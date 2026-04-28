@@ -1,0 +1,30 @@
+{
+  "defaultDoc": "README.md",
+  "groups": [
+    {
+      "title": "Start Here",
+      "items": [
+        { "label": "README", "path": "README.md" },
+        { "label": "Template Index", "path": "template/INDEX.md" },
+        { "label": "How To Use", "path": "template/00-start-here/how-to-use-this-kb.md" },
+        { "label": "Revision State", "path": "template/00-start-here/repository-revision-state.md" }
+      ]
+    },
+    {
+      "title": "Governance",
+      "items": [
+        { "label": "Metadata Schema", "path": "template/15-governance/metadata-schema.md" },
+        { "label": "Verification Policy", "path": "template/15-governance/verification-policy.md" },
+        { "label": "Review Cadence", "path": "template/15-governance/review-cadence.md" }
+      ]
+    },
+    {
+      "title": "AI Skills",
+      "items": [
+        { "label": "Agent Operating Manual", "path": "template/12-ai-skills/agent-operating-manual.md" },
+        { "label": "Prompting Guide", "path": "template/12-ai-skills/prompting-guide.md" },
+        { "label": "Prompt Pack", "path": "template/12-ai-skills/prompt-pack.md" }
+      ]
+    }
+  ]
+}

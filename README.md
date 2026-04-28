@@ -62,6 +62,28 @@ Downstream project KBs should stamp both the adopted template version and the br
 - Reusable document stubs in `template/14-templates/`
 - Governance rules for metadata, verification, review cadence, and template lifecycle in `template/15-governance/`
 
+## Public Site (Landing + Docs)
+
+This repository includes a standalone website bundle in `site/` for GitHub Pages publishing:
+
+- Landing page: `site/landing/`
+- Docs portal: `site/docs/`
+- Entrypoint redirect: `site/index.html`
+
+The docs portal renders markdown directly from the `main` branch via `raw.githubusercontent.com`, so docs stay up to date without duplicating template files.
+
+### Enable GitHub Pages
+
+1. Push the repository to GitHub (default branch `main`).
+2. Open **Settings -> Pages**.
+3. Under **Build and deployment**, choose **Source: GitHub Actions**.
+4. Keep workflow file `.github/workflows/pages.yml` enabled.
+
+After deployment, the site will be available at:
+
+- `https://<owner>.github.io/<repo>/landing/`
+- `https://<owner>.github.io/<repo>/docs/`
+
 ## Quick Start
 
 1. Read [template/INDEX.md](template/INDEX.md) for the full template map.

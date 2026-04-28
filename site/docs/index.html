@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KB Template Docs</title>
+    <meta name="description" content="Documentation portal for Project Knowledge Base Template" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Serif:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="back" href="../landing/">Back to landing</a>
+      <h1>Documentation</h1>
+      <a id="repoLink" href="https://github.com/williamduong/project-knowledge-base-template">Repository</a>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <label for="search">Search docs</label>
+        <input id="search" type="search" placeholder="Type keyword..." />
+        <nav id="nav"></nav>
+      </aside>
+
+      <section class="content-wrap">
+        <article id="content" class="content">
+          <h2>Loading documentation...</h2>
+        </article>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
