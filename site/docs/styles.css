@@ -1,11 +1,12 @@
 :root {
-  --bg: #f2f6f5;
-  --panel: #ffffff;
-  --ink: #12211f;
-  --muted: #46615d;
-  --line: #d6e1df;
-  --accent: #0f7568;
-  --accent-soft: #e4f5f2;
+  --bg: #090f13;
+  --panel: #101922;
+  --panel-2: #0c141b;
+  --ink: #e4f1ef;
+  --muted: #9db8b3;
+  --line: rgba(121, 182, 169, 0.26);
+  --accent: #1fc9ad;
+  --accent-soft: rgba(31, 201, 173, 0.16);
 }
 
 * {
@@ -16,7 +17,10 @@ html,
 body {
   margin: 0;
   min-height: 100%;
-  background: radial-gradient(circle at 88% 10%, #dff1ed, transparent 26%), var(--bg);
+  background:
+    radial-gradient(circle at 88% 10%, rgba(31, 201, 173, 0.22), transparent 30%),
+    radial-gradient(circle at 10% 18%, rgba(74, 129, 217, 0.24), transparent 30%),
+    var(--bg);
   color: var(--ink);
   font-family: "IBM Plex Sans", sans-serif;
 }
@@ -28,7 +32,7 @@ body {
   gap: 1rem;
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--line);
-  background: rgba(242, 246, 245, 0.93);
+  background: rgba(9, 15, 19, 0.84);
   position: sticky;
   top: 0;
   backdrop-filter: blur(8px);
@@ -59,7 +63,7 @@ body {
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   gap: 1rem;
-  max-width: 1300px;
+  max-width: 1360px;
   margin: 1rem auto;
   padding: 0 1rem 1.2rem;
 }
@@ -84,9 +88,15 @@ body {
 .sidebar input {
   width: 100%;
   border: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--panel-2);
   border-radius: 9px;
   padding: 0.55rem 0.65rem;
   margin-bottom: 0.8rem;
+}
+
+.sidebar input::placeholder {
+  color: #7f9893;
 }
 
 .sidebar-section + .sidebar-section {
@@ -127,7 +137,7 @@ body {
 
 .doc-item:hover,
 .doc-item.active {
-  border-color: #b9d8d3;
+  border-color: rgba(122, 206, 189, 0.56);
   background: var(--accent-soft);
 }
 
@@ -159,7 +169,7 @@ body {
 
 .tree-action {
   border: 1px solid var(--line);
-  background: #f8fcfb;
+  background: rgba(13, 23, 30, 0.9);
   color: var(--accent);
   border-radius: 999px;
   padding: 0.22rem 0.55rem;
@@ -202,7 +212,7 @@ body {
 }
 
 .tree-folder > summary:hover {
-  background: #f3faf8;
+  background: rgba(31, 201, 173, 0.09);
 }
 
 .tree-folder-label {
@@ -225,7 +235,7 @@ body {
 .tree-children {
   margin-left: 0.85rem;
   padding-left: 0.55rem;
-  border-left: 1px dashed #cfe2de;
+  border-left: 1px dashed rgba(121, 182, 169, 0.26);
 }
 
 .tree-file {
@@ -275,7 +285,7 @@ body {
 }
 
 .breadcrumb-sep {
-  color: #87a8a2;
+  color: #7ea8a0;
 }
 
 .content h1,
@@ -290,10 +300,10 @@ body {
 }
 
 .note {
-  border: 1px solid #d4e8e4;
+  border: 1px solid rgba(121, 182, 169, 0.35);
   border-radius: 10px;
   padding: 0.75rem;
-  background: #f8fcfb;
+  background: rgba(12, 20, 27, 0.85);
 }
 
 .content .internal-doc-link {

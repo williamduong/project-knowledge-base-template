@@ -191,10 +191,11 @@ kb init --mode private-git</pre>
 
       <section class="quickstart-section" aria-label="Quick start">
         <p class="section-eyebrow">Get started</p>
-        <h2 class="section-title">Quick Start</h2>
+        <h2 class="section-title">Getting Started In 5 Clear Steps</h2>
+        <p class="section-sub">Follow this sequence end-to-end. Each block below is copy-ready for terminal or AI chat.</p>
         <div class="quickstart-layout">
           <div class="code-block">
-            <div class="code-label">Fast path</div>
+            <div class="code-label">Step 1-2 | Install + bootstrap</div>
 <pre># Install or run one-off
 npm install -g @williamduong/kb
 kb help
@@ -206,12 +207,30 @@ kb init --mode private-git
 kb doctor --strict</pre>
           </div>
           <ol class="steps">
-            <li><strong>Install the CLI</strong> and run <code>kb help</code> to confirm the command surface.</li>
-            <li><strong>Bootstrap a KB</strong> with <code>kb init --mode private-git</code> or use <code>npx @williamduong/kb help</code> for one-off usage.</li>
-            <li><strong>Open the prompt docs</strong> and choose a prompt from <code>12-ai-skills/prompt-pack.md</code> after reading <code>12-ai-skills/prompting-guide.md</code>.</li>
-            <li><strong>Run the prompt in your AI IDE</strong> and let the agent build or maintain the KB using the repo rules already stored in Markdown.</li>
-            <li><strong>Validate immediately</strong> with <code>kb doctor</code>, then continue the queue in <code>00-start-here/finalization-plan.md</code>.</li>
+            <li><strong>Install and verify CLI</strong>: run <code>kb help</code> and confirm commands are visible.</li>
+            <li><strong>Create KB baseline</strong>: run <code>kb init --mode private-git</code> (or use one-off <code>npx @williamduong/kb help</code>).</li>
+            <li><strong>Load AI prompts</strong>: open Prompting Guide first, then select a prompt from Prompt Pack.</li>
+            <li><strong>Run the selected prompt</strong>: execute in your AI IDE and keep edits constrained to scope.</li>
+            <li><strong>Validate and maintain</strong>: run <code>kb doctor</code>, then continue queue in <code>00-start-here/finalization-plan.md</code>.</li>
           </ol>
+        </div>
+        <div class="copy-grid" aria-label="Copy-ready command and prompt forms">
+          <article class="copy-card">
+            <h3>Copy | Maintenance Prompt</h3>
+            <textarea class="copy-form" readonly>Run a maintenance sweep of the current knowledge base using review-cadence and verification-policy, detect drift, apply verification downgrade/upgrade correctly, update finalization-plan queue, refresh indexes, and report completed changes plus unresolved items.</textarea>
+          </article>
+          <article class="copy-card">
+            <h3>Copy | Release Notes Preview</h3>
+            <textarea class="copy-form" readonly>npm run release:notes -- v1.1.1 Minor Medium dry-run</textarea>
+          </article>
+          <article class="copy-card">
+            <h3>Copy | Release Notes Apply</h3>
+            <textarea class="copy-form" readonly>npm run release:notes -- v1.1.1 Minor Medium</textarea>
+          </article>
+          <article class="copy-card">
+            <h3>Copy | Patch Upgrade Prompt</h3>
+            <textarea class="copy-form" readonly>Read TEMPLATE_CHANGELOG.md, template-versioning-policy.md, 00-start-here/repository-revision-state.md, and the relevant migration note. Upgrade this project KB from template version &lt;OLD_VERSION&gt; to &lt;NEW_VERSION&gt;, reconcile source drift from the stored brand-scoped baseline commit first, apply required structural and governance changes, refresh indexes and verification states, update finalization-plan queue, and report completed migration work plus pending items.</textarea>
+          </article>
         </div>
         <div class="cta-row">
           <a class="btn btn-primary" href="../docs/?doc=template/12-ai-skills/prompt-pack.md">Browse Prompt Pack</a>
@@ -242,18 +261,20 @@ kb doctor --strict</pre>
         <p class="section-eyebrow">Lifecycle</p>
         <h2 class="section-title">Release Notes &amp; Patch Guidance</h2>
         <p class="section-sub">
-          Template changes and migration expectations already live in the KB. Use changelog entries
-          for release context, then follow patch prompts when an existing KB must be upgraded.
+          Release notes are generated from git history but only when you explicitly run the command.
+          No automatic changelog write happens on each commit push.
         </p>
         <div class="release-grid">
           <article class="release-card">
             <h3>Release notes</h3>
-            <p>Read the template changelog for current version history, impact level, migration requirements, and agent impact.</p>
+            <p>Open template changelog for release history and run manual update command only when you are cutting a release.</p>
+            <div class="mini-code">npm run release:notes -- vX.Y.Z Minor Medium dry-run</div>
             <a class="text-link" href="../docs/?doc=template/TEMPLATE_CHANGELOG.md">Open TEMPLATE_CHANGELOG.md</a>
           </article>
           <article class="release-card">
             <h3>Patch prompts</h3>
-            <p>Use the generic, minor, major, and post-migration prompts when rolling an existing KB forward to a newer template version.</p>
+            <p>Use generic/minor/major/post-migration prompts when rolling a KB forward to newer template versions.</p>
+            <div class="mini-code">Open docs -> Patch Flow -> Version Patch Prompts</div>
             <a class="text-link" href="../docs/?doc=template/12-ai-skills/version-patch-prompts.md">Open version-patch-prompts.md</a>
           </article>
         </div>
