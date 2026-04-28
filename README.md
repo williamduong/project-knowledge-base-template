@@ -104,6 +104,7 @@ After deployment, the site will be available at:
 If you use GitHub Copilot or another coding agent in this repository:
 
 - Start with [template/12-ai-skills/agent-operating-manual.md](template/12-ai-skills/agent-operating-manual.md)
+- Use [template/12-ai-skills/ai-ide-compatibility-matrix.md](template/12-ai-skills/ai-ide-compatibility-matrix.md) to keep the same KB workflow across common AI-enabled IDEs
 - Check [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md) against the current git revision before broad maintenance or upgrade work
 - Use [template/12-ai-skills/prompting-guide.md](template/12-ai-skills/prompting-guide.md) to choose prompt shape
 - Keep document metadata valid per [template/15-governance/metadata-schema.md](template/15-governance/metadata-schema.md)
@@ -126,6 +127,7 @@ If you use GitHub Copilot or another coding agent in this repository:
 - [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md)
 - [template/12-ai-skills/prompting-guide.md](template/12-ai-skills/prompting-guide.md)
 - [template/12-ai-skills/agent-operating-manual.md](template/12-ai-skills/agent-operating-manual.md)
+- [template/12-ai-skills/ai-ide-compatibility-matrix.md](template/12-ai-skills/ai-ide-compatibility-matrix.md)
 - [template/15-governance/metadata-schema.md](template/15-governance/metadata-schema.md)
 - [template/TEMPLATE_CHANGELOG.md](template/TEMPLATE_CHANGELOG.md)
 

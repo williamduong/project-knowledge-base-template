@@ -45,7 +45,7 @@ Operational queue for KB maintenance and completion.
 | KB-002 | Populate current-verified-index first hop docs | knowledge-management | P0 | YYYY-MM-DD | todo | |
 | KB-003 | Review all code-verified claims for source_of_truth | owners by folder | P1 | YYYY-MM-DD | todo | |
 | KB-004 | Prune truly unused template files after first release | knowledge-management | P2 | YYYY-MM-DD | todo | |
-| KB-005 | Document AI IDE compatibility matrix and tested agent workflows | knowledge-management | P1 | YYYY-MM-DD | todo | Add explicit support/testing notes for VS Code, Cursor, Windsurf, JetBrains, and other agent-capable IDEs. |
+| KB-005 | Document AI IDE compatibility matrix and tested agent workflows | knowledge-management | P1 | YYYY-MM-DD | partial | Added `12-ai-skills/ai-ide-compatibility-matrix.md`; empirical IDE validation notes can be expanded later. |
 
 ## Add / Edit / Delete Workflow
 

@@ -50,6 +50,7 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 - Revision state: [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md)
 - Prompting guide: [12-ai-skills/prompting-guide.md](12-ai-skills/prompting-guide.md)
 - Agent manual: [12-ai-skills/agent-operating-manual.md](12-ai-skills/agent-operating-manual.md)
+- AI IDE compatibility: [12-ai-skills/ai-ide-compatibility-matrix.md](12-ai-skills/ai-ide-compatibility-matrix.md)
 - Prompt pack: [12-ai-skills/prompt-pack.md](12-ai-skills/prompt-pack.md)
 - Version patch prompts: [12-ai-skills/version-patch-prompts.md](12-ai-skills/version-patch-prompts.md)
 - Maintenance queue: [00-start-here/finalization-plan.md](00-start-here/finalization-plan.md)
@@ -64,9 +65,10 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 3. Read [00-start-here/terminology-guard.md](00-start-here/terminology-guard.md) and [00-start-here/what-this-repo-is-not.md](00-start-here/what-this-repo-is-not.md) to avoid taxonomy confusion.
 4. Read [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md) and stamp the git baseline when the repository is under version control.
 5. Use [12-ai-skills/prompting-guide.md](12-ai-skills/prompting-guide.md) to pick the right prompt style.
-6. Start the queue in [00-start-here/finalization-plan.md](00-start-here/finalization-plan.md).
-7. Build or maintain the KB using prompts from [12-ai-skills/prompt-pack.md](12-ai-skills/prompt-pack.md).
-8. When updating template versions later, use [12-ai-skills/version-patch-prompts.md](12-ai-skills/version-patch-prompts.md) with [TEMPLATE_CHANGELOG.md](TEMPLATE_CHANGELOG.md).
+6. Use [12-ai-skills/ai-ide-compatibility-matrix.md](12-ai-skills/ai-ide-compatibility-matrix.md) when choosing how to run the workflow in a specific AI-enabled IDE.
+7. Start the queue in [00-start-here/finalization-plan.md](00-start-here/finalization-plan.md).
+8. Build or maintain the KB using prompts from [12-ai-skills/prompt-pack.md](12-ai-skills/prompt-pack.md).
+9. When updating template versions later, use [12-ai-skills/version-patch-prompts.md](12-ai-skills/version-patch-prompts.md) with [TEMPLATE_CHANGELOG.md](TEMPLATE_CHANGELOG.md).
 
 ## Directory Map
 
