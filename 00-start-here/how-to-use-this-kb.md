@@ -68,10 +68,12 @@ tags:
 ## AI Agent Usage Protocol
 
 1. Read [../15-governance/metadata-schema.md](../15-governance/metadata-schema.md)
-2. Respect verification and time_state before quoting facts
-3. For code-impact tasks, update docs in same PR when feasible
-4. Log assumptions in Open Questions section if evidence is missing
-5. Do not ask the user to choose verification mode or queue location unless the repository already has a conflicting standard.
+2. Read [repository-revision-state.md](repository-revision-state.md) and compare stored git baseline with current `HEAD` before broad maintenance, migration, or upgrade work
+3. If the baseline differs from `HEAD`, inspect git log and diff from the stored revision to current state, then run the maintenance loop from governance docs before trusting stale content
+4. Respect verification and time_state before quoting facts
+5. For code-impact tasks, update docs in same PR when feasible
+6. Log assumptions in Open Questions section if evidence is missing
+7. Do not ask the user to choose verification mode or queue location unless the repository already has a conflicting standard.
 
 ## Prompting Help
 

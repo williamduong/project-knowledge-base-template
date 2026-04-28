@@ -11,6 +11,7 @@ related:
   - ../TEMPLATE_CHANGELOG.md
   - migrations/README.md
   - ../12-ai-skills/version-patch-prompts.md
+  - ../00-start-here/repository-revision-state.md
 tags:
   - governance
   - versioning
@@ -61,3 +62,10 @@ A complete migration pack should include:
 ## Repository Adoption Rule
 
 When a project KB is copied from this template, stamp the adopted template version in project-local documentation. On later template upgrades, migrate only when the change adds value or resolves drift risk.
+
+## Git Baseline Rule
+
+- When the repository is under git, store a baseline revision in `00-start-here/repository-revision-state.md`.
+- Before upgrade or migration work, compare the stored baseline with current `HEAD`.
+- If they differ, review git log and diff from the stored baseline forward before applying template upgrade logic.
+- Any drift found during that review must flow through the maintenance loop and queue before the new baseline is stamped.

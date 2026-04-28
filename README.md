@@ -32,6 +32,7 @@ It is designed for teams that want a consistent documentation baseline across di
 If you use GitHub Copilot or another coding agent in this repository:
 
 - Start with [12-ai-skills/agent-operating-manual.md](12-ai-skills/agent-operating-manual.md)
+- Check [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md) against the current git revision before broad maintenance or upgrade work
 - Use [12-ai-skills/prompting-guide.md](12-ai-skills/prompting-guide.md) to choose prompt shape
 - Keep document metadata valid per [15-governance/metadata-schema.md](15-governance/metadata-schema.md)
 - Respect verification and time-state rules before asserting facts
@@ -48,6 +49,7 @@ If you use GitHub Copilot or another coding agent in this repository:
 - [INDEX.md](INDEX.md)
 - [00-start-here/how-to-use-this-kb.md](00-start-here/how-to-use-this-kb.md)
 - [00-start-here/intent-index.md](00-start-here/intent-index.md)
+- [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md)
 - [12-ai-skills/prompting-guide.md](12-ai-skills/prompting-guide.md)
 - [12-ai-skills/agent-operating-manual.md](12-ai-skills/agent-operating-manual.md)
 - [15-governance/metadata-schema.md](15-governance/metadata-schema.md)

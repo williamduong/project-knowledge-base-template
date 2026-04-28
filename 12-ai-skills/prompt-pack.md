@@ -27,6 +27,10 @@ Hay doc toan bo huong dan trong knowledge-base/INDEX.md va 00-start-here/how-to-
 
 Hay quet va maintain knowledge-base hien tai theo review-cadence va verification-policy, phat hien drift, downgrade hoac upgrade verification dung quy tac, cap nhat finalization-plan queue, va bao cao cac thay doi da thuc hien.
 
+## One-Line Prompt For Git Drift Reconciliation
+
+Hay doc 00-start-here/repository-revision-state.md, so sanh baseline revision da luu voi git HEAD hien tai, neu co sai lech thi lay git log va git diff tu revision da luu den hien tai, xac dinh docs bi drift, chay maintenance loop theo review-cadence va verification-policy, cap nhat finalization-plan queue, dong bo lai noi dung, roi ghi baseline moi vao repository-revision-state.md.
+
 ## Prompt Template: Implement Feature
 
 - Goal:
@@ -53,3 +57,6 @@ Hay quet va maintain knowledge-base hien tai theo review-cadence va verification
 - Intake channel: workflow | direct-prompt | scheduled
 - Queue update rule: update finalization-plan first
 - Target verification coverage for this run:
+- Stored baseline revision:
+- Current HEAD revision:
+- Git log and diff range reviewed:

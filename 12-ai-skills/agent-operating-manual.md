@@ -23,9 +23,11 @@ Provide a single location for future coding agents to read KB conventions before
 
 1. Read INDEX and intent-index first.
 2. Read governance metadata and bi-temporal rules.
-3. For task execution, gather current-state evidence before writing claims.
-4. Update docs impacted by code changes in the same change set when possible.
-5. Default to phased `code-verified` coverage and use `finalization-plan.md` as the review queue.
+3. Read `00-start-here/repository-revision-state.md` and compare the stored git baseline with the current `HEAD` revision when git is available.
+4. If the baseline differs, inspect git log and diff from the stored revision forward, detect drift, and route work through the maintenance loop before trusting current KB content.
+5. For task execution, gather current-state evidence before writing claims.
+6. Update docs impacted by code changes in the same change set when possible.
+7. Default to phased `code-verified` coverage and use `finalization-plan.md` as the review queue.
 
 ## Frontend Interpretation Rule
 
@@ -54,3 +56,4 @@ Provide a single location for future coding agents to read KB conventions before
 - Do not revert unrelated local changes.
 - Prefer fast search tools and focused updates.
 - Keep documentation synchronized with implementation changes.
+- Reconcile stored repository revision state with git history before upgrades or maintenance sweeps.
