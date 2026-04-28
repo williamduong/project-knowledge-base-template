@@ -1,0 +1,879 @@
+{
+  "generatedAt": "2026-04-28T18:29:56.942Z",
+  "root": {
+    "type": "directory",
+    "name": "KB",
+    "repoPath": "",
+    "publicPath": "",
+    "children": [
+      {
+        "type": "file",
+        "name": "README.md",
+        "repoPath": "README.md",
+        "publicPath": "README.md"
+      },
+      {
+        "type": "directory",
+        "name": "00-start-here",
+        "repoPath": "template/00-start-here",
+        "publicPath": "00-start-here",
+        "children": [
+          {
+            "type": "file",
+            "name": "current-state.md",
+            "repoPath": "template/00-start-here/current-state.md",
+            "publicPath": "00-start-here/current-state.md"
+          },
+          {
+            "type": "file",
+            "name": "current-verified-index.md",
+            "repoPath": "template/00-start-here/current-verified-index.md",
+            "publicPath": "00-start-here/current-verified-index.md"
+          },
+          {
+            "type": "file",
+            "name": "finalization-plan.md",
+            "repoPath": "template/00-start-here/finalization-plan.md",
+            "publicPath": "00-start-here/finalization-plan.md"
+          },
+          {
+            "type": "file",
+            "name": "glossary.md",
+            "repoPath": "template/00-start-here/glossary.md",
+            "publicPath": "00-start-here/glossary.md"
+          },
+          {
+            "type": "file",
+            "name": "how-to-use-this-kb.md",
+            "repoPath": "template/00-start-here/how-to-use-this-kb.md",
+            "publicPath": "00-start-here/how-to-use-this-kb.md"
+          },
+          {
+            "type": "file",
+            "name": "intent-index.md",
+            "repoPath": "template/00-start-here/intent-index.md",
+            "publicPath": "00-start-here/intent-index.md"
+          },
+          {
+            "type": "file",
+            "name": "knowledge-base-architecture.md",
+            "repoPath": "template/00-start-here/knowledge-base-architecture.md",
+            "publicPath": "00-start-here/knowledge-base-architecture.md"
+          },
+          {
+            "type": "file",
+            "name": "product-summary.md",
+            "repoPath": "template/00-start-here/product-summary.md",
+            "publicPath": "00-start-here/product-summary.md"
+          },
+          {
+            "type": "file",
+            "name": "project-scope-matrix.md",
+            "repoPath": "template/00-start-here/project-scope-matrix.md",
+            "publicPath": "00-start-here/project-scope-matrix.md"
+          },
+          {
+            "type": "file",
+            "name": "repository-revision-state.md",
+            "repoPath": "template/00-start-here/repository-revision-state.md",
+            "publicPath": "00-start-here/repository-revision-state.md"
+          },
+          {
+            "type": "file",
+            "name": "system-map.md",
+            "repoPath": "template/00-start-here/system-map.md",
+            "publicPath": "00-start-here/system-map.md"
+          },
+          {
+            "type": "file",
+            "name": "target-state-index.md",
+            "repoPath": "template/00-start-here/target-state-index.md",
+            "publicPath": "00-start-here/target-state-index.md"
+          },
+          {
+            "type": "file",
+            "name": "terminology-guard.md",
+            "repoPath": "template/00-start-here/terminology-guard.md",
+            "publicPath": "00-start-here/terminology-guard.md"
+          },
+          {
+            "type": "file",
+            "name": "what-this-repo-is-not.md",
+            "repoPath": "template/00-start-here/what-this-repo-is-not.md",
+            "publicPath": "00-start-here/what-this-repo-is-not.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "01-product",
+        "repoPath": "template/01-product",
+        "publicPath": "01-product",
+        "children": [
+          {
+            "type": "directory",
+            "name": "business-rules",
+            "repoPath": "template/01-product/business-rules",
+            "publicPath": "01-product/business-rules",
+            "children": [
+              {
+                "type": "file",
+                "name": "image-export-rules.md",
+                "repoPath": "template/01-product/business-rules/image-export-rules.md",
+                "publicPath": "01-product/business-rules/image-export-rules.md"
+              },
+              {
+                "type": "file",
+                "name": "randomization-rules.md",
+                "repoPath": "template/01-product/business-rules/randomization-rules.md",
+                "publicPath": "01-product/business-rules/randomization-rules.md"
+              },
+              {
+                "type": "file",
+                "name": "storage-rules.md",
+                "repoPath": "template/01-product/business-rules/storage-rules.md",
+                "publicPath": "01-product/business-rules/storage-rules.md"
+              }
+            ]
+          },
+          {
+            "type": "directory",
+            "name": "features",
+            "repoPath": "template/01-product/features",
+            "publicPath": "01-product/features",
+            "children": [
+              {
+                "type": "file",
+                "name": "ai-content-generation.md",
+                "repoPath": "template/01-product/features/ai-content-generation.md",
+                "publicPath": "01-product/features/ai-content-generation.md"
+              },
+              {
+                "type": "file",
+                "name": "api-key-management.md",
+                "repoPath": "template/01-product/features/api-key-management.md",
+                "publicPath": "01-product/features/api-key-management.md"
+              },
+              {
+                "type": "file",
+                "name": "gallery.md",
+                "repoPath": "template/01-product/features/gallery.md",
+                "publicPath": "01-product/features/gallery.md"
+              },
+              {
+                "type": "file",
+                "name": "randomization.md",
+                "repoPath": "template/01-product/features/randomization.md",
+                "publicPath": "01-product/features/randomization.md"
+              },
+              {
+                "type": "file",
+                "name": "visual-builder.md",
+                "repoPath": "template/01-product/features/visual-builder.md",
+                "publicPath": "01-product/features/visual-builder.md"
+              }
+            ]
+          },
+          {
+            "type": "directory",
+            "name": "user-journeys",
+            "repoPath": "template/01-product/user-journeys",
+            "publicPath": "01-product/user-journeys",
+            "children": [
+              {
+                "type": "file",
+                "name": "create-composition-browser.md",
+                "repoPath": "template/01-product/user-journeys/create-composition-browser.md",
+                "publicPath": "01-product/user-journeys/create-composition-browser.md"
+              },
+              {
+                "type": "file",
+                "name": "extend-via-vscode.md",
+                "repoPath": "template/01-product/user-journeys/extend-via-vscode.md",
+                "publicPath": "01-product/user-journeys/extend-via-vscode.md"
+              },
+              {
+                "type": "file",
+                "name": "generate-via-api.md",
+                "repoPath": "template/01-product/user-journeys/generate-via-api.md",
+                "publicPath": "01-product/user-journeys/generate-via-api.md"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "problem-statement.md",
+            "repoPath": "template/01-product/problem-statement.md",
+            "publicPath": "01-product/problem-statement.md"
+          },
+          {
+            "type": "file",
+            "name": "product-decisions.md",
+            "repoPath": "template/01-product/product-decisions.md",
+            "publicPath": "01-product/product-decisions.md"
+          },
+          {
+            "type": "file",
+            "name": "user-personas.md",
+            "repoPath": "template/01-product/user-personas.md",
+            "publicPath": "01-product/user-personas.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "02-domain-model",
+        "repoPath": "template/02-domain-model",
+        "publicPath": "02-domain-model",
+        "children": [
+          {
+            "type": "file",
+            "name": "domain-events.md",
+            "repoPath": "template/02-domain-model/domain-events.md",
+            "publicPath": "02-domain-model/domain-events.md"
+          },
+          {
+            "type": "file",
+            "name": "entities.md",
+            "repoPath": "template/02-domain-model/entities.md",
+            "publicPath": "02-domain-model/entities.md"
+          },
+          {
+            "type": "file",
+            "name": "ontology.md",
+            "repoPath": "template/02-domain-model/ontology.md",
+            "publicPath": "02-domain-model/ontology.md"
+          },
+          {
+            "type": "file",
+            "name": "relationships.md",
+            "repoPath": "template/02-domain-model/relationships.md",
+            "publicPath": "02-domain-model/relationships.md"
+          },
+          {
+            "type": "file",
+            "name": "states-and-lifecycles.md",
+            "repoPath": "template/02-domain-model/states-and-lifecycles.md",
+            "publicPath": "02-domain-model/states-and-lifecycles.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "03-architecture",
+        "repoPath": "template/03-architecture",
+        "publicPath": "03-architecture",
+        "children": [
+          {
+            "type": "directory",
+            "name": "adr",
+            "repoPath": "template/03-architecture/adr",
+            "publicPath": "03-architecture/adr",
+            "children": [
+              {
+                "type": "file",
+                "name": "adr-001-json-composition-format.md",
+                "repoPath": "template/03-architecture/adr/adr-001-json-composition-format.md",
+                "publicPath": "03-architecture/adr/adr-001-json-composition-format.md"
+              },
+              {
+                "type": "file",
+                "name": "adr-002-server-side-rendering.md",
+                "repoPath": "template/03-architecture/adr/adr-002-server-side-rendering.md",
+                "publicPath": "03-architecture/adr/adr-002-server-side-rendering.md"
+              },
+              {
+                "type": "file",
+                "name": "adr-003-postgresql-drizzle.md",
+                "repoPath": "template/03-architecture/adr/adr-003-postgresql-drizzle.md",
+                "publicPath": "03-architecture/adr/adr-003-postgresql-drizzle.md"
+              },
+              {
+                "type": "file",
+                "name": "adr-004-gcs-storage.md",
+                "repoPath": "template/03-architecture/adr/adr-004-gcs-storage.md",
+                "publicPath": "03-architecture/adr/adr-004-gcs-storage.md"
+              },
+              {
+                "type": "file",
+                "name": "adr-005-monorepo-pnpm.md",
+                "repoPath": "template/03-architecture/adr/adr-005-monorepo-pnpm.md",
+                "publicPath": "03-architecture/adr/adr-005-monorepo-pnpm.md"
+              },
+              {
+                "type": "file",
+                "name": "adr-006-multi-ai-provider.md",
+                "repoPath": "template/03-architecture/adr/adr-006-multi-ai-provider.md",
+                "publicPath": "03-architecture/adr/adr-006-multi-ai-provider.md"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "components.md",
+            "repoPath": "template/03-architecture/components.md",
+            "publicPath": "03-architecture/components.md"
+          },
+          {
+            "type": "file",
+            "name": "containers.md",
+            "repoPath": "template/03-architecture/containers.md",
+            "publicPath": "03-architecture/containers.md"
+          },
+          {
+            "type": "file",
+            "name": "system-overview.md",
+            "repoPath": "template/03-architecture/system-overview.md",
+            "publicPath": "03-architecture/system-overview.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "04-frontend",
+        "repoPath": "template/04-frontend",
+        "publicPath": "04-frontend",
+        "children": [
+          {
+            "type": "file",
+            "name": "app-structure.md",
+            "repoPath": "template/04-frontend/app-structure.md",
+            "publicPath": "04-frontend/app-structure.md"
+          },
+          {
+            "type": "file",
+            "name": "authentication-local.md",
+            "repoPath": "template/04-frontend/authentication-local.md",
+            "publicPath": "04-frontend/authentication-local.md"
+          },
+          {
+            "type": "file",
+            "name": "build-and-vite.md",
+            "repoPath": "template/04-frontend/build-and-vite.md",
+            "publicPath": "04-frontend/build-and-vite.md"
+          },
+          {
+            "type": "file",
+            "name": "components-overview.md",
+            "repoPath": "template/04-frontend/components-overview.md",
+            "publicPath": "04-frontend/components-overview.md"
+          },
+          {
+            "type": "file",
+            "name": "hooks-and-state.md",
+            "repoPath": "template/04-frontend/hooks-and-state.md",
+            "publicPath": "04-frontend/hooks-and-state.md"
+          },
+          {
+            "type": "file",
+            "name": "pages-and-features.md",
+            "repoPath": "template/04-frontend/pages-and-features.md",
+            "publicPath": "04-frontend/pages-and-features.md"
+          },
+          {
+            "type": "file",
+            "name": "styling-system.md",
+            "repoPath": "template/04-frontend/styling-system.md",
+            "publicPath": "04-frontend/styling-system.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "05-backend",
+        "repoPath": "template/05-backend",
+        "publicPath": "05-backend",
+        "children": [
+          {
+            "type": "file",
+            "name": "configuration-deployment.md",
+            "repoPath": "template/05-backend/configuration-deployment.md",
+            "publicPath": "05-backend/configuration-deployment.md"
+          },
+          {
+            "type": "file",
+            "name": "database-operations.md",
+            "repoPath": "template/05-backend/database-operations.md",
+            "publicPath": "05-backend/database-operations.md"
+          },
+          {
+            "type": "file",
+            "name": "error-handling.md",
+            "repoPath": "template/05-backend/error-handling.md",
+            "publicPath": "05-backend/error-handling.md"
+          },
+          {
+            "type": "file",
+            "name": "middleware-and-auth.md",
+            "repoPath": "template/05-backend/middleware-and-auth.md",
+            "publicPath": "05-backend/middleware-and-auth.md"
+          },
+          {
+            "type": "file",
+            "name": "rendering-engine.md",
+            "repoPath": "template/05-backend/rendering-engine.md",
+            "publicPath": "05-backend/rendering-engine.md"
+          },
+          {
+            "type": "file",
+            "name": "routes-and-handlers.md",
+            "repoPath": "template/05-backend/routes-and-handlers.md",
+            "publicPath": "05-backend/routes-and-handlers.md"
+          },
+          {
+            "type": "file",
+            "name": "services-overview.md",
+            "repoPath": "template/05-backend/services-overview.md",
+            "publicPath": "05-backend/services-overview.md"
+          },
+          {
+            "type": "file",
+            "name": "storage-service.md",
+            "repoPath": "template/05-backend/storage-service.md",
+            "publicPath": "05-backend/storage-service.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "06-api",
+        "repoPath": "template/06-api",
+        "publicPath": "06-api",
+        "children": [
+          {
+            "type": "directory",
+            "name": "endpoints",
+            "repoPath": "template/06-api/endpoints",
+            "publicPath": "06-api/endpoints",
+            "children": [
+              {
+                "type": "file",
+                "name": "delete-api-key.md",
+                "repoPath": "template/06-api/endpoints/delete-api-key.md",
+                "publicPath": "06-api/endpoints/delete-api-key.md"
+              },
+              {
+                "type": "file",
+                "name": "delete-composition.md",
+                "repoPath": "template/06-api/endpoints/delete-composition.md",
+                "publicPath": "06-api/endpoints/delete-composition.md"
+              },
+              {
+                "type": "file",
+                "name": "get-api-keys.md",
+                "repoPath": "template/06-api/endpoints/get-api-keys.md",
+                "publicPath": "06-api/endpoints/get-api-keys.md"
+              },
+              {
+                "type": "file",
+                "name": "get-composition.md",
+                "repoPath": "template/06-api/endpoints/get-composition.md",
+                "publicPath": "06-api/endpoints/get-composition.md"
+              },
+              {
+                "type": "file",
+                "name": "get-compositions.md",
+                "repoPath": "template/06-api/endpoints/get-compositions.md",
+                "publicPath": "06-api/endpoints/get-compositions.md"
+              },
+              {
+                "type": "file",
+                "name": "get-profile-me.md",
+                "repoPath": "template/06-api/endpoints/get-profile-me.md",
+                "publicPath": "06-api/endpoints/get-profile-me.md"
+              },
+              {
+                "type": "file",
+                "name": "patch-profile-me.md",
+                "repoPath": "template/06-api/endpoints/patch-profile-me.md",
+                "publicPath": "06-api/endpoints/patch-profile-me.md"
+              },
+              {
+                "type": "file",
+                "name": "post-api-keys.md",
+                "repoPath": "template/06-api/endpoints/post-api-keys.md",
+                "publicPath": "06-api/endpoints/post-api-keys.md"
+              },
+              {
+                "type": "file",
+                "name": "post-composition.md",
+                "repoPath": "template/06-api/endpoints/post-composition.md",
+                "publicPath": "06-api/endpoints/post-composition.md"
+              },
+              {
+                "type": "file",
+                "name": "post-generate.md",
+                "repoPath": "template/06-api/endpoints/post-generate.md",
+                "publicPath": "06-api/endpoints/post-generate.md"
+              },
+              {
+                "type": "file",
+                "name": "post-random-state.md",
+                "repoPath": "template/06-api/endpoints/post-random-state.md",
+                "publicPath": "06-api/endpoints/post-random-state.md"
+              },
+              {
+                "type": "file",
+                "name": "post-random.md",
+                "repoPath": "template/06-api/endpoints/post-random.md",
+                "publicPath": "06-api/endpoints/post-random.md"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "api-overview.md",
+            "repoPath": "template/06-api/api-overview.md",
+            "publicPath": "06-api/api-overview.md"
+          },
+          {
+            "type": "file",
+            "name": "authentication.md",
+            "repoPath": "template/06-api/authentication.md",
+            "publicPath": "06-api/authentication.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "07-database",
+        "repoPath": "template/07-database",
+        "publicPath": "07-database",
+        "children": [
+          {
+            "type": "directory",
+            "name": "tables",
+            "repoPath": "template/07-database/tables",
+            "publicPath": "07-database/tables",
+            "children": [
+              {
+                "type": "file",
+                "name": "api-images.md",
+                "repoPath": "template/07-database/tables/api-images.md",
+                "publicPath": "07-database/tables/api-images.md"
+              },
+              {
+                "type": "file",
+                "name": "api-keys.md",
+                "repoPath": "template/07-database/tables/api-keys.md",
+                "publicPath": "07-database/tables/api-keys.md"
+              },
+              {
+                "type": "file",
+                "name": "compositions.md",
+                "repoPath": "template/07-database/tables/compositions.md",
+                "publicPath": "07-database/tables/compositions.md"
+              },
+              {
+                "type": "file",
+                "name": "user-profiles.md",
+                "repoPath": "template/07-database/tables/user-profiles.md",
+                "publicPath": "07-database/tables/user-profiles.md"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "erd.md",
+            "repoPath": "template/07-database/erd.md",
+            "publicPath": "07-database/erd.md"
+          },
+          {
+            "type": "file",
+            "name": "indexing-strategy.md",
+            "repoPath": "template/07-database/indexing-strategy.md",
+            "publicPath": "07-database/indexing-strategy.md"
+          },
+          {
+            "type": "file",
+            "name": "schema-overview.md",
+            "repoPath": "template/07-database/schema-overview.md",
+            "publicPath": "07-database/schema-overview.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "08-security",
+        "repoPath": "template/08-security",
+        "publicPath": "08-security",
+        "children": [
+          {
+            "type": "file",
+            "name": "authentication-details.md",
+            "repoPath": "template/08-security/authentication-details.md",
+            "publicPath": "08-security/authentication-details.md"
+          },
+          {
+            "type": "file",
+            "name": "authz-matrix.md",
+            "repoPath": "template/08-security/authz-matrix.md",
+            "publicPath": "08-security/authz-matrix.md"
+          },
+          {
+            "type": "file",
+            "name": "encryption.md",
+            "repoPath": "template/08-security/encryption.md",
+            "publicPath": "08-security/encryption.md"
+          },
+          {
+            "type": "file",
+            "name": "security-checklist.md",
+            "repoPath": "template/08-security/security-checklist.md",
+            "publicPath": "08-security/security-checklist.md"
+          },
+          {
+            "type": "file",
+            "name": "threat-model.md",
+            "repoPath": "template/08-security/threat-model.md",
+            "publicPath": "08-security/threat-model.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "09-operations",
+        "repoPath": "template/09-operations",
+        "publicPath": "09-operations",
+        "children": [
+          {
+            "type": "file",
+            "name": "deployment.md",
+            "repoPath": "template/09-operations/deployment.md",
+            "publicPath": "09-operations/deployment.md"
+          },
+          {
+            "type": "file",
+            "name": "incident-runbook.md",
+            "repoPath": "template/09-operations/incident-runbook.md",
+            "publicPath": "09-operations/incident-runbook.md"
+          },
+          {
+            "type": "file",
+            "name": "monitoring.md",
+            "repoPath": "template/09-operations/monitoring.md",
+            "publicPath": "09-operations/monitoring.md"
+          },
+          {
+            "type": "file",
+            "name": "troubleshooting.md",
+            "repoPath": "template/09-operations/troubleshooting.md",
+            "publicPath": "09-operations/troubleshooting.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "10-testing",
+        "repoPath": "template/10-testing",
+        "publicPath": "10-testing",
+        "children": [
+          {
+            "type": "file",
+            "name": "e2e-tests.md",
+            "repoPath": "template/10-testing/e2e-tests.md",
+            "publicPath": "10-testing/e2e-tests.md"
+          },
+          {
+            "type": "file",
+            "name": "integration-tests.md",
+            "repoPath": "template/10-testing/integration-tests.md",
+            "publicPath": "10-testing/integration-tests.md"
+          },
+          {
+            "type": "file",
+            "name": "release-checklist.md",
+            "repoPath": "template/10-testing/release-checklist.md",
+            "publicPath": "10-testing/release-checklist.md"
+          },
+          {
+            "type": "file",
+            "name": "test-strategy.md",
+            "repoPath": "template/10-testing/test-strategy.md",
+            "publicPath": "10-testing/test-strategy.md"
+          },
+          {
+            "type": "file",
+            "name": "unit-tests.md",
+            "repoPath": "template/10-testing/unit-tests.md",
+            "publicPath": "10-testing/unit-tests.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "11-user-docs",
+        "repoPath": "template/11-user-docs",
+        "publicPath": "11-user-docs",
+        "children": [
+          {
+            "type": "file",
+            "name": "README.md",
+            "repoPath": "template/11-user-docs/README.md",
+            "publicPath": "11-user-docs/README.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "12-ai-skills",
+        "repoPath": "template/12-ai-skills",
+        "publicPath": "12-ai-skills",
+        "children": [
+          {
+            "type": "file",
+            "name": "agent-operating-manual.md",
+            "repoPath": "template/12-ai-skills/agent-operating-manual.md",
+            "publicPath": "12-ai-skills/agent-operating-manual.md"
+          },
+          {
+            "type": "file",
+            "name": "ai-ide-compatibility-matrix.md",
+            "repoPath": "template/12-ai-skills/ai-ide-compatibility-matrix.md",
+            "publicPath": "12-ai-skills/ai-ide-compatibility-matrix.md"
+          },
+          {
+            "type": "file",
+            "name": "prompt-pack.md",
+            "repoPath": "template/12-ai-skills/prompt-pack.md",
+            "publicPath": "12-ai-skills/prompt-pack.md"
+          },
+          {
+            "type": "file",
+            "name": "prompting-guide.md",
+            "repoPath": "template/12-ai-skills/prompting-guide.md",
+            "publicPath": "12-ai-skills/prompting-guide.md"
+          },
+          {
+            "type": "file",
+            "name": "version-patch-prompts.md",
+            "repoPath": "template/12-ai-skills/version-patch-prompts.md",
+            "publicPath": "12-ai-skills/version-patch-prompts.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "13-knowledge-graph",
+        "repoPath": "template/13-knowledge-graph",
+        "publicPath": "13-knowledge-graph",
+        "children": [
+          {
+            "type": "file",
+            "name": "README.md",
+            "repoPath": "template/13-knowledge-graph/README.md",
+            "publicPath": "13-knowledge-graph/README.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "14-templates",
+        "repoPath": "template/14-templates",
+        "publicPath": "14-templates",
+        "children": [
+          {
+            "type": "file",
+            "name": "doc-template.md",
+            "repoPath": "template/14-templates/doc-template.md",
+            "publicPath": "14-templates/doc-template.md"
+          },
+          {
+            "type": "file",
+            "name": "README.md",
+            "repoPath": "template/14-templates/README.md",
+            "publicPath": "14-templates/README.md"
+          }
+        ]
+      },
+      {
+        "type": "directory",
+        "name": "15-governance",
+        "repoPath": "template/15-governance",
+        "publicPath": "15-governance",
+        "children": [
+          {
+            "type": "directory",
+            "name": "migrations",
+            "repoPath": "template/15-governance/migrations",
+            "publicPath": "15-governance/migrations",
+            "children": [
+              {
+                "type": "file",
+                "name": "migrate-v1.0.0-to-v1.1.0.md",
+                "repoPath": "template/15-governance/migrations/migrate-v1.0.0-to-v1.1.0.md",
+                "publicPath": "15-governance/migrations/migrate-v1.0.0-to-v1.1.0.md"
+              },
+              {
+                "type": "file",
+                "name": "migration-template.md",
+                "repoPath": "template/15-governance/migrations/migration-template.md",
+                "publicPath": "15-governance/migrations/migration-template.md"
+              },
+              {
+                "type": "file",
+                "name": "README.md",
+                "repoPath": "template/15-governance/migrations/README.md",
+                "publicPath": "15-governance/migrations/README.md"
+              }
+            ]
+          },
+          {
+            "type": "file",
+            "name": "bi-temporal-writing-rules.md",
+            "repoPath": "template/15-governance/bi-temporal-writing-rules.md",
+            "publicPath": "15-governance/bi-temporal-writing-rules.md"
+          },
+          {
+            "type": "file",
+            "name": "document-taxonomy.md",
+            "repoPath": "template/15-governance/document-taxonomy.md",
+            "publicPath": "15-governance/document-taxonomy.md"
+          },
+          {
+            "type": "file",
+            "name": "link-and-ownership-policy.md",
+            "repoPath": "template/15-governance/link-and-ownership-policy.md",
+            "publicPath": "15-governance/link-and-ownership-policy.md"
+          },
+          {
+            "type": "file",
+            "name": "metadata-schema.md",
+            "repoPath": "template/15-governance/metadata-schema.md",
+            "publicPath": "15-governance/metadata-schema.md"
+          },
+          {
+            "type": "file",
+            "name": "review-cadence.md",
+            "repoPath": "template/15-governance/review-cadence.md",
+            "publicPath": "15-governance/review-cadence.md"
+          },
+          {
+            "type": "file",
+            "name": "template-versioning-policy.md",
+            "repoPath": "template/15-governance/template-versioning-policy.md",
+            "publicPath": "15-governance/template-versioning-policy.md"
+          },
+          {
+            "type": "file",
+            "name": "verification-policy.md",
+            "repoPath": "template/15-governance/verification-policy.md",
+            "publicPath": "15-governance/verification-policy.md"
+          }
+        ]
+      },
+      {
+        "type": "file",
+        "name": "INDEX.md",
+        "repoPath": "template/INDEX.md",
+        "publicPath": "INDEX.md"
+      },
+      {
+        "type": "file",
+        "name": "TEMPLATE_CHANGELOG.md",
+        "repoPath": "template/TEMPLATE_CHANGELOG.md",
+        "publicPath": "TEMPLATE_CHANGELOG.md"
+      }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting…</title>
+  </head>
+  <body>
+    <script>
+      (function redirectDocsRoute() {
+        var pathname = window.location.pathname;
+        var docsMarker = "/docs/";
+        var legacyMarker = "/site/docs/";
+        var marker = pathname.indexOf(legacyMarker) !== -1 ? legacyMarker : docsMarker;
+        var markerIndex = pathname.indexOf(marker);
+
+        if (markerIndex === -1) {
+          return;
+        }
+
+        var prefix = pathname.slice(0, markerIndex);
+        var publicPath = decodeURIComponent(pathname.slice(markerIndex + marker.length));
+        var target = prefix + "/docs/";
+
+        if (publicPath) {
+          target += "?path=" + encodeURIComponent(publicPath);
+        }
+
+        if (window.location.hash) {
+          target += window.location.hash;
+        }
+
+        window.location.replace(target);
+      })();
+    </script>
+    <p>Redirecting to documentation portal…</p>
+  </body>
+</html>

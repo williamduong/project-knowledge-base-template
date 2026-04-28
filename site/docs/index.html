@@ -24,7 +24,17 @@
       <aside class="sidebar">
         <label for="search">Search docs</label>
         <input id="search" type="search" placeholder="Type keyword..." />
-        <nav id="nav"></nav>
+        <section class="sidebar-section">
+          <h2 class="sidebar-title">Highlights</h2>
+          <nav id="nav"></nav>
+        </section>
+        <section class="sidebar-section tree-panel">
+          <div class="tree-panel-header">
+            <h2 class="sidebar-title">KB Tree</h2>
+            <span id="treeStatus" class="tree-status">Loading…</span>
+          </div>
+          <div id="tree"></div>
+        </section>
       </aside>
 
       <section class="content-wrap">
