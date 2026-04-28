@@ -2,12 +2,27 @@ const fs = require('fs');
 const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
-const { readStateFile } = require('../lib/state');
+const { persistStateAndRender, readStateFile } = require('../lib/state');
+
+function parseArgs(args) {
+  const options = {
+    restoreBackup: false,
+  };
+
+  for (const current of args || []) {
+    if (current === '--restore-backup') {
+      options.restoreBackup = true;
+      continue;
+    }
+
+    throw new Error(`Unknown hide option \"${current}\".`);
+  }
+
+  return options;
+}
 
 function runHide({ args, cwd }) {
-  if (args && args.length > 0) {
-    throw new Error(`Unknown hide option \"${args[0]}\".`);
-  }
+  const options = parseArgs(args);
 
   const workspaceRoot = path.resolve(cwd);
   const context = resolveExistingState({ workspaceRoot });
@@ -19,6 +34,19 @@ function runHide({ args, cwd }) {
 
   if (!fs.existsSync(context.visibleMountPath)) {
     console.log(`hide: no visible mount found at ${context.visibleMountPath}`);
+
+    if (options.restoreBackup && state.lastShowBackupPath && fs.existsSync(state.lastShowBackupPath)) {
+      fs.renameSync(state.lastShowBackupPath, context.visibleMountPath);
+      console.log(`hide: restored backup ${state.lastShowBackupPath} -> ${context.visibleMountPath}`);
+      state.lastShowBackupPath = null;
+
+      persistStateAndRender({
+        statePath: context.statePath,
+        renderedRevisionStatePath: context.renderedRevisionStatePath,
+        state,
+      });
+    }
+
     return;
   }
 
@@ -31,6 +59,18 @@ function runHide({ args, cwd }) {
 
   fs.rmSync(context.visibleMountPath, { recursive: true, force: true });
   console.log(`hide: removed visible mount ${context.visibleMountPath}`);
+
+  if (options.restoreBackup && state.lastShowBackupPath && fs.existsSync(state.lastShowBackupPath)) {
+    fs.renameSync(state.lastShowBackupPath, context.visibleMountPath);
+    console.log(`hide: restored backup ${state.lastShowBackupPath} -> ${context.visibleMountPath}`);
+    state.lastShowBackupPath = null;
+
+    persistStateAndRender({
+      statePath: context.statePath,
+      renderedRevisionStatePath: context.renderedRevisionStatePath,
+      state,
+    });
+  }
 }
 
 module.exports = {

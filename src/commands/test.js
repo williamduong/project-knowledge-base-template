@@ -3,7 +3,8 @@ const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
 const { readStateFile } = require('../lib/state');
-const { getGitMetadata } = require('../lib/git');
+const { getGitMetadata, getWorkingTreeStatus } = require('../lib/git');
+const { buildDocumentIndex } = require('../lib/kb-analysis');
 
 function parseArgs(args) {
   const options = {
@@ -29,30 +30,6 @@ function parseArgs(args) {
   return options;
 }
 
-function collectMarkdownFiles(root, output = []) {
-  if (!fs.existsSync(root)) {
-    return output;
-  }
-
-  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
-    if (entry.name === '.git' || entry.name === 'node_modules') {
-      continue;
-    }
-
-    const fullPath = path.join(root, entry.name);
-    if (entry.isDirectory()) {
-      collectMarkdownFiles(fullPath, output);
-      continue;
-    }
-
-    if (entry.name.toLowerCase().endsWith('.md')) {
-      output.push(fullPath);
-    }
-  }
-
-  return output;
-}
-
 function sampleArray(items, count) {
   if (items.length <= count) {
     return [...items];
@@ -75,6 +52,8 @@ function runTest({ args, cwd }) {
   const context = resolveExistingState({ workspaceRoot });
   const state = readStateFile({ statePath: context.statePath });
   const git = getGitMetadata(workspaceRoot);
+  const dirtyEntries = git.isGitRepo ? getWorkingTreeStatus(workspaceRoot) : [];
+  const docs = buildDocumentIndex({ contentRoot: context.contentRoot, workspaceRoot });
 
   const failures = [];
   const warnings = [];
@@ -97,19 +76,22 @@ function runTest({ args, cwd }) {
     } else if (git.head !== state.sourceRepositoryGitBaseline) {
       warnings.push(`Git HEAD differs from baseline (${state.sourceRepositoryGitBaseline} -> ${git.head}).`);
     }
+
+    if (dirtyEntries.length > 0) {
+      warnings.push(`Working tree has ${dirtyEntries.length} uncommitted change(s).`);
+    }
   }
 
-  const markdownFiles = collectMarkdownFiles(context.contentRoot, []);
-  if (markdownFiles.length === 0) {
+  if (docs.length === 0) {
     warnings.push('No markdown files found in KB content root.');
   }
 
-  const sampled = sampleArray(markdownFiles, options.sample);
+  const sampled = sampleArray(docs, options.sample);
   let sampledWithFrontmatter = 0;
 
-  for (const filePath of sampled) {
-    const text = fs.readFileSync(filePath, 'utf8');
-    if (text.startsWith('---\n') || text.startsWith('---\r\n')) {
+  for (const doc of sampled) {
+    const text = fs.readFileSync(doc.filePath, 'utf8');
+    if (doc.frontmatter && (text.startsWith('---\n') || text.startsWith('---\r\n'))) {
       sampledWithFrontmatter += 1;
     }
   }
@@ -120,11 +102,36 @@ function runTest({ args, cwd }) {
     );
   }
 
+  const codeVerifiedDocs = docs.filter((doc) => doc.verification === 'code-verified');
+  const missingSourceOfTruth = codeVerifiedDocs.filter((doc) => doc.sourceOfTruth.length === 0);
+  const missingSourceTargets = codeVerifiedDocs.filter((doc) =>
+    doc.sourceChecks.some((check) => !check.exists)
+  );
+
+  if (missingSourceOfTruth.length > 0) {
+    warnings.push(
+      `source_of_truth missing for ${missingSourceOfTruth.length} code-verified document(s).`
+    );
+  }
+
+  if (missingSourceTargets.length > 0) {
+    warnings.push(
+      `source_of_truth targets not found for ${missingSourceTargets.length} code-verified document(s).`
+    );
+  }
+
   console.log('kb test summary');
   console.log(`- mode: ${context.mode}`);
   console.log(`- state file: ${context.statePath}`);
+  console.log(`- markdown documents indexed: ${docs.length}`);
   console.log(`- sampled markdown files: ${sampled.length}`);
   console.log(`- sampled files with frontmatter: ${sampledWithFrontmatter}`);
+  console.log(`- code-verified docs: ${codeVerifiedDocs.length}`);
+  console.log(`- code-verified docs missing source_of_truth: ${missingSourceOfTruth.length}`);
+  console.log(`- code-verified docs with missing source targets: ${missingSourceTargets.length}`);
+  if (git.isGitRepo) {
+    console.log(`- uncommitted working tree changes: ${dirtyEntries.length}`);
+  }
 
   if (warnings.length > 0) {
     console.log('Warnings:');

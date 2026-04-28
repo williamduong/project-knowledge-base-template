@@ -20,15 +20,28 @@ Run directly from this repository:
 node ./bin/kb.js help
 ```
 
+Global install mode (after publish):
+
+```bash
+npm install -g @williamduong/kb
+kb help
+```
+
+One-off usage with npx:
+
+```bash
+npx @williamduong/kb help
+```
+
 Currently implemented commands:
 
 - `help`
 - `init --mode private-git|tracked`
-- `show` (private-git mode)
-- `hide` (private-git mode)
+- `show [--backup-existing]` (private-git mode)
+- `hide [--restore-backup]` (private-git mode)
 - `test`
-- `sync`
-- `update`
+- `sync [--accept-baseline]`
+- `update [--accept-baseline]`
 
 Downstream project KBs should stamp both the adopted template version and the brand-scoped source baseline commit they were verified against.
 

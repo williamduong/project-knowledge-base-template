@@ -2,8 +2,14 @@ const fs = require('fs');
 const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
-const { getGitDiffNameStatus, getGitLogRange, getGitMetadata } = require('../lib/git');
+const { getGitDiffNameStatus, getGitLogRange, getGitMetadata, getWorkingTreeStatus } = require('../lib/git');
 const { persistStateAndRender, readStateFile } = require('../lib/state');
+const {
+  buildDocumentIndex,
+  mapDiffToDocuments,
+  parseDiffNameStatus,
+  updateFinalizationQueue,
+} = require('../lib/kb-analysis');
 
 function parseArgs(args) {
   const options = {
@@ -38,7 +44,17 @@ function getReportsDirectory(context) {
   return path.join(path.dirname(context.statePath), 'reports');
 }
 
-function writeSyncReport({ reportPath, state, git, logRange, diffNameStatus }) {
+function writeSyncReport({ reportPath, state, git, logRange, diffNameStatus, mappedDocs, dirtyEntries }) {
+  let mappingSection = 'No source_of_truth mappings matched changed files.\n';
+  if (mappedDocs && mappedDocs.length > 0) {
+    const lines = mappedDocs.map((item, index) => {
+      const paths = item.matches.map((match) => match.filePath).slice(0, 5).join(', ');
+      return `${index + 1}. ${item.document.relativePath} (matches: ${item.matches.length}) -> ${paths}`;
+    });
+
+    mappingSection = `${lines.join('\n')}\n`;
+  }
+
   const report = `# KB Sync Report
 
 - Generated At: ${new Date().toISOString()}
@@ -48,12 +64,23 @@ function writeSyncReport({ reportPath, state, git, logRange, diffNameStatus }) {
 - Current HEAD: ${git.head || 'NOT_AVAILABLE'}
 - Branch: ${git.branch || 'NOT_AVAILABLE'}
 - Repository: ${git.originUrl || state.sourceRepositoryIdentifier}
+- Uncommitted Changes: ${dirtyEntries.length}
 
 ## Diff Name Status
 
 \`\`\`
 ${diffNameStatus || 'No diff output available.'}
 \`\`\`
+
+## Working Tree Status
+
+\`\`\`
+${dirtyEntries.map((entry) => entry.raw).join('\n') || 'No uncommitted changes.'}
+\`\`\`
+
+## source_of_truth Mapping
+
+${mappingSection}
 
 ## Git Log Range
 
@@ -71,6 +98,7 @@ function performSync({ cwd, options }) {
   const context = resolveExistingState({ workspaceRoot });
   const state = readStateFile({ statePath: context.statePath });
   const git = getGitMetadata(workspaceRoot);
+  const dirtyEntries = git.isGitRepo ? getWorkingTreeStatus(workspaceRoot) : [];
   const today = nowDate();
 
   state.lastDriftCheckAt = today;
@@ -118,8 +146,26 @@ function performSync({ cwd, options }) {
   state.sourceRepositoryIdentifier = git.originUrl || state.sourceRepositoryIdentifier;
 
   if (baseline === head) {
+    if (dirtyEntries.length > 0) {
+      state.driftStatus = 'drift-detected';
+      state.notes = `Baseline matches HEAD but working tree has ${dirtyEntries.length} uncommitted change(s).`;
+
+      persistStateAndRender({
+        statePath: context.statePath,
+        renderedRevisionStatePath: context.renderedRevisionStatePath,
+        state,
+      });
+
+      return {
+        status: 'WARN',
+        message: `Baseline matches HEAD, but working tree has ${dirtyEntries.length} uncommitted change(s).`,
+        context,
+        state,
+      };
+    }
+
     state.driftStatus = 'aligned';
-    state.notes = 'Sync confirmed baseline is aligned with current HEAD.';
+    state.notes = 'Sync confirmed baseline is aligned with current HEAD and clean working tree.';
 
     persistStateAndRender({
       statePath: context.statePath,
@@ -137,15 +183,30 @@ function performSync({ cwd, options }) {
 
   const logRange = getGitLogRange(workspaceRoot, baseline, 'HEAD');
   const diffNameStatus = getGitDiffNameStatus(workspaceRoot, baseline, 'HEAD');
+  const diffRows = parseDiffNameStatus(diffNameStatus);
+  const docs = buildDocumentIndex({ contentRoot: context.contentRoot, workspaceRoot });
+  const mappedDocs = mapDiffToDocuments({ diffRows, documents: docs });
   const reportsDirectory = getReportsDirectory(context);
   const reportPath = path.join(reportsDirectory, `sync-report-${nowTimestampForFile()}.md`);
 
-  writeSyncReport({ reportPath, state, git, logRange, diffNameStatus });
+  writeSyncReport({ reportPath, state, git, logRange, diffNameStatus, mappedDocs, dirtyEntries });
+
+  const queueUpdate = updateFinalizationQueue({
+    contentRoot: context.contentRoot,
+    mappedDocs,
+    baseline,
+    head,
+    date: today,
+  });
 
   state.driftStatus = options.acceptBaseline ? 'aligned' : 'drift-detected';
   state.notes = options.acceptBaseline
     ? `Sync accepted baseline update after report review. Report: ${reportPath}`
     : `Sync detected drift. Review report before reconciliation: ${reportPath}`;
+
+  if (queueUpdate.updated) {
+    state.notes += ` Queue updated: ${queueUpdate.queuePath}`;
+  }
 
   if (options.acceptBaseline) {
     state.sourceRepositoryGitBaseline = head;
@@ -167,6 +228,7 @@ function performSync({ cwd, options }) {
     context,
     state,
     reportPath,
+    queueUpdate,
   };
 }
 
@@ -178,6 +240,10 @@ function runSync({ args, cwd }) {
   console.log(result.message);
   if (result.reportPath) {
     console.log(`Report: ${result.reportPath}`);
+  }
+
+  if (result.queueUpdate && result.queueUpdate.updated) {
+    console.log(`Queue updated: ${result.queueUpdate.queuePath}`);
   }
 }
 

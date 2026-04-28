@@ -42,9 +42,27 @@ function getGitDiffNameStatus(workspaceRoot, fromRevision, toRevision = 'HEAD') 
   return runGitCommand(`git diff --name-status ${fromRevision}..${toRevision}`, workspaceRoot);
 }
 
+function getWorkingTreeStatus(workspaceRoot) {
+  const output = runGitCommand('git status --porcelain', workspaceRoot);
+  if (!output) {
+    return [];
+  }
+
+  return output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => ({
+      raw: line,
+      status: line.slice(0, 2).trim(),
+      filePath: line.slice(3).trim().replace(/\\/g, '/'),
+    }));
+}
+
 module.exports = {
   getGitDiffNameStatus,
   getGitLogRange,
   getGitMetadata,
+  getWorkingTreeStatus,
   runGitCommand,
 };
