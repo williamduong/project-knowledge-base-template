@@ -63,9 +63,23 @@ A complete migration pack should include:
 
 When a project KB is copied from this template, stamp the adopted template version in project-local documentation. On later template upgrades, migrate only when the change adds value or resolves drift risk.
 
+## Downstream Version Stamp Rule
+
+- Every downstream KB must expose its adopted template version in a stable file that future agents read first.
+- Every downstream KB must also record the brand-scoped source baseline commit used for the last full synchronization.
+- Template version and source baseline commit serve different purposes: template version tracks KB framework behavior, while source baseline commit tracks freshness against the real project.
+- A KB patch revision may advance without changing template version when source drift is reconciled under the same template rules.
+
 ## Git Baseline Rule
 
 - When the repository is under git, store a baseline revision in `00-start-here/repository-revision-state.md`.
+- Scope that baseline to the relevant brand or source lineage.
 - Before upgrade or migration work, compare the stored baseline with current `HEAD`.
 - If they differ, review git log and diff from the stored baseline forward before applying template upgrade logic.
 - Any drift found during that review must flow through the maintenance loop and queue before the new baseline is stamped.
+
+## KB Patch Versioning Rule
+
+- Source drift reconciliation without template framework change is a KB patch revision.
+- Template version follows semantic versioning for the template itself.
+- KB patch revision is an integer local to the downstream KB and increments whenever drift maintenance materially updates the KB.

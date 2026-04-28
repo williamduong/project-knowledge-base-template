@@ -26,16 +26,30 @@ tags:
 
 Stores the last repository baseline that agents used when they verified, upgraded, or synchronized this knowledge base.
 
+## Version Identity
+
+| Field | Value |
+|---|---|
+| KB Template Version | v1.1.0 |
+| KB Patch Revision | 0 |
+| Version Lineage | v1.0.0 -> v1.1.0 |
+| Brand Scope | project-knowledge-base-template |
+| Source Repository Identifier | https://github.com/williamduong/project-knowledge-base-template.git |
+| Source Default Branch | main |
+
+For downstream project use, `Brand Scope` should identify the product or brand boundary inside which commit comparison is valid. Do not compare commits across unrelated brands or repositories.
+
 ## Current Baseline
 
 | Field | Value |
 |---|---|
-| Repository Git Baseline | NOT_AVAILABLE |
-| Baseline Captured At | NOT_AVAILABLE |
-| Last Drift Check At | NOT_AVAILABLE |
-| Drift Status | unknown |
-| Baseline Scope | whole repository |
-| Notes | This workspace was not a git repository when the baseline file was initialized. Replace placeholders after git is available. |
+| Source Repository Git Baseline | 0783d92178cc28e0badb79202b86d83903c83cec |
+| Baseline Captured At | 2026-04-28 |
+| Last Drift Check At | 2026-04-28 |
+| Drift Status | aligned |
+| Baseline Scope | whole repository on main |
+| Last Reconciled Template Version | v1.1.0 |
+| Notes | Initialized against the current template repository HEAD to activate revision guard hooks. |
 
 ## Mandatory Agent Check
 
@@ -43,13 +57,14 @@ Before broad maintenance, migration, upgrade, or repo-wide edits:
 
 1. Read this file.
 2. If the repository is not under git, keep placeholders explicit and do not invent a revision baseline.
-3. If the repository is under git, resolve the current `HEAD` revision.
-4. Compare `HEAD` with `Repository Git Baseline`.
+3. If the repository is under git, resolve the current `HEAD` revision within the recorded brand and repository scope.
+4. Compare `HEAD` with `Source Repository Git Baseline`.
 5. If they differ, review git history from the stored baseline to `HEAD` before trusting KB freshness.
+6. If template version changed since the last reconciliation, run the version patch flow as part of the same maintenance pass.
 
 ## Drift Reconciliation Procedure
 
-When `Repository Git Baseline` and `HEAD` differ:
+When `Source Repository Git Baseline` and `HEAD` differ:
 
 1. Collect `git log` from the stored baseline to `HEAD`.
 2. Collect `git diff` or equivalent changed-file evidence for the same range.
@@ -57,8 +72,16 @@ When `Repository Git Baseline` and `HEAD` differ:
 4. Follow the maintenance loop in `15-governance/review-cadence.md`.
 5. Apply downgrade or upgrade rules from `15-governance/verification-policy.md`.
 6. Add or update queue items in `finalization-plan.md`.
-7. Use the maintenance or version-patch prompts in `12-ai-skills/` when the change is broad enough to require a guided sweep.
-8. After synchronization is complete, update this file with the new baseline revision and audit time.
+7. Run a KB patch pass for the affected docs, indexes, and governance metadata.
+8. Use the maintenance or version-patch prompts in `12-ai-skills/` when the change is broad enough to require a guided sweep.
+9. After synchronization is complete, update this file with the new baseline revision, audit time, and patch revision if the KB changed.
+
+## KB Patch Rule
+
+- A KB patch is a documentation maintenance pass triggered by source drift or template drift.
+- Increment `KB Patch Revision` whenever the KB is materially updated to reconcile drift against the same template version.
+- If the template version itself changes, update `KB Template Version` and record the migration path.
+- Patch revisions are brand-scoped and should only summarize changes within the recorded `Brand Scope`.
 
 ## Recommended Git Commands
 

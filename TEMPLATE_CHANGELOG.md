@@ -58,6 +58,43 @@ Track meaningful template changes that affect agent behavior, folder structure, 
 
 ## Current Entries
 
+## v1.1.0 - 2026-04-28
+
+### Summary
+
+- Exposed template version more clearly in entry-point documents.
+- Added brand-scoped source baseline fields and KB patch revision tracking to repository revision state.
+- Updated agent and migration prompts so source drift is reconciled before template upgrades.
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- Medium
+
+### Migration Required
+
+- Yes: see migration note at 15-governance/migrations/migrate-v1.0.0-to-v1.1.0.md
+
+### Agent Impact
+
+- Agents should read template version, brand scope, and source baseline commit before maintenance or upgrade work.
+- Agents should treat source drift reconciliation as a KB patch pass, not only a template migration concern.
+
+### Files Added / Changed
+
+- README.md
+- INDEX.md
+- .github/copilot-instructions.md
+- 00-start-here/repository-revision-state.md
+- 12-ai-skills/agent-operating-manual.md
+- 12-ai-skills/prompt-pack.md
+- 12-ai-skills/version-patch-prompts.md
+- 15-governance/template-versioning-policy.md
+- 15-governance/migrations/migrate-v1.0.0-to-v1.1.0.md
+
 ## v1.0.0 - 2026-04-28
 
 ### Summary

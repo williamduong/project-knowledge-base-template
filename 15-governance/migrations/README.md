@@ -37,5 +37,6 @@ Store migration notes for KBs that were created from older template versions.
 
 ## Current Baseline
 
-- Initial baseline version: v1.0.0
-- First migration note should be created when the next behavior-changing version is released.
+- Current baseline version: v1.1.0
+- Previous baseline version: v1.0.0
+- Current migration note: [migrate-v1.0.0-to-v1.1.0.md](migrate-v1.0.0-to-v1.1.0.md)

@@ -31,6 +31,10 @@ Hay quet va maintain knowledge-base hien tai theo review-cadence va verification
 
 Hay doc 00-start-here/repository-revision-state.md, so sanh baseline revision da luu voi git HEAD hien tai, neu co sai lech thi lay git log va git diff tu revision da luu den hien tai, xac dinh docs bi drift, chay maintenance loop theo review-cadence va verification-policy, cap nhat finalization-plan queue, dong bo lai noi dung, roi ghi baseline moi vao repository-revision-state.md.
 
+## One-Line Prompt For Brand-Scoped KB Patch
+
+Hay doc 00-start-here/repository-revision-state.md, xac dinh brand scope, template version, KB patch revision, va source baseline commit. Neu source commit trong cung brand da thay doi, hay lay git log va git diff cho dung pham vi brand do, tao mot KB patch maintenance pass, ra soat docs lien quan, cap nhat verification, index, queue, va tang KB patch revision sau khi dong bo xong.
+
 ## Prompt Template: Implement Feature
 
 - Goal:

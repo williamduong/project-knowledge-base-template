@@ -4,6 +4,14 @@ This repository is a multi-project knowledge base template for documenting softw
 
 It is designed for teams that want a consistent documentation baseline across different project archetypes such as web apps, API platforms, data and AI systems, internal enterprise tools, and extension or integration products.
 
+## Current Template Version
+
+- Template version: `v1.1.0`
+- License: GNU AGPL v3 with separate commercial licensing available
+- Baseline state file for downstream projects: [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md)
+
+Downstream project KBs should stamp both the adopted template version and the brand-scoped source baseline commit they were verified against.
+
 ## What This Repository Contains
 
 - Orientation and onboarding documents in `00-start-here/`

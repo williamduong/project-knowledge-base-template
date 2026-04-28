@@ -23,11 +23,12 @@ Provide a single location for future coding agents to read KB conventions before
 
 1. Read INDEX and intent-index first.
 2. Read governance metadata and bi-temporal rules.
-3. Read `00-start-here/repository-revision-state.md` and compare the stored git baseline with the current `HEAD` revision when git is available.
+3. Read `00-start-here/repository-revision-state.md` and compare the stored brand-scoped git baseline with the current `HEAD` revision when git is available.
 4. If the baseline differs, inspect git log and diff from the stored revision forward, detect drift, and route work through the maintenance loop before trusting current KB content.
-5. For task execution, gather current-state evidence before writing claims.
-6. Update docs impacted by code changes in the same change set when possible.
-7. Default to phased `code-verified` coverage and use `finalization-plan.md` as the review queue.
+5. If the stored template version differs from the active template version, run the version-patch flow in the same pass.
+6. For task execution, gather current-state evidence before writing claims.
+7. Update docs impacted by code changes in the same change set when possible.
+8. Default to phased `code-verified` coverage and use `finalization-plan.md` as the review queue.
 
 ## Frontend Interpretation Rule
 

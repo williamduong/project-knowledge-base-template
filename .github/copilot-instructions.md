@@ -17,6 +17,8 @@ Then read only the task-specific folder files you need.
 ## Repository Revision Check
 
 - At the start of any upgrade, migration, maintenance sweep, or broad edit, read `00-start-here/repository-revision-state.md`.
+- Treat source commit comparison as brand-scoped: compare only against the source repository lineage recorded in that file.
+- Workspace hook enforcement lives in `.github/hooks/revision-state-guard.json` and should remain aligned with this policy.
 - If the workspace is a git repository, compare the stored baseline revision with the current `HEAD` revision before trusting current KB content.
 - If the stored revision differs from `HEAD`, collect change evidence from the stored baseline to the current revision using git history and diff.
 - Use that change evidence to detect drift, downgrade verification where needed, update `00-start-here/finalization-plan.md`, and run the maintenance loop defined by repository governance.
