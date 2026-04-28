@@ -6,7 +6,7 @@ const path = require('path');
 const { buildDocumentIndex } = require('../src/lib/kb-analysis');
 
 const repoRoot = process.cwd();
-const contentRoot = repoRoot;
+const contentRoot = path.join(repoRoot, 'template');
 
 function readFileIfExists(filePath) {
   if (!fs.existsSync(filePath)) {
@@ -80,8 +80,8 @@ function main() {
     }
   }
 
-  const currentState = readFileIfExists(path.join(repoRoot, '00-start-here', 'current-state.md'));
-  const apiOverview = readFileIfExists(path.join(repoRoot, '06-api', 'api-overview.md'));
+  const currentState = readFileIfExists(path.join(contentRoot, '00-start-here', 'current-state.md'));
+  const apiOverview = readFileIfExists(path.join(contentRoot, '06-api', 'api-overview.md'));
 
   if (/no\s+frontend\s+codebase/i.test(currentState) && /frontend\s+codebase\s+exists/i.test(apiOverview)) {
     failures.push(

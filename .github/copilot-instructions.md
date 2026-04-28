@@ -6,23 +6,23 @@ This repository is a knowledge base template, not an application runtime codebas
 
 Read these files first before making broad changes:
 
-1. `INDEX.md`
-2. `00-start-here/how-to-use-this-kb.md`
-3. `00-start-here/repository-revision-state.md`
-4. `15-governance/metadata-schema.md`
-5. `12-ai-skills/agent-operating-manual.md`
+1. `template/INDEX.md`
+2. `template/00-start-here/how-to-use-this-kb.md`
+3. `template/00-start-here/repository-revision-state.md`
+4. `template/15-governance/metadata-schema.md`
+5. `template/12-ai-skills/agent-operating-manual.md`
 
 Then read only the task-specific folder files you need.
 
 ## Repository Revision Check
 
-- At the start of any upgrade, migration, maintenance sweep, or broad edit, read `00-start-here/repository-revision-state.md`.
+- At the start of any upgrade, migration, maintenance sweep, or broad edit, read `template/00-start-here/repository-revision-state.md`.
 - Treat source commit comparison as brand-scoped: compare only against the source repository lineage recorded in that file.
 - Workspace hook enforcement lives in `.github/hooks/revision-state-guard.json` and should remain aligned with this policy.
 - If the workspace is a git repository, compare the stored baseline revision with the current `HEAD` revision before trusting current KB content.
 - If the stored revision differs from `HEAD`, collect change evidence from the stored baseline to the current revision using git history and diff.
-- Use that change evidence to detect drift, downgrade verification where needed, update `00-start-here/finalization-plan.md`, and run the maintenance loop defined by repository governance.
-- After drift is reconciled, write the new baseline revision and audit time back to `00-start-here/repository-revision-state.md`.
+- Use that change evidence to detect drift, downgrade verification where needed, update `template/00-start-here/finalization-plan.md`, and run the maintenance loop defined by repository governance.
+- After drift is reconciled, write the new baseline revision and audit time back to `template/00-start-here/repository-revision-state.md`.
 - If the workspace is not yet a git repository, preserve an explicit placeholder state instead of inventing a revision.
 
 ## Editing Rules
@@ -44,7 +44,7 @@ Then read only the task-specific folder files you need.
 ## Agent Behavior Defaults
 
 - Use repository defaults instead of asking avoidable setup questions.
-- For repo-wide work, start in `00-start-here/`, `12-ai-skills/`, and `15-governance/` before editing deeper sections.
+- For repo-wide work, start in `template/00-start-here/`, `template/12-ai-skills/`, and `template/15-governance/` before editing deeper sections.
 - Keep documentation synchronized with implementation-facing changes when the task affects both.
 - When drift is detected from git history, follow `review-cadence.md`, `verification-policy.md`, and the maintenance prompts before upgrading confidence.
 - Avoid destructive cleanup of unrelated local changes.

@@ -23,3 +23,6 @@ temp/
 # Node and npm artifacts
 node_modules/
 npm-debug.log*
+
+# Private note
+notes/*

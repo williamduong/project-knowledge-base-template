@@ -23,6 +23,7 @@ function main() {
     'bin/kb.js',
     'src/cli.js',
     'src/commands/doctor.js',
+    'template/INDEX.md',
     'scripts/doc-gate.js',
     'README.md',
     'LICENSE',
