@@ -8,6 +8,14 @@
       name="description"
       content="A practical, governance-ready knowledge base template for software teams and AI agents."
     />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-RXPMRGHE8E"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', 'G-RXPMRGHE8E');
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -301,5 +309,75 @@ kb doctor --strict</pre>
         <a href="../docs/">Browse docs</a>
       </div>
     </footer>
+    <script>
+      (function trackLandingActions() {
+        function track(eventName, payload) {
+          if (!window.gtag) {
+            return;
+          }
+          window.gtag('event', eventName, payload || {});
+        }
+
+        track('landing_view', {
+          event_category: 'page',
+          event_label: 'landing_home'
+        });
+
+        document.addEventListener('click', function (event) {
+          var anchor = event.target.closest('a');
+          if (!anchor) {
+            return;
+          }
+
+          var href = anchor.getAttribute('href') || '';
+          var text = (anchor.textContent || '').trim();
+
+          if (anchor.classList.contains('btn')) {
+            track('landing_cta_click', {
+              event_category: 'engagement',
+              event_label: text || href,
+              destination: href
+            });
+            return;
+          }
+
+          if (anchor.classList.contains('chip-link')) {
+            track('landing_chip_click', {
+              event_category: 'navigation',
+              event_label: text || href,
+              destination: href
+            });
+            return;
+          }
+
+          if (anchor.classList.contains('text-link')) {
+            track('landing_release_link_click', {
+              event_category: 'release_notes',
+              event_label: text || href,
+              destination: href
+            });
+            return;
+          }
+
+          if (anchor.closest('.top-nav')) {
+            track('landing_nav_click', {
+              event_category: 'navigation',
+              event_label: text || href,
+              destination: href
+            });
+          }
+        });
+
+        document.querySelectorAll('.copy-form').forEach(function (element) {
+          element.addEventListener('focus', function () {
+            var title = element.closest('.copy-card')?.querySelector('h3')?.textContent?.trim() || 'copy_form';
+            track('landing_copy_form_focus', {
+              event_category: 'engagement',
+              event_label: title
+            });
+          });
+        });
+      })();
+    </script>
   </body>
 </html>

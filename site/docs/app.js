@@ -12,6 +12,27 @@ const state = {
   treeExpansion: new Map()
 };
 
+function trackEvent(eventName, payload = {}) {
+  if (typeof window.gtag !== "function") {
+    return;
+  }
+
+  window.gtag("event", eventName, payload);
+}
+
+function classifyDocPath(docPath) {
+  if (!docPath) {
+    return "unknown";
+  }
+
+  if (docPath === "README.md") {
+    return "root";
+  }
+
+  const top = docPath.split("/")[1] || "other";
+  return top;
+}
+
 function detectRepository() {
   const host = window.location.hostname;
   const pathParts = window.location.pathname.split("/").filter(Boolean);
@@ -147,6 +168,11 @@ function setTreeExpansionForAll(expanded) {
       state.treeExpansion.set(node.repoPath, expanded);
     }
   });
+
+  trackEvent("docs_tree_expand_toggle_all", {
+    event_category: "docs_tree",
+    state: expanded ? "expanded" : "collapsed"
+  });
 }
 
 function walkTree(node, visitor) {
@@ -217,7 +243,14 @@ function renderNav(filterText = "") {
       }
       btn.textContent = item.label;
       btn.type = "button";
-      btn.onclick = () => loadDoc(item.path);
+      btn.onclick = () => {
+        trackEvent("docs_highlight_click", {
+          event_category: "docs_navigation",
+          doc_path: item.path,
+          doc_group: group.title
+        });
+        loadDoc(item.path);
+      };
       nav.appendChild(btn);
     });
   }
@@ -264,7 +297,14 @@ function createFileButton(node) {
   }
   button.type = "button";
   button.textContent = node.name;
-  button.onclick = () => loadDoc(node.repoPath);
+  button.onclick = () => {
+    trackEvent("docs_tree_file_click", {
+      event_category: "docs_tree",
+      doc_path: node.repoPath,
+      doc_group: classifyDocPath(node.repoPath)
+    });
+    loadDoc(node.repoPath);
+  };
   return button;
 }
 
@@ -292,6 +332,11 @@ function createTreeNode(node, filter, depth = 0) {
     }
     state.treeExpansion.set(node.repoPath, details.open);
     setTreeStatus(`${state.treeExpansion.size} folder states saved`);
+    trackEvent("docs_tree_folder_toggle", {
+      event_category: "docs_tree",
+      folder_path: node.repoPath,
+      state: details.open ? "open" : "closed"
+    });
   });
 
   const summary = document.createElement("summary");
@@ -465,6 +510,17 @@ async function loadDoc(docPath, options = {}) {
   const { pushHistory = true, replaceHistory = false } = options;
 
   state.activePath = normalizedPath;
+  trackEvent("docs_doc_open", {
+    event_category: "docs_navigation",
+    doc_path: normalizedPath,
+    doc_group: classifyDocPath(normalizedPath)
+  });
+
+  trackEvent("page_view", {
+    page_title: `KB Docs - ${toPublicPath(normalizedPath)}`,
+    page_path: docsUrl(normalizedPath)
+  });
+
   renderNav(document.getElementById("search").value);
   renderTree(document.getElementById("search").value);
 
@@ -504,6 +560,16 @@ async function loadDoc(docPath, options = {}) {
         target.scrollIntoView();
       }
     }
+
+    const sourceAnchor = content.querySelector(".note a");
+    if (sourceAnchor) {
+      sourceAnchor.addEventListener("click", () => {
+        trackEvent("docs_open_github_source", {
+          event_category: "docs_external",
+          doc_path: normalizedPath
+        });
+      });
+    }
   } catch (error) {
     content.innerHTML = `
       <h2>Unable to load this document</h2>
@@ -533,10 +599,25 @@ async function bootstrap() {
   setTreeStatus("Repository view");
 
   const search = document.getElementById("search");
+  let searchDebounceTimer = null;
   search.addEventListener("input", (event) => {
     renderNav(event.target.value);
     renderTree(event.target.value);
     setTreeStatus(event.target.value.trim() ? "Filtered view" : "Repository view");
+
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      const query = event.target.value.trim();
+      if (!query) {
+        return;
+      }
+
+      trackEvent("docs_search", {
+        event_category: "docs_navigation",
+        query,
+        query_length: query.length
+      });
+    }, 400);
   });
 
   document.getElementById("expandTree").addEventListener("click", () => {
@@ -549,6 +630,11 @@ async function bootstrap() {
     setTreeExpansionForAll(false);
     renderTree(document.getElementById("search").value);
     setTreeStatus("All folders collapsed");
+  });
+
+  trackEvent("docs_portal_view", {
+    event_category: "page",
+    event_label: "docs_home"
   });
 
   window.addEventListener("popstate", async () => {
