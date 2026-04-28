@@ -45,6 +45,8 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 ## Quick Links
 
 - Start here: [00-start-here/how-to-use-this-kb.md](00-start-here/how-to-use-this-kb.md)
+- Terminology guard: [00-start-here/terminology-guard.md](00-start-here/terminology-guard.md)
+- Repo boundary: [00-start-here/what-this-repo-is-not.md](00-start-here/what-this-repo-is-not.md)
 - Revision state: [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md)
 - Prompting guide: [12-ai-skills/prompting-guide.md](12-ai-skills/prompting-guide.md)
 - Agent manual: [12-ai-skills/agent-operating-manual.md](12-ai-skills/agent-operating-manual.md)
@@ -59,11 +61,12 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 
 1. Read [00-start-here/project-scope-matrix.md](00-start-here/project-scope-matrix.md) to choose the right project archetype and optional modules.
 2. Read [00-start-here/how-to-use-this-kb.md](00-start-here/how-to-use-this-kb.md) to understand working mode and defaults.
-3. Read [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md) and stamp the git baseline when the repository is under version control.
-4. Use [12-ai-skills/prompting-guide.md](12-ai-skills/prompting-guide.md) to pick the right prompt style.
-5. Start the queue in [00-start-here/finalization-plan.md](00-start-here/finalization-plan.md).
-6. Build or maintain the KB using prompts from [12-ai-skills/prompt-pack.md](12-ai-skills/prompt-pack.md).
-7. When updating template versions later, use [12-ai-skills/version-patch-prompts.md](12-ai-skills/version-patch-prompts.md) with [TEMPLATE_CHANGELOG.md](TEMPLATE_CHANGELOG.md).
+3. Read [00-start-here/terminology-guard.md](00-start-here/terminology-guard.md) and [00-start-here/what-this-repo-is-not.md](00-start-here/what-this-repo-is-not.md) to avoid taxonomy confusion.
+4. Read [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md) and stamp the git baseline when the repository is under version control.
+5. Use [12-ai-skills/prompting-guide.md](12-ai-skills/prompting-guide.md) to pick the right prompt style.
+6. Start the queue in [00-start-here/finalization-plan.md](00-start-here/finalization-plan.md).
+7. Build or maintain the KB using prompts from [12-ai-skills/prompt-pack.md](12-ai-skills/prompt-pack.md).
+8. When updating template versions later, use [12-ai-skills/version-patch-prompts.md](12-ai-skills/version-patch-prompts.md) with [TEMPLATE_CHANGELOG.md](TEMPLATE_CHANGELOG.md).
 
 ## Directory Map
 

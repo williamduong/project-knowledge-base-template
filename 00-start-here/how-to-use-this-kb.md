@@ -44,12 +44,15 @@ tags:
 - Review queue source of truth default: keep it in [finalization-plan.md](finalization-plan.md).
 - If an external issue tracker is used later, treat KB as the initial canonical queue and mirror outwards only when automation justifies it.
 
-## What Counts As Frontend In This Template
+## Frontend Taxonomy Guard
 
-- Any visual, operator-facing, or interactive surface counts as frontend for documentation purposes.
-- Examples: web UI, Swagger UI, Redoc, GraphQL explorer, CLI/TUI, admin panel, external SaaS control plane, database browser, observability dashboard.
-- If the project has no first-party UI, document the external toolchain that humans use to operate the system.
-- Put direct user product surfaces in `04-frontend`; put user manuals in `11-user-docs`; put operational consoles and dashboards in `09-operations` with cross-links from `04-frontend` when they serve as the main interaction surface.
+- `Frontend codebase` means first-party client runtime code in this repository (for example SPA/SSR/mobile UI source).
+- `Browser-facing integration surface` means externally exposed UI surfaces that are generated or hosted by backend/runtime components (for example Swagger UI at `/api/docs`, Redoc, GraphQL explorer).
+- Swagger UI is treated as backend API documentation surface by default, not evidence that the repository contains a first-party frontend codebase.
+- If the project has no first-party frontend codebase, state this explicitly in `00-start-here/current-state.md` and `06-api/api-overview.md`.
+- Use `04-frontend/` only for real client codebase architecture or explicit consumer-surface integration docs. Keep backend API docs UI details primarily in `06-api/`.
+
+For canonical terminology and examples, read [terminology-guard.md](terminology-guard.md).
 
 ## Fast Retrieval Strategy
 

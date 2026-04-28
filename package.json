@@ -45,7 +45,8 @@
   },
   "scripts": {
     "help": "node ./bin/kb.js help",
-    "start": "node ./bin/kb.js help"
+    "start": "node ./bin/kb.js help",
+    "doc:gate": "node ./scripts/doc-gate.js"
   },
   "engines": {
     "node": ">=18"

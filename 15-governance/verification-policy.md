@@ -44,6 +44,13 @@ Defines how documents move between verification states and how maintenance is tr
 4. last_updated changes whenever body content changes.
 5. Current State sections must not contain planned behavior.
 
+## CI Doc Gate Rules
+
+1. Fail CI when any `code-verified` document has missing or unresolved `source_of_truth` paths.
+2. Fail CI when a document under `04-frontend/` presents backend API docs surfaces (Swagger/Redoc/GraphQL explorer) without explicit integration taxonomy markers.
+3. Fail CI when frontend claims conflict with `00-start-here/current-state.md` or `06-api/api-overview.md` and no reconciliation note is provided.
+4. Treat CI gate failures as verification blockers: do not promote affected docs to `code-verified` until resolved.
+
 ## Trigger Sources For Maintenance
 
 - Workflow-triggered: code PR merged, schema changed, route changed, deployment changed.

@@ -89,6 +89,8 @@ If you use GitHub Copilot or another coding agent in this repository:
 
 - [INDEX.md](INDEX.md)
 - [00-start-here/how-to-use-this-kb.md](00-start-here/how-to-use-this-kb.md)
+- [00-start-here/terminology-guard.md](00-start-here/terminology-guard.md)
+- [00-start-here/what-this-repo-is-not.md](00-start-here/what-this-repo-is-not.md)
 - [00-start-here/intent-index.md](00-start-here/intent-index.md)
 - [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md)
 - [12-ai-skills/prompting-guide.md](12-ai-skills/prompting-guide.md)
