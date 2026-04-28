@@ -42,7 +42,7 @@ Currently implemented commands:
 - `test`
 - `sync [--accept-baseline]`
 - `update [--accept-baseline]`
-- `doctor`
+- `doctor [--json]`
 
 Pre-publish artifact simulation:
 

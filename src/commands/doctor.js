@@ -31,10 +31,25 @@ function testLinkCapability(cwd) {
   }
 }
 
-function runDoctor({ args, cwd, packageJson }) {
-  if (args && args.length > 0) {
-    throw new Error(`Unknown doctor option \"${args[0]}\".`);
+function parseDoctorArgs(args) {
+  const options = {
+    json: false,
+  };
+
+  for (const arg of args || []) {
+    if (arg === '--json') {
+      options.json = true;
+      continue;
+    }
+
+    throw new Error(`Unknown doctor option \"${arg}\".`);
   }
+
+  return options;
+}
+
+function runDoctor({ args, cwd, packageJson }) {
+  const options = parseDoctorArgs(args);
 
   const checks = [];
   const workspaceRoot = path.resolve(cwd);
@@ -83,16 +98,28 @@ function runDoctor({ args, cwd, packageJson }) {
       : `Hook file missing at ${hookFile}`,
   });
 
-  console.log('kb doctor publish-readiness');
-  for (const check of checks) {
-    console.log(`- [${check.status}] ${check.name}: ${check.detail}`);
-  }
-
   const hasFailure = checks.some((check) => check.status === 'FAIL');
   const hasWarning = checks.some((check) => check.status === 'WARN');
   const summary = hasFailure ? 'FAIL' : hasWarning ? 'WARN' : 'PASS';
 
-  console.log(`Result: ${summary}`);
+  if (options.json) {
+    const report = {
+      command: 'kb doctor',
+      mode: 'json',
+      result: summary,
+      workspaceRoot,
+      nodeVersion: process.versions.node,
+      minimumNodeMajor: minNodeMajor,
+      checks,
+    };
+    console.log(JSON.stringify(report, null, 2));
+  } else {
+    console.log('kb doctor publish-readiness');
+    for (const check of checks) {
+      console.log(`- [${check.status}] ${check.name}: ${check.detail}`);
+    }
+    console.log(`Result: ${summary}`);
+  }
 
   if (hasFailure) {
     throw new Error('Doctor check failed. Resolve FAIL items before publish.');
