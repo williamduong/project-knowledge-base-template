@@ -8,7 +8,8 @@ const state = {
   activePath: null,
   owner: FALLBACK_OWNER,
   repo: FALLBACK_REPO,
-  docsBasePath: "/docs"
+  docsBasePath: "/docs",
+  treeExpansion: new Map()
 };
 
 function detectRepository() {
@@ -139,6 +140,26 @@ function setTreeStatus(text) {
   document.getElementById("treeStatus").textContent = text;
 }
 
+function setTreeExpansionForAll(expanded) {
+  state.treeExpansion.clear();
+  walkTree(state.tree.root, (node) => {
+    if (node.type === "directory" && node.repoPath) {
+      state.treeExpansion.set(node.repoPath, expanded);
+    }
+  });
+}
+
+function walkTree(node, visitor) {
+  if (!node) {
+    return;
+  }
+
+  visitor(node);
+  for (const child of node.children || []) {
+    walkTree(child, visitor);
+  }
+}
+
 async function loadTree() {
   try {
     const response = await fetch("./tree.json", { cache: "no-cache" });
@@ -223,6 +244,18 @@ function hasActiveDescendant(node) {
   return (node.children || []).some((child) => hasActiveDescendant(child));
 }
 
+function shouldFolderBeOpen(node, filter, depth) {
+  if (filter) {
+    return true;
+  }
+
+  if (state.treeExpansion.has(node.repoPath)) {
+    return state.treeExpansion.get(node.repoPath);
+  }
+
+  return depth === 0 ? hasActiveDescendant(node) : hasActiveDescendant(node);
+}
+
 function createFileButton(node) {
   const button = document.createElement("button");
   button.className = "doc-item tree-file";
@@ -249,7 +282,17 @@ function createTreeNode(node, filter, depth = 0) {
 
   const details = document.createElement("details");
   details.className = "tree-folder";
-  details.open = Boolean(filter) || depth === 0 || hasActiveDescendant(node);
+  details.open = shouldFolderBeOpen(node, filter, depth);
+  if (node.repoPath) {
+    details.dataset.repoPath = node.repoPath;
+  }
+  details.addEventListener("toggle", () => {
+    if (!node.repoPath) {
+      return;
+    }
+    state.treeExpansion.set(node.repoPath, details.open);
+    setTreeStatus(`${state.treeExpansion.size} folder states saved`);
+  });
 
   const summary = document.createElement("summary");
   const label = document.createElement("span");
@@ -300,6 +343,72 @@ function renderTree(filterText = "") {
   }
 
   tree.appendChild(root);
+}
+
+function buildBreadcrumbSegments(docPath) {
+  const publicPath = toPublicPath(docPath);
+  const segments = publicPath.split("/");
+  const items = [];
+
+  if (publicPath === "README.md") {
+    return [{ label: "README", path: "README.md" }];
+  }
+
+  let currentPublicPath = "";
+  segments.forEach((segment, index) => {
+    currentPublicPath = currentPublicPath ? `${currentPublicPath}/${segment}` : segment;
+    const isLast = index === segments.length - 1;
+    items.push({
+      label: segment,
+      path: isLast ? toRepoPath(currentPublicPath) : null
+    });
+  });
+
+  return items;
+}
+
+function renderBreadcrumb(docPath) {
+  const segments = buildBreadcrumbSegments(docPath);
+  const breadcrumb = document.createElement("nav");
+  breadcrumb.className = "breadcrumb";
+  breadcrumb.setAttribute("aria-label", "Breadcrumb");
+
+  const home = document.createElement("a");
+  home.className = "breadcrumb-link breadcrumb-item";
+  home.href = docsUrl("README.md");
+  home.textContent = "Docs";
+  home.addEventListener("click", (event) => {
+    event.preventDefault();
+    loadDoc("README.md");
+  });
+  breadcrumb.appendChild(home);
+
+  segments.forEach((segment) => {
+    const separator = document.createElement("span");
+    separator.className = "breadcrumb-sep";
+    separator.textContent = "/";
+    breadcrumb.appendChild(separator);
+
+    if (segment.path) {
+      const link = document.createElement("a");
+      link.className = "breadcrumb-link breadcrumb-item";
+      link.href = docsUrl(segment.path);
+      link.textContent = segment.label;
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        loadDoc(segment.path);
+      });
+      breadcrumb.appendChild(link);
+      return;
+    }
+
+    const text = document.createElement("span");
+    text.className = "breadcrumb-current";
+    text.textContent = segment.label;
+    breadcrumb.appendChild(text);
+  });
+
+  return breadcrumb;
 }
 
 function joinRepoPath(baseFilePath, relativePath) {
@@ -386,6 +495,7 @@ async function loadDoc(docPath, options = {}) {
       </p>
       ${html}
     `;
+    content.prepend(renderBreadcrumb(normalizedPath));
     decorateContentLinks(content, normalizedPath);
 
     if (window.location.hash) {
@@ -426,6 +536,19 @@ async function bootstrap() {
   search.addEventListener("input", (event) => {
     renderNav(event.target.value);
     renderTree(event.target.value);
+    setTreeStatus(event.target.value.trim() ? "Filtered view" : "Repository view");
+  });
+
+  document.getElementById("expandTree").addEventListener("click", () => {
+    setTreeExpansionForAll(true);
+    renderTree(document.getElementById("search").value);
+    setTreeStatus("All folders expanded");
+  });
+
+  document.getElementById("collapseTree").addEventListener("click", () => {
+    setTreeExpansionForAll(false);
+    renderTree(document.getElementById("search").value);
+    setTreeStatus("All folders collapsed");
   });
 
   window.addEventListener("popstate", async () => {

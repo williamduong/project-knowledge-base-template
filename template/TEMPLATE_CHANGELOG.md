@@ -21,6 +21,14 @@ tags:
 
 Track meaningful template changes that affect agent behavior, folder structure, metadata rules, or migration steps.
 
+Release note entries should be generated from git history for each release.
+
+This changelog is `manual-only`: it does not auto-update on every commit.
+
+Use `npm run release:notes -- vX.Y.Z Minor Medium dry-run` to preview commits since the previous generated release anchor, then rerun without `dry-run` when you explicitly want to write a new release entry.
+
+Each generated entry stores an internal `release-meta` marker with the git range reviewed, so the next release can continue from the last released `HEAD` even when no git tags exist yet.
+
 ## Change Classification
 
 - Patch: wording, examples, links, non-breaking clarifications
@@ -30,6 +38,8 @@ Track meaningful template changes that affect agent behavior, folder structure, 
 ## Entry Template
 
 ## vX.Y.Z - YYYY-MM-DD
+
+<!-- release-meta: from=<PREVIOUS_RELEASE_SHA_OR_INITIAL_HISTORY> to=<CURRENT_RELEASE_SHA> generated_at=<ISO_TIMESTAMP> -->
 
 ### Summary
 

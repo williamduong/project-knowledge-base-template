@@ -31,7 +31,13 @@
         <section class="sidebar-section tree-panel">
           <div class="tree-panel-header">
             <h2 class="sidebar-title">KB Tree</h2>
-            <span id="treeStatus" class="tree-status">Loading…</span>
+            <div class="tree-panel-meta">
+              <span id="treeStatus" class="tree-status">Loading…</span>
+              <div class="tree-actions">
+                <button id="expandTree" class="tree-action" type="button">Expand all</button>
+                <button id="collapseTree" class="tree-action" type="button">Collapse all</button>
+              </div>
+            </div>
           </div>
           <div id="tree"></div>
         </section>

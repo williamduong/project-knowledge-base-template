@@ -30,6 +30,7 @@
     "help": "node ./bin/kb.js help",
     "start": "node ./bin/kb.js help",
     "docs:tree": "node ./scripts/build-docs-tree.js",
+    "release:notes": "node ./scripts/generate-template-changelog.js",
     "doc:gate": "node ./scripts/doc-gate.js",
     "doctor": "node ./bin/kb.js doctor",
     "doctor:json": "node ./bin/kb.js doctor --json",
