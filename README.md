@@ -10,6 +10,26 @@ It is designed for teams that want a consistent documentation baseline across di
 - License: GNU AGPL v3 with separate commercial licensing available
 - Baseline state file for downstream projects: [00-start-here/repository-revision-state.md](00-start-here/repository-revision-state.md)
 
+## CLI Preview
+
+This repository now includes a preview CLI scaffold (`kb`) for local initialization and maintenance workflow bootstrapping.
+
+Run directly from this repository:
+
+```bash
+node ./bin/kb.js help
+```
+
+Currently implemented commands:
+
+- `help`
+- `init --mode private-git|tracked`
+- `show` (private-git mode)
+- `hide` (private-git mode)
+- `test`
+- `sync`
+- `update`
+
 Downstream project KBs should stamp both the adopted template version and the brand-scoped source baseline commit they were verified against.
 
 ## What This Repository Contains

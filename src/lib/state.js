@@ -42,6 +42,15 @@ function writeStateFile({ statePath, state }) {
   fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
 }
 
+function readStateFile({ statePath }) {
+  if (!fs.existsSync(statePath)) {
+    throw new Error(`State file not found: ${statePath}`);
+  }
+
+  const raw = fs.readFileSync(statePath, 'utf8');
+  return JSON.parse(raw);
+}
+
 function renderRevisionStateMarkdown(state) {
   const today = new Date().toISOString().slice(0, 10);
   const stateFilePath = state.storageMode === 'private-git' ? '.git/project-kb/state.json' : 'knowledge-base/.kb/state.json';
@@ -122,8 +131,17 @@ Before broad maintenance, migration, upgrade, or repo-wide edits:
 `;
 }
 
+function persistStateAndRender({ statePath, renderedRevisionStatePath, state }) {
+  writeStateFile({ statePath, state });
+  const markdown = renderRevisionStateMarkdown(state);
+  fs.mkdirSync(path.dirname(renderedRevisionStatePath), { recursive: true });
+  fs.writeFileSync(renderedRevisionStatePath, markdown, 'utf8');
+}
+
 module.exports = {
   createInitialState,
+  persistStateAndRender,
+  readStateFile,
   renderRevisionStateMarkdown,
   writeStateFile,
 };

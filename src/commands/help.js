@@ -7,18 +7,21 @@ function runHelp({ packageJson }) {
   console.log('Usage:');
   console.log('  kb help');
   console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>]');
+  console.log('  kb show');
+  console.log('  kb hide');
+  console.log('  kb test [--sample <count>]');
+  console.log('  kb sync [--accept-baseline]');
+  console.log('  kb update [--accept-baseline]');
   console.log('  kb version');
   console.log('');
   console.log('Implemented commands:');
   console.log('  help      Show usage and package information.');
   console.log('  init      Install the KB template into a target workspace and create state.');
-  console.log('');
-  console.log('Planned commands:');
-  console.log('  show      Expose a hidden KB mount into the workspace.');
-  console.log('  hide      Remove the visible KB mount while keeping canonical content.');
+  console.log('  show      Expose a hidden KB mount into the workspace (private-git mode).');
+  console.log('  hide      Remove the visible KB mount while keeping canonical content (private-git mode).');
   console.log('  test      Run deterministic KB integrity and drift checks.');
-  console.log('  sync      Reconcile KB content against the source repository baseline.');
-  console.log('  update    Upgrade CLI/template version and run KB patch or migration flow.');
+  console.log('  sync      Collect drift evidence and update sync state/report.');
+  console.log('  update    Sync first, then refresh template version state.');
 }
 
 module.exports = {

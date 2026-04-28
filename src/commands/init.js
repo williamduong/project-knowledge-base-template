@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { getGitMetadata } = require('../lib/git');
-const { createInitialState, renderRevisionStateMarkdown, writeStateFile } = require('../lib/state');
+const { createInitialState, persistStateAndRender } = require('../lib/state');
 const { copyTemplateContent, getTemplateVersion } = require('../lib/template');
 const { resolveStoragePaths, validateMode } = require('../lib/storage');
 
@@ -71,11 +71,11 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     storagePaths,
   });
 
-  writeStateFile({ statePath: storagePaths.statePath, state });
-
-  const markdown = renderRevisionStateMarkdown(state);
-  fs.mkdirSync(path.dirname(storagePaths.renderedRevisionStatePath), { recursive: true });
-  fs.writeFileSync(storagePaths.renderedRevisionStatePath, markdown, 'utf8');
+  persistStateAndRender({
+    statePath: storagePaths.statePath,
+    renderedRevisionStatePath: storagePaths.renderedRevisionStatePath,
+    state,
+  });
 
   console.log(`Initialized KB in ${storagePaths.contentRoot}`);
   console.log(`Storage mode: ${options.mode}`);
