@@ -1,0 +1,22 @@
+{
+  "name": "project-kb-cli",
+  "version": "0.1.0",
+  "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
+  "license": "AGPL-3.0-only",
+  "author": "William Duong (Dương Tấn Nghĩa) <duongtannghia@gmail.com>",
+  "homepage": "https://github.com/williamduong/project-knowledge-base-template",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/williamduong/project-knowledge-base-template.git"
+  },
+  "bin": {
+    "kb": "./bin/kb.js"
+  },
+  "scripts": {
+    "help": "node ./bin/kb.js help",
+    "start": "node ./bin/kb.js help"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

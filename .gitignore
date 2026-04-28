@@ -19,3 +19,7 @@ Desktop.ini
 logs/
 tmp/
 temp/
+
+# Node and npm artifacts
+node_modules/
+npm-debug.log*
