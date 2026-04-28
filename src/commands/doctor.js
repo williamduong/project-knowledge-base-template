@@ -34,11 +34,17 @@ function testLinkCapability(cwd) {
 function parseDoctorArgs(args) {
   const options = {
     json: false,
+    strict: false,
   };
 
   for (const arg of args || []) {
     if (arg === '--json') {
       options.json = true;
+      continue;
+    }
+
+    if (arg === '--strict') {
+      options.strict = true;
       continue;
     }
 
@@ -106,6 +112,7 @@ function runDoctor({ args, cwd, packageJson }) {
     const report = {
       command: 'kb doctor',
       mode: 'json',
+      strict: options.strict,
       result: summary,
       workspaceRoot,
       nodeVersion: process.versions.node,
@@ -121,8 +128,18 @@ function runDoctor({ args, cwd, packageJson }) {
     console.log(`Result: ${summary}`);
   }
 
-  if (hasFailure) {
-    throw new Error('Doctor check failed. Resolve FAIL items before publish.');
+  const shouldFail = hasFailure || (options.strict && hasWarning);
+  if (shouldFail) {
+    const failureMessage = hasFailure
+      ? 'Doctor check failed. Resolve FAIL items before publish.'
+      : 'Doctor strict check failed. Resolve WARN items before publish or run without --strict.';
+
+    if (options.json) {
+      process.exitCode = 1;
+      return;
+    }
+
+    throw new Error(failureMessage);
   }
 }
 

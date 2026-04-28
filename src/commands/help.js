@@ -12,7 +12,7 @@ function runHelp({ packageJson }) {
   console.log('  kb test [--sample <count>]');
   console.log('  kb sync [--accept-baseline]');
   console.log('  kb update [--accept-baseline]');
-  console.log('  kb doctor [--json]');
+  console.log('  kb doctor [--json] [--strict]');
   console.log('  kb version');
   console.log('');
   console.log('Implemented commands:');
@@ -29,6 +29,7 @@ function runHelp({ packageJson }) {
   console.log('            Use --accept-baseline to propagate sync baseline acceptance.');
   console.log('  doctor    Quick publish-readiness checks (node/git/link/hooks).');
   console.log('            Use --json for machine-readable CI output.');
+  console.log('            Use --strict to exit with code 1 on WARN (hard CI gate).');
 }
 
 module.exports = {

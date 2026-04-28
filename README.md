@@ -42,11 +42,12 @@ Currently implemented commands:
 - `test`
 - `sync [--accept-baseline]`
 - `update [--accept-baseline]`
-- `doctor [--json]`
+- `doctor [--json] [--strict]`
 
 Pre-publish artifact simulation:
 
 ```bash
+npm run doctor:json
 npm run pack:smoke
 npm run release:dry
 ```
