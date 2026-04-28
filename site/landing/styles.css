@@ -286,16 +286,14 @@ h1 {
 }
 
 .agent-card h3,
-.maintain-card h3,
-.release-card h3 {
+.copy-card h3 {
   margin: 0 0 0.6rem;
   font-family: "Fraunces", serif;
   font-size: 1.15rem;
 }
 
 .agent-card p,
-.maintain-card p,
-.release-card p {
+.copy-card p {
   margin: 0;
   line-height: 1.6;
   color: var(--ink-soft);
@@ -391,17 +389,17 @@ h1 {
 }
 
 .steps {
-  padding-left: 1.3rem;
+  padding-left: 1.4rem;
   margin: 0 0 1.8rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.95rem;
   max-width: 72ch;
 }
 
 .steps li {
   line-height: 1.6;
-  font-size: 0.97rem;
+  font-size: 1rem;
 }
 
 .steps code {
@@ -431,10 +429,41 @@ h1 {
   padding: 0.8rem;
 }
 
+.copy-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 0.55rem;
+}
+
 .copy-card h3 {
-  margin: 0 0 0.45rem;
+  margin: 0;
   font-family: "Fraunces", serif;
   font-size: 1rem;
+}
+
+.copy-desc {
+  margin-top: 0.2rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+}
+
+.copy-btn {
+  border: 1px solid rgba(108, 232, 213, 0.28);
+  background: rgba(19, 34, 40, 0.92);
+  color: var(--accent-2);
+  border-radius: 999px;
+  padding: 0.42rem 0.8rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  background: rgba(28, 52, 58, 0.95);
 }
 
 .copy-form {
@@ -452,51 +481,8 @@ h1 {
 }
 
 /* ── Maintenance ── */
-.maintain-section,
-.release-section {
+.prompt-library-section {
   margin-top: 4rem;
-}
-
-.maintain-grid,
-.release-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-.maintain-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.release-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.maintain-card,
-.release-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 1rem;
-}
-
-.text-link {
-  display: inline-block;
-  margin-top: 0.9rem;
-  color: var(--accent-2);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.mini-code {
-  margin-top: 0.7rem;
-  background: #0c151b;
-  color: #d7ebe7;
-  border: 1px solid rgba(108, 232, 213, 0.18);
-  border-radius: 8px;
-  padding: 0.5rem 0.65rem;
-  font-family: "Courier New", monospace;
-  font-size: 0.82rem;
-  line-height: 1.5;
 }
 
 footer {
@@ -551,8 +537,6 @@ footer a {
   .pillars,
   .path-cards,
   .agent-grid,
-  .maintain-grid,
-  .release-grid,
   .copy-grid {
     grid-template-columns: 1fr;
   }
@@ -560,6 +544,11 @@ footer a {
   .cli-layout,
   .quickstart-layout {
     grid-template-columns: 1fr;
+  }
+
+  .copy-card-head {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .top-nav {
