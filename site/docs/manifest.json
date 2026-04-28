@@ -23,7 +23,15 @@
       "items": [
         { "label": "Agent Operating Manual", "path": "template/12-ai-skills/agent-operating-manual.md" },
         { "label": "Prompting Guide", "path": "template/12-ai-skills/prompting-guide.md" },
-        { "label": "Prompt Pack", "path": "template/12-ai-skills/prompt-pack.md" }
+        { "label": "Prompt Pack", "path": "template/12-ai-skills/prompt-pack.md" },
+        { "label": "Version Patch Prompts", "path": "template/12-ai-skills/version-patch-prompts.md" }
+      ]
+    },
+    {
+      "title": "Template Lifecycle",
+      "items": [
+        { "label": "Template Changelog", "path": "template/TEMPLATE_CHANGELOG.md" },
+        { "label": "Revision State", "path": "template/00-start-here/repository-revision-state.md" }
       ]
     }
   ]

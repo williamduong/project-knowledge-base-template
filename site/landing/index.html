@@ -22,6 +22,9 @@
       <div class="brand">KB Template</div>
       <nav>
         <a href="../docs/">Docs</a>
+        <a href="../docs/?doc=template/12-ai-skills/agent-operating-manual.md">AI Agent</a>
+        <a href="../docs/?doc=template/TEMPLATE_CHANGELOG.md">Release Notes</a>
+        <a href="../docs/?doc=template/12-ai-skills/version-patch-prompts.md">Patch Flow</a>
         <a href="https://github.com/williamduong/project-knowledge-base-template">GitHub</a>
       </nav>
     </header>
@@ -36,6 +39,7 @@
         </p>
         <div class="actions">
           <a class="btn btn-primary" href="../docs/">Open Documentation</a>
+          <a class="btn btn-secondary" href="../docs/?doc=template/12-ai-skills/prompt-pack.md">Open Prompt Pack</a>
           <a class="btn btn-ghost" href="https://github.com/williamduong/project-knowledge-base-template">
             View Repository
           </a>
@@ -124,6 +128,37 @@
         </div>
       </section>
 
+      <section class="agent-section" aria-label="AI agent workflow">
+        <p class="section-eyebrow">AI agent workflow</p>
+        <h2 class="section-title">Use the Same KB Workflow Across Common AI-Enabled IDEs</h2>
+        <p class="section-sub">
+          The template stores prompts, governance, revision state, and maintenance rules as plain
+          Markdown, so the workflow stays editor-agnostic for common AI-enabled IDEs and editors.
+          Start with the same documents whether you work in VS Code, Cursor, Windsurf, JetBrains
+          IDEs, or another agent-capable environment.
+        </p>
+        <div class="agent-grid">
+          <article class="agent-card">
+            <h3>Before the agent writes</h3>
+            <p>Read Template Index, How To Use, Metadata Schema, and Repository Revision State first.</p>
+          </article>
+          <article class="agent-card">
+            <h3>Choose the right prompt</h3>
+            <p>Use Prompting Guide for strategy, Prompt Pack for ready-made prompts, and Agent Manual for operating rules.</p>
+          </article>
+          <article class="agent-card">
+            <h3>Keep drift under control</h3>
+            <p>Compare the stored baseline with git HEAD before broad maintenance, then run the maintenance loop or patch flow.</p>
+          </article>
+        </div>
+        <div class="agent-links">
+          <a class="chip-link" href="../docs/?doc=template/12-ai-skills/agent-operating-manual.md">Agent Operating Manual</a>
+          <a class="chip-link" href="../docs/?doc=template/12-ai-skills/prompting-guide.md">Prompting Guide</a>
+          <a class="chip-link" href="../docs/?doc=template/12-ai-skills/prompt-pack.md">Prompt Pack</a>
+          <a class="chip-link" href="../docs/?doc=template/00-start-here/repository-revision-state.md">Revision State</a>
+        </div>
+      </section>
+
       <section class="cli-section" aria-label="CLI tool">
         <p class="section-eyebrow">Tooling</p>
         <h2 class="section-title">CLI Preview — <code>kb</code></h2>
@@ -156,13 +191,71 @@ kb init --mode private-git</pre>
       <section class="quickstart-section" aria-label="Quick start">
         <p class="section-eyebrow">Get started</p>
         <h2 class="section-title">Quick Start</h2>
-        <ol class="steps">
-          <li><strong>Choose your archetype</strong> — open <code>00-start-here/project-scope-matrix.md</code> and mark the project type and optional modules.</li>
-          <li><strong>Read working defaults</strong> — read <code>00-start-here/how-to-use-this-kb.md</code> to understand the fill order and governance rules.</li>
-          <li><strong>Stamp the revision</strong> — if the repo is under git, record the baseline commit in <code>00-start-here/repository-revision-state.md</code>.</li>
-          <li><strong>Start the maintenance queue</strong> — open <code>00-start-here/finalization-plan.md</code> and work through the priority list.</li>
-          <li><strong>Use the CLI</strong> — run <code>kb doctor</code> regularly to catch metadata drift and broken links early.</li>
-        </ol>
+        <div class="quickstart-layout">
+          <div class="code-block">
+            <div class="code-label">Fast path</div>
+<pre># Install or run one-off
+npm install -g @williamduong/kb
+kb help
+
+# Bootstrap a new knowledge base
+kb init --mode private-git
+
+# Check health after your first fill pass
+kb doctor --strict</pre>
+          </div>
+          <ol class="steps">
+            <li><strong>Install the CLI</strong> and run <code>kb help</code> to confirm the command surface.</li>
+            <li><strong>Bootstrap a KB</strong> with <code>kb init --mode private-git</code> or use <code>npx @williamduong/kb help</code> for one-off usage.</li>
+            <li><strong>Open the prompt docs</strong> and choose a prompt from <code>12-ai-skills/prompt-pack.md</code> after reading <code>12-ai-skills/prompting-guide.md</code>.</li>
+            <li><strong>Run the prompt in your AI IDE</strong> and let the agent build or maintain the KB using the repo rules already stored in Markdown.</li>
+            <li><strong>Validate immediately</strong> with <code>kb doctor</code>, then continue the queue in <code>00-start-here/finalization-plan.md</code>.</li>
+          </ol>
+        </div>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="../docs/?doc=template/12-ai-skills/prompt-pack.md">Browse Prompt Pack</a>
+          <a class="btn btn-secondary" href="../docs/?doc=template/12-ai-skills/prompting-guide.md">Read Prompting Guide</a>
+        </div>
+      </section>
+
+      <section class="maintain-section" aria-label="Maintenance workflow">
+        <p class="section-eyebrow">Operate &amp; maintain</p>
+        <h2 class="section-title">Maintenance Flow During Real Usage</h2>
+        <div class="maintain-grid">
+          <article class="maintain-card">
+            <h3>Routine maintenance</h3>
+            <p>Run <code>kb doctor</code> and refresh the queue in <code>00-start-here/finalization-plan.md</code> as you edit docs or onboard new work.</p>
+          </article>
+          <article class="maintain-card">
+            <h3>Source drift reconciliation</h3>
+            <p>Read <code>00-start-here/repository-revision-state.md</code>, compare the stored baseline to git HEAD, and reconcile drift before trusting stale docs.</p>
+          </article>
+          <article class="maintain-card">
+            <h3>Template upgrades</h3>
+            <p>Use <code>update [--accept-baseline]</code> with the version patch prompts when template versions change and a KB patch pass is required.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="release-section" aria-label="Release notes and patches">
+        <p class="section-eyebrow">Lifecycle</p>
+        <h2 class="section-title">Release Notes &amp; Patch Guidance</h2>
+        <p class="section-sub">
+          Template changes and migration expectations already live in the KB. Use changelog entries
+          for release context, then follow patch prompts when an existing KB must be upgraded.
+        </p>
+        <div class="release-grid">
+          <article class="release-card">
+            <h3>Release notes</h3>
+            <p>Read the template changelog for current version history, impact level, migration requirements, and agent impact.</p>
+            <a class="text-link" href="../docs/?doc=template/TEMPLATE_CHANGELOG.md">Open TEMPLATE_CHANGELOG.md</a>
+          </article>
+          <article class="release-card">
+            <h3>Patch prompts</h3>
+            <p>Use the generic, minor, major, and post-migration prompts when rolling an existing KB forward to a newer template version.</p>
+            <a class="text-link" href="../docs/?doc=template/12-ai-skills/version-patch-prompts.md">Open version-patch-prompts.md</a>
+          </article>
+        </div>
         <div class="cta-row">
           <a class="btn btn-primary" href="../docs/">Browse the Docs</a>
           <a class="btn btn-ghost" href="https://github.com/williamduong/project-knowledge-base-template">View on GitHub</a>
@@ -171,8 +264,20 @@ kb init --mode private-git</pre>
     </main>
 
     <footer>
-      <span>Project Knowledge Base Template</span>
-      <a href="../docs/">Browse docs</a>
+      <div>
+        <strong>Project Knowledge Base Template</strong>
+        <p class="footer-copy">A dual-licensed KB template for structured documentation, governance, and AI-agent workflows.</p>
+      </div>
+      <div class="footer-meta">
+        <span>Author: William Duong (Dương Tấn Nghĩa)</span>
+        <span>Email: duongtannghia@gmail.com</span>
+        <span>License: GNU AGPL v3, with separate commercial licensing available</span>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/williamduong">GitHub</a>
+        <a href="https://williamresearch.com/">Blog</a>
+        <a href="../docs/">Browse docs</a>
+      </div>
     </footer>
   </body>
 </html>

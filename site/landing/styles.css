@@ -118,6 +118,11 @@ h1 {
   color: #fff;
 }
 
+.btn-secondary {
+  background: var(--accent-2);
+  color: #fff;
+}
+
 .btn-ghost {
   border-color: var(--line);
   color: var(--ink);
@@ -250,6 +255,57 @@ h1 {
   line-height: 1.8;
 }
 
+/* ── AI Agents ── */
+.agent-section {
+  margin-top: 4rem;
+}
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.agent-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.agent-card h3,
+.maintain-card h3,
+.release-card h3 {
+  margin: 0 0 0.6rem;
+  font-family: "Fraunces", serif;
+  font-size: 1.15rem;
+}
+
+.agent-card p,
+.maintain-card p,
+.release-card p {
+  margin: 0;
+  line-height: 1.6;
+  color: rgba(31, 27, 25, 0.78);
+}
+
+.agent-links {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.chip-link {
+  text-decoration: none;
+  color: var(--accent-2);
+  border: 1px solid rgba(20, 75, 67, 0.18);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
 /* ── CLI ── */
 .cli-section {
   margin-top: 4rem;
@@ -314,6 +370,13 @@ h1 {
   margin-top: 4rem;
 }
 
+.quickstart-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 1.4rem;
+  align-items: start;
+}
+
 .steps {
   padding-left: 1.3rem;
   margin: 0 0 1.8rem;
@@ -341,13 +404,62 @@ h1 {
   flex-wrap: wrap;
 }
 
+/* ── Maintenance ── */
+.maintain-section,
+.release-section {
+  margin-top: 4rem;
+}
+
+.maintain-grid,
+.release-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.maintain-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.release-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.maintain-card,
+.release-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.text-link {
+  display: inline-block;
+  margin-top: 0.9rem;
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
 footer {
   border-top: 1px solid var(--line);
-  padding: 1rem 1.5rem 2rem;
+  padding: 1.2rem 1.5rem 2rem;
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.footer-copy {
+  margin: 0.45rem 0 0;
+  max-width: 46ch;
+  color: rgba(31, 27, 25, 0.75);
+}
+
+.footer-meta,
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 footer a {
@@ -367,11 +479,25 @@ footer a {
 
 @media (max-width: 850px) {
   .pillars,
-  .path-cards {
+  .path-cards,
+  .agent-grid,
+  .maintain-grid,
+  .release-grid {
     grid-template-columns: 1fr;
   }
 
-  .cli-layout {
+  .cli-layout,
+  .quickstart-layout {
     grid-template-columns: 1fr;
+  }
+
+  .top-nav {
+    align-items: flex-start;
+    gap: 0.8rem;
+    flex-direction: column;
+  }
+
+  .top-nav nav {
+    flex-wrap: wrap;
   }
 }
