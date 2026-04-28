@@ -56,6 +56,118 @@
           <p>Structured prompts and operating manuals help AI agents contribute without breaking standards.</p>
         </article>
       </section>
+
+      <section class="areas" aria-label="Knowledge areas">
+        <p class="section-eyebrow">What's inside</p>
+        <h2 class="section-title">15 Knowledge Areas</h2>
+        <p class="section-sub">Every area ships as structured Markdown with frontmatter, verification state, and reusable document stubs. Enable only what your project needs.</p>
+        <div class="area-grid">
+          <div class="area-item"><span class="area-num">00</span><div><strong>Start Here</strong><p>Onboarding, scope matrix, intent index, revision state, terminology guard.</p></div></div>
+          <div class="area-item"><span class="area-num">01</span><div><strong>Product</strong><p>Problem statement, personas, feature definitions, business rules, user journeys.</p></div></div>
+          <div class="area-item"><span class="area-num">02</span><div><strong>Domain Model</strong><p>Entities, domain events, relationships, states and lifecycles, ontology.</p></div></div>
+          <div class="area-item"><span class="area-num">03</span><div><strong>Architecture</strong><p>System overview, components, containers, and Architecture Decision Records (ADRs).</p></div></div>
+          <div class="area-item"><span class="area-num">04</span><div><strong>Frontend</strong><p>App structure, components, pages, hooks, state, styling system, build config.</p></div></div>
+          <div class="area-item"><span class="area-num">05</span><div><strong>Backend</strong><p>Services, routes, middleware, auth, error handling, storage, rendering engine.</p></div></div>
+          <div class="area-item"><span class="area-num">06</span><div><strong>API</strong><p>API overview, authentication, endpoint reference templates.</p></div></div>
+          <div class="area-item"><span class="area-num">07</span><div><strong>Database</strong><p>Schema overview, ERD, table templates, indexing strategy.</p></div></div>
+          <div class="area-item"><span class="area-num">08</span><div><strong>Security</strong><p>Threat model, auth details, authorization matrix, encryption, security checklist.</p></div></div>
+          <div class="area-item"><span class="area-num">09</span><div><strong>Operations</strong><p>Deployment, monitoring, incident runbooks, troubleshooting guides.</p></div></div>
+          <div class="area-item"><span class="area-num">10</span><div><strong>Testing</strong><p>Quality strategy, integration tests, E2E tests, release gates.</p></div></div>
+          <div class="area-item"><span class="area-num">11</span><div><strong>User Docs</strong><p>User-facing documentation — optional module, enable per project.</p></div></div>
+          <div class="area-item"><span class="area-num">12</span><div><strong>AI Skills</strong><p>Agent operating manual, prompting guide, prompt pack, version-patch prompts.</p></div></div>
+          <div class="area-item"><span class="area-num">13</span><div><strong>Knowledge Graph</strong><p>Semantic graph and index rules — optional module for advanced search.</p></div></div>
+          <div class="area-item"><span class="area-num">14–15</span><div><strong>Templates &amp; Governance</strong><p>Reusable document stubs, metadata schema, verification policy, review cadence.</p></div></div>
+        </div>
+      </section>
+
+      <section class="paths" aria-label="Reading paths by role">
+        <p class="section-eyebrow">Where to start</p>
+        <h2 class="section-title">Reading Paths by Role</h2>
+        <div class="path-cards">
+          <div class="path-card">
+            <h3>Engineers</h3>
+            <ol>
+              <li>00 Start Here</li>
+              <li>03 Architecture</li>
+              <li>04 Frontend / 05 Backend</li>
+              <li>06 API</li>
+              <li>07 Database</li>
+            </ol>
+          </div>
+          <div class="path-card">
+            <h3>Product &amp; BA</h3>
+            <ol>
+              <li>00 Start Here</li>
+              <li>01 Product</li>
+              <li>02 Domain Model</li>
+              <li>03 Architecture</li>
+            </ol>
+          </div>
+          <div class="path-card">
+            <h3>QA</h3>
+            <ol>
+              <li>00 Start Here</li>
+              <li>10 Testing</li>
+              <li>08 Security</li>
+              <li>09 Operations</li>
+            </ol>
+          </div>
+          <div class="path-card">
+            <h3>AI Agents</h3>
+            <ol>
+              <li>00 Start Here</li>
+              <li>15 Governance</li>
+              <li>12 AI Skills</li>
+              <li>Task-specific folders</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      <section class="cli-section" aria-label="CLI tool">
+        <p class="section-eyebrow">Tooling</p>
+        <h2 class="section-title">CLI Preview — <code>kb</code></h2>
+        <p class="section-sub">A local CLI for initializing, maintaining, and health-checking downstream KB instances. No server required.</p>
+        <div class="cli-layout">
+          <div class="code-block">
+            <div class="code-label">Install &amp; run</div>
+<pre># One-off
+npx @williamduong/kb help
+
+# Global install
+npm install -g @williamduong/kb
+kb help
+
+# Init a new KB
+kb init --mode private-git</pre>
+          </div>
+          <ul class="cmd-list">
+            <li><code>help</code> — list available commands</li>
+            <li><code>init --mode private-git|tracked</code> — bootstrap a new KB</li>
+            <li><code>show / hide</code> — toggle private-git visibility</li>
+            <li><code>sync [--accept-baseline]</code> — pull latest template changes</li>
+            <li><code>update [--accept-baseline]</code> — apply version patches</li>
+            <li><code>doctor [--json] [--strict]</code> — validate KB health</li>
+            <li><code>test</code> — run template self-checks</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="quickstart-section" aria-label="Quick start">
+        <p class="section-eyebrow">Get started</p>
+        <h2 class="section-title">Quick Start</h2>
+        <ol class="steps">
+          <li><strong>Choose your archetype</strong> — open <code>00-start-here/project-scope-matrix.md</code> and mark the project type and optional modules.</li>
+          <li><strong>Read working defaults</strong> — read <code>00-start-here/how-to-use-this-kb.md</code> to understand the fill order and governance rules.</li>
+          <li><strong>Stamp the revision</strong> — if the repo is under git, record the baseline commit in <code>00-start-here/repository-revision-state.md</code>.</li>
+          <li><strong>Start the maintenance queue</strong> — open <code>00-start-here/finalization-plan.md</code> and work through the priority list.</li>
+          <li><strong>Use the CLI</strong> — run <code>kb doctor</code> regularly to catch metadata drift and broken links early.</li>
+        </ol>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="../docs/">Browse the Docs</a>
+          <a class="btn btn-ghost" href="https://github.com/williamduong/project-knowledge-base-template">View on GitHub</a>
+        </div>
+      </section>
     </main>
 
     <footer>

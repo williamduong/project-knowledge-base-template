@@ -153,6 +153,194 @@ h1 {
   font-size: 1.35rem;
 }
 
+/* ── Section shared ── */
+.section-eyebrow {
+  display: inline-block;
+  background: var(--accent-2);
+  color: #f6f1e7;
+  margin: 0 0 0.6rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}
+
+.section-title {
+  margin: 0 0 0.5rem;
+  font-family: "Fraunces", serif;
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+}
+
+.section-sub {
+  margin: 0 0 1.6rem;
+  max-width: 68ch;
+  color: rgba(31, 27, 25, 0.78);
+}
+
+/* ── Knowledge Areas ── */
+.areas {
+  margin-top: 4rem;
+}
+
+.area-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.9rem;
+}
+
+.area-item {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.area-num {
+  font-family: "Fraunces", serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 2.2rem;
+  padding-top: 0.05rem;
+}
+
+.area-item strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.area-item p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: rgba(31, 27, 25, 0.72);
+}
+
+/* ── Reading Paths ── */
+.paths {
+  margin-top: 4rem;
+}
+
+.path-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.path-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1.1rem 1rem;
+}
+
+.path-card h3 {
+  margin: 0 0 0.7rem;
+  font-family: "Fraunces", serif;
+  font-size: 1.1rem;
+}
+
+.path-card ol {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  color: rgba(31, 27, 25, 0.78);
+  line-height: 1.8;
+}
+
+/* ── CLI ── */
+.cli-section {
+  margin-top: 4rem;
+}
+
+.cli-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4rem;
+  align-items: start;
+}
+
+.code-block {
+  background: #1f1b19;
+  color: #e5ddd4;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.code-label {
+  background: rgba(255,255,255,0.07);
+  font-size: 0.78rem;
+  padding: 0.4rem 1rem;
+  letter-spacing: 0.04em;
+  color: rgba(229,221,212,0.55);
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 1rem;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  font-family: "Courier New", monospace;
+  overflow-x: auto;
+}
+
+.cmd-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.cmd-list li {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.cmd-list code {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── Quick Start ── */
+.quickstart-section {
+  margin-top: 4rem;
+}
+
+.steps {
+  padding-left: 1.3rem;
+  margin: 0 0 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 72ch;
+}
+
+.steps li {
+  line-height: 1.6;
+  font-size: 0.97rem;
+}
+
+.steps code {
+  background: rgba(31,27,25,0.07);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.88em;
+}
+
+.cta-row {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
 footer {
   border-top: 1px solid var(--line);
   padding: 1rem 1.5rem 2rem;
@@ -178,7 +366,12 @@ footer a {
 }
 
 @media (max-width: 850px) {
-  .pillars {
+  .pillars,
+  .path-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .cli-layout {
     grid-template-columns: 1fr;
   }
 }
