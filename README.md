@@ -42,6 +42,14 @@ Currently implemented commands:
 - `test`
 - `sync [--accept-baseline]`
 - `update [--accept-baseline]`
+- `doctor`
+
+Pre-publish artifact simulation:
+
+```bash
+npm run pack:smoke
+npm run release:dry
+```
 
 Downstream project KBs should stamp both the adopted template version and the brand-scoped source baseline commit they were verified against.
 

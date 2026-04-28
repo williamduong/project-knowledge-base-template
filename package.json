@@ -46,7 +46,10 @@
   "scripts": {
     "help": "node ./bin/kb.js help",
     "start": "node ./bin/kb.js help",
-    "doc:gate": "node ./scripts/doc-gate.js"
+    "doc:gate": "node ./scripts/doc-gate.js",
+    "doctor": "node ./bin/kb.js doctor",
+    "pack:smoke": "node ./scripts/pack-smoke.js",
+    "release:dry": "npm run doc:gate && npm run doctor && npm run pack:smoke"
   },
   "engines": {
     "node": ">=18"

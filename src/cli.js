@@ -8,6 +8,7 @@ const { runHide } = require('./commands/hide');
 const { runTest } = require('./commands/test');
 const { runSync } = require('./commands/sync');
 const { runUpdate } = require('./commands/update');
+const { runDoctor } = require('./commands/doctor');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -44,6 +45,11 @@ async function run(argv) {
 
   if (command === 'update') {
     await runUpdate({ args: rest, cwd: process.cwd(), repoRoot: path.resolve(__dirname, '..') });
+    return;
+  }
+
+  if (command === 'doctor') {
+    await runDoctor({ args: rest, cwd: process.cwd(), packageJson });
     return;
   }
 
