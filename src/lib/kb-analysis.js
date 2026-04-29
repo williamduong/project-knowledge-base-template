@@ -128,6 +128,7 @@ function buildDocumentIndex({ contentRoot, workspaceRoot }) {
       relativePath: path.relative(contentRoot, filePath).replace(/\\/g, '/'),
       frontmatter,
       verification: frontmatter && frontmatter.verification ? String(frontmatter.verification) : null,
+      kbState: frontmatter && frontmatter.kb_state ? String(frontmatter.kb_state) : null,
       owner: frontmatter && frontmatter.owner ? String(frontmatter.owner) : 'unknown',
       sourceOfTruth,
       sourceChecks,

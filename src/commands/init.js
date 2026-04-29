@@ -6,6 +6,8 @@ const { createInitialState, persistStateAndRender } = require('../lib/state');
 const { copyTemplateContent, getTemplateVersion } = require('../lib/template');
 const { resolveStoragePaths, validateMode } = require('../lib/storage');
 const { generateAdapterFiles } = require('../lib/adapters');
+const { runBootstrap } = require('./bootstrap');
+const { runIndex } = require('./index');
 
 function parseArgs(args) {
   const options = {
@@ -14,6 +16,8 @@ function parseArgs(args) {
     brand: null,
     skipAdapters: false,
     installHooks: false,
+    skipBootstrap: false,
+    skipIndex: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -44,6 +48,16 @@ function parseArgs(args) {
 
     if (current === '--install-hooks') {
       options.installHooks = true;
+      continue;
+    }
+
+    if (current === '--skip-bootstrap') {
+      options.skipBootstrap = true;
+      continue;
+    }
+
+    if (current === '--skip-index') {
+      options.skipIndex = true;
       continue;
     }
 
@@ -132,6 +146,16 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
 
   if (options.installHooks) {
     installPreCommitHook({ workspaceRoot });
+  }
+
+  if (!options.skipBootstrap) {
+    console.log('\nRunning initial bootstrap to replace obvious placeholders...');
+    await runBootstrap({ args: [], cwd: workspaceRoot });
+  }
+
+  if (!options.skipIndex) {
+    console.log('\nBuilding initial KB index summary...');
+    await runIndex({ args: [], cwd: workspaceRoot });
   }
 }
 

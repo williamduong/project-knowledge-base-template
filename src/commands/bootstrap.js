@@ -118,6 +118,7 @@ status: active
 owner: engineering
 time_state: current
 verification: unverified
+kb_state: autofilled
 last_updated: ${today()}
 last_verified: ${today()}
 source_of_truth:
@@ -292,6 +293,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: unverified
+kb_state: autofilled
 last_updated: ${today()}
 last_verified: ${today()}
 ---`;

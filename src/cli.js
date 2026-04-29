@@ -11,6 +11,9 @@ const { runUpdate } = require('./commands/update');
 const { runDoctor } = require('./commands/doctor');
 const { runBootstrap } = require('./commands/bootstrap');
 const { runPlan } = require('./commands/plan');
+const { runIndex } = require('./commands/index');
+const { runQuestions } = require('./commands/questions');
+const { runMark } = require('./commands/mark');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -62,6 +65,21 @@ async function run(argv) {
 
   if (command === 'plan') {
     await runPlan({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'index') {
+    await runIndex({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'questions') {
+    await runQuestions({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'mark') {
+    await runMark({ args: rest, cwd: process.cwd() });
     return;
   }
 
