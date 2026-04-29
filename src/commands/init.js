@@ -5,12 +5,15 @@ const { getGitMetadata } = require('../lib/git');
 const { createInitialState, persistStateAndRender } = require('../lib/state');
 const { copyTemplateContent, getTemplateVersion } = require('../lib/template');
 const { resolveStoragePaths, validateMode } = require('../lib/storage');
+const { generateAdapterFiles } = require('../lib/adapters');
 
 function parseArgs(args) {
   const options = {
     mode: 'private-git',
     target: process.cwd(),
     brand: null,
+    skipAdapters: false,
+    installHooks: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -34,11 +37,39 @@ function parseArgs(args) {
       continue;
     }
 
+    if (current === '--skip-adapters') {
+      options.skipAdapters = true;
+      continue;
+    }
+
+    if (current === '--install-hooks') {
+      options.installHooks = true;
+      continue;
+    }
+
     throw new Error(`Unknown init option \"${current}\".`);
   }
 
   validateMode(options.mode);
   return options;
+}
+
+function installPreCommitHook({ workspaceRoot }) {
+  const hookPath = path.join(workspaceRoot, '.git', 'hooks', 'pre-commit');
+  if (fs.existsSync(hookPath)) {
+    console.log('\nPre-commit hook already exists (skipped): .git/hooks/pre-commit');
+    return;
+  }
+
+  const hookContent = `#!/bin/sh
+# KB doc-gate: run kb doctor before every commit.
+# Installed by: kb init --install-hooks
+kb doctor --strict
+`;
+
+  fs.mkdirSync(path.dirname(hookPath), { recursive: true });
+  fs.writeFileSync(hookPath, hookContent, { encoding: 'utf8', mode: 0o755 });
+  console.log('\nPre-commit hook installed: .git/hooks/pre-commit');
 }
 
 async function runInit({ args, packageJson, cwd, repoRoot }) {
@@ -81,6 +112,27 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
   console.log(`Storage mode: ${options.mode}`);
   console.log(`State file: ${storagePaths.statePath}`);
   console.log(`Rendered revision state: ${storagePaths.renderedRevisionStatePath}`);
+
+  if (!options.skipAdapters) {
+    const adapterResult = generateAdapterFiles({ workspaceRoot, visibleMountPath: storagePaths.visibleMountPath });
+    if (adapterResult.created.length > 0) {
+      console.log(`\nAI adapter files created:`);
+      for (const f of adapterResult.created) {
+        console.log(`  + ${f}`);
+      }
+    }
+
+    if (adapterResult.skipped.length > 0) {
+      console.log(`\nAI adapter files already exist (skipped):`);
+      for (const f of adapterResult.skipped) {
+        console.log(`  ~ ${f}`);
+      }
+    }
+  }
+
+  if (options.installHooks) {
+    installPreCommitHook({ workspaceRoot });
+  }
 }
 
 module.exports = {

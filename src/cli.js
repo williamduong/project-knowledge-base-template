@@ -9,6 +9,8 @@ const { runTest } = require('./commands/test');
 const { runSync } = require('./commands/sync');
 const { runUpdate } = require('./commands/update');
 const { runDoctor } = require('./commands/doctor');
+const { runBootstrap } = require('./commands/bootstrap');
+const { runPlan } = require('./commands/plan');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -50,6 +52,16 @@ async function run(argv) {
 
   if (command === 'doctor') {
     await runDoctor({ args: rest, cwd: process.cwd(), packageJson });
+    return;
+  }
+
+  if (command === 'bootstrap') {
+    await runBootstrap({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'plan') {
+    await runPlan({ args: rest, cwd: process.cwd() });
     return;
   }
 

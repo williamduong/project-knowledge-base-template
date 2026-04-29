@@ -35,7 +35,24 @@ function copyTemplateContent({ sourceRoot, destinationRoot }) {
 }
 
 function getTemplateVersion({ repoRoot }) {
+  const templateJsonPath = path.join(repoRoot, 'template', 'template.json');
+  if (fs.existsSync(templateJsonPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(templateJsonPath, 'utf8'));
+      if (data && data.version) {
+        return data.version;
+      }
+    } catch {
+      // fall through to legacy parse
+    }
+  }
+
+  // Legacy fallback: parse from revision-state markdown
   const revisionStatePath = path.join(repoRoot, 'template', '00-start-here', 'repository-revision-state.md');
+  if (!fs.existsSync(revisionStatePath)) {
+    return 'v0.0.0';
+  }
+
   const text = fs.readFileSync(revisionStatePath, 'utf8');
   const match = text.match(/\|\s*KB Template Version\s*\|\s*(.*?)\s*\|/);
   if (!match) {
