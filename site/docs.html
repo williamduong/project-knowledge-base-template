@@ -16,14 +16,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&family=IBM+Plex+Serif:wght@500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./css/shared.css" />
+    <link rel="stylesheet" href="./css/docs.css" />
   </head>
   <body>
-    <header class="topbar">
-      <a class="brand-link" href="../landing/">
+    <div class="mesh" aria-hidden="true"></div>
+    <header class="top-nav">
+        <a href="./" class="brand">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 48 48" role="img" focusable="false">
             <path d="M24 5 9 13.5v12.8C9 35.7 15.2 41 24 43c8.8-2 15-7.3 15-16.7V13.5z"></path>
@@ -32,13 +34,13 @@
             <path d="M16.5 28H31.5"></path>
           </svg>
         </span>
-        <span class="brand-stack">
-          <span class="brand-title">KB Template</span>
-          <span class="brand-subtitle">Docs portal</span>
+        <span class="brand-copy">
+          <span class="brand-name">KB Template</span>
+          <span class="brand-tag">Documentation</span>
         </span>
       </a>
-      <nav class="topbar-nav">
-        <a href="../docs/" class="nav-active">
+      <nav>
+        <a href="./docs.html">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="img" focusable="false">
               <path d="M6 5.5A2.5 2.5 0 0 1 8.5 3H19v15H8.5A2.5 2.5 0 0 0 6 20.5z"></path>
@@ -49,7 +51,7 @@
           </span>
           <span>Docs</span>
         </a>
-        <a href="../docs/?doc=template/12-ai-skills/agent-operating-manual.md">
+        <a href="./docs.html?doc=template/12-ai-skills/agent-operating-manual.md">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="img" focusable="false">
               <rect x="7" y="7" width="10" height="10" rx="2"></rect>
@@ -61,7 +63,7 @@
           </span>
           <span>AI Agent</span>
         </a>
-        <a href="../docs/?doc=template/TEMPLATE_CHANGELOG.md">
+        <a href="./docs.html?doc=template/TEMPLATE_CHANGELOG.md">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="img" focusable="false">
               <path d="M7 4.5h7l3 3V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2z"></path>
@@ -72,7 +74,7 @@
           </span>
           <span>Release Notes</span>
         </a>
-        <a href="../docs/?doc=template/12-ai-skills/version-patch-prompts.md">
+        <a href="./docs.html?doc=template/12-ai-skills/version-patch-prompts.md">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="img" focusable="false">
               <path d="m5 7 4 5-4 5"></path>
@@ -81,7 +83,7 @@
           </span>
           <span>Patch Flow</span>
         </a>
-        <a href="https://github.com/williamduong/project-knowledge-base-template">
+        <a id="repoLink" href="https://github.com/williamduong/project-knowledge-base-template">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="img" focusable="false">
               <path d="M9 18c-4 1.2-4-2-5.5-2.5"></path>
@@ -123,7 +125,35 @@
       </section>
     </main>
 
+    <footer>
+      <p class="footer-line">
+        <span class="footer-brand">Project Knowledge Base Template</span>
+        <span>By William Duong</span>
+        <span>AGPL v3 + commercial license</span>
+        <a href="https://github.com/williamduong/project-knowledge-base-template">GitHub</a>
+        <a href="./">Home</a>
+      </p>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="./app.js"></script>
+    <script src="./js/docs-app.js"></script>
+    <script>
+      (function highlightActiveNav() {
+        const navLinks = document.querySelectorAll('.top-nav nav a');
+        const currentPath = window.location.pathname;
+        const currentDoc = new URLSearchParams(window.location.search).get('doc');
+        
+        navLinks.forEach(link => {
+          const href = link.getAttribute('href');
+          
+            if ((href === './docs.html' && currentPath.endsWith('/docs.html') && !currentDoc) ||
+              (href.includes('?doc=') && currentDoc && href.includes(currentDoc))) {
+            link.classList.add('nav-active');
+          } else {
+            link.classList.remove('nav-active');
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

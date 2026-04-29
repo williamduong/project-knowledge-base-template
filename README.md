@@ -80,9 +80,9 @@ Downstream project KBs should stamp both the adopted template version and the br
 
 This repository includes a standalone website bundle in `site/` for GitHub Pages publishing:
 
-- Landing page: `site/landing/`
-- Docs portal: `site/docs/`
-- Entrypoint redirect: `site/index.html`
+- Landing page: `site/index.html`
+- Docs portal: `site/docs.html`
+- Shared assets: `site/css/`, `site/js/`, `site/data/`
 
 The docs portal renders markdown directly from the `main` branch via `raw.githubusercontent.com`, so docs stay up to date without duplicating template files.
 

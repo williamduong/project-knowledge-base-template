@@ -20,7 +20,7 @@
 
         var prefix = pathname.slice(0, markerIndex);
         var publicPath = decodeURIComponent(pathname.slice(markerIndex + marker.length));
-        var target = prefix + "/docs/";
+        var target = prefix + "/docs.html";
 
         if (publicPath) {
           target += "?path=" + encodeURIComponent(publicPath);

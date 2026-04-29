@@ -8,7 +8,7 @@ const state = {
   activePath: null,
   owner: FALLBACK_OWNER,
   repo: FALLBACK_REPO,
-  docsBasePath: "/docs",
+  docsPagePath: "/docs.html",
   treeExpansion: new Map()
 };
 
@@ -36,11 +36,8 @@ function classifyDocPath(docPath) {
 function detectRepository() {
   const host = window.location.hostname;
   const pathParts = window.location.pathname.split("/").filter(Boolean);
-  const docsIndex = pathParts.lastIndexOf("docs");
-
-  if (docsIndex >= 0) {
-    state.docsBasePath = `/${pathParts.slice(0, docsIndex + 1).join("/")}`;
-  }
+  const pathPrefix = pathParts.length > 0 ? `/${pathParts.slice(0, -1).join("/")}` : "";
+  state.docsPagePath = `${pathPrefix}/docs.html`;
 
   if (host.endsWith(".github.io")) {
     state.owner = host.replace(".github.io", "");
@@ -83,7 +80,7 @@ function toRepoPath(publicPath) {
 }
 
 function docsUrl(docPath) {
-  return `${state.docsBasePath}/${encodeURI(toPublicPath(docPath))}`;
+  return `${state.docsPagePath}?path=${encodeURIComponent(toPublicPath(docPath))}`;
 }
 
 function parseInitialDoc() {
@@ -97,15 +94,6 @@ function parseInitialDoc() {
 
   if (legacyDoc) {
     return normalizeDocPath(legacyDoc);
-  }
-
-  const currentPath = decodeURIComponent(window.location.pathname);
-  const prefix = `${state.docsBasePath}/`;
-  if (currentPath.startsWith(prefix)) {
-    const publicPath = currentPath.slice(prefix.length);
-    if (publicPath) {
-      return toRepoPath(publicPath);
-    }
   }
 
   return state.manifest.defaultDoc;
@@ -188,7 +176,7 @@ function walkTree(node, visitor) {
 
 async function loadTree() {
   try {
-    const response = await fetch("./tree.json", { cache: "no-cache" });
+    const response = await fetch("./data/tree.json", { cache: "no-cache" });
     if (!response.ok) {
       throw new Error("missing tree metadata");
     }
@@ -586,7 +574,7 @@ async function bootstrap() {
   detectRepository();
   setRepoLink();
 
-  const response = await fetch("./manifest.json");
+  const response = await fetch("./data/manifest.json");
   if (!response.ok) {
     throw new Error("Cannot load docs manifest.");
   }
