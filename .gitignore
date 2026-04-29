@@ -26,3 +26,6 @@ npm-debug.log*
 
 # Private note
 notes/*
+
+# Sample repos for local testing only
+sample_repo/
