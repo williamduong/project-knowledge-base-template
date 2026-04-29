@@ -67,114 +67,25 @@
           <h2>Agent-ready</h2>
           <p>Structured prompts and operating manuals help AI agents contribute without breaking standards.</p>
         </article>
-      </section>
-
-      <section class="areas" aria-label="Knowledge areas">
-        <p class="section-eyebrow">What's inside</p>
-        <h2 class="section-title">15 Knowledge Areas</h2>
-        <p class="section-sub">Every area ships as structured Markdown with frontmatter, verification state, and reusable document stubs. Enable only what your project needs.</p>
-        <div class="area-grid">
-          <div class="area-item"><span class="area-num">00</span><div><strong>Start Here</strong><p>Onboarding, scope matrix, intent index, revision state, terminology guard.</p></div></div>
-          <div class="area-item"><span class="area-num">01</span><div><strong>Product</strong><p>Problem statement, personas, feature definitions, business rules, user journeys.</p></div></div>
-          <div class="area-item"><span class="area-num">02</span><div><strong>Domain Model</strong><p>Entities, domain events, relationships, states and lifecycles, ontology.</p></div></div>
-          <div class="area-item"><span class="area-num">03</span><div><strong>Architecture</strong><p>System overview, components, containers, and Architecture Decision Records (ADRs).</p></div></div>
-          <div class="area-item"><span class="area-num">04</span><div><strong>Frontend</strong><p>App structure, components, pages, hooks, state, styling system, build config.</p></div></div>
-          <div class="area-item"><span class="area-num">05</span><div><strong>Backend</strong><p>Services, routes, middleware, auth, error handling, storage, rendering engine.</p></div></div>
-          <div class="area-item"><span class="area-num">06</span><div><strong>API</strong><p>API overview, authentication, endpoint reference templates.</p></div></div>
-          <div class="area-item"><span class="area-num">07</span><div><strong>Database</strong><p>Schema overview, ERD, table templates, indexing strategy.</p></div></div>
-          <div class="area-item"><span class="area-num">08</span><div><strong>Security</strong><p>Threat model, auth details, authorization matrix, encryption, security checklist.</p></div></div>
-          <div class="area-item"><span class="area-num">09</span><div><strong>Operations</strong><p>Deployment, monitoring, incident runbooks, troubleshooting guides.</p></div></div>
-          <div class="area-item"><span class="area-num">10</span><div><strong>Testing</strong><p>Quality strategy, integration tests, E2E tests, release gates.</p></div></div>
-          <div class="area-item"><span class="area-num">11</span><div><strong>User Docs</strong><p>User-facing documentation — optional module, enable per project.</p></div></div>
-          <div class="area-item"><span class="area-num">12</span><div><strong>AI Skills</strong><p>Agent operating manual, prompting guide, prompt pack, version-patch prompts.</p></div></div>
-          <div class="area-item"><span class="area-num">13</span><div><strong>Knowledge Graph</strong><p>Semantic graph and index rules — optional module for advanced search.</p></div></div>
-          <div class="area-item"><span class="area-num">14–15</span><div><strong>Templates &amp; Governance</strong><p>Reusable document stubs, metadata schema, verification policy, review cadence.</p></div></div>
+        <div class="coverage-summary" aria-label="Coverage summary">
+          <span class="coverage-kicker">Covers the full delivery surface</span>
+          <ul class="coverage-list">
+            <li><strong>System architecture</strong> across product, domain, frontend, backend, API, and database.</li>
+            <li><strong>AI governance</strong> with prompt packs, operating manuals, revision state, and verification policy.</li>
+            <li><strong>Operations and security</strong> through testing, deployment, monitoring, threat modeling, and incident response.</li>
+          </ul>
         </div>
       </section>
 
-      <section class="paths" aria-label="Reading paths by role">
-        <p class="section-eyebrow">Where to start</p>
-        <h2 class="section-title">Reading Paths by Role</h2>
-        <div class="path-cards">
-          <div class="path-card">
-            <h3>Engineers</h3>
-            <ol>
-              <li>00 Start Here</li>
-              <li>03 Architecture</li>
-              <li>04 Frontend / 05 Backend</li>
-              <li>06 API</li>
-              <li>07 Database</li>
-            </ol>
-          </div>
-          <div class="path-card">
-            <h3>Product &amp; BA</h3>
-            <ol>
-              <li>00 Start Here</li>
-              <li>01 Product</li>
-              <li>02 Domain Model</li>
-              <li>03 Architecture</li>
-            </ol>
-          </div>
-          <div class="path-card">
-            <h3>QA</h3>
-            <ol>
-              <li>00 Start Here</li>
-              <li>10 Testing</li>
-              <li>08 Security</li>
-              <li>09 Operations</li>
-            </ol>
-          </div>
-          <div class="path-card">
-            <h3>AI Agents</h3>
-            <ol>
-              <li>00 Start Here</li>
-              <li>15 Governance</li>
-              <li>12 AI Skills</li>
-              <li>Task-specific folders</li>
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      <section class="agent-section" aria-label="AI agent workflow">
-        <p class="section-eyebrow">AI agent workflow</p>
-        <h2 class="section-title">Use the Same KB Workflow Across Common AI-Enabled IDEs</h2>
-        <p class="section-sub">
-          The template stores prompts, governance, revision state, and maintenance rules as plain
-          Markdown, so the workflow stays editor-agnostic for common AI-enabled IDEs and editors.
-          Start with the same documents whether you work in VS Code, Cursor, Windsurf, JetBrains
-          IDEs, or another agent-capable environment.
-        </p>
-        <div class="agent-grid">
-          <article class="agent-card">
-            <h3>Before the agent writes</h3>
-            <p>Read Template Index, How To Use, Metadata Schema, and Repository Revision State first.</p>
-          </article>
-          <article class="agent-card">
-            <h3>Choose the right prompt</h3>
-            <p>Use Prompting Guide for strategy, Prompt Pack for ready-made prompts, and Agent Manual for operating rules.</p>
-          </article>
-          <article class="agent-card">
-            <h3>Keep drift under control</h3>
-            <p>Compare the stored baseline with git HEAD before broad maintenance, then run the maintenance loop or patch flow.</p>
-          </article>
-        </div>
-        <div class="agent-links">
-          <a class="chip-link" href="../docs/?doc=template/12-ai-skills/agent-operating-manual.md">Agent Operating Manual</a>
-          <a class="chip-link" href="../docs/?doc=template/12-ai-skills/ai-ide-compatibility-matrix.md">AI IDE Compatibility Matrix</a>
-          <a class="chip-link" href="../docs/?doc=template/12-ai-skills/prompting-guide.md">Prompting Guide</a>
-          <a class="chip-link" href="../docs/?doc=template/12-ai-skills/prompt-pack.md">Prompt Pack</a>
-          <a class="chip-link" href="../docs/?doc=template/00-start-here/repository-revision-state.md">Revision State</a>
-        </div>
-      </section>
-
-      <section class="cli-section" aria-label="CLI tool">
-        <p class="section-eyebrow">Tooling</p>
-        <h2 class="section-title">CLI Preview — <code>kb</code></h2>
-        <p class="section-sub">A local CLI for initializing, maintaining, and health-checking downstream KB instances. No server required.</p>
-        <div class="cli-layout">
-          <div class="code-block">
-            <div class="code-label">Install &amp; run</div>
+      <section class="workflow-section" aria-label="How it works">
+        <p class="section-eyebrow">How it works</p>
+        <h2 class="section-title">A CLI Backbone With An Agent Operating Model</h2>
+        <p class="section-sub">The CLI bootstraps and validates the knowledge base locally. The AI workflow stays disciplined because the repository already contains the operating manual, prompt pack, revision state, and governance rules the agent must read first.</p>
+        <div class="workflow-layout">
+          <div class="workflow-column workflow-cli">
+            <div class="workflow-label">CLI bootstrap</div>
+            <div class="code-block">
+              <div class="code-label">Install &amp; initialize</div>
 <pre># One-off
 npx @williamduong/kb help
 
@@ -184,23 +95,38 @@ kb help
 
 # Init a new KB
 kb init --mode private-git</pre>
+            </div>
+            <ul class="cmd-list">
+              <li><code>init</code> bootstraps a new KB workspace.</li>
+              <li><code>sync</code> and <code>update</code> pull forward template changes safely.</li>
+              <li><code>doctor --strict</code> verifies that the KB is still coherent.</li>
+            </ul>
           </div>
-          <ul class="cmd-list">
-            <li><code>help</code> — list available commands</li>
-            <li><code>init --mode private-git|tracked</code> — bootstrap a new KB</li>
-            <li><code>show / hide</code> — toggle private-git visibility</li>
-            <li><code>sync [--accept-baseline]</code> — pull latest template changes</li>
-            <li><code>update [--accept-baseline]</code> — apply version patches</li>
-            <li><code>doctor [--json] [--strict]</code> — validate KB health</li>
-            <li><code>test</code> — run template self-checks</li>
-          </ul>
+          <div class="workflow-column workflow-agent">
+            <div class="workflow-label">Agent behavior</div>
+            <div class="workflow-panel">
+              <h3>What the agent reads before touching the project</h3>
+              <p>Start from the repository index and operating rules, not from guesswork. The agent reads the KB map, prompting guide, metadata schema, and revision state before making broad edits.</p>
+              <ul class="workflow-points">
+                <li>Read the operating manual to understand the maintenance loop and guardrails.</li>
+                <li>Pick a prompt from Prompt Pack instead of inventing an ad-hoc workflow.</li>
+                <li>Check revision state against git before trusting stale documentation.</li>
+              </ul>
+              <div class="agent-links">
+                <a class="chip-link" href="../docs/?doc=template/12-ai-skills/agent-operating-manual.md">Agent Operating Manual</a>
+                <a class="chip-link" href="../docs/?doc=template/12-ai-skills/prompting-guide.md">Prompting Guide</a>
+                <a class="chip-link" href="../docs/?doc=template/12-ai-skills/prompt-pack.md">Prompt Library</a>
+                <a class="chip-link" href="../docs/?doc=template/00-start-here/repository-revision-state.md">Revision State</a>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       <section class="quickstart-section" aria-label="Quick start">
         <p class="section-eyebrow">Get started</p>
         <h2 class="section-title">Getting Started In 3 Steps</h2>
-        <p class="section-sub">Do the setup first, pick one prompt block below, then validate and start development.</p>
+        <p class="section-sub">Install the CLI, choose the prompt flow inside Docs, then move straight into implementation.</p>
         <div class="quickstart-layout">
           <div class="code-block">
             <div class="code-label">Step 1 | Install + bootstrap</div>
@@ -216,105 +142,14 @@ kb doctor --strict</pre>
           </div>
           <ol class="steps">
             <li><strong>Step 1. Install + bootstrap</strong>: install the CLI, run <code>kb help</code>, then initialize with <code>kb init --mode private-git</code>.</li>
-            <li><strong>Step 2. Choose one prompt block below</strong>: read Prompting Guide first, then copy the prompt or command that matches your goal.</li>
-            <li><strong>Step 3. Validate and start development</strong>: run <code>kb doctor</code>, open the KB in your AI IDE, and continue from <code>00-start-here/finalization-plan.md</code>.</li>
+            <li><strong>Step 2. Choose a prompt flow</strong>: open the Prompt Library in Docs and select the build, maintenance, release, or patch workflow you need.</li>
+            <li><strong>Step 3. Validate and start development</strong>: run <code>kb doctor</code>, then continue implementation with the KB and finalization plan open.</li>
           </ol>
         </div>
         <div class="cta-row">
-          <a class="btn btn-primary" href="../docs/?doc=template/12-ai-skills/prompt-pack.md">Browse Prompt Pack</a>
-          <a class="btn btn-secondary" href="../docs/?doc=template/12-ai-skills/prompting-guide.md">Read Prompting Guide</a>
-        </div>
-      </section>
-
-      <section class="prompt-library-section" aria-label="Prompt blocks">
-        <p class="section-eyebrow">Prompt blocks</p>
-        <h2 class="section-title">Copy-Ready Commands And Prompts</h2>
-        <p class="section-sub">Each block has a short purpose line and a dedicated copy button. Choose one block, paste it into terminal or your AI IDE, then continue development.</p>
-        <div class="copy-grid" aria-label="Copy-ready command and prompt blocks">
-          <article class="copy-card">
-            <div class="copy-card-head">
-              <div>
-                <h3>Install + Bootstrap</h3>
-                <p class="copy-desc">Use first when starting from this repository or initializing a downstream KB.</p>
-              </div>
-              <button class="copy-btn" type="button" data-copy-target="copy-install-bootstrap">Copy</button>
-            </div>
-            <textarea id="copy-install-bootstrap" class="copy-form" readonly>npm install -g @williamduong/kb
-kb help
-kb init --mode private-git
-kb doctor --strict</textarea>
-          </article>
-
-          <article class="copy-card">
-            <div class="copy-card-head">
-              <div>
-                <h3>Full KB Build Prompt</h3>
-                <p class="copy-desc">Use when you want the agent to build or fill the KB from scratch for a project.</p>
-              </div>
-              <button class="copy-btn" type="button" data-copy-target="copy-full-build">Copy</button>
-            </div>
-            <textarea id="copy-full-build" class="copy-form" readonly>Hay doc toan bo huong dan trong knowledge-base/INDEX.md va 00-start-here/how-to-use-this-kb.md, lam theo finalization-plan.md, tu dong xay dung knowledge-base day du cho project &lt;TEN_DU_AN&gt;, uu tien code-verified toi da theo tung phase, cap nhat index va governance, khong hoi lai, chi bao cao ket qua.</textarea>
-          </article>
-
-          <article class="copy-card">
-            <div class="copy-card-head">
-              <div>
-                <h3>Maintenance Prompt</h3>
-                <p class="copy-desc">Use when the KB already exists and you need a guided maintenance sweep.</p>
-              </div>
-              <button class="copy-btn" type="button" data-copy-target="copy-maintenance">Copy</button>
-            </div>
-            <textarea id="copy-maintenance" class="copy-form" readonly>Hay quet va maintain knowledge-base hien tai theo review-cadence va verification-policy, phat hien drift, downgrade hoac upgrade verification dung quy tac, cap nhat finalization-plan queue, va bao cao cac thay doi da thuc hien.</textarea>
-          </article>
-
-          <article class="copy-card">
-            <div class="copy-card-head">
-              <div>
-                <h3>Git Drift Reconciliation Prompt</h3>
-                <p class="copy-desc">Use when baseline revision and current HEAD may have diverged.</p>
-              </div>
-              <button class="copy-btn" type="button" data-copy-target="copy-drift">Copy</button>
-            </div>
-            <textarea id="copy-drift" class="copy-form" readonly>Hay doc 00-start-here/repository-revision-state.md, so sanh baseline revision da luu voi git HEAD hien tai, neu co sai lech thi lay git log va git diff tu revision da luu den hien tai, xac dinh docs bi drift, chay maintenance loop theo review-cadence va verification-policy, cap nhat finalization-plan queue, dong bo lai noi dung, roi ghi baseline moi vao repository-revision-state.md.</textarea>
-          </article>
-
-          <article class="copy-card">
-            <div class="copy-card-head">
-              <div>
-                <h3>Release Notes Preview</h3>
-                <p class="copy-desc">Use only when you explicitly want to preview a new release-note entry from git history.</p>
-              </div>
-              <button class="copy-btn" type="button" data-copy-target="copy-release-preview">Copy</button>
-            </div>
-            <textarea id="copy-release-preview" class="copy-form" readonly>npm run release:notes -- v1.1.1 Minor Medium dry-run</textarea>
-          </article>
-
-          <article class="copy-card">
-            <div class="copy-card-head">
-              <div>
-                <h3>Release Notes Apply</h3>
-                <p class="copy-desc">Use only when you intentionally want to write a new release-note entry into TEMPLATE_CHANGELOG.md.</p>
-              </div>
-              <button class="copy-btn" type="button" data-copy-target="copy-release-apply">Copy</button>
-            </div>
-            <textarea id="copy-release-apply" class="copy-form" readonly>npm run release:notes -- v1.1.1 Minor Medium</textarea>
-          </article>
-
-          <article class="copy-card">
-            <div class="copy-card-head">
-              <div>
-                <h3>Patch Upgrade Prompt</h3>
-                <p class="copy-desc">Use when upgrading an existing KB to a newer template version.</p>
-              </div>
-              <button class="copy-btn" type="button" data-copy-target="copy-patch-upgrade">Copy</button>
-            </div>
-            <textarea id="copy-patch-upgrade" class="copy-form" readonly>Read TEMPLATE_CHANGELOG.md, template-versioning-policy.md, 00-start-here/repository-revision-state.md, and the relevant migration note. Upgrade this project KB from template version &lt;OLD_VERSION&gt; to &lt;NEW_VERSION&gt;, reconcile source drift from the stored brand-scoped baseline commit first, apply required structural and governance changes, refresh indexes and verification states, update finalization-plan queue, and report completed migration work plus pending items.</textarea>
-          </article>
-        </div>
-        <div class="cta-row">
-          <a class="btn btn-primary" href="../docs/?doc=template/12-ai-skills/prompt-pack.md">Open Prompt Pack</a>
-          <a class="btn btn-secondary" href="../docs/?doc=template/TEMPLATE_CHANGELOG.md">Open Release Notes</a>
-          <a class="btn btn-ghost" href="../docs/?doc=template/12-ai-skills/version-patch-prompts.md">Open Patch Flow</a>
+          <a class="btn btn-primary" href="../docs/?doc=template/12-ai-skills/prompt-pack.md">Go to Prompt Library</a>
+          <a class="btn btn-secondary" href="../docs/">Open Docs</a>
+          <a class="btn btn-ghost" href="https://github.com/williamduong/project-knowledge-base-template">View GitHub</a>
         </div>
       </section>
     </main>
@@ -394,41 +229,6 @@ kb doctor --strict</textarea>
           }
         });
 
-        document.querySelectorAll('.copy-form').forEach(function (element) {
-          element.addEventListener('focus', function () {
-            var title = element.closest('.copy-card')?.querySelector('h3')?.textContent?.trim() || 'copy_form';
-            track('landing_copy_form_focus', {
-              event_category: 'engagement',
-              event_label: title
-            });
-          });
-        });
-
-        document.querySelectorAll('.copy-btn').forEach(function (button) {
-          button.addEventListener('click', async function () {
-            var targetId = button.getAttribute('data-copy-target');
-            var source = targetId ? document.getElementById(targetId) : null;
-            if (!source) {
-              return;
-            }
-
-            try {
-              await navigator.clipboard.writeText(source.value);
-              var original = button.textContent;
-              button.textContent = 'Copied';
-              setTimeout(function () {
-                button.textContent = original;
-              }, 1200);
-              track('landing_copy_button_click', {
-                event_category: 'engagement',
-                event_label: targetId
-              });
-            } catch (error) {
-              source.focus();
-              source.select();
-            }
-          });
-        });
       })();
     </script>
   </body>
