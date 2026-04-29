@@ -14,6 +14,7 @@ const { runPlan } = require('./commands/plan');
 const { runIndex } = require('./commands/index');
 const { runQuestions } = require('./commands/questions');
 const { runMark } = require('./commands/mark');
+const { runNormalizeState } = require('./commands/normalize-state');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -80,6 +81,11 @@ async function run(argv) {
 
   if (command === 'mark') {
     await runMark({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'normalize-state') {
+    await runNormalizeState({ args: rest, cwd: process.cwd() });
     return;
   }
 
