@@ -191,7 +191,25 @@
             </span>
             <h2>AI Agent-ready</h2>
           </div>
-          <p>Prompt packs and operating rules let agents work with less guesswork and less drift. <code>kb init</code> auto-generates adapter files for Cursor, Claude, Windsurf, Cline, and Codex so every AI IDE picks up KB context immediately.</p>
+          <p>Prompt packs and operating rules let agents work with less guesswork and less drift. <code>kb init</code> auto-detects the active IDE, generates the relevant adapter file, and creates project-scoped KB prompts for the first Copilot handoff.</p>
+        </article>
+      </section>
+
+      <section class="pillars" aria-label="Latest release">
+        <article>
+          <div class="feature-head">
+            <span class="icon-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M7 4.5h7l3 3V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2z"></path>
+                <path d="M14 4.5v3h3"></path>
+                <path d="M8.5 12h7"></path>
+                <path d="M8.5 15.5h5"></path>
+              </svg>
+            </span>
+            <h2>Latest Release: v1.1.0</h2>
+          </div>
+          <p>The latest package release streamlines first-run onboarding: `kb init` now auto-detects mode, creates a project-scoped KB agent, prints a Copilot handoff prompt, and keeps chained bootstrap/index output quiet.</p>
+          <p><a class="text-link" href="./docs.html?path=TEMPLATE_CHANGELOG.md">Read the full release notes in the template changelog &rarr;</a></p>
         </article>
       </section>
 
@@ -222,7 +240,7 @@ kb help
 # Initialize KB (auto-detects mode, creates agent files)
 kb init
 
-# After init, a handoff prompt will be printed. Save it!
+# After init, a handoff prompt will be printed. Save it!</pre>
             </div>
             <div class="gs-card-links">
               <a class="chip-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Setup guide</a>
@@ -308,7 +326,7 @@ kb update   # apply + refresh version state</pre>
             <div class="cmd-table">
               <div class="cmd-row">
                 <code class="cmd-name">kb init</code>
-                <span class="cmd-desc">Scaffold KB; auto-generate AI IDE adapter files for Cursor, Claude, Windsurf &amp; more</span>
+                <span class="cmd-desc">Scaffold KB; auto-detect mode, create KB agent prompts, and generate the relevant AI IDE adapter</span>
               </div>
               <div class="cmd-row">
                 <code class="cmd-name">kb bootstrap</code>
