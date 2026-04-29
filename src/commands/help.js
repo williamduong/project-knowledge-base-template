@@ -8,7 +8,7 @@ function runHelp({ packageJson }) {
   console.log('  kb help');
   console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>]');
   console.log('          [--skip-adapters] [--install-hooks]');
-  console.log('  kb bootstrap [--dry-run]');
+  console.log('  kb bootstrap [--dry-run] [--no-fill-placeholders]');
   console.log('  kb plan list');
   console.log('  kb plan add "<description>" [--owner <name>] [--priority P0|P1|P2]');
   console.log('  kb show [--backup-existing]');
@@ -26,7 +26,8 @@ function runHelp({ packageJson }) {
   console.log('             --install-hooks   Install a pre-commit hook that runs kb doctor.');
   console.log('  bootstrap  Scan source code and generate unverified stub docs for');
   console.log('             03-architecture, 05-backend, 06-api, 07-database, 09-operations.');
-  console.log('             --dry-run         Preview which files would be created.');
+  console.log('             --dry-run         Preview create/update/skip actions.');
+  console.log('             --no-fill-placeholders  Do not replace existing template placeholders.');
   console.log('  plan       Manage the KB finalization plan (finalization-plan.md).');
   console.log('             list              Show pending and done plan items.');
   console.log('             add "<text>"      Append a new todo item with auto-incremented ID.');

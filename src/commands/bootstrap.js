@@ -284,11 +284,78 @@ ${envSection}
 `;
 }
 
+function stubCurrentState({ stack, sourceFolders, envVars }) {
+  const fm = `---
+title: Current State
+type: orientation
+status: active
+owner: knowledge-management
+time_state: current
+verification: unverified
+last_updated: ${today()}
+last_verified: ${today()}
+---`;
+
+  return `${fm}
+
+# Current State
+
+## Purpose
+Capture the observed current implementation baseline for this repository so future KB updates can distinguish current vs target state.
+
+## What To Fill
+- Replace placeholders with code-verified facts after reviewing source files.
+- Keep current behavior and target behavior explicitly separated.
+
+## Current State
+- Detected language: **${stack.language}**
+- Detected frameworks: **${stack.frameworks.join(', ') || 'none'}**
+- Detected source folders: ${sourceFolders.length > 0 ? sourceFolders.map((f) => `\`${f}/\``).join(', ') : 'none'}
+- Detected environment keys (count): **${envVars.length}**
+
+## Target State
+- Upgrade this file from \`verification: unverified\` to \`code-verified\` after validating claims against source.
+- Link architecture, backend, API, and database KB sections to concrete source files.
+
+## Evidence
+- package manifests: ${stack.packageFiles.join(', ') || '(none detected)'}
+- scanned folders: ${sourceFolders.join(', ') || '(none detected)'}
+
+## Open Questions
+- Which runtime/deployment environment is canonical (local/docker/cloud)?
+- Which API surface is public and versioned?
+- Which data model objects are authoritative for domain vocabulary?
+`;
+}
+
+function isPlaceholderDocument(text) {
+  const markers = [
+    '[Enter the purpose of this document here]',
+    '[Enter instructions or placeholders for required information]',
+    '[Describe the current implementation or situation]',
+    '[Describe the desired future state]',
+    '[Link to code, logs, or other proof]',
+    '[List any unresolved issues or questions]',
+    '(placeholder)',
+  ];
+
+  return markers.some((marker) => text.includes(marker));
+}
+
 // ─── Write stubs ─────────────────────────────────────────────────────────
 
-function writeStub({ contentRoot, relPath, content, dryRun }) {
+function writeStub({ contentRoot, relPath, content, dryRun, fillPlaceholders }) {
   const fullPath = path.join(contentRoot, relPath);
   if (fs.existsSync(fullPath)) {
+    const existing = fs.readFileSync(fullPath, 'utf8');
+    if (fillPlaceholders && isPlaceholderDocument(existing)) {
+      if (!dryRun) {
+        fs.writeFileSync(fullPath, content, 'utf8');
+      }
+
+      return { path: relPath, action: 'updated' };
+    }
+
     return { path: relPath, action: 'skipped' };
   }
 
@@ -303,7 +370,7 @@ function writeStub({ contentRoot, relPath, content, dryRun }) {
 // ─── Command ──────────────────────────────────────────────────────────────
 
 function parseArgs(args) {
-  const options = { dryRun: false };
+  const options = { dryRun: false, fillPlaceholders: true };
 
   for (const arg of args) {
     if (arg === '--dry-run') {
@@ -311,7 +378,12 @@ function parseArgs(args) {
       continue;
     }
 
-    throw new Error(`Unknown bootstrap option "${arg}". Supported: --dry-run`);
+    if (arg === '--no-fill-placeholders') {
+      options.fillPlaceholders = false;
+      continue;
+    }
+
+    throw new Error(`Unknown bootstrap option "${arg}". Supported: --dry-run, --no-fill-placeholders`);
   }
 
   return options;
@@ -336,6 +408,7 @@ async function runBootstrap({ args, cwd }) {
   console.log(`  Env vars  : ${envVars.length} detected`);
 
   const stubs = [
+    { relPath: '00-start-here/current-state.md', content: stubCurrentState({ stack, sourceFolders, envVars }) },
     { relPath: '03-architecture/system-overview.md', content: stubSystemOverview({ stack, sourceFolders }) },
     { relPath: '05-backend/services-overview.md', content: stubServicesOverview({ stack, sourceFolders }) },
     { relPath: '06-api/api-overview.md', content: stubApiOverview({ stack }) },
@@ -343,16 +416,31 @@ async function runBootstrap({ args, cwd }) {
     { relPath: '09-operations/configuration-deployment.md', content: stubConfigDeployment({ stack, envVars }) },
   ];
 
-  const results = stubs.map((s) => writeStub({ contentRoot, ...s, dryRun: options.dryRun }));
+  const results = stubs.map((s) => writeStub({
+    contentRoot,
+    ...s,
+    dryRun: options.dryRun,
+    fillPlaceholders: options.fillPlaceholders,
+  }));
 
   const created = results.filter((r) => r.action === 'created');
+  const updated = results.filter((r) => r.action === 'updated');
   const skipped = results.filter((r) => r.action === 'skipped');
 
   if (options.dryRun) {
-    console.log('\n[dry-run] Would create:');
+    console.log('\n[dry-run] Planned actions:');
     for (const r of results) {
-      const marker = fs.existsSync(path.join(contentRoot, r.path)) ? '~ skip' : '+ new ';
-      console.log(`  ${marker}  ${r.path}`);
+      if (!fs.existsSync(path.join(contentRoot, r.path))) {
+        console.log(`  + create  ${r.path}`);
+        continue;
+      }
+
+      if (options.fillPlaceholders && r.action === 'updated') {
+        console.log(`  * update  ${r.path} (placeholder detected)`);
+        continue;
+      }
+
+      console.log(`  ~ skip    ${r.path}`);
     }
     return;
   }
@@ -361,6 +449,13 @@ async function runBootstrap({ args, cwd }) {
     console.log('\nCreated stubs (verification: unverified):');
     for (const r of created) {
       console.log(`  + ${r.path}`);
+    }
+  }
+
+  if (updated.length > 0) {
+    console.log('\nUpdated existing placeholder docs:');
+    for (const r of updated) {
+      console.log(`  * ${r.path}`);
     }
   }
 
