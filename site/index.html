@@ -62,7 +62,7 @@
           </span>
           <span>Docs</span>
         </a>
-        <a href="./docs.html?doc=template/12-ai-skills/agent-operating-manual.md">
+        <a href="./docs.html?path=12-ai-skills/agent-operating-manual.md">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="img" focusable="false">
               <rect x="7" y="7" width="10" height="10" rx="2"></rect>
@@ -74,7 +74,7 @@
           </span>
           <span>AI Agent</span>
         </a>
-        <a href="./docs.html?doc=template/TEMPLATE_CHANGELOG.md">
+        <a href="./docs.html?path=TEMPLATE_CHANGELOG.md">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="img" focusable="false">
               <path d="M7 4.5h7l3 3V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2z"></path>
@@ -85,7 +85,7 @@
           </span>
           <span>Release Notes</span>
         </a>
-        <a href="./docs.html?doc=template/12-ai-skills/version-patch-prompts.md">
+        <a href="./docs.html?path=12-ai-skills/version-patch-prompts.md">
           <span class="nav-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" role="img" focusable="false">
               <path d="m5 7 4 5-4 5"></path>
@@ -201,7 +201,7 @@
         <p class="section-sub">
           Before you begin, make sure you have <strong>Node.js 18+</strong>, <strong>Git</strong>, and a code editor
           (VS Code recommended). No other runtime or service is required to bootstrap a local KB.
-          <a class="text-link" href="./docs.html?doc=template/00-start-here/how-to-use-this-kb.md">Read the full setup guide in Docs &rarr;</a>
+          <a class="text-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Read the full setup guide in Docs &rarr;</a>
         </p>
 
         <div class="gs-steps">
@@ -223,8 +223,8 @@ kb help
 kb init --mode private-git</pre>
             </div>
             <div class="gs-card-links">
-              <a class="chip-link" href="./docs.html?doc=template/00-start-here/how-to-use-this-kb.md">Setup guide</a>
-              <a class="chip-link" href="./docs.html?doc=template/TEMPLATE_CHANGELOG.md">Release notes</a>
+              <a class="chip-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Setup guide</a>
+              <a class="chip-link" href="./docs.html?path=TEMPLATE_CHANGELOG.md">Release notes</a>
             </div>
           </div>
 
@@ -233,19 +233,22 @@ kb init --mode private-git</pre>
               <span class="gs-step-num">02</span>
               <div>
                 <h3>Choose a prompt flow</h3>
-                <p>Open the Prompt Library and pick a starting workflow — build-new, maintenance, or patch — before touching any content.</p>
+                <p>Open the Prompt Library and pick a starting workflow — full build, maintenance sweep, or brand-scoped patch — before touching any content.</p>
               </div>
             </div>
             <div class="code-block">
               <div class="code-label">Recommended first prompts</div>
-<pre># In your AI chat, paste one of:
-→ "Build new KB" prompt
-→ "Onboard existing project" prompt
-→ "Fill section" prompt</pre>
+<pre># First, ask the agent to read:
+INDEX.md + 00-start-here/how-to-use-this-kb.md
+
+# Then paste one of:
+→ "Build KB From Scratch" prompt
+→ "Maintenance Sweep" prompt
+→ "Brand-Scoped KB Patch" prompt</pre>
             </div>
             <div class="gs-card-links">
-              <a class="chip-link" href="./docs.html?doc=template/12-ai-skills/prompt-pack.md">Prompt Library</a>
-              <a class="chip-link" href="./docs.html?doc=template/12-ai-skills/prompting-guide.md">Prompting guide</a>
+              <a class="chip-link" href="./docs.html?path=12-ai-skills/prompt-pack.md">Prompt Library</a>
+              <a class="chip-link" href="./docs.html?path=12-ai-skills/prompting-guide.md">Prompting guide</a>
             </div>
           </div>
 
@@ -259,15 +262,18 @@ kb init --mode private-git</pre>
             </div>
             <div class="code-block">
               <div class="code-label">Terminal</div>
-<pre>kb doctor --strict
+<pre>kb doctor
+
+# Optional hard gate for CI
+kb doctor --strict
 
 # Reconcile template drift later
 kb sync     # collect drift evidence
 kb update   # apply + refresh version state</pre>
             </div>
             <div class="gs-card-links">
-              <a class="chip-link" href="#workflow">CLI reference &darr;</a>
-              <a class="chip-link" href="./docs.html?doc=template/12-ai-skills/version-patch-prompts.md">Maintenance prompts</a>
+              <a class="chip-link" href="./docs.html?path=README.md">CLI reference</a>
+              <a class="chip-link" href="./docs.html?path=12-ai-skills/version-patch-prompts.md">Maintenance prompts</a>
             </div>
           </div>
 
@@ -347,13 +353,13 @@ kb update   # apply + refresh version state</pre>
               </li>
               <li>
                 <span class="wf-point-label">Verify after writing</span>
-                Runs <code>kb doctor</code> and commits KB alongside code in one pass.
+                Runs <code>kb doctor</code> and prepares KB changes to ship with related code updates.
               </li>
             </ul>
             <div class="wf-card-links">
-              <a class="chip-link" href="./docs.html?doc=template/12-ai-skills/agent-operating-manual.md">Agent Operating Manual</a>
-              <a class="chip-link" href="./docs.html?doc=template/12-ai-skills/prompt-pack.md">Prompt Library</a>
-              <a class="chip-link" href="./docs.html?doc=template/00-start-here/repository-revision-state.md">Revision State</a>
+              <a class="chip-link" href="./docs.html?path=12-ai-skills/agent-operating-manual.md">Agent Operating Manual</a>
+              <a class="chip-link" href="./docs.html?path=12-ai-skills/prompt-pack.md">Prompt Library</a>
+              <a class="chip-link" href="./docs.html?path=00-start-here/repository-revision-state.md">Revision State</a>
             </div>
           </div>
 
@@ -393,7 +399,7 @@ kb update   # apply + refresh version state</pre>
                 <span class="flow-step-label">Fill</span>
                 <span class="flow-step-body">Paste a prompt from Prompt Pack &rarr; agent fills KB</span>
                 <div class="flow-step-links">
-                  <a href="#" class="flow-step-btn">Browse prompts &rarr;</a>
+                  <a href="./docs.html?path=12-ai-skills/prompt-pack.md" class="flow-step-btn">Browse prompts &rarr;</a>
                 </div>
               </div>
             </div>
@@ -409,11 +415,11 @@ kb update   # apply + refresh version state</pre>
                 <span class="flow-step-label">Step 1 &mdash; Pick an action prompt</span>
                 <span class="flow-step-body">Choose a prompt that matches what you&rsquo;re building. Paste it into your AI chat to start the session.</span>
                 <div class="flow-step-links">
-                  <a href="#" class="flow-step-btn">Build feature</a>
-                  <a href="#" class="flow-step-btn">Patch docs</a>
-                  <a href="#" class="flow-step-btn">Add ADR</a>
-                  <a href="#" class="flow-step-btn">Refactor + update KB</a>
-                  <a href="#" class="flow-step-btn">See all &rarr;</a>
+                  <a href="./docs.html?path=12-ai-skills/prompting-guide.md" class="flow-step-btn">Build feature</a>
+                  <a href="./docs.html?path=12-ai-skills/prompt-pack.md" class="flow-step-btn">Patch docs</a>
+                  <a href="./docs.html?path=03-architecture/adr/adr-001-json-composition-format.md" class="flow-step-btn">Add ADR</a>
+                  <a href="./docs.html?path=12-ai-skills/version-patch-prompts.md" class="flow-step-btn">Refactor + update KB</a>
+                  <a href="./docs.html?path=12-ai-skills/prompt-pack.md" class="flow-step-btn">See all &rarr;</a>
                 </div>
               </div>
               <div class="flow-step flow-step-wide flow-step-accent" role="listitem">
@@ -422,7 +428,7 @@ kb update   # apply + refresh version state</pre>
                   <li>Reads <code>INDEX.md</code> + operating manual for grounding</li>
                   <li>Fills or updates relevant KB docs aligned with code changes</li>
                   <li>Stamps <code>verification</code> and <code>time_state</code> fields</li>
-                  <li>Runs <code>kb doctor</code> and commits KB alongside code</li>
+                  <li>Runs <code>kb doctor</code> and prepares doc updates for the same changeset</li>
                 </ul>
               </div>
             </div>
@@ -433,11 +439,11 @@ kb update   # apply + refresh version state</pre>
               <span class="flow-num">3</span>
               Source sync &mdash; reflecting code changes back into KB
             </h3>
-            <p class="flow-note">After a successful bootstrap, sync can auto-fire &mdash; or use <code>kb sync --accept-baseline</code> as a shortcut when you&rsquo;re in a hurry.</p>
+            <p class="flow-note">After a successful bootstrap, run sync manually (or ask your agent to run it) and use <code>kb sync --accept-baseline</code> only after reviewing drift evidence.</p>
             <div class="flow-row" role="list">
               <div class="flow-step" role="listitem">
                 <span class="flow-step-label">Step 1 &mdash; Trigger</span>
-                <span class="flow-step-body">Run <code>kb sync</code> manually<br>&mdash; or type a sync intent in your AI chat<br>&mdash; or let it auto-fire after bootstrap</span>
+                <span class="flow-step-body">Run <code>kb sync</code> manually<br>&mdash; or ask your AI agent to execute <code>kb sync</code> in this workspace</span>
               </div>
               <div class="flow-step" role="listitem">
                 <span class="flow-step-label">Step 2 &mdash; KB auto-runs</span>
@@ -448,8 +454,8 @@ kb update   # apply + refresh version state</pre>
                 </ul>
               </div>
               <div class="flow-step flow-step-accent" role="listitem">
-                <span class="flow-step-label">Step 3 &mdash; Session resume</span>
-                <span class="flow-step-body">If sync was triggered mid vibe-code session, KB picks up your prior prompts and continues the interrupted workflow automatically.</span>
+                <span class="flow-step-label">Step 3 &mdash; Continue execution</span>
+                <span class="flow-step-body">Review the sync report, then continue your current coding or documentation workflow with refreshed KB context.</span>
               </div>
             </div>
           </div>
