@@ -200,7 +200,7 @@
         <h2 class="section-title">Getting Started In 3 Steps</h2>
         <p class="section-sub">
           Before you begin, make sure you have <strong>Node.js 18+</strong>, <strong>Git</strong>, and a code editor
-          (VS Code recommended). No other runtime or service is required to bootstrap a local KB.
+          (VS Code, Cursor, or Claude recommended). No other runtime or service is required to bootstrap a local KB.
           <a class="text-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Read the full setup guide in Docs &rarr;</a>
         </p>
 
@@ -210,8 +210,8 @@
             <div class="gs-card-head">
               <span class="gs-step-num">01</span>
               <div>
-                <h3>Install + bootstrap</h3>
-                <p>Install the CLI globally, then run <code>kb init</code> to scaffold a fresh knowledge base in your repository.</p>
+                <h3>Install + Initialize KB</h3>
+                <p>Install the CLI globally, then run <code>kb init</code> to scaffold your knowledge base. Mode is auto-detected (private-git if .git exists, otherwise tracked). Agent files are created automatically.</p>
               </div>
             </div>
             <div class="code-block">
@@ -219,14 +219,10 @@
 <pre>npm install -g @williamduong/kb
 kb help
 
-# Scaffold into current repo (generates AI IDE adapter files automatically)
-kb init --mode private-git
+# Initialize KB (auto-detects mode, creates agent files)
+kb init
 
-# Auto-detect stack + generate stub docs
-kb bootstrap
-
-# Check fill progress
-kb index</pre>
+# After init, a handoff prompt will be printed. Save it!
             </div>
             <div class="gs-card-links">
               <a class="chip-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Setup guide</a>
@@ -238,26 +234,25 @@ kb index</pre>
             <div class="gs-card-head">
               <span class="gs-step-num">02</span>
               <div>
-                <h3>Fill via chat-first intake</h3>
-                <p>Use the chat-first intake flow to fill KB content 5 questions at a time directly in your AI chat. Or pick a prompt from the Prompt Library for a full build or maintenance sweep.</p>
+                <h3>Build KB with @kb in Copilot Chat</h3>
+                <p>Copy the handoff prompt from <code>kb init</code> output and paste it into Copilot Chat. The @kb agent will scan your source code and generate documentation stubs automatically.</p>
               </div>
             </div>
             <div class="code-block">
-              <div class="code-label">Chat-first intake (recommended)</div>
-<pre># Generate a 5-question batch for your AI chat
-kb questions --chat --batch 1
+              <div class="code-label">Copilot Chat (VS Code / Cursor / Claude)</div>
+<pre>@kb Build Knowledge Base from Source
 
-# Paste the output into chat, answer questions,
-# agent fills KB docs, then continue:
-kb questions --chat --batch 2
+(kb init printed a handoff prompt - paste it here!)
 
-# Or use a prompt from the Prompt Library instead:
-→ "Build KB From Scratch" prompt
-→ "Maintenance Sweep" prompt</pre>
+Agent will:
+- Detect your tech stack
+- Generate stubs for architecture, backend, API, database
+- Create intake questions for high-priority items
+- Build KB index report</pre>
             </div>
             <div class="gs-card-links">
+              <a class="chip-link" href="./docs.html?path=12-ai-skills/agent-operating-manual.md">Agent guide</a>
               <a class="chip-link" href="./docs.html?path=12-ai-skills/prompt-pack.md">Prompt Library</a>
-              <a class="chip-link" href="./docs.html?path=12-ai-skills/prompting-guide.md">Prompting guide</a>
             </div>
           </div>
 
@@ -265,24 +260,21 @@ kb questions --chat --batch 2
             <div class="gs-card-head">
               <span class="gs-step-num">03</span>
               <div>
-                <h3>Validate and start development</h3>
-                <p>Run <code>kb doctor</code> to confirm the KB is coherent, then keep it healthy over time with the maintenance prompt set.</p>
+                <h3>Review & Publish</h3>
+                <p>Review generated stubs, fill in content, run <code>kb doctor</code> to validate. Your KB is now ready for team collaboration and AI agent reference!</p>
               </div>
             </div>
             <div class="code-block">
               <div class="code-label">Terminal</div>
 <pre>kb doctor
 
-# Optional hard gate for CI
-kb doctor --strict
-
-# Normalize fill state after bootstrap
-kb normalize-state
-
-# Monitor fill progress over time
+# (Optional) Review fill progress
 kb index
 
-# Reconcile template drift later
+# (Optional) Normalize unset kb_state values
+kb normalize-state
+
+# (Optional) Reconcile template drift later
 kb sync     # collect drift evidence
 kb update   # apply + refresh version state</pre>
             </div>

@@ -105,12 +105,40 @@ Full KB: \`${kbPath}/INDEX.md\`
 }
 
 /**
+ * Detect the active IDE/editor environment from env vars and workspace markers.
+ * Priority: VS Code > Cursor > Claude > Windsurf > Cline > Other
+ * Returns the detected IDE name or 'other' if none found.
+ */
+function detectIDE() {
+  // Check environment variables
+  if (process.env.TERM_PROGRAM === 'vscode' || process.env.VSCODE_PORTABLE) {
+    return 'vscode';
+  }
+
+  if (process.env.CURSOR_READY === 'true' || process.env.CURSOR_WORKSPACE) {
+    return 'cursor';
+  }
+
+  if (process.env.WINDSURF_WORKSPACE) {
+    return 'windsurf';
+  }
+
+  if (process.env.CLINE_WORKSPACE) {
+    return 'cline';
+  }
+
+  // Fallback: default to vscode (most common) but user can override with --adapter flag
+  return 'vscode';
+}
+
+/**
  * @param {Object} opts
  * @param {string} opts.workspaceRoot
  * @param {string} opts.visibleMountPath
- * @returns {{ created: string[], skipped: string[] }}
+ * @param {string} [opts.ideOverride] — Force generation of specific IDE adapter (vscode|cursor|claude|windsurf|cline|all)
+ * @returns {{ created: string[], skipped: string[], detectedIDE: string }}
  */
-function generateAdapterFiles({ workspaceRoot, visibleMountPath }) {
+function generateAdapterFiles({ workspaceRoot, visibleMountPath, ideOverride }) {
   const kbPath = kbRelativePath(visibleMountPath, workspaceRoot);
   const created = [];
   const skipped = [];
@@ -127,15 +155,33 @@ function generateAdapterFiles({ workspaceRoot, visibleMountPath }) {
     created.push(relPath);
   }
 
-  writeIfMissing('AGENTS.md', agentsMd(kbPath));
-  writeIfMissing('CLAUDE.md', claudeMd(kbPath));
-  writeIfMissing('.cursor/rules/kb.mdc', cursorMdc(kbPath));
-  writeIfMissing('.windsurfrules', windsurfRules(kbPath));
-  writeIfMissing('.clinerules', clineRules(kbPath));
+  const detectedIDE = ideOverride || detectIDE();
 
-  return { created, skipped };
+  // Generate only the relevant adapter(s)
+  if (detectedIDE === 'all') {
+    // Generate all adapters (for debugging/testing)
+    writeIfMissing('AGENTS.md', agentsMd(kbPath));
+    writeIfMissing('CLAUDE.md', claudeMd(kbPath));
+    writeIfMissing('.cursor/rules/kb.mdc', cursorMdc(kbPath));
+    writeIfMissing('.windsurfrules', windsurfRules(kbPath));
+    writeIfMissing('.clinerules', clineRules(kbPath));
+  } else if (detectedIDE === 'cursor') {
+    writeIfMissing('.cursor/rules/kb.mdc', cursorMdc(kbPath));
+  } else if (detectedIDE === 'windsurf') {
+    writeIfMissing('.windsurfrules', windsurfRules(kbPath));
+  } else if (detectedIDE === 'cline') {
+    writeIfMissing('.clinerules', clineRules(kbPath));
+  } else if (detectedIDE === 'claude') {
+    writeIfMissing('CLAUDE.md', claudeMd(kbPath));
+  } else {
+    // Default: vscode or fallback to generic AGENTS.md
+    writeIfMissing('AGENTS.md', agentsMd(kbPath));
+  }
+
+  return { created, skipped, detectedIDE };
 }
 
 module.exports = {
   generateAdapterFiles,
+  detectIDE,
 };

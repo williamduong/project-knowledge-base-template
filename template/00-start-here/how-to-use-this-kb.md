@@ -77,7 +77,82 @@ For canonical terminology and examples, read [terminology-guard.md](terminology-
 5. For code-impact tasks, update docs in same PR when feasible
 6. Log assumptions in Open Questions section if evidence is missing
 7. Do not ask the user to choose verification mode or queue location unless the repository already has a conflicting standard.
+## Getting Started: Initialize and Build Your KB
 
+### Quick Start Flow
+
+**Step 1: Initialize KB in your workspace**
+
+```bash
+# Install the CLI globally (one-time setup)
+npm install -g @williamduong/kb
+
+# Initialize KB in your repository
+# Mode is auto-detected: private-git (if .git exists) or tracked
+kb init
+
+# Output includes a handoff prompt for next step
+```
+
+After `kb init` completes, you'll see:
+- KB template copied to your repo (in `.git/project-kb/` or `knowledge-base/`)
+- `.github/agents/kb.agent.md` — project-scoped AI agent created
+- `.github/prompts/kb-build.prompt.md` — handoff prompt for Copilot Chat
+- Handoff prompt printed to terminal (save this!)
+
+**Step 2: Build documentation with @kb in Copilot Chat**
+
+```
+Paste this into your Copilot Chat (VS Code, Cursor, or Claude):
+
+@kb Build Knowledge Base from Source
+
+(Then paste the handoff prompt printed by kb init)
+```
+
+The @kb agent will:
+1. Detect your tech stack (languages, frameworks, ORMs)
+2. Generate unverified stubs for: architecture, backend, API, database, operations
+3. Create intake questions from placeholders
+4. Build KB index summary
+
+Reference: [.github/agents/kb.agent.md](.github/agents/kb.agent.md) for full agent behaviors.
+
+**Step 3: Review and continue**
+
+After the agent completes:
+- Review generated stubs in KB folders
+- Fill in high-priority items (marked P0 in [finalization-plan.md](finalization-plan.md))
+- Run `kb doctor` to validate coherence
+- Keep KB in sync with code using `kb sync` and `kb update` periodically
+
+### Maintenance: Keep KB in Sync Over Time
+
+For periodic maintenance sweeps, use:
+
+```
+@kb Maintain Knowledge Base
+
+(Agent detects drift, updates stubs, upgrades verification states)
+```
+
+Reference: [.github/prompts/kb-maintain.prompt.md](.github/prompts/kb-maintain.prompt.md)
+
+### Advanced: CLI Commands for Custom Workflows
+
+If you prefer CLI-driven workflows:
+
+```bash
+kb help                    # show basic commands
+kb help --advanced         # show all 15 commands
+kb bootstrap              # scan code, generate stubs
+kb index                  # build KB summary report
+kb questions --batch 5    # generate intake Q&A
+kb normalize-state        # assign kb_state to unset docs
+kb doctor                 # publish-readiness checks
+kb sync                   # detect KB drift from source
+kb update                 # refresh KB version state
+```
 ## Prompting Help
 
 - For the best prompt patterns by goal, read [../12-ai-skills/prompting-guide.md](../12-ai-skills/prompting-guide.md).

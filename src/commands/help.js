@@ -1,11 +1,43 @@
-function runHelp({ packageJson }) {
+function runHelp({ packageJson, args }) {
+  // Parse --advanced flag
+  const showAdvanced = (args || []).includes('--advanced');
+
   console.log(`${packageJson.name} v${packageJson.version}`);
   console.log('');
   console.log('Project Knowledge Base CLI');
   console.log('Author: William Duong (Dương Tấn Nghĩa) <duongtannghia@gmail.com>');
   console.log('');
+
+  if (!showAdvanced) {
+    // Basic mode - show only essential commands
+    console.log('Usage (basic commands):');
+    console.log('  kb help [--advanced]');
+    console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>]');
+    console.log('  kb doctor [--json] [--strict]');
+    console.log('  kb version');
+    console.log('');
+    console.log('Essential commands:');
+    console.log('  help       Show usage and package information.');
+    console.log('             Add --advanced to see all 15 commands.');
+    console.log('  init       Install the KB template into a target workspace and create state.');
+    console.log('             Auto-detects mode (private-git if .git exists, tracked otherwise).');
+    console.log('             --skip-adapters   Skip generating AI IDE adapter files.');
+    console.log('             --install-hooks   Install a pre-commit hook that runs kb doctor.');
+    console.log('             --skip-bootstrap  Skip initial placeholder filling after init.');
+    console.log('             --skip-index      Skip initial KB index summary generation.');
+    console.log('  doctor     Quick publish-readiness checks (node/git/link/hooks).');
+    console.log('             Use --json for machine-readable CI output.');
+    console.log('             Use --strict to exit with code 1 on WARN (hard CI gate).');
+    console.log('  version    Show package version.');
+    console.log('');
+    console.log('Next step: Use @kb with Copilot Chat to build your KB');
+    console.log('(Run with --advanced to see all commands)');
+    return;
+  }
+
+  // Advanced mode - show all commands
   console.log('Usage:');
-  console.log('  kb help');
+  console.log('  kb help [--advanced]');
   console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>]');
   console.log('          [--skip-adapters] [--install-hooks] [--skip-bootstrap] [--skip-index]');
   console.log('  kb bootstrap [--dry-run] [--no-fill-placeholders]');

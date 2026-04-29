@@ -58,3 +58,70 @@ Provide a single location for future coding agents to read KB conventions before
 - Prefer fast search tools and focused updates.
 - Keep documentation synchronized with implementation changes.
 - Reconcile stored repository revision state with git history before upgrades or maintenance sweeps.
+
+## Project-Scoped KB Agent
+
+### Auto-Created by `kb init`
+
+When you run `kb init`, a project-scoped KB Agent is created at `.github/agents/kb.agent.md`.
+
+This agent is **not** the global Copilot agent — it is specific to this project and is automatically loaded by IDE adapters (AGENTS.md, .cursor/rules/kb.mdc, .clinerules, etc.) when you open the workspace in VS Code, Cursor, or Claude.
+
+### Role & Activation
+
+**Name:** KB Agent  
+**Scope:** Project-scoped (not user-level or global)  
+**Activation:** Via slash command `/kb` or by using prompts from `.github/prompts/kb-*.prompt.md`  
+**Purpose:** Scaffold, build, maintain, and verify KB documentation
+
+### Core Capabilities
+
+- **Bootstrap:** Scan source code, auto-detect stack, generate stubs for core folders
+- **Build:** Create domain model, entities, relationships from codebase signals
+- **Maintain:** Detect drift from git history, update stubs, manage review queue
+- **Integrate:** Connect source code → KB → IDE adapters
+- **Govern:** Enforce metadata schema, verify states, check revision baselines
+
+### Usage Patterns
+
+**Initial Build (One-Time)**
+
+```
+@kb Build Knowledge Base from Source
+
+(Agent scans code, generates stubs, creates intake questions)
+```
+
+**Periodic Maintenance (Every Sprint/Release)**
+
+```
+@kb Maintain Knowledge Base
+
+(Agent detects drift, updates docs, shows review checklist)
+```
+
+**Quick Bootstrap**
+
+```
+/kb bootstrap
+
+(Agent runs `kb bootstrap` command silently)
+```
+
+### Behavioral Contract
+
+1. **Always verify baseline first:** Check `00-start-here/repository-revision-state.md` before claiming confidence
+2. **Respect verification states:** Do not upgrade `code-verified` without re-checking source
+3. **Preserve metadata:** Maintain YAML frontmatter (title, verification, kb_state, time_state)
+4. **Update indexes on change:** Refresh INDEX.md and finalization-plan.md after doc changes
+5. **Hand off to user:** Ask for approval before publishing or major revisions
+6. **Support CLI and chat:** Seamlessly integrate `kb` CLI commands with Copilot Chat workflows
+
+### Files to Know
+
+- `.github/agents/kb.agent.md` — Agent definition and behavioral rules
+- `.github/prompts/kb-build.prompt.md` — "Build KB from Source" prompt
+- `.github/prompts/kb-maintain.prompt.md` — "Maintain KB" prompt
+- `.github/copilot-instructions.md` — Global repo instructions (if any)
+- `template/INDEX.md` — KB scope and navigation map
+- `template/00-start-here/knowledge-base-architecture.md` — KB trust model and conventions

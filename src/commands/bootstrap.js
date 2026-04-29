@@ -404,10 +404,15 @@ async function runBootstrap({ args, cwd }) {
   const envVars = detectEnvVars(cwd);
   const sourceFolders = detectSourceFolders(cwd);
 
-  console.log('\nDetected stack:');
-  console.log(`  Language  : ${stack.language}`);
-  console.log(`  Frameworks: ${stack.frameworks.join(', ') || 'none'}`);
-  console.log(`  Env vars  : ${envVars.length} detected`);
+  const isSilent = process.env.KB_INIT_SILENT === 'true';
+
+  // Only show detected stack if language is known (not 'unknown')
+  if (!isSilent && stack.language !== 'unknown') {
+    console.log('\nDetected stack:');
+    console.log(`  Language  : ${stack.language}`);
+    console.log(`  Frameworks: ${stack.frameworks.join(', ') || 'none'}`);
+    console.log(`  Env vars  : ${envVars.length} detected`);
+  }
 
   const stubs = [
     { relPath: '00-start-here/current-state.md', content: stubCurrentState({ stack, sourceFolders, envVars }) },
@@ -447,28 +452,30 @@ async function runBootstrap({ args, cwd }) {
     return;
   }
 
-  if (created.length > 0) {
-    console.log('\nCreated stubs (verification: unverified):');
-    for (const r of created) {
-      console.log(`  + ${r.path}`);
+  if (!isSilent) {
+    if (created.length > 0) {
+      console.log('\nCreated stubs (verification: unverified):');
+      for (const r of created) {
+        console.log(`  + ${r.path}`);
+      }
     }
-  }
 
-  if (updated.length > 0) {
-    console.log('\nUpdated existing placeholder docs:');
-    for (const r of updated) {
-      console.log(`  * ${r.path}`);
+    if (updated.length > 0) {
+      console.log('\nUpdated existing placeholder docs:');
+      for (const r of updated) {
+        console.log(`  * ${r.path}`);
+      }
     }
-  }
 
-  if (skipped.length > 0) {
-    console.log('\nSkipped (already exist):');
-    for (const r of skipped) {
-      console.log(`  ~ ${r.path}`);
+    if (skipped.length > 0) {
+      console.log('\nSkipped (already exist):');
+      for (const r of skipped) {
+        console.log(`  ~ ${r.path}`);
+      }
     }
-  }
 
-  console.log('\nNext: open each stub and replace placeholder content with actual code-verified data.');
+    console.log('\nNext: open each stub and replace placeholder content with actual code-verified data.');
+  }
 }
 
 module.exports = {

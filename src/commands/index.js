@@ -128,13 +128,17 @@ function runOnce({ cwd }) {
   const summary = buildIndexSummary({ workspaceRoot, context });
   const summaryPath = writeSummary(context, summary);
 
-  console.log('kb index: PASS');
-  console.log(`Summary: ${summaryPath}`);
-  console.log(`Docs: ${summary.kb.documentCount}`);
-  console.log(`Placeholder docs: ${summary.kb.placeholderDocumentCount}`);
-  console.log(`KB states: ${JSON.stringify(summary.kb.kbStateCounts)}`);
-  console.log(`Route files: ${summary.source.routeFiles.length}`);
-  console.log(`Prisma models: ${summary.source.prismaModels.join(', ') || 'none'}`);
+  const isSilent = process.env.KB_INIT_SILENT === 'true';
+
+  if (!isSilent) {
+    console.log('kb index: PASS');
+    console.log(`Summary: ${summaryPath}`);
+    console.log(`Docs: ${summary.kb.documentCount}`);
+    console.log(`Placeholder docs: ${summary.kb.placeholderDocumentCount}`);
+    console.log(`KB states: ${JSON.stringify(summary.kb.kbStateCounts)}`);
+    console.log(`Route files: ${summary.source.routeFiles.length}`);
+    console.log(`Prisma models: ${summary.source.prismaModels.join(', ') || 'none'}`);
+  }
 }
 
 async function runIndex({ args, cwd }) {

@@ -21,7 +21,7 @@ async function run(argv) {
   const [command = 'help', ...rest] = argv;
 
   if (command === 'help' || command === '--help' || command === '-h') {
-    runHelp({ packageJson });
+    runHelp({ packageJson, args: rest });
     return;
   }
 

@@ -37,10 +37,10 @@ Currently implemented commands:
 
 **Scaffold & Fill**
 
-- `init [--mode private-git|tracked] [--brand <name>] [--skip-adapters] [--install-hooks] [--skip-bootstrap] [--skip-index]`
+- `init [--mode private-git|tracked] [--brand <name>] [--skip-adapters] [--install-hooks] [--skip-bootstrap] [--skip-index]` — Auto-detects mode when `--mode` is omitted, creates project-scoped KB agent and handoff prompts
 - `bootstrap [--dry-run] [--no-fill-placeholders]` — Scan source code and generate stub docs for architecture, backend, API, database, and operations tiers
 - `index [--watch]` — Build KB summary report: doc count, placeholder count, fill rate per tier
-- `questions [--print] [--chat] [--batch <n>] [--batch-size <n>]` — Generate intake questions from unresolved placeholders; use `--chat --batch 1` for a 5-question AI chat batch
+- `questions [--print] [--chat] [--batch <n>] [--batch-size <n>]` — Generate intake questions from unresolved placeholders; use batch output for a 5-question AI chat handoff
 - `mark --file <relative-md-path> --state <template|autofilled|needs-review|verified|blocked>` — Set `kb_state` on a specific doc without renaming files
 - `normalize-state [--dry-run]` — Assign `kb_state: template` to all docs that are currently unset
 
@@ -56,17 +56,33 @@ Currently implemented commands:
 
 **AI IDE Adapter Files**
 
-`kb init` automatically generates adapter files so agents in every major AI IDE pick up the KB context immediately:
+`kb init` automatically generates the relevant adapter file for the active AI IDE and also creates project-scoped Copilot prompt files:
 
 | File | IDE |
 |------|-----|
-| `AGENTS.md` | OpenAI Codex / ChatGPT |
+| `AGENTS.md` | VS Code / Generic agent context |
 | `CLAUDE.md` | Claude Projects |
 | `.cursor/rules/kb.mdc` | Cursor |
 | `.windsurfrules` | Windsurf |
 | `.clinerules` | Cline |
 
+It also creates:
+
+- `.github/agents/kb.agent.md`
+- `.github/prompts/kb-build.prompt.md`
+- `.github/prompts/kb-maintain.prompt.md`
+
 Skip adapter generation with `--skip-adapters` if not needed.
+
+Recommended first-run flow after global install:
+
+```bash
+kb help
+kb init
+
+# Then paste the printed handoff prompt into Copilot Chat:
+@kb Build Knowledge Base from Source
+```
 
 Pre-publish artifact simulation:
 
