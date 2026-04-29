@@ -48,23 +48,33 @@ Use this structure for reliable results:
 
 ## Build KB From Scratch
 
+```prompt
 Read INDEX.md, how-to-use-this-kb.md, and finalization-plan.md. Build a complete knowledge base for project <PROJECT_NAME> using this template, fill placeholders, maximize code-verified coverage in phases, update indexes and governance, do not ask setup questions, and report only final results with changed files and risks.
+```
 
 ## Maintenance Sweep
 
+```prompt
 Run a maintenance sweep of the current knowledge base using review-cadence and verification-policy, detect drift, apply verification downgrade/upgrade correctly, update finalization-plan queue, refresh indexes, and report completed changes plus unresolved items.
+```
 
 ## API-Only Project Intake
 
+```prompt
 Analyze this API-only source and document all interaction surfaces as frontend equivalents (Swagger, Redoc, CLI, dashboards, DB viewers, external consoles), then build and link KB sections accordingly with phased code-verified evidence.
+```
 
 ## Incident / Bug Documentation Update
 
+```prompt
 Given this production issue context, update impacted KB docs (operations, backend, api, security, testing), separate current vs target state, add evidence links, update verification states, and add follow-up tasks in finalization-plan.
+```
 
 ## Feature Delivery With Doc Sync
 
+```prompt
 Implement feature <FEATURE_NAME> and in the same change update all impacted KB docs, keep metadata valid, keep indexes in sync, and provide a final map of code changes vs doc changes.
+```
 
 ## Template Version Upgrade
 
@@ -84,11 +94,14 @@ Add one or more lines after the base prompt:
 
 Ask agent to always return:
 
+```prompt
+Return:
 - changed files
 - verification changes (downgrade or upgrade)
 - queue items added or closed
 - unresolved assumptions
 - next recommended actions
+```
 
 ## Anti-Patterns To Avoid In Prompts
 

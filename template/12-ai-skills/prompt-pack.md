@@ -19,48 +19,80 @@ tags:
 
 Read prompting-guide.md first to choose the right prompt strategy for your objective.
 
+## Formatting Convention
+
+Use explicit fenced blocks so prompt text, commands, and terminal output are never mixed.
+
+```prompt
+<instruction for the coding agent>
+```
+
+```bash
+# command line input
+git diff --name-status HEAD~1..HEAD
+```
+
+```text
+# terminal output
+M template/12-ai-skills/prompt-pack.md
+```
+
 ## One-Line Prompt For Full KB Build
 
-Hay doc toan bo huong dan trong knowledge-base/INDEX.md va 00-start-here/how-to-use-this-kb.md, lam theo finalization-plan.md, tu dong xay dung knowledge-base day du cho project <TEN_DU_AN>, uu tien code-verified toi da theo tung phase, cap nhat index va governance, khong hoi lai, chi bao cao ket qua.
+```prompt
+Read all guidance in knowledge-base/INDEX.md and 00-start-here/how-to-use-this-kb.md, follow finalization-plan.md, automatically build a complete knowledge base for project <PROJECT_NAME>, maximize phased code-verified coverage, update indexes and governance, do not ask setup questions, and report final results only.
+```
 
 ## One-Line Prompt For Maintenance Mode
 
-Hay quet va maintain knowledge-base hien tai theo review-cadence va verification-policy, phat hien drift, downgrade hoac upgrade verification dung quy tac, cap nhat finalization-plan queue, va bao cao cac thay doi da thuc hien.
+```prompt
+Scan and maintain the current knowledge base using review-cadence and verification-policy, detect drift, apply verification downgrade or upgrade according to policy, update the finalization-plan queue, and report completed changes.
+```
 
 ## One-Line Prompt For Git Drift Reconciliation
 
-Hay doc 00-start-here/repository-revision-state.md, so sanh baseline revision da luu voi git HEAD hien tai, neu co sai lech thi lay git log va git diff tu revision da luu den hien tai, xac dinh docs bi drift, chay maintenance loop theo review-cadence va verification-policy, cap nhat finalization-plan queue, dong bo lai noi dung, roi ghi baseline moi vao repository-revision-state.md.
+```prompt
+Read 00-start-here/repository-revision-state.md and compare the stored baseline revision with the current git HEAD. If they differ, collect git log and git diff from the stored revision to HEAD, identify drifted docs, run the maintenance loop using review-cadence and verification-policy, update the finalization-plan queue, resynchronize affected content, then write the new baseline into repository-revision-state.md.
+```
 
 ## One-Line Prompt For Brand-Scoped KB Patch
 
-Hay doc 00-start-here/repository-revision-state.md, xac dinh brand scope, template version, KB patch revision, va source baseline commit. Neu source commit trong cung brand da thay doi, hay lay git log va git diff cho dung pham vi brand do, tao mot KB patch maintenance pass, ra soat docs lien quan, cap nhat verification, index, queue, va tang KB patch revision sau khi dong bo xong.
+```prompt
+Read 00-start-here/repository-revision-state.md and identify the brand scope, template version, KB patch revision, and source baseline commit. If the source commit changed within that same brand scope, collect git log and git diff for that brand-scoped range, run one KB patch maintenance pass, review affected docs, update verification, indexes, and queue items, then increment KB patch revision after synchronization.
+```
 
 ## Prompt Template: Implement Feature
 
-- Goal:
-- Scope boundaries:
-- Required files:
-- Non-goals:
-- Verification steps:
-- Documentation updates required:
+```prompt
+Goal:
+Scope boundaries:
+Required files:
+Non-goals:
+Verification steps:
+Documentation updates required:
+```
 
 ## Prompt Template: Investigate Bug
 
-- Symptom:
-- Reproduction:
-- Suspected modules:
-- Logs and metrics to inspect:
-- Expected fix validation:
+```prompt
+Symptom:
+Reproduction:
+Suspected modules:
+Logs and metrics to inspect:
+Expected fix validation:
+```
 
 ## Prompt Template: KB Maintenance
 
-- Files to review:
-- Required metadata checks:
-- Link/index updates:
-- Verification downgrade/upgrade actions:
-- Intake channel: workflow | direct-prompt | scheduled
-- Queue update rule: update finalization-plan first
-- Target verification coverage for this run:
-- Stored baseline revision:
-- Current HEAD revision:
-- Git log and diff range reviewed:
+```prompt
+Files to review:
+Required metadata checks:
+Link/index updates:
+Verification downgrade/upgrade actions:
+Intake channel: workflow | direct-prompt | scheduled
+Queue update rule: update finalization-plan first
+Target verification coverage for this run:
+Stored baseline revision:
+Current HEAD revision:
+Git log and diff range reviewed:
+```

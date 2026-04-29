@@ -35,14 +35,38 @@ npx @williamduong/kb help
 
 Currently implemented commands:
 
-- `help`
-- `init --mode private-git|tracked`
+**Scaffold & Fill**
+
+- `init [--mode private-git|tracked] [--brand <name>] [--skip-adapters] [--install-hooks] [--skip-bootstrap] [--skip-index]`
+- `bootstrap [--dry-run] [--no-fill-placeholders]` — Scan source code and generate stub docs for architecture, backend, API, database, and operations tiers
+- `index [--watch]` — Build KB summary report: doc count, placeholder count, fill rate per tier
+- `questions [--print] [--chat] [--batch <n>] [--batch-size <n>]` — Generate intake questions from unresolved placeholders; use `--chat --batch 1` for a 5-question AI chat batch
+- `mark --file <relative-md-path> --state <template|autofilled|needs-review|verified|blocked>` — Set `kb_state` on a specific doc without renaming files
+- `normalize-state [--dry-run]` — Assign `kb_state: template` to all docs that are currently unset
+
+**Lifecycle**
+
+- `plan list` / `plan add "<description>" [--owner <name>] [--priority P0|P1|P2]` — Manage finalization-plan.md
 - `show [--backup-existing]` (private-git mode)
 - `hide [--restore-backup]` (private-git mode)
-- `test`
+- `test [--sample <count>]`
 - `sync [--accept-baseline]`
 - `update [--accept-baseline]`
 - `doctor [--json] [--strict]`
+
+**AI IDE Adapter Files**
+
+`kb init` automatically generates adapter files so agents in every major AI IDE pick up the KB context immediately:
+
+| File | IDE |
+|------|-----|
+| `AGENTS.md` | OpenAI Codex / ChatGPT |
+| `CLAUDE.md` | Claude Projects |
+| `.cursor/rules/kb.mdc` | Cursor |
+| `.windsurfrules` | Windsurf |
+| `.clinerules` | Cline |
+
+Skip adapter generation with `--skip-adapters` if not needed.
 
 Pre-publish artifact simulation:
 

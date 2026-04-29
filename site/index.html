@@ -191,7 +191,7 @@
             </span>
             <h2>AI Agent-ready</h2>
           </div>
-          <p>Prompt packs and operating rules let agents work with less guesswork and less drift.</p>
+          <p>Prompt packs and operating rules let agents work with less guesswork and less drift. <code>kb init</code> auto-generates adapter files for Cursor, Claude, Windsurf, Cline, and Codex so every AI IDE picks up KB context immediately.</p>
         </article>
       </section>
 
@@ -219,8 +219,14 @@
 <pre>npm install -g @williamduong/kb
 kb help
 
-# Scaffold into current repo
-kb init --mode private-git</pre>
+# Scaffold into current repo (generates AI IDE adapter files automatically)
+kb init --mode private-git
+
+# Auto-detect stack + generate stub docs
+kb bootstrap
+
+# Check fill progress
+kb index</pre>
             </div>
             <div class="gs-card-links">
               <a class="chip-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Setup guide</a>
@@ -232,19 +238,22 @@ kb init --mode private-git</pre>
             <div class="gs-card-head">
               <span class="gs-step-num">02</span>
               <div>
-                <h3>Choose a prompt flow</h3>
-                <p>Open the Prompt Library and pick a starting workflow — full build, maintenance sweep, or brand-scoped patch — before touching any content.</p>
+                <h3>Fill via chat-first intake</h3>
+                <p>Use the chat-first intake flow to fill KB content 5 questions at a time directly in your AI chat. Or pick a prompt from the Prompt Library for a full build or maintenance sweep.</p>
               </div>
             </div>
             <div class="code-block">
-              <div class="code-label">Recommended first prompts</div>
-<pre># First, ask the agent to read:
-INDEX.md + 00-start-here/how-to-use-this-kb.md
+              <div class="code-label">Chat-first intake (recommended)</div>
+<pre># Generate a 5-question batch for your AI chat
+kb questions --chat --batch 1
 
-# Then paste one of:
+# Paste the output into chat, answer questions,
+# agent fills KB docs, then continue:
+kb questions --chat --batch 2
+
+# Or use a prompt from the Prompt Library instead:
 → "Build KB From Scratch" prompt
-→ "Maintenance Sweep" prompt
-→ "Brand-Scoped KB Patch" prompt</pre>
+→ "Maintenance Sweep" prompt</pre>
             </div>
             <div class="gs-card-links">
               <a class="chip-link" href="./docs.html?path=12-ai-skills/prompt-pack.md">Prompt Library</a>
@@ -266,6 +275,12 @@ INDEX.md + 00-start-here/how-to-use-this-kb.md
 
 # Optional hard gate for CI
 kb doctor --strict
+
+# Normalize fill state after bootstrap
+kb normalize-state
+
+# Monitor fill progress over time
+kb index
 
 # Reconcile template drift later
 kb sync     # collect drift evidence
@@ -296,11 +311,39 @@ kb update   # apply + refresh version state</pre>
               </span>
               <span class="wf-card-title">CLI Backbone</span>
             </div>
-            <p class="wf-card-desc">Six commands cover the full KB lifecycle &mdash; from first scaffold to ongoing maintenance.</p>
+            <p class="wf-card-desc">Scaffold, fill, track, and maintain &mdash; the full KB lifecycle in one CLI.</p>
+            <p class="wf-card-group-label">Scaffold &amp; Fill</p>
             <div class="cmd-table">
               <div class="cmd-row">
                 <code class="cmd-name">kb init</code>
-                <span class="cmd-desc">Scaffold a new KB into the current workspace</span>
+                <span class="cmd-desc">Scaffold KB; auto-generate AI IDE adapter files for Cursor, Claude, Windsurf &amp; more</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb bootstrap</code>
+                <span class="cmd-desc">Scan source code; generate stub docs for arch, API, DB, and ops tiers</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb index</code>
+                <span class="cmd-desc">Build fill-rate summary: doc count, placeholder count per tier</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb questions</code>
+                <span class="cmd-desc">Generate intake questions from placeholders; <code class="cmd-flag">--chat --batch N</code> for 5-question AI chat batches</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb mark</code>
+                <span class="cmd-desc">Set <code class="cmd-flag">kb_state</code> on any doc: template &rarr; autofilled &rarr; needs-review &rarr; verified</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb normalize-state</code>
+                <span class="cmd-desc">Assign <code class="cmd-flag">kb_state: template</code> to all docs that are currently unset</span>
+              </div>
+            </div>
+            <p class="wf-card-group-label">Lifecycle</p>
+            <div class="cmd-table">
+              <div class="cmd-row">
+                <code class="cmd-name">kb plan</code>
+                <span class="cmd-desc">Manage finalization plan items (<code class="cmd-flag">list</code> / <code class="cmd-flag">add</code>)</span>
               </div>
               <div class="cmd-row">
                 <code class="cmd-name">kb show / hide</code>
@@ -395,9 +438,13 @@ kb update   # apply + refresh version state</pre>
                 <span class="flow-step-label">Mount</span>
                 <span class="flow-step-body"><code>kb show</code> exposes visible symlink in workspace</span>
               </div>
+              <div class="flow-step" role="listitem">
+                <span class="flow-step-label">Bootstrap</span>
+                <span class="flow-step-body"><code>kb bootstrap</code> scans source and fills stub docs for arch, API, DB &amp; ops</span>
+              </div>
               <div class="flow-step flow-step-accent" role="listitem">
-                <span class="flow-step-label">Fill</span>
-                <span class="flow-step-body">Paste a prompt from Prompt Pack &rarr; agent fills KB</span>
+                <span class="flow-step-label">Fill via chat</span>
+                <span class="flow-step-body"><code>kb questions --chat --batch 1</code> &rarr; paste into AI chat &rarr; agent fills KB &rarr; repeat batches until done</span>
                 <div class="flow-step-links">
                   <a href="./docs.html?path=12-ai-skills/prompt-pack.md" class="flow-step-btn">Browse prompts &rarr;</a>
                 </div>
