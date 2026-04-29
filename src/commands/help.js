@@ -10,7 +10,7 @@ function runHelp({ packageJson }) {
   console.log('          [--skip-adapters] [--install-hooks] [--skip-bootstrap] [--skip-index]');
   console.log('  kb bootstrap [--dry-run] [--no-fill-placeholders]');
   console.log('  kb index [--watch]');
-  console.log('  kb questions [--print] [--all-states]');
+  console.log('  kb questions [--print] [--all-states] [--chat] [--batch <n>] [--batch-size <n>]');
   console.log('  kb mark --file <relative-md-path> --state <template|autofilled|needs-review|verified|blocked>');
   console.log('  kb normalize-state [--dry-run]');
   console.log('  kb bootstrap-api [--dry-run]');
@@ -39,6 +39,9 @@ function runHelp({ packageJson }) {
   console.log('             --watch           Rebuild every 10s for background indexing workflow.');
   console.log('  questions  Generate intake questions from unresolved placeholders/TODOs.');
   console.log('             --print           Print top questions for immediate AI chat Q&A.');
+  console.log('             --chat            Print interactive 5-question intake batch for chat flow.');
+  console.log('             --batch <n>       Choose batch number when --chat is enabled.');
+  console.log('             --batch-size <n>  Set batch size (default 5, max 20).');
   console.log('             Default state order: needs-review -> autofilled -> template.');
   console.log('             --all-states      Include all kb_state values (default filters review/autofill/template).');
   console.log('  mark       Set kb_state for a KB markdown file without renaming files.');
