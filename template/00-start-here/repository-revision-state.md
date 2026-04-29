@@ -85,9 +85,16 @@ When `Source Repository Git Baseline` and `HEAD` differ:
 
 ## Recommended Git Commands
 
-- Current HEAD: `git rev-parse HEAD`
-- Baseline to current history: `git log --stat <BASELINE>..HEAD`
-- Baseline to current changed files: `git diff --name-status <BASELINE>..HEAD`
+```bash
+# Current HEAD
+git rev-parse HEAD
+
+# Baseline to current history
+git log --stat <BASELINE>..HEAD
+
+# Baseline to current changed files
+git diff --name-status <BASELINE>..HEAD
+```
 
 ## Upgrade Safety Rule
 

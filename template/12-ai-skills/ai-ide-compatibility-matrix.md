@@ -68,7 +68,11 @@ For any AI-enabled IDE, the minimum repo assets are:
 4. Use a ready-made prompt from `prompt-pack.md` when possible.
 5. Before broad maintenance or upgrades, compare stored baseline versus current git `HEAD` using `repository-revision-state.md`.
 6. Update docs, indexes, and governance metadata in the same change set.
-7. Run maintenance checks such as `kb doctor` after the agent finishes.
+7. Run maintenance checks after the agent finishes.
+
+```bash
+kb doctor
+```
 
 ## Prompt Portability Guidance
 

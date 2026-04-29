@@ -25,7 +25,11 @@ Release note entries should be generated from git history for each release.
 
 This changelog is `manual-only`: it does not auto-update on every commit.
 
-Use `npm run release:notes -- vX.Y.Z Minor Medium dry-run` to preview commits since the previous generated release anchor, then rerun without `dry-run` when you explicitly want to write a new release entry.
+Use this command to preview commits since the previous generated release anchor. Rerun without `dry-run` when you explicitly want to write a new release entry.
+
+```bash
+npm run release:notes -- vX.Y.Z Minor Medium dry-run
+```
 
 Each generated entry stores an internal `release-meta` marker with the git range reviewed, so the next release can continue from the last released `HEAD` even when no git tags exist yet.
 

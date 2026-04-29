@@ -166,9 +166,16 @@ An agent reading a `to_be` document must not assume the described feature exists
 
 The `kb` CLI provides commands that keep KB state aligned with the codebase:
 
-- `kb sync` — propagates changes from template source to a downstream project KB.
-- `kb update` — updates the KB version and patch revision.
-- `kb doctor` — validates frontmatter, checks required fields, reports broken links.
+```bash
+# Propagates changes from template source to a downstream project KB
+kb sync
+
+# Updates KB version and patch revision
+kb update
+
+# Validates frontmatter, checks required fields, reports broken links
+kb doctor
+```
 
 These commands are not optional in a healthy workflow. Running them on a schedule (or as a pre-commit hook) is the primary mechanism for preventing drift.
 
