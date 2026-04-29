@@ -26,38 +26,133 @@ body {
 }
 
 .topbar {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 0.85rem 1rem;
+  padding: 0.85rem 1.2rem;
   border-bottom: 1px solid var(--line);
-  background: rgba(9, 15, 19, 0.84);
+  background: rgba(9, 15, 19, 0.9);
+  box-shadow: 0 12px 30px rgba(1, 8, 11, 0.26);
   position: sticky;
   top: 0;
+  z-index: 100;
   backdrop-filter: blur(8px);
 }
 
-.topbar h1 {
-  margin: 0;
-  font-family: "IBM Plex Serif", serif;
-  font-size: 1.2rem;
-  text-align: center;
+.brand-link,
+.brand-stack {
+  display: inline-flex;
+  align-items: center;
+}
+
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.topbar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.65rem;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.topbar-nav a:hover {
+  background: rgba(31, 201, 173, 0.09);
+  color: var(--ink);
+}
+
+.topbar-nav a.nav-active {
+  color: var(--accent);
+  background: rgba(31, 201, 173, 0.12);
+  border-color: rgba(31, 201, 173, 0.26);
+}
+
+.nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  color: currentColor;
+  opacity: 0.9;
+}
+
+.nav-icon svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .topbar a {
-  color: var(--accent);
   text-decoration: none;
   font-weight: 500;
 }
 
-.back {
-  justify-self: start;
+.brand-link {
+  gap: 0.75rem;
+  color: var(--ink);
 }
 
-#repoLink {
-  justify-self: end;
+.brand-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
 }
+
+.brand-title {
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.brand-subtitle {
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.brand-mark {
+  width: 2.45rem;
+  height: 2.45rem;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(31, 201, 173, 0.18), rgba(31, 201, 173, 0.06));
+  border: 1px solid rgba(121, 182, 169, 0.28);
+}
+
+.brand-mark svg,
+.topbar-link-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-mark svg {
+  width: 1.45rem;
+  height: 1.45rem;
+  color: #74ead7;
+}
+
+
 
 .layout {
   display: grid;
@@ -333,8 +428,15 @@ body {
     justify-content: flex-start;
   }
 
-  .back,
-  #repoLink {
-    justify-self: center;
+  .brand-subtitle {
+    display: none;
+  }
+
+  .topbar-nav a span:not(.nav-icon) {
+    display: none;
+  }
+
+  .topbar-nav a {
+    padding: 0.38rem;
   }
 }
