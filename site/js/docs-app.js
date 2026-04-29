@@ -12,6 +12,15 @@ const state = {
   treeExpansion: new Map()
 };
 
+const MOBILE_SIDEBAR_QUERY = window.matchMedia("(max-width: 1000px)");
+
+const ui = {
+  sidebarToggle: null,
+  sidebarClose: null,
+  sidebarOverlay: null,
+  goTopButton: null
+};
+
 function trackEvent(eventName, payload = {}) {
   if (typeof window.gtag !== "function") {
     return;
@@ -147,6 +156,104 @@ function mergeItems(manifestItems, treeItems) {
 
 function setTreeStatus(text) {
   document.getElementById("treeStatus").textContent = text;
+}
+
+function isMobileSidebarViewport() {
+  return MOBILE_SIDEBAR_QUERY.matches;
+}
+
+function closeSidebarDrawer() {
+  if (!isMobileSidebarViewport()) {
+    return;
+  }
+
+  document.body.classList.remove("sidebar-open");
+  if (ui.sidebarToggle) {
+    ui.sidebarToggle.setAttribute("aria-expanded", "false");
+  }
+  if (ui.sidebarOverlay) {
+    ui.sidebarOverlay.hidden = true;
+  }
+}
+
+function openSidebarDrawer() {
+  if (!isMobileSidebarViewport()) {
+    return;
+  }
+
+  document.body.classList.add("sidebar-open");
+  if (ui.sidebarToggle) {
+    ui.sidebarToggle.setAttribute("aria-expanded", "true");
+  }
+  if (ui.sidebarOverlay) {
+    ui.sidebarOverlay.hidden = false;
+  }
+}
+
+function toggleSidebarDrawer() {
+  if (document.body.classList.contains("sidebar-open")) {
+    closeSidebarDrawer();
+    return;
+  }
+
+  openSidebarDrawer();
+}
+
+function initSidebarDrawer() {
+  ui.sidebarToggle = document.getElementById("sidebarToggle");
+  ui.sidebarClose = document.getElementById("sidebarClose");
+  ui.sidebarOverlay = document.getElementById("sidebarOverlay");
+
+  if (!ui.sidebarToggle || !ui.sidebarClose || !ui.sidebarOverlay) {
+    return;
+  }
+
+  ui.sidebarToggle.addEventListener("click", () => {
+    toggleSidebarDrawer();
+  });
+
+  ui.sidebarClose.addEventListener("click", () => {
+    closeSidebarDrawer();
+  });
+
+  ui.sidebarOverlay.addEventListener("click", () => {
+    closeSidebarDrawer();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeSidebarDrawer();
+    }
+  });
+
+  MOBILE_SIDEBAR_QUERY.addEventListener("change", () => {
+    if (!isMobileSidebarViewport()) {
+      document.body.classList.remove("sidebar-open");
+      ui.sidebarToggle.setAttribute("aria-expanded", "false");
+      ui.sidebarOverlay.hidden = true;
+    }
+  });
+}
+
+function initGoTopButton() {
+  ui.goTopButton = document.getElementById("goTopBtn");
+  if (!ui.goTopButton) {
+    return;
+  }
+
+  const refreshVisibility = () => {
+    ui.goTopButton.classList.toggle("visible", window.scrollY > 320);
+  };
+
+  window.addEventListener("scroll", refreshVisibility, { passive: true });
+  refreshVisibility();
+
+  ui.goTopButton.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    trackEvent("docs_go_to_top_click", {
+      event_category: "docs_navigation"
+    });
+  });
 }
 
 function setTreeExpansionForAll(expanded) {
@@ -493,11 +600,30 @@ function decorateContentLinks(content, currentDocPath) {
   });
 }
 
+function stripYamlFrontmatter(markdownText) {
+  if (!markdownText) {
+    return markdownText;
+  }
+
+  const normalized = markdownText.replace(/^\uFEFF/, "");
+  if (!normalized.startsWith("---\n") && !normalized.startsWith("---\r\n")) {
+    return markdownText;
+  }
+
+  const closingMatch = normalized.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+  if (!closingMatch) {
+    return markdownText;
+  }
+
+  return normalized.slice(closingMatch[0].length);
+}
+
 async function loadDoc(docPath, options = {}) {
   const normalizedPath = normalizeDocPath(docPath);
   const { pushHistory = true, replaceHistory = false } = options;
 
   state.activePath = normalizedPath;
+  closeSidebarDrawer();
   trackEvent("docs_doc_open", {
     event_category: "docs_navigation",
     doc_path: normalizedPath,
@@ -531,7 +657,8 @@ async function loadDoc(docPath, options = {}) {
     }
 
     const markdown = await response.text();
-    const html = marked.parse(markdown);
+    const contentMarkdown = stripYamlFrontmatter(markdown);
+    const html = marked.parse(contentMarkdown);
 
     content.innerHTML = `
       <p class="note">
@@ -573,6 +700,8 @@ async function loadDoc(docPath, options = {}) {
 async function bootstrap() {
   detectRepository();
   setRepoLink();
+  initSidebarDrawer();
+  initGoTopButton();
 
   const response = await fetch("./data/manifest.json");
   if (!response.ok) {

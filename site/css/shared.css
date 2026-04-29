@@ -13,9 +13,15 @@
   backdrop-filter: blur(8px);
   background: rgba(10, 16, 19, 0.88);
   box-shadow: 0 12px 30px rgba(1, 8, 11, 0.26);
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   top: 0;
   z-index: 100;
+}
+
+body {
+  padding-top: 5.35rem;
 }
 
 .top-nav nav {
@@ -30,6 +36,9 @@
 }
 
 .top-nav nav a {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
   gap: 0.45rem;
   padding: 0.4rem 0.65rem;
   border-radius: 999px;
@@ -160,7 +169,7 @@ footer a {
 
 .footer-line span:not(.footer-brand)::before,
 .footer-line a::before {
-  content: "•";
+  /* content: "•"; */
   margin-right: 0.85rem;
   color: rgba(156, 212, 201, 0.36);
 }
@@ -168,4 +177,86 @@ footer a {
 .footer-brand {
   color: #edf8f4;
   font-weight: 700;
+}
+
+/* ── Hamburger toggle ── */
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink-muted);
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.nav-toggle:hover {
+  background: rgba(108, 232, 213, 0.08);
+  color: var(--accent-2);
+}
+
+.nav-toggle svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.icon-close {
+  display: none;
+}
+
+.top-nav.nav-open .icon-open {
+  display: none;
+}
+
+.top-nav.nav-open .icon-close {
+  display: block;
+}
+
+@media (max-width: 1000px) {
+  .nav-toggle {
+    display: flex;
+  }
+
+  .top-nav {
+    flex-wrap: wrap;
+  }
+
+  .top-nav nav {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.7rem 0 0.25rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .top-nav:not(.nav-open) nav {
+    display: none;
+  }
+
+  .top-nav.nav-open nav {
+    display: flex;
+  }
+
+  .top-nav nav a {
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* Ensure nav labels are always visible in expanded menu */
+  .top-nav nav a span:not(.nav-icon) {
+    display: inline !important;
+  }
+
+  .brand-tag {
+    display: none;
+  }
 }

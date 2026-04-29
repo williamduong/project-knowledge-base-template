@@ -49,7 +49,9 @@ body {
   backdrop-filter: blur(8px);
   background: rgba(10, 16, 19, 0.88);
   box-shadow: 0 12px 30px rgba(1, 8, 11, 0.26);
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   top: 0;
   z-index: 100;
 }
@@ -870,7 +872,7 @@ footer a {
 
 .footer-line span:not(.footer-brand)::before,
 .footer-line a::before {
-  content: "•";
+  /* content: "•"; */
   margin-right: 0.85rem;
   color: rgba(156, 212, 201, 0.36);
 }
@@ -1218,24 +1220,34 @@ footer a {
     flex-direction: column;
     align-items: stretch;
   }
+}
 
-  .top-nav {
-    align-items: flex-start;
-    gap: 0.8rem;
+@media (max-width: 600px) {
+  main {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  /* Flow steps stack vertically on small screens */
+  .flow-row {
     flex-direction: column;
+    overflow-x: visible;
   }
 
-  .top-nav nav {
-    flex-wrap: wrap;
+  /* Reset horizontal-pipe borders for vertical stacking */
+  .flow-step,
+  .flow-step + .flow-step,
+  .flow-step:first-child {
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    min-width: 0;
   }
 
-  .top-nav nav a {
-    padding-left: 0;
-    padding-right: 0;
-    border-radius: 0;
+  .flow-step-accent {
+    border-color: rgba(108, 232, 213, 0.36);
   }
 
-  .brand-tag {
+  /* Hide horizontal arrow connectors */
+  .flow-step:not(:last-child)::after {
     display: none;
   }
 }
@@ -1252,4 +1264,14 @@ footer a {
   height: 1px;
   border: none;
   margin: 2.5rem 0;
+}
+
+@media (max-width: 1000px) {
+  .top-nav:not(.nav-open) nav {
+    display: none;
+  }
+
+  .top-nav.nav-open nav {
+    display: flex;
+  }
 }

@@ -28,7 +28,7 @@
   <body>
     <div class="mesh" aria-hidden="true"></div>
     <header class="top-nav">
-      <div class="brand">
+      <a href="./" class="brand">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 48 48" role="img" focusable="false">
             <path d="M24 5 9 13.5v12.8C9 35.7 15.2 41 24 43c8.8-2 15-7.3 15-16.7V13.5z"></path>
@@ -41,7 +41,15 @@
           <span class="brand-name">KB Template</span>
           <span class="brand-tag">Structured docs for teams and agents</span>
         </span>
-      </div>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <svg class="icon-open" viewBox="0 0 24 24" role="img" focusable="false">
+          <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </svg>
+        <svg class="icon-close" viewBox="0 0 24 24" role="img" focusable="false">
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </button>
       <nav>
         <a href="./docs.html">
           <span class="nav-icon" aria-hidden="true">
@@ -553,11 +561,8 @@ kb update   # apply + refresh version state</pre>
 
     <footer>
       <p class="footer-line">
-        <span class="footer-brand">Project Knowledge Base Template</span>
-        <span>By William Duong</span>
-        <span>AGPL v3 + commercial license</span>
-        <a href="https://github.com/williamduong/project-knowledge-base-template">GitHub</a>
-        <a href="./docs.html">Docs</a>
+        <span>© 2026 <a href="https://github.com/williamduong">William Duong</a>. All rights reserved.</span>
+        <span>Open-source under <a href="https://www.gnu.org/licenses/agpl-3.0.en.html">AGPL v3</a> + commercial license</span>
       </p>
     </footer>
     <script>
@@ -620,6 +625,15 @@ kb update   # apply + refresh version state</pre>
         });
 
       })();
-    </script>
-  </body>
+    </script>    <script>
+      (function () {
+        var toggle = document.querySelector('.nav-toggle');
+        var header = document.querySelector('.top-nav');
+        if (!toggle || !header) { return; }
+        toggle.addEventListener('click', function () {
+          var open = header.classList.toggle('nav-open');
+          toggle.setAttribute('aria-expanded', String(open));
+        });
+      })();
+    </script>  </body>
 </html>
