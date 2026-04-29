@@ -15,6 +15,7 @@ const { runIndex } = require('./commands/index');
 const { runQuestions } = require('./commands/questions');
 const { runMark } = require('./commands/mark');
 const { runNormalizeState } = require('./commands/normalize-state');
+const { runBootstrapApi } = require('./commands/bootstrap-api');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -86,6 +87,11 @@ async function run(argv) {
 
   if (command === 'normalize-state') {
     await runNormalizeState({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'bootstrap-api') {
+    await runBootstrapApi({ args: rest, cwd: process.cwd() });
     return;
   }
 

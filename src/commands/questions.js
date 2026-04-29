@@ -36,6 +36,13 @@ function priorityForPath(relativePath) {
   return 3;
 }
 
+function priorityForState(state) {
+  if (state === 'needs-review') return 1;
+  if (state === 'autofilled') return 2;
+  if (state === 'template') return 3;
+  return 4;
+}
+
 function collectQuestions(docs, { includeAllStates }) {
   const markers = [
     { pattern: '[Enter the purpose of this document here]', section: 'Purpose' },
@@ -51,7 +58,7 @@ function collectQuestions(docs, { includeAllStates }) {
 
   for (const doc of docs) {
     const state = doc.kbState || 'template';
-    if (!includeAllStates && !(state === 'template' || state === 'needs-review')) {
+    if (!includeAllStates && !(state === 'needs-review' || state === 'autofilled' || state === 'template')) {
       continue;
     }
 
@@ -67,6 +74,8 @@ function collectQuestions(docs, { includeAllStates }) {
       const deduped = [...new Set(missingSections)];
       output.push({
         relativePath: doc.relativePath,
+        state,
+        statePriority: priorityForState(state),
         priority: priorityForPath(doc.relativePath),
         section: deduped.join(', '),
         question: `Please fill ${deduped.join(', ')} for ${doc.relativePath}.`,
@@ -75,6 +84,7 @@ function collectQuestions(docs, { includeAllStates }) {
   }
 
   output.sort((a, b) => {
+    if (a.statePriority !== b.statePriority) return a.statePriority - b.statePriority;
     if (a.priority !== b.priority) return a.priority - b.priority;
     return a.relativePath.localeCompare(b.relativePath);
   });
@@ -85,7 +95,7 @@ function collectQuestions(docs, { includeAllStates }) {
 function renderQuestionsMarkdown(items) {
   const today = new Date().toISOString().slice(0, 10);
   const rows = items.map((item, index) =>
-    `| Q-${String(index + 1).padStart(3, '0')} | P${item.priority} | ${item.relativePath} | ${item.section} | ${item.question} |`
+    `| Q-${String(index + 1).padStart(3, '0')} | ${item.state} | P${item.priority} | ${item.relativePath} | ${item.section} | ${item.question} |`
   );
 
   return `---
@@ -106,8 +116,8 @@ Use this list in AI chat to ask product/engineering owners for missing facts.
 
 One row equals one actionable question per file.
 
-| ID | Priority | File | Section | Question |
-|---|---|---|---|---|
+| ID | State | Priority | File | Section | Question |
+|---|---|---|---|---|---|
 ${rows.join('\n')}
 `;
 }
@@ -130,7 +140,7 @@ async function runQuestions({ args, cwd }) {
     console.log('\nTop 10 questions:');
     for (let i = 0; i < preview.length; i += 1) {
       const q = preview[i];
-      console.log(`${i + 1}. [P${q.priority}] ${q.relativePath} :: ${q.section}`);
+      console.log(`${i + 1}. [${q.state}] [P${q.priority}] ${q.relativePath} :: ${q.section}`);
       console.log(`   ${q.question}`);
     }
   }

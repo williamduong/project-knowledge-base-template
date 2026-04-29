@@ -13,6 +13,7 @@ function runHelp({ packageJson }) {
   console.log('  kb questions [--print] [--all-states]');
   console.log('  kb mark --file <relative-md-path> --state <template|autofilled|needs-review|verified|blocked>');
   console.log('  kb normalize-state [--dry-run]');
+  console.log('  kb bootstrap-api [--dry-run]');
   console.log('  kb plan list');
   console.log('  kb plan add "<description>" [--owner <name>] [--priority P0|P1|P2]');
   console.log('  kb show [--backup-existing]');
@@ -38,10 +39,13 @@ function runHelp({ packageJson }) {
   console.log('             --watch           Rebuild every 10s for background indexing workflow.');
   console.log('  questions  Generate intake questions from unresolved placeholders/TODOs.');
   console.log('             --print           Print top questions for immediate AI chat Q&A.');
-  console.log('             --all-states      Include all kb_state values (default filters template/needs-review).');
+  console.log('             Default state order: needs-review -> autofilled -> template.');
+  console.log('             --all-states      Include all kb_state values (default filters review/autofill/template).');
   console.log('  mark       Set kb_state for a KB markdown file without renaming files.');
   console.log('  normalize-state  Assign kb_state for docs that are currently unset.');
   console.log('             --dry-run         Preview state assignment without modifying files.');
+  console.log('  bootstrap-api  Generate endpoint docs from route/controller annotations.');
+  console.log('             --dry-run         Preview endpoint doc creation/update only.');
   console.log('  plan       Manage the KB finalization plan (finalization-plan.md).');
   console.log('             list              Show pending and done plan items.');
   console.log('             add "<text>"      Append a new todo item with auto-incremented ID.');
