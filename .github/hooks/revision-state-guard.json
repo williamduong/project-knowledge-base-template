@@ -3,8 +3,8 @@
     "SessionStart": [
       {
         "type": "command",
-        "command": "pwsh -File scripts/revision-state-guard.ps1",
-        "windows": "powershell -ExecutionPolicy Bypass -File scripts\\revision-state-guard.ps1",
+        "command": "pwsh -File tools/revision-state-guard.ps1",
+        "windows": "powershell -ExecutionPolicy Bypass -File tools\\revision-state-guard.ps1",
         "cwd": ".",
         "timeout": 10
       }
@@ -12,8 +12,8 @@
     "PreToolUse": [
       {
         "type": "command",
-        "command": "pwsh -File scripts/revision-state-guard.ps1",
-        "windows": "powershell -ExecutionPolicy Bypass -File scripts\\revision-state-guard.ps1",
+        "command": "pwsh -File tools/revision-state-guard.ps1",
+        "windows": "powershell -ExecutionPolicy Bypass -File tools\\revision-state-guard.ps1",
         "cwd": ".",
         "timeout": 15
       }

@@ -35,7 +35,7 @@ jobs:
           enablement: true
 
       - name: Build docs tree metadata
-        run: node ./scripts/build-docs-tree.js
+        run: node ./tools/build-docs-tree.js
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
