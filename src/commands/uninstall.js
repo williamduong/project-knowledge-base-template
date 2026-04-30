@@ -102,10 +102,10 @@ function removeGeneratedAiFiles({ workspaceRoot, removed }) {
     path.join(workspaceRoot, '.clinerules'),
     path.join(workspaceRoot, '.cursor', 'rules', 'kb.mdc'),
     path.join(workspaceRoot, '.github', 'agents', 'kb.agent.md'),
-    path.join(workspaceRoot, '.github', 'prompts', 'kb-build.prompt.md'),
-    path.join(workspaceRoot, '.github', 'prompts', 'kb-maintain.prompt.md'),
     path.join(workspaceRoot, '.github', 'prompts', 'kb-plan.prompt.md'),
     path.join(workspaceRoot, '.github', 'prompts', 'kb-run.prompt.md'),
+    path.join(workspaceRoot, '.github', 'prompts', 'kb-ask.prompt.md'),
+    path.join(workspaceRoot, '.github', 'hooks', 'revision-state-guard.json'),
   ];
 
   for (const filePath of files) {
@@ -116,6 +116,7 @@ function removeGeneratedAiFiles({ workspaceRoot, removed }) {
   cleanupEmptyDir(path.join(workspaceRoot, '.cursor'), workspaceRoot, removed);
   cleanupEmptyDir(path.join(workspaceRoot, '.github', 'agents'), workspaceRoot, removed);
   cleanupEmptyDir(path.join(workspaceRoot, '.github', 'prompts'), workspaceRoot, removed);
+  cleanupEmptyDir(path.join(workspaceRoot, '.github', 'hooks'), workspaceRoot, removed);
   cleanupEmptyDir(path.join(workspaceRoot, '.github'), workspaceRoot, removed);
 }
 

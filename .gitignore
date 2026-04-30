@@ -23,6 +23,9 @@ temp/
 # Node and npm artifacts
 node_modules/
 npm-debug.log*
+_cacache/
+_logs/
+_update-notifier-last-checked
 
 # Private note
 notes/*
