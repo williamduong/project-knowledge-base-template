@@ -30,5 +30,9 @@ _update-notifier-last-checked
 # Private note
 notes/*
 
+# Local-only project agent (William's internal agent, never ship/commit)
+.local/
+.github/agents/KBRoot.agent.md
+
 # Sample repos for local testing only
 sample_repo/
