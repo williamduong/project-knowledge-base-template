@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 1.2.7
+version: 1.2.8
 ---
 
 # /kb-run — Execute the next step of the KB runtime plan
@@ -48,16 +48,18 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
    **HALT (Partial / corrupted case):** Re-print the human-readable output of `kb status` so the user sees the same recovery hints (`kb doctor`, `git checkout HEAD -- knowledge-base/.kb/state.json`, or `kb uninstall --force` + `kb init --yes`). Stop. Do not proceed to step 2.
 
 2. **First-run IDE integration.** If `state.ideIntegration.enabled` is `false` (or field missing):
-   - Detect IDE targets via `src/lib/ide-detect.js` (`selectInjectionTargets`).
-   - For each target, call `injectBlock` to write a one-line KB-MANAGED reference to `.github/agents/kb.agent.md`.
-   - Update `state.ideIntegration` to `{ enabled: true, targets: [{ file, injectedAt: <ISO> }, ...] }`. **Always set `enabled: true` after this step — even when `targets` is empty** (no IDE rules file detected). This prevents `/kb-run` from re-probing on every invocation. The user can re-run with `@kb enable ide-integration` later if they add an IDE rules file.
-   - If at least one target was injected, print:
+    - Run `kb ide enable` and use its output as-is.
+    - If `kb` is not on PATH, use `npx -y @williamduong/kb@latest ide enable`.
+    - Do NOT import or execute internal files from global installs (for example under `node_modules/@williamduong/kb/src/*`).
+    - This command owns target detection, block injection, and `state.ideIntegration` updates.
+    - If the command reports injected targets, print:
      ```
      KB integration enabled. Reference block injected into:
        - <file 1>
        - <file 2>
      To disable later: type `@kb disable ide-integration`.
      ```
+    - If it reports no targets, print that integration was marked enabled with zero targets and continue.
 
 3. **Check plan.** If `knowledge-base/.kb/runtime-plan.md` does not exist:
    - Invoke `/kb-plan` logic (read inputs, decide actions, write plan).
@@ -138,8 +140,8 @@ For any other non-zero exit, just print the captured output and the menu — do 
 
 ## Toggles
 
-- `@kb disable ide-integration` → call `removeBlock` for every entry in `state.ideIntegration.targets`, set `state.ideIntegration.enabled = false`, clear `targets`.
-- `@kb enable ide-integration` → re-run preflight step 2.
+- `@kb disable ide-integration` → run `kb ide disable`.
+- `@kb enable ide-integration` → run `kb ide enable`.
 
 ## Boundaries
 

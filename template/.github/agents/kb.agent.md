@@ -4,7 +4,7 @@ type: multi-modal
 category: development-support
 trigger: slash-command
 instruction_file: .github/copilot-instructions.md
-version: 1.2.7
+version: 1.2.8
 ---
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
@@ -125,8 +125,8 @@ User-facing commands the agent recognizes in chat:
 |---|---|
 | `@kb <free-form question>` | Role 3 Q&A pipeline |
 | `@kb audit metadata` | Role 2 strict audit; lists missing fields + remediation plan |
-| `@kb enable ide-integration` | Inject `KB-MANAGED` block into detected IDE rule files |
-| `@kb disable ide-integration` | Remove all `KB-MANAGED` blocks; clear `state.json.ideIntegration.enabled` |
+| `@kb enable ide-integration` | Run `kb ide enable` (or `npx -y @williamduong/kb@latest ide enable`) |
+| `@kb disable ide-integration` | Run `kb ide disable` (or `npx -y @williamduong/kb@latest ide disable`) |
 | `@kb status` | Print current state.json summary, drift, fill rate, IDE integration targets |
 | `@kb bootstrap` | Scaffold stubs from source (delegates to `kb bootstrap`) |
 | `@kb build <topic>` | Create/update docs for a topic (e.g. `domain model`, `api endpoints`) |
@@ -149,6 +149,7 @@ When called by the `kb` CLI in silent mode, suppress verbose narration and retur
 6. **Silent in chains.** When invoked by CLI, suppress narration.
 7. **Cite or abstain.** Every factual claim about source or KB must carry a `[KB]` or `[SRC]` citation, or be marked provisional.
 8. **Defer to user toggles.** `state.json` is the source of truth for `metadataPolicy` and `ideIntegration`. Honor it.
+9. **Do not use CLI internals directly.** Never `require()` or edit files under global install paths like `node_modules/@williamduong/kb/src/*`. Use public `kb` commands only (`kb status`, `kb ide`, `kb maintain`, etc.).
 
 ---
 

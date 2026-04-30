@@ -72,6 +72,37 @@ Each generated entry stores an internal `release-meta` marker with the git range
 
 ## Current Entries
 
+## v1.2.8 - 2026-04-30
+
+### Summary
+
+- Added a public IDE integration command surface so chat prompts no longer need to call CLI internals.
+- Hardened prompt/agent contracts to prevent `node_modules` introspection and direct state-file mutation.
+
+### Change Type
+
+- Patch
+
+### Impact On Existing KBs
+
+- Medium
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- `/kb-run` first-run IDE integration must call `kb ide enable` (or npx fallback), not internal library functions.
+- `@kb enable ide-integration` and `@kb disable ide-integration` must route to `kb ide enable|disable`.
+- Agents must never `require()` files under global install paths such as `node_modules/@williamduong/kb/src/*`.
+
+### Files Added / Changed
+
+- Added: `src/commands/ide.js`
+- Changed: `src/cli.js`, `src/commands/help.js`
+- Changed: `template/.github/prompts/kb-run.prompt.md`, `template/.github/agents/kb.agent.md`
+
 ## v1.1.1 - 2026-04-30
 
 <!-- release-meta: from=v1.1.0 to=working-tree generated_at=2026-04-30T00:00:00.000Z -->

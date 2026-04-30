@@ -19,6 +19,7 @@ const { runBootstrapApi } = require('./commands/bootstrap-api');
 const { runUninstall } = require('./commands/uninstall');
 const { runMaintain } = require('./commands/maintain');
 const { runStatus } = require('./commands/status');
+const { runIde } = require('./commands/ide');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -70,6 +71,11 @@ async function run(argv) {
 
   if (command === 'status') {
     await runStatus({ args: rest, cwd: process.cwd(), packageJson });
+    return;
+  }
+
+  if (command === 'ide') {
+    await runIde({ args: rest, cwd: process.cwd() });
     return;
   }
 

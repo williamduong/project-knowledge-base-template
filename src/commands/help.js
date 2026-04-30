@@ -14,6 +14,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kb help [--advanced]');
     console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>] [--yes]');
     console.log('  kb update [--accept-baseline] [--refresh-prompts]');
+    console.log('  kb ide <enable|disable> [--json] [--dry-run]');
     console.log('  kb maintain [--accept-baseline] [--fast]');
     console.log('  kb status [--json]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
@@ -35,6 +36,11 @@ function runHelp({ packageJson, args }) {
     console.log('  maintain   One-command maintenance pipeline.');
     console.log('             Default: sync + doc:gate (if available) + test --all + doctor --strict.');
     console.log('             --fast            Quick mode: skips doc:gate, sampled test, non-strict doctor.');
+    console.log('  ide        Manage IDE integration blocks without touching state by hand.');
+    console.log('             enable            Inject KB-MANAGED block and set state.ideIntegration.enabled=true.');
+    console.log('             disable           Remove injected blocks from tracked targets and disable integration.');
+    console.log('             --dry-run         Preview targets for enable only.');
+    console.log('             --json            Machine-readable output.');
     console.log('  status     Report KB install state (fresh / healthy / partial) and key state fields.');
     console.log('             --json            Machine-readable output.');
     console.log('  uninstall  Remove KB content and generated AI helper files.');
@@ -66,6 +72,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb test [--sample <count>] [--all]');
   console.log('  kb sync [--accept-baseline]');
   console.log('  kb update [--accept-baseline] [--refresh-prompts]');
+  console.log('  kb ide <enable|disable> [--json] [--dry-run]');
   console.log('  kb doctor [--json] [--strict]');
   console.log('  kb status [--json]');
   console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
@@ -84,6 +91,11 @@ function runHelp({ packageJson, args }) {
   console.log('             Default: sync + doc:gate (if available) + test --all + doctor --strict.');
   console.log('             --fast            Quick mode: skips doc:gate, sampled test, non-strict doctor.');
   console.log('             --accept-baseline Pass-through to sync baseline acceptance.');
+  console.log('  ide        Manage KB-MANAGED IDE integration blocks.');
+  console.log('             enable            Inject into detected targets and set state.ideIntegration enabled.');
+  console.log('             disable           Remove from tracked targets and disable integration.');
+  console.log('             --dry-run         Preview enable targets only.');
+  console.log('             --json            Machine-readable output.');
   console.log('  bootstrap  Scan source code and generate unverified stub docs for');
   console.log('             03-architecture, 05-backend, 06-api, 07-database, 09-operations.');
   console.log('             --dry-run         Preview create/update/skip actions.');
