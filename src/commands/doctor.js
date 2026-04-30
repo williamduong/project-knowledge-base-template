@@ -4,6 +4,8 @@ const path = require('path');
 
 const { getGitMetadata, getWorkingTreeStatus } = require('../lib/git');
 const { detectKbArtifacts } = require('../lib/kb-presence');
+const { resolveExistingState } = require('../lib/context');
+const { readImpactFile } = require('../lib/impact');
 
 function parseMinNodeMajor(range) {
   const match = /(\d+)/.exec(range || '');
@@ -104,6 +106,60 @@ function runDoctor({ args, cwd, packageJson }) {
       ? `Found hook: ${hookFile}`
       : `Hook file missing at ${hookFile}`,
   });
+
+  // git-impact-pending: read-only check against impact.json (does not auto-scan).
+  // Does not depend on KB presence checks below — handles its own resolution.
+  let impactCtx = null;
+  try {
+    impactCtx = resolveExistingState({ workspaceRoot });
+  } catch {
+    // No state, no impact check — KB presence check below will surface this.
+  }
+  if (impactCtx) {
+    let impactData = null;
+    try {
+      impactData = readImpactFile(impactCtx.contentRoot);
+    } catch (err) {
+      checks.push({
+        name: 'git-impact-pending',
+        status: 'WARN',
+        detail: `Unable to read impact.json: ${err.message}`,
+      });
+      impactData = null;
+    }
+    if (impactData) {
+      const impactedCount = (impactData.impacted || []).length;
+      const unboundCount = (impactData.unbound_changes || []).length;
+      if (impactData.skipped_reason) {
+        checks.push({
+          name: 'git-impact-pending',
+          status: 'WARN',
+          detail: `Impact scan skipped: ${impactData.skipped_reason}. Run "kb status" or "kb scan" once baseline is set.`,
+        });
+      } else if (impactedCount > 0 || unboundCount > 0) {
+        const parts = [];
+        if (impactedCount > 0) parts.push(`${impactedCount} doc(s) need re-verification`);
+        if (unboundCount > 0) parts.push(`${unboundCount} unbound change(s)`);
+        checks.push({
+          name: 'git-impact-pending',
+          status: 'WARN',
+          detail: `${parts.join('; ')}. Run "kb status" for details.`,
+        });
+      } else {
+        checks.push({
+          name: 'git-impact-pending',
+          status: 'PASS',
+          detail: `No pending impact (baseline ${impactData.baseline || 'unknown'} → ${impactData.head || 'HEAD'}).`,
+        });
+      }
+    } else if (impactCtx) {
+      checks.push({
+        name: 'git-impact-pending',
+        status: 'WARN',
+        detail: 'No impact.json found. Run "kb scan" to generate.',
+      });
+    }
+  }
 
   const presence = detectKbArtifacts(workspaceRoot);
   if (presence.classification === 'partial') {

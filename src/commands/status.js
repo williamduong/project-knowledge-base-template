@@ -1,18 +1,33 @@
-const fs = require('fs');
 const path = require('path');
 
 const { detectKbArtifacts } = require('../lib/kb-presence');
 const { resolveExistingState } = require('../lib/context');
 const { readStateFile } = require('../lib/state');
+const { getWorkingTreeStatus } = require('../lib/git');
+const {
+  computeImpact,
+  contentRootRelativeToWorkspace,
+  readImpactFile,
+  writeImpactFile,
+} = require('../lib/impact');
+const { normalizePath } = require('../lib/binding-matcher');
 
 function parseArgs(args) {
-  const options = { json: false };
+  const options = { json: false, quiet: false, noScan: false };
   for (const arg of args || []) {
     if (arg === '--json') {
       options.json = true;
       continue;
     }
-    throw new Error(`Unknown status option "${arg}".`);
+    if (arg === '--quiet') {
+      options.quiet = true;
+      continue;
+    }
+    if (arg === '--no-scan') {
+      options.noScan = true;
+      continue;
+    }
+    throw new Error(`Unknown status option "${arg}". Supported: --json, --quiet, --no-scan`);
   }
   return options;
 }
@@ -21,6 +36,59 @@ function relPath(target, root) {
   if (!target) return '';
   const rel = path.relative(root, target).replace(/\\/g, '/');
   return rel || '.';
+}
+
+function partitionWorkingTree(workingTree, contentRootRel) {
+  const prefix = contentRootRel ? `${contentRootRel.replace(/\/+$/, '')}/` : null;
+  const kbDirty = [];
+  const codeDirty = [];
+  for (const entry of workingTree || []) {
+    const p = normalizePath(entry.filePath);
+    if (prefix && (p === contentRootRel || p.startsWith(prefix))) {
+      kbDirty.push({ status: entry.status, path: p });
+    } else {
+      codeDirty.push({ status: entry.status, path: p });
+    }
+  }
+  return { kbDirty, codeDirty };
+}
+
+/**
+ * Pure verdict derivation. Combines presence, state, impact, and working tree.
+ *
+ * Verdicts (per plan v1.3 Section 4 Phase 2):
+ * - clean     : no impacted docs, no uncommitted KB changes, state OK
+ * - attention : impacted/unbound/uncommitted-KB present
+ * - blocked   : presence partial, state error, or impact skipped (no baseline / not git)
+ *
+ * Note: uncommitted *code* changes (outside contentRoot) do NOT trigger attention —
+ * they are normal during development. Plan locks this behaviour intentionally.
+ */
+function deriveStatusVerdict({ presence, stateError, impactData, kbDirty }) {
+  if (presence === 'partial') {
+    return { code: 2, label: 'blocked', reasons: ['kb-partial'] };
+  }
+  if (stateError) {
+    return { code: 2, label: 'blocked', reasons: ['state-error'] };
+  }
+  if (presence === 'fresh') {
+    return { code: 0, label: 'clean', reasons: ['no-kb'] };
+  }
+  if (impactData && impactData.skipped_reason) {
+    return { code: 2, label: 'blocked', reasons: [impactData.skipped_reason] };
+  }
+
+  const reasons = [];
+  if (impactData) {
+    if ((impactData.impacted || []).length > 0) reasons.push('impacted-docs');
+    if ((impactData.unbound_changes || []).length > 0) reasons.push('unbound-changes');
+  }
+  if ((kbDirty || []).length > 0) reasons.push('kb-uncommitted');
+
+  if (reasons.length === 0) {
+    return { code: 0, label: 'clean', reasons: [] };
+  }
+  return { code: 1, label: 'attention', reasons };
 }
 
 function runStatus({ args, cwd, packageJson }) {
@@ -46,6 +114,40 @@ function runStatus({ args, cwd, packageJson }) {
 
   const presence = artifacts.classification; // 'fresh' | 'healthy' | 'partial'
 
+  // Impact + working tree (only meaningful when KB is healthy and accessible)
+  let impactData = null;
+  let impactPath = null;
+  let impactError = null;
+  let kbDirty = [];
+  let codeDirty = [];
+
+  if (context && state && presence === 'healthy') {
+    try {
+      if (options.noScan) {
+        impactData = readImpactFile(context.contentRoot);
+      } else {
+        impactData = computeImpact({ workspaceRoot, ctx: context });
+        impactPath = writeImpactFile(context.contentRoot, impactData);
+      }
+    } catch (err) {
+      impactError = err.message;
+    }
+
+    const workingTree = getWorkingTreeStatus(workspaceRoot);
+    const contentRootRel = contentRootRelativeToWorkspace(workspaceRoot, context.contentRoot);
+    const partition = partitionWorkingTree(workingTree, contentRootRel);
+    kbDirty = partition.kbDirty;
+    codeDirty = partition.codeDirty;
+  }
+
+  const verdict = deriveStatusVerdict({ presence, stateError, impactData, kbDirty });
+
+  if (options.quiet) {
+    console.log(verdict.label);
+    if (verdict.code !== 0) process.exit(verdict.code);
+    return;
+  }
+
   if (options.json) {
     console.log(JSON.stringify({
       command: 'kb status',
@@ -62,12 +164,20 @@ function runStatus({ args, cwd, packageJson }) {
         metadataPolicy: state.metadataPolicy,
         ideIntegration: state.ideIntegration,
         driftStatus: state.driftStatus,
+        sourceRepositoryGitBaseline: state.sourceRepositoryGitBaseline,
       } : null,
       stateError,
+      impact: impactData,
+      impactPath,
+      impactError,
+      workingTree: { kbDirty, codeDirty },
+      verdict,
     }, null, 2));
+    if (verdict.code !== 0) process.exit(verdict.code);
     return;
   }
 
+  // Human-readable
   console.log('kb status');
   console.log(`- workspace: ${workspaceRoot}`);
   console.log(`- presence : ${presence}`);
@@ -85,12 +195,17 @@ function runStatus({ args, cwd, packageJson }) {
     console.log('Recover with one of:');
     console.log('  1. git checkout HEAD -- knowledge-base/.kb/state.json');
     console.log('  2. kb uninstall --force   then   kb init --yes   (clean reinstall)');
+    console.log('');
+    console.log(`verdict: ${verdict.label}${verdict.reasons.length ? ` (${verdict.reasons.join(', ')})` : ''}`);
+    if (verdict.code !== 0) process.exit(verdict.code);
     return;
   }
 
   if (presence === 'fresh') {
     console.log('');
     console.log('No KB detected in this workspace. Run: kb init');
+    console.log('');
+    console.log(`verdict: ${verdict.label}`);
     return;
   }
 
@@ -110,8 +225,51 @@ function runStatus({ args, cwd, packageJson }) {
   } else if (stateError) {
     console.log(`- state error: ${stateError}`);
   }
+
+  // Impact section
+  console.log('- impact:');
+  if (impactError) {
+    console.log(`    error: ${impactError}`);
+  } else if (!impactData) {
+    console.log(`    (no impact data; run "kb scan" to refresh)`);
+  } else if (impactData.skipped_reason) {
+    console.log(`    skipped: ${impactData.skipped_reason}`);
+  } else {
+    console.log(`    baseline       : ${impactData.baseline || 'NOT_AVAILABLE'}`);
+    console.log(`    head           : ${impactData.head || 'NOT_AVAILABLE'}`);
+    console.log(`    impacted docs  : ${impactData.impacted.length}`);
+    for (const item of impactData.impacted.slice(0, 5)) {
+      console.log(`      - ${item.doc} (${item.matched_changes.length} match)`);
+    }
+    if (impactData.impacted.length > 5) {
+      console.log(`      ... +${impactData.impacted.length - 5} more`);
+    }
+    console.log(`    unbound changes: ${impactData.unbound_changes.length}`);
+    console.log(`    KB self-edits  : ${impactData.self_edits.length}`);
+    if (options.noScan) {
+      console.log(`    (data from cached impact.json; omit --no-scan to refresh)`);
+    }
+  }
+
+  // Working tree
+  console.log('- working tree:');
+  console.log(`    KB uncommitted   : ${kbDirty.length}`);
+  for (const entry of kbDirty.slice(0, 5)) {
+    console.log(`      - [${entry.status || '??'}] ${entry.path}`);
+  }
+  if (kbDirty.length > 5) {
+    console.log(`      ... +${kbDirty.length - 5} more`);
+  }
+  console.log(`    code uncommitted : ${codeDirty.length}`);
+
+  console.log('');
+  console.log(`verdict: ${verdict.label}${verdict.reasons.length ? ` (${verdict.reasons.join(', ')})` : ''}`);
+
+  if (verdict.code !== 0) process.exit(verdict.code);
 }
 
 module.exports = {
+  deriveStatusVerdict,
+  partitionWorkingTree,
   runStatus,
 };
