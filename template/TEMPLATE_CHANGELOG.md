@@ -72,6 +72,74 @@ Each generated entry stores an internal `release-meta` marker with the git range
 
 ## Current Entries
 
+## 1.4.0 - 2026-05-01
+
+<!-- release-meta: from=v1.3.0 to=4b879b36ca3f053ff9205c1b0cfcfbe714c4498a generated_at=2026-04-30T19:40:20.050Z -->
+
+### Summary
+
+- Advance baseline to v1.3.0 (f8b4e58).
+- Add configuration management and impact graph functionality.
+- Recursive expansion + cycle detection (v1.4 Phase 2).
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- Medium
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Generated from git log for this release; review the commit-derived summary and refine wording if a higher-level narrative is needed.
+
+### Git Range Reviewed
+
+- v1.3.0..4b879b36ca3f053ff9205c1b0cfcfbe714c4498a
+
+### Commits Included
+
+- 72e92fa chore: advance baseline to v1.3.0 (f8b4e58) (2026-05-01)
+- b9aa3d1 feat: add configuration management and impact graph functionality (2026-05-01)
+- 4b879b3 feat(impact): recursive expansion + cycle detection (v1.4 Phase 2) (2026-05-01)
+
+### Files Added / Changed
+
+- package-lock.json
+- package.json
+- src/cli.js
+- src/commands/baseline.js
+- src/commands/doctor.js
+- src/commands/help.js
+- src/commands/impact.js
+- src/commands/scan.js
+- src/commands/status.js
+- src/commands/verify.js
+- src/lib/config.js
+- src/lib/impact-graph.js
+- template/.github/agents/kb.agent.md
+- template/.github/prompts/kb-ask.prompt.md
+- template/.github/prompts/kb-plan.prompt.md
+- template/.github/prompts/kb-run.prompt.md
+- template/00-start-here/repository-revision-state.md
+- template/15-governance/impact-policy.md
+- template/15-governance/metadata-schema.md
+- template/15-governance/related-semantic.md
+- template/template.json
+- test/commands/baseline.test.js
+- test/commands/impact.test.js
+- test/commands/scan-recursive.test.js
+- test/commands/verify.test.js
+- test/lib/config.test.js
+- test/lib/impact-graph-recursive.test.js
+- test/lib/impact-graph.test.js
+
+
 ## v1.3.0 - 2026-05-01
 
 <!-- release-meta: from=v1.2.11 to=27fb8bbeb9edc1ac85555695793497560b42d402 generated_at=2026-04-30T17:48:41.459Z -->
