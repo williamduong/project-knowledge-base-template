@@ -53,6 +53,7 @@ Currently implemented commands:
 - `sync [--accept-baseline]`
 - `update [--accept-baseline]`
 - `doctor [--json] [--strict]`
+- `uninstall [--keep-ai-files] [--remove-hook] [--force]` - Remove KB content and generated AI helper files from the workspace
 
 **AI IDE Adapter Files**
 

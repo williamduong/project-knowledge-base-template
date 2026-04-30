@@ -4,8 +4,8 @@ function runHelp({ packageJson, args }) {
 
   console.log(`${packageJson.name} v${packageJson.version}`);
   console.log('');
-  console.log('Project Knowledge Base CLI');
-  console.log('Author: William Duong (Dương Tấn Nghĩa) <duongtannghia@gmail.com>');
+  console.log('Knowledge Base CLI');
+  console.log('https://williamduong.github.io/project-knowledge-base-template/');
   console.log('');
 
   if (!showAdvanced) {
@@ -14,11 +14,12 @@ function runHelp({ packageJson, args }) {
     console.log('  kb help [--advanced]');
     console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>]');
     console.log('  kb doctor [--json] [--strict]');
+    console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
     console.log('  kb version');
     console.log('');
     console.log('Essential commands:');
     console.log('  help       Show usage and package information.');
-    console.log('             Add --advanced to see all 15 commands.');
+    console.log('             Add --advanced to see all 16 commands.');
     console.log('  init       Install the KB template into a target workspace and create state.');
     console.log('             Auto-detects mode (private-git if .git exists, tracked otherwise).');
     console.log('             --skip-adapters   Skip generating AI IDE adapter files.');
@@ -28,6 +29,9 @@ function runHelp({ packageJson, args }) {
     console.log('  doctor     Quick publish-readiness checks (node/git/link/hooks).');
     console.log('             Use --json for machine-readable CI output.');
     console.log('             Use --strict to exit with code 1 on WARN (hard CI gate).');
+    console.log('  uninstall  Remove KB content and generated AI helper files.');
+    console.log('             Use --keep-ai-files to keep AGENTS/prompt files.');
+    console.log('             Use --remove-hook to remove kb-managed pre-commit hook.');
     console.log('  version    Show package version.');
     console.log('');
     console.log('Next step: Use @kb with Copilot Chat to build your KB');
@@ -54,6 +58,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb sync [--accept-baseline]');
   console.log('  kb update [--accept-baseline]');
   console.log('  kb doctor [--json] [--strict]');
+  console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
   console.log('  kb version');
   console.log('');
   console.log('Implemented commands:');
@@ -96,6 +101,10 @@ function runHelp({ packageJson, args }) {
   console.log('  doctor     Quick publish-readiness checks (node/git/link/hooks).');
   console.log('             Use --json for machine-readable CI output.');
   console.log('             Use --strict to exit with code 1 on WARN (hard CI gate).');
+  console.log('  uninstall  Remove KB installation from the workspace.');
+  console.log('             --keep-ai-files  Keep AGENTS/prompt files at repo root.');
+  console.log('             --remove-hook    Remove kb-managed .git/hooks/pre-commit.');
+  console.log('             --force          In private-git mode, delete non-link knowledge-base directory.');
 }
 
 module.exports = {

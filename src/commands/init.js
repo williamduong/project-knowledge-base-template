@@ -141,7 +141,7 @@ function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE }) {
   console.log('(See detailed instructions in: ' + buildPromptPath + ')');
   console.log('');
   console.log('Optional: Use @kb with these maintenance prompts:');
-  console.log('  /kb Maintain Knowledge Base (periodic sync + drift detection)');
+  console.log('  @kb Maintain Knowledge Base (periodic sync + drift detection)');
   console.log('  (stored in: .github/prompts/kb-maintain.prompt.md)');
   console.log('');
   console.log('IDE detected: ' + detectedIDE);
@@ -171,6 +171,13 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
 
   fs.mkdirSync(storagePaths.contentRoot, { recursive: true });
   copyTemplateContent({ sourceRoot: repoRoot, destinationRoot: storagePaths.contentRoot });
+
+  // Keep Copilot agent/prompt files only at workspace root to avoid duplicate
+  // @agent and /prompt entries from nested knowledge-base/.github.
+  const nestedGithubPath = path.join(storagePaths.contentRoot, '.github');
+  if (fs.existsSync(nestedGithubPath)) {
+    fs.rmSync(nestedGithubPath, { recursive: true, force: true });
+  }
 
   const gitMetadata = getGitMetadata(workspaceRoot);
   const templateVersion = getTemplateVersion({ repoRoot });

@@ -16,6 +16,7 @@ const { runQuestions } = require('./commands/questions');
 const { runMark } = require('./commands/mark');
 const { runNormalizeState } = require('./commands/normalize-state');
 const { runBootstrapApi } = require('./commands/bootstrap-api');
+const { runUninstall } = require('./commands/uninstall');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -92,6 +93,11 @@ async function run(argv) {
 
   if (command === 'bootstrap-api') {
     await runBootstrapApi({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'uninstall') {
+    await runUninstall({ args: rest, cwd: process.cwd() });
     return;
   }
 

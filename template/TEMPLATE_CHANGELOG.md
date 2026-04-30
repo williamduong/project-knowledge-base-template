@@ -72,6 +72,55 @@ Each generated entry stores an internal `release-meta` marker with the git range
 
 ## Current Entries
 
+## v1.1.1 - 2026-04-30
+
+<!-- release-meta: from=v1.1.0 to=working-tree generated_at=2026-04-30T00:00:00.000Z -->
+
+### Summary
+
+- Added `kb uninstall` to remove KB setup and generated AI helper files from a workspace.
+- Reduced Copilot setup confusion by preventing duplicate `.github` prompt/agent files under `knowledge-base/`.
+- Unified init handoff wording to use `@kb` consistently in terminal guidance.
+
+### Change Type
+
+- Patch
+
+### Impact On Existing KBs
+
+- Low
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents should use root-scoped prompt files (`.github/prompts/*`) and ignore nested prompt duplicates from older installs.
+- Users can now cleanly remove KB setup with `kb uninstall` when re-initializing or switching modes.
+
+### Package Release Notes
+
+- Published npm package: `@williamduong/kb@1.1.1`
+- Release date: 2026-04-30
+- Release focus: uninstall workflow + duplicate prompt cleanup + handoff wording consistency
+
+### CLI Changes In This Release
+
+- Added `kb uninstall [--keep-ai-files] [--remove-hook] [--force]`.
+- Updated help output to include uninstall in both basic and advanced usage.
+- `kb init` now removes nested `knowledge-base/.github` after template copy to avoid duplicated @agent and /prompt entries.
+- `kb init` handoff now uses `@kb Maintain Knowledge Base` for consistency.
+
+### Files Added / Changed
+
+- package.json
+- README.md
+- src/cli.js
+- src/commands/help.js
+- src/commands/init.js
+- src/commands/uninstall.js
+
 ## v1.1.0 - 2026-04-28
 
 <!-- release-meta: from=3fe90f9 to=3fe90f9 generated_at=2026-04-30T00:00:00.000Z -->
