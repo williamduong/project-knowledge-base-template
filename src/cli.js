@@ -18,6 +18,7 @@ const { runNormalizeState } = require('./commands/normalize-state');
 const { runBootstrapApi } = require('./commands/bootstrap-api');
 const { runUninstall } = require('./commands/uninstall');
 const { runMaintain } = require('./commands/maintain');
+const { runStatus } = require('./commands/status');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -64,6 +65,11 @@ async function run(argv) {
 
   if (command === 'doctor') {
     await runDoctor({ args: rest, cwd: process.cwd(), packageJson });
+    return;
+  }
+
+  if (command === 'status') {
+    await runStatus({ args: rest, cwd: process.cwd(), packageJson });
     return;
   }
 

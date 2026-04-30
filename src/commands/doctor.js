@@ -3,6 +3,7 @@ const os = require('os');
 const path = require('path');
 
 const { getGitMetadata, getWorkingTreeStatus } = require('../lib/git');
+const { detectKbArtifacts } = require('../lib/kb-presence');
 
 function parseMinNodeMajor(range) {
   const match = /(\d+)/.exec(range || '');
@@ -103,6 +104,28 @@ function runDoctor({ args, cwd, packageJson }) {
       ? `Found hook: ${hookFile}`
       : `Hook file missing at ${hookFile}`,
   });
+
+  const presence = detectKbArtifacts(workspaceRoot);
+  if (presence.classification === 'partial') {
+    const missing = presence.stateFileRawExists ? 'state.json present but invalid (missing schemaVersion or unparseable)' : 'state.json missing';
+    const leftovers = [
+      presence.kbDir ? 'knowledge-base/' : null,
+      presence.agentFile ? '.github/agents/kb.agent.md' : null,
+      presence.promptFile ? '.github/prompts/kb-*.prompt.md' : null,
+      presence.agentsMd ? 'AGENTS.md' : null,
+    ].filter(Boolean);
+    checks.push({
+      name: 'KB install state',
+      status: 'FAIL',
+      detail: `Partial / corrupted: ${missing}. Leftovers: ${leftovers.join(', ')}. Run "kb status" for recovery guidance; do NOT run "kb init" before troubleshooting.`,
+    });
+  } else {
+    checks.push({
+      name: 'KB install state',
+      status: 'PASS',
+      detail: presence.classification === 'healthy' ? 'state.json valid (schemaVersion present).' : 'No KB detected (fresh workspace).',
+    });
+  }
 
   const hasFailure = checks.some((check) => check.status === 'FAIL');
   const hasWarning = checks.some((check) => check.status === 'WARN');

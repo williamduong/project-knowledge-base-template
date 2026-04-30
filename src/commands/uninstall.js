@@ -202,6 +202,24 @@ function runUninstall({ args, cwd }) {
       warnings.push(`Could not read state file: ${err.message}`);
     }
     removeKbContent({ workspaceRoot, context, options, removed, warnings });
+  } else {
+    // Fallback: state is missing/invalid but KB content directories may still exist.
+    // Without state we cannot know storageMode; scan the two well-known candidates.
+    const trackedKb = path.join(workspaceRoot, 'knowledge-base');
+    const privateKb = path.join(workspaceRoot, '.git', 'project-kb');
+
+    if (fs.existsSync(trackedKb)) {
+      const stat = fs.lstatSync(trackedKb);
+      if (stat.isSymbolicLink() || options.force) {
+        removePathIfExists(trackedKb, removed, workspaceRoot);
+      } else {
+        warnings.push('Found knowledge-base/ but cannot determine storage mode (state.json missing). Re-run with --force to delete it.');
+      }
+    }
+
+    if (fs.existsSync(privateKb)) {
+      removePathIfExists(privateKb, removed, workspaceRoot);
+    }
   }
 
   stripKbManagedBlocks({ workspaceRoot, state, removed, warnings });

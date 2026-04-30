@@ -15,6 +15,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>] [--yes]');
     console.log('  kb update [--accept-baseline]');
     console.log('  kb maintain [--accept-baseline] [--fast]');
+    console.log('  kb status [--json]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
     console.log('');
     console.log('Core workflow:');
@@ -31,6 +32,8 @@ function runHelp({ packageJson, args }) {
     console.log('  maintain   One-command maintenance pipeline.');
     console.log('             Default: sync + doc:gate (if available) + test --all + doctor --strict.');
     console.log('             --fast            Quick mode: skips doc:gate, sampled test, non-strict doctor.');
+    console.log('  status     Report KB install state (fresh / healthy / partial) and key state fields.');
+    console.log('             --json            Machine-readable output.');
     console.log('  uninstall  Remove KB content and generated AI helper files.');
     console.log('             Use --keep-ai-files to keep AGENTS/prompt files.');
     console.log('             Use --remove-hook to remove kb-managed pre-commit hook.');
@@ -61,6 +64,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb sync [--accept-baseline]');
   console.log('  kb update [--accept-baseline]');
   console.log('  kb doctor [--json] [--strict]');
+  console.log('  kb status [--json]');
   console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
   console.log('  kb version');
   console.log('');
@@ -111,6 +115,9 @@ function runHelp({ packageJson, args }) {
   console.log('  doctor     Quick publish-readiness checks (node/git/link/hooks).');
   console.log('             Use --json for machine-readable CI output.');
   console.log('             Use --strict to exit with code 1 on WARN (hard CI gate).');
+  console.log('  status     Report KB install state and key state.json fields.');
+  console.log('             Classification: fresh | healthy | partial.');
+  console.log('             --json           Machine-readable JSON.');
   console.log('  uninstall  Remove KB installation from the workspace.');
   console.log('             --keep-ai-files  Keep AGENTS/prompt files at repo root.');
   console.log('             --remove-hook    Remove kb-managed .git/hooks/pre-commit.');

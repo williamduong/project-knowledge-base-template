@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
+const { detectKbArtifacts } = require('./kb-presence');
+
 function resolveExistingState({ workspaceRoot }) {
   const privateStatePath = path.join(workspaceRoot, '.git', 'project-kb', 'state.json');
   const trackedStatePath = path.join(workspaceRoot, 'knowledge-base', '.kb', 'state.json');
@@ -30,6 +32,23 @@ function resolveExistingState({ workspaceRoot }) {
       renderedRevisionStatePath: path.join(workspaceRoot, 'knowledge-base', '00-start-here', 'repository-revision-state.md'),
       visibleMountPath: path.join(workspaceRoot, 'knowledge-base'),
     };
+  }
+
+  // Distinguish fresh vs partial-corrupted to give the user actionable guidance.
+  const presence = detectKbArtifacts(workspaceRoot);
+  if (presence.classification === 'partial') {
+    const leftovers = [
+      presence.kbDir ? 'knowledge-base/' : null,
+      presence.agentFile ? '.github/agents/kb.agent.md' : null,
+      presence.promptFile ? '.github/prompts/kb-*.prompt.md' : null,
+      presence.agentsMd ? 'AGENTS.md' : null,
+    ].filter(Boolean).join(', ');
+    throw new Error(
+      `KB state appears partial or corrupted: state.json missing or invalid, but other artifacts exist (${leftovers}).\n` +
+      `Do NOT run "kb init" — it would overwrite existing KB content.\n` +
+      `Run "kb status" for recovery guidance, or restore state.json from git:\n` +
+      `  git checkout HEAD -- knowledge-base/.kb/state.json`
+    );
   }
 
   throw new Error(

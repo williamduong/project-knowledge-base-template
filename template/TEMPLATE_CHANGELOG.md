@@ -121,6 +121,24 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - src/commands/init.js
 - src/commands/uninstall.js
 
+## v1.2.2 - 2026-04-30
+
+### Summary
+
+Patch from Phase 6 Option B field-test on a real Next.js project. Fixes 4 CLI gaps surfaced when the agent contracts (`@kb`, `/kb-run`) reference behaviors that the CLI did not yet provide or did not handle in partial-state recovery.
+
+### Changes
+
+- New CLI command `kb status [--json]` reports KB install state (`fresh` / `healthy` / `partial`) and key state.json fields. Closes the gap where `@kb status` and `/kb-run` troubleshoot guidance referenced a command that did not exist.
+- New shared library `src/lib/kb-presence.js` with `detectKbArtifacts(workspaceRoot)` returning the same 3-way classification used by the agent and the `/kb-run` preflight.
+- `kb doctor` now adds a **KB install state** check that fails with a recovery hint when state.json is missing/invalid but other KB artifacts (knowledge-base/, kb.agent.md, kb-*.prompt.md, AGENTS.md) still exist.
+- `kb maintain` / `kb sync` / `kb update` now produce an actionable error message in partial-state recovery: they explain leftovers, refuse to suggest `kb init`, and point the user to `kb status` and `git checkout HEAD -- knowledge-base/.kb/state.json`.
+- `kb uninstall` falls back to scanning `knowledge-base/` and `.git/project-kb/` when state.json is missing. `--force` is required to remove a non-link tracked `knowledge-base/` directory in this fallback path (same safety as private-git mode).
+
+### Migration
+
+- None. Strictly additive plus error-message wording changes.
+
 ## v1.2.1 - 2026-04-30
 
 ### Summary
