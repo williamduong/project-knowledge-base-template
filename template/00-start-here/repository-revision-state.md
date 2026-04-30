@@ -30,9 +30,9 @@ Stores the last repository baseline that agents used when they verified, upgrade
 
 | Field | Value |
 |---|---|
-| KB Template Version | v1.3.0 |
+| KB Template Version | v1.4.0 |
 | KB Patch Revision | 0 |
-| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 -> v1.2.11 -> v1.3.0 |
+| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 -> v1.2.11 -> v1.3.0 -> v1.4.0 |
 | Brand Scope | project-knowledge-base-template |
 | Source Repository Identifier | https://github.com/williamduong/project-knowledge-base-template.git |
 | Source Default Branch | main |
@@ -43,13 +43,13 @@ For downstream project use, `Brand Scope` should identify the product or brand b
 
 | Field | Value |
 |---|---|
-| Source Repository Git Baseline | f8b4e58b3c4252453a9da79b00014542265849c8 |
+| Source Repository Git Baseline | 574f8b55b1a074ac544e7004ae7658c003b41830 |
 | Baseline Captured At | 2026-05-01 |
 | Last Drift Check At | 2026-05-01 |
 | Drift Status | aligned |
 | Baseline Scope | whole repository on main |
-| Last Reconciled Template Version | v1.3.0 |
-| Notes | v1.3.0 ships git binding (`kb bind`, `kb scan`) + unified `kb status` entry with verdict, plus `git-impact-pending` doctor rule. Tag v1.3.0 = f8b4e58. |
+| Last Reconciled Template Version | v1.4.0 |
+| Notes | v1.4.0 ships impact engine (`kb impact`, `kb verify`, `kb baseline`), recursive expansion (`kb scan --recursive`, `kb status` recursive impact line), related-strong cycle detection in doctor, and the `15-governance/impact-policy.md` governance doc. Tag v1.4.0 = 574f8b5. |
 
 ## Mandatory Agent Check
 
