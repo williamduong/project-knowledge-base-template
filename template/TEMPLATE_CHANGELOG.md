@@ -121,6 +121,23 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - src/commands/init.js
 - src/commands/uninstall.js
 
+## v1.2.1 - 2026-04-30
+
+### Summary
+
+UX patch + safety guard. No code-breaking changes.
+
+### Changes
+
+- Docs: add `npx @williamduong/kb@latest init --yes` one-liner as the recommended Quick Start (README, site landing, how-to-use). Clarify the **two-step bootstrap**: `@kb` agent + `/kb-*` prompts only exist after `kb init` writes them per project.
+- `/kb-run` preflight (`.github/prompts/kb-run.prompt.md` v1.1.0): split init detection into three cases — fresh / healthy / partial-or-corrupted. Auto-init now runs ONLY in the fresh case (no KB artifacts at all). Partial cases HALT with a troubleshoot message instead of silently re-running `kb init` and overwriting existing KB content.
+- `@kb` master agent (`.github/agents/kb.agent.md` v2.1.0): Role 2 (Structural Guardian) gains a "No silent re-init" rule mirroring the `/kb-run` behavior.
+- New troubleshooting section in `00-start-here/how-to-use-this-kb.md` covering recovery from a deleted/invalid `state.json`.
+
+### Migration
+
+- None. Existing v1.2.0 workspaces just pick up the new agent + prompt contracts on the next `kb init` or `kb maintain` that refreshes template files.
+
 ## v1.2.0 - 2026-04-30
 
 ### Summary

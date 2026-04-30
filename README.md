@@ -14,6 +14,19 @@ It is designed for teams that want a consistent documentation baseline across di
 
 This repository now includes a preview CLI scaffold (`kb`) for local initialization and maintenance workflow bootstrapping.
 
+### Quick Start (1 command, no global install)
+
+```bash
+cd <your-repo>
+npx @williamduong/kb@latest init --yes
+```
+
+That single command installs the KB template, the `@kb` master agent, and the `/kb-plan` + `/kb-run` chat prompts into your repo. Then open Copilot Chat (or any agent that resolves `AGENTS.md`) and run `/kb-run`.
+
+> **Two-step bootstrap (important).** The `@kb` agent and `/kb-*` prompts are **per-project files** that live in your repo's `.github/`. They do not exist until `kb init` writes them. Order is always: **(1) install or `npx` the CLI → (2) `kb init` inside the target repo → (3) chat with `@kb` / `/kb-run`**.
+
+### Other usage modes
+
 Run directly from this repository:
 
 ```bash

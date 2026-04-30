@@ -229,19 +229,19 @@
               <span class="gs-step-num">01</span>
               <div>
                 <h3>Install + Initialize KB</h3>
-                <p>Install the CLI globally, then run <code>kb init</code> to scaffold your knowledge base. Mode is auto-detected (private-git if .git exists, otherwise tracked). No git repo? use tracked mode, or run <code>git init</code> first for private-git. Agent files are created automatically.</p>
+                <p>One-liner with <code>npx</code> (no global install) is the fastest path. Or install globally if you'll use <code>kb</code> often. Mode is auto-detected (private-git if <code>.git</code> exists, otherwise tracked). The <code>@kb</code> agent and <code>/kb-*</code> prompts only appear <em>after</em> <code>kb init</code> writes them into your repo.</p>
               </div>
             </div>
             <div class="code-block">
-              <div class="code-label">Terminal</div>
+              <div class="code-label">Terminal — fastest (no install)</div>
+<pre>cd &lt;your-repo&gt;
+npx @williamduong/kb@latest init --yes</pre>
+            </div>
+            <div class="code-block">
+              <div class="code-label">Terminal — global install</div>
 <pre>npm install -g @williamduong/kb@latest
-
-kb help
-
-# Initialize KB (auto-detects mode, creates agent files)
-kb init
-
-# After init, a handoff prompt will be printed. Save it!</pre>
+cd &lt;your-repo&gt;
+kb init</pre>
             </div>
             <div class="gs-card-links">
               <a class="chip-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Setup guide</a>

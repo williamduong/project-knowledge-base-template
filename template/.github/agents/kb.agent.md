@@ -4,7 +4,7 @@ type: multi-modal
 category: development-support
 trigger: slash-command
 instruction_file: .github/copilot-instructions.md
-version: 2.0.0
+version: 2.1.0
 ---
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
@@ -59,6 +59,20 @@ Structural rules to enforce on edit:
 - When source files change, downgrade dependent docs to `needs-review`.
 - Update `template/INDEX.md` and `template/00-start-here/finalization-plan.md` when adding/moving/renaming/deleting docs.
 - Future-graphdb hook: when adding entities/relationships, mirror them into `02-domain-model/ontology.md` and `02-domain-model/relationships.md` so they remain extractable as nodes/edges later.
+
+**No silent re-init.** If `knowledge-base/.kb/state.json` is missing, invalid JSON, or lacks `schemaVersion`, BUT any of these still exist:
+
+- `knowledge-base/` directory
+- `.github/agents/kb.agent.md`
+- `.github/prompts/kb-plan.prompt.md` or `kb-run.prompt.md`
+
+…then the workspace is in a **partial / corrupted** state. Do NOT run `kb init` (it would overwrite existing KB content). Instead:
+
+1. Report which artifacts were detected.
+2. Ask the user to troubleshoot first: `kb doctor`, `kb status`, or `git checkout HEAD -- knowledge-base/.kb/state.json`.
+3. Only after the user explicitly confirms they want a clean reinstall should you suggest `kb uninstall --force` followed by `kb init --yes`.
+
+This rule applies to every entry point (`@kb`, `/kb-plan`, `/kb-run`).
 
 ### Role 3 — Code Q&A Oracle
 

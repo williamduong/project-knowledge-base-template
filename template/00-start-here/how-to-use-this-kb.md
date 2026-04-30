@@ -92,18 +92,19 @@ Power-user commands are still available via `kb help --advanced`.
 
 **Step 1: Initialize KB in your workspace**
 
+> **Two-step bootstrap.** The `@kb` agent and the `/kb-plan` + `/kb-run` chat prompts are **per-project files**. They are written into your repo only by `kb init`. Until then, your IDE chat does not know about `@kb`. Order is always: install (or `npx`) the CLI → `kb init` inside the target repo → chat with `@kb` / `/kb-run`.
+
 ```bash
-# Install the CLI globally (one-time setup)
+# Fastest path: one-liner with npx, no global install
+cd <your-repo>
+npx @williamduong/kb@latest init --yes
+
+# OR — global install if you'll use `kb` often
 npm install -g @williamduong/kb@latest
-
-# Initialize KB in your repository
-# Mode is auto-detected: private-git (if .git exists) or tracked
+cd <your-repo>
 kb init
-
+# Mode is auto-detected: private-git (if .git exists) or tracked.
 # If no git repo exists, kb init falls back to tracked mode with a warning.
-# Run git init first if you want private-git mode.
-
-# Output includes a handoff prompt for next step
 ```
 
 After `kb init` completes, you'll see:
@@ -159,6 +160,26 @@ or chat-driven:
 ```
 /kb-run              # next step in the plan; if drift detected, plan adds a maintain step
 ```
+
+### Troubleshooting: partial or corrupted KB state
+
+If `knowledge-base/.kb/state.json` is missing or invalid but other KB artifacts (`knowledge-base/`, `.github/agents/kb.agent.md`, `.github/prompts/kb-*.prompt.md`) still exist, `/kb-run` and `@kb` will **HALT and refuse to auto-run `kb init`**. This is intentional — re-running `init` would overwrite your existing KB content.
+
+Recover in this order:
+
+1. `kb doctor` — diagnose environment.
+2. `kb status` — see what state can still be read.
+3. Restore from git if the state file was deleted by accident:
+   ```bash
+   git checkout HEAD -- knowledge-base/.kb/state.json
+   ```
+4. Only if you intentionally want a clean reinstall:
+   ```bash
+   kb uninstall --force
+   kb init --yes
+   ```
+
+After the state is healthy, re-run `/kb-run`.
 
 ### Advanced: CLI Commands for Custom Workflows
 
