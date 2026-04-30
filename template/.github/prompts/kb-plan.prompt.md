@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-plan
-version: 1.0.0
+version: 1.1.0
 ---
 
 # /kb-plan — Analyze and write the next KB action plan
@@ -17,12 +17,13 @@ You are operating under the master `@kb` agent contract at `.github/agents/kb.ag
 
 Always read (silent, no narration):
 
-1. `knowledge-base/.kb/state.json` — current `cliVersion`, `templateVersion`, `metadataPolicy`, `ideIntegration`, `lastReconciledTemplateVersion`. If missing → state is `not-initialized`.
-2. `knowledge-base/00-start-here/repository-revision-state.md` (if present) — drift baseline.
+0. **CLI status** — run `kb status --json` (or fall back to `npx -y @williamduong/kb@latest status --json` if `kb` is not on PATH). The CLI is the single source of truth for `presence` (`fresh` / `healthy` / `partial`) and for the resolved `state.json` path. Do NOT use file_search or filesystem probes alone — most IDEs exclude `.git/` from search by default and will misclassify `private-git` installs as `partial`.
+1. `state.json` — the CLI's `--json` output already includes the parsed state object (`schemaVersion`, `cliVersion`, `templateVersion`, `metadataPolicy`, `ideIntegration`, `storageMode`, etc.). If `presence === 'fresh'`, treat as `not-initialized`. If `presence === 'partial'`, abstain and ask the user to follow the recovery steps printed by `kb status`.
+2. `knowledge-base/00-start-here/repository-revision-state.md` (if present) — drift baseline. In `private-git` mode this is at `.git/project-kb/content/00-start-here/repository-revision-state.md`; consult `state.contentRoot` from CLI output.
 3. `knowledge-base/00-start-here/finalization-plan.md` (if present) — outstanding finalization items.
 4. Workspace `package.json` (if present) — for `projectName` detection.
 5. Latest published CLI version via `npm view @williamduong/kb version` (only if `state.cliVersion` looks behind; otherwise skip to save tokens).
-6. Existing plan file at `knowledge-base/.kb/runtime-plan.md` (if present).
+6. Existing plan file at `knowledge-base/.kb/runtime-plan.md` (if present). In `private-git` mode the plan still lives under the visible `knowledge-base/` mount (which is a junction/symlink to `.git/project-kb/content/`).
 
 ## Decision rules
 

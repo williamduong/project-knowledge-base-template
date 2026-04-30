@@ -121,6 +121,23 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - src/commands/init.js
 - src/commands/uninstall.js
 
+## v1.2.3 - 2026-04-30
+
+### Summary
+
+Agent-side patch from Phase 6 field-test on `ace1` (a fresh `private-git` install). Two real-world bugs surfaced where the agent contracts told the chat agent to probe install state via `file_search`, which IDEs exclude `.git/` from by default — producing a false `partial` verdict and triggering the no-silent-re-init guard for a perfectly healthy install.
+
+### Changes
+
+- `.github/agents/kb.agent.md` v2.2.0: Role 2 now explicitly requires `kb status --json` (or `npx -y @williamduong/kb@latest status --json` fallback) as the single source of truth for install-state classification. Filesystem probes are demoted to a last-resort fallback that must also check `.git/project-kb/state.json`.
+- `.github/prompts/kb-run.prompt.md` v1.2.0: preflight Step 1 rewritten to call `kb status --json` first; HALT path re-uses the human-readable `kb status` output.
+- `.github/prompts/kb-plan.prompt.md` v1.1.0: "Inputs to inspect" gains a new Step 0 calling `kb status --json` before any file probing; subsequent steps reference `state.contentRoot` so private-git layouts are read correctly.
+- `kb init` log now prints a private-git note explaining that `state.json` lives under `.git/project-kb/` and that agents must use `kb status` instead of `file_search`. The handoff block also adds a `Verify install` section.
+
+### Migration
+
+- Existing installs pick up the new agent + prompt contracts the next time `kb init` (or any future template-refresh path) writes them. No state migration required.
+
 ## v1.2.2 - 2026-04-30
 
 ### Summary

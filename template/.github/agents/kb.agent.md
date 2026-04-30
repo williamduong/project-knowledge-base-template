@@ -4,7 +4,7 @@ type: multi-modal
 category: development-support
 trigger: slash-command
 instruction_file: .github/copilot-instructions.md
-version: 2.1.0
+version: 2.2.0
 ---
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
@@ -73,6 +73,25 @@ Structural rules to enforce on edit:
 3. Only after the user explicitly confirms they want a clean reinstall should you suggest `kb uninstall --force` followed by `kb init --yes`.
 
 This rule applies to every entry point (`@kb`, `/kb-plan`, `/kb-run`).
+
+**Always probe install state via the CLI, not via file_search.** Two facts:
+
+1. The `private-git` storage mode places state at `.git/project-kb/state.json` and content at `.git/project-kb/content/`, then exposes them through a `knowledge-base/` junction/symlink. Most IDEs (VS Code, Cursor, etc.) exclude `.git/` from `file_search` by default, so a filesystem probe alone will misclassify a perfectly healthy `private-git` install as `partial`.
+2. The CLI command `kb status [--json]` knows about both storage modes and is the single source of truth.
+
+Therefore, before classifying install state always run:
+
+```
+kb status --json
+```
+
+…and if `kb` is not on PATH, fall back to:
+
+```
+npx -y @williamduong/kb@latest status --json
+```
+
+Use the CLI's `presence` field (`fresh | healthy | partial`) as the verdict. Only fall back to filesystem probes if BOTH commands fail (network or install error), and in that fallback also check `.git/project-kb/state.json` in addition to `knowledge-base/.kb/state.json`.
 
 ### Role 3 — Code Q&A Oracle
 

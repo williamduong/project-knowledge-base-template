@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 1.1.0
+version: 1.2.0
 ---
 
 # /kb-run — Execute the next step of the KB runtime plan
@@ -15,20 +15,29 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
 
 ## Preflight (in order)
 
-1. **Check init state.** Probe the workspace for KB artifacts:
+1. **Check init state via the CLI.** The CLI is the single source of truth — do **not** rely on file_search to detect KB state, because most IDEs (VS Code, Cursor, etc.) exclude `.git/` from search by default and will report a false "partial" verdict for workspaces installed in `private-git` mode (where state lives at `.git/project-kb/state.json`).
 
-   - `A` = `knowledge-base/.kb/state.json` exists AND parses as valid JSON with a `schemaVersion` field.
-   - `B` = `knowledge-base/` directory exists (any contents).
-   - `C` = `.github/agents/kb.agent.md` exists.
-   - `D` = `.github/prompts/kb-plan.prompt.md` or `kb-run.prompt.md` exists.
+   Run:
 
-   Decide based on the combination:
+   ```
+   kb status --json
+   ```
 
-   | Case | Condition | Action |
-   |------|-----------|--------|
-   | Fresh | `!A && !B && !C && !D` | Auto-init silently (see below). |
-   | Healthy | `A` is true | Continue to step 2. |
-   | **Partial / corrupted** | `!A` BUT any of `B`, `C`, `D` is true | **HALT. Do NOT auto-init.** |
+   Parse the JSON. The `presence` field is one of `fresh | healthy | partial`:
+
+   | `presence` | Action |
+   |---|---|
+   | `fresh` | Auto-init silently (see below). |
+   | `healthy` | Continue to step 2. |
+   | `partial` | **HALT. Do NOT auto-init.** Print the recovery guidance from `kb status` (without `--json`). Stop. |
+
+   If the `kb` CLI is not installed in PATH, fall back to:
+
+   ```
+   npx -y @williamduong/kb@latest status --json
+   ```
+
+   Only if BOTH commands fail (network/install error), fall back to filesystem probes — and in that fallback **also** check `.git/project-kb/state.json` in addition to `knowledge-base/.kb/state.json` so private-git installs are not misclassified.
 
    **Auto-init (Fresh case only):**
    - `projectName` ← `package.json` `name` field, else workspace folder name.
@@ -36,32 +45,7 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
    - `contentRoot` ← `knowledge-base/` (default).
    - Run `kb init --yes`. Capture stdout. Report what was detected.
 
-   **HALT message (Partial / corrupted case):**
-
-   ```
-   KB state appears partial or corrupted.
-
-   Detected artifacts:
-     - knowledge-base/        : <yes|no>
-     - .github/agents/kb.agent.md : <yes|no>
-     - .github/prompts/kb-*.prompt.md : <yes|no>
-     - knowledge-base/.kb/state.json : <missing|invalid JSON|missing schemaVersion>
-
-   I will NOT auto-run `kb init` because that would overwrite existing KB
-   content and lose your context.
-
-   Please troubleshoot first:
-     1. `kb doctor`               # diagnose environment
-     2. `kb status`               # check what state can be read
-     3. Restore `state.json` from git if it was deleted by accident:
-        `git checkout HEAD -- knowledge-base/.kb/state.json`
-     4. If you intentionally want a clean install, run:
-        `kb uninstall --force`  then  `kb init --yes`
-
-   Re-run `/kb-run` after the state is healthy.
-   ```
-
-   Stop. Do not proceed to step 2.
+   **HALT (Partial / corrupted case):** Re-print the human-readable output of `kb status` so the user sees the same recovery hints (`kb doctor`, `git checkout HEAD -- knowledge-base/.kb/state.json`, or `kb uninstall --force` + `kb init --yes`). Stop. Do not proceed to step 2.
 
 2. **First-run IDE integration.** If `state.ideIntegration.enabled` is `false` (or field missing) AND this is the first `/kb-run` invocation in this workspace:
    - Detect IDE targets via `src/lib/ide-detect.js` (`selectInjectionTargets`).

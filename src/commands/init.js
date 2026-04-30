@@ -168,6 +168,11 @@ function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE }) {
   console.log('  /kb-run       Execute the next step of the plan (auto-inits if needed)');
   console.log('  @kb <q>       Ask the KB master agent (code Q&A, governance, status)');
   console.log('');
+  console.log('Verify install:');
+  console.log('  kb status          Show install state (fresh / healthy / partial) + key fields.');
+  console.log('  Agents MUST use `kb status --json` instead of file_search to detect KB state,');
+  console.log('  because IDEs exclude .git/ from search and would misclassify private-git mode.');
+  console.log('');
   console.log('Plan prompt: ' + planPromptPath);
   console.log('Run prompt:  ' + runPromptPath);
   console.log('');
@@ -263,6 +268,10 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
   console.log(`Storage mode: ${options.mode}`);
   console.log(`State file: ${storagePaths.statePath}`);
   console.log(`Rendered revision state: ${storagePaths.renderedRevisionStatePath}`);
+  if (options.mode === 'private-git') {
+    console.log('Note: in private-git mode, state.json lives under .git/project-kb/ and is hidden from IDE file searches by default.');
+    console.log('      Use "kb status" to inspect install state instead of file_search.');
+  }
 
   // Create agent and prompt template files
   const agentFiles = createAgentAndPromptFiles({ workspaceRoot, repoRoot });
