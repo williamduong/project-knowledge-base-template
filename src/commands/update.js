@@ -55,6 +55,14 @@ function runUpdate({ args, cwd, repoRoot }) {
 
   if (state.templateVersion !== latestTemplateVersion) {
     const previousVersion = state.templateVersion;
+    const cmp = compareSemver(previousVersion, latestTemplateVersion);
+
+    if (cmp > 0) {
+      console.log(`update: state template version (${previousVersion}) is newer than bundled template (${latestTemplateVersion}). Refusing to downgrade.`);
+      console.log('update: your global kb CLI is older than the workspace state. Run: npm i -g @williamduong/kb@latest');
+      return;
+    }
+
     state.templateVersion = latestTemplateVersion;
     state.lastReconciledTemplateVersion = latestTemplateVersion;
     state.versionLineage = `${previousVersion} -> ${latestTemplateVersion}`;
@@ -71,6 +79,18 @@ function runUpdate({ args, cwd, repoRoot }) {
   }
 
   console.log(`update: template version already current (${state.templateVersion})`);
+}
+
+function compareSemver(a, b) {
+  const pa = String(a || '0.0.0').split('.').map((n) => parseInt(n, 10) || 0);
+  const pb = String(b || '0.0.0').split('.').map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i += 1) {
+    const da = pa[i] || 0;
+    const db = pb[i] || 0;
+    if (da > db) return 1;
+    if (da < db) return -1;
+  }
+  return 0;
 }
 
 module.exports = {
