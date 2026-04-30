@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-04-30
-last_verified: 2026-04-30
+last_updated: 2026-05-01
+last_verified: 2026-05-01
 related:
   - how-to-use-this-kb.md
   - finalization-plan.md
@@ -30,9 +30,9 @@ Stores the last repository baseline that agents used when they verified, upgrade
 
 | Field | Value |
 |---|---|
-| KB Template Version | v1.2.1 |
+| KB Template Version | v1.3.0 |
 | KB Patch Revision | 0 |
-| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 |
+| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 -> v1.2.11 -> v1.3.0 |
 | Brand Scope | project-knowledge-base-template |
 | Source Repository Identifier | https://github.com/williamduong/project-knowledge-base-template.git |
 | Source Default Branch | main |
@@ -43,13 +43,13 @@ For downstream project use, `Brand Scope` should identify the product or brand b
 
 | Field | Value |
 |---|---|
-| Source Repository Git Baseline | 24edf8cf65f34780162bfbf314965e1af5652751 |
-| Baseline Captured At | 2026-04-30 |
-| Last Drift Check At | 2026-04-30 |
+| Source Repository Git Baseline | f8b4e58b3c4252453a9da79b00014542265849c8 |
+| Baseline Captured At | 2026-05-01 |
+| Last Drift Check At | 2026-05-01 |
 | Drift Status | aligned |
 | Baseline Scope | whole repository on main |
-| Last Reconciled Template Version | v1.2.1 |
-| Notes | Phase 5 closed: three-layer power surface (4 CLI + 2 prompts + 1 master agent) shipped in v1.2.0; v1.2.1 adds npx Quick Start and the no-silent-re-init guard. |
+| Last Reconciled Template Version | v1.3.0 |
+| Notes | v1.3.0 ships git binding (`kb bind`, `kb scan`) + unified `kb status` entry with verdict, plus `git-impact-pending` doctor rule. Tag v1.3.0 = f8b4e58. |
 
 ## Mandatory Agent Check
 
