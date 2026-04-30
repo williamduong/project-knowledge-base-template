@@ -13,7 +13,7 @@ function runHelp({ packageJson, args }) {
     console.log('Usage (core commands):');
     console.log('  kb help [--advanced]');
     console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>] [--yes]');
-    console.log('  kb update [--accept-baseline]');
+    console.log('  kb update [--accept-baseline] [--refresh-prompts]');
     console.log('  kb maintain [--accept-baseline] [--fast]');
     console.log('  kb status [--json]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
@@ -29,6 +29,9 @@ function runHelp({ packageJson, args }) {
     console.log('             --skip-index      Skip initial KB index summary generation.');
     console.log('  update     Refresh KB state after sync and reconcile template version metadata.');
     console.log('             Use --accept-baseline to stamp current HEAD as the new baseline.');
+    console.log('             Use --refresh-prompts to overwrite .github/agents/kb.agent.md,');
+    console.log('             .github/prompts/kb-*.prompt.md and .github/hooks/revision-state-guard.json');
+    console.log('             with the latest template versions (does not touch state.json).');
     console.log('  maintain   One-command maintenance pipeline.');
     console.log('             Default: sync + doc:gate (if available) + test --all + doctor --strict.');
     console.log('             --fast            Quick mode: skips doc:gate, sampled test, non-strict doctor.');
@@ -62,7 +65,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb hide [--restore-backup]');
   console.log('  kb test [--sample <count>] [--all]');
   console.log('  kb sync [--accept-baseline]');
-  console.log('  kb update [--accept-baseline]');
+  console.log('  kb update [--accept-baseline] [--refresh-prompts]');
   console.log('  kb doctor [--json] [--strict]');
   console.log('  kb status [--json]');
   console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');

@@ -4,15 +4,22 @@ const { resolveExistingState } = require('../lib/context');
 const { getTemplateVersion } = require('../lib/template');
 const { persistStateAndRender, readStateFile } = require('../lib/state');
 const { performSync } = require('./sync');
+const { createAgentAndPromptFiles } = require('./init');
 
 function parseArgs(args) {
   const options = {
     acceptBaseline: false,
+    refreshPrompts: false,
   };
 
   for (const current of args) {
     if (current === '--accept-baseline') {
       options.acceptBaseline = true;
+      continue;
+    }
+
+    if (current === '--refresh-prompts') {
+      options.refreshPrompts = true;
       continue;
     }
 
@@ -25,6 +32,19 @@ function parseArgs(args) {
 function runUpdate({ args, cwd, repoRoot }) {
   const options = parseArgs(args);
   const workspaceRoot = path.resolve(cwd);
+
+  if (options.refreshPrompts) {
+    const refreshed = createAgentAndPromptFiles({ workspaceRoot, repoRoot, overwrite: true });
+    if (refreshed.length > 0) {
+      console.log('update: refreshed agent + prompt + hook files from template:');
+      for (const f of refreshed) {
+        console.log(`  ~ ${f}`);
+      }
+    } else {
+      console.log('update: no agent/prompt template files found to refresh.');
+    }
+    return;
+  }
 
   const syncResult = performSync({ cwd: workspaceRoot, options });
   console.log(`update: sync status = ${syncResult.status}`);

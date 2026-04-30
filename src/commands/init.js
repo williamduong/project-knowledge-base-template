@@ -121,19 +121,21 @@ function autoDetectMode({ workspaceRoot }) {
   return fs.existsSync(path.join(workspaceRoot, '.git')) ? 'private-git' : 'tracked';
 }
 
-function createAgentAndPromptFiles({ workspaceRoot, repoRoot }) {
+function createAgentAndPromptFiles({ workspaceRoot, repoRoot, overwrite = false }) {
   const templateAgentPath = path.join(repoRoot, 'template', '.github', 'agents', 'kb.agent.md');
   const templatePlanPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-plan.prompt.md');
   const templateRunPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-run.prompt.md');
+  const templateHookPath = path.join(repoRoot, 'template', '.github', 'hooks', 'revision-state-guard.json');
 
   const agentDestPath = path.join(workspaceRoot, '.github', 'agents', 'kb.agent.md');
   const planPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-plan.prompt.md');
   const runPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-run.prompt.md');
+  const hookDestPath = path.join(workspaceRoot, '.github', 'hooks', 'revision-state-guard.json');
 
   const created = [];
 
-  function copyIfMissing(srcPath, dstPath) {
-    if (fs.existsSync(dstPath)) {
+  function copyFile(srcPath, dstPath) {
+    if (!overwrite && fs.existsSync(dstPath)) {
       return;
     }
 
@@ -144,13 +146,16 @@ function createAgentAndPromptFiles({ workspaceRoot, repoRoot }) {
   }
 
   if (fs.existsSync(templateAgentPath)) {
-    copyIfMissing(templateAgentPath, agentDestPath);
+    copyFile(templateAgentPath, agentDestPath);
   }
   if (fs.existsSync(templatePlanPromptPath)) {
-    copyIfMissing(templatePlanPromptPath, planPromptDestPath);
+    copyFile(templatePlanPromptPath, planPromptDestPath);
   }
   if (fs.existsSync(templateRunPromptPath)) {
-    copyIfMissing(templateRunPromptPath, runPromptDestPath);
+    copyFile(templateRunPromptPath, runPromptDestPath);
+  }
+  if (fs.existsSync(templateHookPath)) {
+    copyFile(templateHookPath, hookDestPath);
   }
 
   return created;
@@ -314,4 +319,5 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
 
 module.exports = {
   runInit,
+  createAgentAndPromptFiles,
 };

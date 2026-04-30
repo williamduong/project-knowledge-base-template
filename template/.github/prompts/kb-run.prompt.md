@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 1.3.0
+version: 1.4.0
 ---
 
 # /kb-run — Execute the next step of the KB runtime plan
@@ -47,11 +47,11 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
 
    **HALT (Partial / corrupted case):** Re-print the human-readable output of `kb status` so the user sees the same recovery hints (`kb doctor`, `git checkout HEAD -- knowledge-base/.kb/state.json`, or `kb uninstall --force` + `kb init --yes`). Stop. Do not proceed to step 2.
 
-2. **First-run IDE integration.** If `state.ideIntegration.enabled` is `false` (or field missing) AND this is the first `/kb-run` invocation in this workspace:
+2. **First-run IDE integration.** If `state.ideIntegration.enabled` is `false` (or field missing):
    - Detect IDE targets via `src/lib/ide-detect.js` (`selectInjectionTargets`).
    - For each target, call `injectBlock` to write a one-line KB-MANAGED reference to `.github/agents/kb.agent.md`.
-   - Update `state.ideIntegration` to `{ enabled: true, targets: [{ file, injectedAt: <ISO> }, ...] }`.
-   - Print:
+   - Update `state.ideIntegration` to `{ enabled: true, targets: [{ file, injectedAt: <ISO> }, ...] }`. **Always set `enabled: true` after this step — even when `targets` is empty** (no IDE rules file detected). This prevents `/kb-run` from re-probing on every invocation. The user can re-run with `@kb enable ide-integration` later if they add an IDE rules file.
+   - If at least one target was injected, print:
      ```
      KB integration enabled. Reference block injected into:
        - <file 1>
@@ -109,6 +109,18 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
    ```
 
 5. Stop. Do not chain to the next step automatically (unless `--auto` was passed; then loop until next pending step requires user input or none remain).
+
+## On non-zero exit
+
+If the CLI exits non-zero, mark the step `(status: blocked)` with the exit code and stop. **Before declaring the step blocked, parse the CLI output for known recoverable causes and offer a one-line fix that the user can confirm with `yes`:**
+
+| Cause (in stderr / stdout) | Suggested fix (ask user `yes` first) |
+|---|---|
+| `working tree has N uncommitted change(s)` from `kb maintain --strict` | Suggest `git add -A && git commit -m "chore: kb housekeeping"`, then re-run the same step. |
+| `Hook file missing at .github/hooks/revision-state-guard.json` (WARN) | Suggest `kb update --refresh-prompts` (re-copies template files including the hook), then re-run. |
+| Doctor `WARN` items only (no FAIL) | Suggest re-running with `kb maintain --fast` (skips strict mode). |
+
+For any other non-zero exit, just print the captured output and the menu — do not invent fixes.
 
 ## On `skip`
 

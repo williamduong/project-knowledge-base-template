@@ -121,6 +121,22 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - src/commands/init.js
 - src/commands/uninstall.js
 
+## v1.2.6 - 2026-04-30
+
+### Summary
+
+Four Phase-6 field-test fixes that came out of the first end-to-end `/kb-run` run on `ace1`. All four eliminate dead-end UX where the user would otherwise have to drop into a terminal manually.
+
+### Changes
+
+- `kb init` now copies a default `.github/hooks/revision-state-guard.json` from the template (declarative hook contract used by `kb doctor`/`kb maintain`). Closes the WARN that `kb maintain --strict` was failing on.
+- `kb update --refresh-prompts` (new flag) overwrites `.github/agents/kb.agent.md`, `.github/prompts/kb-*.prompt.md`, and the hook file from the bundled template without touching `state.json`. This is the first-class "pull the new prompts into a project that was init'd on an older version" path.
+- `.github/prompts/kb-run.prompt.md` v1.4.0:
+  - Preflight Step 2 now ALWAYS sets `state.ideIntegration.enabled = true` after the first probe (even if `targets` is empty), so `/kb-run` stops re-probing IDE integration on every invocation.
+  - New "On non-zero exit" recovery table: when `kb maintain --strict` blocks on uncommitted changes, the agent must offer `git add -A && git commit -m "chore: kb housekeeping"` and wait for `yes` instead of telling the user to drop to a terminal. Same pattern for missing hook file (suggest `kb update --refresh-prompts`) and WARN-only doctor (suggest `kb maintain --fast`).
+- `kb help` documents `--refresh-prompts` in both basic and advanced output.
+- `template/.github/hooks/revision-state-guard.json` (new): declarative hook contract.
+
 ## v1.2.5 - 2026-04-30
 
 ### Summary

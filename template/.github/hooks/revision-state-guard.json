@@ -1,0 +1,17 @@
+{
+  "$schema": "https://williamduong.github.io/project-knowledge-base-template/schemas/revision-state-guard.schema.json",
+  "name": "kb-revision-state-guard",
+  "version": "1.0.0",
+  "description": "Workspace hook contract for the KB revision-state guard. Used by `kb doctor` and `kb maintain` to detect drift between the stored baseline revision in 00-start-here/repository-revision-state.md and the current git HEAD. The contract is declarative; the actual enforcement runs inside the CLI.",
+  "policy": {
+    "compareScope": "brand",
+    "requireBaselineFile": true,
+    "treatMissingBaselineAs": "placeholder",
+    "onDrift": "downgradeVerification",
+    "writeBackOnReconcile": true
+  },
+  "files": {
+    "baseline": "knowledge-base/00-start-here/repository-revision-state.md",
+    "renderedFallback": ".git/project-kb/content/00-start-here/repository-revision-state.md"
+  }
+}
