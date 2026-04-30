@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-plan
-version: 1.3.0
+version: 1.4.0
 ---
 
 # /kb-plan — Analyze and write the next KB action plan

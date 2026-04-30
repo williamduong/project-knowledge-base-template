@@ -6,6 +6,8 @@ const { getGitMetadata, getWorkingTreeStatus } = require('../lib/git');
 const { detectKbArtifacts } = require('../lib/kb-presence');
 const { resolveExistingState } = require('../lib/context');
 const { readImpactFile } = require('../lib/impact');
+const { buildGraph, coerceListField, collectMarkdownFiles } = require('../lib/impact-graph');
+const { parseFrontmatter } = require('../lib/kb-analysis');
 
 function parseMinNodeMajor(range) {
   const match = /(\d+)/.exec(range || '');
@@ -32,6 +34,24 @@ function testLinkCapability(cwd) {
       // ignore cleanup errors
     }
   }
+}
+
+function scanLastVerifiedCommitMissing(contentRoot) {
+  const fs = require('fs');
+  const stale = [];
+  const files = collectMarkdownFiles(contentRoot, []);
+  for (const abs of files) {
+    let raw;
+    try { raw = fs.readFileSync(abs, 'utf8'); } catch { continue; }
+    const fm = parseFrontmatter(raw);
+    if (!fm) continue;
+    const lv = typeof fm.last_verified === 'string' ? fm.last_verified.trim() : '';
+    const lvc = typeof fm.last_verified_commit === 'string' ? fm.last_verified_commit.trim() : '';
+    if (lv && !lvc) {
+      stale.push(abs);
+    }
+  }
+  return stale;
 }
 
 function parseDoctorArgs(args) {
@@ -161,6 +181,50 @@ function runDoctor({ args, cwd, packageJson }) {
     }
   }
 
+  // related-semantic + last_verified_commit doctor rules (v1.4)
+  if (impactCtx) {
+    try {
+      const { stats } = buildGraph({ contentRoot: impactCtx.contentRoot });
+      if (stats.legacyRelatedDocs > 0) {
+        checks.push({
+          name: 'related-legacy-field',
+          status: 'INFO',
+          detail: `${stats.legacyRelatedDocs} doc(s) still use legacy "related:" field. Rename to "related_weak:" (or promote to "related_strong:") per template/15-governance/related-semantic.md. Not auto-rewritten by upgrade.`,
+        });
+      }
+      if (stats.conflictPairs > 0) {
+        checks.push({
+          name: 'related-strong-weak-conflict',
+          status: 'WARN',
+          detail: `${stats.conflictPairs} path(s) appear in both related_strong and related_weak across the KB. Strong wins for traversal; remove the weak duplicate.`,
+        });
+      }
+    } catch (err) {
+      checks.push({
+        name: 'related-semantic-scan',
+        status: 'WARN',
+        detail: `Failed to scan related-semantic: ${err.message}`,
+      });
+    }
+
+    try {
+      const stale = scanLastVerifiedCommitMissing(impactCtx.contentRoot);
+      if (stale.length > 0) {
+        checks.push({
+          name: 'last-verified-commit-missing',
+          status: 'WARN',
+          detail: `${stale.length} doc(s) have last_verified set but last_verified_commit missing. Run "kb verify <doc>" to fill commit SHA.`,
+        });
+      }
+    } catch (err) {
+      checks.push({
+        name: 'last-verified-commit-scan',
+        status: 'WARN',
+        detail: `Failed to scan last_verified_commit: ${err.message}`,
+      });
+    }
+  }
+
   const presence = detectKbArtifacts(workspaceRoot);
   if (presence.classification === 'partial') {
     const missing = presence.stateFileRawExists ? 'state.json present but invalid (missing schemaVersion or unparseable)' : 'state.json missing';
@@ -185,9 +249,7 @@ function runDoctor({ args, cwd, packageJson }) {
 
   const hasFailure = checks.some((check) => check.status === 'FAIL');
   const hasWarning = checks.some((check) => check.status === 'WARN');
-  const summary = hasFailure ? 'FAIL' : hasWarning ? 'WARN' : 'PASS';
-
-  if (options.json) {
+  const summary = hasFailure ? 'FAIL' : hasWarning ? 'WARN' : 'PASS';  if (options.json) {
     const report = {
       command: 'kb doctor',
       mode: 'json',

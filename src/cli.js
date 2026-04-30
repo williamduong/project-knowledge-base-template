@@ -22,6 +22,9 @@ const { runStatus } = require('./commands/status');
 const { runIde } = require('./commands/ide');
 const { runBind } = require('./commands/bind');
 const { runScan } = require('./commands/scan');
+const { runImpact } = require('./commands/impact');
+const { runVerify } = require('./commands/verify');
+const { runBaseline } = require('./commands/baseline');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -88,6 +91,21 @@ async function run(argv) {
 
   if (command === 'scan') {
     await runScan({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'impact') {
+    await runImpact({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'verify') {
+    await runVerify({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'baseline') {
+    await runBaseline({ args: rest, cwd: process.cwd() });
     return;
   }
 

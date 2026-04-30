@@ -1,6 +1,6 @@
 {
   "name": "@williamduong/kb",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
   "private": false,
   "license": "AGPL-3.0-only",
@@ -51,6 +51,8 @@
     "node": ">=18"
   },
   "dependencies": {
+    "graphology": "^0.26.0",
+    "graphology-traversal": "^0.3.1",
     "minimatch": "^10.2.5"
   }
 }
