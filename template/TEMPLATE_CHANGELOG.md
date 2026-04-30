@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: historical
 verification: self-referential
-last_updated: 2026-04-30
-last_verified: 2026-04-30
+last_updated: 2026-05-01
+last_verified: 2026-05-01
 related:
   - INDEX.md
   - 15-governance/template-versioning-policy.md
@@ -71,6 +71,77 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - TODO
 
 ## Current Entries
+
+## v1.3.0 - 2026-05-01
+
+<!-- release-meta: from=v1.2.11 to=27fb8bbeb9edc1ac85555695793497560b42d402 generated_at=2026-04-30T17:48:41.459Z -->
+
+### Summary
+
+- Update .gitignore and package.json to include local agent and GitHub files.
+- Implement impact scanning and binding matching functionality.
+- Update template version to v1.2.11 in README and INDEX files.
+- Update latest release information and enhance documentation for new features in index.html.
+- Update version to 1.3.0 across multiple files and enhance impact analysis functionality in status and doctor commands.
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- Medium
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Generated from git log for this release; review the commit-derived summary and refine wording if a higher-level narrative is needed.
+
+### Git Range Reviewed
+
+- v1.2.11..27fb8bbeb9edc1ac85555695793497560b42d402
+
+### Commits Included
+
+- 0c25ee5 feat: update .gitignore and package.json to include local agent and GitHub files (2026-04-30)
+- ff7e54d feat: implement impact scanning and binding matching functionality (2026-04-30)
+- 9fd613d chore: update template version to v1.2.11 in README and INDEX files (2026-04-30)
+- 2cdad44 feat: update latest release information and enhance documentation for new features in index.html (2026-04-30)
+- 27fb8bb feat: update version to 1.3.0 across multiple files and enhance impact analysis functionality in status and doctor commands (2026-05-01)
+
+### Files Added / Changed
+
+- .gitignore
+- README.md
+- package-lock.json
+- package.json
+- site/index.html
+- src/cli.js
+- src/commands/bind.js
+- src/commands/doctor.js
+- src/commands/scan.js
+- src/commands/status.js
+- src/lib/binding-matcher.js
+- src/lib/bindings.js
+- src/lib/git.js
+- src/lib/impact.js
+- template/.github/agents/kb.agent.md
+- template/.github/prompts/kb-ask.prompt.md
+- template/.github/prompts/kb-plan.prompt.md
+- template/.github/prompts/kb-run.prompt.md
+- template/15-governance/git-binding-policy.md
+- template/INDEX.md
+- template/template.json
+- test/commands/status.test.js
+- test/integration/phase0-fixture.test.js
+- test/lib/binding-matcher.test.js
+- test/lib/bindings.test.js
+- test/lib/git.test.js
+- test/lib/impact.test.js
+
 
 ## v1.2.8 - 2026-04-30
 
