@@ -6,7 +6,7 @@ It is designed for teams that want a consistent documentation baseline across di
 
 ## Current Template Version
 
-- Template version: `v1.1.0`
+- Template version: `v1.2.11`
 - License: GNU AGPL v3 with separate commercial licensing available
 - Baseline state file for downstream projects: [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md)
 

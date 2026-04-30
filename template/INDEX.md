@@ -91,7 +91,7 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 
 ## Template Lifecycle
 
-- Current template version: `v1.1.0`
+- Current template version: `v1.2.11`
 - Current template baseline: see [TEMPLATE_CHANGELOG.md](TEMPLATE_CHANGELOG.md)
 - Versioning rules: [15-governance/template-versioning-policy.md](15-governance/template-versioning-policy.md)
 - Migration notes: [15-governance/migrations/README.md](15-governance/migrations/README.md)
