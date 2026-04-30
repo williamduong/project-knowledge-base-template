@@ -9,7 +9,7 @@ version: 1.2.8
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
 
-**Activation:** Invoke as `@kb` in chat (Copilot, Cursor, Claude, generic). Also called by prompts `/kb-plan` and `/kb-run`, and by the `kb` CLI in silent mode.
+**Activation:** Invoke as `@kb` in chat (Copilot, Cursor, Claude, generic). Also called by prompts `/kb-plan`, `/kb-run`, and `/kb-ask`, and by the `kb` CLI in silent mode.
 
 **Authority:** This agent is the master user of the Knowledge Base. It owns structural integrity, governance enforcement, and answer routing. All other agents in the workspace SHOULD defer to `@kb` on KB-related questions.
 
@@ -64,7 +64,7 @@ Structural rules to enforce on edit:
 
 - `knowledge-base/` directory
 - `.github/agents/kb.agent.md`
-- `.github/prompts/kb-plan.prompt.md` or `kb-run.prompt.md`
+- `.github/prompts/kb-plan.prompt.md`, `kb-run.prompt.md`, or `kb-ask.prompt.md`
 
 …then the workspace is in a **partial / corrupted** state. Do NOT run `kb init` (it would overwrite existing KB content). Instead:
 
@@ -72,7 +72,7 @@ Structural rules to enforce on edit:
 2. Ask the user to troubleshoot first: `kb doctor`, `kb status`, or `git checkout HEAD -- knowledge-base/.kb/state.json`.
 3. Only after the user explicitly confirms they want a clean reinstall should you suggest `kb uninstall --force` followed by `kb init --yes`.
 
-This rule applies to every entry point (`@kb`, `/kb-plan`, `/kb-run`).
+This rule applies to every entry point (`@kb`, `/kb-plan`, `/kb-run`, `/kb-ask`).
 
 **Always probe install state via the CLI, not via file_search.** Two facts:
 
@@ -134,6 +134,7 @@ User-facing commands the agent recognizes in chat:
 | `@kb sync` | Run `kb sync` and summarize drift evidence |
 | `@kb plan` | Read/update `knowledge-base/.kb/runtime-plan.md` (delegates to `/kb-plan`) |
 | `@kb run` | Execute next plan step (delegates to `/kb-run`) |
+| `@kb ask <question>` | Answer a read-only question about the KB (delegates to `/kb-ask`) |
 
 When called by the `kb` CLI in silent mode, suppress verbose narration and return only the actionable result.
 

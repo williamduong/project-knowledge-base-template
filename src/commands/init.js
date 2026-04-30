@@ -125,11 +125,13 @@ function createAgentAndPromptFiles({ workspaceRoot, repoRoot, overwrite = false 
   const templateAgentPath = path.join(repoRoot, 'template', '.github', 'agents', 'kb.agent.md');
   const templatePlanPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-plan.prompt.md');
   const templateRunPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-run.prompt.md');
+  const templateAskPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-ask.prompt.md');
   const templateHookPath = path.join(repoRoot, 'template', '.github', 'hooks', 'revision-state-guard.json');
 
   const agentDestPath = path.join(workspaceRoot, '.github', 'agents', 'kb.agent.md');
   const planPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-plan.prompt.md');
   const runPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-run.prompt.md');
+  const askPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-ask.prompt.md');
   const hookDestPath = path.join(workspaceRoot, '.github', 'hooks', 'revision-state-guard.json');
 
   const created = [];
@@ -154,6 +156,9 @@ function createAgentAndPromptFiles({ workspaceRoot, repoRoot, overwrite = false 
   if (fs.existsSync(templateRunPromptPath)) {
     copyFile(templateRunPromptPath, runPromptDestPath);
   }
+  if (fs.existsSync(templateAskPromptPath)) {
+    copyFile(templateAskPromptPath, askPromptDestPath);
+  }
   if (fs.existsSync(templateHookPath)) {
     copyFile(templateHookPath, hookDestPath);
   }
@@ -165,7 +170,7 @@ function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE }) {
   const adapterFile = detectedIDE === 'vscode' ? 'AGENTS.md' : (detectedIDE.charAt(0).toUpperCase() + detectedIDE.slice(1) + ' adapter');
   console.log('');
   console.log(`IDE: ${detectedIDE} (adapter: ${adapterFile})`);
-  console.log('Next: /kb-plan, /kb-run, or @kb <question>  |  Verify: kb status');
+  console.log('Next: /kb-plan, /kb-run, /kb-ask <question>  |  Verify: kb status');
 }
 
 async function runInit({ args, packageJson, cwd, repoRoot }) {
