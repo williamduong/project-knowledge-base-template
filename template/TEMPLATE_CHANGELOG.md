@@ -72,6 +72,55 @@ Each generated entry stores an internal `release-meta` marker with the git range
 
 ## Current Entries
 
+## 1.4.1 - 2026-05-01
+
+<!-- release-meta: from=v1.4.0 to=ee835be02037a5d01f87f6daeda0813de39c05ae generated_at=2026-04-30T19:52:00.723Z -->
+
+### Summary
+
+- Advance baseline to v1.4.0 (574f8b5).
+- Advertise kb scan; docs(site,readme): v1.4 release content; chore: bump 1.4.1.
+
+### Change Type
+
+- Patch
+
+### Impact On Existing KBs
+
+- Low
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Generated from git log for this release; review the commit-derived summary and refine wording if a higher-level narrative is needed.
+
+### Git Range Reviewed
+
+- v1.4.0..ee835be02037a5d01f87f6daeda0813de39c05ae
+
+### Commits Included
+
+- a07ee05 chore: advance baseline to v1.4.0 (574f8b5) (2026-05-01)
+- ee835be fix(help): advertise kb scan; docs(site,readme): v1.4 release content; chore: bump 1.4.1 (2026-05-01)
+
+### Files Added / Changed
+
+- README.md
+- package-lock.json
+- package.json
+- site/index.html
+- src/commands/help.js
+- template/.github/agents/kb.agent.md
+- template/.github/prompts/kb-ask.prompt.md
+- template/.github/prompts/kb-plan.prompt.md
+- template/.github/prompts/kb-run.prompt.md
+- template/00-start-here/repository-revision-state.md
+- template/template.json
+
+
 ## 1.4.0 - 2026-05-01
 
 <!-- release-meta: from=v1.3.0 to=4b879b36ca3f053ff9205c1b0cfcfbe714c4498a generated_at=2026-04-30T19:40:20.050Z -->
