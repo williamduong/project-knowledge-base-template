@@ -18,6 +18,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kb maintain [--accept-baseline] [--fast]');
     console.log('  kb status [--json]');
     console.log('  kb impact <doc-or-code> [--depth=N] [--json]');
+    console.log('  kb scan [--recursive] [--depth=N] [--json]');
     console.log('  kb verify <doc> [--json]   |   kb verify --all [--json]');
     console.log('  kb baseline show [--json]   |   kb baseline set <sha|--to-head> [--yes] [--json]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
@@ -79,6 +80,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb doctor [--json] [--strict]');
   console.log('  kb status [--json]');
   console.log('  kb impact <doc-or-code> [--depth=N] [--json]');
+  console.log('  kb scan [--recursive] [--depth=N] [--json]');
   console.log('  kb verify <doc> [--json]');
   console.log('  kb verify --all [--json]');
   console.log('  kb baseline show [--json]');
@@ -145,6 +147,10 @@ function runHelp({ packageJson, args }) {
   console.log('  impact     Recursive impact analysis (graphology in-memory).');
   console.log('             Traverses related_strong + binds_to (depth-1). related_weak displayed only.');
   console.log('             --depth=N        Override default depth (capped at impact.maxDepth).');
+  console.log('             --json           Machine-readable JSON.');
+  console.log('  scan       Scan git diff (baseline..HEAD), bind code changes to docs, write impact.json.');
+  console.log('             --recursive      Expand related_strong neighbours into transitive_impacted[].');
+  console.log('             --depth=N        Recursive depth (capped at impact.maxDepth, default impact.defaultDepth).');
   console.log('             --json           Machine-readable JSON.');
   console.log('  verify     Bump last_verified + last_verified_commit (current HEAD) for a doc.');
   console.log('             Clears matching entries from impact.json on success.');
