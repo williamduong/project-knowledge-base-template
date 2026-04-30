@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-plan
-version: 1.1.0
+version: 1.2.0
 ---
 
 # /kb-plan — Analyze and write the next KB action plan
@@ -74,14 +74,18 @@ Rules:
 
 ## Output to chat
 
-After writing the plan, print a concise summary to chat:
+After writing the plan, print a concise summary to chat. The final block MUST end with an explicit "What to do next" menu so the user knows whether to converse or run a command:
 
 ```
 KB plan ready: knowledge-base/.kb/runtime-plan.md
 - current_step: <n>
 - pending: <count>
-- next action: <action of current_step>
-Run /kb-run to execute the next step.
+- next action: <action of current_step> — <one-line rationale>
+
+What to do next (pick one):
+  1. Run `/kb-run` to execute step <n> now.
+  2. Reply `/kb-plan <change>` to refine the plan (e.g. reorder, drop, add steps).
+  3. Reply with a question or task (`@kb …` or just plain chat) to keep talking; the plan stays as-is.
 ```
 
 Do not run any step. /kb-plan only plans.

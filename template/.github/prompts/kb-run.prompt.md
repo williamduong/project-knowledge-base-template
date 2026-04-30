@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 1.2.0
+version: 1.3.0
 ---
 
 # /kb-run — Execute the next step of the KB runtime plan
@@ -91,9 +91,21 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
    - Bump `current_step` to the next `pending` step.
    - Update `last_updated` in frontmatter.
 
-4. Print a short report:
+4. Print a short report ending with an explicit "What to do next" menu:
+
    ```
-   Step <n> done. Next: step <n+1> (<action>) — run /kb-run again to continue.
+   Step <n> done (exit=<code>). <one-line outcome>.
+
+   What to do next (pick one):
+     1. Run `/kb-run` again to execute step <n+1> (<action>).
+     2. Reply `/kb-plan <change>` to adjust remaining steps before continuing.
+     3. Reply with a question or task (`@kb …` or plain chat) to pause execution and keep talking.
+   ```
+
+   If there is no `pending` step left, replace the menu with:
+
+   ```
+   No pending steps. The plan is complete. Reply `/kb-plan` to generate a new one, or `@kb <question>` to keep using the KB.
    ```
 
 5. Stop. Do not chain to the next step automatically (unless `--auto` was passed; then loop until next pending step requires user input or none remain).

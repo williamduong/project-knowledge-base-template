@@ -121,6 +121,17 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - src/commands/init.js
 - src/commands/uninstall.js
 
+## v1.2.5 - 2026-04-30
+
+### Summary
+
+UX: both `/kb-plan` and `/kb-run` now end with an explicit "What to do next" menu so the user is never left guessing whether to converse, refine the plan, or run the next step.
+
+### Changes
+
+- `.github/prompts/kb-plan.prompt.md` v1.2.0: output template ends with a 3-option menu (run, refine, keep talking).
+- `.github/prompts/kb-run.prompt.md` v1.3.0: post-step report ends with the same 3-option menu; when no pending steps remain, prints a completion message instead.
+
 ## v1.2.4 - 2026-04-30
 
 ### Summary
