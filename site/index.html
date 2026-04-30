@@ -206,9 +206,9 @@
                 <path d="M8.5 15.5h5"></path>
               </svg>
             </span>
-            <h2>Latest Release: v1.1.0</h2>
+            <h2>Latest Release: v1.2.11</h2>
           </div>
-          <p>The latest package release streamlines first-run onboarding: `kb init` now auto-detects mode, creates a project-scoped KB agent, prints a Copilot handoff prompt, and keeps chained bootstrap/index output quiet.</p>
+          <p>The latest releases harden day-to-day workflows: a read-only <code>/kb-ask</code> prompt for KB-first Q&amp;A, a guard that prevents <code>kb update</code> from accidentally downgrading the template version, and a more thorough <code>kb uninstall</code> that fully cleans up generated AI helper files.</p>
           <p><a class="text-link" href="./docs.html?path=TEMPLATE_CHANGELOG.md">Read the full release notes in the template changelog &rarr;</a></p>
         </article>
       </section>
@@ -261,6 +261,7 @@ kb init</pre>
               <div class="code-label">Copilot Chat (VS Code / Cursor / Claude)</div>
 <pre>/kb-plan      # analyze workspace, write knowledge-base/.kb/runtime-plan.md
 /kb-run       # execute next pending step (resumable)
+/kb-ask       # read-only KB-first Q&amp;A (no edits)
 
 @kb What database does this project use?
 @kb What are the main components?
@@ -356,6 +357,14 @@ kb update</pre>
                 <span class="cmd-desc">Expose or retract the KB mount in private-git mode</span>
               </div>
               <div class="cmd-row">
+                <code class="cmd-name">kb status</code>
+                <span class="cmd-desc">Report KB presence, mode, and state with a <code class="cmd-flag">--json</code> mode for prompts and CI</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb ide</code>
+                <span class="cmd-desc"><code class="cmd-flag">enable</code> / <code class="cmd-flag">disable</code> IDE integration (Copilot, Cursor, Claude) without touching internals</span>
+              </div>
+              <div class="cmd-row">
                 <code class="cmd-name">kb maintain</code>
                 <span class="cmd-desc">One-command maintenance pipeline: sync + doc checks + test + doctor</span>
               </div>
@@ -365,7 +374,7 @@ kb update</pre>
               </div>
               <div class="cmd-row">
                 <code class="cmd-name">kb update</code>
-                <span class="cmd-desc">Run sync then stamp the new template version state</span>
+                <span class="cmd-desc">Run sync then stamp the new template version state (refuses to downgrade)</span>
               </div>
               <div class="cmd-row">
                 <code class="cmd-name">kb doctor</code>
@@ -374,6 +383,10 @@ kb update</pre>
               <div class="cmd-row">
                 <code class="cmd-name">kb test</code>
                 <span class="cmd-desc">Smoke-test template structure against expected schema</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb uninstall</code>
+                <span class="cmd-desc">Remove KB content and generated AI helper files; <code class="cmd-flag">--keep-ai-files</code> preserves IDE adapters</span>
               </div>
             </div>
           </div>
@@ -523,73 +536,88 @@ kb update</pre>
       <section class="roadmap-section" aria-label="Roadmap">
         <p class="section-eyebrow">What&rsquo;s coming</p>
         <h2 class="section-title">Roadmap &amp; Planned Features</h2>
-        <p class="section-sub">The KB template is actively evolving. These are the capabilities currently being researched or prototyped.</p>
+        <p class="section-sub">The KB template ships in versioned waves. Each wave stands alone in user value while building the foundation for the next. Dates are not committed; ordering is.</p>
         <div class="roadmap-grid">
           <div class="roadmap-card">
             <span class="roadmap-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <circle cx="12" cy="12" r="9"></circle>
-                <path d="M12 7v5l3 3"></path>
+                <path d="M3 12h6l3-7 3 14 3-7h3"></path>
               </svg>
             </span>
             <div>
-              <h3>Bi-temporal knowledge &amp; GraphDB</h3>
-              <p>Track when facts were known vs. when they were true. Embed a graph layer to map relationships between entities across the KB.</p>
+              <h3>v1.3 &mdash; Git binding &amp; impact surface</h3>
+              <p>Bind any KB doc to one or more code paths via <code>kb bind</code>. <code>kb scan</code> walks the diff since the last baseline and reports which docs are impacted, with KB self-edits filtered out.</p>
             </div>
           </div>
           <div class="roadmap-card">
             <span class="roadmap-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <rect x="3" y="8" width="18" height="12" rx="2"></rect>
-                <path d="M7 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"></path>
-                <path d="M12 13v3"></path>
-                <path d="m10 14 2-1 2 1"></path>
+                <circle cx="6" cy="6" r="2"></circle>
+                <circle cx="18" cy="6" r="2"></circle>
+                <circle cx="6" cy="18" r="2"></circle>
+                <circle cx="18" cy="18" r="2"></circle>
+                <path d="M8 6h8M6 8v8M18 8v8M8 18h8"></path>
               </svg>
             </span>
             <div>
-              <h3>MCP server integration</h3>
-              <p>Expose the KB as a Model Context Protocol server so agents can query structured knowledge directly via tool calls.</p>
+              <h3>v1.4 &mdash; Impact engine &amp; estimator</h3>
+              <p>An in-memory dependency graph turns a code change into a ranked list of affected docs, with an estimator for review cost. Powers smarter prompts and safer maintenance loops.</p>
             </div>
           </div>
           <div class="roadmap-card">
             <span class="roadmap-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <path d="M12 3 5.5 6v5.5c0 4.2 2.6 7.4 6.5 9.5 3.9-2.1 6.5-5.3 6.5-9.5V6z"></path>
-                <path d="m9.4 12.2 1.8 1.8 3.5-4"></path>
+                <path d="M7 4.5h7l3 3V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2z"></path>
+                <path d="M14 4.5v3h3"></path>
+                <path d="M8.5 12h7"></path>
+                <path d="M8.5 15.5h5"></path>
               </svg>
             </span>
             <div>
-              <h3>Broader verification coverage</h3>
-              <p>Extend verification workflows and doctor checks to cover more project types: mobile apps, data pipelines, embedded systems.</p>
+              <h3>v1.5 &mdash; Catalog &amp; deterministic release notes</h3>
+              <p>A queryable catalog of every doc, binding, and verification stamp. Release notes are generated deterministically from git history and impact data, ready for any downstream KB.</p>
             </div>
           </div>
           <div class="roadmap-card">
             <span class="roadmap-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <path d="M3 12h18"></path>
-                <path d="M3 6h18"></path>
-                <path d="M3 18h18"></path>
-                <circle cx="19" cy="6" r="2" fill="currentColor" stroke="none"></circle>
+                <path d="M5 12h14"></path>
+                <path d="m13 6 6 6-6 6"></path>
               </svg>
             </span>
             <div>
-              <h3>SaaS-specialized variant</h3>
-              <p>A pre-configured KB profile for SaaS products: tenant model, subscription lifecycle, feature flags, billing domain built in.</p>
+              <h3>v1.6 &mdash; Release pipeline orchestrator (optional)</h3>
+              <p>Skippable wave. Adds an opinionated tag &rarr; notes &rarr; publish pipeline behind a decision gate, for teams who want one command to ship rather than a checklist.</p>
             </div>
           </div>
           <div class="roadmap-card">
             <span class="roadmap-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <rect x="3" y="5" width="7" height="6" rx="1.5"></rect>
-                <rect x="14" y="5" width="7" height="6" rx="1.5"></rect>
-                <rect x="3" y="13" width="7" height="6" rx="1.5"></rect>
-                <path d="M14 16h7"></path>
-                <path d="M17.5 13v6"></path>
+                <rect x="7" y="7" width="10" height="10" rx="2"></rect>
+                <path d="M9 11.5h6"></path>
+                <path d="M12 3v2"></path>
+                <path d="M4 12H2"></path>
+                <path d="M22 12h-2"></path>
               </svg>
             </span>
             <div>
-              <h3>Multi-app catalog management</h3>
-              <p>A variant designed for teams managing a linked catalog of applications &mdash; shared domain model, cross-system relationships, and dependency tracking.</p>
+              <h3>v2.0 &mdash; Intent layer &amp; KB Agent</h3>
+              <p>A 7-step intent workflow that observes user actions, captures lessons learned, and feeds them back into the KB. The bundled KB Agent enforces the workflow. Major version &mdash; includes a migration path.</p>
+            </div>
+          </div>
+          <div class="roadmap-card">
+            <span class="roadmap-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M4 19V5"></path>
+                <path d="M4 19h16"></path>
+                <rect x="6" y="11" width="3" height="6"></rect>
+                <rect x="11" y="7" width="3" height="10"></rect>
+                <rect x="16" y="13" width="3" height="4"></rect>
+              </svg>
+            </span>
+            <div>
+              <h3>v3.0 &mdash; 3-tier KB platform <span style="opacity:.7;font-weight:400">(draft, gated)</span></h3>
+              <p>Workspace, organisation, and platform tiers with shared identity and cross-repo discovery. Locked behind explicit trigger conditions; not committed until usage from v2.x justifies the lift.</p>
             </div>
           </div>
         </div>
