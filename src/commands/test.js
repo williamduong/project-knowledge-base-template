@@ -9,6 +9,7 @@ const { buildDocumentIndex } = require('../lib/kb-analysis');
 function parseArgs(args) {
   const options = {
     sample: 5,
+    all: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -21,6 +22,11 @@ function parseArgs(args) {
 
       options.sample = Math.floor(value);
       index += 1;
+      continue;
+    }
+
+    if (current === '--all') {
+      options.all = true;
       continue;
     }
 
@@ -86,7 +92,7 @@ function runTest({ args, cwd }) {
     warnings.push('No markdown files found in KB content root.');
   }
 
-  const sampled = sampleArray(docs, options.sample);
+  const sampled = options.all ? [...docs] : sampleArray(docs, options.sample);
   let sampledWithFrontmatter = 0;
 
   for (const doc of sampled) {
@@ -124,7 +130,7 @@ function runTest({ args, cwd }) {
   console.log(`- mode: ${context.mode}`);
   console.log(`- state file: ${context.statePath}`);
   console.log(`- markdown documents indexed: ${docs.length}`);
-  console.log(`- sampled markdown files: ${sampled.length}`);
+  console.log(`- sampled markdown files: ${sampled.length}${options.all ? ' (all docs)' : ''}`);
   console.log(`- sampled files with frontmatter: ${sampledWithFrontmatter}`);
   console.log(`- code-verified docs: ${codeVerifiedDocs.length}`);
   console.log(`- code-verified docs missing source_of_truth: ${missingSourceOfTruth.length}`);

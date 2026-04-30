@@ -49,7 +49,7 @@ Currently implemented commands:
 - `plan list` / `plan add "<description>" [--owner <name>] [--priority P0|P1|P2]` — Manage finalization-plan.md
 - `show [--backup-existing]` (private-git mode)
 - `hide [--restore-backup]` (private-git mode)
-- `test [--sample <count>]`
+- `test [--sample <count>] [--all]`
 - `sync [--accept-baseline]`
 - `update [--accept-baseline]`
 - `doctor [--json] [--strict]`

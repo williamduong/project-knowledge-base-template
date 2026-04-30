@@ -54,7 +54,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb plan add "<description>" [--owner <name>] [--priority P0|P1|P2]');
   console.log('  kb show [--backup-existing]');
   console.log('  kb hide [--restore-backup]');
-  console.log('  kb test [--sample <count>]');
+  console.log('  kb test [--sample <count>] [--all]');
   console.log('  kb sync [--accept-baseline]');
   console.log('  kb update [--accept-baseline]');
   console.log('  kb doctor [--json] [--strict]');
@@ -94,6 +94,7 @@ function runHelp({ packageJson, args }) {
   console.log('  hide       Remove the visible KB mount while keeping canonical content (private-git mode).');
   console.log('             Use --restore-backup to restore a previous backup directory.');
   console.log('  test       Run deterministic KB integrity and drift checks.');
+  console.log('             --all            Validate frontmatter on all indexed markdown docs.');
   console.log('  sync       Collect drift evidence, map source_of_truth changes, and update queue/report.');
   console.log('             Use --accept-baseline to stamp HEAD as new baseline after review.');
   console.log('  update     Sync first, then refresh template version state.');

@@ -34,6 +34,7 @@
     "doc:gate": "node ./scripts/doc-gate.js",
     "doctor": "node ./bin/kb.js doctor",
     "doctor:json": "node ./bin/kb.js doctor --json",
+    "test:all": "node ./bin/kb.js test --all",
     "pack:smoke": "node ./tools/pack-smoke.js",
     "release:dry": "npm run doc:gate && npm run doctor && npm run pack:smoke"
   },
