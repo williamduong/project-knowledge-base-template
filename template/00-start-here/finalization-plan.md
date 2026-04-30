@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: unverified
-last_updated: 2026-04-28
-last_verified: 2026-04-28
+last_updated: 2026-04-30
+last_verified: 2026-04-30
 related:
 	- current-verified-index.md
 	- target-state-index.md
@@ -46,6 +46,7 @@ Operational queue for KB maintenance and completion.
 | KB-003 | Review all code-verified claims for source_of_truth | owners by folder | P1 | YYYY-MM-DD | todo | |
 | KB-004 | Prune truly unused template files after first release | knowledge-management | P2 | YYYY-MM-DD | todo | |
 | KB-005 | Document AI IDE compatibility matrix and tested agent workflows | knowledge-management | P1 | YYYY-MM-DD | partial | Added `12-ai-skills/ai-ide-compatibility-matrix.md`; empirical IDE validation notes can be expanded later. |
+| KB-006 | Phase 5 — Three-layer power surface (4 CLI + 2 prompts + 1 master agent) | knowledge-management | P0 | 2026-04-30 | done | Shipped in v1.2.0 (rewrite kb.agent.md v2.0.0, /kb-plan + /kb-run prompts, code-qa-index, state schema v2 with metadataPolicy + ideIntegration, ide-detect/inject libs, uninstall KB-MANAGED block strip). v1.2.1 added npx Quick Start and the no-silent-re-init guard. |
 
 ## Add / Edit / Delete Workflow
 
