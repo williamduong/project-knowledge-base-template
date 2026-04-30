@@ -6,7 +6,7 @@ const { getGitMetadata, getWorkingTreeStatus } = require('../lib/git');
 const { detectKbArtifacts } = require('../lib/kb-presence');
 const { resolveExistingState } = require('../lib/context');
 const { readImpactFile } = require('../lib/impact');
-const { buildGraph, coerceListField, collectMarkdownFiles } = require('../lib/impact-graph');
+const { buildGraph, coerceListField, collectMarkdownFiles, findStrongCycles } = require('../lib/impact-graph');
 const { parseFrontmatter } = require('../lib/kb-analysis');
 
 function parseMinNodeMajor(range) {
@@ -184,7 +184,7 @@ function runDoctor({ args, cwd, packageJson }) {
   // related-semantic + last_verified_commit doctor rules (v1.4)
   if (impactCtx) {
     try {
-      const { stats } = buildGraph({ contentRoot: impactCtx.contentRoot });
+      const { graph, stats } = buildGraph({ contentRoot: impactCtx.contentRoot });
       if (stats.legacyRelatedDocs > 0) {
         checks.push({
           name: 'related-legacy-field',
@@ -197,6 +197,16 @@ function runDoctor({ args, cwd, packageJson }) {
           name: 'related-strong-weak-conflict',
           status: 'WARN',
           detail: `${stats.conflictPairs} path(s) appear in both related_strong and related_weak across the KB. Strong wins for traversal; remove the weak duplicate.`,
+        });
+      }
+      // Cycle detection in related_strong subgraph (v1.4 Phase 2).
+      const cycles = findStrongCycles(graph);
+      if (cycles.length > 0) {
+        const sample = cycles.slice(0, 3).map((c) => c.concat([c[0]]).join(' -> ')).join('; ');
+        checks.push({
+          name: 'related-strong-cycle',
+          status: 'WARN',
+          detail: `${cycles.length} cycle(s) detected in related_strong graph. Cycles inflate recursive impact and complicate review. Sample: ${sample}${cycles.length > 3 ? ' ...' : ''}`,
         });
       }
     } catch (err) {

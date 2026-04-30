@@ -11,6 +11,8 @@ const {
   writeImpactFile,
 } = require('../lib/impact');
 const { normalizePath } = require('../lib/binding-matcher');
+const { buildGraph, findRecursiveImpact } = require('../lib/impact-graph');
+const { loadConfig, getConfigValue } = require('../lib/config');
 
 function parseArgs(args) {
   const options = { json: false, quiet: false, noScan: false };
@@ -140,6 +142,25 @@ function runStatus({ args, cwd, packageJson }) {
     codeDirty = partition.codeDirty;
   }
 
+  // Recursive impact summary (additive — no breaking change to impact.json on disk).
+  let recursiveImpact = null;
+  if (context && impactData && !impactData.skipped_reason) {
+    const roots = (impactData.impacted || []).map((it) => it.doc);
+    if (roots.length > 0) {
+      try {
+        const cfg = loadConfig(context.contentRoot);
+        const depth = getConfigValue(cfg, 'impact.defaultDepth', 2);
+        const { graph } = buildGraph({ contentRoot: context.contentRoot });
+        const map = findRecursiveImpact({ graph, roots, depth });
+        recursiveImpact = { depth, count: map.size };
+      } catch (_err) {
+        recursiveImpact = { depth: null, count: null, error: _err.message };
+      }
+    } else {
+      recursiveImpact = { depth: null, count: 0 };
+    }
+  }
+
   const verdict = deriveStatusVerdict({ presence, stateError, impactData, kbDirty });
 
   if (options.quiet) {
@@ -170,6 +191,7 @@ function runStatus({ args, cwd, packageJson }) {
       impact: impactData,
       impactPath,
       impactError,
+      recursiveImpact,
       workingTree: { kbDirty, codeDirty },
       verdict,
     }, null, 2));
@@ -246,6 +268,11 @@ function runStatus({ args, cwd, packageJson }) {
     }
     console.log(`    unbound changes: ${impactData.unbound_changes.length}`);
     console.log(`    KB self-edits  : ${impactData.self_edits.length}`);
+    if (recursiveImpact && recursiveImpact.count !== null && recursiveImpact.depth !== null) {
+      console.log(`    recursive impact: ${recursiveImpact.count} doc(s) (depth ${recursiveImpact.depth}, related_strong only)`);
+    } else if (recursiveImpact && recursiveImpact.error) {
+      console.log(`    recursive impact: error (${recursiveImpact.error})`);
+    }
     if (options.noScan) {
       console.log(`    (data from cached impact.json; omit --no-scan to refresh)`);
     }

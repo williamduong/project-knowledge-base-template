@@ -402,6 +402,170 @@ function estimate({ nodes, contentRoot, workspaceRoot, config }) {
   };
 }
 
+/**
+ * Compute transitive impact starting from a set of doc roots.
+ * BFS via related_strong only (matches default impact semantics).
+ *
+ * Returns: Map<docId, { depth: number, from: string[] }>
+ *   - excludes the roots themselves
+ *   - depth = shortest hop from any root
+ *   - from  = sorted unique list of immediate-parent docs that surfaced this node
+ *
+ * roots that are not in the graph are silently skipped.
+ */
+function findRecursiveImpact({ graph, roots, depth }) {
+  const result = new Map();
+  if (!Number.isInteger(depth) || depth <= 0) return result;
+  const rootSet = new Set();
+  for (const r of roots || []) {
+    if (graph.hasNode(r)) rootSet.add(r);
+  }
+  if (rootSet.size === 0) return result;
+
+  // Multi-source BFS. Visit map: nodeId -> shortest depth from any root.
+  const shortest = new Map();
+  for (const r of rootSet) shortest.set(r, 0);
+
+  const queue = [];
+  for (const r of rootSet) queue.push({ node: r, depth: 0 });
+
+  while (queue.length > 0) {
+    const { node, depth: d } = queue.shift();
+    if (d >= depth) continue;
+
+    graph.forEachNeighbor(node, (neighbor) => {
+      let strongFound = false;
+      graph.forEachEdge(node, neighbor, (_e, attrs) => {
+        if (attrs.kind === EDGE_KIND_STRONG) strongFound = true;
+      });
+      if (!strongFound) return;
+      // Only consider doc nodes for transitive impact.
+      const a = graph.getNodeAttributes(neighbor);
+      if (a.kind !== NODE_KIND_DOC) return;
+
+      const nextDepth = d + 1;
+      const known = shortest.get(neighbor);
+      if (known !== undefined && known <= nextDepth) {
+        // Track parent if neighbor sits exactly at known depth and parent is a root or smaller depth.
+        if (!rootSet.has(neighbor)) {
+          const entry = result.get(neighbor);
+          if (entry && entry.depth === nextDepth && !entry.from.includes(node)) {
+            entry.from.push(node);
+          }
+        }
+        return;
+      }
+      shortest.set(neighbor, nextDepth);
+      if (!rootSet.has(neighbor)) {
+        result.set(neighbor, { depth: nextDepth, from: [node] });
+      }
+      queue.push({ node: neighbor, depth: nextDepth });
+    });
+  }
+
+  // Sort `from` lists for stable output.
+  for (const entry of result.values()) {
+    entry.from.sort();
+  }
+  return result;
+}
+
+/**
+ * Detect cycles in the related_strong subgraph (undirected).
+ * Returns array of cycle paths; each path is an array of node ids forming the cycle
+ * (closed loop NOT repeated; e.g. [A, B, C] means A-B-C-A).
+ *
+ * Heuristic dedup: cycles are canonicalised by lex-smallest rotation in either
+ * direction. Each connected component reports only fundamental cycles found by
+ * DFS back-edges; full minimum cycle basis is out of scope.
+ */
+function findStrongCycles(graph) {
+  const cycles = [];
+  const seenCanonical = new Set();
+  const visited = new Set();
+
+  graph.forEachNode((node, attrs) => {
+    if (attrs.kind !== NODE_KIND_DOC) return;
+    if (visited.has(node)) return;
+
+    const parent = new Map();
+    parent.set(node, null);
+    visited.add(node);
+
+    // Iterative DFS frames: [cur, neighborsArr, nextIdx]
+    const stack = [[node, strongDocNeighbors(graph, node), 0]];
+
+    while (stack.length > 0) {
+      const top = stack[stack.length - 1];
+      const [cur, neighbors] = top;
+      const idx = top[2];
+      if (idx >= neighbors.length) {
+        stack.pop();
+        continue;
+      }
+      const next = neighbors[idx];
+      top[2] = idx + 1;
+
+      if (next === parent.get(cur)) continue;
+
+      if (visited.has(next)) {
+        // Back edge — reconstruct cycle by walking parent chain from cur back to next.
+        const cyclePath = [];
+        let n = cur;
+        while (n !== null && n !== next) {
+          cyclePath.push(n);
+          n = parent.get(n);
+        }
+        if (n === next) {
+          cyclePath.push(next);
+          cyclePath.reverse();
+          const canon = canonicaliseCycle(cyclePath);
+          if (!seenCanonical.has(canon)) {
+            seenCanonical.add(canon);
+            cycles.push(cyclePath);
+          }
+        }
+        continue;
+      }
+
+      visited.add(next);
+      parent.set(next, cur);
+      stack.push([next, strongDocNeighbors(graph, next), 0]);
+    }
+  });
+
+  return cycles;
+}
+
+function strongDocNeighbors(graph, node) {
+  const out = [];
+  graph.forEachNeighbor(node, (neighbor) => {
+    let strong = false;
+    graph.forEachEdge(node, neighbor, (_e, a) => {
+      if (a.kind === EDGE_KIND_STRONG) strong = true;
+    });
+    if (!strong) return;
+    if (graph.getNodeAttributes(neighbor).kind !== NODE_KIND_DOC) return;
+    out.push(neighbor);
+  });
+  return out;
+}
+
+function canonicaliseCycle(cycle) {
+  if (!cycle || cycle.length === 0) return '';
+  // Normalise: choose lexicographically smallest rotation considering both directions.
+  const n = cycle.length;
+  let best = null;
+  for (let i = 0; i < n; i += 1) {
+    const rot = cycle.slice(i).concat(cycle.slice(0, i));
+    const fwd = rot.join('|');
+    const rev = rot.slice().reverse().join('|');
+    const cand = fwd < rev ? fwd : rev;
+    if (best === null || cand < best) best = cand;
+  }
+  return best;
+}
+
 module.exports = {
   EDGE_KIND_STRONG,
   EDGE_KIND_WEAK,
@@ -416,4 +580,6 @@ module.exports = {
   estimate,
   findCodeNodes,
   collectMarkdownFiles,
+  findRecursiveImpact,
+  findStrongCycles,
 };
