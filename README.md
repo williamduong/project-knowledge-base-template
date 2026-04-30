@@ -47,6 +47,33 @@ No git repository detected?
 
 Advanced commands remain available via `kb help --advanced`.
 
+## Three-Layer Power Surface
+
+KB ships three complementary layers; pick whichever matches your workflow.
+
+| Layer | Surface | When to use |
+|---|---|---|
+| **CLI (4 commands)** | `kb init` / `kb update` / `kb maintain` / `kb uninstall` | Power user, CI, scripting. Deterministic. |
+| **Prompts (2)** | `/kb-plan` and `/kb-run` in any agent chat (Copilot, Cursor, Claude) | Step-by-step, resumable. `/kb-run` auto-inits if needed and executes one step per call. |
+| **Master agent** | `@kb` in chat | Code Q&A oracle, structural guardian (bi-temporal, metadata schema), governance. Backed by `.github/agents/kb.agent.md`. |
+
+Examples:
+
+```text
+@kb What database does this project use and how does it connect?
+@kb What are the main components?
+@kb How do I add an extension/plugin?
+@kb audit metadata
+@kb status
+```
+
+Plan + run pipeline (no CLI typing required after install):
+
+```text
+/kb-plan         # writes knowledge-base/.kb/runtime-plan.md
+/kb-run          # executes the next pending step (resumable)
+```
+
 Currently implemented commands:
 
 **Scaffold & Fill**
@@ -84,9 +111,9 @@ Currently implemented commands:
 
 It also creates:
 
-- `.github/agents/kb.agent.md`
-- `.github/prompts/kb-build.prompt.md`
-- `.github/prompts/kb-maintain.prompt.md`
+- `.github/agents/kb.agent.md` — master KB agent (Q&A oracle, structural guardian)
+- `.github/prompts/kb-plan.prompt.md` — `/kb-plan` analyzer
+- `.github/prompts/kb-run.prompt.md` — `/kb-run` step executor (auto-inits if needed)
 
 Skip adapter generation with `--skip-adapters` if not needed.
 
@@ -97,8 +124,9 @@ kb help
 kb init
 kb maintain
 
-# Then paste the printed handoff prompt into Copilot Chat:
-@kb Build Knowledge Base from Source
+# Or, fully agent-driven (no CLI typing after install):
+# Open Copilot Chat in your workspace and run:
+#   /kb-run
 ```
 
 Pre-publish artifact simulation:

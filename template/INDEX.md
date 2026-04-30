@@ -39,7 +39,7 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 
 1. Define project archetype and constraints in [00-start-here/project-scope-matrix.md](00-start-here/project-scope-matrix.md)
 2. Fill orientation files in [00-start-here/](00-start-here/)
-3. Build fast-search indexes in [00-start-here/intent-index.md](00-start-here/intent-index.md)
+3. Build fast-search indexes in [00-start-here/intent-index.md](00-start-here/intent-index.md) and [00-start-here/code-qa-index.md](00-start-here/code-qa-index.md)
 4. Enforce governance in [15-governance/](15-governance/)
 
 ## Quick Links

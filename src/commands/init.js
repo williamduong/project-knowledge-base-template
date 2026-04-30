@@ -123,12 +123,12 @@ function autoDetectMode({ workspaceRoot }) {
 
 function createAgentAndPromptFiles({ workspaceRoot, repoRoot }) {
   const templateAgentPath = path.join(repoRoot, 'template', '.github', 'agents', 'kb.agent.md');
-  const templateBuildPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-build.prompt.md');
-  const templateMaintainPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-maintain.prompt.md');
+  const templatePlanPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-plan.prompt.md');
+  const templateRunPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-run.prompt.md');
 
   const agentDestPath = path.join(workspaceRoot, '.github', 'agents', 'kb.agent.md');
-  const buildPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-build.prompt.md');
-  const maintainPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-maintain.prompt.md');
+  const planPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-plan.prompt.md');
+  const runPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-run.prompt.md');
 
   const created = [];
 
@@ -146,31 +146,30 @@ function createAgentAndPromptFiles({ workspaceRoot, repoRoot }) {
   if (fs.existsSync(templateAgentPath)) {
     copyIfMissing(templateAgentPath, agentDestPath);
   }
-  if (fs.existsSync(templateBuildPromptPath)) {
-    copyIfMissing(templateBuildPromptPath, buildPromptDestPath);
+  if (fs.existsSync(templatePlanPromptPath)) {
+    copyIfMissing(templatePlanPromptPath, planPromptDestPath);
   }
-  if (fs.existsSync(templateMaintainPromptPath)) {
-    copyIfMissing(templateMaintainPromptPath, maintainPromptDestPath);
+  if (fs.existsSync(templateRunPromptPath)) {
+    copyIfMissing(templateRunPromptPath, runPromptDestPath);
   }
 
   return created;
 }
 
 function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE }) {
-  const buildPromptPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-build.prompt.md');
+  const planPromptPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-plan.prompt.md');
+  const runPromptPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-run.prompt.md');
 
   console.log('\n' + '='.repeat(70));
-  console.log('Next Steps: Paste this into Copilot Chat to build your KB');
+  console.log('Next Steps: Use these prompts in Copilot Chat (or any @kb-aware IDE)');
   console.log('='.repeat(70));
   console.log('');
-  console.log('@kb Build Knowledge Base from Source');
+  console.log('  /kb-plan      Analyze workspace and write a runtime plan');
+  console.log('  /kb-run       Execute the next step of the plan (auto-inits if needed)');
+  console.log('  @kb <q>       Ask the KB master agent (code Q&A, governance, status)');
   console.log('');
-  console.log('---');
-  console.log('(See detailed instructions in: ' + buildPromptPath + ')');
-  console.log('');
-  console.log('Optional: Use @kb with these maintenance prompts:');
-  console.log('  @kb Maintain Knowledge Base (periodic sync + drift detection)');
-  console.log('  (stored in: .github/prompts/kb-maintain.prompt.md)');
+  console.log('Plan prompt: ' + planPromptPath);
+  console.log('Run prompt:  ' + runPromptPath);
   console.log('');
   console.log('IDE detected: ' + detectedIDE);
   const adapterFile = detectedIDE === 'vscode' ? 'AGENTS.md' : (detectedIDE.charAt(0).toUpperCase() + detectedIDE.slice(1) + ' adapter');

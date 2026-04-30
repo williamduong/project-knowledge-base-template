@@ -108,47 +108,57 @@ kb init
 
 After `kb init` completes, you'll see:
 - KB template copied to your repo (in `.git/project-kb/` or `knowledge-base/`)
-- `.github/agents/kb.agent.md` — project-scoped AI agent created
-- `.github/prompts/kb-build.prompt.md` — handoff prompt for Copilot Chat
-- Handoff prompt printed to terminal (save this!)
+- `.github/agents/kb.agent.md` — master KB agent (Q&A oracle, structural guardian)
+- `.github/prompts/kb-plan.prompt.md` — `/kb-plan` analyzer
+- `.github/prompts/kb-run.prompt.md` — `/kb-run` step executor (auto-inits if needed)
+- Handoff summary printed to terminal
 
-**Step 2: Build documentation with @kb in Copilot Chat**
+**Step 2: Drive the KB from chat (`/kb-run`)**
+
+Open Copilot Chat (VS Code, Cursor, Claude, or any agent that resolves `AGENTS.md`) and run:
 
 ```
-Paste this into your Copilot Chat (VS Code, Cursor, or Claude):
-
-@kb Build Knowledge Base from Source
-
-(Then paste the handoff prompt printed by kb init)
+/kb-plan      Analyze the workspace and write a runtime plan
+/kb-run       Execute the next pending step (auto-inits if state is missing)
 ```
 
-The @kb agent will:
-1. Detect your tech stack (languages, frameworks, ORMs)
-2. Generate unverified stubs for: architecture, backend, API, database, operations
-3. Create intake questions from placeholders
-4. Build KB index summary
+`/kb-run` is resumable — close the IDE, come back later, run again to continue from `current_step`.
 
-Reference: [.github/agents/kb.agent.md](.github/agents/kb.agent.md) for full agent behaviors.
+You can also ask the master agent directly:
+
+```
+@kb What database does this project use?
+@kb What are the main components?
+@kb How do I add an extension/plugin?
+@kb audit metadata
+@kb status
+```
+
+The `@kb` master agent uses the routing table at [code-qa-index.md](code-qa-index.md) to load only the relevant docs before answering, then falls back to bounded source-code search if KB evidence is incomplete.
+
+Reference: [.github/agents/kb.agent.md](.github/agents/kb.agent.md) for the full agent contract (3 roles, governance, output format).
 
 **Step 3: Review and continue**
 
-After the agent completes:
-- Review generated stubs in KB folders
+After each step:
+- Review the plan file at `.kb/runtime-plan.md`
 - Fill in high-priority items (marked P0 in [finalization-plan.md](finalization-plan.md))
-- Run `kb maintain` for regular sync + validation checks
-- Use `kb update` when you want to reconcile baseline/version metadata
+- Run `/kb-run` again to continue, or `kb maintain` from CLI for the same pipeline
 
 ### Maintenance: Keep KB in Sync Over Time
 
-For periodic maintenance sweeps, use:
+Either:
+
+```bash
+kb maintain          # full pipeline (sync + doc:gate + test --all + doctor --strict)
+kb maintain --fast   # quick mode (sample test, non-strict doctor)
+```
+
+or chat-driven:
 
 ```
-@kb Maintain Knowledge Base
-
-(Agent detects drift, updates stubs, upgrades verification states)
+/kb-run              # next step in the plan; if drift detected, plan adds a maintain step
 ```
-
-Reference: [.github/prompts/kb-maintain.prompt.md](.github/prompts/kb-maintain.prompt.md)
 
 ### Advanced: CLI Commands for Custom Workflows
 

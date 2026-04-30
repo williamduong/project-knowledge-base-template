@@ -2,6 +2,14 @@ const fs = require('fs');
 const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
+const { readStateFile } = require('../lib/state');
+
+const KB_MANAGED_BLOCK_RE = /[\r\n]?<!--\s*KB-MANAGED:START\s*-->[\s\S]*?<!--\s*KB-MANAGED:END\s*-->[\r\n]?/g;
+
+const USER_OWNED_IDE_FILES = [
+  ['.github', 'copilot-instructions.md'],
+  ['.cursorrules'],
+];
 
 function parseArgs(args) {
   const options = {
@@ -96,6 +104,8 @@ function removeGeneratedAiFiles({ workspaceRoot, removed }) {
     path.join(workspaceRoot, '.github', 'agents', 'kb.agent.md'),
     path.join(workspaceRoot, '.github', 'prompts', 'kb-build.prompt.md'),
     path.join(workspaceRoot, '.github', 'prompts', 'kb-maintain.prompt.md'),
+    path.join(workspaceRoot, '.github', 'prompts', 'kb-plan.prompt.md'),
+    path.join(workspaceRoot, '.github', 'prompts', 'kb-run.prompt.md'),
   ];
 
   for (const filePath of files) {
@@ -107,6 +117,42 @@ function removeGeneratedAiFiles({ workspaceRoot, removed }) {
   cleanupEmptyDir(path.join(workspaceRoot, '.github', 'agents'), workspaceRoot, removed);
   cleanupEmptyDir(path.join(workspaceRoot, '.github', 'prompts'), workspaceRoot, removed);
   cleanupEmptyDir(path.join(workspaceRoot, '.github'), workspaceRoot, removed);
+}
+
+function stripKbManagedBlocks({ workspaceRoot, state, removed, warnings }) {
+  const candidatePaths = new Set();
+
+  if (state && state.ideIntegration && Array.isArray(state.ideIntegration.targets)) {
+    for (const target of state.ideIntegration.targets) {
+      if (target && typeof target.file === 'string' && target.file) {
+        candidatePaths.add(path.resolve(workspaceRoot, target.file));
+      }
+    }
+  }
+
+  for (const segments of USER_OWNED_IDE_FILES) {
+    candidatePaths.add(path.join(workspaceRoot, ...segments));
+  }
+
+  for (const filePath of candidatePaths) {
+    if (!fs.existsSync(filePath)) continue;
+    let content;
+    try {
+      content = fs.readFileSync(filePath, 'utf8');
+    } catch (err) {
+      warnings.push(`Could not read ${toWorkspaceRelative(filePath, workspaceRoot)} to strip KB-MANAGED block: ${err.message}`);
+      continue;
+    }
+    if (!KB_MANAGED_BLOCK_RE.test(content)) continue;
+    KB_MANAGED_BLOCK_RE.lastIndex = 0;
+    const cleaned = content.replace(KB_MANAGED_BLOCK_RE, '\n').replace(/\n{3,}/g, '\n\n').replace(/^\s+|\s+$/g, '') + '\n';
+    try {
+      fs.writeFileSync(filePath, cleaned, 'utf8');
+      removed.push(`${toWorkspaceRelative(filePath, workspaceRoot)} (KB-MANAGED block)`);
+    } catch (err) {
+      warnings.push(`Could not write ${toWorkspaceRelative(filePath, workspaceRoot)} after stripping KB-MANAGED block: ${err.message}`);
+    }
+  }
 }
 
 function removeKbContent({ workspaceRoot, context, options, removed, warnings }) {
@@ -142,6 +188,7 @@ function runUninstall({ args, cwd }) {
   const warnings = [];
 
   let context = null;
+  let state = null;
   try {
     context = resolveExistingState({ workspaceRoot });
   } catch {
@@ -149,8 +196,15 @@ function runUninstall({ args, cwd }) {
   }
 
   if (context) {
+    try {
+      state = readStateFile({ statePath: context.statePath });
+    } catch (err) {
+      warnings.push(`Could not read state file: ${err.message}`);
+    }
     removeKbContent({ workspaceRoot, context, options, removed, warnings });
   }
+
+  stripKbManagedBlocks({ workspaceRoot, state, removed, warnings });
 
   if (!options.keepAiFiles) {
     removeGeneratedAiFiles({ workspaceRoot, removed });

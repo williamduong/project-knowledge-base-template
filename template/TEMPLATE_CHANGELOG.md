@@ -121,6 +121,37 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - src/commands/init.js
 - src/commands/uninstall.js
 
+## v1.2.0 - 2026-04-30
+
+### Summary
+
+Three-layer power surface: 4 CLI commands + 2 prompts + 1 master `@kb` agent. Adds resumable plan/run flow so non-CLI users can drive the entire KB lifecycle from chat.
+
+### Changes
+
+- New master agent contract at `.github/agents/kb.agent.md` v2.0.0 (3 roles: master user, structural guardian, code Q&A oracle).
+- New prompts:
+  - `/kb-plan` (`.github/prompts/kb-plan.prompt.md`) — analyzes state and writes `knowledge-base/.kb/runtime-plan.md`.
+  - `/kb-run` (`.github/prompts/kb-run.prompt.md`) — executes one resumable step at a time; auto-inits if state missing; injects `KB-MANAGED` IDE block on first run.
+- Removed legacy prompts `kb-build.prompt.md` and `kb-maintain.prompt.md` (functionality absorbed by `/kb-plan` + `/kb-run`).
+- New template docs:
+  - `00-start-here/code-qa-index.md` — intent-to-doc routing table for the agent's Q&A pipeline.
+  - `14-templates/extension-mechanism.md` — placeholder for the project's extension/plugin model.
+- State schema bumped to v2 with new fields:
+  - `metadataPolicy` (`advisory` default | `strict`).
+  - `ideIntegration: { enabled, targets[] }` for KB-MANAGED block tracking.
+- `kb uninstall` now strips KB-MANAGED blocks from user-owned IDE files (e.g. `.github/copilot-instructions.md`) and removes `kb-plan` / `kb-run` prompt files.
+- New libs `src/lib/ide-detect.js` and `src/lib/ide-inject.js` provide idempotent block management.
+
+### Migration
+
+- Existing v1.1.x state files are auto-migrated on read (adds `metadataPolicy: advisory` and empty `ideIntegration`). No user action required.
+- Downstream workspaces still containing old `kb-build.prompt.md` / `kb-maintain.prompt.md` will have them removed on next `kb uninstall`. Users may also delete them by hand; `/kb-run` is the new entry point.
+
+### Breaking
+
+- The chat handoff message printed by `kb init` no longer suggests `@kb Build Knowledge Base from Source`. Use `/kb-run` (or `/kb-plan` then `/kb-run`).
+
 ## v1.1.0 - 2026-04-28
 
 <!-- release-meta: from=3fe90f9 to=3fe90f9 generated_at=2026-04-30T00:00:00.000Z -->

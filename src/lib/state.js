@@ -15,7 +15,7 @@ function createInitialState({ packageVersion, templateVersion, mode, workspaceRo
     : 'Initialized without git metadata. Replace placeholders after git is available.';
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     cliVersion: packageVersion,
     templateVersion,
     kbPatchRevision: 0,
@@ -34,6 +34,11 @@ function createInitialState({ packageVersion, templateVersion, mode, workspaceRo
     baselineScope,
     lastReconciledTemplateVersion: templateVersion,
     notes,
+    metadataPolicy: 'advisory',
+    ideIntegration: {
+      enabled: false,
+      targets: [],
+    },
   };
 }
 
@@ -48,7 +53,34 @@ function readStateFile({ statePath }) {
   }
 
   const raw = fs.readFileSync(statePath, 'utf8');
-  return JSON.parse(raw);
+  const parsed = JSON.parse(raw);
+  return migrateState(parsed);
+}
+
+function migrateState(state) {
+  if (!state || typeof state !== 'object') return state;
+  let changed = false;
+  if (typeof state.metadataPolicy !== 'string') {
+    state.metadataPolicy = 'advisory';
+    changed = true;
+  }
+  if (!state.ideIntegration || typeof state.ideIntegration !== 'object') {
+    state.ideIntegration = { enabled: false, targets: [] };
+    changed = true;
+  } else {
+    if (typeof state.ideIntegration.enabled !== 'boolean') {
+      state.ideIntegration.enabled = false;
+      changed = true;
+    }
+    if (!Array.isArray(state.ideIntegration.targets)) {
+      state.ideIntegration.targets = [];
+      changed = true;
+    }
+  }
+  if (changed && (typeof state.schemaVersion !== 'number' || state.schemaVersion < 2)) {
+    state.schemaVersion = 2;
+  }
+  return state;
 }
 
 function renderRevisionStateMarkdown(state) {
@@ -144,4 +176,5 @@ module.exports = {
   readStateFile,
   renderRevisionStateMarkdown,
   writeStateFile,
+  migrateState,
 };

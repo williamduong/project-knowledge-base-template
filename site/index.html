@@ -253,25 +253,24 @@ kb init
             <div class="gs-card-head">
               <span class="gs-step-num">02</span>
               <div>
-                <h3>Build KB with @kb in Copilot Chat</h3>
-                <p>Copy the handoff prompt from <code>kb init</code> output and paste it into Copilot Chat. The @kb agent will scan your source code and generate documentation stubs automatically.</p>
+                <h3>Drive the KB from chat with /kb-run</h3>
+                <p>Open Copilot Chat (VS Code, Cursor, Claude) in your workspace and run <code>/kb-run</code>. It auto-inits if needed, writes a runtime plan, and executes one resumable step at a time.</p>
               </div>
             </div>
             <div class="code-block">
               <div class="code-label">Copilot Chat (VS Code / Cursor / Claude)</div>
-<pre>@kb Build Knowledge Base from Source
+<pre>/kb-plan      # analyze workspace, write knowledge-base/.kb/runtime-plan.md
+/kb-run       # execute next pending step (resumable)
 
-(kb init printed a handoff prompt - paste it here!)
-
-Agent will:
-- Detect your tech stack
-- Generate stubs for architecture, backend, API, database
-- Create intake questions for high-priority items
-- Build KB index report</pre>
+@kb What database does this project use?
+@kb What are the main components?
+@kb How do I add an extension?
+@kb audit metadata
+@kb status</pre>
             </div>
             <div class="gs-card-links">
               <a class="chip-link" href="./docs.html?path=12-ai-skills/agent-operating-manual.md">Agent guide</a>
-              <a class="chip-link" href="./docs.html?path=12-ai-skills/prompt-pack.md">Prompt Library</a>
+              <a class="chip-link" href="./docs.html?path=00-start-here/code-qa-index.md">Code Q&amp;A index</a>
             </div>
           </div>
 
