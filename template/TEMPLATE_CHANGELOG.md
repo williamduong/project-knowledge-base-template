@@ -121,6 +121,24 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - src/commands/init.js
 - src/commands/uninstall.js
 
+## v1.2.7 - 2026-04-30
+
+### Summary
+
+Version-management hygiene. Single source of truth for the version number is now `package.json`. All other files (`template/template.json`, agent + prompt frontmatter `version:` fields) are mirrored from it by a tiny script.
+
+### Changes
+
+- New `tools/sync-versions.js` (write/check modes).
+- New npm scripts: `version:sync` (rewrite all targets), `version:check` (verify, exit 1 on mismatch).
+- `prepublishOnly` now runs `version:check` and `doc:gate` so a misaligned version cannot be published by accident.
+- `release:dry` adds `version:check` to its pipeline.
+- All in-repo template files synced to `1.2.6` (the version they were shipped under in v1.2.6) and then bumped to `1.2.7` together with the package as part of this release.
+
+### Migration
+
+- For every future release: bump `package.json`, then run `npm run version:sync`. The `prepublishOnly` hook will refuse the publish if you forget.
+
 ## v1.2.6 - 2026-04-30
 
 ### Summary

@@ -1,6 +1,6 @@
 {
   "name": "@williamduong/kb",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
   "private": false,
   "license": "AGPL-3.0-only",
@@ -32,13 +32,16 @@
     "docs:tree": "node ./tools/build-docs-tree.js",
     "release:notes": "node ./tools/generate-template-changelog.js",
     "doc:gate": "node ./scripts/doc-gate.js",
+    "version:sync": "node ./tools/sync-versions.js",
+    "version:check": "node ./tools/sync-versions.js --check",
     "doctor": "node ./bin/kb.js doctor",
     "doctor:json": "node ./bin/kb.js doctor --json",
     "test:all": "node ./bin/kb.js test --all",
     "maintain": "node ./bin/kb.js maintain",
     "maintain:fast": "node ./bin/kb.js maintain --fast",
     "pack:smoke": "node ./tools/pack-smoke.js",
-    "release:dry": "npm run doc:gate && npm run doctor && npm run pack:smoke"
+    "prepublishOnly": "npm run version:check && npm run doc:gate",
+    "release:dry": "npm run version:check && npm run doc:gate && npm run doctor && npm run pack:smoke"
   },
   "engines": {
     "node": ">=18"
