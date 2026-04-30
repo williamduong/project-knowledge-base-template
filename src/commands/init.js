@@ -157,29 +157,10 @@ function createAgentAndPromptFiles({ workspaceRoot, repoRoot }) {
 }
 
 function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE }) {
-  const planPromptPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-plan.prompt.md');
-  const runPromptPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-run.prompt.md');
-
-  console.log('\n' + '='.repeat(70));
-  console.log('Next Steps: Use these prompts in Copilot Chat (or any @kb-aware IDE)');
-  console.log('='.repeat(70));
-  console.log('');
-  console.log('  /kb-plan      Analyze workspace and write a runtime plan');
-  console.log('  /kb-run       Execute the next step of the plan (auto-inits if needed)');
-  console.log('  @kb <q>       Ask the KB master agent (code Q&A, governance, status)');
-  console.log('');
-  console.log('Verify install:');
-  console.log('  kb status          Show install state (fresh / healthy / partial) + key fields.');
-  console.log('  Agents MUST use `kb status --json` instead of file_search to detect KB state,');
-  console.log('  because IDEs exclude .git/ from search and would misclassify private-git mode.');
-  console.log('');
-  console.log('Plan prompt: ' + planPromptPath);
-  console.log('Run prompt:  ' + runPromptPath);
-  console.log('');
-  console.log('IDE detected: ' + detectedIDE);
   const adapterFile = detectedIDE === 'vscode' ? 'AGENTS.md' : (detectedIDE.charAt(0).toUpperCase() + detectedIDE.slice(1) + ' adapter');
-  console.log('  AI adapter configured at: ' + adapterFile);
-  console.log('='.repeat(70) + '\n');
+  console.log('');
+  console.log(`IDE: ${detectedIDE} (adapter: ${adapterFile})`);
+  console.log('Next: /kb-plan, /kb-run, or @kb <question>  |  Verify: kb status');
 }
 
 async function runInit({ args, packageJson, cwd, repoRoot }) {
@@ -264,22 +245,16 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     state,
   });
 
-  console.log(`Initialized KB in ${storagePaths.contentRoot}`);
-  console.log(`Storage mode: ${options.mode}`);
-  console.log(`State file: ${storagePaths.statePath}`);
-  console.log(`Rendered revision state: ${storagePaths.renderedRevisionStatePath}`);
+  console.log(`Initialized KB (${options.mode}) in ${storagePaths.contentRoot}`);
+  console.log(`State: ${storagePaths.statePath}`);
   if (options.mode === 'private-git') {
-    console.log('Note: in private-git mode, state.json lives under .git/project-kb/ and is hidden from IDE file searches by default.');
-    console.log('      Use "kb status" to inspect install state instead of file_search.');
+    console.log('Note: state.json lives under .git/ and is hidden from IDE file_search; use `kb status` to inspect.');
   }
 
   // Create agent and prompt template files
   const agentFiles = createAgentAndPromptFiles({ workspaceRoot, repoRoot });
   if (agentFiles.length > 0) {
-    console.log('\nAI agent & prompt files created:');
-    for (const f of agentFiles) {
-      console.log(`  + ${f}`);
-    }
+    console.log(`Agent + prompts: ${agentFiles.join(', ')}`);
   }
 
   if (!options.skipAdapters) {
@@ -287,17 +262,11 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     const ide = detectIDE();
     const adapterResult = generateAdapterFiles({ workspaceRoot, visibleMountPath: storagePaths.visibleMountPath, ideOverride: ide });
     if (adapterResult.created.length > 0) {
-      console.log(`\nAI adapter files created (${ide}):`);
-      for (const f of adapterResult.created) {
-        console.log(`  + ${f}`);
-      }
+      console.log(`Adapter (${ide}): ${adapterResult.created.join(', ')}`);
     }
 
     if (adapterResult.skipped.length > 0) {
-      console.log(`\nAI adapter files already exist (skipped):`);
-      for (const f of adapterResult.skipped) {
-        console.log(`  ~ ${f}`);
-      }
+      console.log(`Adapter skipped (already exists): ${adapterResult.skipped.join(', ')}`);
     }
   }
 

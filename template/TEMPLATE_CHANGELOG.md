@@ -121,6 +121,16 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - src/commands/init.js
 - src/commands/uninstall.js
 
+## v1.2.4 - 2026-04-30
+
+### Summary
+
+UX polish: condense `kb init` output from ~30 lines (with banners) to ~7 dense lines. Same information, no decorative `===` headers.
+
+### Changes
+
+- `src/commands/init.js`: collapse 4 lines of path output into 2; agent/prompt/adapter file lists print as comma-joined single lines; the `printHandoffPrompt` banner is replaced by a 2-line footer.
+
 ## v1.2.3 - 2026-04-30
 
 ### Summary
