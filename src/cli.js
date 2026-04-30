@@ -17,6 +17,7 @@ const { runMark } = require('./commands/mark');
 const { runNormalizeState } = require('./commands/normalize-state');
 const { runBootstrapApi } = require('./commands/bootstrap-api');
 const { runUninstall } = require('./commands/uninstall');
+const { runMaintain } = require('./commands/maintain');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -53,6 +54,11 @@ async function run(argv) {
 
   if (command === 'update') {
     await runUpdate({ args: rest, cwd: process.cwd(), repoRoot: path.resolve(__dirname, '..') });
+    return;
+  }
+
+  if (command === 'maintain') {
+    await runMaintain({ args: rest, cwd: process.cwd(), packageJson });
     return;
   }
 

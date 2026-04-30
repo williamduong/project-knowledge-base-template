@@ -81,15 +81,27 @@ For canonical terminology and examples, read [terminology-guard.md](terminology-
 
 ### Quick Start Flow
 
+Default user workflow is centered on four commands:
+
+- `kb init`
+- `kb update`
+- `kb maintain`
+- `kb uninstall`
+
+Power-user commands are still available via `kb help --advanced`.
+
 **Step 1: Initialize KB in your workspace**
 
 ```bash
 # Install the CLI globally (one-time setup)
-npm install -g @williamduong/kb
+npm install -g @williamduong/kb@latest
 
 # Initialize KB in your repository
 # Mode is auto-detected: private-git (if .git exists) or tracked
 kb init
+
+# If no git repo exists, kb init falls back to tracked mode with a warning.
+# Run git init first if you want private-git mode.
 
 # Output includes a handoff prompt for next step
 ```
@@ -123,8 +135,8 @@ Reference: [.github/agents/kb.agent.md](.github/agents/kb.agent.md) for full age
 After the agent completes:
 - Review generated stubs in KB folders
 - Fill in high-priority items (marked P0 in [finalization-plan.md](finalization-plan.md))
-- Run `kb doctor` to validate coherence
-- Keep KB in sync with code using `kb sync` and `kb update` periodically
+- Run `kb maintain` for regular sync + validation checks
+- Use `kb update` when you want to reconcile baseline/version metadata
 
 ### Maintenance: Keep KB in Sync Over Time
 
@@ -144,7 +156,9 @@ If you prefer CLI-driven workflows:
 
 ```bash
 kb help                    # show basic commands
-kb help --advanced         # show all 15 commands
+kb help --advanced         # show all advanced commands
+kb maintain                # full maintenance pipeline
+kb maintain --fast         # quicker checks for large projects
 kb bootstrap              # scan code, generate stubs
 kb index                  # build KB summary report
 kb questions --batch 5    # generate intake Q&A

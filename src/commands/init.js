@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 
 const { getGitMetadata } = require('../lib/git');
-const { createInitialState, persistStateAndRender } = require('../lib/state');
+const { createInitialState, persistStateAndRender, readStateFile } = require('../lib/state');
 const { copyTemplateContent, getTemplateVersion } = require('../lib/template');
 const { resolveStoragePaths, validateMode } = require('../lib/storage');
 const { generateAdapterFiles, detectIDE } = require('../lib/adapters');
@@ -18,6 +19,7 @@ function parseArgs(args) {
     installHooks: false,
     skipBootstrap: false,
     skipIndex: false,
+    yes: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -61,6 +63,11 @@ function parseArgs(args) {
       continue;
     }
 
+    if (current === '--yes') {
+      options.yes = true;
+      continue;
+    }
+
     throw new Error(`Unknown init option \"${current}\".`);
   }
 
@@ -68,6 +75,27 @@ function parseArgs(args) {
     validateMode(options.mode);
   }
   return options;
+}
+
+async function askConfirmation({ question }) {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    throw new Error('Init rerun requires interactive confirmation. Re-run with --yes to continue in non-interactive mode.');
+  }
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  try {
+    const answer = await new Promise((resolve) => {
+      rl.question(question, (value) => resolve(String(value || '')));
+    });
+
+    return ['y', 'yes'].includes(answer.trim().toLowerCase());
+  } finally {
+    rl.close();
+  }
 }
 
 function installPreCommitHook({ workspaceRoot }) {
@@ -153,10 +181,16 @@ function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE }) {
 async function runInit({ args, packageJson, cwd, repoRoot }) {
   const options = parseArgs(args);
   const workspaceRoot = path.resolve(cwd, options.target);
+  const modeProvided = Boolean(options.mode);
 
   // Auto-detect mode if not provided
   if (!options.mode) {
     options.mode = autoDetectMode({ workspaceRoot });
+  }
+
+  if (!modeProvided && options.mode === 'tracked') {
+    console.log('Warning: no .git directory detected. Defaulting to tracked mode.');
+    console.log('Tip: run "git init" first if you want private-git mode.');
   }
 
   const storagePaths = resolveStoragePaths({ workspaceRoot, mode: options.mode });
@@ -165,33 +199,60 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     throw new Error(`Target workspace does not exist: ${workspaceRoot}`);
   }
 
-  if (fs.existsSync(storagePaths.contentRoot) && fs.readdirSync(storagePaths.contentRoot).length > 0) {
-    throw new Error(`Target KB content already exists: ${storagePaths.contentRoot}`);
+  const contentExists = fs.existsSync(storagePaths.contentRoot) && fs.readdirSync(storagePaths.contentRoot).length > 0;
+  const isRerun = contentExists;
+
+  if (isRerun && !options.yes) {
+    const confirmed = await askConfirmation({
+      question: `KB content already exists at ${storagePaths.contentRoot}. Re-run init in refresh mode? [y/N]: `,
+    });
+
+    if (!confirmed) {
+      throw new Error('Init cancelled by user. No changes were made.');
+    }
   }
 
-  fs.mkdirSync(storagePaths.contentRoot, { recursive: true });
-  copyTemplateContent({ sourceRoot: repoRoot, destinationRoot: storagePaths.contentRoot });
+  if (!isRerun) {
+    fs.mkdirSync(storagePaths.contentRoot, { recursive: true });
+    copyTemplateContent({ sourceRoot: repoRoot, destinationRoot: storagePaths.contentRoot });
 
-  // Keep Copilot agent/prompt files only at workspace root to avoid duplicate
-  // @agent and /prompt entries from nested knowledge-base/.github.
-  const nestedGithubPath = path.join(storagePaths.contentRoot, '.github');
-  if (fs.existsSync(nestedGithubPath)) {
-    fs.rmSync(nestedGithubPath, { recursive: true, force: true });
+    // Keep Copilot agent/prompt files only at workspace root to avoid duplicate
+    // @agent and /prompt entries from nested knowledge-base/.github.
+    const nestedGithubPath = path.join(storagePaths.contentRoot, '.github');
+    if (fs.existsSync(nestedGithubPath)) {
+      fs.rmSync(nestedGithubPath, { recursive: true, force: true });
+    }
+  } else {
+    console.log('KB content already exists. Running init in refresh mode (no template copy).');
   }
 
   const gitMetadata = getGitMetadata(workspaceRoot);
   const templateVersion = getTemplateVersion({ repoRoot });
   const brandScope = options.brand || path.basename(workspaceRoot);
 
-  const state = createInitialState({
-    packageVersion: packageJson.version,
-    templateVersion,
-    mode: options.mode,
-    workspaceRoot,
-    brandScope,
-    gitMetadata,
-    storagePaths,
-  });
+  let state;
+  if (isRerun && fs.existsSync(storagePaths.statePath)) {
+    state = readStateFile({ statePath: storagePaths.statePath });
+    state.cliVersion = packageJson.version;
+    state.templateVersion = templateVersion;
+    state.lastReconciledTemplateVersion = templateVersion;
+    state.storageMode = options.mode;
+    state.workspaceRoot = workspaceRoot;
+    state.contentRoot = storagePaths.contentRoot;
+    state.visibleMountPath = storagePaths.visibleMountPath;
+    state.brandScope = options.brand || state.brandScope || brandScope;
+    state.notes = 'Initialized by kb init refresh mode; existing KB content was preserved.';
+  } else {
+    state = createInitialState({
+      packageVersion: packageJson.version,
+      templateVersion,
+      mode: options.mode,
+      workspaceRoot,
+      brandScope,
+      gitMetadata,
+      storagePaths,
+    });
+  }
 
   persistStateAndRender({
     statePath: storagePaths.statePath,
@@ -237,8 +298,17 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
   }
 
   // Run bootstrap and index silently (set env var to suppress verbose output)
+  // In rerun mode we skip these steps by default to avoid modifying existing KB content.
   const isInitSilent = process.env.KB_INIT_SILENT !== 'false';
-  if (!options.skipBootstrap) {
+  const runBootstrapStep = !isRerun && !options.skipBootstrap;
+  const runIndexStep = !isRerun && !options.skipIndex;
+
+  if (isRerun && (!options.skipBootstrap || !options.skipIndex)) {
+    console.log('Refresh mode: bootstrap/index were skipped to avoid unintended content changes.');
+    console.log('Use "kb maintain" for routine refresh checks.');
+  }
+
+  if (runBootstrapStep) {
     if (isInitSilent) {
       process.env.KB_INIT_SILENT = 'true';
       await runBootstrap({ args: [], cwd: workspaceRoot });
@@ -249,7 +319,7 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     }
   }
 
-  if (!options.skipIndex) {
+  if (runIndexStep) {
     if (isInitSilent) {
       process.env.KB_INIT_SILENT = 'true';
       await runIndex({ args: [], cwd: workspaceRoot });

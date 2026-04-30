@@ -9,41 +9,44 @@ function runHelp({ packageJson, args }) {
   console.log('');
 
   if (!showAdvanced) {
-    // Basic mode - show only essential commands
-    console.log('Usage (basic commands):');
+    // Basic mode - only 4 core lifecycle commands
+    console.log('Usage (core commands):');
     console.log('  kb help [--advanced]');
-    console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>]');
-    console.log('  kb doctor [--json] [--strict]');
+    console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>] [--yes]');
+    console.log('  kb update [--accept-baseline]');
+    console.log('  kb maintain [--accept-baseline] [--fast]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
-    console.log('  kb version');
     console.log('');
-    console.log('Essential commands:');
-    console.log('  help       Show usage and package information.');
-    console.log('             Add --advanced to see all 16 commands.');
+    console.log('Core workflow:');
     console.log('  init       Install the KB template into a target workspace and create state.');
     console.log('             Auto-detects mode (private-git if .git exists, tracked otherwise).');
+    console.log('             If KB already exists, prompts for rerun confirmation.');
+    console.log('             --yes             Skip rerun confirmation prompt.');
     console.log('             --skip-adapters   Skip generating AI IDE adapter files.');
     console.log('             --install-hooks   Install a pre-commit hook that runs kb doctor.');
     console.log('             --skip-bootstrap  Skip initial placeholder filling after init.');
     console.log('             --skip-index      Skip initial KB index summary generation.');
-    console.log('  doctor     Quick publish-readiness checks (node/git/link/hooks).');
-    console.log('             Use --json for machine-readable CI output.');
-    console.log('             Use --strict to exit with code 1 on WARN (hard CI gate).');
+    console.log('  update     Refresh KB state after sync and reconcile template version metadata.');
+    console.log('             Use --accept-baseline to stamp current HEAD as the new baseline.');
+    console.log('  maintain   One-command maintenance pipeline.');
+    console.log('             Default: sync + doc:gate (if available) + test --all + doctor --strict.');
+    console.log('             --fast            Quick mode: skips doc:gate, sampled test, non-strict doctor.');
     console.log('  uninstall  Remove KB content and generated AI helper files.');
     console.log('             Use --keep-ai-files to keep AGENTS/prompt files.');
     console.log('             Use --remove-hook to remove kb-managed pre-commit hook.');
-    console.log('  version    Show package version.');
     console.log('');
+    console.log('Other commands are available for power users.');
+    console.log('Run "kb help --advanced" to see all commands.');
     console.log('Next step: Use @kb with Copilot Chat to build your KB');
-    console.log('(Run with --advanced to see all commands)');
     return;
   }
 
   // Advanced mode - show all commands
   console.log('Usage:');
   console.log('  kb help [--advanced]');
-  console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>]');
+  console.log('  kb init [--mode private-git|tracked] [--target <path>] [--brand <name>] [--yes]');
   console.log('          [--skip-adapters] [--install-hooks] [--skip-bootstrap] [--skip-index]');
+  console.log('  kb maintain [--accept-baseline] [--fast]');
   console.log('  kb bootstrap [--dry-run] [--no-fill-placeholders]');
   console.log('  kb index [--watch]');
   console.log('  kb questions [--print] [--all-states] [--chat] [--batch <n>] [--batch-size <n>]');
@@ -64,10 +67,16 @@ function runHelp({ packageJson, args }) {
   console.log('Implemented commands:');
   console.log('  help       Show usage and package information.');
   console.log('  init       Install the KB template into a target workspace and create state.');
+  console.log('             If KB already exists, prompts for rerun confirmation.');
+  console.log('             --yes             Skip rerun confirmation prompt.');
   console.log('             --skip-adapters   Skip generating AI IDE adapter files.');
   console.log('             --install-hooks   Install a pre-commit hook that runs kb doctor.');
   console.log('             --skip-bootstrap  Skip initial placeholder filling after init.');
   console.log('             --skip-index      Skip initial KB index summary generation.');
+  console.log('  maintain   Run sync/test/doctor maintenance pipeline in one command.');
+  console.log('             Default: sync + doc:gate (if available) + test --all + doctor --strict.');
+  console.log('             --fast            Quick mode: skips doc:gate, sampled test, non-strict doctor.');
+  console.log('             --accept-baseline Pass-through to sync baseline acceptance.');
   console.log('  bootstrap  Scan source code and generate unverified stub docs for');
   console.log('             03-architecture, 05-backend, 06-api, 07-database, 09-operations.');
   console.log('             --dry-run         Preview create/update/skip actions.');

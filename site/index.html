@@ -229,12 +229,13 @@
               <span class="gs-step-num">01</span>
               <div>
                 <h3>Install + Initialize KB</h3>
-                <p>Install the CLI globally, then run <code>kb init</code> to scaffold your knowledge base. Mode is auto-detected (private-git if .git exists, otherwise tracked). Agent files are created automatically.</p>
+                <p>Install the CLI globally, then run <code>kb init</code> to scaffold your knowledge base. Mode is auto-detected (private-git if .git exists, otherwise tracked). No git repo? use tracked mode, or run <code>git init</code> first for private-git. Agent files are created automatically.</p>
               </div>
             </div>
             <div class="code-block">
               <div class="code-label">Terminal</div>
-<pre>npm install -g @williamduong/kb
+<pre>npm install -g @williamduong/kb@latest
+
 kb help
 
 # Initialize KB (auto-detects mode, creates agent files)
@@ -279,22 +280,18 @@ Agent will:
               <span class="gs-step-num">03</span>
               <div>
                 <h3>Review & Publish</h3>
-                <p>Review generated stubs, fill in content, run <code>kb doctor</code> to validate. Your KB is now ready for team collaboration and AI agent reference!</p>
+                <p>Review generated stubs, fill in content, then run <code>kb maintain</code> for one-command sync and validation. Your KB is now ready for team collaboration and AI agent reference.</p>
               </div>
             </div>
             <div class="code-block">
               <div class="code-label">Terminal</div>
-<pre>kb doctor
+<pre>kb maintain
 
-# (Optional) Review fill progress
-kb index
+# (Optional) faster checks for large repositories
+kb maintain --fast
 
-# (Optional) Normalize unset kb_state values
-kb normalize-state
-
-# (Optional) Reconcile template drift later
-kb sync     # collect drift evidence
-kb update   # apply + refresh version state</pre>
+# (Optional) reconcile baseline/version metadata
+kb update</pre>
             </div>
             <div class="gs-card-links">
               <a class="chip-link" href="./docs.html?path=README.md">CLI reference</a>
@@ -358,6 +355,10 @@ kb update   # apply + refresh version state</pre>
               <div class="cmd-row">
                 <code class="cmd-name">kb show / hide</code>
                 <span class="cmd-desc">Expose or retract the KB mount in private-git mode</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb maintain</code>
+                <span class="cmd-desc">One-command maintenance pipeline: sync + doc checks + test + doctor</span>
               </div>
               <div class="cmd-row">
                 <code class="cmd-name">kb sync</code>
@@ -438,7 +439,7 @@ kb update   # apply + refresh version state</pre>
               </div>
               <div class="flow-step" role="listitem">
                 <span class="flow-step-label">Install</span>
-                <span class="flow-step-body"><code>npm i -g @williamduong/kb</code></span>
+                <span class="flow-step-body"><code>npm install -g @williamduong/kb@latest</code></span>
               </div>
               <div class="flow-step" role="listitem">
                 <span class="flow-step-label">Scaffold</span>
@@ -496,11 +497,11 @@ kb update   # apply + refresh version state</pre>
               <span class="flow-num">3</span>
               Source sync &mdash; reflecting code changes back into KB
             </h3>
-            <p class="flow-note">After a successful bootstrap, run sync manually (or ask your agent to run it) and use <code>kb sync --accept-baseline</code> only after reviewing drift evidence.</p>
+            <p class="flow-note">After a successful bootstrap, run <code>kb maintain</code> as your default maintenance path. Use <code>kb sync --accept-baseline</code> only after reviewing drift evidence.</p>
             <div class="flow-row" role="list">
               <div class="flow-step" role="listitem">
                 <span class="flow-step-label">Step 1 &mdash; Trigger</span>
-                <span class="flow-step-body">Run <code>kb sync</code> manually<br>&mdash; or ask your AI agent to execute <code>kb sync</code> in this workspace</span>
+                <span class="flow-step-body">Run <code>kb maintain</code> manually<br>&mdash; or ask your AI agent to execute <code>kb maintain</code> in this workspace</span>
               </div>
               <div class="flow-step" role="listitem">
                 <span class="flow-step-label">Step 2 &mdash; KB auto-runs</span>

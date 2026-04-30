@@ -23,7 +23,7 @@ node ./bin/kb.js help
 Global install mode (after publish):
 
 ```bash
-npm install -g @williamduong/kb
+npm install -g @williamduong/kb@latest
 kb help
 ```
 
@@ -32,6 +32,20 @@ One-off usage with npx:
 ```bash
 npx @williamduong/kb help
 ```
+
+Core lifecycle commands (default user path):
+
+- `init [--mode private-git|tracked] [--brand <name>] [--yes]` - Install KB into the workspace.
+- `update [--accept-baseline]` - Sync state and refresh template version metadata.
+- `maintain [--accept-baseline] [--fast]` - Run one maintenance pipeline (sync + checks).
+- `uninstall [--keep-ai-files] [--remove-hook] [--force]` - Remove KB setup from workspace.
+
+No git repository detected?
+
+- `kb init` automatically falls back to `tracked` mode and prints a warning.
+- Run `git init` first if you want `private-git` mode.
+
+Advanced commands remain available via `kb help --advanced`.
 
 Currently implemented commands:
 
@@ -52,6 +66,7 @@ Currently implemented commands:
 - `test [--sample <count>] [--all]`
 - `sync [--accept-baseline]`
 - `update [--accept-baseline]`
+- `maintain [--accept-baseline] [--fast]`
 - `doctor [--json] [--strict]`
 - `uninstall [--keep-ai-files] [--remove-hook] [--force]` - Remove KB content and generated AI helper files from the workspace
 
@@ -80,6 +95,7 @@ Recommended first-run flow after global install:
 ```bash
 kb help
 kb init
+kb maintain
 
 # Then paste the printed handoff prompt into Copilot Chat:
 @kb Build Knowledge Base from Source
