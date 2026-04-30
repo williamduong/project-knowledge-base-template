@@ -20,6 +20,8 @@ const { runUninstall } = require('./commands/uninstall');
 const { runMaintain } = require('./commands/maintain');
 const { runStatus } = require('./commands/status');
 const { runIde } = require('./commands/ide');
+const { runBind } = require('./commands/bind');
+const { runScan } = require('./commands/scan');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -76,6 +78,16 @@ async function run(argv) {
 
   if (command === 'ide') {
     await runIde({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'bind') {
+    await runBind({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'scan') {
+    await runScan({ args: rest, cwd: process.cwd() });
     return;
   }
 

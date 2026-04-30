@@ -42,6 +42,55 @@ function getGitDiffNameStatus(workspaceRoot, fromRevision, toRevision = 'HEAD') 
   return runGitCommand(`git diff --name-status ${fromRevision}..${toRevision}`, workspaceRoot);
 }
 
+function parseDiffNameStatus(rawOutput) {
+  if (!rawOutput || typeof rawOutput !== 'string') {
+    return [];
+  }
+
+  return rawOutput
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split(/\t+/);
+      if (parts.length < 2) {
+        return null;
+      }
+
+      const rawStatus = parts[0];
+      // Status code is first letter (M/A/D/R/C/T/U). Rename/copy carry similarity score (e.g. R100).
+      const status = rawStatus.charAt(0).toUpperCase();
+      const isRenameOrCopy = status === 'R' || status === 'C';
+
+      if (isRenameOrCopy && parts.length >= 3) {
+        return {
+          status,
+          path: parts[2].replace(/\\/g, '/'),
+          oldPath: parts[1].replace(/\\/g, '/'),
+        };
+      }
+
+      return {
+        status,
+        path: parts[1].replace(/\\/g, '/'),
+      };
+    })
+    .filter(Boolean);
+}
+
+function getChangedFilesSince(workspaceRoot, baseline, head = 'HEAD') {
+  if (!baseline) {
+    return [];
+  }
+
+  const raw = getGitDiffNameStatus(workspaceRoot, baseline, head);
+  if (!raw) {
+    return [];
+  }
+
+  return parseDiffNameStatus(raw);
+}
+
 function getWorkingTreeStatus(workspaceRoot) {
   const output = runGitCommand('git status --porcelain', workspaceRoot);
   if (!output) {
@@ -60,9 +109,11 @@ function getWorkingTreeStatus(workspaceRoot) {
 }
 
 module.exports = {
+  getChangedFilesSince,
   getGitDiffNameStatus,
   getGitLogRange,
   getGitMetadata,
   getWorkingTreeStatus,
+  parseDiffNameStatus,
   runGitCommand,
 };

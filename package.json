@@ -40,6 +40,7 @@
     "doctor": "node ./bin/kb.js doctor",
     "doctor:json": "node ./bin/kb.js doctor --json",
     "test:all": "node ./bin/kb.js test --all",
+    "test:unit": "node --test \"test/**/*.test.js\"",
     "maintain": "node ./bin/kb.js maintain",
     "maintain:fast": "node ./bin/kb.js maintain --fast",
     "pack:smoke": "node ./tools/pack-smoke.js",
@@ -48,5 +49,8 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "minimatch": "^10.2.5"
   }
 }
