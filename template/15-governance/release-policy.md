@@ -11,6 +11,7 @@ related:
   - metadata-schema.md
   - template-versioning-policy.md
   - review-cadence.md
+  - release-pipeline-policy.md
 tags:
   - governance
   - release
@@ -22,7 +23,13 @@ tags:
 
 ## Scope
 
-This policy governs KB release metadata stored in .kb/catalog.json and release note generation.
+This policy governs KB release metadata stored in .kb/catalog.json, release note generation, and the operational release flow for npm publication.
+
+## Release Workflow Modes
+
+- Default mode is pipeline-first using `.kb/release-pipeline.yaml` with `kb release init-pipeline`, `kb release plan`, and `kb release run`.
+- Manual mode is supported as fallback when pipeline YAML is not configured or project requirements are outside the supported DSL.
+- Both modes must produce the same release artifacts: git tag, npm publish result, release notes, catalog update, and verification evidence.
 
 ## Catalog Contract
 
@@ -85,7 +92,11 @@ released_in: v1.5.0
 
 ## Operational Rules
 
-- Run kb release init once after enabling release tracking.
-- Use kb release tag for each shipped version after the git tag exists.
-- Keep release notes generation deterministic from git history.
-- If catalog drifts, rebuild from tags using kb release init.
+- Initialize catalog tracking with `kb release init` once per workspace.
+- If pipeline mode is used, initialize `.kb/release-pipeline.yaml` once with `kb release init-pipeline --template=<name>`.
+- Before real execution, run `kb release plan` (or `kb release run --dry-run`) to validate pipeline wiring.
+- Use `kb release run` as the preferred orchestrator for release steps.
+- If manual fallback is used, follow the end-to-end checklist in `notes/npm-release-checklist.md`.
+- Ensure each shipped version has a git tag (`vX.Y.Z`) and a matching catalog entry.
+- Keep release notes generation deterministic from git history and review before publishing.
+- If catalog drifts, rebuild from tags using `kb release init`.
