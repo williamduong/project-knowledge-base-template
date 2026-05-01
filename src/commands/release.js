@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
@@ -12,6 +13,7 @@ const {
   writeCatalog,
 } = require('../lib/catalog');
 const { loadConfig, getConfigValue, DEFAULTS } = require('../lib/config');
+const { buildReleaseNotes, writeReleaseNotesOutput } = require('../lib/release-notes');
 
 function parseArgs(args) {
   const options = {
@@ -20,10 +22,16 @@ function parseArgs(args) {
     version: null,
     summary: null,
     ignorePrerelease: null,
+    from: null,
+    output: null,
+    format: null,
   };
 
   const rest = [];
   for (const arg of args || []) {
+    if (arg === '--') {
+      continue;
+    }
     if (arg === '--json') {
       options.json = true;
       continue;
@@ -40,16 +48,28 @@ function parseArgs(args) {
       options.summary = arg.slice('--summary='.length).trim();
       continue;
     }
+    if (arg.startsWith('--from=')) {
+      options.from = arg.slice('--from='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--output=')) {
+      options.output = arg.slice('--output='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--format=')) {
+      options.format = arg.slice('--format='.length).trim().toLowerCase();
+      continue;
+    }
     if (arg.startsWith('--')) {
       throw new Error(
-        `Unknown release option "${arg}". Supported: --json, --summary=..., --ignore-prerelease, --include-prerelease`
+        `Unknown release option "${arg}". Supported: --json, --summary=..., --ignore-prerelease, --include-prerelease, --from=..., --output=..., --format=md|json`
       );
     }
     rest.push(arg);
   }
 
   if (rest.length === 0) {
-    throw new Error('kb release requires a subcommand: init | tag | list | show');
+    throw new Error('kb release requires a subcommand: init | tag | list | show | notes');
   }
 
   options.sub = rest[0];
@@ -80,7 +100,21 @@ function parseArgs(args) {
     return options;
   }
 
-  throw new Error(`kb release: unknown subcommand "${options.sub}". Supported: init | tag | list | show`);
+  if (options.sub === 'notes') {
+    if (rest.length !== 2) {
+      throw new Error('kb release notes requires exactly 1 argument: <version>');
+    }
+    options.version = rest[1];
+    if (!options.format) {
+      options.format = options.json ? 'json' : 'md';
+    }
+    if (options.format !== 'md' && options.format !== 'json') {
+      throw new Error('kb release notes: --format must be md or json');
+    }
+    return options;
+  }
+
+  throw new Error(`kb release: unknown subcommand "${options.sub}". Supported: init | tag | list | show | notes`);
 }
 
 function normalizePrefix(prefix) {
@@ -315,25 +349,115 @@ function runReleaseShow({ contentRoot, options }) {
   console.log(`  stats           : intents=${entry.stats.intents_applied}, docs=${entry.stats.docs_changed}, commits=${entry.stats.ad_hoc_commits}`);
 }
 
+function findPreviousTagFromCatalog(catalog, version) {
+  if (!catalog || !Array.isArray(catalog.releases)) return null;
+  const index = catalog.releases.findIndex((item) => item.version === version);
+  if (index < 0) return null;
+  const previous = catalog.releases[index + 1];
+  return previous ? previous.git_tag : null;
+}
+
+function findPreviousTagFromGit(workspaceRoot, version) {
+  const tags = getVersionTags(workspaceRoot);
+  const index = tags.findIndex((tag) => tag === version);
+  if (index <= 0) return null;
+  return tags[index - 1];
+}
+
+function runReleaseNotes({ workspaceRoot, contentRoot, options }) {
+  const catalog = readCatalog(contentRoot);
+  let fromTag = options.from;
+  if (!fromTag && catalog) {
+    fromTag = findPreviousTagFromCatalog(catalog, options.version);
+  }
+  if (!fromTag) {
+    fromTag = findPreviousTagFromGit(workspaceRoot, options.version);
+  }
+  if (!fromTag) {
+    throw new Error(`kb release notes: cannot infer previous release for ${options.version}. Use --from=<tag>.`);
+  }
+
+  const contentPaths = getReleaseContentPaths(contentRoot);
+  const releaseEntry = catalog && Array.isArray(catalog.releases)
+    ? catalog.releases.find((item) => item.version === options.version)
+    : null;
+
+  const result = buildReleaseNotes({
+    workspaceRoot,
+    fromTag,
+    toTag: options.version,
+    version: options.version,
+    summary: releaseEntry ? releaseEntry.summary : null,
+    contentPaths,
+    runGit: (command) => runGitCommand(command, workspaceRoot),
+  });
+
+  const resolvedOutputPath = options.output
+    ? path.resolve(workspaceRoot, options.output)
+    : null;
+
+  if (resolvedOutputPath) {
+    fs.mkdirSync(path.dirname(resolvedOutputPath), { recursive: true });
+    writeReleaseNotesOutput({
+      outputPath: resolvedOutputPath,
+      format: options.format,
+      markdown: result.markdown,
+      json: result.json,
+    });
+  }
+
+  if (options.format === 'json' || options.json) {
+    const payload = {
+      command: 'kb release notes',
+      from: fromTag,
+      to: options.version,
+      content_paths: contentPaths,
+      output: resolvedOutputPath,
+      notes: result.json,
+    };
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+
+  if (resolvedOutputPath) {
+    console.log(`kb release notes: wrote ${resolvedOutputPath}`);
+    return;
+  }
+  process.stdout.write(result.markdown);
+}
+
 function runRelease({ args, cwd }) {
   const options = parseArgs(args);
   const workspaceRoot = path.resolve(cwd);
-  const ctx = resolveExistingState({ workspaceRoot });
+  let ctx = null;
+  try {
+    ctx = resolveExistingState({ workspaceRoot });
+  } catch (err) {
+    if (options.sub !== 'notes') {
+      throw err;
+    }
+  }
+
+  const contentRoot = ctx ? ctx.contentRoot : workspaceRoot;
 
   if (options.sub === 'init') {
-    runReleaseInit({ workspaceRoot, contentRoot: ctx.contentRoot, options });
+    runReleaseInit({ workspaceRoot, contentRoot, options });
     return;
   }
   if (options.sub === 'tag') {
-    runReleaseTag({ workspaceRoot, contentRoot: ctx.contentRoot, options });
+    runReleaseTag({ workspaceRoot, contentRoot, options });
     return;
   }
   if (options.sub === 'list') {
-    runReleaseList({ contentRoot: ctx.contentRoot, options });
+    runReleaseList({ contentRoot, options });
     return;
   }
   if (options.sub === 'show') {
-    runReleaseShow({ contentRoot: ctx.contentRoot, options });
+    runReleaseShow({ contentRoot, options });
+    return;
+  }
+  if (options.sub === 'notes') {
+    runReleaseNotes({ workspaceRoot, contentRoot, options });
     return;
   }
 

@@ -1,0 +1,157 @@
+{
+  "version": "v1.4.1",
+  "fromTag": "v1.4.0",
+  "toTag": "v1.4.1",
+  "toCommitShort": "886a7ba",
+  "releasedAt": "2026-05-01",
+  "highlights": [
+    "This release contains 3 commit(s) touching KB content, with primary categories: fixes (1), docs (1)."
+  ],
+  "grouped": {
+    "features": [],
+    "fixes": [
+      {
+        "sha": "ee835be02037a5d01f87f6daeda0813de39c05ae",
+        "shortSha": "ee835be",
+        "subject": "fix(help): advertise kb scan; docs(site,readme): v1.4 release content; chore: bump 1.4.1",
+        "date": "2026-05-01",
+        "isConventional": true,
+        "type": "fix",
+        "scope": "help",
+        "breaking": false,
+        "description": "advertise kb scan; docs(site,readme): v1.4 release content; chore: bump 1.4.1",
+        "group": "fixes",
+        "files": [
+          "README.md",
+          "package-lock.json",
+          "package.json",
+          "site/index.html",
+          "src/commands/help.js",
+          "template/.github/agents/kb.agent.md",
+          "template/.github/prompts/kb-ask.prompt.md",
+          "template/.github/prompts/kb-plan.prompt.md",
+          "template/.github/prompts/kb-run.prompt.md",
+          "template/template.json"
+        ]
+      }
+    ],
+    "docs": [
+      {
+        "sha": "886a7ba4b32afdb3c944dea856978572a127d2d1",
+        "shortSha": "886a7ba",
+        "subject": "docs(release): generate v1.4.1 changelog entry",
+        "date": "2026-05-01",
+        "isConventional": true,
+        "type": "docs",
+        "scope": "release",
+        "breaking": false,
+        "description": "generate v1.4.1 changelog entry",
+        "group": "docs",
+        "files": [
+          "template/TEMPLATE_CHANGELOG.md"
+        ]
+      }
+    ],
+    "refactors": [],
+    "tests": [],
+    "performance": [],
+    "chores": [
+      {
+        "sha": "a07ee05c7d056407dba5c4339c2f4dc6aece55d8",
+        "shortSha": "a07ee05",
+        "subject": "chore: advance baseline to v1.4.0 (574f8b5)",
+        "date": "2026-05-01",
+        "isConventional": true,
+        "type": "chore",
+        "scope": null,
+        "breaking": false,
+        "description": "advance baseline to v1.4.0 (574f8b5)",
+        "group": "chores",
+        "files": [
+          "template/00-start-here/repository-revision-state.md"
+        ]
+      }
+    ],
+    "misc": []
+  },
+  "stats": {
+    "commitsInRange": 3,
+    "contentCommits": 3,
+    "docsChanged": 7,
+    "filesChanged": 12
+  },
+  "files": [
+    "README.md",
+    "package-lock.json",
+    "package.json",
+    "site/index.html",
+    "src/commands/help.js",
+    "template/.github/agents/kb.agent.md",
+    "template/.github/prompts/kb-ask.prompt.md",
+    "template/.github/prompts/kb-plan.prompt.md",
+    "template/.github/prompts/kb-run.prompt.md",
+    "template/00-start-here/repository-revision-state.md",
+    "template/TEMPLATE_CHANGELOG.md",
+    "template/template.json"
+  ],
+  "contentPaths": [
+    "knowledge-base/",
+    "template/"
+  ],
+  "commits": [
+    {
+      "sha": "a07ee05c7d056407dba5c4339c2f4dc6aece55d8",
+      "shortSha": "a07ee05",
+      "subject": "chore: advance baseline to v1.4.0 (574f8b5)",
+      "date": "2026-05-01",
+      "isConventional": true,
+      "type": "chore",
+      "scope": null,
+      "breaking": false,
+      "description": "advance baseline to v1.4.0 (574f8b5)",
+      "group": "chores",
+      "files": [
+        "template/00-start-here/repository-revision-state.md"
+      ]
+    },
+    {
+      "sha": "ee835be02037a5d01f87f6daeda0813de39c05ae",
+      "shortSha": "ee835be",
+      "subject": "fix(help): advertise kb scan; docs(site,readme): v1.4 release content; chore: bump 1.4.1",
+      "date": "2026-05-01",
+      "isConventional": true,
+      "type": "fix",
+      "scope": "help",
+      "breaking": false,
+      "description": "advertise kb scan; docs(site,readme): v1.4 release content; chore: bump 1.4.1",
+      "group": "fixes",
+      "files": [
+        "README.md",
+        "package-lock.json",
+        "package.json",
+        "site/index.html",
+        "src/commands/help.js",
+        "template/.github/agents/kb.agent.md",
+        "template/.github/prompts/kb-ask.prompt.md",
+        "template/.github/prompts/kb-plan.prompt.md",
+        "template/.github/prompts/kb-run.prompt.md",
+        "template/template.json"
+      ]
+    },
+    {
+      "sha": "886a7ba4b32afdb3c944dea856978572a127d2d1",
+      "shortSha": "886a7ba",
+      "subject": "docs(release): generate v1.4.1 changelog entry",
+      "date": "2026-05-01",
+      "isConventional": true,
+      "type": "docs",
+      "scope": "release",
+      "breaking": false,
+      "description": "generate v1.4.1 changelog entry",
+      "group": "docs",
+      "files": [
+        "template/TEMPLATE_CHANGELOG.md"
+      ]
+    }
+  ]
+}

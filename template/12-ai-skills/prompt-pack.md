@@ -96,3 +96,24 @@ Stored baseline revision:
 Current HEAD revision:
 Git log and diff range reviewed:
 ```
+
+### Manual Follow-up Rule (applies to all maintenance prompts)
+
+After every maintenance run, if any required verification or action could not be completed by the agent, output a `Manual follow-up checklist` block before the final summary. Each item must include:
+
+- `task` — what needs to be done
+- `command_or_path` — exact CLI command or IDE/UI navigation path
+- `expected_outcome` — observable condition that confirms success
+- `why_manual` — one-line reason the agent could not do it
+
+Format:
+
+```markdown
+Manual follow-up checklist:
+- [ ] <task>
+  - command_or_path: <exact CLI command OR exact IDE/UI navigation path>
+  - expected_outcome: <observable success condition>
+  - why_manual: <short reason>
+```
+
+Do not emit the block when no manual work remains.

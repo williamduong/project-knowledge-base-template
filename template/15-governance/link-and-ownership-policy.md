@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-04-28
-last_verified: 2026-04-28
+last_updated: 2026-05-01
+last_verified: 2026-05-01
 tags:
   - governance
   - ownership
@@ -30,7 +30,8 @@ tags:
 
 ## Add / Edit / Delete Rules
 
-- Add: create from templates and register in intent index.
+- Add: follow register-first flow (folder decision -> edit-vs-create decision -> purpose/path declaration -> index registration).
+- Add: register new docs in routing/index files in the same change set (intent-index, code-qa-index, or folder-level index).
 - Edit: update metadata and evidence in same commit.
 - Delete: add deprecation stub first, remove after one review cycle.
 

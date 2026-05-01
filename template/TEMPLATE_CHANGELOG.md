@@ -25,13 +25,19 @@ Release note entries should be generated from git history for each release.
 
 This changelog is `manual-only`: it does not auto-update on every commit.
 
-Use this command to preview commits since the previous generated release anchor. Rerun without `dry-run` when you explicitly want to write a new release entry.
+Use this command to generate notes from a selected release range.
 
 ```bash
-npm run release:notes -- vX.Y.Z Minor Medium dry-run
+npm run release:notes -- vX.Y.Z -- --from=vPREV --format=md
 ```
 
-Each generated entry stores an internal `release-meta` marker with the git range reviewed, so the next release can continue from the last released `HEAD` even when no git tags exist yet.
+Optional JSON output for automation:
+
+```bash
+npm run release:notes -- vX.Y.Z -- --from=vPREV --format=json --output=notes/release-vX.Y.Z.json
+```
+
+Legacy script `tools/generate-template-changelog.js` is deprecated and kept as compatibility wrapper only.
 
 ## Change Classification
 
@@ -71,6 +77,68 @@ Each generated entry stores an internal `release-meta` marker with the git range
 - TODO
 
 ## Current Entries
+
+## 1.5.0 - 2026-05-01
+
+<!-- release-meta: from=v1.4.1 to=HEAD generated_at=2026-05-01T00:00:00.000Z -->
+
+### Summary
+
+- Release catalog layer: `kb release init|tag|list|show` commands + `knowledge-base/.kb/catalog.json` schema.
+- Release notes generator: `kb release notes <version>` with conventional-commit parser, Misc fallback, markdown/JSON output, and `--from`/`--output`/`--format` flags.
+- `kb status` now shows `current release` line from catalog.
+- `kb maintain` now warns when current release is older than 30 days.
+- `kb doctor` lightweight routing-registration check: flags new KB docs not registered in index/routing files.
+- Governance: `register-first` rule added to agent-operating-manual, prompt-pack, kb-plan/kb-run prompts.
+- Mandatory `Manual follow-up checklist` output contract added to agent-operating-manual, prompt-pack, kb-plan, and kb-run.
+- Deprecated `tools/generate-template-changelog.js` (compatibility wrapper only); `npm run release:notes` now delegates to `kb release notes`.
+- New governance doc: `15-governance/release-policy.md`.
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- Low — additive commands only; no breaking changes to state.json schema or existing commands.
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents running maintenance should now call `kb release notes` instead of the legacy changelog generator.
+- Agents should check `kb status` output for `current release` line to determine if a new release is due.
+- Agents must include a `Manual follow-up checklist` block when any required verification cannot be completed directly.
+
+### Files Added / Changed
+
+**New:**
+- `src/lib/catalog.js` — catalog read/write/validate/append
+- `src/lib/release-notes.js` — commit parser + notes builder
+- `src/commands/release.js` — `kb release` command surface
+- `template/15-governance/release-policy.md` — release governance doc
+- `test/lib/catalog.test.js`, `test/lib/release-notes.test.js`, `test/commands/release.test.js`
+- `test/commands/doctor.test.js`, `test/commands/maintain.test.js`
+- `test/snapshots/` — locked markdown + JSON snapshots for release notes
+
+**Modified:**
+- `src/commands/status.js` — current release line from catalog
+- `src/commands/maintain.js` — stale release warning
+- `src/commands/doctor.js` — routing-registration check for new docs
+- `src/commands/help.js` — documents `kb release` subcommands
+- `src/lib/config.js` — release config defaults
+- `src/cli.js` — registers `release` command
+- `tools/generate-template-changelog.js` — deprecated wrapper
+- `template/12-ai-skills/agent-operating-manual.md` — register-first + manual follow-up output contract
+- `template/12-ai-skills/prompt-pack.md` — manual follow-up rule in maintain template
+- `template/.github/prompts/kb-plan.prompt.md` — manual follow-up summary requirement
+- `template/.github/prompts/kb-run.prompt.md` — mandatory manual follow-up block
+- `template/15-governance/link-and-ownership-policy.md` — register-first rule
+- `template/00-start-here/how-to-use-this-kb.md` — register-first guidance
+- `template/INDEX.md` — release-policy.md entry
+- `template/TEMPLATE_CHANGELOG.md`, `README.md`, `package.json`
 
 ## 1.4.1 - 2026-05-01
 

@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 1.4.1
+version: 1.5.0
 ---
 
 # /kb-run — Execute the next step of the KB runtime plan
@@ -104,6 +104,18 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
      3. Reply with a question or task (`@kb …` or plain chat) to pause execution and keep talking.
    ```
 
+    If any required work remains manual (for example: user confirmation, external system check, command the agent cannot run, or unresolved verification), print this block immediately before `What to do next`:
+
+    ```markdown
+    Manual follow-up checklist:
+    - [ ] <task>
+       - command_or_path: <exact CLI command OR exact IDE/UI navigation path>
+       - expected_outcome: <observable success condition>
+       - why_manual: <short reason>
+    ```
+
+    Do not print the block when no manual follow-up remains.
+
    If there is no `pending` step left, replace the menu with:
 
    ```
@@ -123,6 +135,8 @@ If the CLI exits non-zero, mark the step `(status: blocked)` with the exit code 
 | Doctor `WARN` items only (no FAIL) | Suggest re-running with `kb maintain --fast` (skips strict mode). |
 
 For any other non-zero exit, just print the captured output and the menu — do not invent fixes.
+
+If the failure requires user-only actions (credentials, privileged access, external approvals, or unavailable environment), include the `Manual follow-up checklist` block before the menu.
 
 ## On `skip`
 

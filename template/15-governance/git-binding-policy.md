@@ -129,7 +129,8 @@ This filter is enforced unconditionally so that editing docs never triggers impa
 Impact analysis compares `<baseline>..HEAD`. The baseline lives in `<contentRoot>/.kb/state.json` under `sourceRepositoryGitBaseline` (per [`repository-revision-state.md`](../00-start-here/repository-revision-state.md)).
 
 - Updating the baseline (currently a manual `state.json` edit; `kb baseline` command planned for a later release) advances the comparison window. Do this only after the impacted-doc backlog is reconciled — otherwise you lose audit trail.
-- Source-repository tools (`release:notes`) advance the baseline as part of release sessions and must not be run during routine drift sweeps.
+- Legacy tool `tools/generate-template-changelog.js` used to advance an internal release anchor; this path is deprecated in v1.5 Phase 2.
+- Current `kb release notes` only generates notes from an explicit range (or inferred previous tag) and does not mutate baseline/state.
 
 ## Evidence
 

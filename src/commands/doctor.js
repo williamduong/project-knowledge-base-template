@@ -77,6 +77,112 @@ function parseDoctorArgs(args) {
   return options;
 }
 
+function normalizePosix(p) {
+  return String(p || '').replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+/g, '/');
+}
+
+function isNewDocStatus(status) {
+  const s = String(status || '').trim();
+  if (s === '??') return true;
+  return s.includes('A');
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function containsDocReference(text, candidateRelPath, docRelPath) {
+  const body = String(text || '');
+  const candidate = normalizePosix(candidateRelPath);
+  const doc = normalizePosix(docRelPath);
+  if (!body || !doc) return false;
+
+  if (body.includes(doc)) return true;
+
+  const candidateDir = normalizePosix(path.posix.dirname(candidate));
+  const docDir = normalizePosix(path.posix.dirname(doc));
+  const docBase = path.posix.basename(doc);
+  const relFromCandidate = normalizePosix(path.posix.relative(candidateDir, doc));
+
+  const patterns = [
+    new RegExp(`\\]\\((?:\\./)?${escapeRegExp(docBase)}(?:#[^)]+)?\\)`),
+    new RegExp(`\\]\\((?:\\./)?${escapeRegExp(relFromCandidate)}(?:#[^)]+)?\\)`),
+  ];
+
+  // If the candidate is in a different folder, basename-only links are ambiguous.
+  if (candidateDir !== docDir) {
+    patterns.shift();
+  }
+
+  return patterns.some((p) => p.test(body));
+}
+
+function listRoutingCandidateFiles(docRelPath) {
+  const doc = normalizePosix(docRelPath);
+  const dir = path.posix.dirname(doc);
+  const candidates = [
+    'INDEX.md',
+    '00-start-here/intent-index.md',
+    '00-start-here/code-qa-index.md',
+  ];
+
+  if (dir && dir !== '.') {
+    candidates.push(`${dir}/INDEX.md`);
+    candidates.push(`${dir}/README.md`);
+  }
+
+  return Array.from(new Set(candidates.map(normalizePosix)));
+}
+
+function isDocRegisteredInRouting(contentRoot, docRelPath, cache) {
+  const candidates = listRoutingCandidateFiles(docRelPath);
+  for (const candidateRelPath of candidates) {
+    if (!cache.has(candidateRelPath)) {
+      const abs = path.join(contentRoot, ...candidateRelPath.split('/'));
+      if (!fs.existsSync(abs)) {
+        cache.set(candidateRelPath, null);
+      } else {
+        cache.set(candidateRelPath, fs.readFileSync(abs, 'utf8'));
+      }
+    }
+
+    const body = cache.get(candidateRelPath);
+    if (typeof body !== 'string') continue;
+    if (containsDocReference(body, candidateRelPath, docRelPath)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function detectUnregisteredNewDocs({ workspaceRoot, contentRoot, workingTree }) {
+  const contentRootRel = normalizePosix(path.relative(workspaceRoot, contentRoot));
+  const rootPrefix = contentRootRel ? `${contentRootRel}/` : '';
+  const tree = Array.isArray(workingTree) ? workingTree : getWorkingTreeStatus(workspaceRoot);
+
+  const newDocs = [];
+  for (const entry of tree) {
+    if (!entry || !isNewDocStatus(entry.status)) continue;
+    const filePath = normalizePosix(entry.filePath);
+    if (!filePath) continue;
+    if (rootPrefix && !(filePath === contentRootRel || filePath.startsWith(rootPrefix))) continue;
+
+    const rel = rootPrefix ? filePath.slice(rootPrefix.length) : filePath;
+    if (!rel.toLowerCase().endsWith('.md')) continue;
+    if (rel.startsWith('.kb/')) continue;
+    newDocs.push(rel);
+  }
+
+  const uniqueNewDocs = Array.from(new Set(newDocs)).sort();
+  const cache = new Map();
+  const missingDocs = uniqueNewDocs.filter((doc) => !isDocRegisteredInRouting(contentRoot, doc, cache));
+
+  return {
+    newDocs: uniqueNewDocs,
+    missingDocs,
+  };
+}
+
 function runDoctor({ args, cwd, packageJson }) {
   const options = parseDoctorArgs(args);
 
@@ -177,6 +283,37 @@ function runDoctor({ args, cwd, packageJson }) {
         name: 'git-impact-pending',
         status: 'WARN',
         detail: 'No impact.json found. Run "kb scan" to generate.',
+      });
+    }
+  }
+
+  // Register-first guard: detect newly added docs that are not routed in indexes.
+  if (impactCtx && git.isGitRepo) {
+    try {
+      const { newDocs, missingDocs } = detectUnregisteredNewDocs({
+        workspaceRoot,
+        contentRoot: impactCtx.contentRoot,
+      });
+
+      if (newDocs.length > 0 && missingDocs.length > 0) {
+        const sample = missingDocs.slice(0, 5).join(', ');
+        checks.push({
+          name: 'routing-registration-missing',
+          status: 'WARN',
+          detail: `${missingDocs.length}/${newDocs.length} new markdown doc(s) are not registered in KB routing/index files. Sample: ${sample}${missingDocs.length > 5 ? ' ...' : ''}. Update intent-index/code-qa-index or folder INDEX/README in the same change set.`,
+        });
+      } else if (newDocs.length > 0) {
+        checks.push({
+          name: 'routing-registration-missing',
+          status: 'PASS',
+          detail: `All ${newDocs.length} new markdown doc(s) are registered in KB routing/index files.`,
+        });
+      }
+    } catch (err) {
+      checks.push({
+        name: 'routing-registration-scan',
+        status: 'WARN',
+        detail: `Failed to scan new-doc routing registration: ${err.message}`,
       });
     }
   }
@@ -295,5 +432,7 @@ function runDoctor({ args, cwd, packageJson }) {
 }
 
 module.exports = {
+  detectUnregisteredNewDocs,
+  isNewDocStatus,
   runDoctor,
 };

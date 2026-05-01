@@ -13,6 +13,7 @@ const {
 const { normalizePath } = require('../lib/binding-matcher');
 const { buildGraph, findRecursiveImpact } = require('../lib/impact-graph');
 const { loadConfig, getConfigValue } = require('../lib/config');
+const { readCatalog } = require('../lib/catalog');
 
 function parseArgs(args) {
   const options = { json: false, quiet: false, noScan: false };
@@ -161,6 +162,16 @@ function runStatus({ args, cwd, packageJson }) {
     }
   }
 
+  // Catalog — current release line
+  let catalogData = null;
+  if (context && presence === 'healthy') {
+    try {
+      catalogData = readCatalog(context.contentRoot);
+    } catch (_err) {
+      // catalog missing or invalid — non-fatal
+    }
+  }
+
   const verdict = deriveStatusVerdict({ presence, stateError, impactData, kbDirty });
 
   if (options.quiet) {
@@ -193,6 +204,7 @@ function runStatus({ args, cwd, packageJson }) {
       impactError,
       recursiveImpact,
       workingTree: { kbDirty, codeDirty },
+      currentRelease: catalogData ? catalogData.current : null,
       verdict,
     }, null, 2));
     if (verdict.code !== 0) process.exit(verdict.code);
@@ -246,6 +258,15 @@ function runStatus({ args, cwd, packageJson }) {
     }
   } else if (stateError) {
     console.log(`- state error: ${stateError}`);
+  }
+
+  // Current release (from catalog)
+  if (catalogData && catalogData.current) {
+    const currentEntry = (catalogData.releases || []).find((r) => r.version === catalogData.current);
+    const releasedAt = currentEntry ? currentEntry.released_at : '';
+    console.log(`- current release: ${catalogData.current}${releasedAt ? ` (released ${releasedAt})` : ''}`);
+  } else if (catalogData) {
+    console.log('- current release: (none tagged yet — run: kb release tag <version>)');
   }
 
   // Impact section

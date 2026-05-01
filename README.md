@@ -150,19 +150,21 @@ npm run pack:smoke
 npm run release:dry
 ```
 
-Generate the template release note page from git history:
+Generate release notes from git history (new v1.5 flow):
 
 ```bash
-npm run release:notes -- v1.1.1 Patch Low dry-run
+npm run release:notes -- v1.1.1 -- --from=v1.1.0 --format=md
 ```
 
-Release notes are `manual-only`: they do not auto-update on every commit push. Remove `dry-run` when you explicitly want to prepend a new entry into `template/TEMPLATE_CHANGELOG.md` using commits since the last generated release anchor.
+Release notes remain `manual-only`: they do not auto-update on every commit push and are reviewed before being copied into `template/TEMPLATE_CHANGELOG.md`.
 
-Direct Node variant with named flags:
+Write output to a file for review:
 
 ```bash
-node ./scripts/generate-template-changelog.js --template-version v1.1.1 --change-type Patch --impact Low --dry-run
+npm run release:notes -- v1.1.1 -- --from=v1.1.0 --output=notes/release-v1.1.1.md --format=md
 ```
+
+Legacy path `tools/generate-template-changelog.js` is deprecated and retained only as a compatibility wrapper.
 
 Downstream project KBs should stamp both the adopted template version and the brand-scoped source baseline commit they were verified against.
 

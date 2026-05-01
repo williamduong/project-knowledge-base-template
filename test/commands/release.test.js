@@ -42,6 +42,36 @@ test('release parseArgs: list/show forms', () => {
   assert.equal(show.version, 'v1.5.0');
 });
 
+test('release parseArgs: notes defaults and options', () => {
+  const defaults = parseArgs(['notes', 'v1.5.0']);
+  assert.equal(defaults.sub, 'notes');
+  assert.equal(defaults.version, 'v1.5.0');
+  assert.equal(defaults.format, 'md');
+
+  const jsonFmt = parseArgs([
+    'notes',
+    'v1.5.0',
+    '--from=v1.4.0',
+    '--output=notes.md',
+    '--format=json',
+  ]);
+  assert.equal(jsonFmt.from, 'v1.4.0');
+  assert.equal(jsonFmt.output, 'notes.md');
+  assert.equal(jsonFmt.format, 'json');
+});
+
+test('release parseArgs: notes invalid format throws', () => {
+  assert.throws(() => parseArgs(['notes', 'v1.5.0', '--format=xml']), /--format must be md or json/);
+});
+
+test('release parseArgs: ignores bare -- separator', () => {
+  const parsed = parseArgs(['notes', 'v1.5.0', '--', '--from=v1.4.0', '--format=json']);
+  assert.equal(parsed.sub, 'notes');
+  assert.equal(parsed.version, 'v1.5.0');
+  assert.equal(parsed.from, 'v1.4.0');
+  assert.equal(parsed.format, 'json');
+});
+
 test('release parseArgs: unknown option throws', () => {
   assert.throws(() => parseArgs(['init', '--bogus']), /Unknown release option/);
 });

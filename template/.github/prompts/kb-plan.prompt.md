@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-plan
-version: 1.4.1
+version: 1.5.0
 ---
 
 # /kb-plan — Analyze and write the next KB action plan
@@ -87,6 +87,22 @@ What to do next (pick one):
   2. Reply `/kb-plan <change>` to refine the plan (e.g. reorder, drop, add steps).
   3. Reply with a question or task (`@kb …` or just plain chat) to keep talking; the plan stays as-is.
 ```
+
+### Manual Follow-up Summary (required when applicable)
+
+If any step is pending, blocked, or otherwise unverified because the agent cannot complete it directly, add a `Manual follow-up checklist` block immediately before the `What to do next` menu.
+
+Checklist format:
+
+```markdown
+Manual follow-up checklist:
+- [ ] <task>
+  - command_or_path: <exact CLI command OR exact IDE/UI navigation path>
+  - expected_outcome: <observable success condition>
+  - why_manual: <short reason>
+```
+
+Do not emit this block when there is no manual work remaining.
 
 Do not run any step. /kb-plan only plans.
 

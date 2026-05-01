@@ -24,6 +24,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kb release init [--ignore-prerelease|--include-prerelease] [--json]');
     console.log('  kb release tag <version> --summary=... [--json]');
     console.log('  kb release list [--json]   |   kb release show <version> [--json]');
+    console.log('  kb release notes <version> [--from=<tag>] [--output=<path>] [--format=md|json] [--json]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
     console.log('');
     console.log('Core workflow:');
@@ -93,6 +94,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb release tag <version> --summary=... [--json]');
   console.log('  kb release list [--json]');
   console.log('  kb release show <version> [--json]');
+  console.log('  kb release notes <version> [--from=<tag>] [--output=<path>] [--format=md|json] [--json]');
   console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
   console.log('  kb version');
   console.log('');
@@ -172,6 +174,10 @@ function runHelp({ packageJson, args }) {
   console.log('             tag <version>    Append one release from an existing git tag (requires --summary).');
   console.log('             list             List catalog releases (current marked with *).');
   console.log('             show <version>   Show one release entry in detail.');
+  console.log('             notes <version>  Generate release notes from git range (previous..version).');
+  console.log('                               --from=<tag> overrides previous release detection.');
+  console.log('                               --output=<path> writes file; default prints to stdout.');
+  console.log('                               --format=md|json (default md; --json implies json payload).');
   console.log('  uninstall  Remove KB installation from the workspace.');
   console.log('             --keep-ai-files  Keep AGENTS/prompt files at repo root.');
   console.log('             --remove-hook    Remove kb-managed .git/hooks/pre-commit.');

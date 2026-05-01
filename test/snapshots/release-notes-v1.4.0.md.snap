@@ -1,0 +1,70 @@
+# Release v1.4.0 - 2026-05-01
+
+**Previous release:** v1.3.0
+**Range:** v1.3.0..v1.4.0 (574f8b5)
+
+## Highlights
+
+- This release contains 4 commit(s) touching KB content, with primary categories: features (2), docs (1).
+
+## Changes
+
+### Features
+
+- **feat:** add configuration management and impact graph functionality (b9aa3d1)
+- **feat(impact):** recursive expansion + cycle detection (v1.4 Phase 2) (4b879b3)
+
+### Docs
+
+- **docs(release):** generate v1.4.0 changelog entry (574f8b5)
+
+### Chore
+
+- **chore:** advance baseline to v1.3.0 (f8b4e58) (72e92fa)
+
+## Stats
+
+- Commits in range: 4
+- Commits touching content paths: 4
+- Docs changed (filtered by content paths): 10
+- Files changed (all paths): 29
+
+## Files
+
+- package-lock.json
+- package.json
+- src/cli.js
+- src/commands/baseline.js
+- src/commands/doctor.js
+- src/commands/help.js
+- src/commands/impact.js
+- src/commands/scan.js
+- src/commands/status.js
+- src/commands/verify.js
+- src/lib/config.js
+- src/lib/impact-graph.js
+- template/.github/agents/kb.agent.md
+- template/.github/prompts/kb-ask.prompt.md
+- template/.github/prompts/kb-plan.prompt.md
+- template/.github/prompts/kb-run.prompt.md
+- template/00-start-here/repository-revision-state.md
+- template/15-governance/impact-policy.md
+- template/15-governance/metadata-schema.md
+- template/15-governance/related-semantic.md
+- template/TEMPLATE_CHANGELOG.md
+- template/template.json
+- test/commands/baseline.test.js
+- test/commands/impact.test.js
+- test/commands/scan-recursive.test.js
+- test/commands/verify.test.js
+- test/lib/config.test.js
+- test/lib/impact-graph-recursive.test.js
+- test/lib/impact-graph.test.js
+
+## Migration
+
+- None declared. Review grouped changes above and add migration steps if downstream KBs depend on altered behavior.
+
+---
+
+<!-- intents_applied: [] (v2.0 will populate) -->

@@ -1,0 +1,52 @@
+# Release v1.4.1 - 2026-05-01
+
+**Previous release:** v1.4.0
+**Range:** v1.4.0..v1.4.1 (886a7ba)
+
+## Highlights
+
+- This release contains 3 commit(s) touching KB content, with primary categories: fixes (1), docs (1).
+
+## Changes
+
+### Fixes
+
+- **fix(help):** advertise kb scan; docs(site,readme): v1.4 release content; chore: bump 1.4.1 (ee835be)
+
+### Docs
+
+- **docs(release):** generate v1.4.1 changelog entry (886a7ba)
+
+### Chore
+
+- **chore:** advance baseline to v1.4.0 (574f8b5) (a07ee05)
+
+## Stats
+
+- Commits in range: 3
+- Commits touching content paths: 3
+- Docs changed (filtered by content paths): 7
+- Files changed (all paths): 12
+
+## Files
+
+- README.md
+- package-lock.json
+- package.json
+- site/index.html
+- src/commands/help.js
+- template/.github/agents/kb.agent.md
+- template/.github/prompts/kb-ask.prompt.md
+- template/.github/prompts/kb-plan.prompt.md
+- template/.github/prompts/kb-run.prompt.md
+- template/00-start-here/repository-revision-state.md
+- template/TEMPLATE_CHANGELOG.md
+- template/template.json
+
+## Migration
+
+- None declared. Review grouped changes above and add migration steps if downstream KBs depend on altered behavior.
+
+---
+
+<!-- intents_applied: [] (v2.0 will populate) -->

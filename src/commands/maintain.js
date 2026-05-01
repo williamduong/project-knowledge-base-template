@@ -5,6 +5,8 @@ const { spawnSync } = require('child_process');
 const { performSync } = require('./sync');
 const { runTest } = require('./test');
 const { runDoctor } = require('./doctor');
+const { readCatalog } = require('../lib/catalog');
+const { resolveExistingState } = require('../lib/context');
 
 function parseArgs(args) {
   const options = {
@@ -94,9 +96,47 @@ function runMaintain({ args, cwd, packageJson }) {
     packageJson,
   });
 
+  checkStaleRelease({ workspaceRoot });
+
   console.log('maintain: completed');
+}
+
+const STALE_RELEASE_DAYS = 30;
+
+function checkStaleRelease({ workspaceRoot }) {
+  let context;
+  try {
+    context = resolveExistingState({ workspaceRoot });
+  } catch (_err) {
+    return; // no KB state — skip silently
+  }
+
+  let catalog;
+  try {
+    catalog = readCatalog(context.contentRoot);
+  } catch (_err) {
+    return; // catalog unreadable — non-fatal
+  }
+
+  if (!catalog || !catalog.current) {
+    console.log('maintain: WARNING: no release tagged yet in catalog. Consider running: kb release tag <version>');
+    return;
+  }
+
+  const currentEntry = (catalog.releases || []).find((r) => r.version === catalog.current);
+  if (!currentEntry || !currentEntry.released_at) return;
+
+  const releasedMs = Date.parse(currentEntry.released_at);
+  if (!Number.isFinite(releasedMs)) return;
+
+  const daysSince = Math.floor((Date.now() - releasedMs) / 86_400_000);
+  if (daysSince > STALE_RELEASE_DAYS) {
+    console.log(`maintain: WARNING: current release ${catalog.current} was tagged ${daysSince} days ago (>${STALE_RELEASE_DAYS}d). Consider running: kb release tag <version>`);
+  }
 }
 
 module.exports = {
   runMaintain,
+  checkStaleRelease,
+  STALE_RELEASE_DAYS,
 };

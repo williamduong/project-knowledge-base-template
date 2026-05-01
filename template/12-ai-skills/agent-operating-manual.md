@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: design-only
-last_updated: 2026-04-28
-last_verified: 2026-04-28
+last_updated: 2026-05-01
+last_verified: 2026-05-01
 tags:
   - ai-agent
   - copilot
@@ -30,6 +30,17 @@ Provide a single location for future coding agents to read KB conventions before
 7. Update docs impacted by code changes in the same change set when possible.
 8. Default to phased `code-verified` coverage and use `finalization-plan.md` as the review queue.
 
+## Register-First Rule For File Creation
+
+Before creating any new file, agents must declare and register intent in this order:
+
+1. Decide folder strategy: reuse an existing folder or create a new folder with rationale.
+2. Decide edit vs create: prefer editing an existing file if it can absorb the change.
+3. Declare file intent: purpose, filename, and target path before writing content.
+4. Register the file in KB routing/indexes in the same change set (`intent-index`, `code-qa-index`, or relevant folder-level index).
+
+Do not create files first and register them later.
+
 ## Frontend Interpretation Rule
 
 - `Frontend` means any human interaction surface, not only a browser application.
@@ -49,6 +60,8 @@ Provide a single location for future coding agents to read KB conventions before
 
 - Include changed file list.
 - Include risk notes and what was not verified.
+- Include a mandatory `Manual follow-up checklist` section whenever any required verification or execution cannot be completed by the agent.
+- Each checklist item must include: task, exact command or UI path, expected outcome, and reason it was manual.
 - Include suggested next actions.
 
 ## Copilot Instruction Digest

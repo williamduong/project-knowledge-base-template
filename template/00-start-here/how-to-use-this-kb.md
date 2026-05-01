@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: unverified
-last_updated: 2026-04-28
-last_verified: 2026-04-28
+last_updated: 2026-05-01
+last_verified: 2026-05-01
 related:
   - ../INDEX.md
   - intent-index.md
@@ -63,10 +63,16 @@ For canonical terminology and examples, read [terminology-guard.md](terminology-
 
 ## Lifecycle For Add / Edit / Delete
 
-1. Add: create file from [../14-templates/](../14-templates/) and register in intent index.
-2. Edit: update content, last_updated, and verification fields.
-3. Delete: replace with stub + redirect first, then remove in next review cycle.
-4. Move/Rename: update incoming links and index entries in same change set.
+1. Add: apply register-first workflow before creating a file.
+2. Register-first workflow:
+  - Decide folder strategy: reuse existing folder or create a new folder with explicit rationale.
+  - Decide edit vs create: prefer editing an existing file if the scope fits.
+  - If creating new file: declare purpose, filename, and target path before writing.
+  - Register routing in the same change set (intent-index, code-qa-index, or folder index).
+3. Add implementation: create file from [../14-templates/](../14-templates/) and keep frontmatter valid.
+4. Edit: update content, last_updated, and verification fields.
+5. Delete: replace with stub + redirect first, then remove in next review cycle.
+6. Move/Rename: update incoming links and index entries in same change set.
 
 ## AI Agent Usage Protocol
 

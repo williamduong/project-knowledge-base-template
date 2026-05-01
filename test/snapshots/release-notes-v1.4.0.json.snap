@@ -1,0 +1,240 @@
+{
+  "version": "v1.4.0",
+  "fromTag": "v1.3.0",
+  "toTag": "v1.4.0",
+  "toCommitShort": "574f8b5",
+  "releasedAt": "2026-05-01",
+  "highlights": [
+    "This release contains 4 commit(s) touching KB content, with primary categories: features (2), docs (1)."
+  ],
+  "grouped": {
+    "features": [
+      {
+        "sha": "b9aa3d1542a4573761542fccdf373f0d2f146d69",
+        "shortSha": "b9aa3d1",
+        "subject": "feat: add configuration management and impact graph functionality",
+        "date": "2026-05-01",
+        "isConventional": true,
+        "type": "feat",
+        "scope": null,
+        "breaking": false,
+        "description": "add configuration management and impact graph functionality",
+        "group": "features",
+        "files": [
+          "package-lock.json",
+          "package.json",
+          "src/cli.js",
+          "src/commands/baseline.js",
+          "src/commands/doctor.js",
+          "src/commands/help.js",
+          "src/commands/impact.js",
+          "src/commands/verify.js",
+          "src/lib/config.js",
+          "src/lib/impact-graph.js",
+          "template/.github/agents/kb.agent.md",
+          "template/.github/prompts/kb-ask.prompt.md",
+          "template/.github/prompts/kb-plan.prompt.md",
+          "template/.github/prompts/kb-run.prompt.md",
+          "template/15-governance/metadata-schema.md",
+          "template/15-governance/related-semantic.md",
+          "template/template.json",
+          "test/commands/baseline.test.js",
+          "test/commands/impact.test.js",
+          "test/commands/verify.test.js",
+          "test/lib/config.test.js",
+          "test/lib/impact-graph.test.js"
+        ]
+      },
+      {
+        "sha": "4b879b36ca3f053ff9205c1b0cfcfbe714c4498a",
+        "shortSha": "4b879b3",
+        "subject": "feat(impact): recursive expansion + cycle detection (v1.4 Phase 2)",
+        "date": "2026-05-01",
+        "isConventional": true,
+        "type": "feat",
+        "scope": "impact",
+        "breaking": false,
+        "description": "recursive expansion + cycle detection (v1.4 Phase 2)",
+        "group": "features",
+        "files": [
+          "src/commands/doctor.js",
+          "src/commands/scan.js",
+          "src/commands/status.js",
+          "src/lib/impact-graph.js",
+          "template/15-governance/impact-policy.md",
+          "test/commands/scan-recursive.test.js",
+          "test/lib/impact-graph-recursive.test.js"
+        ]
+      }
+    ],
+    "fixes": [],
+    "docs": [
+      {
+        "sha": "574f8b55b1a074ac544e7004ae7658c003b41830",
+        "shortSha": "574f8b5",
+        "subject": "docs(release): generate v1.4.0 changelog entry",
+        "date": "2026-05-01",
+        "isConventional": true,
+        "type": "docs",
+        "scope": "release",
+        "breaking": false,
+        "description": "generate v1.4.0 changelog entry",
+        "group": "docs",
+        "files": [
+          "template/TEMPLATE_CHANGELOG.md"
+        ]
+      }
+    ],
+    "refactors": [],
+    "tests": [],
+    "performance": [],
+    "chores": [
+      {
+        "sha": "72e92fa084c8c43066ebb8eb076e95af1aaf5091",
+        "shortSha": "72e92fa",
+        "subject": "chore: advance baseline to v1.3.0 (f8b4e58)",
+        "date": "2026-05-01",
+        "isConventional": true,
+        "type": "chore",
+        "scope": null,
+        "breaking": false,
+        "description": "advance baseline to v1.3.0 (f8b4e58)",
+        "group": "chores",
+        "files": [
+          "template/00-start-here/repository-revision-state.md"
+        ]
+      }
+    ],
+    "misc": []
+  },
+  "stats": {
+    "commitsInRange": 4,
+    "contentCommits": 4,
+    "docsChanged": 10,
+    "filesChanged": 29
+  },
+  "files": [
+    "package-lock.json",
+    "package.json",
+    "src/cli.js",
+    "src/commands/baseline.js",
+    "src/commands/doctor.js",
+    "src/commands/help.js",
+    "src/commands/impact.js",
+    "src/commands/scan.js",
+    "src/commands/status.js",
+    "src/commands/verify.js",
+    "src/lib/config.js",
+    "src/lib/impact-graph.js",
+    "template/.github/agents/kb.agent.md",
+    "template/.github/prompts/kb-ask.prompt.md",
+    "template/.github/prompts/kb-plan.prompt.md",
+    "template/.github/prompts/kb-run.prompt.md",
+    "template/00-start-here/repository-revision-state.md",
+    "template/15-governance/impact-policy.md",
+    "template/15-governance/metadata-schema.md",
+    "template/15-governance/related-semantic.md",
+    "template/TEMPLATE_CHANGELOG.md",
+    "template/template.json",
+    "test/commands/baseline.test.js",
+    "test/commands/impact.test.js",
+    "test/commands/scan-recursive.test.js",
+    "test/commands/verify.test.js",
+    "test/lib/config.test.js",
+    "test/lib/impact-graph-recursive.test.js",
+    "test/lib/impact-graph.test.js"
+  ],
+  "contentPaths": [
+    "knowledge-base/",
+    "template/"
+  ],
+  "commits": [
+    {
+      "sha": "72e92fa084c8c43066ebb8eb076e95af1aaf5091",
+      "shortSha": "72e92fa",
+      "subject": "chore: advance baseline to v1.3.0 (f8b4e58)",
+      "date": "2026-05-01",
+      "isConventional": true,
+      "type": "chore",
+      "scope": null,
+      "breaking": false,
+      "description": "advance baseline to v1.3.0 (f8b4e58)",
+      "group": "chores",
+      "files": [
+        "template/00-start-here/repository-revision-state.md"
+      ]
+    },
+    {
+      "sha": "b9aa3d1542a4573761542fccdf373f0d2f146d69",
+      "shortSha": "b9aa3d1",
+      "subject": "feat: add configuration management and impact graph functionality",
+      "date": "2026-05-01",
+      "isConventional": true,
+      "type": "feat",
+      "scope": null,
+      "breaking": false,
+      "description": "add configuration management and impact graph functionality",
+      "group": "features",
+      "files": [
+        "package-lock.json",
+        "package.json",
+        "src/cli.js",
+        "src/commands/baseline.js",
+        "src/commands/doctor.js",
+        "src/commands/help.js",
+        "src/commands/impact.js",
+        "src/commands/verify.js",
+        "src/lib/config.js",
+        "src/lib/impact-graph.js",
+        "template/.github/agents/kb.agent.md",
+        "template/.github/prompts/kb-ask.prompt.md",
+        "template/.github/prompts/kb-plan.prompt.md",
+        "template/.github/prompts/kb-run.prompt.md",
+        "template/15-governance/metadata-schema.md",
+        "template/15-governance/related-semantic.md",
+        "template/template.json",
+        "test/commands/baseline.test.js",
+        "test/commands/impact.test.js",
+        "test/commands/verify.test.js",
+        "test/lib/config.test.js",
+        "test/lib/impact-graph.test.js"
+      ]
+    },
+    {
+      "sha": "4b879b36ca3f053ff9205c1b0cfcfbe714c4498a",
+      "shortSha": "4b879b3",
+      "subject": "feat(impact): recursive expansion + cycle detection (v1.4 Phase 2)",
+      "date": "2026-05-01",
+      "isConventional": true,
+      "type": "feat",
+      "scope": "impact",
+      "breaking": false,
+      "description": "recursive expansion + cycle detection (v1.4 Phase 2)",
+      "group": "features",
+      "files": [
+        "src/commands/doctor.js",
+        "src/commands/scan.js",
+        "src/commands/status.js",
+        "src/lib/impact-graph.js",
+        "template/15-governance/impact-policy.md",
+        "test/commands/scan-recursive.test.js",
+        "test/lib/impact-graph-recursive.test.js"
+      ]
+    },
+    {
+      "sha": "574f8b55b1a074ac544e7004ae7658c003b41830",
+      "shortSha": "574f8b5",
+      "subject": "docs(release): generate v1.4.0 changelog entry",
+      "date": "2026-05-01",
+      "isConventional": true,
+      "type": "docs",
+      "scope": "release",
+      "breaking": false,
+      "description": "generate v1.4.0 changelog entry",
+      "group": "docs",
+      "files": [
+        "template/TEMPLATE_CHANGELOG.md"
+      ]
+    }
+  ]
+}

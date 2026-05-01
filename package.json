@@ -1,6 +1,6 @@
 {
   "name": "@williamduong/kb",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
   "private": false,
   "license": "AGPL-3.0-only",
@@ -33,7 +33,8 @@
     "help": "node ./bin/kb.js help",
     "start": "node ./bin/kb.js help",
     "docs:tree": "node ./tools/build-docs-tree.js",
-    "release:notes": "node ./tools/generate-template-changelog.js",
+    "release:notes": "node ./bin/kb.js release notes",
+    "release:notes:legacy": "node ./tools/generate-template-changelog.js",
     "doc:gate": "node ./scripts/doc-gate.js",
     "version:sync": "node ./tools/sync-versions.js",
     "version:check": "node ./tools/sync-versions.js --check",
