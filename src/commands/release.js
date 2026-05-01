@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const { resolveExistingState } = require('../lib/context');
 const { runGitCommand } = require('../lib/git');
@@ -14,6 +15,7 @@ const {
 } = require('../lib/catalog');
 const { loadConfig, getConfigValue, DEFAULTS } = require('../lib/config');
 const { buildReleaseNotes, writeReleaseNotesOutput } = require('../lib/release-notes');
+const { executePipeline, interpolateTemplate, pipelineFilePath, readPipeline } = require('../lib/pipeline');
 
 function parseArgs(args) {
   const options = {
@@ -25,10 +27,17 @@ function parseArgs(args) {
     from: null,
     output: null,
     format: null,
+    dryRun: false,
+    yes: false,
+    bump: null,
+    target: null,
+    file: null,
+    template: null,
   };
 
   const rest = [];
-  for (const arg of args || []) {
+  for (let i = 0; i < (args || []).length; i += 1) {
+    const arg = args[i];
     if (arg === '--') {
       continue;
     }
@@ -60,16 +69,49 @@ function parseArgs(args) {
       options.format = arg.slice('--format='.length).trim().toLowerCase();
       continue;
     }
+    if (arg === '--dry-run') {
+      options.dryRun = true;
+      continue;
+    }
+    if (arg === '--yes') {
+      options.yes = true;
+      continue;
+    }
+    if (arg.startsWith('--bump=')) {
+      options.bump = arg.slice('--bump='.length).trim().toLowerCase();
+      continue;
+    }
+    if (arg.startsWith('--target=')) {
+      options.target = arg.slice('--target='.length).trim().toLowerCase();
+      continue;
+    }
+    if (arg.startsWith('--file=')) {
+      options.file = arg.slice('--file='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--template=')) {
+      options.template = arg.slice('--template='.length).trim().toLowerCase();
+      continue;
+    }
+    if (arg === '-f' || arg === '--file') {
+      const next = (args || [])[i + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error('kb release run/plan: --file requires a value');
+      }
+      options.file = String(next).trim();
+      i += 1;
+      continue;
+    }
     if (arg.startsWith('--')) {
       throw new Error(
-        `Unknown release option "${arg}". Supported: --json, --summary=..., --ignore-prerelease, --include-prerelease, --from=..., --output=..., --format=md|json`
+        `Unknown release option "${arg}". Supported: --json, --summary=..., --ignore-prerelease, --include-prerelease, --from=..., --output=..., --format=md|json, --dry-run, --yes, --bump=..., --target=..., --file=..., --template=...`
       );
     }
     rest.push(arg);
   }
 
   if (rest.length === 0) {
-    throw new Error('kb release requires a subcommand: init | tag | list | show | notes');
+    throw new Error('kb release requires a subcommand: init | tag | list | show | notes | run | plan | init-pipeline');
   }
 
   options.sub = rest[0];
@@ -114,7 +156,39 @@ function parseArgs(args) {
     return options;
   }
 
-  throw new Error(`kb release: unknown subcommand "${options.sub}". Supported: init | tag | list | show | notes`);
+  if (options.sub === 'run' || options.sub === 'plan') {
+    if (rest.length > 1) {
+      throw new Error(`kb release ${options.sub} takes no positional arguments`);
+    }
+
+    if (options.bump && !['patch', 'minor', 'major'].includes(options.bump)) {
+      throw new Error('kb release run/plan: --bump must be patch, minor, or major');
+    }
+    if (options.target && !['npm', 'gh', 'all'].includes(options.target)) {
+      throw new Error('kb release run/plan: --target must be npm, gh, or all');
+    }
+
+    if (options.sub === 'plan') {
+      options.dryRun = true;
+    }
+
+    return options;
+  }
+
+  if (options.sub === 'init-pipeline') {
+    if (rest.length > 1) {
+      throw new Error('kb release init-pipeline takes no positional arguments');
+    }
+
+    options.template = options.template || 'npm-package';
+    if (!['npm-package', 'docs-only', 'custom'].includes(options.template)) {
+      throw new Error('kb release init-pipeline: --template must be npm-package, docs-only, or custom');
+    }
+
+    return options;
+  }
+
+  throw new Error(`kb release: unknown subcommand "${options.sub}". Supported: init | tag | list | show | notes | run | plan | init-pipeline`);
 }
 
 function normalizePrefix(prefix) {
@@ -426,6 +500,372 @@ function runReleaseNotes({ workspaceRoot, contentRoot, options }) {
   process.stdout.write(result.markdown);
 }
 
+function releaseTemplatePath(repoRoot, templateName) {
+  return path.join(repoRoot, 'template', '16-release-pipelines', `${templateName}.yaml`);
+}
+
+function runReleaseInitPipeline({ contentRoot, options }) {
+  const repoRoot = path.resolve(__dirname, '..', '..');
+  const templateName = options.template || 'npm-package';
+  const sourcePath = releaseTemplatePath(repoRoot, templateName);
+
+  if (!fs.existsSync(sourcePath)) {
+    throw new Error(`Pipeline template not found: ${templateName}`);
+  }
+
+  const targetPath = pipelineFilePath(contentRoot);
+  const existed = fs.existsSync(targetPath);
+  if (existed && !options.yes) {
+    throw new Error(
+      `Pipeline already exists at ${targetPath}. Re-run with --yes to overwrite or use --file with kb release run/plan.`
+    );
+  }
+
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  fs.copyFileSync(sourcePath, targetPath);
+
+  const out = {
+    command: 'kb release init-pipeline',
+    template: templateName,
+    source: sourcePath,
+    written: targetPath,
+    overwritten: existed,
+  };
+
+  if (options.json) {
+    console.log(JSON.stringify(out, null, 2));
+    return;
+  }
+
+  console.log('kb release init-pipeline: PASS');
+  console.log(`  template : ${templateName}`);
+  console.log(`  written  : ${targetPath}`);
+}
+
+function resolveKbEntryPathForPrecheck() {
+  const fromArgv = process.argv[1];
+  if (fromArgv && fs.existsSync(fromArgv)) {
+    return fromArgv;
+  }
+  return path.resolve(__dirname, '..', '..', 'bin', 'kb.js');
+}
+
+function runReleasePrecheck({ workspaceRoot, processRunner = spawnSync }) {
+  const kbEntryPath = resolveKbEntryPathForPrecheck();
+  const result = processRunner(process.execPath, [kbEntryPath, 'status', '--quiet'], {
+    cwd: workspaceRoot,
+    encoding: 'utf8',
+  });
+
+  if (result && result.error) {
+    throw new Error(`Release pre-check failed to execute "kb status --quiet": ${result.error.message}`);
+  }
+
+  const exitCode = result && typeof result.status === 'number' ? result.status : 1;
+  const statusLabel = String((result && result.stdout) || '').trim() || 'blocked';
+  if (exitCode !== 0) {
+    throw new Error(
+      `Release blocked by status pre-check (${statusLabel}). Resolve workspace state before running release pipeline.`
+    );
+  }
+
+  return {
+    exitCode,
+    status: statusLabel,
+  };
+}
+
+function normalizeReleaseVersionCandidate(value) {
+  if (value === null || value === undefined) return null;
+  const firstToken = String(value).trim().split(/\s+/)[0] || '';
+  if (!firstToken) return null;
+
+  if (/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(firstToken)) {
+    return firstToken;
+  }
+  if (/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(firstToken)) {
+    return `v${firstToken}`;
+  }
+  return null;
+}
+
+function getRuntimeReleaseVersion(runtime) {
+  if (!runtime || !runtime.outputs || typeof runtime.outputs !== 'object') {
+    return null;
+  }
+
+  const bumpStep = runtime.outputs['bump-version'];
+  if (bumpStep && typeof bumpStep === 'object') {
+    const explicit = normalizeReleaseVersionCandidate(bumpStep.version);
+    if (explicit) return explicit;
+
+    const fromStdout = normalizeReleaseVersionCandidate(bumpStep.stdout);
+    if (fromStdout) return fromStdout;
+  }
+
+  for (const value of Object.values(runtime.outputs)) {
+    if (!value || typeof value !== 'object') continue;
+
+    const explicit = normalizeReleaseVersionCandidate(value.version);
+    if (explicit) return explicit;
+
+    const fromStdout = normalizeReleaseVersionCandidate(value.stdout);
+    if (fromStdout) return fromStdout;
+  }
+
+  return null;
+}
+
+function buildAutoCatalogSummary({ version, inputs }) {
+  const parts = [`Auto pipeline release ${version}`];
+  if (inputs && inputs.bump) parts.push(`bump=${inputs.bump}`);
+  if (inputs && inputs.target) parts.push(`target=${inputs.target}`);
+  return parts.join(' | ');
+}
+
+function upsertCatalogReleaseFromTag({ workspaceRoot, contentRoot, version, summary }) {
+  const existing = readCatalog(contentRoot);
+  if (!existing) {
+    throw new Error('catalog.json not found. Run "kb release init" first.');
+  }
+
+  const alreadyExists = (existing.releases || []).some((item) => item.version === version);
+  if (alreadyExists) {
+    return {
+      updated: false,
+      version,
+      reason: 'already-exists',
+      summary: null,
+    };
+  }
+
+  const contentPaths = getReleaseContentPaths(contentRoot);
+  const previous = existing.current
+    ? existing.releases.find((item) => item.version === existing.current)
+    : null;
+
+  const entry = buildEntryFromTag({
+    workspaceRoot,
+    tag: version,
+    previousTag: previous ? previous.git_tag : null,
+    contentPaths,
+    summaryOverride: summary,
+  });
+
+  appendReleaseEntry(contentRoot, entry, { setCurrent: true });
+
+  return {
+    updated: true,
+    version: entry.version,
+    reason: null,
+    summary: entry.summary,
+  };
+}
+
+function runReleasePosthookCatalogUpdate({
+  workspaceRoot,
+  contentRoot,
+  runtime,
+  inputs,
+  upsertReleaseFn = upsertCatalogReleaseFromTag,
+}) {
+  const version = getRuntimeReleaseVersion(runtime);
+  if (!version) {
+    throw new Error(
+      'Release post-hook: cannot resolve release version from pipeline outputs. Ensure bump-version outputs include version or stdout.'
+    );
+  }
+
+  const summary = buildAutoCatalogSummary({ version, inputs });
+  const result = upsertReleaseFn({ workspaceRoot, contentRoot, version, summary });
+  return {
+    ...result,
+    hook: 'catalog-update',
+  };
+}
+
+function resolvePipelineInputs(options) {
+  return {
+    bump: options.bump || 'patch',
+    target: options.target || 'all',
+    from_tag: options.from || '',
+    dry_run: Boolean(options.dryRun),
+  };
+}
+
+function resolvePipelinePathForRun({ workspaceRoot, contentRoot, options }) {
+  if (options.file) {
+    return path.resolve(workspaceRoot, options.file);
+  }
+  return pipelineFilePath(contentRoot);
+}
+
+function readYesNoFromStdin(promptText) {
+  process.stdout.write(promptText);
+  let text = '';
+  const buf = Buffer.alloc(1);
+  while (true) {
+    const bytesRead = fs.readSync(0, buf, 0, 1, null);
+    if (bytesRead === 0) break;
+    const ch = buf.toString('utf8', 0, bytesRead);
+    if (ch === '\n') break;
+    if (ch !== '\r') text += ch;
+  }
+  return text.trim();
+}
+
+function createConfirmStepHandler(options) {
+  if (options.yes) return null;
+  return ({ step, command }) => {
+    if (!process.stdin.isTTY) {
+      throw new Error(`Non-interactive terminal for confirm step "${step.name}". Use --yes to bypass.`);
+    }
+    const answer = readYesNoFromStdin(
+      `[confirm] ${step.name}\n  command: ${command}\n  Continue? [y/N]: `
+    );
+    return /^(y|yes)$/i.test(answer);
+  };
+}
+
+function buildDryRunPreview(pipeline, inputs) {
+  const steps = [];
+  const outputs = {};
+
+  for (const step of pipeline.steps) {
+    let command = step.run;
+    let interpolationError = null;
+    try {
+      command = interpolateTemplate(step.run, { inputs, outputs });
+    } catch (err) {
+      interpolationError = err.message;
+    }
+
+    const stepOutputs = {
+      command,
+      exit_code: 0,
+      stdout: `<dry-run:${step.name}:stdout>`,
+      stderr: '',
+    };
+
+    if (step.outputs && typeof step.outputs === 'object' && !Array.isArray(step.outputs)) {
+      const mappingContext = {
+        inputs,
+        outputs: {
+          ...outputs,
+          [step.name]: stepOutputs,
+        },
+      };
+      for (const [k, v] of Object.entries(step.outputs)) {
+        if (typeof v === 'string') {
+          try {
+            stepOutputs[k] = interpolateTemplate(v, mappingContext);
+          } catch {
+            stepOutputs[k] = `<unresolved:${k}>`;
+          }
+        } else if (typeof v === 'number' || typeof v === 'boolean') {
+          stepOutputs[k] = v;
+        }
+      }
+    }
+
+    outputs[step.name] = stepOutputs;
+    steps.push({
+      name: step.name,
+      confirm: step.confirm === true,
+      command,
+      interpolation_error: interpolationError,
+    });
+  }
+
+  return { steps, outputs };
+}
+
+function runReleasePipeline({ workspaceRoot, contentRoot, options }) {
+  const filePath = resolvePipelinePathForRun({ workspaceRoot, contentRoot, options });
+  const pipeline = readPipeline(contentRoot, { required: true, filePath });
+  const inputs = resolvePipelineInputs(options);
+
+  if (options.dryRun) {
+    const preview = buildDryRunPreview(pipeline, inputs);
+    if (options.json) {
+      console.log(
+        JSON.stringify(
+          {
+            command: options.sub === 'plan' ? 'kb release plan' : 'kb release run --dry-run',
+            pipeline: filePath,
+            inputs,
+            steps: preview.steps,
+          },
+          null,
+          2
+        )
+      );
+      return;
+    }
+
+    console.log(`kb release plan: ${preview.steps.length} step(s)`);
+    console.log(`  pipeline: ${filePath}`);
+    console.log(`  inputs  : bump=${inputs.bump}, target=${inputs.target}${inputs.from_tag ? `, from_tag=${inputs.from_tag}` : ''}`);
+    preview.steps.forEach((step, idx) => {
+      const confirmTag = step.confirm ? ' [confirm]' : '';
+      console.log(`  ${idx + 1}. ${step.name}${confirmTag}`);
+      console.log(`     ${step.command}`);
+      if (step.interpolation_error) {
+        console.log(`     interpolation: ${step.interpolation_error}`);
+      }
+    });
+    return;
+  }
+
+  const precheck = runReleasePrecheck({ workspaceRoot });
+
+  const runtime = executePipeline(pipeline, {
+    cwd: workspaceRoot,
+    inputs,
+    yes: options.yes,
+    confirmStep: createConfirmStepHandler(options),
+  });
+
+  const posthook = runReleasePosthookCatalogUpdate({
+    workspaceRoot,
+    contentRoot,
+    runtime,
+    inputs,
+  });
+
+  if (options.json) {
+    console.log(
+      JSON.stringify(
+        {
+          command: 'kb release run',
+          pipeline: filePath,
+          precheck,
+          posthook,
+          inputs,
+          steps: runtime.steps.map((step) => ({
+            name: step.name,
+            exit_code: step.outputs.exit_code,
+          })),
+        },
+        null,
+        2
+      )
+    );
+    return;
+  }
+
+  console.log(`kb release pre-check: ${precheck.status}`);
+  if (posthook.updated) {
+    console.log(`kb release post-hook: catalog updated (${posthook.version})`);
+  } else {
+    console.log(`kb release post-hook: catalog unchanged (${posthook.reason || 'no-op'})`);
+  }
+  console.log(`kb release run: PASS (${runtime.steps.length} step(s))`);
+  for (const step of runtime.steps) {
+    console.log(`  - ${step.name}: exit ${step.exitCode}`);
+  }
+}
+
 function runRelease({ args, cwd }) {
   const options = parseArgs(args);
   const workspaceRoot = path.resolve(cwd);
@@ -433,7 +873,12 @@ function runRelease({ args, cwd }) {
   try {
     ctx = resolveExistingState({ workspaceRoot });
   } catch (err) {
-    if (options.sub !== 'notes') {
+    if (
+      options.sub !== 'notes' &&
+      options.sub !== 'run' &&
+      options.sub !== 'plan' &&
+      options.sub !== 'init-pipeline'
+    ) {
       throw err;
     }
   }
@@ -460,6 +905,14 @@ function runRelease({ args, cwd }) {
     runReleaseNotes({ workspaceRoot, contentRoot, options });
     return;
   }
+  if (options.sub === 'run' || options.sub === 'plan') {
+    runReleasePipeline({ workspaceRoot, contentRoot, options });
+    return;
+  }
+  if (options.sub === 'init-pipeline') {
+    runReleaseInitPipeline({ contentRoot, options });
+    return;
+  }
 
   throw new Error(`Unsupported release subcommand: ${options.sub}`);
 }
@@ -469,6 +922,14 @@ module.exports = {
   getIgnorePrerelease,
   getReleaseContentPaths,
   isPrereleaseVersion,
+  getRuntimeReleaseVersion,
   parseArgs,
+  releaseTemplatePath,
+  runReleasePosthookCatalogUpdate,
   runRelease,
+  runReleaseInitPipeline,
+  runReleasePrecheck,
+  runReleasePipeline,
+  normalizeReleaseVersionCandidate,
+  upsertCatalogReleaseFromTag,
 };

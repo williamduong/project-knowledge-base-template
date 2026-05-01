@@ -1,0 +1,59 @@
+# Release pipeline example: github-release-only
+# Intended for projects that ship artifacts outside npm but still tag and publish release metadata.
+# Usage:
+#   kb release plan -f template/16-release-pipelines/examples/github-release-only.yaml --bump=patch --from=v1.5.0
+
+inputs:
+  bump:
+    description: "Semver bump type"
+    options: [patch, minor, major]
+    required: true
+  from_tag:
+    description: "Previous release tag used by kb release notes"
+    required: false
+
+steps:
+  - name: pre-check
+    description: "Run project release checks"
+    run: npm run release:dry
+    fail_on_nonzero: true
+
+  - name: bump-version
+    description: "Bump project version without publish"
+    run: npm version ${{ inputs.bump }} --no-git-tag-version
+    outputs:
+      version: ${{ outputs.bump-version.stdout }}
+
+  - name: package-artifacts
+    description: "Prepare release artifacts"
+    run: npm run build
+    fail_on_nonzero: true
+
+  - name: generate-notes
+    description: "Generate markdown release notes"
+    run: node ./bin/kb.js release notes ${{ outputs.bump-version.version }} --from=${{ inputs.from_tag }} --format=md --output=RELEASE_NOTES.md
+    fail_on_nonzero: true
+
+  - name: commit-release
+    description: "Commit release metadata and artifacts"
+    run: >-
+      git add -A
+      && git commit -m "release: ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: tag
+    description: "Create annotated release tag"
+    run: git tag -a ${{ outputs.bump-version.version }} -m "Release ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: push
+    description: "Push commits and tags"
+    run: git push origin main && git push origin --tags
+    confirm: true
+    fail_on_nonzero: true
+
+  - name: github-release
+    description: "Create GitHub release only"
+    run: gh release create ${{ outputs.bump-version.version }} --notes-file RELEASE_NOTES.md --title "Release ${{ outputs.bump-version.version }}"
+    confirm: true
+    fail_on_nonzero: true

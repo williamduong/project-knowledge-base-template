@@ -1,0 +1,75 @@
+# Release pipeline template: npm-package
+# Usage:
+#   kb release init-pipeline --template=npm-package
+#   kb release plan --bump=patch --target=all
+#   kb release run --bump=patch --target=all --yes
+
+inputs:
+  bump:
+    description: "Semver bump type"
+    options: [patch, minor, major]
+    required: true
+  target:
+    description: "Publish target"
+    options: [npm, gh, all]
+    default: all
+  from_tag:
+    description: "Previous release tag used by kb release notes"
+    required: false
+
+steps:
+  - name: pre-check
+    description: "Run quick release readiness checks"
+    run: npm run release:dry
+    fail_on_nonzero: true
+
+  - name: bump-version
+    description: "Bump package version without creating git tag"
+    run: npm version ${{ inputs.bump }} --no-git-tag-version
+    outputs:
+      version: ${{ outputs.bump-version.stdout }}
+
+  - name: sync-versions
+    description: "Sync version references in template files"
+    run: npm run version:sync
+    fail_on_nonzero: true
+
+  - name: generate-notes
+    description: "Generate markdown release notes"
+    run: node ./bin/kb.js release notes ${{ outputs.bump-version.version }} --from=${{ inputs.from_tag }} --format=md --output=RELEASE_NOTES.md
+    fail_on_nonzero: true
+
+  - name: commit-release
+    description: "Commit release metadata updates"
+    run: >-
+      git add -A
+      && git commit -m "feat(${{ outputs.bump-version.version }}): release ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: tag
+    description: "Create annotated release tag"
+    run: git tag -a ${{ outputs.bump-version.version }} -m "Release ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: push
+    description: "Push commits and tags"
+    run: git push origin main && git push origin --tags
+    confirm: true
+    fail_on_nonzero: true
+
+  - name: publish-npm
+    description: "Publish package to npm"
+    run: npm publish --access public
+    confirm: true
+    fail_on_nonzero: true
+
+  - name: github-release
+    description: "Create GitHub release with generated notes"
+    run: gh release create ${{ outputs.bump-version.version }} --notes-file RELEASE_NOTES.md --title "Release ${{ outputs.bump-version.version }}"
+    confirm: true
+    fail_on_nonzero: true
+
+  - name: catalog-update
+    description: "Register release in KB catalog"
+    run: node ./bin/kb.js release tag ${{ outputs.bump-version.version }} --summary="Release ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true

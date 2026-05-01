@@ -4,14 +4,14 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 1.5.0
+version: 1.6.0
 ---
 
 # /kb-run — Execute the next step of the KB runtime plan
 
 Your task: execute one step at a time from `knowledge-base/.kb/runtime-plan.md`, persisting progress so the user can resume after closing the chat or IDE.
 
-You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md`.
+You operate under the master KB agent contract at `.github/agents/kb.agent.md`.
 
 ## Preflight (in order)
 
@@ -57,7 +57,7 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
      KB integration enabled. Reference block injected into:
        - <file 1>
        - <file 2>
-     To disable later: type `@kb disable ide-integration`.
+   To disable later: run `kb ide disable`.
      ```
     - If it reports no targets, print that integration was marked enabled with zero targets and continue.
 
@@ -101,7 +101,7 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
    What to do next (pick one):
      1. Run `/kb-run` again to execute step <n+1> (<action>).
      2. Reply `/kb-plan <change>` to adjust remaining steps before continuing.
-     3. Reply with a question or task (`@kb …` or plain chat) to pause execution and keep talking.
+   3. Reply with a question or task (`/kb-ask ...` or plain chat) to pause execution and keep talking.
    ```
 
     If any required work remains manual (for example: user confirmation, external system check, command the agent cannot run, or unresolved verification), print this block immediately before `What to do next`:
@@ -119,7 +119,7 @@ You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md
    If there is no `pending` step left, replace the menu with:
 
    ```
-   No pending steps. The plan is complete. Reply `/kb-plan` to generate a new one, or `@kb <question>` to keep using the KB.
+   No pending steps. The plan is complete. Reply `/kb-plan` to generate a new one, or `/kb-ask <question>` to keep using the KB.
    ```
 
 5. Stop. Do not chain to the next step automatically (unless `--auto` was passed; then loop until next pending step requires user input or none remain).
@@ -154,8 +154,8 @@ If the failure requires user-only actions (credentials, privileged access, exter
 
 ## Toggles
 
-- `@kb disable ide-integration` → run `kb ide disable`.
-- `@kb enable ide-integration` → run `kb ide enable`.
+- `kb ide disable` disables IDE integration.
+- `kb ide enable` enables IDE integration.
 
 ## Boundaries
 

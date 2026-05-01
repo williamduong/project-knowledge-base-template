@@ -4,14 +4,14 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-plan
-version: 1.5.0
+version: 1.6.0
 ---
 
 # /kb-plan — Analyze and write the next KB action plan
 
 Your task: produce or refine a runtime plan describing which KB actions the user needs next, from the surface defined by the four CLI lifecycle commands and any custom KB work.
 
-You are operating under the master `@kb` agent contract at `.github/agents/kb.agent.md`. Honor its read order, governance, and citation rules.
+You are operating under the master KB agent contract at `.github/agents/kb.agent.md`. Honor its read order, governance, and citation rules.
 
 ## Inputs to inspect
 
@@ -85,7 +85,7 @@ KB plan ready: knowledge-base/.kb/runtime-plan.md
 What to do next (pick one):
   1. Run `/kb-run` to execute step <n> now.
   2. Reply `/kb-plan <change>` to refine the plan (e.g. reorder, drop, add steps).
-  3. Reply with a question or task (`@kb …` or just plain chat) to keep talking; the plan stays as-is.
+  3. Reply with a question or task (`/kb-ask ...` or just plain chat) to keep talking; the plan stays as-is.
 ```
 
 ### Manual Follow-up Summary (required when applicable)

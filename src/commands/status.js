@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 
 const { detectKbArtifacts } = require('../lib/kb-presence');
@@ -14,6 +15,9 @@ const { normalizePath } = require('../lib/binding-matcher');
 const { buildGraph, findRecursiveImpact } = require('../lib/impact-graph');
 const { loadConfig, getConfigValue } = require('../lib/config');
 const { readCatalog } = require('../lib/catalog');
+const { pipelineFilePath, readPipeline } = require('../lib/pipeline');
+
+const KNOWN_PIPELINE_TEMPLATES = new Set(['npm-package', 'docs-only', 'custom']);
 
 function parseArgs(args) {
   const options = { json: false, quiet: false, noScan: false };
@@ -94,6 +98,73 @@ function deriveStatusVerdict({ presence, stateError, impactData, kbDirty }) {
   return { code: 1, label: 'attention', reasons };
 }
 
+function detectPipelineTemplate(rawText) {
+  const text = String(rawText || '');
+  const match = text.match(/Release pipeline template:\s*([A-Za-z0-9_-]+)/i);
+  if (!match) return 'custom';
+  const name = String(match[1] || '').trim().toLowerCase();
+  if (!name) return 'custom';
+  if (KNOWN_PIPELINE_TEMPLATES.has(name)) return name;
+  return 'custom';
+}
+
+function getReleasePipelineState(contentRoot) {
+  if (!contentRoot) {
+    return {
+      configured: false,
+      template: null,
+      filePath: null,
+      valid: null,
+      error: null,
+    };
+  }
+
+  const filePath = pipelineFilePath(contentRoot);
+  if (!fs.existsSync(filePath)) {
+    return {
+      configured: false,
+      template: null,
+      filePath,
+      valid: null,
+      error: null,
+    };
+  }
+
+  let rawText = '';
+  try {
+    rawText = fs.readFileSync(filePath, 'utf8');
+  } catch (err) {
+    return {
+      configured: true,
+      template: 'custom',
+      filePath,
+      valid: false,
+      error: `Unable to read pipeline file: ${err.message}`,
+    };
+  }
+
+  const template = detectPipelineTemplate(rawText);
+
+  try {
+    readPipeline(contentRoot, { required: true, filePath });
+    return {
+      configured: true,
+      template,
+      filePath,
+      valid: true,
+      error: null,
+    };
+  } catch (err) {
+    return {
+      configured: true,
+      template,
+      filePath,
+      valid: false,
+      error: err.message,
+    };
+  }
+}
+
 function runStatus({ args, cwd, packageJson }) {
   const options = parseArgs(args);
   const workspaceRoot = path.resolve(cwd);
@@ -172,6 +243,11 @@ function runStatus({ args, cwd, packageJson }) {
     }
   }
 
+  let releasePipeline = null;
+  if (context && presence === 'healthy') {
+    releasePipeline = getReleasePipelineState(context.contentRoot);
+  }
+
   const verdict = deriveStatusVerdict({ presence, stateError, impactData, kbDirty });
 
   if (options.quiet) {
@@ -205,6 +281,7 @@ function runStatus({ args, cwd, packageJson }) {
       recursiveImpact,
       workingTree: { kbDirty, codeDirty },
       currentRelease: catalogData ? catalogData.current : null,
+      releasePipeline,
       verdict,
     }, null, 2));
     if (verdict.code !== 0) process.exit(verdict.code);
@@ -269,6 +346,16 @@ function runStatus({ args, cwd, packageJson }) {
     console.log('- current release: (none tagged yet — run: kb release tag <version>)');
   }
 
+  if (releasePipeline && releasePipeline.configured) {
+    const invalidTag = releasePipeline.valid === false ? ', invalid' : '';
+    console.log(`- release pipeline: configured (${releasePipeline.template}${invalidTag})`);
+    if (releasePipeline.valid === false && releasePipeline.error) {
+      console.log(`    pipeline error: ${releasePipeline.error}`);
+    }
+  } else if (releasePipeline) {
+    console.log('- release pipeline: not configured');
+  }
+
   // Impact section
   console.log('- impact:');
   if (impactError) {
@@ -317,7 +404,9 @@ function runStatus({ args, cwd, packageJson }) {
 }
 
 module.exports = {
+  detectPipelineTemplate,
   deriveStatusVerdict,
+  getReleasePipelineState,
   partitionWorkingTree,
   runStatus,
 };

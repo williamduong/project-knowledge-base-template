@@ -6,7 +6,7 @@ It is designed for teams that want a consistent documentation baseline across di
 
 ## Current Template Version
 
-- Template version: `v1.4.0`
+- Template version: `v1.6.0`
 - License: GNU AGPL v3 with separate commercial licensing available
 - Baseline state file for downstream projects: [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md)
 
@@ -165,6 +165,34 @@ npm run release:notes -- v1.1.1 -- --from=v1.1.0 --output=notes/release-v1.1.1.m
 ```
 
 Legacy path `tools/generate-template-changelog.js` is deprecated and retained only as a compatibility wrapper.
+
+### Release Pipeline (v1.6)
+
+Declare your release workflow as YAML and execute it with `kb release run`. Steps run sequentially, outputs are captured, and dangerous commands are rejected before execution.
+
+```bash
+# Initialize a pipeline in your KB (once per project)
+kb release init-pipeline --template=npm-package
+# Available templates: npm-package | docs-only | custom
+
+# Preview what the pipeline will do without executing
+kb release plan --from=v1.5.0 --bump=patch
+
+# Execute the pipeline (requires clean kb status)
+kb release run --from=v1.5.0 --bump=patch
+
+# Dry-run: execute all steps except destructive shell commands
+kb release run --from=v1.5.0 --bump=patch --dry-run
+```
+
+The pipeline file lives at `.kb/release-pipeline.yaml` inside your KB content root. Pipeline execution:
+
+1. Pre-checks `kb status` — fails fast if workspace is `attention` or `blocked`.
+2. Runs steps sequentially; each step can `run` a shell command, capture `outputs`, and `confirm` before proceeding.
+3. On success, auto-updates the catalog with the new release entry.
+4. Rejects dangerous commands (`rm -rf /`, `curl | bash`, `git push --force`, etc.) before shell execution.
+
+Starter templates and examples are in [`template/16-release-pipelines/`](template/16-release-pipelines/). Governance policy is in [`template/15-governance/release-pipeline-policy.md`](template/15-governance/release-pipeline-policy.md).
 
 Downstream project KBs should stamp both the adopted template version and the brand-scoped source baseline commit they were verified against.
 

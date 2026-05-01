@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: unverified
-last_updated: 2026-04-28
+last_updated: 2026-05-01
 last_verified: 2026-04-28
 related:
   - 00-start-here/how-to-use-this-kb.md
@@ -57,6 +57,9 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 - Verification rules: [15-governance/verification-policy.md](15-governance/verification-policy.md)
 - Versioning policy: [15-governance/template-versioning-policy.md](15-governance/template-versioning-policy.md)
 - Release policy: [15-governance/release-policy.md](15-governance/release-policy.md)
+- Release pipeline policy: [15-governance/release-pipeline-policy.md](15-governance/release-pipeline-policy.md)
+- Release pipelines: [16-release-pipelines/](16-release-pipelines/)
+- Release pipeline examples: [16-release-pipelines/examples/README.md](16-release-pipelines/examples/README.md)
 - Template changelog: [TEMPLATE_CHANGELOG.md](TEMPLATE_CHANGELOG.md)
 
 ## New Project Starter Path
@@ -89,6 +92,8 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 - [13-knowledge-graph/](13-knowledge-graph/) - semantic graph/index rules (optional)
 - [14-templates/](14-templates/) - reusable document templates
 - [15-governance/](15-governance/) - policy, metadata, cadence, bi-temporal
+- [16-release-pipelines/](16-release-pipelines/) - release pipeline YAML templates (npm-package, docs-only, custom)
+- [16-release-pipelines/examples/](16-release-pipelines/examples/) - example release pipelines for common project shapes
 
 ## Template Lifecycle
 

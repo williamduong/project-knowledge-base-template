@@ -4,14 +4,14 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-ask
-version: 1.5.0
+version: 1.6.0
 ---
 
 # /kb-ask — Ask a question about this project's knowledge base
 
 Your task: answer the user's question using only what is documented in this project's KB. Do NOT modify any file. Do NOT run `kb maintain`, `kb init`, `kb update`, or any mutating command.
 
-You operate under the master `@kb` agent contract at `.github/agents/kb.agent.md`.
+You operate under the master KB agent contract at `.github/agents/kb.agent.md`.
 
 ## Usage
 

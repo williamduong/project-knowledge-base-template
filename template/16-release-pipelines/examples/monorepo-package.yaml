@@ -1,0 +1,59 @@
+# Release pipeline example: monorepo-package
+# Intended for a repository that publishes one package from a multi-package workspace.
+# Usage:
+#   kb release plan -f template/16-release-pipelines/examples/monorepo-package.yaml --bump=patch --from=v1.5.0
+
+inputs:
+  bump:
+    description: "Semver bump type"
+    options: [patch, minor, major]
+    required: true
+  from_tag:
+    description: "Previous release tag used by kb release notes"
+    required: false
+
+steps:
+  - name: pre-check
+    description: "Run repository release checks"
+    run: npm run release:dry
+    fail_on_nonzero: true
+
+  - name: bump-version
+    description: "Bump the published package version"
+    run: npm version ${{ inputs.bump }} --workspace packages/kb --no-git-tag-version
+    outputs:
+      version: ${{ outputs.bump-version.stdout }}
+
+  - name: build-package
+    description: "Build the target package only"
+    run: npm run build --workspace packages/kb
+    fail_on_nonzero: true
+
+  - name: generate-notes
+    description: "Generate release notes for the package release"
+    run: node ./bin/kb.js release notes ${{ outputs.bump-version.version }} --from=${{ inputs.from_tag }} --format=md --output=RELEASE_NOTES.md
+    fail_on_nonzero: true
+
+  - name: commit-release
+    description: "Commit monorepo package release metadata"
+    run: >-
+      git add -A
+      && git commit -m "feat(${{ outputs.bump-version.version }}): release packages/kb ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: tag
+    description: "Create annotated release tag"
+    run: git tag -a ${{ outputs.bump-version.version }} -m "Release ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: publish-package
+    description: "Publish only the target package"
+    run: npm publish --workspace packages/kb --access public
+    confirm: true
+    fail_on_nonzero: true
+
+  - name: push
+    description: "Push commits and tags"
+    run: git push origin main && git push origin --tags
+    confirm: true
+    fail_on_nonzero: true

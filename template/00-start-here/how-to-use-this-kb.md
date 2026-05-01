@@ -204,6 +204,39 @@ kb doctor                 # publish-readiness checks
 kb sync                   # detect KB drift from source
 kb update                 # refresh KB version state
 ```
+
+### Release Pipeline: Declarative Release Automation (v1.6)
+
+Use `kb release` to manage structured, auditable release workflows defined as YAML pipelines.
+
+**Quick workflow:**
+
+```bash
+# Step 1: Initialize your pipeline (once per project)
+kb release init-pipeline --template=npm-package
+# Options: npm-package | docs-only | custom
+
+# Step 2: Preview what the pipeline will do
+kb release plan --from=v1.5.0 --bump=patch
+
+# Step 3: Execute (requires clean kb status)
+kb release run --from=v1.5.0 --bump=patch
+
+# Dry-run mode (no destructive side-effects)
+kb release run --from=v1.5.0 --bump=patch --dry-run
+```
+
+Pipeline YAML lives at `.kb/release-pipeline.yaml` inside your KB content root.
+
+Steps support:
+- Shell command execution with output capture: `run: <shell command>`
+- Template interpolation: `${{ inputs.bump }}`, `${{ outputs.<step>.version }}`
+- Confirm gates: `confirm: true` pauses for user approval before continuing
+- Pre-execution rejection of dangerous patterns (`rm -rf /`, `curl | bash`, `git push --force`, etc.)
+
+For starter templates and examples, see [`../16-release-pipelines/`](../16-release-pipelines/).
+For governance rules (storage path, security scope, hook behavior), see [`../15-governance/release-pipeline-policy.md`](../15-governance/release-pipeline-policy.md).
+
 ## Prompting Help
 
 - For the best prompt patterns by goal, read [../12-ai-skills/prompting-guide.md](../12-ai-skills/prompting-guide.md).

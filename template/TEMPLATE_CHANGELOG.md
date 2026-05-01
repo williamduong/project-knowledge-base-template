@@ -78,6 +78,62 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## 1.6.0 - 2026-05-01
+
+<!-- release-meta: from=v1.5.0 to=HEAD generated_at=2026-05-01T00:00:00.000Z -->
+
+### Summary
+
+- Release Pipeline Orchestrator: `kb release run`, `kb release plan`, `kb release init-pipeline` commands + declarative YAML DSL.
+- Pipeline DSL supports inputs, sequential steps with shell commands, output capture (`${{ outputs.<step>.* }}`), confirm gates, and template interpolation.
+- 3 starter templates (`npm-package`, `docs-only`, `custom`) and 3 examples (`monorepo-package`, `docs-site`, `github-release-only`) under `template/16-release-pipelines/`.
+- Pipeline executor rejects dangerous commands before shell execution (6 blocked patterns: `rm -rf /`, `del /f /s /q`, `curl|bash`, `chmod -R 777`, `git push --force`, `shutdown`).
+- `kb status` now shows pipeline state (configured/template/valid) in human and JSON output.
+- Post-hook auto-updates catalog after successful pipeline run.
+- Pre-execution `kb status --quiet` check fails fast when workspace is attention/blocked.
+- New governance doc: `template/15-governance/release-pipeline-policy.md`.
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- Low — additive commands, new folder, new governance doc; no breaking changes to state.json, catalog, or existing commands.
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents managing releases should now use `kb release init-pipeline` + `kb release run` instead of ad-hoc shell scripts for release workflows.
+- Agents should check `kb status` output for `release pipeline` line to detect whether a pipeline is configured.
+- Dangerous command patterns are blocked at executor level; agents must not embed those patterns in custom pipeline steps.
+
+### Files Added / Changed
+
+**New:**
+- `src/lib/pipeline.js` — pipeline core: schema, YAML load, interpolation, executor, security checks
+- `template/16-release-pipelines/npm-package.yaml` — npm package release starter
+- `template/16-release-pipelines/docs-only.yaml` — docs-only release starter
+- `template/16-release-pipelines/custom.yaml` — minimal custom skeleton
+- `template/16-release-pipelines/examples/README.md`
+- `template/16-release-pipelines/examples/monorepo-package.yaml`
+- `template/16-release-pipelines/examples/docs-site.yaml`
+- `template/16-release-pipelines/examples/github-release-only.yaml`
+- `template/15-governance/release-pipeline-policy.md`
+- `test/lib/pipeline.test.js`
+
+**Modified:**
+- `src/commands/release.js` — `kb release run`, `plan`, `init-pipeline`, pre-check, post-hook
+- `src/commands/status.js` — pipeline state in human + JSON output
+- `src/commands/help.js` — documents new subcommands
+- `template/INDEX.md` — registers new policy doc and examples folder
+- `README.md` — Release Pipeline (v1.6) section
+- `template/00-start-here/how-to-use-this-kb.md` — Release Pipeline subsection
+- `test/commands/release.test.js`, `test/commands/status.test.js`
+
 ## 1.5.0 - 2026-05-01
 
 <!-- release-meta: from=v1.4.1 to=HEAD generated_at=2026-05-01T00:00:00.000Z -->

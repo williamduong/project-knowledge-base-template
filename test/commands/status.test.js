@@ -1,7 +1,24 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
-const { deriveStatusVerdict, partitionWorkingTree } = require('../../src/commands/status');
+const {
+  deriveStatusVerdict,
+  detectPipelineTemplate,
+  getReleasePipelineState,
+  partitionWorkingTree,
+} = require('../../src/commands/status');
+
+function tmpRoot() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'kb-status-'));
+}
+
+function writeFile(filePath, content) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, content, 'utf8');
+}
 
 test('partitionWorkingTree: KB paths under contentRoot go to kbDirty', () => {
   const tree = [
@@ -93,4 +110,61 @@ test('deriveStatusVerdict: all clean → code 0 clean empty reasons', () => {
     kbDirty: [],
   });
   assert.deepEqual(v, { code: 0, label: 'clean', reasons: [] });
+});
+
+test('detectPipelineTemplate: parses known and unknown headers', () => {
+  assert.equal(detectPipelineTemplate('# Release pipeline template: npm-package'), 'npm-package');
+  assert.equal(detectPipelineTemplate('# Release pipeline template: docs-only'), 'docs-only');
+  assert.equal(detectPipelineTemplate('# Release pipeline template: internal-team'), 'custom');
+  assert.equal(detectPipelineTemplate('steps:\n  - name: a\n    run: echo ok'), 'custom');
+});
+
+test('getReleasePipelineState: returns not configured when pipeline file missing', () => {
+  const root = tmpRoot();
+  const state = getReleasePipelineState(root);
+  assert.equal(state.configured, false);
+  assert.equal(state.template, null);
+  assert.equal(state.valid, null);
+  assert.equal(typeof state.filePath, 'string');
+});
+
+test('getReleasePipelineState: returns configured + template for valid pipeline', () => {
+  const root = tmpRoot();
+  const filePath = path.join(root, '.kb', 'release-pipeline.yaml');
+  writeFile(
+    filePath,
+    [
+      '# Release pipeline template: docs-only',
+      'steps:',
+      '  - name: pre-check',
+      '    run: echo ok',
+      '',
+    ].join('\n')
+  );
+
+  const state = getReleasePipelineState(root);
+  assert.equal(state.configured, true);
+  assert.equal(state.template, 'docs-only');
+  assert.equal(state.valid, true);
+  assert.equal(state.error, null);
+});
+
+test('getReleasePipelineState: marks invalid pipeline but keeps configured=true', () => {
+  const root = tmpRoot();
+  const filePath = path.join(root, '.kb', 'release-pipeline.yaml');
+  writeFile(
+    filePath,
+    [
+      '# Release pipeline template: npm-package',
+      'steps:',
+      '  - name: broken',
+      '',
+    ].join('\n')
+  );
+
+  const state = getReleasePipelineState(root);
+  assert.equal(state.configured, true);
+  assert.equal(state.template, 'npm-package');
+  assert.equal(state.valid, false);
+  assert.match(String(state.error || ''), /Invalid pipeline schema/);
 });

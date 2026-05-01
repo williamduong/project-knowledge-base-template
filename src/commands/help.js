@@ -25,6 +25,9 @@ function runHelp({ packageJson, args }) {
     console.log('  kb release tag <version> --summary=... [--json]');
     console.log('  kb release list [--json]   |   kb release show <version> [--json]');
     console.log('  kb release notes <version> [--from=<tag>] [--output=<path>] [--format=md|json] [--json]');
+    console.log('  kb release run [--bump=patch|minor|major] [--target=npm|gh|all] [--from=<tag>] [--yes] [-f|--file <path>] [--json]');
+    console.log('  kb release plan [--bump=patch|minor|major] [--target=npm|gh|all] [--from=<tag>] [-f|--file <path>] [--json]');
+    console.log('  kb release init-pipeline [--template=npm-package|docs-only|custom] [--yes] [--json]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
     console.log('');
     console.log('Core workflow:');
@@ -57,7 +60,7 @@ function runHelp({ packageJson, args }) {
     console.log('');
     console.log('Other commands are available for power users.');
     console.log('Run "kb help --advanced" to see all commands.');
-    console.log('Next step: Use @kb with Copilot Chat to build your KB');
+    console.log('Next step: Use /kb-ask with Copilot Chat to query your KB, or /kb-run to execute the plan');
     return;
   }
 
@@ -95,6 +98,9 @@ function runHelp({ packageJson, args }) {
   console.log('  kb release list [--json]');
   console.log('  kb release show <version> [--json]');
   console.log('  kb release notes <version> [--from=<tag>] [--output=<path>] [--format=md|json] [--json]');
+  console.log('  kb release run [--bump=patch|minor|major] [--target=npm|gh|all] [--from=<tag>] [--yes] [-f|--file <path>] [--json]');
+  console.log('  kb release plan [--bump=patch|minor|major] [--target=npm|gh|all] [--from=<tag>] [-f|--file <path>] [--json]');
+  console.log('  kb release init-pipeline [--template=npm-package|docs-only|custom] [--yes] [--json]');
   console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
   console.log('  kb version');
   console.log('');
@@ -178,6 +184,14 @@ function runHelp({ packageJson, args }) {
   console.log('                               --from=<tag> overrides previous release detection.');
   console.log('                               --output=<path> writes file; default prints to stdout.');
   console.log('                               --format=md|json (default md; --json implies json payload).');
+  console.log('             run              Execute release pipeline (.kb/release-pipeline.yaml by default).');
+  console.log('                               --yes bypasses per-step confirm gates.');
+  console.log('                               -f|--file <path> selects pipeline file.');
+  console.log('                               --bump=patch|minor|major, --target=npm|gh|all, --from=<tag>.');
+  console.log('             plan             Dry-run alias of run (prints resolved step plan, no execution).');
+  console.log('             init-pipeline    Copy a starter pipeline into .kb/release-pipeline.yaml.');
+  console.log('                               --template=npm-package|docs-only|custom (default npm-package).');
+  console.log('                               --yes overwrites existing pipeline file.');
   console.log('  uninstall  Remove KB installation from the workspace.');
   console.log('             --keep-ai-files  Keep AGENTS/prompt files at repo root.');
   console.log('             --remove-hook    Remove kb-managed .git/hooks/pre-commit.');
