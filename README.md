@@ -170,6 +170,11 @@ Legacy path `tools/generate-template-changelog.js` is deprecated and retained on
 
 Declare your release workflow as YAML and execute it with `kb release run`. Steps run sequentially, outputs are captured, and dangerous commands are rejected before execution.
 
+Release execution modes:
+
+- Path A (recommended): pipeline-first with `kb release init-pipeline` + `kb release plan` + `kb release run`.
+- Path B (fallback): manual command flow in [`notes/npm-release-checklist.md`](notes/npm-release-checklist.md).
+
 ```bash
 # Initialize a pipeline in your KB (once per project)
 kb release init-pipeline --template=npm-package
