@@ -56,6 +56,7 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 - Maintenance queue: [00-start-here/finalization-plan.md](00-start-here/finalization-plan.md)
 - Verification rules: [15-governance/verification-policy.md](15-governance/verification-policy.md)
 - Versioning policy: [15-governance/template-versioning-policy.md](15-governance/template-versioning-policy.md)
+- Release policy: [15-governance/release-policy.md](15-governance/release-policy.md)
 - Template changelog: [TEMPLATE_CHANGELOG.md](TEMPLATE_CHANGELOG.md)
 
 ## New Project Starter Path

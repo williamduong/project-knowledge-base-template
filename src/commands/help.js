@@ -21,6 +21,9 @@ function runHelp({ packageJson, args }) {
     console.log('  kb scan [--recursive] [--depth=N] [--json]');
     console.log('  kb verify <doc> [--json]   |   kb verify --all [--json]');
     console.log('  kb baseline show [--json]   |   kb baseline set <sha|--to-head> [--yes] [--json]');
+    console.log('  kb release init [--ignore-prerelease|--include-prerelease] [--json]');
+    console.log('  kb release tag <version> --summary=... [--json]');
+    console.log('  kb release list [--json]   |   kb release show <version> [--json]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
     console.log('');
     console.log('Core workflow:');
@@ -86,6 +89,10 @@ function runHelp({ packageJson, args }) {
   console.log('  kb baseline show [--json]');
   console.log('  kb baseline set <sha> [--yes] [--json]');
   console.log('  kb baseline set --to-head [--yes] [--json]');
+  console.log('  kb release init [--ignore-prerelease|--include-prerelease] [--json]');
+  console.log('  kb release tag <version> --summary=... [--json]');
+  console.log('  kb release list [--json]');
+  console.log('  kb release show <version> [--json]');
   console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
   console.log('  kb version');
   console.log('');
@@ -160,6 +167,11 @@ function runHelp({ packageJson, args }) {
   console.log('             show             Print baseline + capture metadata.');
   console.log('             set <sha>        Set baseline (interactive confirm; --yes to skip).');
   console.log('             set --to-head    Set baseline to current git HEAD.');
+  console.log('  release    Manage KB release catalog metadata in .kb/catalog.json.');
+  console.log('             init             Build catalog from git tags (v*), skipping prerelease by default.');
+  console.log('             tag <version>    Append one release from an existing git tag (requires --summary).');
+  console.log('             list             List catalog releases (current marked with *).');
+  console.log('             show <version>   Show one release entry in detail.');
   console.log('  uninstall  Remove KB installation from the workspace.');
   console.log('             --keep-ai-files  Keep AGENTS/prompt files at repo root.');
   console.log('             --remove-hook    Remove kb-managed .git/hooks/pre-commit.');

@@ -19,6 +19,10 @@ const DEFAULTS = {
     defaultDepth: 2,
     maxDepth: 5,
   },
+  release: {
+    ignorePrerelease: true,
+    contentPaths: ['knowledge-base/', 'template/'],
+  },
 };
 
 function configFilePath(contentRoot) {

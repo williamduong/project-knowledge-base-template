@@ -77,4 +77,7 @@ test('DEFAULTS: schema present', () => {
   assert.equal(typeof DEFAULTS.impact.defaultDepth, 'number');
   assert.equal(typeof DEFAULTS.impact.maxDepth, 'number');
   assert.ok(DEFAULTS.impact.maxDepth >= DEFAULTS.impact.defaultDepth);
+  assert.equal(typeof DEFAULTS.release.ignorePrerelease, 'boolean');
+  assert.ok(Array.isArray(DEFAULTS.release.contentPaths));
+  assert.ok(DEFAULTS.release.contentPaths.length >= 1);
 });

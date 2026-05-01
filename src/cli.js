@@ -25,6 +25,7 @@ const { runScan } = require('./commands/scan');
 const { runImpact } = require('./commands/impact');
 const { runVerify } = require('./commands/verify');
 const { runBaseline } = require('./commands/baseline');
+const { runRelease } = require('./commands/release');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -106,6 +107,11 @@ async function run(argv) {
 
   if (command === 'baseline') {
     await runBaseline({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'release') {
+    await runRelease({ args: rest, cwd: process.cwd() });
     return;
   }
 

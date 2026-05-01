@@ -34,6 +34,7 @@ related_weak:                        # optional (v1.4+) — mentions only; impac
   - <relative-doc-path>
 related:                             # legacy (≤ v1.3) — read as alias of related_weak; not auto-rewritten
   - <relative-doc-path>
+released_in: <vX.Y.Z>               # optional (v1.5+) — release catalog reference for this doc
 tags:
   - <tag>
 ---
@@ -46,6 +47,7 @@ tags:
 - last_verified_commit (v1.4+) records the git SHA at which the doc was last verified; `kb verify` populates both fields together. Doctor warns if `last_verified` is set but `last_verified_commit` is missing.
 - related_strong vs related_weak: see `15-governance/related-semantic.md`. The impact engine traverses ONLY related_strong. The legacy `related:` field is read as an alias of `related_weak:` to preserve backward compatibility; v1.4 does not rewrite frontmatter on upgrade.
 - A path appearing in both related_strong and related_weak is a conflict; doctor warns and the strong edge wins for traversal.
+- released_in (v1.5+) is optional and advisory; use it when a document is first released in a specific catalog version.
 - use mixed only when current and target must coexist in one document.
 - keep owner as stable role/team slug, not person name.
 
@@ -58,3 +60,4 @@ tags:
 - time_state aligns with body sections
 - if last_verified present, last_verified_commit also present (v1.4+ doctor rule)
 - no path appears in both related_strong and related_weak (v1.4+ doctor rule)
+- if released_in is present, value follows release version format (for example v1.5.0)
