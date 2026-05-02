@@ -134,6 +134,7 @@ Maintenance rule:
 - **Maintain:** Detect drift from git history, update stubs, manage review queue
 - **Integrate:** Connect source code → KB → IDE adapters
 - **Govern:** Enforce metadata schema, verify states, check revision baselines
+- **Record (v1.7+):** Manage intent workspaces — create, stage, apply, archive, and emit evidence for future learning loops
 
 ### Usage Patterns
 

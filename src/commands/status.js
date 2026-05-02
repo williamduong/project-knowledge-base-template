@@ -16,6 +16,7 @@ const { buildGraph, findRecursiveImpact } = require('../lib/impact-graph');
 const { loadConfig, getConfigValue } = require('../lib/config');
 const { readCatalog } = require('../lib/catalog');
 const { pipelineFilePath, readPipeline } = require('../lib/pipeline');
+const { getActiveIntentsSummary } = require('../lib/intent');
 
 const KNOWN_PIPELINE_TEMPLATES = new Set(['npm-package', 'docs-only', 'custom']);
 
@@ -248,6 +249,16 @@ function runStatus({ args, cwd, packageJson }) {
     releasePipeline = getReleasePipelineState(context.contentRoot);
   }
 
+  // Active intents summary
+  let activeIntents = null;
+  if (context && presence === 'healthy') {
+    try {
+      activeIntents = getActiveIntentsSummary(context.contentRoot);
+    } catch (_err) {
+      // non-fatal — intents folder may not exist yet
+    }
+  }
+
   const verdict = deriveStatusVerdict({ presence, stateError, impactData, kbDirty });
 
   if (options.quiet) {
@@ -282,6 +293,7 @@ function runStatus({ args, cwd, packageJson }) {
       workingTree: { kbDirty, codeDirty },
       currentRelease: catalogData ? catalogData.current : null,
       releasePipeline,
+      activeIntents,
       verdict,
     }, null, 2));
     if (verdict.code !== 0) process.exit(verdict.code);
@@ -398,7 +410,21 @@ function runStatus({ args, cwd, packageJson }) {
   console.log(`    code uncommitted : ${codeDirty.length}`);
 
   console.log('');
-  console.log(`verdict: ${verdict.label}${verdict.reasons.length ? ` (${verdict.reasons.join(', ')})` : ''}`);
+
+  // Active intents
+  if (activeIntents) {
+    console.log(`- active intents: ${activeIntents.count}`);
+    for (const intent of activeIntents.intents.slice(0, 5)) {
+      const warn = intent.has_warnings ? ' [!]' : '';
+      console.log(`    ${intent.id} (${intent.mode || '?'}, ${intent.staged_count} staged${warn})`);
+    }
+    if (activeIntents.intents.length > 5) {
+      console.log(`    ... +${activeIntents.intents.length - 5} more`);
+    }
+  }
+
+  console.log('');
+  console.log(`verdict: ${verdict.label}${verdict.reasons.length ? ` (${verdict.reasons.join(', ')})` : ''}`);;
 
   if (verdict.code !== 0) process.exit(verdict.code);
 }

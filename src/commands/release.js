@@ -16,6 +16,7 @@ const {
 const { loadConfig, getConfigValue, DEFAULTS } = require('../lib/config');
 const { buildReleaseNotes, writeReleaseNotesOutput } = require('../lib/release-notes');
 const { executePipeline, interpolateTemplate, pipelineFilePath, readPipeline } = require('../lib/pipeline');
+const { deriveIntentsApplied } = require('../lib/intent');
 
 function parseArgs(args) {
   const options = {
@@ -257,7 +258,7 @@ function getCommitCount(workspaceRoot, rangeSpec) {
   return Math.floor(n);
 }
 
-function buildEntryFromTag({ workspaceRoot, tag, previousTag, contentPaths, summaryOverride }) {
+function buildEntryFromTag({ workspaceRoot, tag, previousTag, contentPaths, summaryOverride, contentRoot, previousReleasedAt }) {
   const fullCommit = runGitCommand(`git rev-list -n 1 ${tag}`, workspaceRoot);
   if (!fullCommit) {
     throw new Error(`Tag not found or unreachable: ${tag}`);
@@ -268,6 +269,11 @@ function buildEntryFromTag({ workspaceRoot, tag, previousTag, contentPaths, summ
   const prerelease = isPrereleaseVersion(tag);
   const summary = summaryOverride || getTagSummary(workspaceRoot, tag);
 
+  // Derive intents applied since the previous release boundary (§6.2 release ledger)
+  const intentsApplied = contentRoot
+    ? deriveIntentsApplied(contentRoot, previousReleasedAt || null)
+    : [];
+
   return {
     version: tag,
     released_at: releasedAt,
@@ -277,11 +283,11 @@ function buildEntryFromTag({ workspaceRoot, tag, previousTag, contentPaths, summ
     summary,
     prerelease,
     stats: {
-      intents_applied: 0,
+      intents_applied: intentsApplied.length,
       docs_changed: getDocsChangedCount(workspaceRoot, rangeSpec, contentPaths),
       ad_hoc_commits: getCommitCount(workspaceRoot, rangeSpec),
     },
-    intents_applied: [],
+    intents_applied: intentsApplied,
   };
 }
 
@@ -349,6 +355,8 @@ function runReleaseTag({ workspaceRoot, contentRoot, options }) {
     previousTag: previous ? previous.git_tag : null,
     contentPaths,
     summaryOverride: options.summary,
+    contentRoot,
+    previousReleasedAt: previous ? previous.released_at : null,
   });
 
   appendReleaseEntry(contentRoot, entry, { setCurrent: true });

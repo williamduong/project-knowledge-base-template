@@ -4,7 +4,7 @@ type: multi-modal
 category: development-support
 trigger: slash-command
 instruction_file: .github/copilot-instructions.md
-version: 1.6.0
+version: 1.7.0
 ---
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
@@ -163,6 +163,11 @@ User-facing commands the agent recognizes in chat:
 | `@kb plan` | Read/update `knowledge-base/.kb/runtime-plan.md` (delegates to `/kb-plan`) |
 | `@kb run` | Execute next plan step (delegates to `/kb-run`) |
 | `@kb ask <question>` | Answer a read-only question about the KB (delegates to `/kb-ask`) |
+| `@kb intent create [<id>]` | Create a new intent workspace (`kb intent create`) |
+| `@kb intent status [<id>]` | Show status of one or all active intents |
+| `@kb intent list` | List active intent IDs |
+| `@kb intent apply <id>` | Apply staged files to KB core and archive the intent workspace |
+| `@kb intent cancel <id>` | Discard an active intent workspace (irreversible) |
 
 When called by the `kb` CLI in silent mode, suppress verbose narration and return only the actionable result.
 
@@ -180,6 +185,7 @@ When called by the `kb` CLI in silent mode, suppress verbose narration and retur
 8. **Defer to user toggles.** `state.json` is the source of truth for `metadataPolicy` and `ideIntegration`. Honor it.
 9. **Do not use CLI internals directly.** Never `require()` or edit files under global install paths like `node_modules/@williamduong/kb/src/*`. Use public `kb` commands only (`kb status`, `kb ide`, `kb maintain`, etc.).
 10. **Never read source before KB.** For any question about the project's code, architecture, features, or behavior, you MUST consult `code-qa-index.md` and the KB docs it points to BEFORE reading any source file. Reading `src/**` first is a contract violation — see the Mandatory Preflight section.
+11. **Recorder role (v1.7+).** For any meaningful KB change, use `kb intent` to create an intent workspace, stage files under `proposed-changes/`, and apply via `kb intent apply`. Do not write KB files directly outside an intent workspace unless the change is trivial (frontmatter-only fix). Archived intent evidence feeds v1.8 learning loops.
 
 ---
 

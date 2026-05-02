@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: unverified
-last_updated: 2026-05-01
+last_updated: 2026-05-02
 last_verified: 2026-05-01
 related:
   - ../INDEX.md
@@ -236,6 +236,47 @@ Steps support:
 
 For starter templates and examples, see [`../16-release-pipelines/`](../16-release-pipelines/).
 For governance rules (storage path, security scope, hook behavior), see [`../15-governance/release-pipeline-policy.md`](../15-governance/release-pipeline-policy.md).
+
+### Intent Workflow: Structured KB Changes (v1.7)
+
+Use `kb intent` to manage KB changes as structured, traceable workspaces. Every meaningful change gets an intent workspace that captures origin, staged files, apply record, and archived evidence for future learning loops.
+
+**Quick workflow:**
+
+```bash
+# Create an intent workspace (ID suggested from git branch)
+kb intent create --mode=quick --change-type=docs
+# Full mode (adds plan.md + impact.md)
+kb intent create --mode=full --change-type=feature
+
+# Check status of a specific intent or all active intents
+kb intent status <id>
+kb intent status
+
+# List all active intent IDs
+kb intent list
+
+# Apply: write staged files to KB core, archive workspace
+kb intent apply <id> --yes
+# Apply then run release pipeline in one command
+kb intent apply <id> --release --yes
+
+# Discard intent (irreversible)
+kb intent cancel <id>
+```
+
+**Staged files live at:** `knowledge-base/intents/_active/<id>/proposed-changes/<relative-from-kb-root>`
+
+Example: to update `template/15-governance/review-cadence.md`, stage the file at  
+`proposed-changes/template/15-governance/review-cadence.md` inside the intent workspace.
+
+**After apply:**
+- Staged files are written to the KB content root.
+- An `apply-record.json` is written with evidence fields (change_scope, impact_signals, decision_summary).
+- The intent workspace is moved to `knowledge-base/intents/_archive/<id>-<timestamp>/`.
+- Applied intents are recorded in the release ledger entry (`intents_applied[]`) when `kb release tag` is run.
+
+For Recorder role responsibilities and doctrine, see [`../15-governance/self-evolution-doctrine.md`](../15-governance/self-evolution-doctrine.md).
 
 ## Prompting Help
 

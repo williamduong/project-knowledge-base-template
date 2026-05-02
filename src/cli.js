@@ -26,6 +26,7 @@ const { runImpact } = require('./commands/impact');
 const { runVerify } = require('./commands/verify');
 const { runBaseline } = require('./commands/baseline');
 const { runRelease } = require('./commands/release');
+const { runIntent } = require('./commands/intent');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -112,6 +113,11 @@ async function run(argv) {
 
   if (command === 'release') {
     await runRelease({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'intent') {
+    await runIntent({ args: rest, cwd: process.cwd() });
     return;
   }
 
