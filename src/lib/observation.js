@@ -559,6 +559,324 @@ function readDecisionRecords(contentRoot) {
 }
 
 // ---------------------------------------------------------------------------
+// Chaos coefficient — AI agent confidence model
+// ---------------------------------------------------------------------------
+
+/**
+ * Levels: stable (0-25) → manageable (26-50) → unstable (51-75) → chaotic (76-100).
+ * Semantics: how confident can an AI agent be when working in this repo?
+ *   stable     = every area can be explained; AI works with high confidence
+ *   manageable = minor blind spots; AI needs extra verification per change
+ *   unstable   = significant blind spots + structural issues; AI likely to regress
+ *   chaotic    = pervasive issues; AI should not attempt unguided changes
+ */
+const CHAOS_LEVELS = [
+  { max: 25,  level: 'stable',     label: 'Stable',     aiNote: 'AI can work with high confidence' },
+  { max: 50,  level: 'manageable', label: 'Manageable', aiNote: 'AI needs extra verification per change' },
+  { max: 75,  level: 'unstable',   label: 'Unstable',   aiNote: 'AI likely to introduce regressions' },
+  { max: 100, level: 'chaotic',    label: 'Chaotic',    aiNote: 'AI should not attempt changes without human review' },
+];
+
+const CHAOS_SPIKE_THRESHOLD = 10;
+
+function _chaosLevelFor(score) {
+  return CHAOS_LEVELS.find(l => score <= l.max) || CHAOS_LEVELS[CHAOS_LEVELS.length - 1];
+}
+
+/**
+ * Compute a unified chaos coefficient (0–100) for an AI agent working in this repo.
+ *
+ * Dimensions (all signals convert to chaos — technical debt, docs, context, difficulty, time):
+ *   structural    (30%): coupling/spread entropy → AI cannot isolate a change
+ *   debtPressure  (25%): accumulated shortcuts → AI encounters unexpected behaviour
+ *   coverageGap   (20%): missing tests/docs → AI cannot verify its own changes
+ *   cognitiveLoad (15%): LOC/coupling complexity → AI context overflow → hallucination
+ *   instability   (10%): urgency/frequency of open issues → AI model goes stale
+ *
+ * Optional `moduleStats` enhances accuracy using real LOC data:
+ *   [ { file, loc, requireCount, hasTests, churnCount? } ]
+ *
+ * Returns { score, level, breakdown, drivers, aiNote }
+ */
+function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItems = [], moduleStats = [] }) {
+  const openDebt    = debtItems.filter(d => d.status !== 'resolved' && d.status !== 'deferred');
+  const openEntropy = entropyItems.filter(e => e.status !== 'resolved' && e.status !== 'deferred');
+
+  const highRedEntropy = openEntropy.filter(e => {
+    const tier = e.entropy_tier || entropyScoreToTier(e.entropy_score);
+    return tier === 'high' || tier === 'red';
+  });
+  const highRedDebt = openDebt.filter(d => {
+    const tier = d.debt_tier || debtScoreToTier(d.debt_score);
+    return tier === 'high' || tier === 'red';
+  });
+
+  // --- 1. Structural entropy (30%) ---
+  // Max entropy score among open high/red items.  Red tier ceiling = ~50, normalize there.
+  // When moduleStats provided, blend with max actual coupling depth.
+  let structural;
+  const maxEntropyScore = highRedEntropy.length > 0
+    ? Math.max(...highRedEntropy.map(e => e.entropy_score || 0)) : 0;
+  const kbStructural = Math.min(100, maxEntropyScore / 50 * 100);
+  if (moduleStats.length > 0) {
+    const maxRequire = Math.max(...moduleStats.map(m => m.requireCount || 0));
+    const couplingFactor = Math.min(100, maxRequire / 20 * 100);
+    structural = kbStructural * 0.6 + couplingFactor * 0.4;
+  } else {
+    structural = kbStructural;
+  }
+
+  // --- 2. Debt pressure (25%) ---
+  // Max debt score among open high/red items.  Normalize at 200 (above red threshold of 120).
+  const maxDebtScore = highRedDebt.length > 0
+    ? Math.max(...highRedDebt.map(d => d.debt_score || 0)) : 0;
+  const debtPressure = Math.min(100, maxDebtScore / 200 * 100);
+
+  // --- 3. Coverage gap (20%) ---
+  // Measures AI's ability to verify changes.  Sources: test-coverage + knowledge type debts,
+  // lesson debt (proposed but not yet accepted = unlearned patterns),
+  // and — when moduleStats provided — actual untested LOC ratio.
+  let coverageGap;
+  if (moduleStats.length > 0) {
+    const totalLoc     = moduleStats.reduce((s, m) => s + (m.loc || 0), 0);
+    const uncoveredLoc = moduleStats.filter(m => !m.hasTests).reduce((s, m) => s + (m.loc || 0), 0);
+    coverageGap = totalLoc > 0 ? (uncoveredLoc / totalLoc) * 100 : 0;
+  } else {
+    const coverageDebts  = openDebt.filter(d => d.type === 'test-coverage' || d.type === 'knowledge');
+    const proposedCount  = lessonItems.filter(l => l.status === 'proposed').length;
+    const lessonTotal    = lessonItems.length || 1;
+    const lessonGap      = (proposedCount / lessonTotal) * 40;          // lessons contribute up to 40
+    const debtGap        = coverageDebts.length > 0
+      ? (coverageDebts.reduce((s, d) => s + (d.severity || 1), 0) / coverageDebts.length) / 5 * 60
+      : 0;
+    coverageGap = Math.min(100, debtGap + lessonGap);
+  }
+
+  // --- 4. Cognitive load (15%) ---
+  // Measures context size AI needs to hold for any safe change.
+  // Sources: module-size + api-design open debts (effort + severity as proxy for complexity).
+  // When moduleStats provided: oversized file ratio + max coupling as actual cognitive cost.
+  let cognitiveLoad;
+  if (moduleStats.length > 0) {
+    const oversizedRatio  = moduleStats.filter(m => (m.loc || 0) > 300).length / moduleStats.length;
+    const maxRequire      = Math.max(...moduleStats.map(m => m.requireCount || 0));
+    cognitiveLoad = Math.min(100, oversizedRatio * 50 + Math.min(1, maxRequire / 20) * 50);
+  } else {
+    const loadDebts = openDebt.filter(d => d.type === 'module-size' || d.type === 'api-design');
+    cognitiveLoad = loadDebts.length > 0
+      ? Math.min(100, (loadDebts.reduce((s, d) => s + (d.severity || 1), 0) / loadDebts.length) / 5 * 100)
+      : 0;
+  }
+
+  // --- 5. Instability (10%) ---
+  // How fast is this repo changing?  AI model of the system goes stale faster under churn.
+  // Sources: urgency + frequency (debt) or urgency + spread (entropy) of open high/red items.
+  // When moduleStats: churnCount-weighted LOC ratio supplements KB signal.
+  const unstableItems = [...highRedDebt, ...highRedEntropy];
+  let instability = 0;
+  if (unstableItems.length > 0) {
+    const avgUrgency = unstableItems.reduce((s, i) => {
+      const u = i.urgency || i.severity || 1;
+      const f = i.frequency || i.spread || 1;
+      return s + (u + f) / 2;
+    }, 0) / unstableItems.length;
+    instability = Math.min(100, avgUrgency / 5 * 100);
+  }
+  if (moduleStats.length > 0) {
+    const totalLoc  = moduleStats.reduce((s, m) => s + (m.loc || 0), 0);
+    const churnLoc  = moduleStats.filter(m => (m.churnCount || 0) >= 3).reduce((s, m) => s + (m.loc || 0), 0);
+    const churnFactor = totalLoc > 0 ? Math.min(100, (churnLoc / totalLoc) * 100 * 2) : 0;
+    instability = instability * 0.5 + churnFactor * 0.5;
+  }
+
+  const raw = structural * 0.30 + debtPressure * 0.25 + coverageGap * 0.20 + cognitiveLoad * 0.15 + instability * 0.10;
+  const score = Math.min(100, Math.round(raw * 10) / 10);
+  const chaosLevel = _chaosLevelFor(score);
+
+  const breakdown = {
+    structural:   Math.round(structural * 10)    / 10,
+    debtPressure: Math.round(debtPressure * 10)  / 10,
+    coverageGap:  Math.round(coverageGap * 10)   / 10,
+    cognitiveLoad: Math.round(cognitiveLoad * 10) / 10,
+    instability:  Math.round(instability * 10)   / 10,
+  };
+
+  const drivers = [
+    ...highRedEntropy.map(e => ({
+      kind: 'entropy', id: e.id,
+      tier: e.entropy_tier || entropyScoreToTier(e.entropy_score),
+      score: e.entropy_score || 0,
+    })),
+    ...highRedDebt.map(d => ({
+      kind: 'debt', id: d.id,
+      tier: d.debt_tier || debtScoreToTier(d.debt_score),
+      score: d.debt_score || 0,
+    })),
+  ].sort((a, b) => b.score - a.score).slice(0, 5);
+
+  return { score, level: chaosLevel.level, breakdown, drivers, aiNote: chaosLevel.aiNote };
+}
+
+/**
+ * Estimate delta chaos for a planned change, given factor adjustments.
+ *
+ * factors:
+ *   addedUncoveredLOC     — LOC added without tests (+1.0 per 100 LOC, weight via coverageGap)
+ *   newUncoveredModules   — new command/lib files without tests (+1.5 each)
+ *   addedHighCoupling     — new high-coupling modules (requireCount > 8) (+3.0 each)
+ *   resolvedHighEntropy   — entropy items resolved (-6.0 each — largest structural relief)
+ *   resolvedHighDebt      — debt items resolved (-3.0 each)
+ *   addedTests            — new test modules (-1.5 each — coverage improves)
+ *   resolvedCoverageDebt  — test-coverage debt items closed (-2.5 each)
+ *
+ * Returns { delta, projected, projectedLevel, warning }
+ */
+function estimateDeltaChaos(baseScore, factors = {}) {
+  const {
+    addedUncoveredLOC    = 0,
+    newUncoveredModules  = 0,
+    addedHighCoupling    = 0,
+    resolvedHighEntropy  = 0,
+    resolvedHighDebt     = 0,
+    addedTests           = 0,
+    resolvedCoverageDebt = 0,
+  } = factors;
+
+  let delta = 0;
+  delta += (addedUncoveredLOC / 100) * 1.0;
+  delta += newUncoveredModules * 1.5;
+  delta += addedHighCoupling * 3.0;
+  delta -= resolvedHighEntropy * 6.0;
+  delta -= resolvedHighDebt * 3.0;
+  delta -= addedTests * 1.5;
+  delta -= resolvedCoverageDebt * 2.5;
+
+  delta = Math.round(delta * 10) / 10;
+  const projected       = Math.min(100, Math.max(0, Math.round((baseScore + delta) * 10) / 10));
+  const projectedLevel  = _chaosLevelFor(projected).level;
+  const warning         = delta >= CHAOS_SPIKE_THRESHOLD
+    ? 'Chaos spike risk: +' + delta + ' points. Verify test plan and refactor scope before proceeding.'
+    : null;
+
+  return { delta, projected, projectedLevel, warning };
+}
+
+/**
+ * Compare two chaos snapshots to detect spikes and trends.
+ * Returns { hasPrevious, delta, spikeDetected, previousScore, previousLevel, previousMeasuredAt }
+ */
+function compareChaosSnapshots(current, previous) {
+  if (!previous) return { hasPrevious: false, delta: null, spikeDetected: false };
+  const delta = Math.round((current.score - previous.score) * 10) / 10;
+  return {
+    hasPrevious: true,
+    delta,
+    spikeDetected: delta >= CHAOS_SPIKE_THRESHOLD,
+    previousScore: previous.score,
+    previousLevel: previous.level,
+    previousMeasuredAt: previous.measuredAt,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Chaos history persistence
+// ---------------------------------------------------------------------------
+
+function chaosHistoryPath(contentRoot) {
+  return path.join(metaRoot(contentRoot), 'chaos-history.md');
+}
+
+/**
+ * Build a chaos snapshot record for persistence.
+ * Returns { snapshot }
+ */
+function buildChaosSnapshot({ score, level, breakdown, drivers, measuredAt = null }) {
+  return {
+    snapshot: {
+      score,
+      level,
+      structural:   breakdown.structural,
+      debtPressure: breakdown.debtPressure,
+      coverageGap:  breakdown.coverageGap,
+      cognitiveLoad: breakdown.cognitiveLoad,
+      instability:  breakdown.instability,
+      topDriverIds: (drivers || []).map(d => d.id).join(', '),
+      measuredAt: measuredAt || new Date().toISOString(),
+    },
+  };
+}
+
+/**
+ * Append a chaos snapshot to chaos-history.md.
+ * Creates the file if missing.
+ */
+function appendChaosSnapshot(contentRoot, snapshot) {
+  const fp = chaosHistoryPath(contentRoot);
+  fs.mkdirSync(path.dirname(fp), { recursive: true });
+  const block = [
+    '',
+    '---',
+    `score: ${snapshot.score}`,
+    `level: ${snapshot.level}`,
+    `structural: ${snapshot.structural}`,
+    `debtPressure: ${snapshot.debtPressure}`,
+    `coverageGap: ${snapshot.coverageGap}`,
+    `cognitiveLoad: ${snapshot.cognitiveLoad}`,
+    `instability: ${snapshot.instability}`,
+    `topDriverIds: ${snapshot.topDriverIds || ''}`,
+    `measuredAt: ${snapshot.measuredAt}`,
+    '',
+  ].join('\n');
+  if (!fs.existsSync(fp)) {
+    fs.writeFileSync(fp, '# Chaos History\n\n> Managed by KB Observer (v1.8.1+). Do not edit manually.\n');
+  }
+  fs.appendFileSync(fp, block);
+}
+
+/**
+ * Parse chaos-history.md into snapshot list.
+ * Chaos snapshots use `measuredAt` (not `id`) as the required anchor field.
+ * Returns { snapshots: ChaosSnapshot[] }
+ */
+function parseChaosHistory(raw) {
+  const snapshots = [];
+  const numFields = ['score', 'structural', 'debtPressure', 'coverageGap', 'cognitiveLoad', 'instability'];
+  const blocks = raw.split(/^---$/m).map(b => b.trim()).filter(Boolean);
+  for (const block of blocks) {
+    if (!block.includes(':')) continue;
+    const obj = {};
+    for (const line of block.split('\n')) {
+      const m = line.match(/^([a-zA-Z_]+):\s*(.*)$/);
+      if (!m) continue;
+      const [, key, val] = m;
+      if (numFields.includes(key)) {
+        const n = parseFloat(val);
+        obj[key] = isNaN(n) ? val : n;
+      } else if (val === 'null' || val === '') {
+        obj[key] = null;
+      } else {
+        obj[key] = val.trim();
+      }
+    }
+    // Require measuredAt to be a valid snapshot block
+    if (!obj.measuredAt) continue;
+    snapshots.push(obj);
+  }
+  return { snapshots };
+}
+
+/**
+ * Read chaos-history.md.
+ * Returns { snapshots } or { snapshots: [] } if file missing.
+ */
+function readChaosHistory(contentRoot) {
+  const fp = chaosHistoryPath(contentRoot);
+  if (!fs.existsSync(fp)) return { snapshots: [] };
+  const raw = fs.readFileSync(fp, 'utf8');
+  return parseChaosHistory(raw);
+}
+
+// ---------------------------------------------------------------------------
 // Reconstruction triggers
 // ---------------------------------------------------------------------------
 
@@ -639,6 +957,8 @@ module.exports = {
   LESSON_LIFECYCLES,
   LESSON_ENFORCEMENT,
   DECISION_ACTIONS,
+  CHAOS_LEVELS,
+  CHAOS_SPIKE_THRESHOLD,
   computeDebtScore,
   computeEntropyScore,
   debtScoreToTier,
@@ -667,9 +987,17 @@ module.exports = {
   RECONSTRUCTION_TRIGGERS,
   evaluateReconstructionTriggers,
   buildReconstructionIntentStub,
+  computeChaosCoefficient,
+  estimateDeltaChaos,
+  compareChaosSnapshots,
+  buildChaosSnapshot,
+  appendChaosSnapshot,
+  parseChaosHistory,
+  readChaosHistory,
   lessonsIndexPath,
   debtIndexPath,
   entropyIndexPath,
   decisionRecordsPath,
+  chaosHistoryPath,
   metaRoot,
 };

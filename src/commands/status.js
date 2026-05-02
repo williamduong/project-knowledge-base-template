@@ -26,6 +26,9 @@ const {
   summariseLessons,
   runAllGates,
   evaluateReconstructionTriggers,
+  computeChaosCoefficient,
+  readChaosHistory,
+  compareChaosSnapshots,
 } = require('../lib/observation');
 
 const KNOWN_PIPELINE_TEMPLATES = new Set(['npm-package', 'docs-only', 'custom']);
@@ -281,7 +284,11 @@ function runStatus({ args, cwd, packageJson }) {
       const lessonSummary = summariseLessons(lessonItems);
       const { gateResults, overallStatus } = runAllGates({ debtItems, entropyItems, lessonItems });
       const reconstruction = evaluateReconstructionTriggers(gateResults);
-      observationSummary = { debtSummary, entropySummary, lessonSummary, overallStatus, reconstruction };
+      const chaosResult = computeChaosCoefficient({ debtItems, entropyItems, lessonItems });
+      const { snapshots } = readChaosHistory(context.contentRoot);
+      const previousSnapshot = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
+      const chaosTrend = compareChaosSnapshots(chaosResult, previousSnapshot);
+      observationSummary = { debtSummary, entropySummary, lessonSummary, overallStatus, reconstruction, chaosResult, chaosTrend };
     } catch (_err) {
       // non-fatal — observation files may not exist yet
     }
@@ -323,8 +330,7 @@ function runStatus({ args, cwd, packageJson }) {
       releasePipeline,
       activeIntents,
       observation: observationSummary,
-      verdict,
-    }, null, 2));
+      verdict,    }, null, 2));
     if (verdict.code !== 0) process.exit(verdict.code);
     return;
   }
@@ -455,11 +461,17 @@ function runStatus({ args, cwd, packageJson }) {
   // Observation summary
   if (observationSummary) {
     console.log('- observation:');
-    const { debtSummary, entropySummary, lessonSummary, overallStatus, reconstruction } = observationSummary;
+    const { debtSummary, entropySummary, lessonSummary, overallStatus, reconstruction, chaosResult, chaosTrend } = observationSummary;
     console.log(`    debt    : total=${debtSummary.total}, open=${debtSummary.openCount}, high=${debtSummary.byTier.high}, red=${debtSummary.byTier.red}`);
     console.log(`    entropy : total=${entropySummary.total}, open=${entropySummary.openCount}, high=${entropySummary.byTier.high}, red=${entropySummary.byTier.red}`);
     console.log(`    lessons : total=${lessonSummary.total}, enforced=${lessonSummary.byStatus.enforced || 0}`);
     console.log(`    gates   : ${overallStatus}`);
+    if (chaosResult) {
+      const trendStr = chaosTrend && chaosTrend.hasPrevious
+        ? ` (${chaosTrend.delta >= 0 ? '+' : ''}${chaosTrend.delta}${chaosTrend.spikeDetected ? ' SPIKE' : ''})`
+        : '';
+      console.log(`    chaos   : ${chaosResult.score.toFixed(1)} / 100  [${chaosResult.level.toUpperCase()}]${trendStr}  — run "kb chaos" for full report`);
+    }
     if (reconstruction.triggered) {
       console.log(`    RECONSTRUCTION TRIGGER: ${reconstruction.triggers.join(', ')}`);
       console.log(`    ${reconstruction.rationale}`);

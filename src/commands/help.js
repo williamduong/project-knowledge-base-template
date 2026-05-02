@@ -33,6 +33,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kb intent list [--json]');
     console.log('  kb intent apply <id> [--release] [--yes] [--json]');
     console.log('  kb intent cancel <id> [--yes] [--json]');
+    console.log('  kb chaos [--json] [--no-save] [--quiet] [--scan-src <dir>]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
     console.log('');
     console.log('Core workflow:');
@@ -110,8 +111,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb intent status [<id>] [--json]');
   console.log('  kb intent list [--json]');
   console.log('  kb intent apply <id> [--release] [--yes] [--json]');
-  console.log('  kb intent cancel <id> [--yes] [--json]');
-  console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
+  console.log('  kb intent cancel <id> [--yes] [--json]');    console.log('  kb chaos [--json] [--no-save] [--quiet] [--scan-src <dir>]');  console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
   console.log('  kb version');
   console.log('');
   console.log('Implemented commands:');
@@ -230,6 +230,16 @@ function runHelp({ packageJson, args }) {
   console.log('                               --release  Trigger release pipeline after apply (apply first, then release).');
   console.log('                               --yes      Skip confirmation prompt.');
   console.log('             cancel <id>      Delete an active intent workspace (irreversible; --yes to skip confirm).');
+  console.log('  chaos      Compute KB Chaos Coefficient — unified AI agent confidence index.');
+  console.log('             Aggregates technical debt, entropy, coverage gap, cognitive load,');
+  console.log('             and instability into a single 0–100 score with level (stable →');
+  console.log('             manageable → unstable → chaotic). Saves snapshot to chaos-history.md.');
+  console.log('             Detects chaos spikes (Δ≥10 pts) vs previous snapshot.');
+  console.log('             Produces forward estimates for planned versions.');
+  console.log('             --scan-src <dir>  Enhance accuracy with actual LOC/coupling data.');
+  console.log('             --no-save         Skip writing snapshot to chaos-history.md.');
+  console.log('             --quiet           Print "<score> <level>" only.');
+  console.log('             --json            Machine-readable JSON output.');
   console.log('  uninstall  Remove KB installation from the workspace.');
   console.log('             --keep-ai-files  Keep AGENTS/prompt files at repo root.');
   console.log('             --remove-hook    Remove kb-managed .git/hooks/pre-commit.');

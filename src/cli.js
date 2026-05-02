@@ -27,6 +27,7 @@ const { runVerify } = require('./commands/verify');
 const { runBaseline } = require('./commands/baseline');
 const { runRelease } = require('./commands/release');
 const { runIntent } = require('./commands/intent');
+const { runChaos } = require('./commands/chaos');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -118,6 +119,11 @@ async function run(argv) {
 
   if (command === 'intent') {
     await runIntent({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'chaos') {
+    await runChaos({ args: rest, cwd: process.cwd(), packageJson });
     return;
   }
 

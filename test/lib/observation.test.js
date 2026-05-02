@@ -40,6 +40,15 @@ const {
   RECONSTRUCTION_TRIGGERS,
   evaluateReconstructionTriggers,
   buildReconstructionIntentStub,
+  CHAOS_LEVELS,
+  CHAOS_SPIKE_THRESHOLD,
+  computeChaosCoefficient,
+  estimateDeltaChaos,
+  compareChaosSnapshots,
+  buildChaosSnapshot,
+  appendChaosSnapshot,
+  parseChaosHistory,
+  readChaosHistory,
 } = require('../../src/lib/observation');
 
 function tmpRoot() {
@@ -841,5 +850,277 @@ test('buildReconstructionIntentStub: fallback decisionSummary when no rationale'
 test('RECONSTRUCTION_TRIGGERS contains debt-red and entropy-red', () => {
   assert.ok(RECONSTRUCTION_TRIGGERS.includes('debt-red'));
   assert.ok(RECONSTRUCTION_TRIGGERS.includes('entropy-red'));
+});
+
+// ---------------------------------------------------------------------------
+// CHAOS_LEVELS constant
+// ---------------------------------------------------------------------------
+
+test('CHAOS_LEVELS has 4 levels in order', () => {
+  assert.equal(CHAOS_LEVELS.length, 4);
+  assert.equal(CHAOS_LEVELS[0].level, 'stable');
+  assert.equal(CHAOS_LEVELS[3].level, 'chaotic');
+});
+
+test('CHAOS_SPIKE_THRESHOLD is 10', () => {
+  assert.equal(CHAOS_SPIKE_THRESHOLD, 10);
+});
+
+// ---------------------------------------------------------------------------
+// computeChaosCoefficient
+// ---------------------------------------------------------------------------
+
+test('computeChaosCoefficient: empty input returns score 0 and stable', () => {
+  const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
+  assert.equal(r.score, 0);
+  assert.equal(r.level, 'stable');
+  assert.ok(r.aiNote.length > 0);
+});
+
+test('computeChaosCoefficient: entropy-red item raises structural, score > stable', () => {
+  const entropyItems = [{ id: 'E01', entropy_score: 40, entropy_tier: 'red', status: 'open' }];
+  const r = computeChaosCoefficient({ debtItems: [], entropyItems, lessonItems: [] });
+  assert.ok(r.score > 25, 'Should exceed stable threshold');
+  assert.ok(r.breakdown.structural > 0);
+});
+
+test('computeChaosCoefficient: high debt item raises debtPressure', () => {
+  const debtItems = [{ id: 'D01', debt_score: 80, debt_tier: 'high', status: 'open' }];
+  const r = computeChaosCoefficient({ debtItems, entropyItems: [], lessonItems: [] });
+  assert.ok(r.breakdown.debtPressure > 0);
+});
+
+test('computeChaosCoefficient: resolved items do not contribute', () => {
+  const debtItems = [{ id: 'D01', debt_score: 200, debt_tier: 'red', status: 'resolved' }];
+  const entropyItems = [{ id: 'E01', entropy_score: 50, entropy_tier: 'red', status: 'resolved' }];
+  const r = computeChaosCoefficient({ debtItems, entropyItems, lessonItems: [] });
+  assert.equal(r.score, 0);
+  assert.equal(r.level, 'stable');
+});
+
+test('computeChaosCoefficient: test-coverage debt raises coverageGap', () => {
+  const debtItems = [{ id: 'D03', type: 'test-coverage', status: 'open', severity: 4, debt_score: 48, debt_tier: 'medium' }];
+  const r = computeChaosCoefficient({ debtItems, entropyItems: [], lessonItems: [] });
+  assert.ok(r.breakdown.coverageGap > 0);
+});
+
+test('computeChaosCoefficient: proposed lessons raise coverageGap', () => {
+  const lessonItems = [
+    { id: 'L01', status: 'proposed' },
+    { id: 'L02', status: 'proposed' },
+    { id: 'L03', status: 'accepted' },
+  ];
+  const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems });
+  assert.ok(r.breakdown.coverageGap > 0);
+});
+
+test('computeChaosCoefficient: module-size debt raises cognitiveLoad', () => {
+  const debtItems = [{ id: 'D02', type: 'module-size', status: 'open', severity: 4, debt_score: 48, debt_tier: 'medium' }];
+  const r = computeChaosCoefficient({ debtItems, entropyItems: [], lessonItems: [] });
+  assert.ok(r.breakdown.cognitiveLoad > 0);
+});
+
+test('computeChaosCoefficient: moduleStats coverage gap calculated from LOC', () => {
+  const moduleStats = [
+    { file: 'a.js', loc: 200, requireCount: 3, hasTests: false },
+    { file: 'b.js', loc: 100, requireCount: 2, hasTests: true },
+  ];
+  const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats });
+  // 200/300 untested = 66.7%
+  assert.ok(r.breakdown.coverageGap > 60);
+});
+
+test('computeChaosCoefficient: moduleStats all tested = zero coverage gap', () => {
+  const moduleStats = [
+    { file: 'a.js', loc: 300, requireCount: 5, hasTests: true },
+    { file: 'b.js', loc: 200, requireCount: 3, hasTests: true },
+  ];
+  const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats });
+  assert.equal(r.breakdown.coverageGap, 0);
+});
+
+test('computeChaosCoefficient: moduleStats high coupling raises structural', () => {
+  const moduleStats = [{ file: 'a.js', loc: 500, requireCount: 14, hasTests: true }];
+  const r1 = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: [] });
+  const r2 = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats });
+  assert.ok(r2.score >= r1.score, 'High coupling should not lower score');
+});
+
+test('computeChaosCoefficient: returns drivers sorted by score desc', () => {
+  const debtItems = [
+    { id: 'D01', debt_score: 80, debt_tier: 'high', status: 'open' },
+    { id: 'D02', debt_score: 140, debt_tier: 'red', status: 'open' },
+  ];
+  const r = computeChaosCoefficient({ debtItems, entropyItems: [], lessonItems: [] });
+  assert.ok(r.drivers.length >= 1);
+  if (r.drivers.length >= 2) {
+    assert.ok(r.drivers[0].score >= r.drivers[1].score);
+  }
+});
+
+test('computeChaosCoefficient: chaotic level when many red items', () => {
+  const debtItems = [{ id: 'D01', debt_score: 500, debt_tier: 'red', status: 'open' }];
+  const entropyItems = [{ id: 'E01', entropy_score: 100, entropy_tier: 'red', status: 'open' }];
+  const moduleStats = Array.from({ length: 10 }, (_, i) => ({
+    file: `f${i}.js`, loc: 500, requireCount: 18, hasTests: false,
+  }));
+  const r = computeChaosCoefficient({ debtItems, entropyItems, lessonItems: [], moduleStats });
+  assert.ok(r.score >= 75, 'Expected chaotic with heavy signals');
+});
+
+// ---------------------------------------------------------------------------
+// estimateDeltaChaos
+// ---------------------------------------------------------------------------
+
+test('estimateDeltaChaos: no factors = zero delta', () => {
+  const r = estimateDeltaChaos(50, {});
+  assert.equal(r.delta, 0);
+  assert.equal(r.projected, 50);
+});
+
+test('estimateDeltaChaos: adding uncovered LOC raises projected', () => {
+  const r = estimateDeltaChaos(40, { addedUncoveredLOC: 200 });
+  assert.ok(r.delta > 0);
+  assert.ok(r.projected > 40);
+});
+
+test('estimateDeltaChaos: resolving high entropy lowers projected', () => {
+  const r = estimateDeltaChaos(60, { resolvedHighEntropy: 1 });
+  assert.ok(r.delta < 0);
+  assert.ok(r.projected < 60);
+});
+
+test('estimateDeltaChaos: spike warning when delta >= 10', () => {
+  const r = estimateDeltaChaos(40, { addedHighCoupling: 5 });
+  assert.ok(r.delta >= 10);
+  assert.ok(r.warning !== null);
+  assert.ok(r.warning.includes('spike'));
+});
+
+test('estimateDeltaChaos: no warning when delta < 10', () => {
+  const r = estimateDeltaChaos(40, { addedUncoveredLOC: 100 });
+  assert.equal(r.warning, null);
+});
+
+test('estimateDeltaChaos: adding tests reduces delta', () => {
+  const r1 = estimateDeltaChaos(50, { newUncoveredModules: 2 });
+  const r2 = estimateDeltaChaos(50, { newUncoveredModules: 2, addedTests: 2 });
+  assert.ok(r2.projected < r1.projected);
+});
+
+test('estimateDeltaChaos: projected capped at 100', () => {
+  const r = estimateDeltaChaos(95, { addedHighCoupling: 10 });
+  assert.equal(r.projected, 100);
+});
+
+test('estimateDeltaChaos: projected floored at 0', () => {
+  const r = estimateDeltaChaos(5, { resolvedHighEntropy: 10 });
+  assert.equal(r.projected, 0);
+});
+
+test('estimateDeltaChaos: projectedLevel matches score thresholds', () => {
+  const r = estimateDeltaChaos(20, { resolvedHighEntropy: 2 });
+  assert.equal(r.projectedLevel, 'stable');
+  const r2 = estimateDeltaChaos(60, {});
+  assert.equal(r2.projectedLevel, 'unstable');
+});
+
+// ---------------------------------------------------------------------------
+// compareChaosSnapshots
+// ---------------------------------------------------------------------------
+
+test('compareChaosSnapshots: no previous → hasPrevious false', () => {
+  const r = compareChaosSnapshots({ score: 45, level: 'manageable' }, null);
+  assert.equal(r.hasPrevious, false);
+  assert.equal(r.spikeDetected, false);
+  assert.equal(r.delta, null);
+});
+
+test('compareChaosSnapshots: positive delta computed correctly', () => {
+  const r = compareChaosSnapshots({ score: 55, level: 'unstable' }, { score: 40, level: 'manageable', measuredAt: '2026-04-01' });
+  assert.equal(r.hasPrevious, true);
+  assert.equal(r.delta, 15);
+  assert.equal(r.spikeDetected, true);
+});
+
+test('compareChaosSnapshots: spike threshold exactly 10', () => {
+  const r = compareChaosSnapshots({ score: 50 }, { score: 40 });
+  assert.equal(r.spikeDetected, true);
+});
+
+test('compareChaosSnapshots: delta 9 is not a spike', () => {
+  const r = compareChaosSnapshots({ score: 49 }, { score: 40 });
+  assert.equal(r.spikeDetected, false);
+});
+
+test('compareChaosSnapshots: negative delta (improving)', () => {
+  const r = compareChaosSnapshots({ score: 30 }, { score: 55 });
+  assert.ok(r.delta < 0);
+  assert.equal(r.spikeDetected, false);
+});
+
+// ---------------------------------------------------------------------------
+// buildChaosSnapshot
+// ---------------------------------------------------------------------------
+
+test('buildChaosSnapshot: produces snapshot with all breakdown fields', () => {
+  const breakdown = { structural: 72, debtPressure: 30, coverageGap: 40, cognitiveLoad: 20, instability: 10 };
+  const { snapshot } = buildChaosSnapshot({ score: 45.5, level: 'manageable', breakdown, drivers: [{ id: 'E01' }] });
+  assert.equal(snapshot.score, 45.5);
+  assert.equal(snapshot.level, 'manageable');
+  assert.equal(snapshot.structural, 72);
+  assert.equal(snapshot.topDriverIds, 'E01');
+  assert.ok(snapshot.measuredAt.includes('T'));
+});
+
+test('buildChaosSnapshot: accepts custom measuredAt', () => {
+  const breakdown = { structural: 0, debtPressure: 0, coverageGap: 0, cognitiveLoad: 0, instability: 0 };
+  const { snapshot } = buildChaosSnapshot({ score: 10, level: 'stable', breakdown, drivers: [], measuredAt: '2026-01-01T00:00:00.000Z' });
+  assert.equal(snapshot.measuredAt, '2026-01-01T00:00:00.000Z');
+});
+
+// ---------------------------------------------------------------------------
+// appendChaosSnapshot / readChaosHistory
+// ---------------------------------------------------------------------------
+
+test('appendChaosSnapshot: creates file and reads back one snapshot', () => {
+  const root = tmpRoot();
+  const breakdown = { structural: 72, debtPressure: 30, coverageGap: 40, cognitiveLoad: 20, instability: 10 };
+  const { snapshot } = buildChaosSnapshot({ score: 52.3, level: 'unstable', breakdown, drivers: [{ id: 'E01' }, { id: 'D01' }] });
+  appendChaosSnapshot(root, snapshot);
+  const { snapshots } = readChaosHistory(root);
+  assert.equal(snapshots.length, 1);
+  assert.equal(snapshots[0].score, 52.3);
+  assert.equal(snapshots[0].level, 'unstable');
+  assert.equal(snapshots[0].structural, 72);
+});
+
+test('appendChaosSnapshot: appends multiple snapshots', () => {
+  const root = tmpRoot();
+  const breakdown = { structural: 60, debtPressure: 20, coverageGap: 30, cognitiveLoad: 15, instability: 5 };
+  const { snapshot: s1 } = buildChaosSnapshot({ score: 40, level: 'manageable', breakdown, drivers: [] });
+  const { snapshot: s2 } = buildChaosSnapshot({ score: 55, level: 'unstable', breakdown, drivers: [] });
+  appendChaosSnapshot(root, s1);
+  appendChaosSnapshot(root, s2);
+  const { snapshots } = readChaosHistory(root);
+  assert.equal(snapshots.length, 2);
+});
+
+test('readChaosHistory: returns empty when file missing', () => {
+  const { snapshots } = readChaosHistory('/nonexistent-xyz');
+  assert.equal(snapshots.length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// parseChaosHistory
+// ---------------------------------------------------------------------------
+
+test('parseChaosHistory: parses numeric fields correctly', () => {
+  const raw = `# Chaos History\n\n---\nscore: 45.2\nlevel: manageable\nstructural: 72.0\ndebtPressure: 30.0\ncoverageGap: 40.0\ncognitiveLoad: 20.0\ninstability: 10.0\ntopDriverIds: E01, D01\nmeasuredAt: 2026-05-01T10:00:00.000Z\n`;
+  const { snapshots } = parseChaosHistory(raw);
+  assert.equal(snapshots.length, 1);
+  assert.equal(typeof snapshots[0].score, 'number');
+  assert.equal(snapshots[0].score, 45.2);
+  assert.equal(snapshots[0].structural, 72);
 });
 
