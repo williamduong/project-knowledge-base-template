@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 1.9.0
+version: 2.0.0
 ---
 
 # /kb-run — Execute the next step of the KB runtime plan
@@ -163,3 +163,19 @@ If the failure requires user-only actions (credentials, privileged access, exter
 - Do not modify the KB outside what the executed CLI command does, plus the plan file and (during preflight) IDE rule files.
 - Never invent CLI flags. If a step requires an unknown flag, stop and ask the user to refine the plan via `/kb-plan`.
 - If any CLI command exits non-zero, mark the step `(status: blocked)` with the exit code and stop. Do not bump `current_step`.
+
+## v2.0 Intent Intelligence Awareness
+
+When executing a step that includes `kb intent apply`:
+
+1. The CLI automatically runs conflict analysis and outputs a strategy (`proceed` / `review-order` / `resolve-first`).
+2. If the strategy is `resolve-first`: **pause, surface the strategy and its steps to the user, and ask for confirmation before continuing**. Do not auto-proceed through a `resolve-first` warning.
+3. If the strategy is `review-order` or `proceed-with-caution`: surface the output, then continue normally.
+
+After applying 3 or more intents in a session, proactively suggest:
+
+```
+You have applied 3+ intents. Run `kb intent suggest-lessons` to surface lesson candidates from the pattern evidence.
+```
+
+Do not auto-run `suggest-lessons` — present it as a suggestion only.

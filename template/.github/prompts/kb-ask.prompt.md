@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-ask
-version: 1.9.0
+version: 2.0.0
 ---
 
 # /kb-ask — Ask a question about this project's knowledge base

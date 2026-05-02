@@ -444,6 +444,43 @@ async function runApply(ctx, options, cwd) {
   // 5. Archive intent workspace (I3: timestamp suffix prevents collision)
   const archivePath = archiveIntent(ctx.contentRoot, intentId, appliedAt);
 
+  // 5a. Write AI decision transparency record into archive (v2.0 Phase 3)
+  if (conflictSummary) {
+    const { suggestApplyOrder: _suggestApplyOrder } = require('../lib/intent-intelligence');
+    const applyOrderDecision = _suggestApplyOrder(conflictSummary);
+    const decisionRecord = {
+      type: 'conflict-strategy',
+      intent_id: intentId,
+      decided_at: appliedAt,
+      evidence: {
+        conflict_count: conflictSummary.conflict_count,
+        high_risk_count: conflictSummary.high_risk_count,
+        medium_risk_count: conflictSummary.medium_risk_count,
+        conflicts: conflictSummary.conflicts.map(c => ({
+          against_intent_id: c.against_intent_id,
+          risk: c.risk,
+          signals: c.signals,
+        })),
+      },
+      strategy: applyOrderDecision.strategy,
+      reason: applyOrderDecision.reason,
+      requires_user_approval: applyOrderDecision.strategy === 'resolve-first',
+      confidence: conflictSummary.conflict_count === 0 ? 'n/a'
+        : conflictSummary.high_risk_count > 0 ? 'strong'
+        : conflictSummary.medium_risk_count > 0 ? 'provisional'
+        : 'low-confidence',
+    };
+    try {
+      fs.writeFileSync(
+        path.join(archivePath, 'ai-decision-context.json'),
+        JSON.stringify(decisionRecord, null, 2),
+        'utf8'
+      );
+    } catch {
+      // Non-fatal: transparency record is best-effort
+    }
+  }
+
   if (json) {
     console.log(JSON.stringify({
       command: 'kb intent apply',

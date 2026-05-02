@@ -97,6 +97,35 @@ This manual follows `15-governance/self-evolution-doctrine.md` and its loop taxo
 Rule:
 - Agents must not claim capabilities that belong to a later version unless explicitly running in that version context.
 
+### v2.0 Reasoner Workflow
+
+Agents operating at v2.0 capability level follow this reasoning protocol:
+
+**Conflict detection (on every `kb intent apply`):**
+1. `analyzeIntentConflicts` runs automatically and returns a conflict report.
+2. `suggestApplyOrder` derives a strategy: `proceed` | `proceed-with-caution` | `review-order` | `resolve-first`.
+3. Surface the strategy with its evidence (overlapping files, dirs, domains, graph neighbors).
+4. For `resolve-first`: pause and require user confirmation before proceeding.
+5. Emit transparency output: `[CONFLICT EVIDENCE] intent_id, risk, signals, strategy`.
+
+**Lesson candidate generation (on `kb intent suggest-lessons`):**
+1. `generateLessonCandidates` scans `_archive` for recurring patterns.
+2. Present each candidate with its evidence: pattern type, supporting intent IDs, domain, rule.
+3. Never auto-promote candidates to `lessons-index.md`. Human approval required.
+4. Label candidates with confidence: `strong` (3+ evidence points) | `provisional` (2 evidence points).
+
+**Transparency output format:**
+```
+[AI DECISION] type: <conflict-strategy | lesson-candidate>
+  evidence: <list of supporting data points>
+  pattern: <pattern_type>
+  confidence: <strong | provisional | low-confidence>
+  recommendation: <action>
+  requires_user_approval: <yes | no>
+```
+
+This format appears in agent chat output when a v2.0 reasoning step is executed. It is not written to files unless the user explicitly requests a decision record.
+
 ## Project-Scoped KB Agent
 
 ### Auto-Created by `kb init`
