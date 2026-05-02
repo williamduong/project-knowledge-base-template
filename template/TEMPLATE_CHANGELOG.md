@@ -78,6 +78,228 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## 1.8.3 - 2026-05-03
+
+<!-- release-meta: from=v1.8.2 to=v1.8.3 generated_at=2026-05-03T00:00:00.000Z -->
+
+### Summary
+
+- Site catalog pages: `features.html`, `cli-commands.html`, `test-cases.html` with JSON-driven rendering.
+- Benchmark repo setup: `sample_repo/ghost/`, `sample_repo/wordpress/`, `sample_repo/realworld-express-fresh/` with shared `benchmark-kb.code-workspace`.
+- Local deterministic orchestrator: `tools/kb-orch.js` + `tools/orch/` — sequential plan runner with scope guard, shell + kb-cli executors, JSON reporter, dry-run mode.
+- Executable test plans: `test-plans/uc-01-init-health.json`, `uc-02-chaos-benchmark.json`, `uc-03-estimate-riskband.json` — all pass (UC-01 3/3, UC-02 6/6, UC-03 2/2).
+- Unit tests for orchestrator: `test/tools/orch.test.js` (3 tests: schema validation, shell step success, scope violation blocking).
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- None — additive tooling and site pages only; no changes to template structure, commands, or state.json schema.
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents running multi-repo test workflows can now use `node tools/kb-orch.js run <plan.json>` for deterministic local execution.
+- Scope guard enforces that all steps stay within declared `allowedRoots`; agents cannot bypass this with wildcards.
+- Catalog pages at `site/features.html`, `site/cli-commands.html`, `site/test-cases.html` provide browsable command and feature references.
+
+### Files Added / Changed
+
+**New:**
+- `site/features.html`, `site/cli-commands.html`, `site/test-cases.html` — catalog pages
+- `site/data/features.json`, `site/data/cli-commands.json`, `site/data/test-cases.json` — catalog data
+- `site/js/catalog-page.js`, `site/css/catalog.css` — catalog rendering
+- `sample_repo/ghost/`, `sample_repo/wordpress/` — benchmark repos (depth-1 clone)
+- `sample_repo/benchmark-kb.code-workspace` — multi-root workspace for benchmark
+- `tools/kb-orch.js` — orchestrator CLI entry (run, --dry-run, --output, --help)
+- `tools/orch/index.js` — sequential plan runner
+- `tools/orch/planner.js` — plan loader + schema validator
+- `tools/orch/scope-guard.js` — hard path boundary enforcement (ScopeViolationError)
+- `tools/orch/executor/shell.js` — child_process.spawn executor with timeout
+- `tools/orch/executor/kb-cli.js` — kb-cli wrapper executor
+- `tools/orch/reporter.js` — JSON report writer
+- `test/tools/orch.test.js` — orchestrator unit tests (3 tests)
+- `test-plans/uc-01-init-health.json` — init + doctor + status health check
+- `test-plans/uc-02-chaos-benchmark.json` — chaos benchmarks across 3 repos
+- `test-plans/uc-03-estimate-riskband.json` — chaos --estimate riskBand check
+
+## 1.8.2 - 2026-05-03
+
+<!-- release-meta: from=v1.8.1 to=v1.8.2 generated_at=2026-05-03T00:00:00.000Z -->
+
+### Summary
+
+- Chaos depth expansion: deep scan (`--deep`), KB context signals, doc quality signals, and riskBand estimate.
+- `scanKbDocQuality()` + `docQualitySignals` blended into chaos coefficient calculation.
+- `riskBand: safe|watch|spike` replaces previous `warning` field in `estimateDeltaChaos`.
+- `--estimate` flag for `kb chaos` outputs human-readable riskBand estimate without saving.
+- Calibration tool `tools/calibrate-signals.js` for tuning signal weights.
+- Test expansion: chaos.test.js +287, observation.test.js +228.
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- Low — `kb chaos` output JSON gains `riskBand` field (additive); no breaking changes to existing chaos output consumers.
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents using `kb chaos` should check `riskBand` field (`safe|watch|spike`) instead of `warning` for threshold decisions.
+- `kb chaos --estimate` can be used for pre-change risk assessment without persisting chaos state.
+
+### Files Added / Changed
+
+**New:**
+- `tools/calibrate-signals.js` — signal weight calibration helper
+
+**Modified:**
+- `src/commands/chaos.js` — deep scan, doc quality signals, riskBand, --estimate flag
+- `src/lib/observation.js` — scanKbDocQuality, docQualitySignals, estimateDeltaChaos riskBand
+- `test/commands/chaos.test.js`, `test/lib/observation.test.js`
+- `template/.github/agents/kb.agent.md`, prompt files, `template/template.json`
+
+## 1.8.1 - 2026-05-02
+
+<!-- release-meta: from=v1.8.0 to=v1.8.1 generated_at=2026-05-02T00:00:00.000Z -->
+
+### Summary
+
+- `kb chaos` command: unified AI agent confidence index (chaos coefficient).
+- Chaos coefficient combines observation signals (entropy, gap density, stale docs, unresolved debt) into a single `[0,1]` score.
+- `kb status` now shows chaos coefficient in human and JSON output.
+- New template file `template/intents/_meta/chaos-history.md` — rolling chaos score ledger.
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- Low — additive command and status field; no breaking changes.
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents should use `kb chaos` output (coefficient + signals) to decide whether to proceed with high-impact intent operations.
+- `kb status --json` now includes `chaosCoefficient` field.
+
+### Files Added / Changed
+
+**New:**
+- `src/commands/chaos.js` — chaos command
+- `template/intents/_meta/chaos-history.md` — chaos score ledger template
+- `test/commands/chaos.test.js`, `test/lib/observation.test.js` (expansion)
+
+**Modified:**
+- `src/lib/observation.js` — chaos coefficient computation
+- `src/commands/status.js` — chaos field
+- `src/commands/help.js`, `src/cli.js`
+- `template/.github/agents/kb.agent.md`, prompt files, `template/template.json`
+
+## 1.8.0 - 2026-05-02
+
+<!-- release-meta: from=v1.7.0 to=v1.8.0 generated_at=2026-05-02T00:00:00.000Z -->
+
+### Summary
+
+- Supervised self-evolution: observation layer, entropy/debt/gap gates, decision records, reconstruction triggers.
+- `src/lib/observation.js` — full observation engine: entropy scoring, debt index, gap detection, lessons tracking.
+- Four new template index files under `template/intents/_meta/`: `entropy-index.md`, `debt-index.md`, `gates-report.md`, `lessons-index.md`.
+- `kb status` now surfaces observation gate summary.
+- 845-test suite for observation layer.
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- Low — additive; new `intents/_meta/` files are optional scaffolding, not required for existing workflows.
+
+### Migration Required
+
+- No — existing KBs can opt in by adding the `_meta/` index files.
+
+### Agent Impact
+
+- Agents should check `gates-report.md` before applying high-risk intents.
+- Observation signals (entropy, debt) are now available via `kb status --json` for automated gate decisions.
+
+### Files Added / Changed
+
+**New:**
+- `src/lib/observation.js` — observation engine (675 lines initial)
+- `template/intents/_meta/entropy-index.md`
+- `template/intents/_meta/debt-index.md`
+- `template/intents/_meta/gates-report.md`
+- `template/intents/_meta/lessons-index.md`
+- `test/lib/observation.test.js` (845 tests)
+
+**Modified:**
+- `src/commands/status.js` — observation gate summary
+- `template/.github/agents/kb.agent.md`, prompt files, `template/template.json`
+
+## 1.7.0 - 2026-05-02
+
+<!-- release-meta: from=v1.6.0 to=v1.7.0 generated_at=2026-05-02T00:00:00.000Z -->
+
+### Summary
+
+- Intent Foundation: `kb intent create|status|list|apply|cancel` command surface.
+- Intent workspaces under `intents/_active/<id>/proposed-changes/` mirror KB content root path structure.
+- `kb intent apply` is atomic: validate → preview → confirm → applyStagedFiles → buildApplyRecord → archiveIntent → optional `--release`.
+- `kb release tag` now derives `intents_applied[]` from archive and writes them into release ledger entry.
+- `kb status` shows active intents summary (count + per-intent detail).
+- Doctrine: Recorder role and Evidence Loop defined in `template/15-governance/self-evolution-doctrine.md`.
+
+### Change Type
+
+- Minor
+
+### Impact On Existing KBs
+
+- Low — additive commands and new `intents/` folder structure; no changes to existing state.json, catalog, or release commands.
+
+### Migration Required
+
+- No — existing KBs can opt in to intent workflow by using `kb intent create`.
+
+### Agent Impact
+
+- Agents should use `kb intent create/apply` for staged KB changes instead of direct file edits when audit trail is required.
+- Agents must follow Recorder role doctrine: apply-record.json is evidence and must not be deleted.
+- `kb intent apply --release` triggers pipeline in the same flow; agents should not call `kb release run` separately after a `--release` apply.
+
+### Files Added / Changed
+
+**New:**
+- `src/lib/intent.js` — full intent workspace library
+- `src/commands/intent.js` — `kb intent` command surface
+- `template/15-governance/self-evolution-doctrine.md` — Recorder role, Evidence Loop
+- `test/commands/intent.test.js` (61 tests)
+
+**Modified:**
+- `src/commands/release.js` — `deriveIntentsApplied` wiring
+- `src/commands/status.js` — active intents summary
+- `src/commands/help.js`, `src/cli.js`
+- `template/00-start-here/how-to-use-this-kb.md` — intent workflow section
+- `template/12-ai-skills/agent-operating-manual.md` — Record capability, Recorder role
+- `template/.github/agents/kb.agent.md` — v1.7.0 bump, intent commands, Behavioral Rule #11
+
 ## 1.6.0 - 2026-05-01
 
 <!-- release-meta: from=v1.5.0 to=HEAD generated_at=2026-05-01T00:00:00.000Z -->
