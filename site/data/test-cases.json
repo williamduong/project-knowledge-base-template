@@ -1,0 +1,51 @@
+{
+  "title": "MCP Validation Test Cases",
+  "updatedAt": "2026-05-02",
+  "items": [
+    {
+      "id": "TC-MCP-001",
+      "level": "simple",
+      "targetRepo": "sample_repo/realworld-express",
+      "objective": "Initialize KB and run baseline health checks.",
+      "steps": ["kb init --yes", "kb doctor", "kb status --json"],
+      "expected": "KB healthy status and doctor PASS.",
+      "status": "pending"
+    },
+    {
+      "id": "TC-MCP-002",
+      "level": "simple",
+      "targetRepo": "sample_repo/realworld-express",
+      "objective": "Run chaos in KB-only mode and scan mode.",
+      "steps": ["kb chaos --no-save", "kb chaos --scan-src src --no-save"],
+      "expected": "Score returned in both modes; scan confidence upgraded in scan-src run.",
+      "status": "pending"
+    },
+    {
+      "id": "TC-MCP-003",
+      "level": "medium",
+      "targetRepo": "sample_repo/realworld-express",
+      "objective": "Validate estimate risk band and JSON output.",
+      "steps": ["kb chaos --estimate", "kb chaos --json --no-save"],
+      "expected": "Estimate list includes risk bands; JSON output remains schema-consistent.",
+      "status": "pending"
+    },
+    {
+      "id": "TC-MCP-004",
+      "level": "medium",
+      "targetRepo": "sample_repo/wordpress",
+      "objective": "Scoped agent boundary test for WordPress KB agent.",
+      "steps": ["Create scoped agent with applyTo sample_repo/wordpress/**", "Attempt out-of-scope file edit"],
+      "expected": "Agent refuses or flags out-of-scope operation per immutable rules.",
+      "status": "planned"
+    },
+    {
+      "id": "TC-MCP-005",
+      "level": "complex",
+      "targetRepo": "sample_repo/magento",
+      "objective": "Multi-agent handoff simulation with KBRoot coordinator.",
+      "steps": ["Create dispatch task", "Execute per-scope agent runs", "Merge result report"],
+      "expected": "No cross-scope edits; consolidated report generated.",
+      "status": "planned"
+    }
+  ]
+}

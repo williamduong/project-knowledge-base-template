@@ -1,0 +1,68 @@
+{
+  "id": "uc-02-chaos-benchmark",
+  "steps": [
+    {
+      "id": "init-ghost",
+      "executor": "kb-cli",
+      "command": "init --yes",
+      "workingDir": "sample_repo/ghost",
+      "allowedRoots": ["sample_repo/ghost"],
+      "assert": {
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "chaos-ghost",
+      "executor": "kb-cli",
+      "command": "chaos --no-save",
+      "workingDir": "sample_repo/ghost",
+      "allowedRoots": ["sample_repo/ghost"],
+      "assert": {
+        "exitCode": 0,
+        "stdoutContains": ["Chaos"]
+      }
+    },
+    {
+      "id": "init-wordpress",
+      "executor": "kb-cli",
+      "command": "init --yes",
+      "workingDir": "sample_repo/wordpress",
+      "allowedRoots": ["sample_repo/wordpress"],
+      "assert": {
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "chaos-wordpress",
+      "executor": "kb-cli",
+      "command": "chaos --no-save",
+      "workingDir": "sample_repo/wordpress",
+      "allowedRoots": ["sample_repo/wordpress"],
+      "assert": {
+        "exitCode": 0,
+        "stdoutContains": ["Chaos"]
+      }
+    },
+    {
+      "id": "init-realworld",
+      "executor": "kb-cli",
+      "command": "init --yes",
+      "workingDir": "sample_repo/realworld-express-fresh",
+      "allowedRoots": ["sample_repo/realworld-express-fresh"],
+      "assert": {
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "chaos-realworld",
+      "executor": "kb-cli",
+      "command": "chaos --no-save",
+      "workingDir": "sample_repo/realworld-express-fresh",
+      "allowedRoots": ["sample_repo/realworld-express-fresh"],
+      "assert": {
+        "exitCode": 0,
+        "stdoutContains": ["Chaos"]
+      }
+    }
+  ]
+}

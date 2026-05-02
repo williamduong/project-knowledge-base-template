@@ -1,0 +1,38 @@
+{
+  "title": "KB CLI Command Catalog",
+  "updatedAt": "2026-05-02",
+  "items": [
+    {"command":"kb init","group":"core","stability":"stable","purpose":"Install KB template into a repository."},
+    {"command":"kb update","group":"core","stability":"stable","purpose":"Sync KB state and template metadata updates."},
+    {"command":"kb maintain","group":"core","stability":"stable","purpose":"Run maintenance pipeline (sync/test/doctor)."},
+    {"command":"kb ide <enable|disable>","group":"core","stability":"stable","purpose":"Manage IDE integration blocks."},
+    {"command":"kb status","group":"core","stability":"stable","purpose":"Report KB installation health and state."},
+    {"command":"kb uninstall","group":"core","stability":"stable","purpose":"Remove KB installation and optional generated files."},
+
+    {"command":"kb bootstrap","group":"authoring","stability":"stable","purpose":"Generate stub docs from source signals."},
+    {"command":"kb bootstrap-api","group":"authoring","stability":"stable","purpose":"Generate endpoint docs from route/controller annotations."},
+    {"command":"kb index","group":"authoring","stability":"stable","purpose":"Build KB index summary file."},
+    {"command":"kb questions","group":"authoring","stability":"stable","purpose":"Generate intake questions from unresolved placeholders."},
+    {"command":"kb mark","group":"authoring","stability":"stable","purpose":"Set kb_state for a markdown doc."},
+    {"command":"kb normalize-state","group":"authoring","stability":"stable","purpose":"Backfill kb_state for docs missing state."},
+
+    {"command":"kb impact","group":"governance","stability":"stable","purpose":"Graph-based impact tracing for docs/code."},
+    {"command":"kb scan","group":"governance","stability":"stable","purpose":"Scan drift and write impact report."},
+    {"command":"kb verify","group":"governance","stability":"stable","purpose":"Mark doc(s) verified with commit stamp."},
+    {"command":"kb baseline show|set","group":"governance","stability":"stable","purpose":"Inspect or update baseline revision pointer."},
+    {"command":"kb doctor","group":"governance","stability":"stable","purpose":"Run environment and readiness diagnostics."},
+    {"command":"kb test","group":"governance","stability":"stable","purpose":"Run deterministic KB integrity checks."},
+
+    {"command":"kb release init|tag|list|show|notes","group":"release","stability":"stable","purpose":"Maintain release catalog and notes."},
+    {"command":"kb release plan|run|init-pipeline","group":"release","stability":"stable","purpose":"Preview/execute release pipeline DSL."},
+
+    {"command":"kb intent create|status|list|apply|cancel","group":"intent","stability":"stable","purpose":"Manage intent workspaces for structured KB updates."},
+
+    {"command":"kb plan list|add","group":"planning","stability":"stable","purpose":"Manage finalization plan TODO list."},
+    {"command":"kb show|hide","group":"storage","stability":"stable","purpose":"Expose/hide KB mount in private-git mode."},
+
+    {"command":"kb chaos","group":"observation","stability":"stable","purpose":"Compute chaos score and confidence index."},
+    {"command":"kb chaos --scan-src <dir>","group":"observation","stability":"stable","purpose":"Blend source structural signals into chaos model."},
+    {"command":"kb chaos --estimate","group":"observation","stability":"stable","purpose":"Show forward estimate plans with risk bands."}
+  ]
+}

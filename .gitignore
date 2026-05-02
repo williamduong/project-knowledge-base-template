@@ -34,6 +34,7 @@ notes/*
 .local/
 .github/agents/KBRoot.agent.md
 
+
 # kb init / kb ide test artifacts — generated when dogfooding kb on this repo root
 knowledge-base/
 AGENTS.md
@@ -42,3 +43,7 @@ AGENTS.md
 
 # Sample repos for local testing only
 sample_repo/
+
+# Local orchestrator generated outputs
+kb-orch-report-*.json
+out/

@@ -1,0 +1,70 @@
+{
+  "title": "KB Feature Catalog",
+  "updatedAt": "2026-05-02",
+  "items": [
+    {
+      "id": "FT-001",
+      "name": "KB Initialization",
+      "scope": "Core Lifecycle",
+      "status": "active",
+      "summary": "Install KB template, state, prompts, and hooks into target repository.",
+      "references": ["kb init", "src/commands/init.js"]
+    },
+    {
+      "id": "FT-002",
+      "name": "Maintenance Pipeline",
+      "scope": "Core Lifecycle",
+      "status": "active",
+      "summary": "Run sync, tests, doctor checks in one command path with fast mode option.",
+      "references": ["kb maintain", "src/commands/maintain.js"]
+    },
+    {
+      "id": "FT-003",
+      "name": "Impact Analysis",
+      "scope": "Governance",
+      "status": "active",
+      "summary": "Resolve document/code impact relationships and output actionable impact state.",
+      "references": ["kb impact", "kb scan", "src/commands/impact.js", "src/commands/scan.js"]
+    },
+    {
+      "id": "FT-004",
+      "name": "Release Pipeline DSL",
+      "scope": "Release",
+      "status": "active",
+      "summary": "Initialize, plan, and run release pipeline steps with safety gates.",
+      "references": ["kb release init-pipeline", "kb release run", "src/lib/pipeline.js"]
+    },
+    {
+      "id": "FT-005",
+      "name": "Intent Workspace",
+      "scope": "Intent",
+      "status": "active",
+      "summary": "Create staged intent workspaces and apply/cancel with governance metadata.",
+      "references": ["kb intent create", "kb intent apply", "src/commands/intent.js"]
+    },
+    {
+      "id": "FT-006",
+      "name": "Chaos Coefficient",
+      "scope": "Observation",
+      "status": "active",
+      "summary": "Compute AI confidence index with deep scan, KB context signals, and risk estimate bands.",
+      "references": ["kb chaos", "src/commands/chaos.js", "src/lib/observation.js"]
+    },
+    {
+      "id": "FT-007",
+      "name": "KB Index Summary",
+      "scope": "Indexing",
+      "status": "active",
+      "summary": "Build placeholder/verification/source index summary for governance visibility.",
+      "references": ["kb index", "src/commands/index.js"]
+    },
+    {
+      "id": "FT-008",
+      "name": "Multi-Agent Scoped Orchestration",
+      "scope": "MCP Program",
+      "status": "planned",
+      "summary": "Introduce per-repo scoped KB agents and coordinator workflow with strict folder boundaries.",
+      "references": ["notes/upgrade-v3.0-platform-plan.md", "MCP roadmap"]
+    }
+  ]
+}

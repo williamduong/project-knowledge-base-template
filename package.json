@@ -1,6 +1,6 @@
 {
   "name": "@williamduong/kb",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
   "private": false,
   "license": "AGPL-3.0-only",
@@ -44,6 +44,8 @@
     "test:unit": "node --test \"test/**/*.test.js\"",
     "maintain": "node ./bin/kb.js maintain",
     "maintain:fast": "node ./bin/kb.js maintain --fast",
+    "orch:help": "node ./tools/kb-orch.js --help",
+    "orch:run": "node ./tools/kb-orch.js run",
     "pack:smoke": "node ./tools/pack-smoke.js",
     "prepublishOnly": "npm run version:check && npm run doc:gate",
     "release:dry": "npm run version:check && npm run doc:gate && npm run doctor && npm run pack:smoke"
