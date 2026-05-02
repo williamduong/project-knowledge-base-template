@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: unverified
-last_updated: 2026-05-01
+last_updated: 2026-05-02
 last_verified: 2026-04-28
 related:
   - 00-start-here/how-to-use-this-kb.md
@@ -55,6 +55,7 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 - Version patch prompts: [12-ai-skills/version-patch-prompts.md](12-ai-skills/version-patch-prompts.md)
 - Maintenance queue: [00-start-here/finalization-plan.md](00-start-here/finalization-plan.md)
 - Verification rules: [15-governance/verification-policy.md](15-governance/verification-policy.md)
+- Self evolution doctrine: [15-governance/self-evolution-doctrine.md](15-governance/self-evolution-doctrine.md)
 - Versioning policy: [15-governance/template-versioning-policy.md](15-governance/template-versioning-policy.md)
 - Release policy: [15-governance/release-policy.md](15-governance/release-policy.md)
 - Release pipeline policy: [15-governance/release-pipeline-policy.md](15-governance/release-pipeline-policy.md)

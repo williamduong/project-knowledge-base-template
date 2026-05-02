@@ -5,12 +5,13 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-05-01
-last_verified: 2026-05-01
+last_updated: 2026-05-02
+last_verified: 2026-05-02
 related:
   - how-to-use-this-kb.md
   - finalization-plan.md
   - ../12-ai-skills/agent-operating-manual.md
+  - ../15-governance/self-evolution-doctrine.md
   - ../12-ai-skills/prompt-pack.md
   - ../15-governance/review-cadence.md
   - ../15-governance/verification-policy.md
@@ -30,9 +31,9 @@ Stores the last repository baseline that agents used when they verified, upgrade
 
 | Field | Value |
 |---|---|
-| KB Template Version | v1.4.1 |
+| KB Template Version | v1.6.0 |
 | KB Patch Revision | 0 |
-| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 -> v1.2.11 -> v1.3.0 -> v1.4.0 -> v1.4.1 |
+| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 -> v1.2.11 -> v1.3.0 -> v1.4.0 -> v1.4.1 -> v1.5.0 -> v1.6.0 |
 | Brand Scope | project-knowledge-base-template |
 | Source Repository Identifier | https://github.com/williamduong/project-knowledge-base-template.git |
 | Source Default Branch | main |
@@ -43,13 +44,13 @@ For downstream project use, `Brand Scope` should identify the product or brand b
 
 | Field | Value |
 |---|---|
-| Source Repository Git Baseline | 886a7ba |
-| Baseline Captured At | 2026-05-01 |
-| Last Drift Check At | 2026-05-01 |
+| Source Repository Git Baseline | cbb71ca |
+| Baseline Captured At | 2026-05-02 |
+| Last Drift Check At | 2026-05-02 |
 | Drift Status | aligned |
 | Baseline Scope | whole repository on main |
-| Last Reconciled Template Version | v1.4.1 |
-| Notes | v1.4.1 patch: `kb help` (basic + advanced) advertises `kb scan [--recursive] [--depth=N] [--json]`; site/index.html Latest Release card + v1.3/v1.4 roadmap cards updated to shipped state; README.md template version bumped. No engine changes; sync-versions propagated to template.json + agent + 3 prompts. Tag v1.4.1 = 886a7ba. |
+| Last Reconciled Template Version | v1.6.0 |
+| Notes | Drift reconciliation completed on 2026-05-02 for range `886a7ba..cbb71ca`. Evidence collected from git log and name-status diff, then mapped to affected KB governance and planning docs during Waves A-D. Baseline restamped to current HEAD after reconciliation pass. |
 
 ## Mandatory Agent Check
 

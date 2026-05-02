@@ -5,11 +5,12 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-04-28
-last_verified: 2026-04-28
+last_updated: 2026-05-02
+last_verified: 2026-05-02
 related:
   - current-state.md
   - how-to-use-this-kb.md
+  - ../15-governance/self-evolution-doctrine.md
   - ../06-api/api-overview.md
   - ../15-governance/verification-policy.md
 tags:
@@ -49,3 +50,30 @@ For important claims, include a short format:
 2. Keep Swagger and API docs UI claims primarily in `06-api/api-overview.md`.
 3. If `04-frontend/` references Swagger-like surfaces, mark them as integration context and cross-link to `06-api/`.
 4. Avoid phrasing that implies a standalone frontend runtime when evidence only points to backend routes.
+
+## Roadmap Glossary Locks (v1.7-v2.0)
+
+Use these terms consistently across plans and governance docs.
+
+### Release Ledger Naming
+
+- User-facing concept: release ledger.
+- Compatibility filename: `.kb/catalog.json`.
+- Rule: do not present catalog as the primary user-facing term.
+
+### Loop Taxonomy Naming
+
+- Doc maintenance loop: governance maintenance loop from `review-cadence.md`.
+- Evidence loop: v1.7 intent evidence capture and archival.
+- Supervision loop: v1.8 debt and entropy measurement with threshold-driven decisions.
+- Graph loop: v1.9 projection, validation, and export loop.
+- Reasoning loop: v2.0 recommendation and conflict reasoning loop.
+
+Rule: avoid replacing these loop names with generic alternatives in version plans.
+
+### Lesson Terminology
+
+- Lesson candidate: v1.7 provisional output, markdown-first with structured fields.
+- Structured lesson: v1.8 governed lesson with lifecycle transitions.
+
+Rule: do not use structured lesson language for v1.7 outputs unless explicitly marked as deferred v1.8 behavior.

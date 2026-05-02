@@ -5,8 +5,11 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: design-only
-last_updated: 2026-05-01
-last_verified: 2026-05-01
+last_updated: 2026-05-02
+last_verified: 2026-05-02
+related:
+  - ../15-governance/self-evolution-doctrine.md
+  - ../00-start-here/terminology-guard.md
 tags:
   - ai-agent
   - copilot
@@ -72,6 +75,28 @@ Do not create files first and register them later.
 - Keep documentation synchronized with implementation changes.
 - Reconcile stored repository revision state with git history before upgrades or maintenance sweeps.
 
+## Doctrine Alignment (v1.7-v2.0)
+
+This manual follows `15-governance/self-evolution-doctrine.md` and its loop taxonomy.
+
+- Doc maintenance loop: governance maintenance flow from `review-cadence.md`.
+- Evidence loop: v1.7 Recorder workflow for intent evidence and archive.
+- Supervision loop: v1.8 Observer workflow for debt and entropy decisions.
+- Graph loop: v1.9 Graph Builder workflow for projection and consistency checks.
+- Reasoning loop: v2.0 Reasoner workflow for recommendation quality and conflict handling.
+
+### Versioned Capability Progression
+
+| Version | Capability emphasis |
+|---|---|
+| v1.7 | Record evidence, preserve intent artifacts, and emit lesson candidates. |
+| v1.8 | Observe metrics, compare thresholds, and generate supervised decisions. |
+| v1.9 | Build graph-ready projections and validate relation consistency. |
+| v2.0 | Reason across evidence, metrics, lessons, and graph context. |
+
+Rule:
+- Agents must not claim capabilities that belong to a later version unless explicitly running in that version context.
+
 ## Project-Scoped KB Agent
 
 ### Auto-Created by `kb init`
@@ -79,6 +104,21 @@ Do not create files first and register them later.
 When you run `kb init`, a project-scoped KB Agent is created at `.github/agents/kb.agent.md`.
 
 This agent is **not** the global Copilot agent — it is specific to this project and is automatically loaded by IDE adapters (AGENTS.md, .cursor/rules/kb.mdc, .clinerules, etc.) when you open the workspace in VS Code, Cursor, or Claude.
+
+### Init Projection Path (verified)
+
+`kb init` creates project-scoped agent and prompts from template files via `src/commands/init.js`:
+
+- Source template: `template/.github/agents/kb.agent.md`
+- Destination: `.github/agents/kb.agent.md`
+- Copy function: `createAgentAndPromptFiles(...)` in `src/commands/init.js`
+- Related prompt sources:
+  - `template/.github/prompts/kb-plan.prompt.md`
+  - `template/.github/prompts/kb-run.prompt.md`
+  - `template/.github/prompts/kb-ask.prompt.md`
+
+Maintenance rule:
+- When changing agent doctrine or capability language in this manual, review `template/.github/agents/kb.agent.md` in the same wave so init projections stay aligned.
 
 ### Role & Activation
 
