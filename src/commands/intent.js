@@ -22,7 +22,7 @@ const {
   writeApplyRecord,
   archiveIntent,
 } = require('../lib/intent');
-const { analyzeIntentConflicts } = require('../lib/intent-intelligence');
+const { analyzeIntentConflicts, suggestApplyOrder, generateLessonCandidates } = require('../lib/intent-intelligence');
 const { runRelease } = require('./release');
 
 // ---------------------------------------------------------------------------
@@ -94,8 +94,10 @@ function parseArgs(args) {
     if (args && args.includes('--release')) options.release = true;
   } else if (options.sub === 'help') {
     // no-op here, handled in runIntent
+  } else if (options.sub === 'suggest-lessons') {
+    // no positional args
   } else {
-    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, status, list, cancel, apply`);
+    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, status, list, cancel, apply, suggest-lessons`);
   }
 
   return options;
@@ -404,6 +406,7 @@ async function runApply(ctx, options, cwd) {
     const hasLesson = fs.existsSync(path.join(wsPath, 'lesson-candidate.md'));
     if (hasLesson) console.log('  (lesson-candidate.md will be preserved in archive)');
     if (conflictSummary && conflictSummary.conflict_count > 0) {
+      const applyOrder = suggestApplyOrder(conflictSummary);
       console.log('');
       console.log(`Conflict context: ${conflictSummary.conflict_count} potential overlap(s) with other active intents.`);
       for (const c of conflictSummary.conflicts.slice(0, 5)) {
@@ -413,8 +416,9 @@ async function runApply(ctx, options, cwd) {
           ` domain:${c.signals.same_domain_overlap}, graph:${c.signals.graph_neighbor_overlap})`
         );
       }
-      if (conflictSummary.high_risk_count > 0) {
-        console.log('  WARNING: high-risk overlap detected; consider apply ordering or merge strategy.');
+      console.log(`  Strategy: [${applyOrder.strategy}] ${applyOrder.reason}`);
+      for (const step of applyOrder.steps) {
+        console.log(`    - ${step}`);
       }
     }
     if (release) console.log('  --release: release pipeline will run after apply.');
@@ -464,6 +468,40 @@ async function runApply(ctx, options, cwd) {
 }
 
 // ---------------------------------------------------------------------------
+// suggest-lessons
+// ---------------------------------------------------------------------------
+
+async function runSuggestLessons(ctx, options) {
+  const { json } = options;
+  const candidates = generateLessonCandidates(ctx.contentRoot);
+
+  if (json) {
+    console.log(JSON.stringify({
+      command: 'kb intent suggest-lessons',
+      candidate_count: candidates.length,
+      candidates,
+    }, null, 2));
+    return;
+  }
+
+  if (candidates.length === 0) {
+    console.log('No lesson candidates found. Archive more intents to build pattern evidence.');
+    return;
+  }
+
+  console.log(`Found ${candidates.length} lesson candidate(s) from archived intent patterns:\n`);
+  for (const c of candidates) {
+    console.log(`  [${c.id}] pattern: ${c.pattern_type}`);
+    console.log(`    domain: ${c.domain}`);
+    console.log(`    rule: ${c.rule}`);
+    console.log(`    reason: ${c.reason}`);
+    console.log(`    evidence: ${c.evidence.join(', ')}`);
+    console.log('');
+  }
+  console.log('These are candidates only. Review and promote manually to lessons-index.md if appropriate.');
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
@@ -487,6 +525,8 @@ async function runIntent({ args, cwd }) {
     await runCancel(ctx, options);
   } else if (options.sub === 'apply') {
     await runApply(ctx, options, cwd);
+  } else if (options.sub === 'suggest-lessons') {
+    await runSuggestLessons(ctx, options);
   }
 }
 
@@ -499,27 +539,32 @@ function printHelp() {
   console.log('  kb intent list [--json]');
   console.log('  kb intent apply <id> [--release] [--yes] [--json]');
   console.log('  kb intent cancel <id> [--yes] [--json]');
+  console.log('  kb intent suggest-lessons [--json]');
   console.log('');
   console.log('Subcommands:');
-  console.log('  create  Create a new intent workspace.');
-  console.log('          Suggests ID from current git branch; prompts to confirm or edit.');
-  console.log('          --mode=quick|full     quick (default): low ceremony, no plan.md/impact.md required.');
-  console.log('          --change-type=<type>  docs (default), feature, fix, refactor, governance.');
-  console.log('          --yes                 Accept suggested ID and skip confirmation prompt.');
-  console.log('  status  Show status of one or all active intents.');
-  console.log('          With <id>: full detail including staged files and warnings.');
-  console.log('          Without <id>: summary of all active intents.');
-  console.log('  list    List active intent IDs.');
-  console.log('  apply   Write staged files from proposed-changes/ to the KB content root.');
-  console.log('          Builds apply-record.json, archives workspace, then optionally runs release.');
-  console.log('          --release  Trigger release pipeline after apply (apply must complete first).');
-  console.log('          --yes      Skip confirmation prompt.');
-  console.log('  cancel  Delete an active intent workspace (irreversible).');
+  console.log('  create          Create a new intent workspace.');
+  console.log('                  Suggests ID from current git branch; prompts to confirm or edit.');
+  console.log('                  --mode=quick|full     quick (default): low ceremony, no plan.md/impact.md required.');
+  console.log('                  --change-type=<type>  docs (default), feature, fix, refactor, governance.');
+  console.log('                  --yes                 Accept suggested ID and skip confirmation prompt.');
+  console.log('  status          Show status of one or all active intents.');
+  console.log('                  With <id>: full detail including staged files and warnings.');
+  console.log('                  Without <id>: summary of all active intents.');
+  console.log('  list            List active intent IDs.');
+  console.log('  apply           Write staged files from proposed-changes/ to the KB content root.');
+  console.log('                  Builds apply-record.json, archives workspace, then optionally runs release.');
+  console.log('                  --release  Trigger release pipeline after apply (apply must complete first).');
+  console.log('                  --yes      Skip confirmation prompt.');
+  console.log('  cancel          Delete an active intent workspace (irreversible).');
+  console.log('  suggest-lessons Scan archived intents for recurring patterns and suggest lesson candidates.');
+  console.log('                  Candidates are human-reviewable; none are written automatically.');
+  console.log('                  --json  Output candidates as JSON.');
 }
 
 module.exports = {
   runIntent,
   runApply,
+  runSuggestLessons,
   parseArgs,
   printHelp,
 };

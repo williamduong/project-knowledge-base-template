@@ -33,6 +33,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kb intent list [--json]');
     console.log('  kb intent apply <id> [--release] [--yes] [--json]');
     console.log('  kb intent cancel <id> [--yes] [--json]');
+    console.log('  kb intent suggest-lessons [--json]');
     console.log('  kb chaos [--json] [--no-save] [--quiet] [--scan-src <dir>]');
     console.log('  kb graph export [--output=<path>] [--json]');
     console.log('  kb graph check  [--json]');
@@ -114,6 +115,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb intent list [--json]');
   console.log('  kb intent apply <id> [--release] [--yes] [--json]');
   console.log('  kb intent cancel <id> [--yes] [--json]');    console.log('  kb chaos [--json] [--no-save] [--quiet] [--scan-src <dir>]');  console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
+  console.log('  kb intent suggest-lessons [--json]');
   console.log('  kb version');
   console.log('');
   console.log('Implemented commands:');
