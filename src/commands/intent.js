@@ -22,6 +22,7 @@ const {
   writeApplyRecord,
   archiveIntent,
 } = require('../lib/intent');
+const { analyzeIntentConflicts } = require('../lib/intent-intelligence');
 const { runRelease } = require('./release');
 
 // ---------------------------------------------------------------------------
@@ -378,6 +379,14 @@ async function runApply(ctx, options, cwd) {
     console.warn(`WARNING: decision_summary is empty in intent "${intentId}". Fill it in intent.md before applying.`);
   }
 
+  // v2.0 Phase 1 primitive: advanced conflict context (warn, non-blocking)
+  let conflictSummary = null;
+  try {
+    conflictSummary = analyzeIntentConflicts(ctx.contentRoot, intentId);
+  } catch (_) {
+    conflictSummary = null;
+  }
+
   // Classify files as new (+) or modified (~) for preview (I8)
   const classified = staged.map((f) => ({
     file: f,
@@ -394,6 +403,20 @@ async function runApply(ctx, options, cwd) {
     const wsPath = intentWorkspacePath(ctx.contentRoot, intentId);
     const hasLesson = fs.existsSync(path.join(wsPath, 'lesson-candidate.md'));
     if (hasLesson) console.log('  (lesson-candidate.md will be preserved in archive)');
+    if (conflictSummary && conflictSummary.conflict_count > 0) {
+      console.log('');
+      console.log(`Conflict context: ${conflictSummary.conflict_count} potential overlap(s) with other active intents.`);
+      for (const c of conflictSummary.conflicts.slice(0, 5)) {
+        console.log(
+          `  [${String(c.risk || '').toUpperCase()}] vs ${c.against_intent_id}` +
+          `  (exact:${c.signals.exact_file_overlap}, dir:${c.signals.same_directory_overlap},` +
+          ` domain:${c.signals.same_domain_overlap}, graph:${c.signals.graph_neighbor_overlap})`
+        );
+      }
+      if (conflictSummary.high_risk_count > 0) {
+        console.log('  WARNING: high-risk overlap detected; consider apply ordering or merge strategy.');
+      }
+    }
     if (release) console.log('  --release: release pipeline will run after apply.');
     console.log('');
   }
@@ -423,6 +446,7 @@ async function runApply(ctx, options, cwd) {
       intent_id: intentId,
       applied_files: applyResults,
       apply_record: record,
+      conflict_summary: conflictSummary,
       archive_path: archivePath,
       status: 'applied',
     }, null, 2));
