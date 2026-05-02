@@ -1,0 +1,845 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+const {
+  DEBT_TYPES,
+  ENTROPY_TYPES,
+  computeDebtScore,
+  computeEntropyScore,
+  debtScoreToTier,
+  entropyScoreToTier,
+  buildDebtItem,
+  buildEntropyItem,
+  parseDebtIndex,
+  parseEntropyIndex,
+  readDebtIndex,
+  readEntropyIndex,
+  summariseDebt,
+  summariseEntropy,
+  buildLessonItem,
+  parseLessonsIndex,
+  readLessonsIndex,
+  summariseLessons,
+  LESSON_DOMAINS,
+  LESSON_LIFECYCLES,
+  runDebtGate,
+  runEntropyGate,
+  runLessonContradictionGate,
+  runVersionScopeGate,
+  runAllGates,
+  buildDecisionRecord,
+  appendDecisionRecord,
+  parseDecisionRecords,
+  readDecisionRecords,
+  DECISION_ACTIONS,
+  RECONSTRUCTION_TRIGGERS,
+  evaluateReconstructionTriggers,
+  buildReconstructionIntentStub,
+} = require('../../src/lib/observation');
+
+function tmpRoot() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'kb-observation-'));
+}
+
+// ---------------------------------------------------------------------------
+// computeDebtScore
+// ---------------------------------------------------------------------------
+
+test('computeDebtScore: correct formula', () => {
+  const score = computeDebtScore({ severity: 4, urgency: 3, frequency: 4, strategic_value: 5, effort: 3 });
+  assert.equal(score, (4 * 3 * 4 * 5) / 3); // 80
+});
+
+test('computeDebtScore: returns null for out-of-range value', () => {
+  assert.equal(computeDebtScore({ severity: 6, urgency: 3, frequency: 3, strategic_value: 3, effort: 3 }), null);
+  assert.equal(computeDebtScore({ severity: 3, urgency: 0, frequency: 3, strategic_value: 3, effort: 3 }), null);
+});
+
+test('computeDebtScore: returns null for missing field', () => {
+  assert.equal(computeDebtScore({ severity: 3, urgency: 3, frequency: 3, strategic_value: 3 }), null);
+});
+
+// ---------------------------------------------------------------------------
+// computeEntropyScore
+// ---------------------------------------------------------------------------
+
+test('computeEntropyScore: correct formula', () => {
+  const score = computeEntropyScore({ severity: 5, spread: 4, coupling: 3, reversibility: 3 });
+  assert.equal(score, (5 * 4 * 3) / 3); // 20
+});
+
+test('computeEntropyScore: returns null for out-of-range value', () => {
+  assert.equal(computeEntropyScore({ severity: 5, spread: 4, coupling: 6, reversibility: 3 }), null);
+});
+
+test('computeEntropyScore: returns null for missing field', () => {
+  assert.equal(computeEntropyScore({ severity: 5, spread: 4, coupling: 3 }), null);
+});
+
+// ---------------------------------------------------------------------------
+// debtScoreToTier
+// ---------------------------------------------------------------------------
+
+test('debtScoreToTier: tiers', () => {
+  assert.equal(debtScoreToTier(10), 'low');
+  assert.equal(debtScoreToTier(19.9), 'low');
+  assert.equal(debtScoreToTier(20), 'medium');
+  assert.equal(debtScoreToTier(59.9), 'medium');
+  assert.equal(debtScoreToTier(60), 'high');
+  assert.equal(debtScoreToTier(119.9), 'high');
+  assert.equal(debtScoreToTier(120), 'red');
+  assert.equal(debtScoreToTier(500), 'red');
+});
+
+test('debtScoreToTier: null input returns null', () => {
+  assert.equal(debtScoreToTier(null), null);
+  assert.equal(debtScoreToTier(undefined), null);
+});
+
+// ---------------------------------------------------------------------------
+// entropyScoreToTier
+// ---------------------------------------------------------------------------
+
+test('entropyScoreToTier: tiers', () => {
+  assert.equal(entropyScoreToTier(1), 'low');
+  assert.equal(entropyScoreToTier(2.9), 'low');
+  assert.equal(entropyScoreToTier(3), 'medium');
+  assert.equal(entropyScoreToTier(9.9), 'medium');
+  assert.equal(entropyScoreToTier(10), 'high');
+  assert.equal(entropyScoreToTier(24.9), 'high');
+  assert.equal(entropyScoreToTier(25), 'red');
+});
+
+test('entropyScoreToTier: null input returns null', () => {
+  assert.equal(entropyScoreToTier(null), null);
+});
+
+// ---------------------------------------------------------------------------
+// buildDebtItem
+// ---------------------------------------------------------------------------
+
+test('buildDebtItem: valid item', () => {
+  const { item, errors } = buildDebtItem({
+    id: 'D01', type: 'knowledge', severity: 4, urgency: 3,
+    frequency: 4, strategic_value: 5, effort: 3,
+    source: 'v1.7-I5', current_gap: 'no boundary rule',
+  });
+  assert.equal(errors, undefined);
+  assert.equal(item.id, 'D01');
+  assert.equal(item.type, 'knowledge');
+  assert.equal(item.status, 'open');
+  assert.equal(item.debt_score, 80);
+  assert.equal(item.debt_tier, 'high');
+  assert.equal(item.source, 'v1.7-I5');
+});
+
+test('buildDebtItem: defaults status to open', () => {
+  const { item } = buildDebtItem({
+    id: 'D02', type: 'technical', severity: 2, urgency: 2,
+    frequency: 2, strategic_value: 2, effort: 2,
+  });
+  assert.equal(item.status, 'open');
+});
+
+test('buildDebtItem: invalid type returns errors', () => {
+  const { errors } = buildDebtItem({
+    id: 'D03', type: 'bogus', severity: 2, urgency: 2,
+    frequency: 2, strategic_value: 2, effort: 2,
+  });
+  assert.ok(errors.some(e => e.includes('type must be')));
+});
+
+test('buildDebtItem: missing id returns errors', () => {
+  const { errors } = buildDebtItem({
+    type: 'technical', severity: 2, urgency: 2,
+    frequency: 2, strategic_value: 2, effort: 2,
+  });
+  assert.ok(errors.some(e => e.includes('id required')));
+});
+
+test('buildDebtItem: out-of-range score field returns errors', () => {
+  const { errors } = buildDebtItem({
+    id: 'D04', type: 'technical', severity: 6, urgency: 2,
+    frequency: 2, strategic_value: 2, effort: 2,
+  });
+  assert.ok(errors.some(e => e.includes('1–5')));
+});
+
+// ---------------------------------------------------------------------------
+// buildEntropyItem
+// ---------------------------------------------------------------------------
+
+test('buildEntropyItem: valid item', () => {
+  const { item, errors } = buildEntropyItem({
+    id: 'E01', type: 'naming', severity: 5, spread: 4,
+    coupling: 3, reversibility: 3,
+    description: 'catalog vs release ledger',
+  });
+  assert.equal(errors, undefined);
+  assert.equal(item.id, 'E01');
+  assert.equal(item.type, 'naming');
+  assert.equal(item.entropy_score, 20);
+  assert.equal(item.entropy_tier, 'high');
+});
+
+test('buildEntropyItem: invalid type returns errors', () => {
+  const { errors } = buildEntropyItem({
+    id: 'E02', type: 'bogus', severity: 3, spread: 3,
+    coupling: 3, reversibility: 3,
+  });
+  assert.ok(errors.some(e => e.includes('type must be')));
+});
+
+test('buildEntropyItem: missing id returns errors', () => {
+  const { errors } = buildEntropyItem({
+    type: 'naming', severity: 3, spread: 3, coupling: 3, reversibility: 3,
+  });
+  assert.ok(errors.some(e => e.includes('id required')));
+});
+
+// ---------------------------------------------------------------------------
+// parseDebtIndex
+// ---------------------------------------------------------------------------
+
+const DEBT_INDEX_SAMPLE = `# Debt Index
+
+---
+id: D01
+type: knowledge
+status: open
+severity: 4
+urgency: 3
+frequency: 4
+strategic_value: 5
+effort: 3
+debt_score: 80.0
+debt_tier: high
+source: v1.7-I5
+current_gap: no boundary rule
+expected_capability: explicit cutoff
+proposed_resolution: implement lastReleasedAt
+linked_intent: null
+linked_lesson: null
+review_after: null
+---
+id: D02
+type: technical
+status: resolved
+severity: 2
+urgency: 2
+frequency: 2
+strategic_value: 2
+effort: 2
+debt_score: 8.0
+debt_tier: low
+source: general
+current_gap: some gap
+expected_capability: some cap
+proposed_resolution: done
+linked_intent: null
+linked_lesson: null
+review_after: null
+---
+`;
+
+test('parseDebtIndex: parses two items', () => {
+  const { items, parseErrors } = parseDebtIndex(DEBT_INDEX_SAMPLE);
+  assert.equal(parseErrors.length, 0);
+  assert.equal(items.length, 2);
+  assert.equal(items[0].id, 'D01');
+  assert.equal(items[0].severity, 4);
+  assert.equal(items[0].debt_score, 80);
+  assert.equal(items[0].debt_tier, 'high');
+  assert.equal(items[1].id, 'D02');
+  assert.equal(items[1].status, 'resolved');
+});
+
+test('parseDebtIndex: empty file returns empty items', () => {
+  const { items } = parseDebtIndex('# Debt Index\n');
+  assert.equal(items.length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// parseEntropyIndex
+// ---------------------------------------------------------------------------
+
+const ENTROPY_INDEX_SAMPLE = `# Entropy Index
+
+---
+id: E01
+type: naming
+status: open
+severity: 5
+spread: 4
+coupling: 3
+reversibility: 3
+entropy_score: 20.0
+entropy_tier: high
+description: catalog vs release ledger
+resolution: terminology correction
+affected_files: null
+affected_modules: null
+linked_intent: null
+linked_lesson: null
+review_after: null
+---
+`;
+
+test('parseEntropyIndex: parses one item', () => {
+  const { items } = parseEntropyIndex(ENTROPY_INDEX_SAMPLE);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].id, 'E01');
+  assert.equal(items[0].type, 'naming');
+  assert.equal(items[0].entropy_score, 20);
+  assert.equal(items[0].entropy_tier, 'high');
+});
+
+// ---------------------------------------------------------------------------
+// readDebtIndex / readEntropyIndex
+// ---------------------------------------------------------------------------
+
+test('readDebtIndex: returns empty when file missing', () => {
+  const { items, parseErrors } = readDebtIndex('/nonexistent-path-xyz');
+  assert.equal(items.length, 0);
+  assert.equal(parseErrors.length, 0);
+});
+
+test('readDebtIndex: reads and parses from disk', () => {
+  const root = tmpRoot();
+  const metaDir = path.join(root, 'intents', '_meta');
+  fs.mkdirSync(metaDir, { recursive: true });
+  fs.writeFileSync(path.join(metaDir, 'debt-index.md'), DEBT_INDEX_SAMPLE, 'utf8');
+  const { items } = readDebtIndex(root);
+  assert.equal(items.length, 2);
+  assert.equal(items[0].id, 'D01');
+});
+
+test('readEntropyIndex: returns empty when file missing', () => {
+  const { items } = readEntropyIndex('/nonexistent-path-xyz');
+  assert.equal(items.length, 0);
+});
+
+test('readEntropyIndex: reads and parses from disk', () => {
+  const root = tmpRoot();
+  const metaDir = path.join(root, 'intents', '_meta');
+  fs.mkdirSync(metaDir, { recursive: true });
+  fs.writeFileSync(path.join(metaDir, 'entropy-index.md'), ENTROPY_INDEX_SAMPLE, 'utf8');
+  const { items } = readEntropyIndex(root);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].id, 'E01');
+});
+
+// ---------------------------------------------------------------------------
+// summariseDebt
+// ---------------------------------------------------------------------------
+
+test('summariseDebt: counts tiers and open items', () => {
+  const items = [
+    { id: 'D01', debt_score: 80, debt_tier: 'high', status: 'open' },
+    { id: 'D02', debt_score: 30, debt_tier: 'medium', status: 'resolved' },
+    { id: 'D03', debt_score: 10, debt_tier: 'low', status: 'in-progress' },
+    { id: 'D04', debt_score: 150, debt_tier: 'red', status: 'open' },
+  ];
+  const s = summariseDebt(items);
+  assert.equal(s.total, 4);
+  assert.equal(s.byTier.high, 1);
+  assert.equal(s.byTier.medium, 1);
+  assert.equal(s.byTier.low, 1);
+  assert.equal(s.byTier.red, 1);
+  assert.equal(s.openCount, 3); // D01 open, D02 resolved, D03 in-progress, D04 open
+});
+
+test('summariseDebt: empty items', () => {
+  const s = summariseDebt([]);
+  assert.equal(s.total, 0);
+  assert.equal(s.openCount, 0);
+});
+
+test('summariseDebt: computes tier from debt_score when debt_tier absent', () => {
+  const items = [{ id: 'D01', debt_score: 80, status: 'open' }];
+  const s = summariseDebt(items);
+  assert.equal(s.byTier.high, 1);
+});
+
+// ---------------------------------------------------------------------------
+// summariseEntropy
+// ---------------------------------------------------------------------------
+
+test('summariseEntropy: counts tiers and open items', () => {
+  const items = [
+    { id: 'E01', entropy_score: 20, entropy_tier: 'high', status: 'open' },
+    { id: 'E02', entropy_score: 1, entropy_tier: 'low', status: 'resolved' },
+    { id: 'E03', entropy_score: 30, entropy_tier: 'red', status: 'open' },
+  ];
+  const s = summariseEntropy(items);
+  assert.equal(s.total, 3);
+  assert.equal(s.byTier.high, 1);
+  assert.equal(s.byTier.low, 1);
+  assert.equal(s.byTier.red, 1);
+  assert.equal(s.openCount, 2);
+});
+
+test('summariseEntropy: computes tier from entropy_score when entropy_tier absent', () => {
+  const items = [{ id: 'E01', entropy_score: 30, status: 'open' }];
+  const s = summariseEntropy(items);
+  assert.equal(s.byTier.red, 1);
+});
+
+// ---------------------------------------------------------------------------
+// DEBT_TYPES / ENTROPY_TYPES constants
+// ---------------------------------------------------------------------------
+
+test('DEBT_TYPES includes all required domains', () => {
+  const required = ['technical', 'knowledge', 'ux', 'governance', 'test'];
+  for (const t of required) assert.ok(DEBT_TYPES.includes(t), `missing: ${t}`);
+});
+
+test('ENTROPY_TYPES includes all required domains', () => {
+  const required = ['naming', 'workflow', 'state', 'decision'];
+  for (const t of required) assert.ok(ENTROPY_TYPES.includes(t), `missing: ${t}`);
+});
+
+// ---------------------------------------------------------------------------
+// buildLessonItem
+// ---------------------------------------------------------------------------
+
+test('buildLessonItem: valid item', () => {
+  const { item, errors } = buildLessonItem({
+    id: 'L01', domain: 'governance',
+    rule: 'Always set decision_summary before apply',
+    source: 'D01',
+  });
+  assert.equal(errors, undefined);
+  assert.equal(item.id, 'L01');
+  assert.equal(item.status, 'proposed');
+  assert.equal(item.level, 'repo');
+  assert.equal(item.enforcement, 'none');
+  assert.equal(item.rule, 'Always set decision_summary before apply');
+});
+
+test('buildLessonItem: accepts accepted status', () => {
+  const { item } = buildLessonItem({
+    id: 'L02', domain: 'governance', status: 'accepted',
+    rule: 'Use timestamp suffix in archive folder names',
+  });
+  assert.equal(item.status, 'accepted');
+});
+
+test('buildLessonItem: invalid domain returns errors', () => {
+  const { errors } = buildLessonItem({
+    id: 'L03', domain: 'bogus', rule: 'some rule',
+  });
+  assert.ok(errors.some(e => e.includes('domain must be')));
+});
+
+test('buildLessonItem: missing rule returns errors', () => {
+  const { errors } = buildLessonItem({ id: 'L04', domain: 'governance', rule: '' });
+  assert.ok(errors.some(e => e.includes('rule required')));
+});
+
+test('buildLessonItem: missing id returns errors', () => {
+  const { errors } = buildLessonItem({ domain: 'governance', rule: 'a rule' });
+  assert.ok(errors.some(e => e.includes('id required')));
+});
+
+test('buildLessonItem: invalid enforcement returns errors', () => {
+  const { errors } = buildLessonItem({
+    id: 'L05', domain: 'governance', rule: 'some rule', enforcement: 'robot',
+  });
+  assert.ok(errors.some(e => e.includes('enforcement must be')));
+});
+
+// ---------------------------------------------------------------------------
+// parseLessonsIndex
+// ---------------------------------------------------------------------------
+
+const LESSONS_INDEX_SAMPLE = `# Lessons Index
+
+---
+id: L01
+status: accepted
+level: repo
+domain: governance
+source: D01
+rule: Always set decision_summary before apply
+applies_to: all intents
+linked_debt: D01
+linked_entropy: null
+enforcement: manual
+review_after: null
+---
+id: L02
+status: proposed
+level: repo
+domain: process
+source: E01
+rule: Use terminology-guard before naming a new concept
+applies_to: naming decisions
+linked_debt: null
+linked_entropy: E01
+enforcement: none
+review_after: null
+---
+`;
+
+test('parseLessonsIndex: parses two items', () => {
+  const { items, parseErrors } = parseLessonsIndex(LESSONS_INDEX_SAMPLE);
+  assert.equal(parseErrors.length, 0);
+  assert.equal(items.length, 2);
+  assert.equal(items[0].id, 'L01');
+  assert.equal(items[0].status, 'accepted');
+  assert.equal(items[0].enforcement, 'manual');
+  assert.equal(items[1].id, 'L02');
+  assert.equal(items[1].status, 'proposed');
+});
+
+test('parseLessonsIndex: empty file returns empty items', () => {
+  const { items } = parseLessonsIndex('# Lessons Index\n');
+  assert.equal(items.length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// readLessonsIndex
+// ---------------------------------------------------------------------------
+
+test('readLessonsIndex: returns empty when file missing', () => {
+  const { items } = readLessonsIndex('/nonexistent-path-xyz');
+  assert.equal(items.length, 0);
+});
+
+test('readLessonsIndex: reads and parses from disk', () => {
+  const root = tmpRoot();
+  const metaDir = path.join(root, 'intents', '_meta');
+  fs.mkdirSync(metaDir, { recursive: true });
+  fs.writeFileSync(path.join(metaDir, 'lessons-index.md'), LESSONS_INDEX_SAMPLE, 'utf8');
+  const { items } = readLessonsIndex(root);
+  assert.equal(items.length, 2);
+  assert.equal(items[0].id, 'L01');
+});
+
+// ---------------------------------------------------------------------------
+// summariseLessons
+// ---------------------------------------------------------------------------
+
+test('summariseLessons: counts by lifecycle status', () => {
+  const items = [
+    { id: 'L01', status: 'proposed' },
+    { id: 'L02', status: 'accepted' },
+    { id: 'L03', status: 'accepted' },
+    { id: 'L04', status: 'enforced' },
+    { id: 'L05', status: 'deprecated' },
+  ];
+  const s = summariseLessons(items);
+  assert.equal(s.total, 5);
+  assert.equal(s.byStatus.proposed, 1);
+  assert.equal(s.byStatus.accepted, 2);
+  assert.equal(s.byStatus.enforced, 1);
+  assert.equal(s.byStatus.deprecated, 1);
+  assert.equal(s.byStatus.measured, 0);
+});
+
+test('summariseLessons: empty items', () => {
+  const s = summariseLessons([]);
+  assert.equal(s.total, 0);
+});
+
+// ---------------------------------------------------------------------------
+// LESSON_DOMAINS / LESSON_LIFECYCLES constants
+// ---------------------------------------------------------------------------
+
+test('LESSON_DOMAINS includes required domains', () => {
+  const required = ['technical', 'governance', 'process', 'documentation'];
+  for (const d of required) assert.ok(LESSON_DOMAINS.includes(d), `missing: ${d}`);
+});
+
+test('LESSON_LIFECYCLES has all 5 stages', () => {
+  assert.equal(LESSON_LIFECYCLES.length, 5);
+  assert.ok(LESSON_LIFECYCLES.includes('proposed'));
+  assert.ok(LESSON_LIFECYCLES.includes('deprecated'));
+});
+
+// ---------------------------------------------------------------------------
+// runDebtGate
+// ---------------------------------------------------------------------------
+
+test('runDebtGate: pass when no high/red open items', () => {
+  const items = [
+    { id: 'D01', debt_score: 30, debt_tier: 'medium', status: 'open' },
+    { id: 'D02', debt_score: 80, debt_tier: 'high', status: 'resolved' },
+  ];
+  const r = runDebtGate(items);
+  assert.equal(r.status, 'pass');
+  assert.equal(r.evidence.length, 0);
+});
+
+test('runDebtGate: warn when open high item exists', () => {
+  const items = [{ id: 'D01', debt_score: 80, debt_tier: 'high', status: 'open' }];
+  const r = runDebtGate(items);
+  assert.equal(r.status, 'warn');
+  assert.equal(r.evidence.length, 1);
+  assert.equal(r.evidence[0].id, 'D01');
+  assert.ok(r.recommendedAction);
+});
+
+test('runDebtGate: warn when open red item exists', () => {
+  const items = [{ id: 'D02', debt_score: 200, debt_tier: 'red', status: 'in-progress' }];
+  const r = runDebtGate(items);
+  assert.equal(r.status, 'warn');
+});
+
+test('runDebtGate: computes tier from debt_score when debt_tier absent', () => {
+  const items = [{ id: 'D03', debt_score: 80, status: 'open' }];
+  const r = runDebtGate(items);
+  assert.equal(r.status, 'warn');
+});
+
+// ---------------------------------------------------------------------------
+// runEntropyGate
+// ---------------------------------------------------------------------------
+
+test('runEntropyGate: pass when no high/red open items', () => {
+  const items = [{ id: 'E01', entropy_score: 5, entropy_tier: 'medium', status: 'open' }];
+  const r = runEntropyGate(items);
+  assert.equal(r.status, 'pass');
+});
+
+test('runEntropyGate: warn when open high entropy item', () => {
+  const items = [{ id: 'E01', entropy_score: 20, entropy_tier: 'high', status: 'open' }];
+  const r = runEntropyGate(items);
+  assert.equal(r.status, 'warn');
+  assert.ok(r.recommendedAction.includes('entropy'));
+});
+
+// ---------------------------------------------------------------------------
+// runLessonContradictionGate
+// ---------------------------------------------------------------------------
+
+test('runLessonContradictionGate: pass when all same enforcement per domain', () => {
+  const items = [
+    { id: 'L01', status: 'accepted', domain: 'governance', enforcement: 'manual' },
+    { id: 'L02', status: 'accepted', domain: 'governance', enforcement: 'manual' },
+  ];
+  assert.equal(runLessonContradictionGate(items).status, 'pass');
+});
+
+test('runLessonContradictionGate: warn on mixed enforcement in same domain', () => {
+  const items = [
+    { id: 'L01', status: 'accepted', domain: 'governance', enforcement: 'manual' },
+    { id: 'L02', status: 'enforced', domain: 'governance', enforcement: 'gate' },
+  ];
+  const r = runLessonContradictionGate(items);
+  assert.equal(r.status, 'warn');
+  assert.equal(r.evidence[0].domain, 'governance');
+});
+
+test('runLessonContradictionGate: ignores proposed/deprecated lessons', () => {
+  const items = [
+    { id: 'L01', status: 'proposed', domain: 'governance', enforcement: 'none' },
+    { id: 'L02', status: 'accepted', domain: 'governance', enforcement: 'gate' },
+  ];
+  assert.equal(runLessonContradictionGate(items).status, 'pass');
+});
+
+// ---------------------------------------------------------------------------
+// runVersionScopeGate
+// ---------------------------------------------------------------------------
+
+test('runVersionScopeGate: pass when no stale resolved items', () => {
+  const items = [{ id: 'D01', status: 'resolved', review_after: '2099-01-01' }];
+  assert.equal(runVersionScopeGate(items).status, 'pass');
+});
+
+test('runVersionScopeGate: warn when resolved item review_after is past', () => {
+  const items = [{ id: 'D01', status: 'resolved', review_after: '2020-01-01' }];
+  const r = runVersionScopeGate(items);
+  assert.equal(r.status, 'warn');
+  assert.equal(r.evidence[0].id, 'D01');
+});
+
+test('runVersionScopeGate: open items ignored', () => {
+  const items = [{ id: 'D01', status: 'open', review_after: '2020-01-01' }];
+  assert.equal(runVersionScopeGate(items).status, 'pass');
+});
+
+// ---------------------------------------------------------------------------
+// runAllGates
+// ---------------------------------------------------------------------------
+
+test('runAllGates: pass when all clear', () => {
+  const r = runAllGates({
+    debtItems: [{ id: 'D01', debt_tier: 'low', debt_score: 10, status: 'open' }],
+    entropyItems: [],
+    lessonItems: [],
+  });
+  assert.equal(r.overallStatus, 'pass');
+});
+
+test('runAllGates: warn when any gate triggers', () => {
+  const r = runAllGates({
+    debtItems: [{ id: 'D01', debt_tier: 'red', debt_score: 200, status: 'open' }],
+    entropyItems: [],
+    lessonItems: [],
+  });
+  assert.equal(r.overallStatus, 'warn');
+  assert.equal(r.gateResults.debt.status, 'warn');
+});
+
+// ---------------------------------------------------------------------------
+// buildDecisionRecord
+// ---------------------------------------------------------------------------
+
+test('buildDecisionRecord: continue-incremental when both low', () => {
+  const { record } = buildDecisionRecord({ id: 'DR01', debtLevel: 'low', entropyLevel: 'low' });
+  assert.equal(record.action, 'continue-incremental');
+});
+
+test('buildDecisionRecord: build-capability when debt high, entropy low', () => {
+  const { record } = buildDecisionRecord({ id: 'DR02', debtLevel: 'high', entropyLevel: 'medium' });
+  assert.equal(record.action, 'build-capability');
+});
+
+test('buildDecisionRecord: refactor-cleanup when debt low, entropy high', () => {
+  const { record } = buildDecisionRecord({ id: 'DR03', debtLevel: 'medium', entropyLevel: 'high' });
+  assert.equal(record.action, 'refactor-cleanup');
+});
+
+test('buildDecisionRecord: create-reconstruction-intent when both high', () => {
+  const { record } = buildDecisionRecord({ id: 'DR04', debtLevel: 'red', entropyLevel: 'red' });
+  assert.equal(record.action, 'create-reconstruction-intent');
+});
+
+test('buildDecisionRecord: auto-generates id when not provided', () => {
+  const { record } = buildDecisionRecord({ debtLevel: 'low', entropyLevel: 'low' });
+  assert.ok(record.id.startsWith('DR-'));
+});
+
+test('buildDecisionRecord: sets decidedAt to ISO string', () => {
+  const { record } = buildDecisionRecord({ id: 'DR05', debtLevel: 'low', entropyLevel: 'low' });
+  assert.ok(record.decidedAt.includes('T'));
+});
+
+// ---------------------------------------------------------------------------
+// appendDecisionRecord / readDecisionRecords
+// ---------------------------------------------------------------------------
+
+test('appendDecisionRecord: creates file and appends record', () => {
+  const root = tmpRoot();
+  const { record } = buildDecisionRecord({ id: 'DR01', debtLevel: 'high', entropyLevel: 'low', rationale: 'test' });
+  appendDecisionRecord(root, record);
+  const { records } = readDecisionRecords(root);
+  assert.equal(records.length, 1);
+  assert.equal(records[0].id, 'DR01');
+  assert.equal(records[0].action, 'build-capability');
+});
+
+test('appendDecisionRecord: appends multiple records', () => {
+  const root = tmpRoot();
+  const { record: r1 } = buildDecisionRecord({ id: 'DR01', debtLevel: 'low', entropyLevel: 'low' });
+  const { record: r2 } = buildDecisionRecord({ id: 'DR02', debtLevel: 'red', entropyLevel: 'red' });
+  appendDecisionRecord(root, r1);
+  appendDecisionRecord(root, r2);
+  const { records } = readDecisionRecords(root);
+  assert.equal(records.length, 2);
+});
+
+test('readDecisionRecords: returns empty when file missing', () => {
+  const { records } = readDecisionRecords('/nonexistent-xyz');
+  assert.equal(records.length, 0);
+});
+
+// ---------------------------------------------------------------------------
+// DECISION_ACTIONS constant
+// ---------------------------------------------------------------------------
+
+test('DECISION_ACTIONS has all 4 matrix actions', () => {
+  assert.equal(DECISION_ACTIONS.length, 4);
+  assert.ok(DECISION_ACTIONS.includes('continue-incremental'));
+  assert.ok(DECISION_ACTIONS.includes('create-reconstruction-intent'));
+});
+
+// ---------------------------------------------------------------------------
+// evaluateReconstructionTriggers
+// ---------------------------------------------------------------------------
+
+test('evaluateReconstructionTriggers: not triggered when all pass', () => {
+  const r = evaluateReconstructionTriggers({
+    debt: { status: 'pass', evidence: [] },
+    entropy: { status: 'pass', evidence: [] },
+    lessonContradiction: { status: 'pass', evidence: [] },
+  });
+  assert.equal(r.triggered, false);
+  assert.equal(r.triggers.length, 0);
+});
+
+test('evaluateReconstructionTriggers: debt-red fired when red tier item in debt warn', () => {
+  const r = evaluateReconstructionTriggers({
+    debt: { status: 'warn', evidence: [{ id: 'D01', debt_tier: 'red', debt_score: 200 }] },
+    entropy: { status: 'pass', evidence: [] },
+    lessonContradiction: { status: 'pass', evidence: [] },
+  });
+  assert.equal(r.triggered, true);
+  assert.ok(r.triggers.includes('debt-red'));
+});
+
+test('evaluateReconstructionTriggers: entropy-red fired when red tier in entropy warn', () => {
+  const r = evaluateReconstructionTriggers({
+    debt: { status: 'pass', evidence: [] },
+    entropy: { status: 'warn', evidence: [{ id: 'E01', entropy_tier: 'red', entropy_score: 100 }] },
+    lessonContradiction: { status: 'pass', evidence: [] },
+  });
+  assert.ok(r.triggers.includes('entropy-red'));
+});
+
+test('evaluateReconstructionTriggers: no debt-red when only high tier (not red)', () => {
+  const r = evaluateReconstructionTriggers({
+    debt: { status: 'warn', evidence: [{ id: 'D01', debt_tier: 'high', debt_score: 80 }] },
+    entropy: { status: 'pass', evidence: [] },
+    lessonContradiction: { status: 'pass', evidence: [] },
+  });
+  assert.equal(r.triggered, false);
+});
+
+test('evaluateReconstructionTriggers: lesson contradiction fires when > 1 domain', () => {
+  const r = evaluateReconstructionTriggers({
+    debt: { status: 'pass', evidence: [] },
+    entropy: { status: 'pass', evidence: [] },
+    lessonContradiction: {
+      status: 'warn',
+      evidence: [{ domain: 'governance' }, { domain: 'testing' }],
+    },
+  });
+  assert.ok(r.triggers.includes('severe-lesson-contradiction'));
+});
+
+// ---------------------------------------------------------------------------
+// buildReconstructionIntentStub
+// ---------------------------------------------------------------------------
+
+test('buildReconstructionIntentStub: returns stub with required fields', () => {
+  const { stub } = buildReconstructionIntentStub({ triggers: ['debt-red'], rationale: 'Red tier debt.' });
+  assert.ok(stub.id.startsWith('reconstruct-'));
+  assert.equal(stub.changeType, 'refactor');
+  assert.ok(stub.decisionSummary.includes('Red tier debt'));
+  assert.deepEqual(stub.triggers, ['debt-red']);
+  assert.ok(stub.createdAt.includes('T'));
+});
+
+test('buildReconstructionIntentStub: fallback decisionSummary when no rationale', () => {
+  const { stub } = buildReconstructionIntentStub({ triggers: [], rationale: '' });
+  assert.ok(stub.decisionSummary.length > 0);
+});
+
+// ---------------------------------------------------------------------------
+// RECONSTRUCTION_TRIGGERS constant
+// ---------------------------------------------------------------------------
+
+test('RECONSTRUCTION_TRIGGERS contains debt-red and entropy-red', () => {
+  assert.ok(RECONSTRUCTION_TRIGGERS.includes('debt-red'));
+  assert.ok(RECONSTRUCTION_TRIGGERS.includes('entropy-red'));
+});
+

@@ -17,6 +17,16 @@ const { loadConfig, getConfigValue } = require('../lib/config');
 const { readCatalog } = require('../lib/catalog');
 const { pipelineFilePath, readPipeline } = require('../lib/pipeline');
 const { getActiveIntentsSummary } = require('../lib/intent');
+const {
+  readDebtIndex,
+  readEntropyIndex,
+  readLessonsIndex,
+  summariseDebt,
+  summariseEntropy,
+  summariseLessons,
+  runAllGates,
+  evaluateReconstructionTriggers,
+} = require('../lib/observation');
 
 const KNOWN_PIPELINE_TEMPLATES = new Set(['npm-package', 'docs-only', 'custom']);
 
@@ -259,6 +269,24 @@ function runStatus({ args, cwd, packageJson }) {
     }
   }
 
+  // Observation summary (detection-only, non-fatal)
+  let observationSummary = null;
+  if (context && presence === 'healthy') {
+    try {
+      const { items: debtItems } = readDebtIndex(context.contentRoot);
+      const { items: entropyItems } = readEntropyIndex(context.contentRoot);
+      const { items: lessonItems } = readLessonsIndex(context.contentRoot);
+      const debtSummary = summariseDebt(debtItems);
+      const entropySummary = summariseEntropy(entropyItems);
+      const lessonSummary = summariseLessons(lessonItems);
+      const { gateResults, overallStatus } = runAllGates({ debtItems, entropyItems, lessonItems });
+      const reconstruction = evaluateReconstructionTriggers(gateResults);
+      observationSummary = { debtSummary, entropySummary, lessonSummary, overallStatus, reconstruction };
+    } catch (_err) {
+      // non-fatal — observation files may not exist yet
+    }
+  }
+
   const verdict = deriveStatusVerdict({ presence, stateError, impactData, kbDirty });
 
   if (options.quiet) {
@@ -294,6 +322,7 @@ function runStatus({ args, cwd, packageJson }) {
       currentRelease: catalogData ? catalogData.current : null,
       releasePipeline,
       activeIntents,
+      observation: observationSummary,
       verdict,
     }, null, 2));
     if (verdict.code !== 0) process.exit(verdict.code);
@@ -423,8 +452,22 @@ function runStatus({ args, cwd, packageJson }) {
     }
   }
 
+  // Observation summary
+  if (observationSummary) {
+    console.log('- observation:');
+    const { debtSummary, entropySummary, lessonSummary, overallStatus, reconstruction } = observationSummary;
+    console.log(`    debt    : total=${debtSummary.total}, open=${debtSummary.openCount}, high=${debtSummary.byTier.high}, red=${debtSummary.byTier.red}`);
+    console.log(`    entropy : total=${entropySummary.total}, open=${entropySummary.openCount}, high=${entropySummary.byTier.high}, red=${entropySummary.byTier.red}`);
+    console.log(`    lessons : total=${lessonSummary.total}, enforced=${lessonSummary.byStatus.enforced || 0}`);
+    console.log(`    gates   : ${overallStatus}`);
+    if (reconstruction.triggered) {
+      console.log(`    RECONSTRUCTION TRIGGER: ${reconstruction.triggers.join(', ')}`);
+      console.log(`    ${reconstruction.rationale}`);
+    }
+  }
+
   console.log('');
-  console.log(`verdict: ${verdict.label}${verdict.reasons.length ? ` (${verdict.reasons.join(', ')})` : ''}`);;
+  console.log(`verdict: ${verdict.label}${verdict.reasons.length ? ` (${verdict.reasons.join(', ')})` : ''}`);
 
   if (verdict.code !== 0) process.exit(verdict.code);
 }
