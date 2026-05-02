@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 1.6.0
+version: 1.7.0
 ---
 
 # /kb-run — Execute the next step of the KB runtime plan
