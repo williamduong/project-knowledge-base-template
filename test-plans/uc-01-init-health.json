@@ -19,7 +19,7 @@
       "allowedRoots": ["sample_repo/realworld-express-fresh"],
       "assert": {
         "exitCode": 0,
-        "stdoutContains": ["Doctor report"]
+        "stdoutContains": ["kb doctor publish-readiness"]
       }
     },
     {
