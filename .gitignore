@@ -43,3 +43,7 @@ AGENTS.md
 
 # Sample repos for local testing only
 sample_repo/
+
+# Local orchestrator generated outputs
+kb-orch-report-*.json
+out/

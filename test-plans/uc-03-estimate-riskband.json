@@ -1,0 +1,26 @@
+{
+  "id": "uc-03-estimate-riskband",
+  "steps": [
+    {
+      "id": "init-realworld",
+      "executor": "kb-cli",
+      "command": "init --yes",
+      "workingDir": "sample_repo/realworld-express-fresh",
+      "allowedRoots": ["sample_repo/realworld-express-fresh"],
+      "assert": {
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "estimate-json",
+      "executor": "kb-cli",
+      "command": "chaos --estimate --json --no-save",
+      "workingDir": "sample_repo/realworld-express-fresh",
+      "allowedRoots": ["sample_repo/realworld-express-fresh"],
+      "assert": {
+        "exitCode": 0,
+        "stdoutContains": ["riskBand"]
+      }
+    }
+  ]
+}

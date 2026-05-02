@@ -1,0 +1,37 @@
+{
+  "id": "uc-01-init-health",
+  "steps": [
+    {
+      "id": "init-kb",
+      "executor": "kb-cli",
+      "command": "init --yes",
+      "workingDir": "sample_repo/realworld-express-fresh",
+      "allowedRoots": ["sample_repo/realworld-express-fresh"],
+      "assert": {
+        "exitCode": 0
+      }
+    },
+    {
+      "id": "doctor",
+      "executor": "kb-cli",
+      "command": "doctor",
+      "workingDir": "sample_repo/realworld-express-fresh",
+      "allowedRoots": ["sample_repo/realworld-express-fresh"],
+      "assert": {
+        "exitCode": 0,
+        "stdoutContains": ["Doctor report"]
+      }
+    },
+    {
+      "id": "status-json",
+      "executor": "kb-cli",
+      "command": "status --json",
+      "workingDir": "sample_repo/realworld-express-fresh",
+      "allowedRoots": ["sample_repo/realworld-express-fresh"],
+      "assert": {
+        "exitCode": 0,
+        "stdoutContains": ["\"status\""]
+      }
+    }
+  ]
+}
