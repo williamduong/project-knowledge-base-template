@@ -78,6 +78,50 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## 2.0.0 - 2026-05-03
+
+<!-- release-meta: from=v1.9.0 to=v2.0.0 generated_at=2026-05-03T00:00:00.000Z -->
+
+### Summary
+
+- Advanced conflict intelligence: `analyzeIntentConflicts` enriched with graph-neighbor signals; `suggestApplyOrder` derives concrete strategies (`proceed` / `proceed-with-caution` / `review-order` / `resolve-first`) with actionable steps.
+- Autonomous lesson candidate generator: `generateLessonCandidates` scans `_archive` for recurring patterns (`recurring-change-type`, `high-churn-file`) and emits human-reviewable suggestions.
+- New CLI subcommand: `kb intent suggest-lessons [--json]` — surfaces lesson candidates without auto-promoting them.
+- AI decision transparency: `ai-decision-context.json` written to intent archive on every apply; records strategy, evidence, confidence, and `requires_user_approval`.
+- Agent governance alignment: `kb.agent.md` v2.0.0 (Role 4 Reasoner, behavioral rules 12–14), all prompt files bumped to 2.0.0, `agent-operating-manual.md` Reasoner Workflow section added.
+- E2E integration tests: 8 new scenarios covering conflict resolution, lesson generation, and no-regression paths (476 tests total).
+
+### Change Type
+
+- Major
+
+### Impact On Existing KBs
+
+- Low: all changes are additive. Existing `kb intent apply` flow gains conflict warnings and writes `ai-decision-context.json` (non-blocking). No schema changes to existing files.
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents should now invoke Role 4 (Reasoner) after `kb intent apply` when conflict warnings are present.
+- For `resolve-first` strategy: agents must surface evidence and steps to user before proceeding.
+- After 3+ intent applies in a session, agents should proactively suggest `kb intent suggest-lessons`.
+- All AI-driven recommendations must cite evidence per the `[AI DECISION]` transparency format in `agent-operating-manual.md`.
+
+### Files Added / Changed
+
+- `src/lib/intent-intelligence.js` — `suggestApplyOrder`, `generateLessonCandidates` added; `buildIntentContext` enriched with graph-neighbor context
+- `src/commands/intent.js` — conflict display with strategy steps, `suggest-lessons` subcommand, `ai-decision-context.json` write after apply
+- `src/commands/help.js` — `suggest-lessons` documented
+- `template/.github/agents/kb.agent.md` — v2.0.0, Role 4 Reasoner, behavioral rules 12–14
+- `template/.github/prompts/kb-run.prompt.md` — v2.0.0, v2.0 Intent Intelligence Awareness section
+- `template/.github/prompts/kb-ask.prompt.md`, `kb-plan.prompt.md` — version bumped to 2.0.0
+- `template/12-ai-skills/agent-operating-manual.md` — v2.0 Reasoner Workflow + transparency output format
+- `test/lib/intent-intelligence.test.js` — +11 tests (Phase 2 functions)
+- `test/integration/v2-e2e-conflict-and-lessons.test.js` — 8 E2E scenarios (new)
+
 ## 1.8.3 - 2026-05-03
 
 <!-- release-meta: from=v1.8.2 to=v1.8.3 generated_at=2026-05-03T00:00:00.000Z -->
