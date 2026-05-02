@@ -1,6 +1,6 @@
 {
   "name": "@williamduong/kb",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
   "private": false,
   "license": "AGPL-3.0-only",

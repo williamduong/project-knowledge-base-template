@@ -898,6 +898,15 @@ test('computeChaosCoefficient: resolved items do not contribute', () => {
   assert.equal(r.level, 'stable');
 });
 
+test('computeChaosCoefficient: draft/in-review contributes partially vs open', () => {
+  const openDebt = [{ id: 'D01', debt_score: 120, debt_tier: 'red', status: 'open' }];
+  const draftDebt = [{ id: 'D01', debt_score: 120, debt_tier: 'red', status: 'draft' }];
+  const open = computeChaosCoefficient({ debtItems: openDebt, entropyItems: [], lessonItems: [] });
+  const draft = computeChaosCoefficient({ debtItems: draftDebt, entropyItems: [], lessonItems: [] });
+  assert.ok(draft.breakdown.debtPressure < open.breakdown.debtPressure);
+  assert.ok(draft.breakdown.debtPressure > 0);
+});
+
 test('computeChaosCoefficient: test-coverage debt raises coverageGap', () => {
   const debtItems = [{ id: 'D03', type: 'test-coverage', status: 'open', severity: 4, debt_score: 48, debt_tier: 'medium' }];
   const r = computeChaosCoefficient({ debtItems, entropyItems: [], lessonItems: [] });
@@ -946,6 +955,124 @@ test('computeChaosCoefficient: moduleStats high coupling raises structural', () 
   assert.ok(r2.score >= r1.score, 'High coupling should not lower score');
 });
 
+test('computeChaosCoefficient: deep scan complexity raises cognitiveLoad', () => {
+  const moduleStats = [
+    {
+      file: 'a.js',
+      loc: 420,
+      requireCount: 9,
+      hasTests: true,
+      maxCyclomaticPerFunction: 22,
+      maxNestingDepth: 9,
+      longFunctionCount: 2,
+      todoCount: 0,
+      fanIn: 3,
+      hasCircularDep: false,
+    },
+  ];
+  const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats });
+  assert.ok(r.breakdown.cognitiveLoad >= 25);
+});
+
+test('computeChaosCoefficient: cyclomatic inflation guarded for tiny files', () => {
+  const tiny = computeChaosCoefficient({
+    debtItems: [],
+    entropyItems: [],
+    lessonItems: [],
+    moduleStats: [{ file: 'tiny.js', loc: 20, requireCount: 1, hasTests: true, maxCyclomaticPerFunction: 120 }],
+  });
+  const large = computeChaosCoefficient({
+    debtItems: [],
+    entropyItems: [],
+    lessonItems: [],
+    moduleStats: [{ file: 'large.js', loc: 220, requireCount: 1, hasTests: true, maxCyclomaticPerFunction: 120 }],
+  });
+  assert.ok(large.breakdown.structural > tiny.breakdown.structural);
+});
+
+test('computeChaosCoefficient: import threshold contributes to structural', () => {
+  const low = computeChaosCoefficient({
+    debtItems: [],
+    entropyItems: [],
+    lessonItems: [],
+    moduleStats: [{ file: 'a.js', loc: 180, requireCount: 5, hasTests: true }],
+  });
+  const high = computeChaosCoefficient({
+    debtItems: [],
+    entropyItems: [],
+    lessonItems: [],
+    moduleStats: [{ file: 'a.js', loc: 180, requireCount: 12, hasTests: true }],
+  });
+  assert.ok(high.breakdown.structural > low.breakdown.structural);
+});
+
+test('computeChaosCoefficient: todo threshold uses per-file density bands', () => {
+  const mild = computeChaosCoefficient({
+    debtItems: [],
+    entropyItems: [],
+    lessonItems: [],
+    moduleStats: [{ file: 'a.js', loc: 200, requireCount: 1, hasTests: true, todoCount: 3 }],
+  });
+  const high = computeChaosCoefficient({
+    debtItems: [],
+    entropyItems: [],
+    lessonItems: [],
+    moduleStats: [{ file: 'a.js', loc: 200, requireCount: 1, hasTests: true, todoCount: 12 }],
+  });
+  assert.ok(high.breakdown.debtPressure > mild.breakdown.debtPressure);
+});
+
+test('computeChaosCoefficient: accepted-not-enforced lessons increase coverageGap', () => {
+  const none = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
+  const accepted = computeChaosCoefficient({
+    debtItems: [],
+    entropyItems: [],
+    lessonItems: [{ id: 'L01', status: 'accepted', enforcement: 'manual' }],
+  });
+  assert.ok(accepted.breakdown.coverageGap > none.breakdown.coverageGap);
+});
+
+test('computeChaosCoefficient: context signals boost dimensions', () => {
+  const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: [] });
+  const boosted = computeChaosCoefficient({
+    debtItems: [],
+    entropyItems: [],
+    lessonItems: [],
+    moduleStats: [],
+    contextSignals: {
+      statusVerdict: 'attention',
+      statusUnboundCount: 3,
+      graphStrongCycleCount: 2,
+      graphOrphanDocCount: 4,
+      intentActiveCount: 5,
+      intentStaleCount: 2,
+      intentMissingDecisionSummaryCount: 1,
+      releaseDaysSinceLast: 45,
+      releaseHasCurrent: false,
+    },
+  });
+  assert.ok(boosted.breakdown.structural > base.breakdown.structural);
+  assert.ok(boosted.breakdown.coverageGap > base.breakdown.coverageGap);
+  assert.ok(boosted.breakdown.cognitiveLoad > base.breakdown.cognitiveLoad);
+  assert.ok(boosted.breakdown.instability > base.breakdown.instability);
+});
+
+test('computeChaosCoefficient: todo density from deep scan increases debtPressure', () => {
+  const moduleStatsClean = [{ file: 'a.js', loc: 400, requireCount: 2, hasTests: true, todoCount: 0 }];
+  const moduleStatsTodo = [{ file: 'a.js', loc: 400, requireCount: 2, hasTests: true, todoCount: 20 }];
+  const clean = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsClean });
+  const todo = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsTodo });
+  assert.ok(todo.breakdown.debtPressure > clean.breakdown.debtPressure);
+});
+
+test('computeChaosCoefficient: circular dependencies raise structural', () => {
+  const moduleStatsNoCycle = [{ file: 'a.js', loc: 200, requireCount: 4, hasTests: true, fanIn: 1, hasCircularDep: false }];
+  const moduleStatsCycle = [{ file: 'a.js', loc: 200, requireCount: 4, hasTests: true, fanIn: 1, hasCircularDep: true }];
+  const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsNoCycle });
+  const cyc = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsCycle });
+  assert.ok(cyc.breakdown.structural >= base.breakdown.structural);
+});
+
 test('computeChaosCoefficient: returns drivers sorted by score desc', () => {
   const debtItems = [
     { id: 'D01', debt_score: 80, debt_tier: 'high', status: 'open' },
@@ -965,7 +1092,8 @@ test('computeChaosCoefficient: chaotic level when many red items', () => {
     file: `f${i}.js`, loc: 500, requireCount: 18, hasTests: false,
   }));
   const r = computeChaosCoefficient({ debtItems, entropyItems, lessonItems: [], moduleStats });
-  assert.ok(r.score >= 75, 'Expected chaotic with heavy signals');
+  assert.ok(r.score >= 60, 'Expected severe instability with heavy signals');
+  assert.equal(r.level, 'unstable');
 });
 
 // ---------------------------------------------------------------------------
@@ -990,16 +1118,15 @@ test('estimateDeltaChaos: resolving high entropy lowers projected', () => {
   assert.ok(r.projected < 60);
 });
 
-test('estimateDeltaChaos: spike warning when delta >= 10', () => {
+test('estimateDeltaChaos: spike riskBand when delta >= 10', () => {
   const r = estimateDeltaChaos(40, { addedHighCoupling: 5 });
   assert.ok(r.delta >= 10);
-  assert.ok(r.warning !== null);
-  assert.ok(r.warning.includes('spike'));
+  assert.equal(r.riskBand, 'spike');
 });
 
-test('estimateDeltaChaos: no warning when delta < 10', () => {
+test('estimateDeltaChaos: safe riskBand when delta < 5 same level', () => {
   const r = estimateDeltaChaos(40, { addedUncoveredLOC: 100 });
-  assert.equal(r.warning, null);
+  assert.equal(r.riskBand, 'safe');
 });
 
 test('estimateDeltaChaos: adding tests reduces delta', () => {
@@ -1124,3 +1251,92 @@ test('parseChaosHistory: parses numeric fields correctly', () => {
   assert.equal(snapshots[0].structural, 72);
 });
 
+
+
+// ---------------------------------------------------------------------------
+// Phase 3: docQualitySignals blending into coverageGap
+// ---------------------------------------------------------------------------
+
+test('computeChaosCoefficient: contentPlaceholderRatio 1.0 raises coverageGap by 30', () => {
+  const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
+  const withPlaceholders = computeChaosCoefficient({
+    debtItems: [], entropyItems: [], lessonItems: [],
+    docQualitySignals: { contentPlaceholderRatio: 1.0 },
+  });
+  assert.ok(withPlaceholders.breakdown.coverageGap >= base.breakdown.coverageGap + 29,
+    `expected coverageGap to increase by ~30, got ${withPlaceholders.breakdown.coverageGap} vs base ${base.breakdown.coverageGap}`);
+});
+
+test('computeChaosCoefficient: contentPlaceholderRatio 0.5 raises coverageGap by ~15', () => {
+  const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
+  const withPartial = computeChaosCoefficient({
+    debtItems: [], entropyItems: [], lessonItems: [],
+    docQualitySignals: { contentPlaceholderRatio: 0.5 },
+  });
+  const delta = withPartial.breakdown.coverageGap - base.breakdown.coverageGap;
+  assert.ok(delta >= 14 && delta <= 16,
+    `expected delta ~15, got ${delta}`);
+});
+
+test('computeChaosCoefficient: zero contentPlaceholderRatio has no effect', () => {
+  const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
+  const same = computeChaosCoefficient({
+    debtItems: [], entropyItems: [], lessonItems: [],
+    docQualitySignals: { contentPlaceholderRatio: 0 },
+  });
+  assert.equal(same.breakdown.coverageGap, base.breakdown.coverageGap);
+});
+
+test('computeChaosCoefficient: coverageGap capped at 100 with extreme placeholders', () => {
+  const manyRed = Array.from({ length: 10 }, (_, i) => buildDebtItem({
+    id: `D${i}`, type: 'duplication', status: 'open', severity: 'critical', notes: 'n',
+  }));
+  const result = computeChaosCoefficient({
+    debtItems: manyRed, entropyItems: [], lessonItems: [],
+    docQualitySignals: { contentPlaceholderRatio: 1.0 },
+  });
+  assert.ok(result.breakdown.coverageGap <= 100);
+});
+
+
+// ---------------------------------------------------------------------------
+// Phase 4: riskBand detailed tests
+// ---------------------------------------------------------------------------
+
+test('estimateDeltaChaos: projected stable always safe', () => {
+  // base = 24 (stable), tiny positive delta -> still stable -> safe
+  const r = estimateDeltaChaos(24, { addedUncoveredLOC: 50 });
+  assert.equal(r.riskBand, 'safe');
+});
+
+test('estimateDeltaChaos: level 1 step up triggers watch not spike', () => {
+  // base = 24 (stable, max 25), +2 modules = +3.0 each = +6 -> 30 = manageable
+  const r = estimateDeltaChaos(24, { newUncoveredModules: 2 });
+  assert.equal(r.projectedLevel, 'manageable');
+  assert.equal(r.riskBand, 'watch');
+});
+
+test('estimateDeltaChaos: level 2 steps up triggers spike', () => {
+  // base = 20 (stable), +15 coupling = +45 -> 65 = unstable (2 levels up)
+  const r = estimateDeltaChaos(20, { addedHighCoupling: 5 });
+  assert.equal(r.riskBand, 'spike');
+});
+
+test('estimateDeltaChaos: projected >= 76 triggers spike', () => {
+  const r = estimateDeltaChaos(74, { addedHighCoupling: 1 });
+  // 74 + 3 = 77 >= 76 -> spike
+  assert.equal(r.riskBand, 'spike');
+});
+
+test('estimateDeltaChaos: delta 5-9 same level triggers watch', () => {
+  // base = 40 (manageable), +2 coupling = +6 -> 46 still manageable but delta=6 >= 5
+  const r = estimateDeltaChaos(40, { addedHighCoupling: 2 });
+  assert.equal(r.projectedLevel, 'manageable');
+  assert.ok(r.delta >= 5 && r.delta < 10);
+  assert.equal(r.riskBand, 'watch');
+});
+
+test('estimateDeltaChaos: no warning field in return', () => {
+  const r = estimateDeltaChaos(50, {});
+  assert.equal(r.warning, undefined);
+});

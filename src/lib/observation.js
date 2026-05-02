@@ -583,6 +583,90 @@ function _chaosLevelFor(score) {
   return CHAOS_LEVELS.find(l => score <= l.max) || CHAOS_LEVELS[CHAOS_LEVELS.length - 1];
 }
 
+function _avg(values) {
+  if (!values || values.length === 0) return 0;
+  return values.reduce((s, v) => s + v, 0) / values.length;
+}
+
+function _normalize(value, ceiling) {
+  if (!ceiling || ceiling <= 0) return 0;
+  return Math.min(100, (value / ceiling) * 100);
+}
+
+function _deepStructuralScore(moduleStats) {
+  let points = 0;
+  for (const m of moduleStats) {
+    const requireCount = m.requireCount || 0;
+    const cyclo = m.maxCyclomaticPerFunction || 0;
+    const fanIn = m.fanIn || 0;
+    const loc = m.loc || 0;
+
+    if (requireCount > 20) points += 1.5;
+    else if (requireCount >= 10) points += 0.5;
+
+    // Avoid small-file inflation from tiny mappers/helpers.
+    if (loc >= 50) {
+      if (cyclo > 100) points += 2.0;
+      else if (cyclo >= 51) points += 1.0;
+      else if (cyclo >= 20) points += 0.5;
+    }
+
+    if (fanIn >= 8) points += 1.0;
+    if (m.hasCircularDep) points += 2.0;
+  }
+  return Math.min(100, points * 5);
+}
+
+function _deepCognitiveScore(moduleStats) {
+  let points = 0;
+  for (const m of moduleStats) {
+    const nesting = m.maxNestingDepth || 0;
+    const longFunctions = m.longFunctionCount || 0;
+    const loc = m.loc || 0;
+
+    if (nesting >= 8) points += 2.0;
+    else if (nesting >= 6) points += 1.0;
+
+    if (longFunctions >= 2) points += 3.0;
+    else if (longFunctions === 1) points += 1.5;
+
+    if (loc > 300) points += 0.5;
+  }
+  return Math.min(100, points * 5);
+}
+
+function _deepTodoScore(moduleStats) {
+  let points = 0;
+  for (const m of moduleStats) {
+    const loc = m.loc || 0;
+    const todoCount = m.todoCount || 0;
+    if (loc <= 0) continue;
+    const todoPer100Loc = (todoCount / loc) * 100;
+
+    if (todoPer100Loc > 3) points += 1.5;
+    else if (todoPer100Loc >= 1) points += 0.5;
+  }
+  return Math.min(100, points * 5);
+}
+
+function _statusWeight(status) {
+  if (status === 'resolved' || status === 'deferred') return 0;
+  if (status === 'draft' || status === 'in-review') return 0.5;
+  return 1;
+}
+
+function _weightedMax(items, scoreField, tierField, tierFn) {
+  let max = 0;
+  for (const item of items || []) {
+    const tier = item[tierField] || tierFn(item[scoreField]);
+    if (tier !== 'high' && tier !== 'red') continue;
+    const weight = _statusWeight(item.status);
+    if (weight <= 0) continue;
+    const weightedScore = (item[scoreField] || 0) * weight;
+    if (weightedScore > max) max = weightedScore;
+  }
+  return max;
+}
 /**
  * Compute a unified chaos coefficient (0–100) for an AI agent working in this repo.
  *
@@ -595,42 +679,46 @@ function _chaosLevelFor(score) {
  *
  * Optional `moduleStats` enhances accuracy using real LOC data:
  *   [ { file, loc, requireCount, hasTests, churnCount? } ]
+ * Optional `contextSignals` feeds phase-2 cross-feature state:
+ *   {
+ *     statusVerdict, statusUnboundCount,
+ *     graphStrongCycleCount, graphOrphanDocCount,
+ *     intentActiveCount, intentStaleCount, intentMissingDecisionSummaryCount,
+ *     releaseDaysSinceLast, releaseHasCurrent,
+ *   }
  *
  * Returns { score, level, breakdown, drivers, aiNote }
  */
-function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItems = [], moduleStats = [] }) {
-  const openDebt    = debtItems.filter(d => d.status !== 'resolved' && d.status !== 'deferred');
-  const openEntropy = entropyItems.filter(e => e.status !== 'resolved' && e.status !== 'deferred');
+function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItems = [], moduleStats = [], contextSignals = {}, docQualitySignals = {} }) {
+  const effectiveDebt = debtItems.filter(d => _statusWeight(d.status) > 0);
+  const effectiveEntropy = entropyItems.filter(e => _statusWeight(e.status) > 0);
 
-  const highRedEntropy = openEntropy.filter(e => {
+  const highRedEntropy = effectiveEntropy.filter(e => {
     const tier = e.entropy_tier || entropyScoreToTier(e.entropy_score);
     return tier === 'high' || tier === 'red';
   });
-  const highRedDebt = openDebt.filter(d => {
+  const highRedDebt = effectiveDebt.filter(d => {
     const tier = d.debt_tier || debtScoreToTier(d.debt_score);
     return tier === 'high' || tier === 'red';
   });
 
   // --- 1. Structural entropy (30%) ---
   // Max entropy score among open high/red items.  Red tier ceiling = ~50, normalize there.
-  // When moduleStats provided, blend with max actual coupling depth.
+  // When moduleStats provided, blend with deep code signals.
   let structural;
-  const maxEntropyScore = highRedEntropy.length > 0
-    ? Math.max(...highRedEntropy.map(e => e.entropy_score || 0)) : 0;
+  const maxEntropyScore = _weightedMax(effectiveEntropy, 'entropy_score', 'entropy_tier', entropyScoreToTier);
   const kbStructural = Math.min(100, maxEntropyScore / 50 * 100);
   if (moduleStats.length > 0) {
-    const maxRequire = Math.max(...moduleStats.map(m => m.requireCount || 0));
-    const couplingFactor = Math.min(100, maxRequire / 20 * 100);
-    structural = kbStructural * 0.6 + couplingFactor * 0.4;
+    const deepStructural = _deepStructuralScore(moduleStats);
+    structural = kbStructural * 0.55 + deepStructural * 0.45;
   } else {
     structural = kbStructural;
   }
 
   // --- 2. Debt pressure (25%) ---
   // Max debt score among open high/red items.  Normalize at 200 (above red threshold of 120).
-  const maxDebtScore = highRedDebt.length > 0
-    ? Math.max(...highRedDebt.map(d => d.debt_score || 0)) : 0;
-  const debtPressure = Math.min(100, maxDebtScore / 200 * 100);
+  const maxDebtScore = _weightedMax(effectiveDebt, 'debt_score', 'debt_tier', debtScoreToTier);
+  let debtPressure = Math.min(100, maxDebtScore / 200 * 100);
 
   // --- 3. Coverage gap (20%) ---
   // Measures AI's ability to verify changes.  Sources: test-coverage + knowledge type debts,
@@ -642,30 +730,46 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
     const uncoveredLoc = moduleStats.filter(m => !m.hasTests).reduce((s, m) => s + (m.loc || 0), 0);
     coverageGap = totalLoc > 0 ? (uncoveredLoc / totalLoc) * 100 : 0;
   } else {
-    const coverageDebts  = openDebt.filter(d => d.type === 'test-coverage' || d.type === 'knowledge');
-    const proposedCount  = lessonItems.filter(l => l.status === 'proposed').length;
-    const lessonTotal    = lessonItems.length || 1;
-    const lessonGap      = (proposedCount / lessonTotal) * 40;          // lessons contribute up to 40
-    const debtGap        = coverageDebts.length > 0
-      ? (coverageDebts.reduce((s, d) => s + (d.severity || 1), 0) / coverageDebts.length) / 5 * 60
+    const coverageDebts = effectiveDebt.filter(d => d.type === 'test-coverage' || d.type === 'knowledge');
+    const proposedCount = lessonItems.filter(l => l.status === 'proposed').length;
+    const acceptedNotEnforcedCount = lessonItems.filter(l => l.status === 'accepted' && l.enforcement !== 'enforced').length;
+    const lessonTotal = lessonItems.length || 1;
+    const lessonGap = (proposedCount / lessonTotal) * 40;
+    const acceptedGap = (acceptedNotEnforcedCount / lessonTotal) * 30;
+    const weightedCoverageSeverity = coverageDebts.reduce((s, d) => s + ((d.severity || 1) * _statusWeight(d.status)), 0);
+    const weightedCoverageCount = coverageDebts.reduce((s, d) => s + _statusWeight(d.status), 0);
+    const debtGap = weightedCoverageCount > 0
+      ? (weightedCoverageSeverity / weightedCoverageCount) / 5 * 60
       : 0;
-    coverageGap = Math.min(100, debtGap + lessonGap);
+    coverageGap = Math.min(100, debtGap + lessonGap + acceptedGap);
   }
 
   // --- 4. Cognitive load (15%) ---
   // Measures context size AI needs to hold for any safe change.
   // Sources: module-size + api-design open debts (effort + severity as proxy for complexity).
-  // When moduleStats provided: oversized file ratio + max coupling as actual cognitive cost.
+  // When moduleStats provided: oversized files + deep nesting + long functions.
   let cognitiveLoad;
   if (moduleStats.length > 0) {
-    const oversizedRatio  = moduleStats.filter(m => (m.loc || 0) > 300).length / moduleStats.length;
-    const maxRequire      = Math.max(...moduleStats.map(m => m.requireCount || 0));
-    cognitiveLoad = Math.min(100, oversizedRatio * 50 + Math.min(1, maxRequire / 20) * 50);
+    cognitiveLoad = _deepCognitiveScore(moduleStats);
   } else {
-    const loadDebts = openDebt.filter(d => d.type === 'module-size' || d.type === 'api-design');
+    const loadDebts = effectiveDebt.filter(d => d.type === 'module-size' || d.type === 'api-design');
     cognitiveLoad = loadDebts.length > 0
-      ? Math.min(100, (loadDebts.reduce((s, d) => s + (d.severity || 1), 0) / loadDebts.length) / 5 * 100)
+      ? Math.min(100, (loadDebts.reduce((s, d) => s + ((d.severity || 1) * _statusWeight(d.status)), 0)
+        / loadDebts.reduce((s, d) => s + _statusWeight(d.status), 0)) / 5 * 100)
       : 0;
+  }
+
+  // Deep scan hygiene debt pressure bump (TODO/FIXME density) — only when scan exists.
+  if (moduleStats.length > 0) {
+    const todoFactor = _deepTodoScore(moduleStats);
+    const combinedDebt = debtPressure * 0.80 + todoFactor * 0.20;
+    debtPressure = Math.min(100, combinedDebt);
+
+    // Gap 1: accepted but not enforced lessons still leave practical blind spots.
+    const lessonTotal = lessonItems.length || 1;
+    const acceptedNotEnforcedCount = lessonItems.filter(l => l.status === 'accepted' && l.enforcement !== 'enforced').length;
+    const acceptedGap = (acceptedNotEnforcedCount / lessonTotal) * 30;
+    coverageGap = Math.min(100, coverageGap + acceptedGap);
   }
 
   // --- 5. Instability (10%) ---
@@ -675,11 +779,17 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
   const unstableItems = [...highRedDebt, ...highRedEntropy];
   let instability = 0;
   if (unstableItems.length > 0) {
-    const avgUrgency = unstableItems.reduce((s, i) => {
+    let weightedSum = 0;
+    let weightedCount = 0;
+    for (const i of unstableItems) {
+      const w = _statusWeight(i.status);
+      if (w <= 0) continue;
       const u = i.urgency || i.severity || 1;
       const f = i.frequency || i.spread || 1;
-      return s + (u + f) / 2;
-    }, 0) / unstableItems.length;
+      weightedSum += ((u + f) / 2) * w;
+      weightedCount += w;
+    }
+    const avgUrgency = weightedCount > 0 ? weightedSum / weightedCount : 0;
     instability = Math.min(100, avgUrgency / 5 * 100);
   }
   if (moduleStats.length > 0) {
@@ -687,6 +797,55 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
     const churnLoc  = moduleStats.filter(m => (m.churnCount || 0) >= 3).reduce((s, m) => s + (m.loc || 0), 0);
     const churnFactor = totalLoc > 0 ? Math.min(100, (churnLoc / totalLoc) * 100 * 2) : 0;
     instability = instability * 0.5 + churnFactor * 0.5;
+  }
+
+  // Phase 2 (Gap 5): blend in cross-feature KB signals.
+  if (contextSignals && typeof contextSignals === 'object') {
+    const {
+      statusVerdict = 'clean',
+      statusUnboundCount = 0,
+      graphStrongCycleCount = 0,
+      graphOrphanDocCount = 0,
+      intentActiveCount = 0,
+      intentStaleCount = 0,
+      intentMissingDecisionSummaryCount = 0,
+      releaseDaysSinceLast = null,
+      releaseHasCurrent = true,
+    } = contextSignals;
+
+    let structuralBoost = 0;
+    structuralBoost += Math.min(30, graphStrongCycleCount * 6);
+    structuralBoost += Math.min(20, graphOrphanDocCount * 1.5);
+    structuralBoost += Math.min(20, intentMissingDecisionSummaryCount * 4);
+    structural = Math.min(100, structural + structuralBoost);
+
+    let coverageBoost = 0;
+    coverageBoost += Math.min(35, statusUnboundCount * 3);
+    if (!releaseHasCurrent) coverageBoost += 20;
+    coverageGap = Math.min(100, coverageGap + coverageBoost);
+
+    let cognitiveBoost = 0;
+    if (intentActiveCount >= 8) cognitiveBoost += 20;
+    else if (intentActiveCount >= 5) cognitiveBoost += 12;
+    else if (intentActiveCount >= 3) cognitiveBoost += 6;
+    cognitiveLoad = Math.min(100, cognitiveLoad + cognitiveBoost);
+
+    let instabilityBoost = 0;
+    if (statusVerdict === 'blocked') instabilityBoost += 30;
+    else if (statusVerdict === 'attention') instabilityBoost += 15;
+    instabilityBoost += Math.min(25, intentStaleCount * 5);
+    if (typeof releaseDaysSinceLast === 'number') {
+      if (releaseDaysSinceLast >= 90) instabilityBoost += 25;
+      else if (releaseDaysSinceLast >= 60) instabilityBoost += 15;
+      else if (releaseDaysSinceLast >= 30) instabilityBoost += 8;
+    }
+    instability = Math.min(100, instability + instabilityBoost);
+  }
+
+  // Phase 3 (Gap 3): KB doc quality — placeholder ratio widens coverage gap.
+  if (docQualitySignals && typeof docQualitySignals === 'object') {
+    const { contentPlaceholderRatio = 0 } = docQualitySignals;
+    coverageGap = Math.min(100, coverageGap + contentPlaceholderRatio * 30);
   }
 
   const raw = structural * 0.30 + debtPressure * 0.25 + coverageGap * 0.20 + cognitiveLoad * 0.15 + instability * 0.10;
@@ -729,7 +888,8 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
  *   addedTests            — new test modules (-1.5 each — coverage improves)
  *   resolvedCoverageDebt  — test-coverage debt items closed (-2.5 each)
  *
- * Returns { delta, projected, projectedLevel, warning }
+ * Returns { delta, projected, projectedLevel, riskBand }
+ * riskBand: 'safe' | 'watch' | 'spike'
  */
 function estimateDeltaChaos(baseScore, factors = {}) {
   const {
@@ -754,11 +914,25 @@ function estimateDeltaChaos(baseScore, factors = {}) {
   delta = Math.round(delta * 10) / 10;
   const projected       = Math.min(100, Math.max(0, Math.round((baseScore + delta) * 10) / 10));
   const projectedLevel  = _chaosLevelFor(projected).level;
-  const warning         = delta >= CHAOS_SPIKE_THRESHOLD
-    ? 'Chaos spike risk: +' + delta + ' points. Verify test plan and refactor scope before proceeding.'
-    : null;
+  const baseLevel       = _chaosLevelFor(baseScore).level;
 
-  return { delta, projected, projectedLevel, warning };
+  const LEVEL_ORDER = ['stable', 'manageable', 'unstable', 'chaotic'];
+  const baseIdx     = LEVEL_ORDER.indexOf(baseLevel);
+  const projIdx     = LEVEL_ORDER.indexOf(projectedLevel);
+  const levelDiff   = projIdx - baseIdx;
+
+  let riskBand;
+  if (projectedLevel === 'stable') {
+    riskBand = 'safe';
+  } else if (delta >= 10 || levelDiff >= 2 || projected >= 76) {
+    riskBand = 'spike';
+  } else if (levelDiff === 1 || (levelDiff === 0 && delta >= 5)) {
+    riskBand = 'watch';
+  } else {
+    riskBand = 'safe';
+  }
+
+  return { delta, projected, projectedLevel, riskBand };
 }
 
 /**
