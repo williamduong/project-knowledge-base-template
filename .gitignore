@@ -34,5 +34,11 @@ notes/*
 .local/
 .github/agents/KBRoot.agent.md
 
+# kb init / kb ide test artifacts — generated when dogfooding kb on this repo root
+knowledge-base/
+AGENTS.md
+.github/agents/kb.agent.md
+.github/prompts/
+
 # Sample repos for local testing only
 sample_repo/
