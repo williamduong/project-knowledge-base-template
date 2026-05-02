@@ -34,6 +34,8 @@ function runHelp({ packageJson, args }) {
     console.log('  kb intent apply <id> [--release] [--yes] [--json]');
     console.log('  kb intent cancel <id> [--yes] [--json]');
     console.log('  kb chaos [--json] [--no-save] [--quiet] [--scan-src <dir>]');
+    console.log('  kb graph export [--output=<path>] [--json]');
+    console.log('  kb graph check  [--json]');
     console.log('  kb uninstall [--keep-ai-files] [--remove-hook] [--force]');
     console.log('');
     console.log('Core workflow:');
@@ -239,6 +241,12 @@ function runHelp({ packageJson, args }) {
   console.log('             --scan-src <dir>  Enhance accuracy with actual LOC/coupling data.');
   console.log('             --no-save         Skip writing snapshot to chaos-history.md.');
   console.log('             --quiet           Print "<score> <level>" only.');
+  console.log('             --json            Machine-readable JSON output.');
+  console.log('  graph      Export or check KB entity/relation graph (v1.9 mini).');
+  console.log('             export            Write JSONL of entities + relations (deterministic).');
+  console.log('                               --output=<path>  Write to file; default stdout.');
+  console.log('             check             Run basic consistency checks:');
+  console.log('                               missing-node-reference, invalid-relation-type, duplicate-entity-id.');
   console.log('             --json            Machine-readable JSON output.');
   console.log('  uninstall  Remove KB installation from the workspace.');
   console.log('             --keep-ai-files  Keep AGENTS/prompt files at repo root.');

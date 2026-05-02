@@ -28,6 +28,7 @@ const { runBaseline } = require('./commands/baseline');
 const { runRelease } = require('./commands/release');
 const { runIntent } = require('./commands/intent');
 const { runChaos } = require('./commands/chaos');
+const { runGraph } = require('./commands/graph');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -124,6 +125,11 @@ async function run(argv) {
 
   if (command === 'chaos') {
     await runChaos({ args: rest, cwd: process.cwd(), packageJson });
+    return;
+  }
+
+  if (command === 'graph') {
+    runGraph(rest, { workspaceRoot: process.cwd() });
     return;
   }
 
