@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-plan
-version: 2.0.3
+version: 2.0.4
 ---
 
 # /kb-plan — Analyze and write a persistent KB runtime plan (explicit/advanced mode)

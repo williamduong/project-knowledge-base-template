@@ -78,6 +78,37 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## v2.0.4 - 2026-05-03
+
+### Summary
+
+- Formalized Source Mirror requirement capture as an official roadmap decision before implementation.
+- Locked implementation scope for Source Mirror features to v2.2.0 (no feature code shipped in this patch).
+- Confirmed the three requested threads map to versions: chaos formula in v2.0.3, source-mirror requirement capture in v2.0.4, and source-tracking index + cheap-model extraction implementation in v2.2.0.
+
+### Change Type
+
+- Patch
+
+### Impact On Existing KBs
+
+- None
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents should treat Source Mirror as planned-and-approved scope, but must not imply it is implemented before v2.2.0.
+
+### Files Added / Changed
+
+- `template/TEMPLATE_CHANGELOG.md` — added v2.0.4 release note entry
+
+
+---
+
 ## v2.0.2 - 2026-05-03
 
 ### Summary
