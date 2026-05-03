@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: design-only
-last_updated: 2026-05-02
-last_verified: 2026-05-02
+last_updated: 2026-05-03
+last_verified: 2026-05-03
 related:
   - ../15-governance/self-evolution-doctrine.md
   - ../00-start-here/terminology-guard.md
@@ -101,6 +101,76 @@ Print the full reference in:
 - Handoff notes between sessions
 
 Counters stored in `.kb/numbering.json`. Fallback to timestamp when counter unavailable.
+
+## Response Status Header (v2.0.2)
+
+Every KB Agent response MUST begin with a status line before any other content:
+
+```
+[INT-001 | PH-2 | T-3 | ▶ running]
+```
+
+Field order: `[<intent-id> | <phase-ref> | <task-ref> | <status>]`
+
+Status values: `▶ running` | `⏸ paused` | `✓ done` | `⚠ blocked` | `◷ pending` | `— idle`
+
+When no active intent: `[no active intent | kb healthy]`  
+When KB not initialized: `[KB not initialized — run: npx @williamduong/kb@latest init --yes]`
+
+This line is a non-negotiable formatting contract — no greeting, no answer text may appear before it.
+
+## Zero-to-Intent Onboarding Flow (v2.0.2)
+
+When a user sets up KB for the first time (fresh install or explicit "setup KB" request), the agent runs a fully autonomous onboarding sequence. Users never run `kb init` manually.
+
+**Trigger conditions:**
+- `kb status --json` → `presence: fresh`
+- User says "setup KB", "install KB", "init this project", or similar
+- User provides a public URL (docs/landing page) + setup intent
+
+**Flow (8 steps):**
+
+| Step | Action | Output |
+|---|---|---|
+| 0 | Register URL if provided; fetch page title for project context | `projectUrl` stored in session context |
+| 1 | `npx -y @williamduong/kb@latest init --yes` | `[KB initialized ✓]` |
+| 2 | Persona Wizard (4 questions in one message) | `userPersona` written to `state.json` |
+| 3 | Scan: `kb status --json` + `kb bootstrap --dry-run` + file counts | Scan summary (1 paragraph) |
+| 4 | Discovery questions (max 5, all in one message) | `onboardingContext` stored in intent workspace |
+| 5 | `kb intent create --mode=full --id=onboarding-setup` as `INT-001` | Plan printed as `[INT-001][PH-N][T-N]` hierarchy |
+| 6 | Execute phases (batch, per involvement level) | Status header on each task |
+| 7 | `kb intent apply INT-001` | Completion report with fill rate delta |
+| 8 | `kb intent create --mode=quick --id=maintenance-ongoing` as `INT-002` | Transition message + next steps |
+
+**Phase auto-generation from bootstrap gap:**
+- PH-1: Core structure (INDEX, architecture, product summary, start-here) — always
+- PH-2: Domain model (entities, relationships, business rules) — if models/schemas found
+- PH-3: Feature & API docs (endpoints, components, integrations) — if API/component dirs found
+- PH-4: Q&A intake flush (`kb questions --batch 1`) — always
+
+## Session Continuity (v2.0.2)
+
+The agent cannot detect when a chat session ends. It MUST proactively emit a Resume Block at natural break points so the user can always continue in a new session.
+
+**When to emit a Resume Block:**
+- After completing any phase (PH-N) within a multi-phase intent
+- Before any destructive/irreversible operation
+- Whenever pausing for user input mid-intent
+- After 8+ exchanges in the current session if still mid-intent
+
+**Resume Block format (5–7 lines max):**
+
+```
+── Resume Guide (save this if the session ends) ──
+Intent:    [INT-001] <intent title>
+Progress:  PH-1 ✓, PH-2 ✓, PH-3 in-progress
+Paused at: [INT-001 | PH-3 | T-2 | ⏸ paused]
+Resume:    Start a new chat with KB Agent and say:
+           "Resume [INT-001] at [PH-3][T-2]: <task description>"
+──────────────────────────────────────────────────
+```
+
+**Handling incoming resume:** verify intent still exists via `kb intent list`, print 3-line context summary, then continue from the named task without re-running prior phases.
 
 ## Output Contract
 

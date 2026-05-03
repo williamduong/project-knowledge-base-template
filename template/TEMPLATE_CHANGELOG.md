@@ -78,6 +78,36 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## v2.0.2 - 2026-05-03
+
+### Summary
+
+- Zero-to-Intent Onboarding Protocol: typing "setup KB" (+ optional public URL) triggers fully autonomous install → scan → persona wizard → discovery questions → INT-001 execution → INT-002 creation. No manual `kb init` needed.
+- Response Status Header: every KB Agent response now starts with `[INT-NNN | PH-N | T-N | ▶ running]` so users always know their current position.
+- Session Continuity Protocol: agent proactively emits a Resume Block after each phase and at every pause, giving users a self-contained prompt to resume in a new chat session.
+- New commands: `@kb setup [<url>]` (onboarding trigger) and `@kb resume <INT-NNN> [at <PH-N><T-N>]` (session resume).
+- Behavioral rules 17–19 added to kb.agent.md.
+- agent-operating-manual.md updated with Status Header, Onboarding Flow, and Session Continuity sections.
+
+### Changed Files
+
+| File | Change |
+|---|---|
+| `template/.github/agents/kb.agent.md` | Added: Response Status Header Protocol, Zero-to-Intent Onboarding Protocol, Session Continuity Protocol; updated Command Surface (+2 commands); added rules 17–19; version → 2.0.2 |
+| `template/12-ai-skills/agent-operating-manual.md` | Added: Response Status Header, Onboarding Flow, Session Continuity sections; `last_updated` bumped |
+| `template/template.json` | version → v2.0.2 |
+| `package.json` | version → 2.0.2 |
+
+### Migration Notes
+
+No migration required. All changes are additive agent behavioral specs. Existing installs pick up the new protocols on next `kb update`.
+
+### Agent Impact
+
+KB Agent now behaves with a visible identity in every response (status header) and guides users from zero to their first completed intent without any CLI knowledge required.
+
+---
+
 ## v2.0.1 - 2026-05-03
 
 ### Summary
