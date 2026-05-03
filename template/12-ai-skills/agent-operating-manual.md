@@ -24,14 +24,19 @@ Provide a single location for future coding agents to read KB conventions before
 
 ## Minimal Agent Workflow
 
-1. Read INDEX and intent-index first.
-2. Read governance metadata and bi-temporal rules.
-3. Read `00-start-here/repository-revision-state.md` and compare the stored brand-scoped git baseline with the current `HEAD` revision when git is available.
-4. If the baseline differs, inspect git log and diff from the stored revision forward, detect drift, and route work through the maintenance loop before trusting current KB content.
-5. If the stored template version differs from the active template version, run the version-patch flow in the same pass.
-6. For task execution, gather current-state evidence before writing claims.
-7. Update docs impacted by code changes in the same change set when possible.
-8. Default to phased `code-verified` coverage and use `finalization-plan.md` as the review queue.
+**v2.0.1 Intent-First protocol replaces the legacy "plan then run" sequence.** The workflow below describes what the agent does internally; users do not manage these steps manually.
+
+1. On activation: check `state.json` for `userPersona`. If absent, run Persona Wizard (see `kb.agent.md`).
+2. For any KB change request: create or resume an intent (`kb intent create/list`).
+3. Assign a numbered ID (`[INT-NNN]` per `15-governance/numbering-system.md`).
+4. Read INDEX and intent-index; read governance metadata and bi-temporal rules.
+5. Read `00-start-here/repository-revision-state.md` and compare the stored brand-scoped git baseline with current `HEAD` when git is available.
+6. If the baseline differs, inspect git log and diff from the stored revision forward, detect drift, and route work through the maintenance loop before trusting current KB content.
+7. If the stored template version differs from the active template version, run the version-patch flow in the same pass.
+8. Stage files under `proposed-changes/` within the intent workspace. Do not write KB files directly outside an intent workspace unless the change is trivial (frontmatter-only fix).
+9. Batch non-blocking tasks. Only pause for user input at destructive ops, approval gates, or genuine ambiguity.
+10. Apply with `kb intent apply <id>` when done. Archive evidence.
+11. Output a concise completion report with numbered references and suggested next intent.
 
 ## Register-First Rule For File Creation
 
@@ -58,6 +63,44 @@ Do not create files first and register them later.
 - Prefer small, auditable edits over broad rewrites.
 - Preserve existing conventions unless migration is requested.
 - Do not surface avoidable setup questions when template defaults already define the operating choice.
+
+## Persona-Aware Communication (v2.0.1)
+
+The agent adapts its communication style based on `state.json.userPersona.skillLevel`. Read this field at every activation. Do not default to master-level if the stored preference differs.
+
+| Skill level    | Communication style                                                                   |
+|----------------|---------------------------------------------------------------------------------------|
+| master/senior  | Technical jargon assumed. Concise bullet points. Skip "why" unless asked. No hand-holding. |
+| mid-level      | Terms defined on first use. Step-by-step for complex flows only. Moderate detail.     |
+| junior         | Every term explained. "Why" context included in every step. Numbered steps always.    |
+| beginner       | Plain language. Analogies over technical terms. Full guidance. Short sentences.       |
+
+Apply this style to all output in the workspace — chat responses, plan summaries, error messages.
+
+The agent also adapts **involvement level** (`state.json.userPersona.involvement`):
+- `hands-on`: Ask the user before each non-trivial step. Walk through decisions explicitly.
+- `balanced`: Execute routine steps silently. Ask at key decision points only.
+- `autopilot`: Run all non-destructive work silently. Only interrupt for blockers or irreversible operations.
+
+## Numbering System (v2.0.1)
+
+All intents, plans, phases, and tasks use the format defined in `15-governance/numbering-system.md`.
+
+Quick reference:
+- `[INT-001]` — global intent ID
+- `[PL-001]` — plan scoped to INT-001  
+- `[PH-1]` — phase scoped to PL-001
+- `[T-2]` — task scoped to PH-1
+- `[T-2.1]` — sub-task
+- Full path: `[INT-001][PL-001][PH-1][T-2]`
+
+Print the full reference in:
+- Plan file task lists
+- Session completion summaries
+- Commit messages (`chore: [INT-001][PH-1][T-3] fill system-overview`)
+- Handoff notes between sessions
+
+Counters stored in `.kb/numbering.json`. Fallback to timestamp when counter unavailable.
 
 ## Output Contract
 

@@ -4,14 +4,135 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 2.0.0
+version: 2.0.1
 ---
 
-# /kb-run — Execute the next step of the KB runtime plan
+# /kb-run — Execute KB plan steps (explicit/advanced mode)
 
-Your task: execute one step at a time from `knowledge-base/.kb/runtime-plan.md`, persisting progress so the user can resume after closing the chat or IDE.
+> **Note (v2.0.1):** For most KB work, invoke `@kb <request>` directly — the agent handles the full intent lifecycle without requiring `/kb-run`. Use `/kb-run` when you explicitly want to step through a persistent `runtime-plan.md` checklist, or when running in automated CI contexts (`--auto` flag).
 
-You operate under the master KB agent contract at `.github/agents/kb.agent.md`.
+Your task: execute steps from `knowledge-base/.kb/runtime-plan.md`, persisting progress so the user can resume after closing the chat or IDE.
+
+You operate under the master KB agent contract at `.github/agents/kb.agent.md`. Apply the persona-aware communication style from `state.json.userPersona.skillLevel` in all output.
+
+## Preflight (in order)
+
+1. **Check init state via the CLI.** The CLI is the single source of truth.
+
+   Run:
+   ```
+   kb status --json
+   ```
+
+   | `presence` | Action |
+   |---|---|
+   | `fresh` | Auto-init silently (see below). |
+   | `healthy` | Continue to step 2. |
+   | `partial` | **HALT. Do NOT auto-init.** Print recovery guidance from `kb status` (without `--json`). Stop. |
+
+   If `kb` is not on PATH: `npx -y @williamduong/kb@latest status --json`
+
+   **Auto-init (fresh only):**
+   - `projectName` ← `package.json` `name` field, else workspace folder name.
+   - `mode` ← `private-git` if `.git` exists, else `tracked`.
+   - Run `kb init --yes`. Report detection.
+
+2. **First-run IDE integration.** If `state.ideIntegration.enabled` is `false`: run `kb ide enable`, print injected targets.
+
+3. **Check plan.** If `runtime-plan.md` does not exist: invoke `/kb-plan` logic, write plan, print summary, ask for confirmation before executing.
+
+4. **If plan exists:** load it and identify `current_step` (the next `pending` step).
+
+## Execution — Batch Non-Blocking Steps (v2.0.1)
+
+Execute multiple steps in sequence within one session unless a step requires user input. **Do not stop and ask the user to re-invoke `/kb-run` between routine non-blocking steps.**
+
+**Blocking conditions (stop and wait for user before continuing):**
+- Destructive or irreversible operation (`uninstall`, `--force`)
+- Step is `custom:*` with ambiguous intent
+- CLI exits non-zero (see error handling below)
+- `kb intent apply` returns strategy `resolve-first`
+- User's `involvement` preference is `hands-on` (per `userPersona`) — in this mode, confirm before each step
+
+**Non-blocking (execute silently, report after all complete):**
+- `init`, `update`, `maintain`, `custom:*` with clear rationale
+- IDE enable/disable
+
+For each step executed:
+1. Map action to CLI:
+   - `init` → `kb init --yes`
+   - `update` → `kb update`
+   - `maintain` → `kb maintain` (use `--fast` if step rationale mentions large workspace)
+   - `uninstall` → confirm twice, then `kb uninstall`
+   - `custom:*` → follow the textual rationale; do not invoke unknown CLI verbs.
+2. Run via terminal tool. Capture result.
+3. Mark step `(status: done)`, append log line: `<ISO timestamp> — exit=<code> — <one-line outcome>`.
+4. Bump `current_step`. Update `last_updated`.
+
+After completing the batch, print a single consolidated report:
+
+```
+Steps <n>–<m> done.
+  [T-N] <action> — <outcome>
+  [T-N+1] <action> — <outcome>
+  ...
+
+[INT-NNN] intent context if applicable
+
+Manual follow-up checklist: (if any)
+- [ ] <task>
+  - command_or_path: <exact command>
+  - expected_outcome: <condition>
+  - why_manual: <reason>
+
+What to do next:
+  1. Run `/kb-run` to continue with step <m+1> (<action>).
+  2. Reply `/kb-plan <change>` to adjust remaining steps.
+  3. Ask a question or type a task to pause and keep talking.
+```
+
+If no `pending` steps remain:
+```
+Plan complete. Reply `/kb-plan` to generate a new plan, or ask a question to continue using the KB.
+```
+
+## Error Handling
+
+If CLI exits non-zero, mark step `(status: blocked)` and stop. Parse output for known causes:
+
+| Cause | Suggested fix (ask user `yes` first) |
+|---|---|
+| `working tree has N uncommitted change(s)` | `git add -A && git commit -m "chore: kb housekeeping"`, re-run step |
+| `Hook file missing at .github/hooks/revision-state-guard.json` | `kb update --refresh-prompts`, re-run step |
+| Doctor `WARN` only (no FAIL) | Re-run with `kb maintain --fast` |
+
+## On `skip`
+Mark `(status: skipped)` with reason `user-skip`. Move to next step.
+
+## On `edit-plan`
+Hand off to `/kb-plan` refinement flow.
+
+## Resumability
+Plan file is the single source of truth. `current_step` and `last_updated` are persisted after each batch. User can close and resume with `/kb-run` at any time.
+
+## Boundaries
+- Do not modify KB content outside what the executed CLI command does, plus the plan file.
+- Never invent CLI flags. Unknown flags → stop and ask user to refine via `/kb-plan`.
+- Non-zero exit → `(status: blocked)`, stop.
+
+## v2.0 Intent Intelligence Awareness
+
+When a step includes `kb intent apply`:
+1. CLI outputs conflict strategy automatically.
+2. `resolve-first` → **pause, explain steps, ask confirmation before continuing.**
+3. `review-order` / `proceed-with-caution` → surface output, continue.
+
+After 3+ intents applied in a session:
+```
+3+ intents applied. Run `kb intent suggest-lessons` to surface lesson candidates.
+```
+Do not auto-run — present as suggestion only.
+
 
 ## Preflight (in order)
 

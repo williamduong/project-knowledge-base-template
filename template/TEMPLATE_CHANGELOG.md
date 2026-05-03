@@ -78,6 +78,46 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## v2.0.1 - 2026-05-03
+
+### Summary
+
+- Intent-First Activation Protocol: agent now drives the full intent lifecycle autonomously; users no longer need to run `/kb-plan` then `/kb-run` manually.
+- Persona Wizard: first-time KB activation asks 4 questions (user type, project mode, involvement level, skill level) and stores result in `state.json.userPersona`. Agent adapts communication style based on skill level.
+- Numbering System: new governance file `15-governance/numbering-system.md` defines `[INT-NNN][PL-NNN][PH-N][T-N]` format with sub-levels, counter storage, and timestamp fallback.
+- Session consolidation: `/kb-run` now batches non-blocking steps in one session instead of stopping after each step. Only pauses for destructive ops, approval gates, and `hands-on` involvement preference.
+- KB Agent behavioral rules 15 (intent-first by default) and 16 (persona-aware output) added.
+- `/kb-plan` and `/kb-run` are now explicitly labeled as advanced/explicit mode; default entrypoint is `@kb <request>`.
+
+### Change Type
+
+- Patch (behavior-only: agent protocol, prompt templates, new governance doc)
+
+### Impact On Existing KBs
+
+- Low — no schema changes, no migration required.
+- `state.json` gains an optional `userPersona` and `numberingPreference` field on first KB activation after upgrade. Field is additive; old KB installations continue to work without it (Persona Wizard runs once on next activation).
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- `@kb <any KB change request>` now triggers Intent-First Protocol automatically. Agents should NOT default to "run /kb-plan then /kb-run" sequence.
+- Agents must read `state.json.userPersona.skillLevel` and apply the corresponding communication style table.
+- All intent, plan, phase, and task references should use `[INT-NNN][PL-NNN][PH-N][T-N]` format.
+- `/kb-run` now batches non-blocking steps; agents should not artificially stop between routine steps.
+
+### Files Added / Changed
+
+- `template/.github/agents/kb.agent.md` — Intent-First Protocol section, Persona Wizard Protocol section, updated Preflight Step 2, rules 15–16 added, Command Surface updated (`@kb start`)
+- `template/.github/prompts/kb-run.prompt.md` — rewritten to batch non-blocking steps; added persona-aware output
+- `template/.github/prompts/kb-plan.prompt.md` — intent context awareness added; explicit/advanced mode note
+- `template/12-ai-skills/agent-operating-manual.md` — updated Minimal Agent Workflow, added Persona-Aware Communication section, added Numbering System section
+- `template/15-governance/numbering-system.md` — NEW: full numbering system definition
+- `template/template.json` — version bumped to v2.0.1
+
 ## 2.0.0 - 2026-05-03
 
 <!-- release-meta: from=v1.9.0 to=v2.0.0 generated_at=2026-05-03T00:00:00.000Z -->

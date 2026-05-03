@@ -4,14 +4,27 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-plan
-version: 2.0.0
+version: 2.0.1
 ---
 
-# /kb-plan — Analyze and write the next KB action plan
+# /kb-plan — Analyze and write a persistent KB runtime plan (explicit/advanced mode)
 
-Your task: produce or refine a runtime plan describing which KB actions the user needs next, from the surface defined by the four CLI lifecycle commands and any custom KB work.
+> **Note (v2.0.1):** For most KB work, invoke `@kb <request>` directly — the agent creates an intent and drives the lifecycle without needing a persistent plan file. Use `/kb-plan` when you want an explicit, persistent, human-readable checklist at `knowledge-base/.kb/runtime-plan.md`, or when coordinating multi-session work across a team.
 
-You are operating under the master KB agent contract at `.github/agents/kb.agent.md`. Honor its read order, governance, and citation rules.
+Your task: produce or refine a runtime plan describing which KB actions the user needs next.
+
+You are operating under the master KB agent contract at `.github/agents/kb.agent.md`. Honor its read order, governance, and citation rules. Apply the persona-aware communication style from `state.json.userPersona.skillLevel` in all output.
+
+## Intent Context Awareness (v2.0.1)
+
+Before writing a plan, check for active intents:
+```
+kb intent list
+```
+If an active intent exists, the plan steps should be scoped to that intent and reference its ID (e.g. `[INT-001]`). Include the intent ID in the plan frontmatter as `intent_id: INT-001`. This links the runtime-plan to the intent evidence trail.
+
+If no intent exists and the plan includes KB change steps (not just read-only work), note in the plan's `## Notes` section that an intent should be created at the start of execution.
+
 
 ## Inputs to inspect
 
