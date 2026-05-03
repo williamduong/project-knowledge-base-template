@@ -38,6 +38,9 @@ function parseArgs(args) {
     yes: false,
     json: false,
     release: false,
+    commitRange: null,
+    extractTitle: null,
+    extractType: 'docs',
   };
 
   const rest = [];
@@ -51,6 +54,14 @@ function parseArgs(args) {
     }
     if (arg.startsWith('--change-type=')) {
       options.changeType = arg.slice('--change-type='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--title=')) {
+      options.extractTitle = arg.slice('--title='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--type=')) {
+      options.extractType = arg.slice('--type='.length).trim();
       continue;
     }
     if (arg === '--release') { options.release = true; continue; }
@@ -96,8 +107,14 @@ function parseArgs(args) {
     // no-op here, handled in runIntent
   } else if (options.sub === 'suggest-lessons') {
     // no positional args
+  } else if (options.sub === 'extract') {
+    // kb intent extract <range> [--title="..."] [--type=...]
+    if (rest.length < 2) {
+      throw new Error('kb intent extract requires a commit range (e.g. HEAD~5..HEAD)');
+    }
+    options.commitRange = rest[1];
   } else {
-    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, status, list, cancel, apply, suggest-lessons`);
+    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, status, list, cancel, apply, suggest-lessons, extract`);
   }
 
   return options;
@@ -539,6 +556,139 @@ async function runSuggestLessons(ctx, options) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: extract (v2.1.0)
+// ---------------------------------------------------------------------------
+
+async function runExtract(ctx, options, cwd) {
+  const { json, extractTitle, extractType, commitRange, yes } = options;
+  const { getChangedFilesSince, runGitCommand } = require('../lib/git');
+
+  if (!commitRange) {
+    throw new Error('kb intent extract: missing commit range (e.g. HEAD~5..HEAD)');
+  }
+
+  // 1. Get changed files in range
+  const changedFiles = getChangedFilesSince(cwd, commitRange.split('..')[0], commitRange.split('..')[1] || 'HEAD');
+  if (!changedFiles || changedFiles.length === 0) {
+    throw new Error(`kb intent extract: no changes found in range "${commitRange}"`);
+  }
+
+  // 2. Filter KB files (knowledge-base/<tier>/ only, skip intents/, .kb/, code)
+  const kbFiles = changedFiles.filter((f) => {
+    const p = f.path.replace(/\\/g, '/');
+    const isKbFile = p.startsWith('knowledge-base/') && !p.includes('/intents/') && !p.includes('/.kb/');
+    return isKbFile && f.status !== 'D'; // Skip deleted
+  });
+
+  if (kbFiles.length === 0) {
+    throw new Error(`kb intent extract: no KB files found in range "${commitRange}". Only knowledge-base/ tier files are extracted.`);
+  }
+
+  // 3. Get commit messages for changelog
+  const logOutput = runGitCommand(`git log --oneline ${commitRange}`, cwd);
+  const commits = logOutput ? logOutput.split('\n').filter(Boolean) : [];
+
+  // 4. Suggest ID from title or timestamp
+  let intentId = extractTitle ? sanitizeId(extractTitle) : null;
+  if (!intentId) {
+    const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
+    intentId = `extracted-${ts}`;
+  }
+
+  // 5. Generate archive intent structure with snapshot
+  const archiveRoot = require('../lib/intent').archiveIntentsRoot(ctx.contentRoot);
+  fs.mkdirSync(archiveRoot, { recursive: true });
+
+  const now = new Date().toISOString();
+  const archiveName = `${intentId}-${now.replace(/[-:T]/g, '').slice(0, 15)}`;
+  const archivePath = path.join(archiveRoot, archiveName);
+  fs.mkdirSync(archivePath, { recursive: true });
+
+  // 6. Build intent.md (status=applied, source=extracted)
+  const intentMdContent = [
+    '---',
+    `id: ${intentId}`,
+    `mode: quick`,
+    `status: applied`,
+    `created_at: ${now}`,
+    `change_type: ${extractType || 'docs'}`,
+    `change_scope: []`,
+    `impact_signals: []`,
+    `decision_summary: "Retroactively extracted from commit range ${commitRange}"`,
+    `review_after: null`,
+    `extraction_source: retroactive`,
+    '---',
+    '',
+    `# Intent: ${intentId}`,
+    '',
+    '## Summary',
+    '',
+    extractTitle ? extractTitle : `Extracted from commit range: ${commitRange}`,
+    '',
+    '## Staged Files',
+    '',
+  ];
+
+  for (const f of kbFiles) {
+    intentMdContent.push(`- ${f.path}`);
+  }
+
+  intentMdContent.push('');
+
+  fs.writeFileSync(path.join(archivePath, 'intent.md'), intentMdContent.join('\n'), 'utf8');
+
+  // 7. Create proposed-changes/ with snapshot
+  const proposedPath = path.join(archivePath, 'proposed-changes');
+  fs.mkdirSync(proposedPath, { recursive: true });
+
+  for (const f of kbFiles) {
+    const sourcePath = path.join(ctx.contentRoot, f.path);
+    if (fs.existsSync(sourcePath)) {
+      const relPath = path.relative(ctx.contentRoot, sourcePath);
+      const destPath = path.join(proposedPath, relPath);
+      fs.mkdirSync(path.dirname(destPath), { recursive: true });
+      fs.copyFileSync(sourcePath, destPath);
+    }
+  }
+
+  // 8. Write changelog.md
+  const changelogLines = [
+    '# Changelog',
+    '',
+    `Extracted from: ${commitRange}`,
+    '',
+    '## Commits',
+    '',
+  ];
+
+  for (const commit of commits) {
+    changelogLines.push(`- ${commit}`);
+  }
+
+  fs.writeFileSync(path.join(archivePath, 'changelog.md'), changelogLines.join('\n'), 'utf8');
+
+  if (json) {
+    console.log(JSON.stringify({
+      command: 'kb intent extract',
+      intent_id: intentId,
+      commit_range: commitRange,
+      kb_files_count: kbFiles.length,
+      kb_files: kbFiles.map(f => f.path),
+      archive_path: archivePath,
+      status: 'extracted',
+    }, null, 2));
+  } else {
+    console.log(`Extracted intent: ${intentId}`);
+    console.log(`Commit range: ${commitRange}`);
+    console.log(`KB files: ${kbFiles.length}`);
+    for (const f of kbFiles) {
+      console.log(`  - ${f.path}`);
+    }
+    console.log(`Archive: ${archivePath}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
 
@@ -564,6 +714,8 @@ async function runIntent({ args, cwd }) {
     await runApply(ctx, options, cwd);
   } else if (options.sub === 'suggest-lessons') {
     await runSuggestLessons(ctx, options);
+  } else if (options.sub === 'extract') {
+    await runExtract(ctx, options, cwd);
   }
 }
 
@@ -577,6 +729,7 @@ function printHelp() {
   console.log('  kb intent apply <id> [--release] [--yes] [--json]');
   console.log('  kb intent cancel <id> [--yes] [--json]');
   console.log('  kb intent suggest-lessons [--json]');
+  console.log('  kb intent extract <range> [--title="..."] [--type=<type>] [--json]');
   console.log('');
   console.log('Subcommands:');
   console.log('  create          Create a new intent workspace.');
@@ -596,6 +749,12 @@ function printHelp() {
   console.log('  suggest-lessons Scan archived intents for recurring patterns and suggest lesson candidates.');
   console.log('                  Candidates are human-reviewable; none are written automatically.');
   console.log('                  --json  Output candidates as JSON.');
+  console.log('  extract         Retroactively extract ad-hoc commits into an archived intent.');
+  console.log('                  <range>      Commit range (e.g. HEAD~5..HEAD).');
+  console.log('                  --title="..." Optional title for the extracted intent.');
+  console.log('                  --type=<type> Change type: docs (default), feature, fix, refactor.');
+  console.log('                  Creates intent in _archive/ with snapshot of changed KB files.');
+  console.log('');
 }
 
 module.exports = {

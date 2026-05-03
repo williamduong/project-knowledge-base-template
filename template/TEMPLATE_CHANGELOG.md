@@ -78,7 +78,43 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## v2.1.0 - 2026-05-04
+
+### Summary
+
+- Retroactive intent extraction: `kb intent extract <commit-range>` command packages ad-hoc KB edits into archived sub-intents with snapshot of changed files.
+- Release notes enrichment: `kb release notes` now accepts `--with-intents` flag (default=true) to include intent context in output.
+- Intent extras enable KB to capture and track ad-hoc changes retroactively, bridging gap between active intent workflow and direct KB edits.
+
+### Change Type
+
+- Minor (additive, no breaking changes)
+
+### Impact On Existing KBs
+
+- Low — all changes are opt-in. Existing `kb release notes` workflow unchanged unless user explicitly uses `--with-intents`.
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents should now proactively suggest `kb intent extract` when multiple KB-only commits are detected.
+- Release notes now capture more context via `--with-intents` flag; agents can cite intent IDs alongside release tags.
+
+### Files Added / Changed
+
+- `src/commands/intent.js` — added `extract` subcommand with full implementation
+- `src/commands/release.js` — added `--with-intents` and `--no-intents` flags
+- `src/lib/release-notes.js` — infrastructure for intent section (Phase 2: content rendering)
+- `template/TEMPLATE_CHANGELOG.md` — v2.1.0 entry
+- Version stamps across 5 template files
+
+---
+
 ## v2.0.4 - 2026-05-03
+
 
 ### Summary
 

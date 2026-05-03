@@ -34,6 +34,7 @@ function parseArgs(args) {
     target: null,
     file: null,
     template: null,
+    withIntents: true,
   };
 
   const rest = [];
@@ -52,6 +53,14 @@ function parseArgs(args) {
     }
     if (arg === '--include-prerelease') {
       options.ignorePrerelease = false;
+      continue;
+    }
+    if (arg === '--with-intents') {
+      options.withIntents = true;
+      continue;
+    }
+    if (arg === '--no-intents') {
+      options.withIntents = false;
       continue;
     }
     if (arg.startsWith('--summary=')) {
