@@ -1,6 +1,6 @@
 {
   "title": "KB Feature Catalog",
-  "updatedAt": "2026-05-02",
+  "updatedAt": "2026-05-04",
   "items": [
     {
       "id": "FT-001",
@@ -20,11 +20,11 @@
     },
     {
       "id": "FT-003",
-      "name": "Impact Analysis",
+      "name": "Impact Analysis & Stale Scan",
       "scope": "Governance",
       "status": "active",
-      "summary": "Resolve document/code impact relationships and output actionable impact state.",
-      "references": ["kb impact", "kb scan", "src/commands/impact.js", "src/commands/scan.js"]
+      "summary": "Resolve document/code impact relationships and output actionable impact state. kb scan (v2.2) also reports stale source-mirror docs when source-index.json is present.",
+      "references": ["kb impact", "kb scan", "src/commands/impact.js", "src/commands/scan.js", "src/lib/source-index.js"]
     },
     {
       "id": "FT-004",
@@ -47,8 +47,8 @@
       "name": "Chaos Coefficient",
       "scope": "Observation",
       "status": "active",
-      "summary": "Compute AI confidence index with deep scan, KB context signals, and risk estimate bands.",
-      "references": ["kb chaos", "src/commands/chaos.js", "src/lib/observation.js"]
+      "summary": "Compute AI confidence index with deep scan, KB context signals, and risk estimate bands. v2.2 adds stale_penalty: stale source mirror docs proportionally reduce coverage score.",
+      "references": ["kb chaos", "src/commands/chaos.js", "src/lib/observation.js", "src/lib/source-index.js"]
     },
     {
       "id": "FT-007",
@@ -57,6 +57,22 @@
       "status": "active",
       "summary": "Build placeholder/verification/source index summary for governance visibility.",
       "references": ["kb index", "src/commands/index.js"]
+    },
+    {
+      "id": "FT-009",
+      "name": "Source Mirror Tracking",
+      "scope": "Authoring",
+      "status": "active",
+      "summary": "Track source-to-doc linkage in .kb/source-index.json. kb extract generates an AI extraction prompt for any source file. Stale detection triggers when source hash changes after extraction. CLI never calls LLM directly.",
+      "references": ["kb extract", "src/commands/extract.js", "src/lib/source-index.js", "template/12-ai-skills/prompts/source-extraction.md"]
+    },
+    {
+      "id": "FT-010",
+      "name": "Intent Extras",
+      "scope": "Intent",
+      "status": "active",
+      "summary": "Retroactive intent extraction: kb intent extract packages ad-hoc KB commits into archived sub-intents. Release notes enrichment: --with-intents flag adds intent context to kb release notes output.",
+      "references": ["kb intent extract", "src/commands/intent.js", "src/commands/release.js"]
     },
     {
       "id": "FT-008",

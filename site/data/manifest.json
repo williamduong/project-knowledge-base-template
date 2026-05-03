@@ -24,7 +24,8 @@
         { "label": "Agent Operating Manual", "path": "template/12-ai-skills/agent-operating-manual.md" },
         { "label": "AI IDE Compatibility Matrix", "path": "template/12-ai-skills/ai-ide-compatibility-matrix.md" },
         { "label": "Prompting Guide", "path": "template/12-ai-skills/prompting-guide.md" },
-        { "label": "Prompt Pack", "path": "template/12-ai-skills/prompt-pack.md" }
+        { "label": "Prompt Pack", "path": "template/12-ai-skills/prompt-pack.md" },
+        { "label": "Source Extraction Prompt", "path": "template/12-ai-skills/prompts/source-extraction.md" }
       ]
     },
     {

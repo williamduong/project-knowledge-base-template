@@ -202,9 +202,9 @@
                 <path d="M8.5 15.5h5"></path>
               </svg>
             </span>
-            <h2>Latest Release: v2.0.0</h2>
+            <h2>Latest Release: v2.2.0</h2>
           </div>
-          <p>Intent Intelligence ships: <code>kb intent create/apply/suggest-lessons</code> introduces structured KB change workspaces with conflict detection and resolution strategies. When two intents modify the same file, <code>kb intent apply</code> detects the conflict and shows concrete resolution steps before proceeding. After each apply, an <code>ai-decision-context.json</code> is archived for future review. <code>kb intent suggest-lessons</code> analyzes applied intents and surfaces lesson candidates to improve the KB over time. The bundled KB Agent gains Role 4 Reasoner capability for intent conflict arbitration.</p>
+          <p>Source Mirror ships: <code>kb extract &lt;source-file&gt; [--target-doc=&lt;path&gt;]</code> generates a structured AI extraction prompt for any source file and tracks source-to-doc linkage in <code>.kb/source-index.json</code>. <code>kb scan</code> now reports stale docs (source changed since last extraction). The Chaos Coefficient formula gains a <code>stale_penalty</code>: stale source mirror docs proportionally reduce the coverage score. CLI never calls an LLM directly — it creates a prompt file you run in Copilot, Claude, or ChatGPT. Also in v2.1: <code>kb intent extract &lt;commit-range&gt;</code> retroactively packages ad-hoc KB commits into archived sub-intents, and <code>kb release notes --with-intents</code> enriches output with intent context.</p>
           <p><a class="text-link" href="./docs.html?path=TEMPLATE_CHANGELOG.md">Read the full release notes in the template changelog &rarr;</a></p>
         </article>
       </section>

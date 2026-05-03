@@ -1,6 +1,6 @@
 {
   "title": "KB CLI Command Catalog",
-  "updatedAt": "2026-05-02",
+  "updatedAt": "2026-05-04",
   "items": [
     {"command":"kb init","group":"core","stability":"stable","purpose":"Install KB template into a repository."},
     {"command":"kb update","group":"core","stability":"stable","purpose":"Sync KB state and template metadata updates."},
@@ -17,7 +17,7 @@
     {"command":"kb normalize-state","group":"authoring","stability":"stable","purpose":"Backfill kb_state for docs missing state."},
 
     {"command":"kb impact","group":"governance","stability":"stable","purpose":"Graph-based impact tracing for docs/code."},
-    {"command":"kb scan","group":"governance","stability":"stable","purpose":"Scan drift and write impact report."},
+    {"command":"kb scan [--recursive] [--depth=N]","group":"governance","stability":"stable","purpose":"Scan drift and write impact report. Reports stale source-mirror docs when source-index.json is present (v2.2)."},
     {"command":"kb verify","group":"governance","stability":"stable","purpose":"Mark doc(s) verified with commit stamp."},
     {"command":"kb baseline show|set","group":"governance","stability":"stable","purpose":"Inspect or update baseline revision pointer."},
     {"command":"kb doctor","group":"governance","stability":"stable","purpose":"Run environment and readiness diagnostics."},
@@ -27,12 +27,17 @@
     {"command":"kb release plan|run|init-pipeline","group":"release","stability":"stable","purpose":"Preview/execute release pipeline DSL."},
 
     {"command":"kb intent create|status|list|apply|cancel","group":"intent","stability":"stable","purpose":"Manage intent workspaces for structured KB updates."},
+    {"command":"kb intent suggest-lessons","group":"intent","stability":"stable","purpose":"Analyze applied intents and surface lesson candidates."},
+    {"command":"kb intent extract <range>","group":"intent","stability":"stable","purpose":"(v2.1) Retroactively package ad-hoc KB commits into archived sub-intents with snapshot."},
 
     {"command":"kb plan list|add","group":"planning","stability":"stable","purpose":"Manage finalization plan TODO list."},
     {"command":"kb show|hide","group":"storage","stability":"stable","purpose":"Expose/hide KB mount in private-git mode."},
 
-    {"command":"kb chaos","group":"observation","stability":"stable","purpose":"Compute chaos score and confidence index."},
+    {"command":"kb chaos","group":"observation","stability":"stable","purpose":"Compute chaos score and confidence index. Stale source mirror docs reduce coverage score (v2.2)."},
     {"command":"kb chaos --scan-src <dir>","group":"observation","stability":"stable","purpose":"Blend source structural signals into chaos model."},
-    {"command":"kb chaos --estimate","group":"observation","stability":"stable","purpose":"Show forward estimate plans with risk bands."}
+    {"command":"kb chaos --estimate","group":"observation","stability":"stable","purpose":"Show forward estimate plans with risk bands."},
+
+    {"command":"kb extract <source-file>","group":"source-mirror","stability":"stable","purpose":"(v2.2) Generate AI extraction prompt for a source file; track source→doc linkage in source-index.json."},
+    {"command":"kb extract --uncovered","group":"source-mirror","stability":"stable","purpose":"(v2.2) List tracked source files with no covering KB doc."}
   ]
 }

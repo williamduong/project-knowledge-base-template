@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: design-only
-last_updated: 2026-05-03
-last_verified: 2026-05-03
+last_updated: 2026-05-04
+last_verified: 2026-05-04
 related:
   - ../15-governance/self-evolution-doctrine.md
   - ../00-start-here/terminology-guard.md
@@ -197,6 +197,8 @@ This manual follows `15-governance/self-evolution-doctrine.md` and its loop taxo
 - Supervision loop: v1.8 Observer workflow for debt and entropy decisions.
 - Graph loop: v1.9 Graph Builder workflow for projection and consistency checks.
 - Reasoning loop: v2.0 Reasoner workflow for recommendation quality and conflict handling.
+- Intent extras loop: v2.1 retroactive extraction and release notes enrichment.
+- Source mirror loop: v2.2 source tracking, stale detection, and extraction prompt generation.
 
 ### Versioned Capability Progression
 
@@ -206,6 +208,8 @@ This manual follows `15-governance/self-evolution-doctrine.md` and its loop taxo
 | v1.8 | Observe metrics, compare thresholds, and generate supervised decisions. |
 | v1.9 | Build graph-ready projections and validate relation consistency. |
 | v2.0 | Reason across evidence, metrics, lessons, and graph context. |
+| v2.1 | Retroactively package ad-hoc KB commits into intent archives; enrich release notes with intent context. |
+| v2.2 | Track source-to-doc linkage; detect stale docs when source changes; generate extraction prompts for AI-assisted doc creation. |
 
 Rule:
 - Agents must not claim capabilities that belong to a later version unless explicitly running in that version context.

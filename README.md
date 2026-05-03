@@ -6,7 +6,7 @@ It is designed for teams that want a consistent documentation baseline across di
 
 ## Current Template Version
 
-- Template version: `v2.0.0`
+- Template version: `v2.2.0`
 - License: GNU AGPL v3 with separate commercial licensing available
 - Baseline state file for downstream projects: [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md)
 
@@ -115,10 +115,10 @@ Currently implemented commands:
 **Analysis & Intelligence**
 
 - `impact <doc-or-code> [--depth=N]` — Recursive impact analysis: traverses related_strong + binds_to links
-- `scan [--recursive] [--depth=N]` — Scan git diff (baseline..HEAD), bind code changes to docs, write impact.json
+- `scan [--recursive] [--depth=N]` — Scan git diff (baseline..HEAD), bind code changes to docs, write impact.json; also reports stale source-mirror docs when source-index.json is present (v2.2)
 - `verify <doc>` / `verify --all` — Bump last_verified + last_verified_commit, clear resolved entries from impact.json
 - `baseline show` / `baseline set <sha>` / `baseline set --to-head` — Manage the source git baseline
-- `chaos [--quiet] [--no-save] [--scan-src <dir>]` (v1.8) — Compute KB Chaos Coefficient (0–100): aggregates technical debt, entropy, coverage gap, cognitive load, instability; detects spikes ≥10 pts vs previous snapshot
+- `chaos [--quiet] [--no-save] [--scan-src <dir>]` (v1.8) — Compute KB Chaos Coefficient (0–100): aggregates technical debt, entropy, coverage gap, cognitive load, instability; detects spikes ≥10 pts vs previous snapshot; stale source-mirror docs reduce coverage score (v2.2)
 
 **Graph (v1.9)**
 
@@ -133,6 +133,12 @@ Currently implemented commands:
 - `intent apply <id> [--release] [--yes]` — Write staged files to KB core, archive workspace, optionally trigger release pipeline
 - `intent cancel <id>` — Delete an active intent workspace (irreversible)
 - `intent suggest-lessons` — Analyze recent applied intents and surface lesson candidates for KB improvement
+- `intent extract <commit-range> [--title=...] [--type=...]` — (v2.1) Retroactively package ad-hoc KB commits into archived sub-intents
+
+**Source Mirror (v2.2)**
+
+- `extract <source-file> [--target-doc=<path>] [--model=<hint>] [--yes]` — Generate an AI extraction prompt for a source file; track source→doc linkage in `.kb/source-index.json`. CLI does **not** call any LLM — it creates a prompt file the user runs in their AI tool.
+- `extract --uncovered` — List source files tracked in source-index without a covering KB doc
 
 **Release Catalog & Pipeline**
 
