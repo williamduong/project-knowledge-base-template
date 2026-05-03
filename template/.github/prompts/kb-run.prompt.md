@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kb-run
-version: 2.1.0
+version: 2.2.0
 ---
 
 # /kb-run — Execute KB plan steps (explicit/advanced mode)

@@ -4,6 +4,7 @@ const { resolveExistingState } = require('../lib/context');
 const { computeImpact, deriveVerdict, writeImpactFile } = require('../lib/impact');
 const { buildGraph, findRecursiveImpact } = require('../lib/impact-graph');
 const { loadConfig, getConfigValue } = require('../lib/config');
+const { readSourceIndex, refreshIndex } = require('../lib/source-index');
 
 function parseArgs(args) {
   const options = { json: false, quiet: false, recursive: false, depth: null };
@@ -99,6 +100,26 @@ function printHumanReport(impactData, verdict, filePath, options) {
   console.log(`  KB self-edits   : ${impactData.self_edits.length}`);
 }
 
+function printStaleReport(staleInfo) {
+  if (!staleInfo) return;
+  const { total, covered, stale, uncovered } = staleInfo.summary;
+  if (total === 0) return;
+  console.log('');
+  console.log('Source mirror:');
+  console.log(`  tracked  : ${total}`);
+  console.log(`  covered  : ${covered}`);
+  if (stale > 0) {
+    console.log(`  stale    : ${stale}`);
+    for (const e of staleInfo.stale_entries) {
+      const docs = (e.kb_docs || []).filter((d) => d.status === 'stale').map((d) => d.doc_path).join(', ');
+      console.log(`    - ${e.source_path} → ${docs || '(doc unknown)'} [STALE]`);
+    }
+  } else {
+    console.log(`  stale    : 0`);
+  }
+  console.log(`  uncovered: ${uncovered}`);
+}
+
 function runScan({ args, cwd }) {
   const options = parseArgs(args);
   const workspaceRoot = path.resolve(cwd);
@@ -121,17 +142,34 @@ function runScan({ args, cwd }) {
   const filePath = writeImpactFile(context.contentRoot, impactData);
   const verdict = deriveVerdict(impactData);
 
+  // Refresh source-index and collect stale info (best-effort)
+  let staleInfo = null;
+  try {
+    const refreshed = refreshIndex(context.contentRoot, workspaceRoot);
+    if (refreshed.entries.length > 0) {
+      staleInfo = {
+        summary: refreshed.summary,
+        stale_entries: refreshed.entries.filter((e) => e.kb_coverage === 'stale'),
+      };
+    }
+  } catch {
+    // source-index not available — skip stale report
+  }
+
   if (options.quiet) {
     console.log(verdict.label);
   } else if (options.json) {
-    console.log(JSON.stringify({
+    const out = {
       command: 'kb scan',
       written: filePath,
       verdict,
       impact: impactData,
-    }, null, 2));
+    };
+    if (staleInfo) out.source_mirror = staleInfo;
+    console.log(JSON.stringify(out, null, 2));
   } else {
     printHumanReport(impactData, verdict, filePath, options);
+    printStaleReport(staleInfo);
   }
 
   if (verdict.code !== 0) {

@@ -35,6 +35,10 @@ related_weak:                        # optional (v1.4+) — mentions only; impac
 related:                             # legacy (≤ v1.3) — read as alias of related_weak; not auto-rewritten
   - <relative-doc-path>
 released_in: <vX.Y.Z>               # optional (v1.5+) — release catalog reference for this doc
+extraction_sources:                  # optional (v2.2+) — source files this doc was extracted from
+  - path: <relative-source-path>
+    hash: <sha1-12chars>
+    extracted_at: <YYYY-MM-DD>
 tags:
   - <tag>
 ---
@@ -61,3 +65,4 @@ tags:
 - if last_verified present, last_verified_commit also present (v1.4+ doctor rule)
 - no path appears in both related_strong and related_weak (v1.4+ doctor rule)
 - if released_in is present, value follows release version format (for example v1.5.0)
+- extraction_sources (v2.2+) is optional; set when a doc is generated or updated from source code via `kb extract`. Each entry has `path` (relative to workspace root), `hash` (sha1 first 12 chars), and `extracted_at` (YYYY-MM-DD). Doctor warns if hash differs from current file hash (stale signal).

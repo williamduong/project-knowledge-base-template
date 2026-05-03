@@ -700,7 +700,7 @@ function _weightedMax(items, scoreField, tierField, tierFn) {
  *
  * Returns { score, level, breakdown, drivers, aiNote, formula_version }
  */
-function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItems = [], moduleStats = [], contextSignals = {}, docQualitySignals = {} }) {
+function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItems = [], moduleStats = [], contextSignals = {}, docQualitySignals = {}, sourceMirrorSignals = {} }) {
   const effectiveDebt    = debtItems.filter(d => _statusWeight(d.status) > 0);
   const effectiveEntropy = entropyItems.filter(e => _statusWeight(e.status) > 0);
 
@@ -763,6 +763,11 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
   } else {
     r_coverage = Math.max(0, 1 - Math.min(1, contentPlaceholderRatio + graphOrphanNorm + unboundNorm));
   }
+  // Source mirror stale penalty: tracked stale docs reduce coverage score (max −50%).
+  const smStale   = (sourceMirrorSignals && typeof sourceMirrorSignals === 'object') ? (sourceMirrorSignals.stale_count || 0) : 0;
+  const smTotal   = (sourceMirrorSignals && typeof sourceMirrorSignals === 'object') ? (sourceMirrorSignals.total_tracked || 0) : 0;
+  const stale_penalty = smTotal > 0 ? Math.min(0.5, (smStale / smTotal) * 2) : 0;
+  r_coverage = r_coverage * (1 - stale_penalty);
   const coverage_reduction = Math.round(20 * r_coverage * 10) / 10;
 
   // --- 3. Testing (max −15) ---

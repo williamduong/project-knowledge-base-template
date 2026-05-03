@@ -78,6 +78,49 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## v2.2.0 - 2026-05-10
+
+### Summary
+
+- Source mirror tracking: new `kb extract <source-file> [--target-doc=<path>]` command generates an AI extraction prompt for any source file, tracks source-to-doc linkage in `.kb/source-index.json`.
+- Stale detection: `kb scan` now reads `source-index.json` and reports stale docs (source changed since extraction).
+- Chaos integration: stale source docs apply a proportional penalty to `coverage_reduction` in the chaos coefficient formula.
+- New frontmatter field `extraction_sources` (optional, v2.2+) in KB docs to record which source files were extracted and their hash at extraction time.
+- CLI does NOT call any LLM directly — it generates a structured prompt file that the user runs in their AI tool of choice (Copilot, Claude, ChatGPT, etc.).
+
+### Change Type
+
+- Minor (additive, no breaking changes)
+
+### Impact On Existing KBs
+
+- Low — all new features are opt-in. `kb scan` stale section only appears when `source-index.json` has entries. Chaos formula unchanged for KBs with no source tracking.
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- Agents should suggest `kb extract <source-file>` when users ask to document source code.
+- Agents should check `kb scan` stale output and suggest re-extraction when source files have changed.
+- `extraction_sources` frontmatter field is now recognized and can be populated during extraction.
+
+### Files Added / Changed
+
+- `src/lib/source-index.js` — **NEW** — read/write/hash/upsert source-index.json
+- `src/commands/extract.js` — **NEW** — extraction pipeline (prompt generation, source-index update)
+- `src/commands/scan.js` — added stale detection from source-index
+- `src/lib/observation.js` — added `sourceMirrorSignals` param + stale_penalty to coverage signal
+- `src/cli.js` — registered `kb extract` command
+- `template/12-ai-skills/prompts/source-extraction.md` — **NEW** — extraction prompt template
+- `template/15-governance/metadata-schema.md` — added `extraction_sources` optional field
+- `template/TEMPLATE_CHANGELOG.md` — v2.2.0 entry
+- `test/lib/source-index.test.js` — **NEW** — 11 unit tests
+- Version stamps across 5 template files
+
+---
+
 ## v2.1.0 - 2026-05-04
 
 ### Summary
