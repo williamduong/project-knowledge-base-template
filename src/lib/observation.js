@@ -670,27 +670,38 @@ function _weightedMax(items, scoreField, tierField, tierFn) {
 /**
  * Compute a unified chaos coefficient (0–100) for an AI agent working in this repo.
  *
- * Dimensions (all signals convert to chaos — technical debt, docs, context, difficulty, time):
- *   structural    (30%): coupling/spread entropy → AI cannot isolate a change
- *   debtPressure  (25%): accumulated shortcuts → AI encounters unexpected behaviour
- *   coverageGap   (20%): missing tests/docs → AI cannot verify its own changes
- *   cognitiveLoad (15%): LOC/coupling complexity → AI context overflow → hallucination
- *   instability   (10%): urgency/frequency of open issues → AI model goes stale
+ * Formula: subtractive-v1 (score = 100 − Σ reductions)
+ *   score starts at 100 (maximum uncertainty / unknown risk).
+ *   Each group reduces the score when there is positive evidence of health.
+ *   Unknown = worst-case, not best-case.
+ *
+ * Groups and max reductions:
+ *   structural    (−20): graph cycles, entropy spread, orphan docs
+ *   coverage      (−20): placeholder ratio, unbound docs, untested LOC
+ *   testing       (−15): open debt items, lesson gaps, code complexity
+ *   intent        (−15): stale intents, missing decision summaries
+ *   release       (−10): release cadence, catalog currency
+ *   other         (  0): reserved — unknown risks, never reduces
+ *
+ * Minimum possible score = 20 (other group always held back).
+ * Score 100 = fully unknown. Score 20 = fully verified.
  *
  * Optional `moduleStats` enhances accuracy using real LOC data:
- *   [ { file, loc, requireCount, hasTests, churnCount? } ]
- * Optional `contextSignals` feeds phase-2 cross-feature state:
+ *   [ { file, loc, requireCount, hasTests, churnCount?,
+ *       maxCyclomaticPerFunction?, maxNestingDepth?, longFunctionCount?,
+ *       todoCount?, fanIn?, hasCircularDep? } ]
+ * Optional `contextSignals` feeds cross-feature KB state:
  *   {
- *     statusVerdict, statusUnboundCount,
+ *     statusUnboundCount,
  *     graphStrongCycleCount, graphOrphanDocCount,
  *     intentActiveCount, intentStaleCount, intentMissingDecisionSummaryCount,
  *     releaseDaysSinceLast, releaseHasCurrent,
  *   }
  *
- * Returns { score, level, breakdown, drivers, aiNote }
+ * Returns { score, level, breakdown, drivers, aiNote, formula_version }
  */
 function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItems = [], moduleStats = [], contextSignals = {}, docQualitySignals = {} }) {
-  const effectiveDebt = debtItems.filter(d => _statusWeight(d.status) > 0);
+  const effectiveDebt    = debtItems.filter(d => _statusWeight(d.status) > 0);
   const effectiveEntropy = entropyItems.filter(e => _statusWeight(e.status) > 0);
 
   const highRedEntropy = effectiveEntropy.filter(e => {
@@ -702,162 +713,128 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
     return tier === 'high' || tier === 'red';
   });
 
-  // --- 1. Structural entropy (30%) ---
-  // Max entropy score among open high/red items.  Red tier ceiling = ~50, normalize there.
-  // When moduleStats provided, blend with deep code signals.
-  let structural;
+  const {
+    statusUnboundCount = 0,
+    graphStrongCycleCount = 0,
+    graphOrphanDocCount = 0,
+    intentStaleCount = 0,
+    intentMissingDecisionSummaryCount = 0,
+    releaseDaysSinceLast = null,
+    releaseHasCurrent = true,
+  } = (contextSignals && typeof contextSignals === 'object') ? contextSignals : {};
+
+  const { contentPlaceholderRatio = 0 } =
+    (docQualitySignals && typeof docQualitySignals === 'object') ? docQualitySignals : {};
+
+  // --- 1. Structural (max −20) ---
+  // r_structural = 0 when no data at all (unknown is not healthy).
+  // With data: r = 1 − badFactor; badFactor rises with entropy score, graph cycles, orphan docs.
+  let r_structural;
   const maxEntropyScore = _weightedMax(effectiveEntropy, 'entropy_score', 'entropy_tier', entropyScoreToTier);
-  const kbStructural = Math.min(100, maxEntropyScore / 50 * 100);
-  if (moduleStats.length > 0) {
-    const deepStructural = _deepStructuralScore(moduleStats);
-    structural = kbStructural * 0.55 + deepStructural * 0.45;
+  const maxEntropyNorm  = Math.min(1.0, maxEntropyScore / 50);
+  const cycleNorm       = Math.min(1.0, graphStrongCycleCount * 0.15);
+  const orphanNorm      = Math.min(0.3, graphOrphanDocCount / 100);
+
+  if (effectiveEntropy.length === 0 && moduleStats.length === 0 && graphStrongCycleCount === 0) {
+    r_structural = 0; // no structural evidence → score stays elevated
   } else {
-    structural = kbStructural;
+    const kbBadFactor = maxEntropyNorm + cycleNorm + orphanNorm;
+    let badFactor;
+    if (moduleStats.length > 0) {
+      const deepBad = _deepStructuralScore(moduleStats) / 100;
+      badFactor = Math.min(1, kbBadFactor * 0.55 + deepBad * 0.45);
+    } else {
+      badFactor = Math.min(1, kbBadFactor);
+    }
+    r_structural = Math.max(0, 1 - badFactor);
   }
+  const structural_reduction = Math.round(20 * r_structural * 10) / 10;
 
-  // --- 2. Debt pressure (25%) ---
-  // Max debt score among open high/red items.  Normalize at 200 (above red threshold of 120).
-  const maxDebtScore = _weightedMax(effectiveDebt, 'debt_score', 'debt_tier', debtScoreToTier);
-  let debtPressure = Math.min(100, maxDebtScore / 200 * 100);
-
-  // --- 3. Coverage gap (20%) ---
-  // Measures AI's ability to verify changes.  Sources: test-coverage + knowledge type debts,
-  // lesson debt (proposed but not yet accepted = unlearned patterns),
-  // and — when moduleStats provided — actual untested LOC ratio.
-  let coverageGap;
+  // --- 2. Coverage (max −20) ---
+  // r_coverage = 1 − badFactor; badFactor rises with placeholder ratio, unbound docs, untested LOC.
+  let r_coverage;
+  const graphOrphanNorm = Math.min(0.3, graphOrphanDocCount / 30);
+  const unboundNorm     = Math.min(1.0, statusUnboundCount * 0.05);
   if (moduleStats.length > 0) {
     const totalLoc     = moduleStats.reduce((s, m) => s + (m.loc || 0), 0);
     const uncoveredLoc = moduleStats.filter(m => !m.hasTests).reduce((s, m) => s + (m.loc || 0), 0);
-    coverageGap = totalLoc > 0 ? (uncoveredLoc / totalLoc) * 100 : 0;
+    const locRatio     = totalLoc > 0 ? uncoveredLoc / totalLoc : 0;
+    r_coverage = Math.max(0, 1 - Math.min(1, locRatio + contentPlaceholderRatio * 0.5 + unboundNorm));
   } else {
-    const coverageDebts = effectiveDebt.filter(d => d.type === 'test-coverage' || d.type === 'knowledge');
-    const proposedCount = lessonItems.filter(l => l.status === 'proposed').length;
-    const acceptedNotEnforcedCount = lessonItems.filter(l => l.status === 'accepted' && l.enforcement !== 'enforced').length;
-    const lessonTotal = lessonItems.length || 1;
-    const lessonGap = (proposedCount / lessonTotal) * 40;
-    const acceptedGap = (acceptedNotEnforcedCount / lessonTotal) * 30;
-    const weightedCoverageSeverity = coverageDebts.reduce((s, d) => s + ((d.severity || 1) * _statusWeight(d.status)), 0);
-    const weightedCoverageCount = coverageDebts.reduce((s, d) => s + _statusWeight(d.status), 0);
-    const debtGap = weightedCoverageCount > 0
-      ? (weightedCoverageSeverity / weightedCoverageCount) / 5 * 60
-      : 0;
-    coverageGap = Math.min(100, debtGap + lessonGap + acceptedGap);
+    r_coverage = Math.max(0, 1 - Math.min(1, contentPlaceholderRatio + graphOrphanNorm + unboundNorm));
+  }
+  const coverage_reduction = Math.round(20 * r_coverage * 10) / 10;
+
+  // --- 3. Testing (max −15) ---
+  // Aggregates debt pressure, lesson gaps, and deep-scan code complexity signals.
+  // r_testing = 1 − totalBad.
+  const maxDebtBad = _weightedMax(effectiveDebt, 'debt_score', 'debt_tier', debtScoreToTier) / 200;
+  const avgSeverityBad = effectiveDebt.length > 0
+    ? Math.min(0.5, (effectiveDebt.reduce((s, d) => s + ((d.severity || 1) * _statusWeight(d.status)), 0)
+        / effectiveDebt.reduce((s, d) => s + _statusWeight(d.status), 0)) / 5 * 0.6)
+    : 0;
+  const debtBadFactor = Math.min(0.9, maxDebtBad + avgSeverityBad);
+
+  const lessonTotal = lessonItems.length || 1;
+  const proposedCount             = lessonItems.filter(l => l.status === 'proposed').length;
+  const acceptedNotEnforcedCount  = lessonItems.filter(l => l.status === 'accepted' && l.enforcement !== 'enforced').length;
+  const lessonGapFactor = Math.min(0.4, (proposedCount / lessonTotal) * 0.4 + (acceptedNotEnforcedCount / lessonTotal) * 0.3);
+
+  let deepCodeBadFactor = 0;
+  if (moduleStats.length > 0) {
+    const todoBad      = Math.min(0.3, _deepTodoScore(moduleStats) / 100 * 0.3);
+    const cognitiveBad = Math.min(0.5, _deepCognitiveScore(moduleStats) / 100 * 0.5);
+    deepCodeBadFactor  = Math.min(0.6, todoBad + cognitiveBad);
   }
 
-  // --- 4. Cognitive load (15%) ---
-  // Measures context size AI needs to hold for any safe change.
-  // Sources: module-size + api-design open debts (effort + severity as proxy for complexity).
-  // When moduleStats provided: oversized files + deep nesting + long functions.
-  let cognitiveLoad;
-  if (moduleStats.length > 0) {
-    cognitiveLoad = _deepCognitiveScore(moduleStats);
+  const r_testing = Math.max(0, 1 - Math.min(1, debtBadFactor + lessonGapFactor + deepCodeBadFactor));
+  const testing_reduction = Math.round(15 * r_testing * 10) / 10;
+
+  // --- 4. Intent (max −15) ---
+  // r_intent = 1 − (staleFactor + missingDecisionFactor).
+  // Fully healthy when no stale intents and no missing decision summaries.
+  const staleFactor          = Math.min(1, intentStaleCount * 0.2);
+  const missingDecisionFactor = Math.min(1, intentMissingDecisionSummaryCount * 0.15);
+  const r_intent = Math.max(0, 1 - Math.min(1, staleFactor + missingDecisionFactor));
+  const intent_reduction = Math.round(15 * r_intent * 10) / 10;
+
+  // --- 5. Release (max −10) ---
+  // r_release = 1 − (ageFactor + currentFactor).
+  // null releaseDaysSinceLast = never released = worst case (ageFactor = 1.0).
+  let ageFactor;
+  if (typeof releaseDaysSinceLast !== 'number') {
+    ageFactor = 1.0;
+  } else if (releaseDaysSinceLast <= 30) {
+    ageFactor = 0;
+  } else if (releaseDaysSinceLast <= 60) {
+    ageFactor = 0.3;
+  } else if (releaseDaysSinceLast <= 90) {
+    ageFactor = 0.6;
   } else {
-    const loadDebts = effectiveDebt.filter(d => d.type === 'module-size' || d.type === 'api-design');
-    cognitiveLoad = loadDebts.length > 0
-      ? Math.min(100, (loadDebts.reduce((s, d) => s + ((d.severity || 1) * _statusWeight(d.status)), 0)
-        / loadDebts.reduce((s, d) => s + _statusWeight(d.status), 0)) / 5 * 100)
-      : 0;
+    ageFactor = 1.0;
   }
+  const currentFactor = releaseHasCurrent ? 0 : 0.3;
+  const r_release = Math.max(0, 1 - Math.min(1, ageFactor + currentFactor));
+  const release_reduction = Math.round(10 * r_release * 10) / 10;
 
-  // Deep scan hygiene debt pressure bump (TODO/FIXME density) — only when scan exists.
-  if (moduleStats.length > 0) {
-    const todoFactor = _deepTodoScore(moduleStats);
-    const combinedDebt = debtPressure * 0.80 + todoFactor * 0.20;
-    debtPressure = Math.min(100, combinedDebt);
+  // --- 6. Other (always 0) ---
+  // Reserved for unknown risks not yet measurable. Never reduces score.
+  // Guarantees minimum score of 20 even for a fully verified codebase.
+  const other_reduction = 0;
 
-    // Gap 1: accepted but not enforced lessons still leave practical blind spots.
-    const lessonTotal = lessonItems.length || 1;
-    const acceptedNotEnforcedCount = lessonItems.filter(l => l.status === 'accepted' && l.enforcement !== 'enforced').length;
-    const acceptedGap = (acceptedNotEnforcedCount / lessonTotal) * 30;
-    coverageGap = Math.min(100, coverageGap + acceptedGap);
-  }
-
-  // --- 5. Instability (10%) ---
-  // How fast is this repo changing?  AI model of the system goes stale faster under churn.
-  // Sources: urgency + frequency (debt) or urgency + spread (entropy) of open high/red items.
-  // When moduleStats: churnCount-weighted LOC ratio supplements KB signal.
-  const unstableItems = [...highRedDebt, ...highRedEntropy];
-  let instability = 0;
-  if (unstableItems.length > 0) {
-    let weightedSum = 0;
-    let weightedCount = 0;
-    for (const i of unstableItems) {
-      const w = _statusWeight(i.status);
-      if (w <= 0) continue;
-      const u = i.urgency || i.severity || 1;
-      const f = i.frequency || i.spread || 1;
-      weightedSum += ((u + f) / 2) * w;
-      weightedCount += w;
-    }
-    const avgUrgency = weightedCount > 0 ? weightedSum / weightedCount : 0;
-    instability = Math.min(100, avgUrgency / 5 * 100);
-  }
-  if (moduleStats.length > 0) {
-    const totalLoc  = moduleStats.reduce((s, m) => s + (m.loc || 0), 0);
-    const churnLoc  = moduleStats.filter(m => (m.churnCount || 0) >= 3).reduce((s, m) => s + (m.loc || 0), 0);
-    const churnFactor = totalLoc > 0 ? Math.min(100, (churnLoc / totalLoc) * 100 * 2) : 0;
-    instability = instability * 0.5 + churnFactor * 0.5;
-  }
-
-  // Phase 2 (Gap 5): blend in cross-feature KB signals.
-  if (contextSignals && typeof contextSignals === 'object') {
-    const {
-      statusVerdict = 'clean',
-      statusUnboundCount = 0,
-      graphStrongCycleCount = 0,
-      graphOrphanDocCount = 0,
-      intentActiveCount = 0,
-      intentStaleCount = 0,
-      intentMissingDecisionSummaryCount = 0,
-      releaseDaysSinceLast = null,
-      releaseHasCurrent = true,
-    } = contextSignals;
-
-    let structuralBoost = 0;
-    structuralBoost += Math.min(30, graphStrongCycleCount * 6);
-    structuralBoost += Math.min(20, graphOrphanDocCount * 1.5);
-    structuralBoost += Math.min(20, intentMissingDecisionSummaryCount * 4);
-    structural = Math.min(100, structural + structuralBoost);
-
-    let coverageBoost = 0;
-    coverageBoost += Math.min(35, statusUnboundCount * 3);
-    if (!releaseHasCurrent) coverageBoost += 20;
-    coverageGap = Math.min(100, coverageGap + coverageBoost);
-
-    let cognitiveBoost = 0;
-    if (intentActiveCount >= 8) cognitiveBoost += 20;
-    else if (intentActiveCount >= 5) cognitiveBoost += 12;
-    else if (intentActiveCount >= 3) cognitiveBoost += 6;
-    cognitiveLoad = Math.min(100, cognitiveLoad + cognitiveBoost);
-
-    let instabilityBoost = 0;
-    if (statusVerdict === 'blocked') instabilityBoost += 30;
-    else if (statusVerdict === 'attention') instabilityBoost += 15;
-    instabilityBoost += Math.min(25, intentStaleCount * 5);
-    if (typeof releaseDaysSinceLast === 'number') {
-      if (releaseDaysSinceLast >= 90) instabilityBoost += 25;
-      else if (releaseDaysSinceLast >= 60) instabilityBoost += 15;
-      else if (releaseDaysSinceLast >= 30) instabilityBoost += 8;
-    }
-    instability = Math.min(100, instability + instabilityBoost);
-  }
-
-  // Phase 3 (Gap 3): KB doc quality — placeholder ratio widens coverage gap.
-  if (docQualitySignals && typeof docQualitySignals === 'object') {
-    const { contentPlaceholderRatio = 0 } = docQualitySignals;
-    coverageGap = Math.min(100, coverageGap + contentPlaceholderRatio * 30);
-  }
-
-  const raw = structural * 0.30 + debtPressure * 0.25 + coverageGap * 0.20 + cognitiveLoad * 0.15 + instability * 0.10;
-  const score = Math.min(100, Math.round(raw * 10) / 10);
+  // --- Final score ---
+  const totalReduction = structural_reduction + coverage_reduction + testing_reduction
+    + intent_reduction + release_reduction + other_reduction;
+  const score      = Math.min(100, Math.max(0, Math.round((100 - totalReduction) * 10) / 10));
   const chaosLevel = _chaosLevelFor(score);
 
   const breakdown = {
-    structural:   Math.round(structural * 10)    / 10,
-    debtPressure: Math.round(debtPressure * 10)  / 10,
-    coverageGap:  Math.round(coverageGap * 10)   / 10,
-    cognitiveLoad: Math.round(cognitiveLoad * 10) / 10,
-    instability:  Math.round(instability * 10)   / 10,
+    structural_reduction,
+    coverage_reduction,
+    testing_reduction,
+    intent_reduction,
+    release_reduction,
+    other: other_reduction,
   };
 
   const drivers = [
@@ -873,7 +850,7 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
     })),
   ].sort((a, b) => b.score - a.score).slice(0, 5);
 
-  return { score, level: chaosLevel.level, breakdown, drivers, aiNote: chaosLevel.aiNote };
+  return { score, level: chaosLevel.level, breakdown, drivers, aiNote: chaosLevel.aiNote, formula_version: 'subtractive-v1' };
 }
 
 /**
@@ -941,6 +918,12 @@ function estimateDeltaChaos(baseScore, factors = {}) {
  */
 function compareChaosSnapshots(current, previous) {
   if (!previous) return { hasPrevious: false, delta: null, spikeDetected: false };
+  // Skip trend when formula changed — scores are not comparable across formula versions.
+  const currentFormula  = current.formula_version  || 'additive-v1';
+  const previousFormula = previous.formula_version || 'additive-v1';
+  if (currentFormula !== previousFormula) {
+    return { hasPrevious: false, delta: null, spikeDetected: false, formulaMismatch: true };
+  }
   const delta = Math.round((current.score - previous.score) * 10) / 10;
   return {
     hasPrevious: true,
@@ -964,16 +947,17 @@ function chaosHistoryPath(contentRoot) {
  * Build a chaos snapshot record for persistence.
  * Returns { snapshot }
  */
-function buildChaosSnapshot({ score, level, breakdown, drivers, measuredAt = null }) {
+function buildChaosSnapshot({ score, level, breakdown, drivers, measuredAt = null, formula_version = 'subtractive-v1' }) {
   return {
     snapshot: {
       score,
       level,
-      structural:   breakdown.structural,
-      debtPressure: breakdown.debtPressure,
-      coverageGap:  breakdown.coverageGap,
-      cognitiveLoad: breakdown.cognitiveLoad,
-      instability:  breakdown.instability,
+      structural_reduction: breakdown.structural_reduction != null ? breakdown.structural_reduction : (breakdown.structural || 0),
+      coverage_reduction:   breakdown.coverage_reduction   != null ? breakdown.coverage_reduction   : (breakdown.coverageGap || 0),
+      testing_reduction:    breakdown.testing_reduction    != null ? breakdown.testing_reduction    : (breakdown.debtPressure || 0),
+      intent_reduction:     breakdown.intent_reduction     != null ? breakdown.intent_reduction     : (breakdown.cognitiveLoad || 0),
+      release_reduction:    breakdown.release_reduction    != null ? breakdown.release_reduction    : (breakdown.instability || 0),
+      formula_version:      formula_version,
       topDriverIds: (drivers || []).map(d => d.id).join(', '),
       measuredAt: measuredAt || new Date().toISOString(),
     },
@@ -992,13 +976,20 @@ function appendChaosSnapshot(contentRoot, snapshot) {
     '---',
     `score: ${snapshot.score}`,
     `level: ${snapshot.level}`,
-    `structural: ${snapshot.structural}`,
-    `debtPressure: ${snapshot.debtPressure}`,
-    `coverageGap: ${snapshot.coverageGap}`,
-    `cognitiveLoad: ${snapshot.cognitiveLoad}`,
-    `instability: ${snapshot.instability}`,
+    `structural_reduction: ${snapshot.structural_reduction}`,
+    `coverage_reduction: ${snapshot.coverage_reduction}`,
+    `testing_reduction: ${snapshot.testing_reduction}`,
+    `intent_reduction: ${snapshot.intent_reduction}`,
+    `release_reduction: ${snapshot.release_reduction}`,
+    `formula_version: ${snapshot.formula_version || 'subtractive-v1'}`,
     `topDriverIds: ${snapshot.topDriverIds || ''}`,
     `measuredAt: ${snapshot.measuredAt}`,
+    // Legacy fields kept for human readability — parseChaosHistory reads new keys
+    `structural: ${snapshot.structural_reduction}`,
+    `debtPressure: ${snapshot.testing_reduction}`,
+    `coverageGap: ${snapshot.coverage_reduction}`,
+    `cognitiveLoad: ${snapshot.intent_reduction}`,
+    `instability: ${snapshot.release_reduction}`,
     '',
   ].join('\n');
   if (!fs.existsSync(fp)) {
@@ -1014,7 +1005,8 @@ function appendChaosSnapshot(contentRoot, snapshot) {
  */
 function parseChaosHistory(raw) {
   const snapshots = [];
-  const numFields = ['score', 'structural', 'debtPressure', 'coverageGap', 'cognitiveLoad', 'instability'];
+  const numFields = ['score', 'structural_reduction', 'coverage_reduction', 'testing_reduction', 'intent_reduction', 'release_reduction',
+    'structural', 'debtPressure', 'coverageGap', 'cognitiveLoad', 'instability']; // legacy names kept for backward compat
   const blocks = raw.split(/^---$/m).map(b => b.trim()).filter(Boolean);
   for (const block of blocks) {
     if (!block.includes(':')) continue;

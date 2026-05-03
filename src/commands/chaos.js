@@ -466,22 +466,22 @@ function pad(str, len, right = false) {
 
 function renderBreakdown(breakdown) {
   const rows = [
-    ['structural entropy',  '30%', breakdown.structural],
-    ['debt pressure',       '25%', breakdown.debtPressure],
-    ['coverage gap',        '20%', breakdown.coverageGap],
-    ['cognitive load',      '15%', breakdown.cognitiveLoad],
-    ['instability',         '10%', breakdown.instability],
+    ['structural',  '−20', breakdown.structural_reduction],
+    ['coverage',    '−20', breakdown.coverage_reduction],
+    ['testing',     '−15', breakdown.testing_reduction],
+    ['intent',      '−15', breakdown.intent_reduction],
+    ['release',     '−10', breakdown.release_reduction],
+    ['other',       '  0', breakdown.other],
   ];
-  const weights = [0.30, 0.25, 0.20, 0.15, 0.10];
   const lines = [];
-  lines.push('  Breakdown (AI agent confidence model):');
+  lines.push('  Breakdown (reductions from 100):');
   lines.push('  ' + '─'.repeat(44));
-  for (let i = 0; i < rows.length; i++) {
-    const [name, weight, val] = rows[i];
-    const contrib = Math.round(val * weights[i] * 10) / 10;
-    lines.push(`    ${pad(name, 22)} ${pad(weight, 5)} val=${pad(val.toFixed(1), 5, true)}  contrib=${pad(contrib.toFixed(1), 5, true)}`);
+  for (const [name, weight, val] of rows) {
+    const v = (val != null ? val : 0);
+    lines.push(`    ${pad(name, 22)} max${pad(weight, 4)} reduction=${pad(v.toFixed(1), 5, true)}`);
   }
   lines.push('  ' + '─'.repeat(44));
+  lines.push(`    formula: subtractive-v1  (100 − reductions = score)`);
   return lines.join('\n');
 }
 

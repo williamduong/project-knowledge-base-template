@@ -870,63 +870,66 @@ test('CHAOS_SPIKE_THRESHOLD is 10', () => {
 // computeChaosCoefficient
 // ---------------------------------------------------------------------------
 
-test('computeChaosCoefficient: empty input returns score 0 and stable', () => {
+test('computeChaosCoefficient: empty input returns score ~50 and manageable (unknown risk, not zero)', () => {
   const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
-  assert.equal(r.score, 0);
-  assert.equal(r.level, 'stable');
+  assert.equal(r.score, 50);
+  assert.equal(r.level, 'manageable');
+  assert.equal(r.formula_version, 'subtractive-v1');
   assert.ok(r.aiNote.length > 0);
 });
 
-test('computeChaosCoefficient: entropy-red item raises structural, score > stable', () => {
+test('computeChaosCoefficient: entropy-red item raises structural signal, score > stable', () => {
   const entropyItems = [{ id: 'E01', entropy_score: 40, entropy_tier: 'red', status: 'open' }];
   const r = computeChaosCoefficient({ debtItems: [], entropyItems, lessonItems: [] });
   assert.ok(r.score > 25, 'Should exceed stable threshold');
-  assert.ok(r.breakdown.structural > 0);
+  assert.ok(r.breakdown.structural_reduction < 20, 'High entropy reduces structural_reduction below max');
 });
 
-test('computeChaosCoefficient: high debt item raises debtPressure', () => {
+test('computeChaosCoefficient: high debt item reduces testing_reduction below max', () => {
   const debtItems = [{ id: 'D01', debt_score: 80, debt_tier: 'high', status: 'open' }];
   const r = computeChaosCoefficient({ debtItems, entropyItems: [], lessonItems: [] });
-  assert.ok(r.breakdown.debtPressure > 0);
+  assert.ok(r.breakdown.testing_reduction < 15);
 });
 
-test('computeChaosCoefficient: resolved items do not contribute', () => {
+test('computeChaosCoefficient: resolved items do not contribute (same as baseline)', () => {
   const debtItems = [{ id: 'D01', debt_score: 200, debt_tier: 'red', status: 'resolved' }];
   const entropyItems = [{ id: 'E01', entropy_score: 50, entropy_tier: 'red', status: 'resolved' }];
   const r = computeChaosCoefficient({ debtItems, entropyItems, lessonItems: [] });
-  assert.equal(r.score, 0);
-  assert.equal(r.level, 'stable');
+  const baseline = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
+  assert.equal(r.score, baseline.score);
+  assert.equal(r.level, baseline.level);
 });
 
 test('computeChaosCoefficient: draft/in-review contributes partially vs open', () => {
-  const openDebt = [{ id: 'D01', debt_score: 120, debt_tier: 'red', status: 'open' }];
+  const openDebt  = [{ id: 'D01', debt_score: 120, debt_tier: 'red', status: 'open' }];
   const draftDebt = [{ id: 'D01', debt_score: 120, debt_tier: 'red', status: 'draft' }];
-  const open = computeChaosCoefficient({ debtItems: openDebt, entropyItems: [], lessonItems: [] });
+  const open  = computeChaosCoefficient({ debtItems: openDebt,  entropyItems: [], lessonItems: [] });
   const draft = computeChaosCoefficient({ debtItems: draftDebt, entropyItems: [], lessonItems: [] });
-  assert.ok(draft.breakdown.debtPressure < open.breakdown.debtPressure);
-  assert.ok(draft.breakdown.debtPressure > 0);
+  // Draft debt is less bad → higher testing_reduction (more health evidence)
+  assert.ok(draft.breakdown.testing_reduction > open.breakdown.testing_reduction);
+  assert.ok(open.breakdown.testing_reduction > 0);
 });
 
-test('computeChaosCoefficient: test-coverage debt raises coverageGap', () => {
+test('computeChaosCoefficient: test-coverage debt reduces testing health', () => {
   const debtItems = [{ id: 'D03', type: 'test-coverage', status: 'open', severity: 4, debt_score: 48, debt_tier: 'medium' }];
   const r = computeChaosCoefficient({ debtItems, entropyItems: [], lessonItems: [] });
-  assert.ok(r.breakdown.coverageGap > 0);
+  assert.ok(r.breakdown.testing_reduction < 15);
 });
 
-test('computeChaosCoefficient: proposed lessons raise coverageGap', () => {
+test('computeChaosCoefficient: proposed lessons reduce testing health', () => {
   const lessonItems = [
     { id: 'L01', status: 'proposed' },
     { id: 'L02', status: 'proposed' },
     { id: 'L03', status: 'accepted' },
   ];
   const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems });
-  assert.ok(r.breakdown.coverageGap > 0);
+  assert.ok(r.breakdown.testing_reduction < 15);
 });
 
-test('computeChaosCoefficient: module-size debt raises cognitiveLoad', () => {
+test('computeChaosCoefficient: module-size debt reduces testing health', () => {
   const debtItems = [{ id: 'D02', type: 'module-size', status: 'open', severity: 4, debt_score: 48, debt_tier: 'medium' }];
   const r = computeChaosCoefficient({ debtItems, entropyItems: [], lessonItems: [] });
-  assert.ok(r.breakdown.cognitiveLoad > 0);
+  assert.ok(r.breakdown.testing_reduction < 15);
 });
 
 test('computeChaosCoefficient: moduleStats coverage gap calculated from LOC', () => {
@@ -935,27 +938,30 @@ test('computeChaosCoefficient: moduleStats coverage gap calculated from LOC', ()
     { file: 'b.js', loc: 100, requireCount: 2, hasTests: true },
   ];
   const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats });
-  // 200/300 untested = 66.7%
-  assert.ok(r.breakdown.coverageGap > 60);
+  // 200/300 untested → high bad factor → coverage_reduction should be low
+  assert.ok(r.breakdown.coverage_reduction < 10);
+  assert.ok(r.breakdown.coverage_reduction >= 0);
 });
 
-test('computeChaosCoefficient: moduleStats all tested = zero coverage gap', () => {
+test('computeChaosCoefficient: moduleStats all tested = full coverage_reduction (20)', () => {
   const moduleStats = [
     { file: 'a.js', loc: 300, requireCount: 5, hasTests: true },
     { file: 'b.js', loc: 200, requireCount: 3, hasTests: true },
   ];
   const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats });
-  assert.equal(r.breakdown.coverageGap, 0);
+  assert.equal(r.breakdown.coverage_reduction, 20);
 });
 
-test('computeChaosCoefficient: moduleStats high coupling raises structural', () => {
+test('computeChaosCoefficient: moduleStats high coupling detected in structural', () => {
   const moduleStats = [{ file: 'a.js', loc: 500, requireCount: 14, hasTests: true }];
   const r1 = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: [] });
   const r2 = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats });
-  assert.ok(r2.score >= r1.score, 'High coupling should not lower score');
+  // Having moduleStats data gives structural signal; high coupling makes structural_reduction < max
+  assert.ok(r2.breakdown.structural_reduction >= r1.breakdown.structural_reduction,
+    'Having structural data should give at least as much reduction as no data');
 });
 
-test('computeChaosCoefficient: deep scan complexity raises cognitiveLoad', () => {
+test('computeChaosCoefficient: deep scan complexity reduces testing_reduction', () => {
   const moduleStats = [
     {
       file: 'a.js',
@@ -971,10 +977,10 @@ test('computeChaosCoefficient: deep scan complexity raises cognitiveLoad', () =>
     },
   ];
   const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats });
-  assert.ok(r.breakdown.cognitiveLoad >= 25);
+  assert.ok(r.breakdown.testing_reduction < 15);
 });
 
-test('computeChaosCoefficient: cyclomatic inflation guarded for tiny files', () => {
+test('computeChaosCoefficient: cyclomatic inflation guarded for tiny files (large file has more structural impact)', () => {
   const tiny = computeChaosCoefficient({
     debtItems: [],
     entropyItems: [],
@@ -987,10 +993,11 @@ test('computeChaosCoefficient: cyclomatic inflation guarded for tiny files', () 
     lessonItems: [],
     moduleStats: [{ file: 'large.js', loc: 220, requireCount: 1, hasTests: true, maxCyclomaticPerFunction: 120 }],
   });
-  assert.ok(large.breakdown.structural > tiny.breakdown.structural);
+  // Large file with high cyclomatic → more structural bad → lower structural_reduction
+  assert.ok(large.breakdown.structural_reduction <= tiny.breakdown.structural_reduction);
 });
 
-test('computeChaosCoefficient: import threshold contributes to structural', () => {
+test('computeChaosCoefficient: import threshold contributes to structural (high coupling → higher score)', () => {
   const low = computeChaosCoefficient({
     debtItems: [],
     entropyItems: [],
@@ -1003,10 +1010,11 @@ test('computeChaosCoefficient: import threshold contributes to structural', () =
     lessonItems: [],
     moduleStats: [{ file: 'a.js', loc: 180, requireCount: 12, hasTests: true }],
   });
-  assert.ok(high.breakdown.structural > low.breakdown.structural);
+  // High coupling → worse structural → lower structural_reduction → higher score
+  assert.ok(high.score >= low.score);
 });
 
-test('computeChaosCoefficient: todo threshold uses per-file density bands', () => {
+test('computeChaosCoefficient: todo threshold uses per-file density bands (high todo → less testing health)', () => {
   const mild = computeChaosCoefficient({
     debtItems: [],
     entropyItems: [],
@@ -1019,20 +1027,20 @@ test('computeChaosCoefficient: todo threshold uses per-file density bands', () =
     lessonItems: [],
     moduleStats: [{ file: 'a.js', loc: 200, requireCount: 1, hasTests: true, todoCount: 12 }],
   });
-  assert.ok(high.breakdown.debtPressure > mild.breakdown.debtPressure);
+  assert.ok(high.breakdown.testing_reduction < mild.breakdown.testing_reduction);
 });
 
-test('computeChaosCoefficient: accepted-not-enforced lessons increase coverageGap', () => {
+test('computeChaosCoefficient: accepted-not-enforced lessons reduce testing health', () => {
   const none = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
   const accepted = computeChaosCoefficient({
     debtItems: [],
     entropyItems: [],
     lessonItems: [{ id: 'L01', status: 'accepted', enforcement: 'manual' }],
   });
-  assert.ok(accepted.breakdown.coverageGap > none.breakdown.coverageGap);
+  assert.ok(accepted.breakdown.testing_reduction < none.breakdown.testing_reduction);
 });
 
-test('computeChaosCoefficient: context signals boost dimensions', () => {
+test('computeChaosCoefficient: context signals affect score and dimensions', () => {
   const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: [] });
   const boosted = computeChaosCoefficient({
     debtItems: [],
@@ -1051,26 +1059,32 @@ test('computeChaosCoefficient: context signals boost dimensions', () => {
       releaseHasCurrent: false,
     },
   });
-  assert.ok(boosted.breakdown.structural > base.breakdown.structural);
-  assert.ok(boosted.breakdown.coverageGap > base.breakdown.coverageGap);
-  assert.ok(boosted.breakdown.cognitiveLoad > base.breakdown.cognitiveLoad);
-  assert.ok(boosted.breakdown.instability > base.breakdown.instability);
+  // Stale intents → lower intent_reduction; cycles give structural data (higher structural_reduction than no-data)
+  assert.ok(boosted.breakdown.structural_reduction > base.breakdown.structural_reduction,
+    'Graph cycles provide structural evidence — more reduction than no-data baseline');
+  assert.ok(boosted.breakdown.intent_reduction < base.breakdown.intent_reduction,
+    'Stale intents lower intent health');
+  assert.ok(boosted.breakdown.release_reduction > base.breakdown.release_reduction,
+    'Recent release (45d) gives some release evidence');
+  assert.ok(boosted.breakdown.coverage_reduction < base.breakdown.coverage_reduction,
+    'Orphan docs and unbound reduce coverage health');
 });
 
-test('computeChaosCoefficient: todo density from deep scan increases debtPressure', () => {
+test('computeChaosCoefficient: todo density from deep scan reduces testing health', () => {
   const moduleStatsClean = [{ file: 'a.js', loc: 400, requireCount: 2, hasTests: true, todoCount: 0 }];
-  const moduleStatsTodo = [{ file: 'a.js', loc: 400, requireCount: 2, hasTests: true, todoCount: 20 }];
+  const moduleStatsTodo  = [{ file: 'a.js', loc: 400, requireCount: 2, hasTests: true, todoCount: 20 }];
   const clean = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsClean });
-  const todo = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsTodo });
-  assert.ok(todo.breakdown.debtPressure > clean.breakdown.debtPressure);
+  const todo  = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsTodo });
+  assert.ok(todo.breakdown.testing_reduction < clean.breakdown.testing_reduction);
 });
 
-test('computeChaosCoefficient: circular dependencies raise structural', () => {
+test('computeChaosCoefficient: circular dependencies reduce structural_reduction', () => {
   const moduleStatsNoCycle = [{ file: 'a.js', loc: 200, requireCount: 4, hasTests: true, fanIn: 1, hasCircularDep: false }];
-  const moduleStatsCycle = [{ file: 'a.js', loc: 200, requireCount: 4, hasTests: true, fanIn: 1, hasCircularDep: true }];
+  const moduleStatsCycle   = [{ file: 'a.js', loc: 200, requireCount: 4, hasTests: true, fanIn: 1, hasCircularDep: true }];
   const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsNoCycle });
-  const cyc = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsCycle });
-  assert.ok(cyc.breakdown.structural >= base.breakdown.structural);
+  const cyc  = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [], moduleStats: moduleStatsCycle });
+  // Circular dep → more structural bad → lower structural_reduction
+  assert.ok(cyc.breakdown.structural_reduction <= base.breakdown.structural_reduction);
 });
 
 test('computeChaosCoefficient: returns drivers sorted by score desc', () => {
@@ -1093,7 +1107,7 @@ test('computeChaosCoefficient: chaotic level when many red items', () => {
   }));
   const r = computeChaosCoefficient({ debtItems, entropyItems, lessonItems: [], moduleStats });
   assert.ok(r.score >= 60, 'Expected severe instability with heavy signals');
-  assert.equal(r.level, 'unstable');
+  assert.equal(r.level, 'chaotic');
 });
 
 // ---------------------------------------------------------------------------
@@ -1191,17 +1205,18 @@ test('compareChaosSnapshots: negative delta (improving)', () => {
 // ---------------------------------------------------------------------------
 
 test('buildChaosSnapshot: produces snapshot with all breakdown fields', () => {
-  const breakdown = { structural: 72, debtPressure: 30, coverageGap: 40, cognitiveLoad: 20, instability: 10 };
+  const breakdown = { structural_reduction: 12, coverage_reduction: 15, testing_reduction: 8, intent_reduction: 6, release_reduction: 4, other: 0 };
   const { snapshot } = buildChaosSnapshot({ score: 45.5, level: 'manageable', breakdown, drivers: [{ id: 'E01' }] });
   assert.equal(snapshot.score, 45.5);
   assert.equal(snapshot.level, 'manageable');
-  assert.equal(snapshot.structural, 72);
+  assert.equal(snapshot.structural_reduction, 12);
+  assert.equal(snapshot.formula_version, 'subtractive-v1');
   assert.equal(snapshot.topDriverIds, 'E01');
   assert.ok(snapshot.measuredAt.includes('T'));
 });
 
 test('buildChaosSnapshot: accepts custom measuredAt', () => {
-  const breakdown = { structural: 0, debtPressure: 0, coverageGap: 0, cognitiveLoad: 0, instability: 0 };
+  const breakdown = { structural_reduction: 0, coverage_reduction: 0, testing_reduction: 0, intent_reduction: 0, release_reduction: 0, other: 0 };
   const { snapshot } = buildChaosSnapshot({ score: 10, level: 'stable', breakdown, drivers: [], measuredAt: '2026-01-01T00:00:00.000Z' });
   assert.equal(snapshot.measuredAt, '2026-01-01T00:00:00.000Z');
 });
@@ -1212,19 +1227,19 @@ test('buildChaosSnapshot: accepts custom measuredAt', () => {
 
 test('appendChaosSnapshot: creates file and reads back one snapshot', () => {
   const root = tmpRoot();
-  const breakdown = { structural: 72, debtPressure: 30, coverageGap: 40, cognitiveLoad: 20, instability: 10 };
+  const breakdown = { structural_reduction: 12, coverage_reduction: 15, testing_reduction: 8, intent_reduction: 6, release_reduction: 4, other: 0 };
   const { snapshot } = buildChaosSnapshot({ score: 52.3, level: 'unstable', breakdown, drivers: [{ id: 'E01' }, { id: 'D01' }] });
   appendChaosSnapshot(root, snapshot);
   const { snapshots } = readChaosHistory(root);
   assert.equal(snapshots.length, 1);
   assert.equal(snapshots[0].score, 52.3);
   assert.equal(snapshots[0].level, 'unstable');
-  assert.equal(snapshots[0].structural, 72);
+  assert.equal(snapshots[0].structural_reduction, 12);
 });
 
 test('appendChaosSnapshot: appends multiple snapshots', () => {
   const root = tmpRoot();
-  const breakdown = { structural: 60, debtPressure: 20, coverageGap: 30, cognitiveLoad: 15, instability: 5 };
+  const breakdown = { structural_reduction: 10, coverage_reduction: 12, testing_reduction: 8, intent_reduction: 9, release_reduction: 3, other: 0 };
   const { snapshot: s1 } = buildChaosSnapshot({ score: 40, level: 'manageable', breakdown, drivers: [] });
   const { snapshot: s2 } = buildChaosSnapshot({ score: 55, level: 'unstable', breakdown, drivers: [] });
   appendChaosSnapshot(root, s1);
@@ -1243,12 +1258,12 @@ test('readChaosHistory: returns empty when file missing', () => {
 // ---------------------------------------------------------------------------
 
 test('parseChaosHistory: parses numeric fields correctly', () => {
-  const raw = `# Chaos History\n\n---\nscore: 45.2\nlevel: manageable\nstructural: 72.0\ndebtPressure: 30.0\ncoverageGap: 40.0\ncognitiveLoad: 20.0\ninstability: 10.0\ntopDriverIds: E01, D01\nmeasuredAt: 2026-05-01T10:00:00.000Z\n`;
+  const raw = `# Chaos History\n\n---\nscore: 45.2\nlevel: manageable\nstructural_reduction: 12.0\ncoverage_reduction: 15.0\ntesting_reduction: 8.0\nintent_reduction: 6.0\nrelease_reduction: 4.0\nformula_version: subtractive-v1\ntopDriverIds: E01, D01\nmeasuredAt: 2026-05-01T10:00:00.000Z\n`;
   const { snapshots } = parseChaosHistory(raw);
   assert.equal(snapshots.length, 1);
   assert.equal(typeof snapshots[0].score, 'number');
   assert.equal(snapshots[0].score, 45.2);
-  assert.equal(snapshots[0].structural, 72);
+  assert.equal(snapshots[0].structural_reduction, 12);
 });
 
 
@@ -1257,37 +1272,39 @@ test('parseChaosHistory: parses numeric fields correctly', () => {
 // Phase 3: docQualitySignals blending into coverageGap
 // ---------------------------------------------------------------------------
 
-test('computeChaosCoefficient: contentPlaceholderRatio 1.0 raises coverageGap by 30', () => {
+test('computeChaosCoefficient: contentPlaceholderRatio 1.0 reduces coverage_reduction toward 0', () => {
   const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
   const withPlaceholders = computeChaosCoefficient({
     debtItems: [], entropyItems: [], lessonItems: [],
     docQualitySignals: { contentPlaceholderRatio: 1.0 },
   });
-  assert.ok(withPlaceholders.breakdown.coverageGap >= base.breakdown.coverageGap + 29,
-    `expected coverageGap to increase by ~30, got ${withPlaceholders.breakdown.coverageGap} vs base ${base.breakdown.coverageGap}`);
+  // Full placeholders → r_coverage near 0 → coverage_reduction near 0 (vs base of 20)
+  assert.ok(withPlaceholders.breakdown.coverage_reduction < base.breakdown.coverage_reduction,
+    `expected coverage_reduction to decrease, got ${withPlaceholders.breakdown.coverage_reduction} vs base ${base.breakdown.coverage_reduction}`);
 });
 
-test('computeChaosCoefficient: contentPlaceholderRatio 0.5 raises coverageGap by ~15', () => {
+test('computeChaosCoefficient: contentPlaceholderRatio 0.5 reduces coverage_reduction', () => {
   const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
   const withPartial = computeChaosCoefficient({
     debtItems: [], entropyItems: [], lessonItems: [],
     docQualitySignals: { contentPlaceholderRatio: 0.5 },
   });
-  const delta = withPartial.breakdown.coverageGap - base.breakdown.coverageGap;
-  assert.ok(delta >= 14 && delta <= 16,
-    `expected delta ~15, got ${delta}`);
+  // Half placeholders → coverage_reduction reduced from 20
+  assert.ok(withPartial.breakdown.coverage_reduction < base.breakdown.coverage_reduction,
+    `expected coverage_reduction to decrease, got ${withPartial.breakdown.coverage_reduction} vs base ${base.breakdown.coverage_reduction}`);
+  assert.ok(withPartial.breakdown.coverage_reduction > 0, 'still some coverage evidence');
 });
 
-test('computeChaosCoefficient: zero contentPlaceholderRatio has no effect', () => {
+test('computeChaosCoefficient: zero contentPlaceholderRatio has no effect on coverage_reduction', () => {
   const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
   const same = computeChaosCoefficient({
     debtItems: [], entropyItems: [], lessonItems: [],
     docQualitySignals: { contentPlaceholderRatio: 0 },
   });
-  assert.equal(same.breakdown.coverageGap, base.breakdown.coverageGap);
+  assert.equal(same.breakdown.coverage_reduction, base.breakdown.coverage_reduction);
 });
 
-test('computeChaosCoefficient: coverageGap capped at 100 with extreme placeholders', () => {
+test('computeChaosCoefficient: extreme placeholders + bad debt reduces coverage to 0', () => {
   const manyRed = Array.from({ length: 10 }, (_, i) => buildDebtItem({
     id: `D${i}`, type: 'duplication', status: 'open', severity: 'critical', notes: 'n',
   }));
@@ -1295,7 +1312,7 @@ test('computeChaosCoefficient: coverageGap capped at 100 with extreme placeholde
     debtItems: manyRed, entropyItems: [], lessonItems: [],
     docQualitySignals: { contentPlaceholderRatio: 1.0 },
   });
-  assert.ok(result.breakdown.coverageGap <= 100);
+  assert.ok(result.breakdown.coverage_reduction <= 1);
 });
 
 
