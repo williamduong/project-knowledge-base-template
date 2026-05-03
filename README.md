@@ -6,7 +6,7 @@ It is designed for teams that want a consistent documentation baseline across di
 
 ## Current Template Version
 
-- Template version: `v1.6.0`
+- Template version: `v2.0.0`
 - License: GNU AGPL v3 with separate commercial licensing available
 - Baseline state file for downstream projects: [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md)
 
@@ -66,9 +66,9 @@ KB ships three complementary layers; pick whichever matches your workflow.
 
 | Layer | Surface | When to use |
 |---|---|---|
-| **CLI (4 commands)** | `kb init` / `kb update` / `kb maintain` / `kb uninstall` | Power user, CI, scripting. Deterministic. |
+| **CLI (35+ commands)** | `kb init` / `kb update` / `kb maintain` / `kb intent *` / `kb graph *` / `kb chaos` / `kb release *` / ... | Power user, CI, scripting. Deterministic. |
 | **Prompts (2)** | `/kb-plan` and `/kb-run` in any agent chat (Copilot, Cursor, Claude) | Step-by-step, resumable. `/kb-run` auto-inits if needed and executes one step per call. |
-| **Master agent** | `@kb` in chat | Code Q&A oracle, structural guardian (bi-temporal, metadata schema), governance. Backed by `.github/agents/kb.agent.md`. |
+| **Master agent** | `@kb` in chat | Code Q&A oracle, structural guardian (bi-temporal, metadata schema), governance, intent conflict resolution (v2.0 Role 4 Reasoner). Backed by `.github/agents/kb.agent.md`. |
 
 Examples:
 
@@ -108,7 +108,40 @@ Currently implemented commands:
 - `update [--accept-baseline]`
 - `maintain [--accept-baseline] [--fast]`
 - `doctor [--json] [--strict]`
-- `uninstall [--keep-ai-files] [--remove-hook] [--force]` - Remove KB content and generated AI helper files from the workspace
+- `status [--json]` — Report KB install state (fresh / healthy / partial)
+- `ide <enable|disable> [--dry-run]` — Inject/remove KB-MANAGED IDE integration blocks
+- `uninstall [--keep-ai-files] [--remove-hook] [--force]` — Remove KB content and generated AI helper files from the workspace
+
+**Analysis & Intelligence**
+
+- `impact <doc-or-code> [--depth=N]` — Recursive impact analysis: traverses related_strong + binds_to links
+- `scan [--recursive] [--depth=N]` — Scan git diff (baseline..HEAD), bind code changes to docs, write impact.json
+- `verify <doc>` / `verify --all` — Bump last_verified + last_verified_commit, clear resolved entries from impact.json
+- `baseline show` / `baseline set <sha>` / `baseline set --to-head` — Manage the source git baseline
+- `chaos [--quiet] [--no-save] [--scan-src <dir>]` (v1.8) — Compute KB Chaos Coefficient (0–100): aggregates technical debt, entropy, coverage gap, cognitive load, instability; detects spikes ≥10 pts vs previous snapshot
+
+**Graph (v1.9)**
+
+- `graph export [--output=<path>]` — Write JSONL of KB entities + relations (deterministic)
+- `graph check` — Run consistency checks: missing-node-reference, invalid-relation-type, duplicate-entity-id
+
+**Intent Workspace (v2.0)**
+
+- `intent create [<id>] [--mode=quick|full] [--change-type=<type>]` — Create a structured intent workspace for a KB change batch
+- `intent status [<id>]` — Show staged files, warnings, plan/impact presence for one or all intents
+- `intent list` — List all active intent IDs
+- `intent apply <id> [--release] [--yes]` — Write staged files to KB core, archive workspace, optionally trigger release pipeline
+- `intent cancel <id>` — Delete an active intent workspace (irreversible)
+- `intent suggest-lessons` — Analyze recent applied intents and surface lesson candidates for KB improvement
+
+**Release Catalog & Pipeline**
+
+- `release init` — Build catalog from git tags\n- `release tag <version> --summary=...` — Append one release from an existing git tag
+- `release list` / `release show <version>` — Browse catalog entries
+- `release notes <version> [--from=<tag>] [--output=<path>]` — Generate release notes from git range
+- `release init-pipeline [--template=npm-package|docs-only|custom]` — Copy a starter pipeline into `.kb/release-pipeline.yaml`
+- `release plan [--bump=patch|minor|major]` — Dry-run alias: print resolved step plan, no execution
+- `release run [--bump=patch|minor|major] [--yes]` — Execute release pipeline
 
 **AI IDE Adapter Files**
 
@@ -200,6 +233,28 @@ The pipeline file lives at `.kb/release-pipeline.yaml` inside your KB content ro
 Starter templates and examples are in [`template/16-release-pipelines/`](template/16-release-pipelines/). Governance policy is in [`template/15-governance/release-pipeline-policy.md`](template/15-governance/release-pipeline-policy.md).
 
 Downstream project KBs should stamp both the adopted template version and the brand-scoped source baseline commit they were verified against.
+
+### Intent Intelligence (v2.0)
+
+Structure multi-file KB changes as versioned intent workspaces. Each intent accumulates staged docs, a plan, and an impact map — then applies atomically with archive.
+
+```bash
+# Create an intent workspace (suggests ID from current git branch)
+kb intent create --mode=full --change-type=feature
+
+# Check status (staged files, warnings)
+kb intent status
+
+# Apply: writes to KB core, archives workspace, optionally triggers release
+kb intent apply my-intent --release
+
+# After multiple applies: surface lesson candidates for KB improvement
+kb intent suggest-lessons
+```
+
+Conflict resolution: when two intents modify the same file, `kb intent apply` detects the conflict and shows a concrete resolution strategy (`resolve-first`, `merge`, etc.) before proceeding.
+
+After each apply, `ai-decision-context.json` is written to the intent archive — records the conflict analysis and decision context for future review.
 
 ## What This Repository Contains
 
