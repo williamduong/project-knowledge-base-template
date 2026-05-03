@@ -234,9 +234,9 @@
                 <path d="M8.5 15.5h5"></path>
               </svg>
             </span>
-            <h2>Latest Release: v1.4.0</h2>
+            <h2>Latest Release: v2.0.0</h2>
           </div>
-          <p>The impact engine ships: <code>kb impact</code> walks an in-memory graph of <code>related_strong</code> + <code>binds_to</code> edges to surface the docs a code change really affects, <code>kb scan --recursive</code> expands those edges into a transitive impact list, <code>kb verify</code> stamps a verified commit per doc, <code>kb baseline</code> manages the source git baseline, and <code>kb doctor</code> now flags <code>related_strong</code> cycles. The new <code>15-governance/impact-policy.md</code> documents depth defaults, promotion rules, and adversarial cases.</p>
+          <p>Intent Intelligence ships: <code>kb intent create/apply/suggest-lessons</code> introduces structured KB change workspaces with conflict detection and resolution strategies. When two intents modify the same file, <code>kb intent apply</code> detects the conflict and shows concrete resolution steps before proceeding. After each apply, an <code>ai-decision-context.json</code> is archived for future review. <code>kb intent suggest-lessons</code> analyzes applied intents and surfaces lesson candidates to improve the KB over time. The bundled KB Agent gains Role 4 Reasoner capability for intent conflict arbitration.</p>
           <p><a class="text-link" href="./docs.html?path=TEMPLATE_CHANGELOG.md">Read the full release notes in the template changelog &rarr;</a></p>
         </article>
       </section>
@@ -415,6 +415,55 @@ kb update</pre>
               <div class="cmd-row">
                 <code class="cmd-name">kb uninstall</code>
                 <span class="cmd-desc">Remove KB content and generated AI helper files; <code class="cmd-flag">--keep-ai-files</code> preserves IDE adapters</span>
+              </div>
+            </div>
+            <p class="wf-card-group-label">Analysis &amp; Intelligence</p>
+            <div class="cmd-table">
+              <div class="cmd-row">
+                <code class="cmd-name">kb impact</code>
+                <span class="cmd-desc">Recursive impact analysis: traverse <code class="cmd-flag">related_strong</code> + <code class="cmd-flag">binds_to</code> edges to surface affected docs</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb scan</code>
+                <span class="cmd-desc">Scan git diff since baseline, bind code changes to docs, write <code class="cmd-flag">impact.json</code>; <code class="cmd-flag">--recursive</code> expands neighbours</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb verify</code>
+                <span class="cmd-desc">Stamp <code class="cmd-flag">last_verified</code> + verified commit on a doc; <code class="cmd-flag">--all</code> clears resolved entries from impact.json</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb baseline</code>
+                <span class="cmd-desc">Inspect or set the source git baseline (<code class="cmd-flag">show</code> / <code class="cmd-flag">set &lt;sha&gt;</code> / <code class="cmd-flag">set --to-head</code>)</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb chaos</code>
+                <span class="cmd-desc">Compute KB Chaos Coefficient (0&ndash;100): aggregates debt, entropy, coverage gap, cognitive load; detects spikes &ge;10 pts</span>
+              </div>
+            </div>
+            <p class="wf-card-group-label">Graph &amp; Release</p>
+            <div class="cmd-table">
+              <div class="cmd-row">
+                <code class="cmd-name">kb graph</code>
+                <span class="cmd-desc"><code class="cmd-flag">export</code> writes entity/relation JSONL; <code class="cmd-flag">check</code> validates node references and relation types</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb release</code>
+                <span class="cmd-desc"><code class="cmd-flag">init-pipeline</code> / <code class="cmd-flag">plan</code> / <code class="cmd-flag">run</code> &mdash; declare your release as YAML and execute it; <code class="cmd-flag">notes</code> generates release notes from git range</span>
+              </div>
+            </div>
+            <p class="wf-card-group-label">Intent Workspace</p>
+            <div class="cmd-table">
+              <div class="cmd-row">
+                <code class="cmd-name">kb intent create</code>
+                <span class="cmd-desc">Create a structured workspace for a KB change batch; suggests ID from current git branch</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb intent apply</code>
+                <span class="cmd-desc">Write staged files to KB core, archive workspace; conflict detection + resolution strategy shown before proceeding</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb intent suggest-lessons</code>
+                <span class="cmd-desc">Analyze recent applied intents; surface lesson candidates to improve the KB over time</span>
               </div>
             </div>
           </div>
@@ -602,8 +651,8 @@ kb update</pre>
               </svg>
             </span>
             <div>
-              <h3>v1.5 &mdash; Catalog &amp; deterministic release notes</h3>
-              <p>A queryable catalog of every doc, binding, and verification stamp. Release notes are generated deterministically from git history and impact data, ready for any downstream KB.</p>
+              <h3>v1.5 &mdash; Catalog &amp; deterministic release notes <span style="opacity:.7;font-weight:400">(shipped)</span></h3>
+              <p>A queryable catalog of every doc, binding, and verification stamp. Release notes are generated deterministically from git history and impact data, ready for any downstream KB. <code>kb release init</code>, <code>kb release list</code>, <code>kb release notes</code>.</p>
             </div>
           </div>
           <div class="roadmap-card">
@@ -614,8 +663,8 @@ kb update</pre>
               </svg>
             </span>
             <div>
-              <h3>v1.6 &mdash; Release pipeline orchestrator (optional)</h3>
-              <p>Skippable wave. Adds an opinionated tag &rarr; notes &rarr; publish pipeline behind a decision gate, for teams who want one command to ship rather than a checklist.</p>
+              <h3>v1.6 &mdash; Release pipeline orchestrator (optional) <span style="opacity:.7;font-weight:400">(shipped)</span></h3>
+              <p>Declare your release workflow as YAML and execute it with <code>kb release run</code>. Steps run sequentially, outputs are captured, and dangerous commands are rejected before execution. Also includes <code>kb chaos</code> (v1.8 KB Chaos Coefficient) and <code>kb graph export/check</code> (v1.9 entity/relation graph).</p>
             </div>
           </div>
           <div class="roadmap-card">
@@ -629,8 +678,8 @@ kb update</pre>
               </svg>
             </span>
             <div>
-              <h3>v2.0 &mdash; Intent layer &amp; KB Agent</h3>
-              <p>A 7-step intent workflow that observes user actions, captures lessons learned, and feeds them back into the KB. The bundled KB Agent enforces the workflow. Major version &mdash; includes a migration path.</p>
+              <h3>v2.0 &mdash; Intent layer &amp; KB Agent <span style="opacity:.7;font-weight:400">(shipped)</span></h3>
+              <p>Structured intent workspaces (<code>kb intent create/status/list/apply/cancel/suggest-lessons</code>) with conflict detection and resolution strategies. The bundled KB Agent gains Role 4 Reasoner for intent conflict arbitration. <code>ai-decision-context.json</code> archived after each apply for audit.</p>
             </div>
           </div>
           <div class="roadmap-card">
