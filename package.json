@@ -60,6 +60,8 @@
     "keywords:apply": "node ./tools/npm-keywords.js --apply",
     "tag:latest": "node ./tools/npm-dist-tag.js latest",
     "tag:next": "node ./tools/npm-dist-tag.js next",
+    "tag:beta": "node ./tools/npm-dist-tag.js beta",
+    "tag:remove": "node ./tools/npm-dist-tag.js --remove",
     "tag:list": "npm dist-tag ls @williamduong/kb",
     "release:notes:legacy": "node ./tools/generate-template-changelog.js",
     "doc:gate": "node ./scripts/doc-gate.js",
