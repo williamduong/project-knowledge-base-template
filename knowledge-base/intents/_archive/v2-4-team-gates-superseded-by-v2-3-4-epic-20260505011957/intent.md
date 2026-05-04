@@ -14,8 +14,9 @@ decision_summary: "Adopt intent-first planning for v2.4 team gates by migrating 
 review_after: 2026-05-18
 # v1.8-ready reserve fields (do not remove):
 lesson_id: null
-lifecycle_state: proposed
+lifecycle_state: superseded
 promotion_ready: false
+superseded_by: v2-3-4-vscode-marketplace-epic
 linked_signals: []
 promote_decision_ref: null
 ---

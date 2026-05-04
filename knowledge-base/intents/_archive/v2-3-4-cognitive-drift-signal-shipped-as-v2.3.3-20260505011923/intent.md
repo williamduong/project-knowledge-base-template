@@ -15,8 +15,10 @@ impact_signals:
 decision_summary: "Add cognitive drift dimension to kb chaos command — measures agreement pressure across intent history, not just technical debt."
 review_after: 2026-05-31
 lesson_id: null
-lifecycle_state: in-progress
-promotion_ready: false
+lifecycle_state: closed
+promotion_ready: true
+shipped_as: v2.3.3
+shipped_at: 2026-05-05
 linked_signals: []
 promote_decision_ref: null
 design_decisions_locked: 2026-05-05

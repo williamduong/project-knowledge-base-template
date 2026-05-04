@@ -115,6 +115,28 @@ Trước khi agent tạo file, bắt buộc khai báo với KB theo thứ tự:
 
 Không được tạo file trước rồi mới quay lại bổ sung đăng ký.
 
+## P18. One active intent rule (intent version uniqueness)
+
+Một version code chỉ được xuất hiện trong **một** intent active tại một thời điểm.  
+Ví dụ: không thể có hai intent `v2-4-*` active cùng lúc.
+
+Trước khi tạo intent mới hoặc version mới, bắt buộc:
+1. Kiểm tra `knowledge-base/intents/_active/` — có active intent nào chưa?
+2. Nếu có: **DỪNG**, trình bày danh sách cho user, hỏi cách đóng (apply, archive, supersede, merge into new).
+3. Chỉ tiến hành tạo intent mới sau khi user approve đóng hoặc giữ intent cũ.
+
+Đây là gate bắt buộc, không skip ngay cả khi user nói "tạo mới đi".
+
+## P19. Chaos estimate gate trước khi bắt đầu intent
+
+Khi bắt đầu bất kỳ intent mới nào (KBRoot hoặc KB Agent), agent phải:
+1. Chạy `kb chaos` (hoặc `kb chaos --json`) để lấy score hiện tại.
+2. Ước tính `chaos_delta` cho intent này: số điểm chaos dự kiến tăng/giảm sau khi apply.
+3. Báo cho user: score hiện tại, dự kiến sau, level sau.
+4. Nếu score dự kiến sau > 80 (CHAOTIC): cảnh báo rõ, yêu cầu explicit confirm trước khi tiếp tục.
+
+Agent không được bắt đầu build/code khi chưa có chaos estimate được user acknowledge.
+
 ---
 
 ## Append history
@@ -124,3 +146,5 @@ Không được tạo file trước rồi mới quay lại bổ sung đăng ký.
 | 2026-04-30 | P1-P15 | Khởi tạo từ context dự án + lessons từ session plan v1.3-v3.0 |
 | 2026-05-01 | P16 | User yêu cầu mọi phần chưa test/verify phải ghi manual follow-up rõ ràng để xử lý sau |
 | 2026-05-01 | P17 | User yêu cầu register-first: phải khai báo folder/edit-vs-create/purpose+path và đăng ký KB trước khi tạo file |
+| 2026-05-05 | P18 | Một version code chỉ được 1 active intent; phải hỏi user trước khi tạo mới nếu còn intent chưa đóng |
+| 2026-05-05 | P19 | Chaos estimate bắt buộc trước khi bắt đầu intent: báo score hiện tại + delta dự kiến + yêu cầu confirm nếu dự kiến > 80 |

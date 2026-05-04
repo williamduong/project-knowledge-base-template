@@ -217,6 +217,48 @@ The KB Agent template marks three trigger points where grounding self-checks app
 - `agreement-density > 0.6` OR `grounding-gap > 0.6` → `(cognitive drift detected)` annotation in output
 - Formula slot: `agreement-density ×8 + grounding-gap ×7`, capped at 15 points total
 
+## Intent Start Gates (v2.3.4)
+
+Before creating any new intent or starting work on a new version, the agent MUST run two gates in order. These gates apply to both `@kb` (KB Agent) and `@KBRoot` (maintainer agent).
+
+### Gate 1 — Active Intent Check
+
+1. List all folders in `knowledge-base/intents/_active/`. Read `intent.md` in each.
+2. If any intent has `lifecycle_state` that is not `closed` or `superseded`:
+   - Print the list: `id`, `lifecycle_state`, one-line summary.
+   - Ask the user to choose a resolution for each (do NOT auto-close or auto-archive):
+     - **Apply & archive** — work is done and shipped
+     - **Archive/supersede** — intent no longer needed, close without shipping
+     - **Merge into new epic** — content absorbed by the new intent
+     - **Keep active** — user explicitly allows parallel intent (must state reason)
+3. Only proceed after the user has acknowledged and approved each disposition.
+
+**This gate may NOT be skipped even if the user says "just create it".**
+
+### Gate 2 — Chaos Estimate
+
+1. Run `kb chaos --json`. Read current `score` and `level`.
+2. Estimate `chaos_delta` for the intent about to be created (use table below).
+3. Report to user before proceeding:
+   ```
+   Current chaos: <score> (<level>)
+   Estimated delta: +<delta> → <projected score> (<projected level>)
+   ```
+4. If projected score > 80: show ⛔ CHAOTIC warning. Require explicit user confirmation.
+5. Record `chaos_estimate` in the new `intent.md`.
+
+**Chaos delta heuristic:**
+
+| Scope | Delta |
+|---|---|
+| Tiny (1 file / 1 function) | 0 – 2 |
+| Small feature (2–5 files) | 3 – 6 |
+| Medium (cross-module, 5–10 files) | 6 – 10 |
+| Large epic (multi-version / new subsystem) | 10 – 20 |
+| Chaos-reducing work (tests, debt paydown) | −5 to −15 |
+
+Both gates must pass (or receive explicit user override) before any plan is drafted or code is touched.
+
 ## Copilot Instruction Digest
 
 - Respect repository instructions and non-destructive editing.

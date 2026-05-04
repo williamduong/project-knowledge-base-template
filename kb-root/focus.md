@@ -7,27 +7,30 @@
 
 ## Active Version Target
 
-**Đang focus:** v2.3.x — Three-Layer Separation + Self-Host Profile refactor
-**Plan file:** [template/00-start-here/strategic-backlog.md](../template/00-start-here/strategic-backlog.md) (section "Refactor Program — Locked Decisions")
-**Status:** Phase R0–R4 done; Phase R5–R6 pending
-**Last shipped:** v2.3.2 (namespace split + notes migration closeout)
+**Đang focus:** v2.3.4 — VSCode Marketplace Epic (P0 governance cleanup)
+**Intent:** [knowledge-base/intents/_active/v2-3-4-vscode-marketplace-epic/](../knowledge-base/intents/_active/v2-3-4-vscode-marketplace-epic/)
+**Status:** Phase P0 in-progress
+**Last shipped:** v2.3.3 (cognitive drift signals + subtractive-v2 formula)
 
 ## Current Phase
 
-**Phase:** R6 — 2.3.x continuation (v2.3.3 → v2.3.4 → close line)
+**Phase:** P0 — Governance cleanup + 2-gate workflow docs
 
-**Done:**
-- R0: scanned all `.local/kb-agent` references; recovered files from VS Code local history after destructive PowerShell chain.
-- R1: moved root manual test docs to `test-plans/`; relocated `kb-orch-report-*.json` to `notes/orch-reports/`; moved `COMPLETION_REPORT.md` and `UPGRADE_SUMMARY.md` to `notes/`.
-- R2: renamed `.local/kb-agent/` → `kb-root/`; updated refs in `.github/agents/KBRoot.agent.md`, `template/00-start-here/strategic-backlog.md`, `template/00-start-here/how-to-use-this-kb.md`; removed `.local/` from `.gitignore`.
-- R3: rewrote self-host section of `.gitignore` — track `knowledge-base/`, `.github/agents/`, `.github/prompts/`, `AGENTS.md`; ignore only `knowledge-base/.kb/{_cacache,_logs,cache,logs}/`.
-- R4: ran `kb init --mode tracked --yes` to materialize Layer D under `knowledge-base/`. Restored `.github/hooks/revision-state-guard.json` accidentally removed by `kb uninstall --force`.
+**Done (this session):**
+- Shipped v2.3.3: cognitive drift signals (`subtractive-v2`), T1/T2/T3 pulse-points in agent template.
+- Archived `v2-3-4-cognitive-drift-signal` intent (shipped as v2.3.3).
+- Removed duplicate `v2-4-intent-first-version-governance` active stub.
+- Archived `v2-4-team-gates` → superseded by v2.3.4 epic.
+- Added P18 (one active intent rule) + P19 (chaos estimate gate) to `principles.md`.
+- Added Workflow 8 (Intent Start Gate) to `process.md`.
+- Added "Intent Start Gates (v2.3.4)" section to `agent-operating-manual.md`.
+- Created `v2-3-4-vscode-marketplace-epic` intent + plan.
 
-**Next action (R6):**
-1. Build v2.3.4 — W1-W4 code changes in `chaos.js` + `observation.js`; W5 doc changes in `kb.agent.template.md` + `agent-operating-manual.md`.
-2. Validate: `npm run test:all` + manual smoke test on self-host.
-3. Bump `package.json` to `2.3.3` (v2.3.3 skipped — merged), commit, tag, publish.
-4. Close v2.3.4 intent, update focus to v2.4.x.
+**Next action (P0 remaining):**
+1. Bump `package.json` 2.3.3 → 2.3.4.
+2. Update `TEMPLATE_CHANGELOG.md` with v2.3.4 entry.
+3. Commit + tag v2.3.4 + publish npm.
+4. Close this P0 phase, move to P1 (extension scaffold planning).
 
 ## Active Blockers
 
@@ -46,13 +49,13 @@
 
 | Version | Status | Notes |
 |---|---|---|
-| v2.2.2 | Shipped 2026-05-04 | Superseded |
-| v2.3.1 | Shipped 2026-05-04 | Governance + tooling hardening |
-| v2.3.2 | Shipped 2026-05-05 | Namespace split + notes migration closeout |
-| v2.3.3 | Superseded 2026-05-05 | Merged into v2.3.4 (no standalone ship) |
-| v2.3.4 | Next (in-progress) | Cognitive Drift Signal + absorbed pulse triggers |
-| v2.4.x | Backlog | Intent-first version governance (seeded) |
-| v2.4+ | Backlog | Intent-driven planning migration follow-up |
+| v2.3.2 | Shipped 2026-05-04 | Namespace split + notes migration closeout |
+| v2.3.3 | Shipped 2026-05-05 | Cognitive drift signals + subtractive-v2 formula |
+| v2.3.4 | In-progress (P0) | VSCode Marketplace Epic — governance cleanup phase |
+| v2.4.x | Planned (P1/P2) | Extension scaffold + core commands |
+| v2.5.x | Planned (P3/P4) | Chat participant + template scaffolding via extension |
+| v2.6.x | Planned (P5) | Marketplace publish |
+| v3.0 | Long-term | Full agent surface in VS Code |
 
 ## Notes / Reminders cho session sau
 

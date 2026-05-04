@@ -164,9 +164,55 @@ npm publish --access public
 
 ---
 
+## Workflow 8: Intent Start Gate (P18 + P19)
+
+**Trigger:** User yêu cầu tạo intent mới hoặc bắt đầu version mới — bất kể phrasing.
+
+**Bắt buộc chạy trước Workflow 1 (New Feature Plan) hoặc bất kỳ intent creation nào.**
+
+### Gate 1 — Active Intent Check (P18)
+
+1. Liệt kê toàn bộ `knowledge-base/intents/_active/`: đọc `intent.md` mỗi folder, lấy `id` + `lifecycle_state`.
+2. Nếu có bất kỳ intent nào `lifecycle_state` ≠ `closed` / `superseded`:
+   - In danh sách: `id`, `lifecycle_state`, `created_at`, tóm tắt summary 1 dòng.
+   - Hỏi user chọn cách xử lý từng intent (dùng `vscode_askQuestions`):
+     - **Apply & archive** — intent xong, ship rồi, đóng với evidence
+     - **Archive/supersede** — intent không còn cần, đóng không ship
+     - **Merge into new epic** — nội dung hấp thụ vào intent mới sắp tạo
+     - **Keep active** — giữ lại, bỏ qua, tạo intent mới song song (user override, ghi rõ lý do)
+3. Thực hiện theo lựa chọn. Chỉ sau khi user approve mới tiến hành.
+
+### Gate 2 — Chaos Estimate (P19)
+
+1. Chạy `kb chaos --json`, đọc `score` + `level` hiện tại.
+2. Ước tính `chaos_delta` cho intent sắp tạo (xem heuristic bên dưới).
+3. Báo user:
+   ```
+   Current chaos: <score> (<level>)
+   Estimated delta: +<delta> → <score+delta> (<projected_level>)
+   ```
+4. Nếu projected score > 80: cảnh báo ⛔ CHAOTIC, yêu cầu explicit confirm.
+5. Ghi `chaos_estimate` vào `intent.md` của intent mới.
+
+**Heuristic chaos_delta:**
+| Scope | Delta estimate |
+|---|---|
+| Tiny (1 file, 1 function) | +0 to +2 |
+| Small feature (2-5 files) | +3 to +6 |
+| Medium (cross-module, 5-10 files) | +6 to +10 |
+| Large epic (multi-version, new subsystem) | +10 to +20 |
+| Chaos-reducing work (adding tests, paying debt) | −5 to −15 |
+
+### Sau khi cả 2 gate pass
+
+Tiếp tục Workflow 1 (New Feature Plan) để draft intent và plan.
+
+---
+
 ## Append history
 
 | Ngày | Workflow | Lý do |
 |---|---|---|
 | 2026-04-30 | W1-W7 | Khởi tạo từ pattern session plan v1.3-v3.0 |
 | 2026-04-30 | W7 step 2 added (git cross-check) | Session 3 found focus.md stale by one full phase; git log was the only reliable signal |
+| 2026-05-05 | W8 | User yêu cầu 2-gate enforcement: active intent check + chaos estimate trước khi tạo intent/version mới |
