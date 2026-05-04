@@ -10,7 +10,7 @@
 **Đang focus:** v2.3.x — Three-Layer Separation + Self-Host Profile refactor
 **Plan file:** [template/00-start-here/strategic-backlog.md](../template/00-start-here/strategic-backlog.md) (section "Refactor Program — Locked Decisions")
 **Status:** Phase R0–R4 done; Phase R5–R6 pending
-**Last shipped:** v2.3.1 (governance + tooling hardening)
+**Last shipped:** v2.3.2 (namespace split + notes migration closeout)
 
 ## Current Phase
 
@@ -49,7 +49,8 @@
 |---|---|---|
 | v2.2.2 | Shipped 2026-05-04 | Superseded |
 | v2.3.1 | Shipped 2026-05-04 | Governance + tooling hardening |
-| v2.3.2 | In progress | Namespace split + notes migration closeout |
+| v2.3.2 | Shipped 2026-05-05 | Namespace split + notes migration closeout |
+| v2.4.x | Next | Intent-first version governance (seeded) |
 | v2.4+ | Backlog | Intent-driven planning migration follow-up |
 
 ## Notes / Reminders cho session sau
