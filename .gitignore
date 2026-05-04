@@ -30,6 +30,7 @@ _update-notifier-last-checked
 # Private notes (scratch); allowlist tracked subpaths below
 notes/*
 !notes/.gitkeep
+!notes/npm-release-checklist.md
 
 # Self-host KB runtime (Layer D) — committed but exclude cache/log noise
 knowledge-base/.kb/_cacache/
