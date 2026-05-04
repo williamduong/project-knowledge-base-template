@@ -5,10 +5,11 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-05-02
-last_verified: 2026-05-02
+last_updated: 2026-05-04
+last_verified: 2026-05-04
 related:
   - current-state.md
+  - glossary.md
   - how-to-use-this-kb.md
   - ../15-governance/self-evolution-doctrine.md
   - ../06-api/api-overview.md
@@ -50,6 +51,24 @@ For important claims, include a short format:
 2. Keep Swagger and API docs UI claims primarily in `06-api/api-overview.md`.
 3. If `04-frontend/` references Swagger-like surfaces, mark them as integration context and cross-link to `06-api/`.
 4. Avoid phrasing that implies a standalone frontend runtime when evidence only points to backend routes.
+
+## Vocabulary Contract Lock (D00)
+
+Canonical vocabulary source: `00-start-here/glossary.md`.
+
+State/status disambiguation:
+- Use `install-presence` (`fresh | healthy | partial`) for KB installation detection.
+- Use `install-state` for `state.json` content fields.
+- Use `doc-kb-state` for frontmatter `kb_state` values.
+- Use `intent-status` for intent workspace status metadata.
+- Use `install-verdict` for health verdict (`clean | attention | blocked`).
+- Use `response-status` and `step-status` for agent output and runtime-step tracking.
+
+Execution disambiguation:
+- Use `intent-phase` and `intent-task` for intent hierarchy references.
+- Use `runtime-step` for `/kb-plan` and `/kb-run` checklist actions.
+
+Rule: avoid bare `state`, `status`, `phase`, `task`, or `step` in governance prose when a compound term exists.
 
 ## Roadmap Glossary Locks (v1.7-v2.0)
 

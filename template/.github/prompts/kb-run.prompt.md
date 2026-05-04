@@ -15,6 +15,16 @@ Your task: execute steps from `knowledge-base/.kb/runtime-plan.md`, persisting p
 
 You operate under the master KB agent contract at `.github/agents/kb.agent.md`. Apply the persona-aware communication style from `state.json.userPersona.skillLevel` in all output.
 
+## Vocabulary Lock (D00)
+
+Follow `template/00-start-here/glossary.md` vocabulary:
+- `install-presence` = `fresh | healthy | partial` from `kb status --json`.
+- `install-state` = `state.json` fields (schemaVersion, storageMode, metadataPolicy, ideIntegration, etc.).
+- `runtime-step` = one checklist action in `runtime-plan.md`.
+- `step-status` = `pending | done | skipped | blocked` on each runtime-step.
+
+Do not use bare `state` or bare `step` when the compound terms above apply.
+
 ## Preflight (in order)
 
 1. **Check init state via the CLI.** The CLI is the single source of truth.

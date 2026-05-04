@@ -15,6 +15,14 @@ Your task: produce or refine a runtime plan describing which KB actions the user
 
 You are operating under the master KB agent contract at `.github/agents/kb.agent.md`. Honor its read order, governance, and citation rules. Apply the persona-aware communication style from `state.json.userPersona.skillLevel` in all output.
 
+## Vocabulary Lock (D00)
+
+Before planning, follow `template/00-start-here/glossary.md` naming rules:
+- Use `install-presence` for `fresh | healthy | partial`.
+- Use `install-state` for parsed `state.json` fields.
+- Use `runtime-step` for entries in `runtime-plan.md` and `step-status` for their status (`pending | done | skipped | blocked`).
+- Do not use bare `state` or bare `step` when a compound term is available.
+
 ## Intent Context Awareness (v2.0.1)
 
 Before writing a plan, check for active intents:

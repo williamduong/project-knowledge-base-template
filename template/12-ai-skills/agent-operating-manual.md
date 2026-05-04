@@ -33,7 +33,7 @@ Provide a single location for future coding agents to read KB conventions before
 5. Read `00-start-here/repository-revision-state.md` and compare the stored brand-scoped git baseline with current `HEAD` when git is available.
 6. If the baseline differs, inspect git log and diff from the stored revision forward, detect drift, and route work through the maintenance loop before trusting current KB content.
 7. If the stored template version differs from the active template version, run the version-patch flow in the same pass.
-8. Stage files under `proposed-changes/` within the intent workspace. Do not write KB files directly outside an intent workspace unless the change is trivial (frontmatter-only fix).
+8. Stage files under `proposed-changes/` within the intent workspace. Do not write KB files directly outside an intent workspace unless the change meets the inline-record policy (see `00-start-here/glossary.md` §A6).
 9. Batch non-blocking tasks. Only pause for user input at destructive ops, approval gates, or genuine ambiguity.
 10. Apply with `kb intent apply <id>` when done. Archive evidence.
 11. Output a concise completion report with numbered references and suggested next intent.
@@ -84,13 +84,13 @@ The agent also adapts **involvement level** (`state.json.userPersona.involvement
 
 ## Numbering System (v2.0.1)
 
-All intents, plans, phases, and tasks use the format defined in `15-governance/numbering-system.md`.
+All intents, plans, intent-phases, and intent-tasks use the format defined in `15-governance/numbering-system.md`.
 
 Quick reference:
 - `[INT-001]` — global intent ID
 - `[PL-001]` — plan scoped to INT-001  
 - `[PH-1]` — phase scoped to PL-001
-- `[T-2]` — task scoped to PH-1
+- `[T-2]` — intent-task scoped to intent-phase PH-1
 - `[T-2.1]` — sub-task
 - Full path: `[INT-001][PL-001][PH-1][T-2]`
 

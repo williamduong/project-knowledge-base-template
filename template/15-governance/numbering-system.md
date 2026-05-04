@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: design-only
-last_updated: 2026-05-03
-last_verified: 2026-05-03
+last_updated: 2026-05-04
+last_verified: 2026-05-04
 related:
   - ../12-ai-skills/agent-operating-manual.md
   - metadata-schema.md
@@ -18,7 +18,9 @@ tags:
 
 # KB Numbering System
 
-Defines how every intent, plan, phase, and task is identified across a knowledge-base project. Consistent numbering enables traceability, cross-session resumability, and unambiguous references in agent output.
+Defines how every intent, plan, intent-phase, and intent-task is identified across a knowledge-base project. Consistent numbering enables traceability, cross-session resumability, and unambiguous references in agent output.
+
+Vocabulary note (D00): `runtime-step` belongs to `/kb-plan` and `/kb-run` execution of `runtime-plan.md`; it is intentionally outside this numbering contract.
 
 ---
 
@@ -40,8 +42,8 @@ Every level may have a sub-level using dot notation.
 |--------|--------|---------------|--------------------|
 | Intent | `INT`  | `INT-001`     | Global within KB   |
 | Plan   | `PL`   | `PL-001`      | Within one Intent  |
-| Phase  | `PH`   | `PH-1`        | Within one Plan    |
-| Task   | `T`    | `T-1`         | Within one Phase   |
+| intent-phase  | `PH`   | `PH-1`        | Within one Plan    |
+| intent-task   | `T`    | `T-1`         | Within one intent-phase   |
 
 Sub-levels use dot notation at any depth:
 - `INT-001.1` — sub-intent of `INT-001`
@@ -63,14 +65,14 @@ Sub-levels use dot notation at any depth:
 - Restarts from `001` for each new Intent.
 - Counter stored at `.kb/numbering.json` under key `"plan.<INT-id>"`.
 
-### Phase (`PH`)
+### Intent-Phase (`PH`)
 - One-based integer, scoped to parent plan: `PH-1`, `PH-2`.
 - Restarts from `1` for each new Plan.
 
-### Task (`T`)
-- One-based integer, scoped to parent phase: `T-1`, `T-2`.
+### Intent-Task (`T`)
+- One-based integer, scoped to parent intent-phase: `T-1`, `T-2`.
 - Sub-tasks use dot notation: `T-3.1`, `T-3.2`.
-- Restarts from `1` for each new Phase.
+- Restarts from `1` for each new intent-phase.
 
 ### Full Reference
 Combine levels from outermost to innermost:
@@ -104,7 +106,7 @@ Counter state lives at `.kb/numbering.json` (within `contentRoot`):
 
 - `intent` is the last issued INT number.
 - `plan.<id>` is the last issued PL number within that intent.
-- Phase and task counters are transient (session-scoped), not persisted — they reset at the start of each new Phase or Plan.
+- Intent-phase and intent-task counters are transient (session-scoped), not persisted — they reset at the start of each new intent-phase or Plan.
 
 ---
 
@@ -116,8 +118,8 @@ When `.kb/numbering.json` does not exist or the counter cannot be read:
 |--------|------------------------------------------|----------------------------|
 | Intent | `INT-` + ISO timestamp compact           | `INT-20260503T1414`        |
 | Plan   | `PL-` + ISO timestamp compact            | `PL-20260503T1414`         |
-| Phase  | Sequential from `1` within session       | `PH-1`, `PH-2`             |
-| Task   | Sequential from `1` within phase         | `T-1`, `T-2`               |
+| Intent-phase | Sequential from `1` within session       | `PH-1`, `PH-2`             |
+| Intent-task  | Sequential from `1` within intent-phase  | `T-1`, `T-2`               |
 
 After successful fallback use, create `.kb/numbering.json` with the timestamp-derived value so subsequent IDs are sequential.
 
@@ -159,7 +161,7 @@ Store the choice in `state.json` under `numberingPreference: { style: "sequentia
   [PH-1][T-3] Apply and archive
 ```
 
-### Multi-phase (full intent)
+### Multi-intent-phase (full intent)
 ```
 [INT-006][PL-001] Init realworld-express project knowledge base
   [PH-1] Discovery
