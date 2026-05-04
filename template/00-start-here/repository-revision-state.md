@@ -31,9 +31,9 @@ Stores the last repository baseline that agents used when they verified, upgrade
 
 | Field | Value |
 |---|---|
-| KB Template Version | v1.6.0 |
+| KB Template Version | v2.3.0 |
 | KB Patch Revision | 0 |
-| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 -> v1.2.11 -> v1.3.0 -> v1.4.0 -> v1.4.1 -> v1.5.0 -> v1.6.0 |
+| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 -> v1.2.11 -> v1.3.0 -> v1.4.0 -> v1.4.1 -> v1.5.0 -> v1.6.0 -> v2.0.0 -> v2.1.0 -> v2.2.0 -> v2.2.1 -> v2.2.2 -> v2.3.0 |
 | Brand Scope | project-knowledge-base-template |
 | Source Repository Identifier | https://github.com/williamduong/project-knowledge-base-template.git |
 | Source Default Branch | main |
@@ -44,9 +44,9 @@ For downstream project use, `Brand Scope` should identify the product or brand b
 
 | Field | Value |
 |---|---|
-| Source Repository Git Baseline | cbb71ca |
-| Baseline Captured At | 2026-05-02 |
-| Last Drift Check At | 2026-05-02 |
+| Source Repository Git Baseline | 1adb01b |
+| Baseline Captured At | 2026-05-04 |
+| Last Drift Check At | 2026-05-04 |
 | Drift Status | aligned |
 | Baseline Scope | whole repository on main |
 | Last Reconciled Template Version | v1.6.0 |

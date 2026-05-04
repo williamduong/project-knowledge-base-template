@@ -1,6 +1,6 @@
 {
   "name": "@williamduong/kb",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
   "keywords": [
     "knowledge-base",
