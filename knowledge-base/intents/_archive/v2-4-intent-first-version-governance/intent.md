@@ -1,7 +1,7 @@
 ---
 id: v2-4-intent-first-version-governance
 mode: full
-status: open
+status: archived
 created_at: 2026-05-04T14:21:15.539Z
 change_type: governance
 change_scope:
