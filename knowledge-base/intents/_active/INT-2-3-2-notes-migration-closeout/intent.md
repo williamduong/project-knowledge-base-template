@@ -1,7 +1,7 @@
 ---
 id: INT-2-3-2-notes-migration-closeout
 mode: full
-status: open
+status: closed
 created_at: 2026-05-04T13:26:08.133Z
 change_type: governance
 change_scope:

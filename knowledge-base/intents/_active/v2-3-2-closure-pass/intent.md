@@ -1,7 +1,7 @@
 ---
 id: v2-3-2-closure-pass
 mode: full
-status: open
+status: closed
 created_at: 2026-05-04T12:28:30.568Z
 change_type: release
 change_scope:
