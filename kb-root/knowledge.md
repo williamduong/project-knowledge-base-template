@@ -268,6 +268,12 @@
 **Rule:** MANDATORY — dùng `npm version <bump> --no-git-tag-version`. Tag tạo SAU `npm publish` exit 0.
 **Enforce:** Workflow R6 = manual commit + tag sau publish success.
 
+### R19. npm publish interactive auth — agent tự gửi Enter
+**Ngày:** 2026-05-04
+**Trigger:** `npm publish` in ra "Press ENTER to open in the browser..." và chờ input → npm sẽ tự mở browser khi nhận Enter
+**Rule:** Khi detect dòng `Press ENTER to open in the browser...` trong terminal output, dùng `send_to_terminal` gửi Enter ngay, không chờ user làm. npm tự xử lý mở browser. Pattern: run `npm publish` async → poll output → khi thấy prompt đó → send Enter.
+**Note:** Không phải đặc quyền model cụ thể — bất kỳ agent có `send_to_terminal` đều làm được.
+
 ---
 
 ## Append history
@@ -278,3 +284,4 @@
 | 2026-04-30 | R10, R11 | Custom Agent + npm files lessons |
 | 2026-05-04 | R13, R14 | npm version bare + CRLF drift — release rules |
 | 2026-05-04 | T8-T10, R15-R18, D10-D14 | v2.3.x refactor complete + three-layer locked |
+| 2026-05-04 | R19 | npm publish auth — agent tự send Enter mở browser |
