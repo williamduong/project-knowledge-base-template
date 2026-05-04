@@ -1,419 +1,362 @@
-# v2.3.x Manual Test Plan (Current KB Reality + Solo Vibe First)
+# v2.3.x Human Experience Test Plan (Solo Vibe First)
 
-## 0) Muc tieu
+## 0) Why this plan exists
 
-Tai lieu nay duoc cap nhat de:
+Ban phan hoi dung: checklist CLI co the de AI auto-run, nhung khong do duoc trai nghiem that cua nguoi dung.
 
-- phan anh dung **thuc trang software KB hien tai**
-- uu tien dung cho **solo user** truoc
-- tham khao bo test catalog phase-based (TC-P1..TC-P5) nhung khong over-claim cac feature chua ship
+Plan nay doi trong tam sang:
 
-## 1) Nguyen tac scope
+- test theo **tinh huong thuc te**
+- test bang **chat prompts theo chuoi**
+- do duoc cam giac "de dung / kho hieu / co tin duoc khong"
 
-### 1.1 In-scope (test executable ngay)
+CLI command chi la tang xac nhan bo sung khi can.
 
-- Solo Core (Phase 1): F01-F10
-- Team-gate subset da co command surface (Phase 2 mot phan):
-  - doctor strict gate
-  - release notes/catalog flow
-  - chaos score
-  - intent workspace workflow
+## 1) Scope theo thuc trang hien tai
+
+### In-scope
+
+- Phase 1 (Solo core): F01-F10, dac biet:
+  - F07 auto-downgrade
+  - F10 kb next
+- Team-gate subset da co command runtime:
+  - doctor strict
+  - release notes
+  - chaos
+  - intent basic
 - User convenience:
-  - discoverability qua help
-  - output `kb next` de copy/paste duoc
-  - error messages actionable
-  - publish docs co huong dan su dung
+  - prompt guidance
+  - output co tinh huong context
+  - user biet buoc tiep theo
 
-### 1.2 Out-of-scope (deferred, not executable hien tai)
+### Out-of-scope (ghi DEFERRED, khong danh FAIL)
 
-- Cross-project registry/workspace/contract commands (Phase 3)
-- Multi-agent orchestrator/audit/scope enforcement runtime (Phase 4)
-- Ecosystem runtime feedback/contract gating lien-repo (Phase 5)
+- Phase 3 cross-project orchestration
+- Phase 4 multi-agent runtime governance day du
+- Phase 5 ecosystem runtime intelligence
 
-Neu can, cac muc nay chi duoc test o muc **design review** va danh dau `BLOCKED/DEFERRED`, khong danh fail runtime.
+## 2) Cach chay test (human-first)
 
-## 2) Mapping tu catalog test cases (tham khao)
+Moi case chay theo 2 lop:
 
-| Catalog ref | Feature | Runtime status hien tai | Co test trong plan nay |
-|---|---|---|---|
-| TC-P1-01 | Init creates KB structure | Supported | Co |
-| TC-P1-02 | Bootstrap + index | Supported | Co |
-| TC-P1-03 | KB Q&A grounding | Partially testable (prompt/agent context) | Co (manual chat optional) |
-| TC-P1-04 | Drift visible | Supported | Co |
-| TC-P1-05 | State transition den verified | Supported | Co |
-| TC-P1-06 | Baseline gate | Supported | Co |
-| TC-P1-07 | Doctor actionable | Supported | Co |
-| TC-P1-08 | Questions from placeholders | Supported | Co |
-| TC-P1-09 | Verified auto-downgrade | Supported (v2.3) | Co |
-| TC-P2-02 | Release gate via doctor strict | Supported | Co |
-| TC-P2-03 | Release notes from range | Supported | Co |
-| TC-P2-04 | Chaos score breakdown | Supported | Co |
-| TC-P2-05 | Intent workspace | Supported | Co |
-| TC-P2-01/P3+/P4+/P5+ | PR gate, cross-project, multi-agent, ecosystem | Chua ship day du | Deferred |
+1. **Prompt flow (bat buoc):** test trai nghiem nguoi dung
+2. **CLI spot-check (tuy chon):** xac nhan co so ky thuat khi can
 
-## 3) Severity quy uoc
+### Evidence can luu
 
-- P0: blocker, khong dung duoc hoac gate sai nghiem trong
-- P1: ket qua sai mot phan, co workaround
-- P2: wording/docs/ui khong nhat quan
+- transcript chat (copy text)
+- 1-2 screenshot neu co
+- thoi gian hoan tat case (uoc luong)
+- muc do friction: 1 (rat muot) -> 5 (rat vat)
 
-## 4) Chuan bi moi truong
+## 3) Prompt style quy uoc
 
-### 4.1 Preflight
+Dung 3 loai prompt:
 
-```bash
-node -v
-npm -v
-git --version
+- `Context prompt`: dat tinh huong
+- `Task prompt`: yeu cau AI xu ly
+- `Recovery prompt`: khi ket qua chua ro, buoc AI sua
+
+## 4) Scenario catalog (human experience)
+
+## HX-01 — First-time solo onboarding [P0]
+
+**Muc tieu:** Nguoi moi vao repo co biet bat dau tu dau khong.
+
+### Prompt sequence
+
+1. Context prompt:
+
+```text
+Toi vua vao repo nay lan dau. Toi muon bat dau theo dung KB workflow ma khong bi ngop.
 ```
 
-Expected:
+2. Task prompt:
 
-- Node >= 18
-- Git available
-
-### 4.2 Tao workspace test rieng
-
-```powershell
-cd D:\Source\template\project-knowledge-base-template
-$ts = Get-Date -Format yyyyMMdd-HHmm
-$target = "D:\Temp\kb-solo-manual-$ts"
-New-Item -ItemType Directory -Path $target | Out-Null
-Copy-Item -Recurse -Force .\sample_repo\realworld-express-fresh\* $target
-cd $target
+```text
+Hay cho toi luong lam viec 10-15 phut dau tien, uu tien solo, noi ro toi can chay gi truoc.
 ```
 
-Expected:
+3. Recovery prompt (neu cau tra loi dai/lan man):
 
-- workspace test doc lap
-
-### 4.3 Verify command surface
-
-```bash
-cd D:/Source/template/project-knowledge-base-template
-node ./bin/kb.js help --advanced
+```text
+Rut gon thanh 5 buoc va moi buoc 1 command hoac 1 hanh dong ro rang.
 ```
 
-Expected:
+### Pass criteria
 
-- co cac command: `init`, `bootstrap`, `scan`, `verify`, `baseline`, `doctor`, `next`, `release`, `intent`, `chaos`
+- AI dua flow ngan, ro thu tu
+- Co next step cu the
+- Khong can nguoi dung tu doan qua nhieu
+
+### Optional CLI spot-check
+
+- `kb help --advanced`
+- `kb init --yes`
+- `kb status`
+
+## HX-02 — Drift anxiety: "Doc verified roi co con tin duoc khong?" [P0]
+
+**Muc tieu:** Test niem tin vao invariant verified != permanent.
+
+### Prompt sequence
+
+1. Context prompt:
+
+```text
+Toi so nhat la tai lieu ghi verified nhung code da doi. KB xu ly no the nao?
+```
+
+2. Task prompt:
+
+```text
+Hay huong dan toi 1 test nhanh de chung minh doc verified se bi downgrade khi binding code thay doi.
+```
+
+3. Recovery prompt:
+
+```text
+Neu co rui ro false positive thi canh bao toi theo cach de hieu cho solo dev.
+```
+
+### Pass criteria
+
+- AI giai thich ro trigger auto-downgrade
+- Co huong dan buoc test duoc
+- Co canh bao/rui ro practical
+
+### Optional CLI spot-check
+
+- `kb verify <doc>`
+- sua file code bind -> commit
+- `kb scan --recursive --depth=2`
+
+## HX-03 — "Gio toi phai lam gi tiep?" moment [P0]
+
+**Muc tieu:** Kiem tra gia tri thuc te cua `kb next`.
+
+### Prompt sequence
+
+1. Context prompt:
+
+```text
+Toi dang mat phuong huong, co nhieu viec do dang. Toi can 1 buoc tiep theo de lam ngay.
+```
+
+2. Task prompt:
+
+```text
+Hay dua next action theo KB hien tai, va noi ly do uu tien ngan gon.
+```
+
+3. Recovery prompt:
+
+```text
+Neu toi lam xong action do, hay noi toi prompt tiep theo de tiep tuc.
+```
+
+### Pass criteria
+
+- Next action ro rang, co the copy/paste
+- Co ly do uu tien ngan gon
+- Co buoc tiep sau khi complete
+
+### Optional CLI spot-check
+
+- `kb next`
+- chay command duoc goi y
+- `kb next` lai
+
+## HX-04 — Missing docs under pressure [P1]
+
+**Muc tieu:** Khi tai lieu thieu, AI co bien no thanh intake practical khong.
+
+### Prompt sequence
+
+1. Context prompt:
+
+```text
+Toi sap phai handoff ma tai lieu con thieu kha nhieu.
+```
+
+2. Task prompt:
+
+```text
+Hay giup toi dat 5 cau hoi intake uu tien cao nhat de lap day cho release gan nhat.
+```
+
+3. Recovery prompt:
+
+```text
+Moi cau hoi cho kem 1 vi du answer mong doi de toi dien nhanh.
+```
+
+### Pass criteria
+
+- Cau hoi cu the, khong generic
+- Uu tien thuc su phuc vu release
+
+### Optional CLI spot-check
+
+- `kb questions --chat --batch 1`
+
+## HX-05 — Error recovery when workspace not initialized [P0]
+
+**Muc tieu:** Nguoi dung gap loi co duoc huong dan thoat ket khong.
+
+### Prompt sequence
+
+1. Context prompt:
+
+```text
+Toi vua chay kb next va bi loi no KB state found. Toi phai lam gi?
+```
+
+2. Task prompt:
+
+```text
+Giai thich nguyen nhan bang ngon ngu de hieu va cho toi 2 cach fix an toan.
+```
+
+3. Recovery prompt:
+
+```text
+Neu toi dang trong monorepo co nhieu folder, lam sao chon dung folder de init?
+```
+
+### Pass criteria
+
+- AI giai thich duoc loi theo context nguoi moi
+- Dua duoc cach fix khong pha du lieu
+
+### Optional CLI spot-check
+
+- trong folder chua init: `kb next`
+- verify message actionable
+
+## HX-06 — Trust in release readiness signal [P1]
+
+**Muc tieu:** `doctor --strict` co duoc hieu nhu release gate hay khong.
+
+### Prompt sequence
+
+1. Context prompt:
+
+```text
+Toi muon release, nhung khong chac KB da du chat luong chua.
+```
+
+2. Task prompt:
+
+```text
+Cho toi checklist release readiness ngan, trong do co KB gate bat buoc.
+```
+
+3. Recovery prompt:
+
+```text
+Neu doctor fail, hay giup toi chia thanh viec P0/P1/P2 de fix.
+```
+
+### Pass criteria
+
+- AI su dung doctor strict dung vai tro gate
+- Dua duoc triage practical
+
+### Optional CLI spot-check
+
+- `kb doctor --strict`
+- `kb release notes ...`
+
+## HX-07 — Usability of published docs/site [P2]
+
+**Muc tieu:** User moi doc site co tim thay cach dung `kb next` khong.
+
+### Prompt sequence
+
+1. Context prompt:
+
+```text
+Toi la user moi, toi doc docs/site truoc khi dung CLI.
+```
+
+2. Task prompt:
+
+```text
+Hay chi toi duong di nhanh nhat de hieu kb next dung trong luc nao, va vi du 1 workflow 3 buoc.
+```
+
+3. Recovery prompt:
+
+```text
+Neu docs hien tai chua ro, de xuat 3 dong wording thay the de user de hieu hon.
+```
+
+### Pass criteria
+
+- Huong dan tim duoc trong docs/site
+- User khong phai doan nghia cua kb next
+
+## HX-08 — Intent handoff for next phase [P1]
+
+**Muc tieu:** Ket thuc solo phase va vao intent tiep theo khong roi context.
+
+### Prompt sequence
+
+1. Context prompt:
+
+```text
+Toi vua xong solo core. Toi muon chuyen sang phase tiep theo ma khong mat context.
+```
+
+2. Task prompt:
+
+```text
+Hay tom tat done criteria da dat va tao handoff note ngan cho intent v2.4.
+```
+
+3. Recovery prompt:
+
+```text
+Cho them 5 risk can theo doi trong phase v2.4 team gates.
+```
+
+### Pass criteria
+
+- Handoff ngan, dung trong tam
+- Co risk list actionable
 
 ---
 
-## 5) Manual checklist (current runtime)
+## 5) Scoring rubric (human experience)
 
-## A. Solo core runtime (P0/P1)
+Moi case cham 3 diem:
 
-### KB-SOLO-01 — Init + status [P0] (ref: TC-P1-01)
+- Clarity (1-5): de hieu khong?
+- Actionability (1-5): lam duoc ngay khong?
+- Trust (1-5): co tin output de quyet dinh khong?
 
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js init --yes
-node D:/Source/template/project-knowledge-base-template/bin/kb.js status
-```
+Tong ket:
 
-Expected:
+- `>= 4.0` trung binh: ready
+- `3.0 - 3.9`: ready with risks
+- `< 3.0`: not ready
 
-- init pass
-- status doc duoc
+## 6) Mapping den catalog attached
 
-### KB-SOLO-02 — Bootstrap + index [P0] (ref: TC-P1-02)
+- HX-01 ~ TC-P1-01
+- HX-02 ~ TC-P1-09
+- HX-03 ~ F10 practical (cover TC-P1-04 + queue handling)
+- HX-04 ~ TC-P1-08
+- HX-05 ~ user-recovery quality (bo sung UX gate)
+- HX-06 ~ TC-P2-02 + TC-P2-03 subset
+- HX-07 ~ UX publish coverage (bo sung docs discoverability)
+- HX-08 ~ TC-P2-05 handoff spirit
 
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js bootstrap --dry-run
-node D:/Source/template/project-knowledge-base-template/bin/kb.js bootstrap
-node D:/Source/template/project-knowledge-base-template/bin/kb.js index
-```
+## 7) Bao cao ket qua
 
-Expected:
-
-- dry-run co preview
-- index co doc count
-
-### KB-SOLO-03 — Questions from placeholders [P1] (ref: TC-P1-08)
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js questions --print
-node D:/Source/template/project-knowledge-base-template/bin/kb.js questions --chat --batch 1
-```
-
-Expected:
-
-- cau hoi cu the, khong generic
-
-### KB-SOLO-04 — Drift visible [P0] (ref: TC-P1-04)
-
-```bash
-# sua 1 file code co bind voi doc
-node D:/Source/template/project-knowledge-base-template/bin/kb.js scan --recursive --depth=2
-```
-
-Expected:
-
-- impact report liet ke docs bi anh huong
-
-### KB-SOLO-05 — Verify state transition [P0] (ref: TC-P1-05)
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js mark --file <doc-path> --state needs-review
-node D:/Source/template/project-knowledge-base-template/bin/kb.js verify <doc-path>
-```
-
-Expected:
-
-- `last_verified` + `last_verified_commit` duoc cap nhat
-
-### KB-SOLO-06 — Baseline gating [P0] (ref: TC-P1-06)
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js baseline show
-node D:/Source/template/project-knowledge-base-template/bin/kb.js baseline set --to-head --yes
-```
-
-Expected:
-
-- baseline show/set hop le
-- neu con drift unresolved thi phai co warning/gate ro rang
-
-### KB-SOLO-07 — Doctor actionable [P0] (ref: TC-P1-07)
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js doctor
-node D:/Source/template/project-knowledge-base-template/bin/kb.js doctor --strict
-```
-
-Expected:
-
-- warning/error co path va ly do cu the
-
-### KB-SOLO-08 — Auto-downgrade verified doc [P1] (ref: TC-P1-09)
-
-```bash
-# 1) verify 1 doc da bind
-node D:/Source/template/project-knowledge-base-template/bin/kb.js verify <doc-path>
-
-# 2) sua file code bind sau verify, commit thay doi
-
-git add -A
-git commit -m "manual: change binding after verify"
-
-# 3) scan
-node D:/Source/template/project-knowledge-base-template/bin/kb.js scan --recursive --depth=2
-```
-
-Expected:
-
-- doc do bi doi ve `kb_state: needs-review`
-- co thong tin downgrade reason phu hop
-
-### KB-SOLO-09 — Auto-downgrade opt-out [P1]
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js scan --no-auto-downgrade
-```
-
-Expected:
-
-- lenh pass
-- khong auto-transition state
-
-### KB-SOLO-10 — `kb next` priority flow [P0]
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js next
-```
-
-Expected:
-
-- co tong actionable
-- co `Next best action`
-- uu tien section hop ly: drift -> review -> missing -> source
-
-### KB-SOLO-11 — Apply suggested action then rerun [P0]
-
-```bash
-# copy command duoc goi y tu kb next
-node D:/Source/template/project-knowledge-base-template/bin/kb.js <suggested-command>
-node D:/Source/template/project-knowledge-base-template/bin/kb.js next
-```
-
-Expected:
-
-- queue thay doi hop ly (count giam hoac next item dich chuyen)
-
-### KB-SOLO-12 — `kb next --json` schema [P1]
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js next --json
-```
-
-Expected:
-
-- JSON parse duoc
-- co `summary`, `nextBestAction`, `sections`
-
-## B. User convenience + usability
-
-### KB-UX-01 — Missing init error is actionable [P0]
-
-```bash
-cd D:/Source/template/project-knowledge-base-template/sample_repo
-node ../bin/kb.js next
-```
-
-Expected:
-
-- thong bao ro can `kb init`
-- in cac path da check
-
-### KB-UX-02 — Help discoverability [P1]
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js help --advanced
-```
-
-Expected:
-
-- mo ta `kb next` ro rang, user doc la lam duoc
-
-### KB-UX-03 — Site publish reflects latest solo workflow [P1]
-
-Manual check:
-
-- `site/index.html`
-- `site/data/cli-commands.json`
-- `site/data/test-cases.json`
-
-Expected:
-
-- landing mention `kb next`
-- CLI catalog co `kb next [--json]`
-- test case catalog co case smoke cho `kb next`
-
-### KB-UX-04 — Onboarding runtime in chat session [P0] (ref: TC-P1-03)
-
-Manual chat check (workspace fresh, chua init KB):
-
-- mo Copilot Chat hoac chat agent co resolve `.github/agents/`
-- goi `@kb setup`
-
-Expected:
-
-- flow onboarding duoc trigger tu chat (khong yeu cau user tu go `kb init` thu cong)
-- agent tiep tuc qua cac buoc onboarding thay vi dung o install
-- co dau hieu tao intent onboarding va transition intent tiep theo theo protocol
-
-### KB-UX-05 — Onboarding asks language + default English [P0]
-
-Manual chat check:
-
-- trong lan onboarding dau tien, quan sat bo cau hoi wizard
-- truong hop A: khong tra loi muc language
-- truong hop B: chon language bat ky (vi du Vietnamese)
-
-Expected:
-
-- wizard co cau hoi language preference cho chat
-- neu khong chon language, gia tri default la English
-- thong tin language duoc luu vao state persona de dung cho session sau
-
-### KB-UX-06 — English-only docs policy with non-English chat [P1]
-
-Manual chat check:
-
-- chon chat language = Vietnamese trong wizard
-- yeu cau agent tao/cap nhat mot doc KB nho
-
-Expected:
-
-- hoi thoai co the theo language user chon
-- noi dung doc/artefact KB van duoc viet bang English
-- khong xuat hien phan tai lieu moi viet bang ngon ngu khac English
-
-## C. Supported Phase-2 subset regression (current software)
-
-### KB-P2-01 — Release notes from range [P1] (ref: TC-P2-03)
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js release notes v2.0.0 --from=v1.9.0 --format=md
-```
-
-Expected:
-
-- notes generate duoc, co noi dung
-
-### KB-P2-02 — Chaos score breakdown [P1] (ref: TC-P2-04)
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js chaos
-node D:/Source/template/project-knowledge-base-template/bin/kb.js chaos --json
-```
-
-Expected:
-
-- score 0-100 + breakdown
-
-### KB-P2-03 — Intent lifecycle basic [P1] (ref: TC-P2-05)
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js intent create test-intent --mode=quick --change-type=docs --yes
-node D:/Source/template/project-knowledge-base-template/bin/kb.js intent status test-intent
-node D:/Source/template/project-knowledge-base-template/bin/kb.js intent cancel test-intent --yes
-```
-
-Expected:
-
-- create/status/cancel chay duoc
-
-### KB-P2-04 — Strict doctor as release gate [P0] (ref: TC-P2-02)
-
-```bash
-node D:/Source/template/project-knowledge-base-template/bin/kb.js doctor --strict
-```
-
-Expected:
-
-- exit code behavior dung voi tinh trang workspace
-
----
-
-## 6) Deferred test set (ghi nhan, khong fail runtime)
-
-Danh dau `DEFERRED` cho cac test tu catalog:
-
-- TC-P2-01 (PR blocked by KB unresolved) neu chua co PR gate integration runtime
-- TC-P3-* (cross-project)
-- TC-P4-* (multi-agent orchestrator/audit)
-- TC-P5-* (ecosystem runtime + contract orchestration)
-
-Ly do: chua co command/runtime path o version hien tai de execute tay day du.
-
----
-
-## 7) Rule ghi ket qua
-
-Moi case ghi theo mau:
-
-| ID | Status | Evidence | Notes |
-|---|---|---|---|
-| KB-SOLO-01 | PASS/FAIL/BLOCKED/DEFERRED | [log-path-or-screenshot] | [short-note] |
-
-Khi FAIL, bat buoc co:
-
-- command da chay
-- output loi full
-- file bi anh huong
-- buoc tai hien ngan (1-2 dong)
-
-## 8) Luu y khi danh gia pass/fail
-
-- `BLOCKED`: bi chan boi credential/env/permission
-- `DEFERRED`: feature catalog co, nhung runtime hien tai chua ship
-- Khong convert `DEFERRED` thanh `FAIL`
-
-## 9) Report template
-
-Su dung file:
+Dung template:
 
 - `MANUAL_TEST_REPORT_TEMPLATE_2.3.x.md`
 
-File nay da co [placeholder] de copy/paste va dien nhanh.
+Template da co [placeholder] + phan transcript/prompt sequence de ban copy paste thang cho toi.

@@ -1,4 +1,4 @@
-# Manual Test Report - v2.3.x (Solo Vibe First)
+# Manual Test Report - v2.3.x (Human Experience + Prompt Flows)
 
 Date: [YYYY-MM-DD]
 Tester: [YOUR_NAME]
@@ -17,6 +17,10 @@ Git Commit: [HEAD_SHA]
 
 Overall verdict: [READY/NOT_READY/READY_WITH_RISKS]
 
+Average Clarity score (1-5): [AVG_CLARITY]
+Average Actionability score (1-5): [AVG_ACTIONABILITY]
+Average Trust score (1-5): [AVG_TRUST]
+
 ## 2) Severity rollup
 
 - P0 issues: [P0_COUNT]
@@ -25,36 +29,22 @@ Overall verdict: [READY/NOT_READY/READY_WITH_RISKS]
 
 ## 3) Failed or blocked cases
 
-| ID | Severity | Status | Command/Area | Actual | Expected | Evidence |
+| ID | Severity | Status | Prompt/Area | Actual | Expected | Evidence |
 |---|---|---|---|---|---|---|
-| [KB-SOLO-XX] | [P0/P1/P2] | [FAIL/BLOCKED] | [COMMAND_OR_AREA] | [ACTUAL_RESULT] | [EXPECTED_RESULT] | [LOG_OR_SCREENSHOT_PATH] |
+| [HX-XX] | [P0/P1/P2] | [FAIL/BLOCKED] | [PROMPT_OR_AREA] | [ACTUAL_RESULT] | [EXPECTED_RESULT] | [LOG_OR_SCREENSHOT_PATH] |
 
-## 4) Full checklist result
+## 4) Full scenario result
 
-| ID | Status | Evidence | Notes |
+| ID | Status | Clarity (1-5) | Actionability (1-5) | Trust (1-5) | Evidence | Notes |
 |---|---|---|---|
-| KB-SOLO-01 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-02 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-03 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-04 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-05 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-06 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-07 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-08 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-09 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-10 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-11 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-SOLO-12 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-UX-01 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-UX-02 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-UX-03 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-UX-04 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-UX-05 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-UX-06 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-P2-01 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-P2-02 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-P2-03 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
-| KB-P2-04 | [PASS/FAIL/BLOCKED/DEFERRED] | [EVIDENCE] | [NOTES] |
+| HX-01 | [PASS/FAIL/BLOCKED/DEFERRED] | [1-5] | [1-5] | [1-5] | [EVIDENCE] | [NOTES] |
+| HX-02 | [PASS/FAIL/BLOCKED/DEFERRED] | [1-5] | [1-5] | [1-5] | [EVIDENCE] | [NOTES] |
+| HX-03 | [PASS/FAIL/BLOCKED/DEFERRED] | [1-5] | [1-5] | [1-5] | [EVIDENCE] | [NOTES] |
+| HX-04 | [PASS/FAIL/BLOCKED/DEFERRED] | [1-5] | [1-5] | [1-5] | [EVIDENCE] | [NOTES] |
+| HX-05 | [PASS/FAIL/BLOCKED/DEFERRED] | [1-5] | [1-5] | [1-5] | [EVIDENCE] | [NOTES] |
+| HX-06 | [PASS/FAIL/BLOCKED/DEFERRED] | [1-5] | [1-5] | [1-5] | [EVIDENCE] | [NOTES] |
+| HX-07 | [PASS/FAIL/BLOCKED/DEFERRED] | [1-5] | [1-5] | [1-5] | [EVIDENCE] | [NOTES] |
+| HX-08 | [PASS/FAIL/BLOCKED/DEFERRED] | [1-5] | [1-5] | [1-5] | [EVIDENCE] | [NOTES] |
 
 ## 5) Deferred catalog cases
 
@@ -65,19 +55,33 @@ Overall verdict: [READY/NOT_READY/READY_WITH_RISKS]
 | [TC-P4-01..08] | [DEFERRED] | [MULTI_AGENT_RUNTIME_NOT_AVAILABLE] |
 | [TC-P5-01..06] | [DEFERRED] | [ECOSYSTEM_RUNTIME_NOT_AVAILABLE] |
 
-## 6) Reproduction details (for each FAIL)
+## 6) Prompt transcript details (for each FAIL/BLOCKED)
 
 ### [ISSUE-01-TITLE]
 
-- Test ID: [KB-XX-YY]
+- Test ID: [HX-XX]
 - Severity: [P0/P1/P2]
-- Command run:
+- Prompt sequence used:
+
+```text
+[PROMPT_1]
+[PROMPT_2]
+[PROMPT_3]
+```
+
+- AI response (relevant part):
+
+```text
+[PASTE_RESPONSE_HERE]
+```
+
+- Optional command verification (neu co):
 
 ```bash
 [PASTE_COMMAND_HERE]
 ```
 
-- Full output:
+- Output (neu co):
 
 ```text
 [PASTE_FULL_OUTPUT_HERE]
@@ -95,7 +99,13 @@ Overall verdict: [READY/NOT_READY/READY_WITH_RISKS]
 - Which command needs better hinting: [PLACEHOLDER]
 - Suggestion for docs/site: [PLACEHOLDER]
 
-## 8) Suggested next patch list
+## 8) Prompt quality notes
+
+- Prompt nao cho ket qua tot nhat: [PLACEHOLDER]
+- Prompt nao can viet lai: [PLACEHOLDER]
+- Chuoi prompt de nghi cho nguoi moi: [PLACEHOLDER]
+
+## 9) Suggested next patch list
 
 1. [PATCH_ITEM_1]
 2. [PATCH_ITEM_2]
