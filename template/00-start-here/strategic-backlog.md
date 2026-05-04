@@ -46,6 +46,8 @@ Mandatory rules:
 - Every target version must map to one active owner intent.
 - New long-term roadmap docs must not be created in `notes/`; use intents.
 - `notes/` is allowed only for historical evidence or short-lived operational scratch.
+- Create release intent only when there is a concrete publish target (`vX.Y.Z`).
+- Governance intent and release intent must be separate; governance commits do not imply re-publish.
 
 ## Three-Layer KB Separation (Mandatory)
 
@@ -85,6 +87,7 @@ Rules:
 | KB-009 | Define focus ownership model (KBRoot local focus vs intent/runtime focus) | knowledge-management | P0 | 2026-05-15 | todo | Keep project execution focus in installed KB runtime artifacts (`.kb/runtime-plan.md`, intents), keep maintainer-only focus in `kb-root/focus.md`, and document non-shipping boundary clearly. |
 | KB-010 | Introduce git-tracked self-host profile for this repository | knowledge-management | P0 | 2026-05-20 | todo | Make self-host KB artifacts explicitly trackable in git without mixing with template payload; keep downstream defaults unchanged. |
 | KB-011 | Enforce intent-first, version-scoped traceability from backlog -> intent -> plan -> task | knowledge-management | P0 | 2026-05-18 | in-progress | Governance intent `v2-4-intent-first-version-governance` defines mandatory chain and sequencing with notes migration. |
+| KB-012 | Enforce release gating: npm prepublish version guard + release-intent separation | knowledge-management | P0 | 2026-05-18 | in-progress | Add `prepublish:version-guard`, document no republish on same version, and separate governance vs release intents. |
 
 ## Refactor Program: Three-Layer Separation + Git-Tracked Self-Hosting
 

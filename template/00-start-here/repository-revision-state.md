@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-05-02
-last_verified: 2026-05-02
+last_updated: 2026-05-04
+last_verified: 2026-05-04
 related:
   - how-to-use-this-kb.md
   - strategic-backlog.md
@@ -31,9 +31,9 @@ Stores the last repository baseline that agents used when they verified, upgrade
 
 | Field | Value |
 |---|---|
-| KB Template Version | v2.3.0 |
+| KB Template Version | v2.3.1 |
 | KB Patch Revision | 0 |
-| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 -> v1.2.11 -> v1.3.0 -> v1.4.0 -> v1.4.1 -> v1.5.0 -> v1.6.0 -> v2.0.0 -> v2.1.0 -> v2.2.0 -> v2.2.1 -> v2.2.2 -> v2.3.0 |
+| Version Lineage | v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.2.1 -> v1.2.11 -> v1.3.0 -> v1.4.0 -> v1.4.1 -> v1.5.0 -> v1.6.0 -> v2.0.0 -> v2.1.0 -> v2.2.0 -> v2.2.1 -> v2.2.2 -> v2.3.0 -> v2.3.1 |
 | Brand Scope | project-knowledge-base-template |
 | Source Repository Identifier | https://github.com/williamduong/project-knowledge-base-template.git |
 | Source Default Branch | main |
@@ -49,8 +49,8 @@ For downstream project use, `Brand Scope` should identify the product or brand b
 | Last Drift Check At | 2026-05-04 |
 | Drift Status | aligned |
 | Baseline Scope | whole repository on main |
-| Last Reconciled Template Version | v1.6.0 |
-| Notes | Drift reconciliation completed on 2026-05-02 for range `886a7ba..cbb71ca`. Evidence collected from git log and name-status diff, then mapped to affected KB governance and planning docs during Waves A-D. Baseline restamped to current HEAD after reconciliation pass. |
+| Last Reconciled Template Version | v2.3.1 |
+| Notes | Drift reconciliation completed on 2026-05-04 across the v2.3.x refactor and governance-intent rollout. Baseline revision is restamped during each release checkpoint after evidence and verification gates pass. |
 
 ## Mandatory Agent Check
 

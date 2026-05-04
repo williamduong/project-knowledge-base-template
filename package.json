@@ -1,6 +1,6 @@
 {
   "name": "@williamduong/kb",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
   "keywords": [
     "knowledge-base",
@@ -65,6 +65,7 @@
     "tag:list": "npm dist-tag ls @williamduong/kb",
     "release:notes:legacy": "node ./tools/generate-template-changelog.js",
     "doc:gate": "node ./scripts/doc-gate.js",
+    "prepublish:version-guard": "node ./tools/prepublish-version-guard.js",
     "version:sync": "node ./tools/sync-versions.js",
     "version:check": "node ./tools/sync-versions.js --check",
     "doctor": "node ./bin/kb.js doctor",
@@ -76,8 +77,8 @@
     "orch:help": "node ./tools/kb-orch.js --help",
     "orch:run": "node ./tools/kb-orch.js run",
     "pack:smoke": "node ./tools/pack-smoke.js",
-    "prepublishOnly": "npm run version:check && npm run doc:gate",
-    "release:dry": "npm run version:check && npm run doc:gate && npm run doctor && npm run pack:smoke"
+    "prepublishOnly": "npm run prepublish:version-guard && npm run version:check && npm run doc:gate",
+    "release:dry": "npm run prepublish:version-guard && npm run version:check && npm run doc:gate && npm run doctor && npm run pack:smoke"
   },
   "engines": {
     "node": ">=18"
