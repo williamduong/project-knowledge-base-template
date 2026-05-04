@@ -22,8 +22,8 @@ decision_summary: >
   Applies to any actor: human, human-role, external-ai, external-system.
 review_after: 2026-06-30
 lesson_id: null
-lifecycle_state: in-progress
-promotion_ready: false
+lifecycle_state: closed
+promotion_ready: true
 linked_signals: []
 promote_decision_ref: null
 parent_epic: v2-3-4-vscode-marketplace-epic
