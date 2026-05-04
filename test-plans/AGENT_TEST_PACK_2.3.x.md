@@ -186,3 +186,67 @@ Execute AG-01..AG-06 in order with best-effort continuation.
 Return only one JSON object following the required output schema in section 5.
 If a check is not executable in current runtime, mark DEFERRED (not FAIL).
 ```
+
+## 7) Validation matrix lock (self-host vs downstream)
+
+Muc nay khoa cach validate de tranh nham lan context giua KBRoot va KB Agent ship.
+
+Rule tong quat:
+
+1. User UX acceptance cho `@kb`, `/kb-plan`, `/kb-run`, `/kb-ask` chi pass khi chay tren downstream clean workspace (KB Agent-only).
+2. Self-host workspace chi dung cho maintainer/governance/packaging smoke.
+3. CLI correctness (`kb status`, `kb intent`, `kb maintain`) co the test o ca 2 workspace.
+
+### MX-01 — Self-host smoke (maintainer mode) [P1]
+
+Command sequence:
+
+```powershell
+node ./bin/kb.js status --json
+node ./bin/kb.js intent list
+node ./bin/kb.js maintain --fast
+```
+
+Expected:
+
+- command chay xong, khong crash
+- co output install-presence/install-state hop le
+- khong dung case nay de ket luan user UX chat/prompt
+
+### MX-02 — Downstream clean UX acceptance (KB Agent-only) [P0]
+
+Setup command sequence (example):
+
+```powershell
+Set-Location D:/tmp
+if (Test-Path kb-ux-sandbox) { Remove-Item kb-ux-sandbox -Recurse -Force }
+New-Item -ItemType Directory -Path kb-ux-sandbox | Out-Null
+Set-Location kb-ux-sandbox
+git init
+npx -y @williamduong/kb@latest init --yes
+npx -y @williamduong/kb@latest status --json
+```
+
+Prompt sequence (chat):
+
+1. `/kb-plan`
+2. `/kb-run`
+3. `/kb-ask what is current kb status`
+
+Expected:
+
+- no KBRoot-specific language/policies in responses
+- output follows shipped KB Agent contract only
+- runtime-plan/result files update under sandbox `knowledge-base/`
+
+### MX-03 — Rejection gate (prevent false acceptance) [P0]
+
+Fail criteria:
+
+- Danh gia UX user that tren self-host workspace maintainer
+- Hoac co evidence output bi tron context KBRoot ma van danh dau PASS
+
+If fail criteria triggered:
+
+- mark case `FAIL`
+- overall ket luan khong duoc dat `READY`

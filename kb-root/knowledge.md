@@ -109,7 +109,7 @@
 
 ### R10. Giả định feature name/format thay vì đọc working example trong repo
 **Ngày:** 2026-04-30
-**Trigger:** Tạo `.chatmode.md` cho Copilot 0.46.0 — feature thực tên "Custom Agents" với file `.agent.md`. Template repo đã có `template/.github/agents/kb.agent.md` working example.
+**Trigger:** Tạo `.chatmode.md` cho Copilot 0.46.0 — feature thực tên "Custom Agents" với file `.agent.md`. Template repo đã có `template/.github/agents/kb.agent.template.md` working example.
 **Tác động:** 4 round trip user reload không thấy, mất thời gian.
 **Phòng:** Khi user xin tạo X tương tự "cái có sẵn", **đọc cái có sẵn trước** (file path, frontmatter format), không web-knowledge giả định.
 
@@ -233,9 +233,15 @@
 
 ### R18. Template version refs must sync pre-release
 **Ngày:** 2026-05-04
-**Trigger:** v2.3.0 release: package.json, template.json, template/.github/agents/kb.agent.md, template/.github/prompts/*.md chứa version string; phải cùng lúc
+**Trigger:** v2.3.0 release: package.json, template.json, template/.github/agents/kb.agent.template.md, template/.github/prompts/*.md chứa version string; phải cùng lúc
 **Tác động:** Downstream user confuse "which version am I on?"
 **Phòng:** Chạy `npm run version:sync` pre-release, verify với `npm run version:check`. Workflow 6 step 3.
+
+### R20. Self-host validation can misrepresent downstream user UX
+**Ngày:** 2026-05-04
+**Trigger:** Chạy `/kb-plan`, `/kb-run`, `/kb-ask` trong workspace maintainer có cả KBRoot context lẫn KB Agent artifacts
+**Tác động:** Kết luận sai về "trải nghiệm user thật" do persona/prompt context collision
+**Phòng:** Split test matrix: downstream clean workspace (KB Agent-only) = user UX acceptance; self-host workspace = maintainer/governance smoke only.
 
 ---
 

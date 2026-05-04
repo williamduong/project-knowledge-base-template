@@ -88,6 +88,7 @@ Rules:
 | KB-010 | Introduce git-tracked self-host profile for this repository | knowledge-management | P0 | 2026-05-20 | todo | Make self-host KB artifacts explicitly trackable in git without mixing with template payload; keep downstream defaults unchanged. |
 | KB-011 | Enforce intent-first, version-scoped traceability from backlog -> intent -> plan -> task | knowledge-management | P0 | 2026-05-18 | in-progress | Governance intent `v2-4-intent-first-version-governance` defines mandatory chain and sequencing with notes migration. |
 | KB-012 | Enforce release gating: npm prepublish version guard + release-intent separation | knowledge-management | P0 | 2026-05-18 | in-progress | Add `prepublish:version-guard`, document no republish on same version, and separate governance vs release intents. |
+| KB-013 | Lock agent/prompt/CLI validation matrix (downstream-user vs self-host-maintainer) | knowledge-management | P0 | 2026-05-18 | in-progress | Prevent context collision between KB Agent and KBRoot when validating `/kb-plan`, `/kb-run`, `/kb-ask`; define canonical test surfaces and acceptance criteria. |
 
 ## Refactor Program: Three-Layer Separation + Git-Tracked Self-Hosting
 
@@ -229,6 +230,20 @@ Dependency policy (locked):
 - Ignore `node_modules/`. Commit `package-lock.json`.
 
 Release target (locked): patch `2.3.x`.
+
+### Agent/Prompt/CLI Validation Scope Lock (2026-05-04)
+
+Problem this lock resolves:
+
+- In a self-host workspace, KBRoot and KB Agent can both execute slash prompts, which can blur user-facing behavior validation.
+
+Locked policy:
+
+1. User-experience acceptance for shipped KB Agent behavior (`@kb`, `/kb-plan`, `/kb-run`, `/kb-ask`) must be validated in a downstream clean workspace with KB Agent active and KBRoot inactive.
+2. Self-host repository validation is maintainer-mode validation only (governance, migration, packaging, safety), not final user-experience acceptance.
+3. CLI command correctness (`kb status`, `kb intent`, `kb maintain`, `kb release`) is shared and testable in both environments; prompt/persona behavior must be judged only in the environment matching the target persona.
+4. Do not remove shipped KB Agent or shipped prompt files from npm payload solely to avoid local overlap; separation is enforced by validation scope, naming clarity, and activation context.
+5. Any maintainer-only prompt surface must remain outside shipped template scope or use explicit maintainer naming to avoid accidental user-facing invocation.
 
 ### Per-Folder/File Action Table
 

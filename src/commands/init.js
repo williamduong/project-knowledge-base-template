@@ -122,10 +122,10 @@ function autoDetectMode({ workspaceRoot }) {
 }
 
 function createAgentAndPromptFiles({ workspaceRoot, repoRoot, overwrite = false }) {
-  const templateAgentPath = path.join(repoRoot, 'template', '.github', 'agents', 'kb.agent.md');
-  const templatePlanPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-plan.prompt.md');
-  const templateRunPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-run.prompt.md');
-  const templateAskPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-ask.prompt.md');
+  const templateAgentPath = path.join(repoRoot, 'template', '.github', 'agents', 'kb.agent.template.md');
+  const templatePlanPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-plan.prompt.template.md');
+  const templateRunPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-run.prompt.template.md');
+  const templateAskPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-ask.prompt.template.md');
   const templateHookPath = path.join(repoRoot, 'template', '.github', 'hooks', 'revision-state-guard.json');
 
   const agentDestPath = path.join(workspaceRoot, '.github', 'agents', 'kb.agent.md');

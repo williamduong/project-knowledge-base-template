@@ -180,6 +180,16 @@ Resume:    Start a new chat with KB Agent and say:
 - Each checklist item must include: task, exact command or UI path, expected outcome, and reason it was manual.
 - Include suggested next actions.
 
+## Validation Scope Lock (v2.3.x)
+
+To avoid context collision between maintainer operations and shipped user behavior, apply this test scope contract:
+
+1. User-experience acceptance for shipped KB Agent behavior (`@kb`, `/kb-plan`, `/kb-run`, `/kb-ask`) must run in a downstream clean workspace with KB Agent active and KBRoot inactive.
+2. Self-host workspace validation is maintainer-mode only: governance, migration, packaging, and CLI smoke.
+3. CLI deterministic behavior (`kb status`, `kb intent`, `kb maintain`, `kb release`) can be validated in both environments, but prompt/persona behavior must be accepted only in the target persona environment.
+4. Do not remove shipped KB Agent files or prompt files from template/npm payload only to prevent local overlap; enforce separation through activation context and validation scope.
+5. Any maintainer-only prompt/agent surface should use explicit maintainer naming and remain outside shipped template surface unless intentionally published.
+
 ## Copilot Instruction Digest
 
 - Respect repository instructions and non-destructive editing.
@@ -256,15 +266,17 @@ This agent is **not** the global Copilot agent — it is specific to this projec
 `kb init` creates project-scoped agent and prompts from template files via `src/commands/init.js`:
 
 - Source template: `template/.github/agents/kb.agent.md`
+- Source template: `template/.github/agents/kb.agent.template.md`
 - Destination: `.github/agents/kb.agent.md`
 - Copy function: `createAgentAndPromptFiles(...)` in `src/commands/init.js`
 - Related prompt sources:
-  - `template/.github/prompts/kb-plan.prompt.md`
-  - `template/.github/prompts/kb-run.prompt.md`
-  - `template/.github/prompts/kb-ask.prompt.md`
+  - `template/.github/prompts/kb-plan.prompt.template.md`
+  - `template/.github/prompts/kb-run.prompt.template.md`
+  - `template/.github/prompts/kb-ask.prompt.template.md`
 
 Maintenance rule:
 - When changing agent doctrine or capability language in this manual, review `template/.github/agents/kb.agent.md` in the same wave so init projections stay aligned.
+- When changing agent doctrine or capability language in this manual, review `template/.github/agents/kb.agent.template.md` in the same wave so init projections stay aligned.
 
 ### Role & Activation
 

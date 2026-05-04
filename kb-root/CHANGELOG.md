@@ -19,6 +19,8 @@
 - **Validation (R6)**: npm run test:all (133 docs indexed, WARN expected for HEAD diff), npm run pack:smoke (208 files pass), smoke kb init tests pass. Version refs synced via npm run version:sync. Repository-revision-state baseline updated to commit 1adb01b.
 - **Learnings archived**: Added T8-T10 (intent pattern, validation parallelism, layer model documentation), R15-R18 (PowerShell safety, uninstall scoping, timestamp precision, version sync), D10-D14 (three-layer locked canonical, intent approved, npm version bare prohibition) to knowledge.md + focus.md for v2.4+ planning.
 - **Released**: @williamduong/kb@2.3.0 published to npm (208 files, 902.2 kB unpacked).
+- **Scope lock note**: Added policy that downstream KB Agent UX acceptance must run in clean downstream workspace (KB Agent only), while self-host workspace is maintainer/governance validation.
+- **Namespace hard split**: Disabled local downstream surfaces (`.github/agents/kb.agent.md`, `.github/prompts/kb-*`) and introduced KBRoot-only prompts (`/kbroot-plan`, `/kbroot-run`, `/kbroot-ask`). Template source files moved to `.template.md` suffix; `src/commands/init.js` now projects from template sources while keeping downstream destination names unchanged.
 
 ## 2026-04-30
 
