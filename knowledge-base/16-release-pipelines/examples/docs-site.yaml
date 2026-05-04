@@ -1,0 +1,59 @@
+# Release pipeline example: docs-site
+# Intended for documentation-only or static site releases.
+# Usage:
+#   kb release plan -f template/16-release-pipelines/examples/docs-site.yaml --bump=patch --from=v1.5.0
+
+inputs:
+  bump:
+    description: "Semver bump type"
+    options: [patch, minor, major]
+    required: true
+  from_tag:
+    description: "Previous release tag used by kb release notes"
+    required: false
+
+steps:
+  - name: pre-check
+    description: "Validate docs release prerequisites"
+    run: npm run release:dry
+    fail_on_nonzero: true
+
+  - name: bump-version
+    description: "Bump docs site version"
+    run: npm version ${{ inputs.bump }} --no-git-tag-version
+    outputs:
+      version: ${{ outputs.bump-version.stdout }}
+
+  - name: build-docs
+    description: "Build the static docs output"
+    run: npm run docs:build
+    fail_on_nonzero: true
+
+  - name: generate-notes
+    description: "Generate docs release notes"
+    run: node ./bin/kb.js release notes ${{ outputs.bump-version.version }} --from=${{ inputs.from_tag }} --format=md --output=RELEASE_NOTES.md
+    fail_on_nonzero: true
+
+  - name: commit-release
+    description: "Commit docs release assets"
+    run: >-
+      git add -A
+      && git commit -m "chore(${{ outputs.bump-version.version }}): docs release ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: tag
+    description: "Create annotated release tag"
+    run: git tag -a ${{ outputs.bump-version.version }} -m "Release ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: publish-docs
+    description: "Publish static docs artifacts"
+    run: npm run docs:publish
+    confirm: true
+    fail_on_nonzero: true
+
+  - name: github-release
+    description: "Create GitHub release from generated notes"
+    run: gh release create ${{ outputs.bump-version.version }} --notes-file RELEASE_NOTES.md --title "Release ${{ outputs.bump-version.version }}"
+    confirm: true
+    fail_on_nonzero: true

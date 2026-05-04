@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "scanned_at": "2026-05-04T11:22:00.867Z",
+  "baseline": "e157d9c61caf325f5816cff25d4987a27b294909",
+  "head": "e157d9c61caf325f5816cff25d4987a27b294909",
+  "storage_mode": "tracked",
+  "impacted": [],
+  "self_edits": [],
+  "unbound_changes": [],
+  "skipped_reason": null
+}

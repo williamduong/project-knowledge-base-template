@@ -1,0 +1,24 @@
+{
+  "generatedAt": "2026-05-04T11:16:38.153Z",
+  "workspaceRoot": "D:\\Source\\template\\project-knowledge-base-template",
+  "kb": {
+    "mode": "tracked",
+    "contentRoot": "D:\\Source\\template\\project-knowledge-base-template\\knowledge-base",
+    "documentCount": 130,
+    "placeholderDocumentCount": 83,
+    "verificationCounts": {
+      "design-only": 20,
+      "unverified": 81,
+      "self-referential": 21,
+      "unknown": 8
+    },
+    "kbStateCounts": {
+      "unset": 124,
+      "autofilled": 6
+    }
+  },
+  "source": {
+    "routeFiles": [],
+    "prismaModels": []
+  }
+}

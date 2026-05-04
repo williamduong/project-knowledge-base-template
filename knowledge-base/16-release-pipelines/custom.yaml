@@ -1,0 +1,48 @@
+# Release pipeline template: custom
+# Usage:
+#   kb release init-pipeline --template=custom
+#   kb release plan --bump=patch
+#   kb release run --bump=patch --yes
+#
+# Keep this template minimal and fill commands for your project.
+
+inputs:
+  bump:
+    description: "Semver bump type"
+    options: [patch, minor, major]
+    required: true
+
+steps:
+  - name: pre-check
+    description: "Project-specific release checks"
+    run: npm run release:dry
+    fail_on_nonzero: true
+
+  - name: bump-version
+    description: "Bump project version without tagging"
+    run: npm version ${{ inputs.bump }} --no-git-tag-version
+    outputs:
+      version: ${{ outputs.bump-version.stdout }}
+
+  - name: build-release-artifacts
+    description: "Replace with your real release artifacts command"
+    run: 'echo "TODO: generate release artifacts for ${{ outputs.bump-version.version }}"'
+    fail_on_nonzero: true
+
+  - name: commit-release
+    description: "Commit release artifacts"
+    run: >-
+      git add -A
+      && git commit -m "release: ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: tag
+    description: "Create annotated release tag"
+    run: git tag -a ${{ outputs.bump-version.version }} -m "Release ${{ outputs.bump-version.version }}"
+    fail_on_nonzero: true
+
+  - name: push
+    description: "Push commits and tags"
+    run: git push origin main && git push origin --tags
+    confirm: true
+    fail_on_nonzero: true
