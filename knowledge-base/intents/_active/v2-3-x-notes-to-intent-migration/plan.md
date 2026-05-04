@@ -13,6 +13,8 @@ Convert `notes/` from mixed backlog storage into a clean split:
 
 This migration is a workflow validation for v2.4+.
 
+Policy source intent: `v2-4-intent-first-version-governance` (must be approved before closing this migration).
+
 ## Files Touched
 
 ### Group A — Keep in notes (historical evidence)
