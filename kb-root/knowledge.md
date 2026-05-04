@@ -137,6 +137,12 @@
 **Tác động:** Nếu `kb scan` không filter, doc tự đổi sẽ bị xếp impact bởi chính nó → noise
 **Phòng:** Phase 2 `kb status` phải tách 2 luồng theo Section 3.0 plan v1.3: (a) git porcelain/diff filter `<contentRoot>/` = KB self-edit; (b) git diff các path khác match binding = KB impacted. `impact.json` chỉ chứa (b).
 
+### R15. P18 được viết ra SAU KHI intent đã set in-progress — rule không retroactive
+**Ngày:** 2026-05-05
+**Trigger:** Trong session tạo P18 (one active intent), agent vừa tạo epic intent v2-3-4 và set in-progress *trước*, rồi viết P18 *sau*. Không quay lại check retroactively.
+**Tác động:** 2 intent in-progress đồng thời, vi phạm rule vừa viết chính mình
+**Phòng:** Sau khi viết bất kỳ governance rule nào, ngay lập tức chạy check hiện tại để verify không có existing state nào vi phạm rule mới. "Write rule → immediately self-audit current state."
+
 ---
 
 ## Decisions (chốt và rationale)
