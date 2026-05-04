@@ -194,8 +194,87 @@
 
 ## Append history
 
+### T8. Intent archive + active workspace pattern cho major refactor tracking
+**Ngày:** 2026-05-04
+**Context:** Refactor R0-R6 tracking: tạo `_archive/v2-3-x-three-layer-separation-refactor-r0-r4-20260504123042/` snapshot (R0-R4 work) + `_active/v2-3-x-refactor-finish/` forward intent (R5-R6 scope)
+**Tại sao work:** Clear checkpoint boundaries, tương lai dễ tìm "cái nào shipped ở R3", "cái nào still WIP R5"
+**Apply:** Mọi major refactor ≥ 5 phases dùng intent archive để snapshot progress, forward intent cho remaining work
+
+### T9. Parallel validation (test:all + pack:smoke + smoke kb init) efficient
+**Ngày:** 2026-05-04
+**Context:** R6 validation: 3 parallel checks (npm run test:all, npm run pack:smoke, smoke kb init --mode tracked/private-git) mỗi 2-5 min
+**Tại sao work:** Loại bỏ 3 loại risk cùng lúc (code+docs, package contents, downstream smoke)
+**Apply:** Pre-release luôn chạy 3 check
+
+### T10. Three-layer KB model trong documentation simplifies downstream
+**Ngày:** 2026-05-04
+**Context:** Clarify layer separation: ship (A)/verify (B)/maintainer (C)/self-host (D)/scratch (E) giúp template user hiểu cái nào merge vào their repo
+**Tại sao work:** Destroy confusion between "KB runtime files" vs "maintainer planning"
+**Apply:** Đưa layer model vào template/00-start-here/how-to-use-this-kb.md + focus ownership (execution focus ≠ kb-root/focus.md)
+
+### R15. PowerShell destructive chain không short-circuit
+**Ngày:** 2026-05-04
+**Trigger:** `git mv .local/kb-agent kb-root; if (Test-Path .local) { Remove-Item .local -Recurse -Force }` → git mv fail nhưng Remove-Item chạy, mất 7 files
+**Tác động:** Dữ liệu mất, phải recover từ local history
+**Phòng:** LUÔN explicit `if ($LASTEXITCODE -eq 0)` sau move/rename trước destructive cleanup. Hoặc dùng `&&` (pwsh 7.0+). Document an toàn rule vào /memories/safety.md.
+
+### R16. `kb uninstall --force` deletes unrelated tracked artifacts
+**Ngày:** 2026-05-04
+**Trigger:** `kb uninstall --force` xóa `.github/hooks/revision-state-guard.json` (product artifact, không kb-managed)
+**Tác động:** Mất governance hook
+**Phòng:** Scope uninstall chỉ xóa KB-MANAGED files (có marker). Logged as v2.4 backlog item.
+
+### R17. Archive timestamp formatting (slice 15 vs 14) creates Windows-unopenable dirs
+**Ngày:** 2026-05-04
+**Trigger:** `toISOString().replace(/[-:T]/g, '').slice(0, 15)` keeps decimal point → folder name ends `.` → Windows không mở được
+**Tác động:** Archive không accessible
+**Fix:** Slice 14 không 15 (skip decimal point). Fix applied src/commands/intent.js + src/lib/intent.js line 78.
+**Phòng:** Timestamp generation là `YYYYMMDDHHMMSS` = 14 chars (no decimal).
+
+### R18. Template version refs must sync pre-release
+**Ngày:** 2026-05-04
+**Trigger:** v2.3.0 release: package.json, template.json, template/.github/agents/kb.agent.md, template/.github/prompts/*.md chứa version string; phải cùng lúc
+**Tác động:** Downstream user confuse "which version am I on?"
+**Phòng:** Chạy `npm run version:sync` pre-release, verify với `npm run version:check`. Workflow 6 step 3.
+
+---
+
+## Decisions (v2.3.x locked)
+
+### D10. Three-layer KB model canonical v2.3.x+
+**Ngày:** 2026-05-04
+**Lý do:** Refactor v2.3 validate rõ (R0-R5 work): ship (A) /verify (B) /kb-root (C) /self-host (D) /scratch (E). Loại bỏ confuse "local vs repo". Governance ổn định.
+**Rationale:** Layer A → user ship. Layer B → verify product (test/, site/). Layer C → maintainer only (kb-root/, không ship npm files). Layer D → self-host runtime (tracked mode). Layer E → scratch noise (notes/, generated reports).
+**Status:** LOCKED. Mọi future version maintain layer separation.
+
+### D11. Intent archive + active pattern approved
+**Ngày:** 2026-05-04
+**Lý do:** v2.3 refactor tracking (archive R0-R4 + active R5-R6) work smooth. Clear snapshot boundaries.
+**Apply:** Major refactor ≥ 5 phases dùng pattern này.
+
+### D12. kb-root is Layer C (never ship)
+**Ngày:** 2026-05-04
+**Lý do:** .github/hooks/hooks.json ensures kb-root không thêm vào package.json files; git commit nhưng npm publish exclude.
+**Implication:** kb.agent.md, kb.prompts/ shipment is template/ files, not kb-root/.
+
+### D13. Self-host profile (tracked mode) active by default downstream
+**Ngày:** 2026-05-04
+**Lý do:** v2.3 validation: `kb init --mode tracked` (default) + `kb init --mode private-git` (opt-in) đều pass smoke test. Tracked safer cho shared repo, private-git advanced opt-in.
+**Apply:** how-to-use-this-kb.md default recommend tracked.
+
+### D14. npm version bare + tag adalah violation
+**Ngày:** 2026-05-04
+**Lý do:** Thấy từ notes/npm-release-checklist.md: `npm version <bump>` bare tạo orphaned tag nếu publish fail (v2.2.1 case).
+**Rule:** MANDATORY — dùng `npm version <bump> --no-git-tag-version`. Tag tạo SAU `npm publish` exit 0.
+**Enforce:** Workflow R6 = manual commit + tag sau publish success.
+
+---
+
+## Append history
+
 | Ngày | Entry | Type |
 |---|---|---|
 | 2026-04-30 | T1-T6, R1-R9, D1-D8 | Khởi tạo |
 | 2026-04-30 | R10, R11 | Custom Agent + npm files lessons |
 | 2026-05-04 | R13, R14 | npm version bare + CRLF drift — release rules |
+| 2026-05-04 | T8-T10, R15-R18, D10-D14 | v2.3.x refactor complete + three-layer locked |

@@ -6,13 +6,19 @@
 
 ## 2026-05-04
 
-- **Three-layer separation refactor (Phase R0–R4)**: renamed `.local/kb-agent/` → `kb-root/`; updated all internal refs in `.github/agents/KBRoot.agent.md`, `template/00-start-here/strategic-backlog.md`, `template/00-start-here/how-to-use-this-kb.md`.
-- **`.gitignore` rewrite**: removed `.local/`, `knowledge-base/`, `AGENTS.md`, `.github/agents/kb.agent.md`, `.github/prompts/`, `kb-orch-report-*.json`, `.github/agents/KBRoot.agent.md`. Added `notes/*` allowlist anchor and `knowledge-base/.kb/{_cacache,_logs,cache,logs}/`.
-- **Root cleanup**: 4 manual test docs → `test-plans/`; 24 `kb-orch-report-*.json` → `notes/orch-reports/`; `COMPLETION_REPORT.md`, `UPGRADE_SUMMARY.md` → `notes/`.
-- **Self-host init (Layer D)**: `kb init --mode tracked --yes` → `knowledge-base/` materialized.
-- **Recovery**: `.local/kb-agent/*` accidentally deleted by destructive `if (Test-Path) { Remove-Item }` chain after failed `git mv`; restored 7 files from VS Code local history (`%APPDATA%\Code\User\History`).
-- **Restored**: `.github/hooks/revision-state-guard.json` after `kb uninstall --force` removed it (logged as bug candidate).
-- **Focus update**: rewrote `focus.md` from v1.3.0 stale state to v2.3.x refactor state (last-shipped v2.2.2).
+- **Three-layer separation refactor (Phase R0–R6 COMPLETE)**: Refactored KB model into 5-layer architecture: ship (A)/verify (B)/kb-root (C)/self-host (D)/scratch (E). Renamed `.local/kb-agent/` → `kb-root/`; updated all internal refs.
+- **kb-root promoted to Layer C**: `.github/agents/KBRoot.agent.md` now authoritative for maintainer operations; bootstrap + Self-Update workflow references kb-root/ instead of .local/.
+- **`.gitignore` rewrite**: Removed `.local/`, `knowledge-base/`, `AGENTS.md`, `.github/agents/kb.agent.md`, `.github/prompts/`, `kb-orch-report-*.json`. Added `notes/*` allowlist anchor; restricted knowledge-base to noise subpaths only.
+- **Root cleanup**: 4 manual test docs → `test-plans/`; 24 `kb-orch-report-*.json` → `notes/orch-reports/`.
+- **Self-host init (Layer D)**: `kb init --mode tracked --yes` materialized; R6 smoke tests pass (both tracked + private-git modes initialized successfully).
+- **Intent seeding (R5)**: Created `_archive/v2-3-x-three-layer-separation-refactor-r0-r4-*/` snapshot (132 KB files from R0-R4) + `_active/v2-3-x-refactor-finish/` forward intent (R5-R6 scope with exit criteria).
+- **Bugfixes (R5)**: Fixed missing `sanitizeId` import in src/commands/intent.js; fixed archive timestamp formatting (`.slice(0, 14)` not 15) to prevent Windows-unopenable dirs with trailing dot.
+- **Recovery**: `.local/kb-agent/*` accidentally deleted during failed `git mv` chain; restored 7 files from VS Code local history.
+- **Restored**: `.github/hooks/revision-state-guard.json` (removed by `kb uninstall --force`); logged as v2.4 backlog candidate.
+- **Focus sync**: Synced `focus.md` from stale v1.3.0 to v2.3.x state (v2.2.2 was last shipped before refactor).
+- **Validation (R6)**: npm run test:all (133 docs indexed, WARN expected for HEAD diff), npm run pack:smoke (208 files pass), smoke kb init tests pass. Version refs synced via npm run version:sync. Repository-revision-state baseline updated to commit 1adb01b.
+- **Learnings archived**: Added T8-T10 (intent pattern, validation parallelism, layer model documentation), R15-R18 (PowerShell safety, uninstall scoping, timestamp precision, version sync), D10-D14 (three-layer locked canonical, intent approved, npm version bare prohibition) to knowledge.md + focus.md for v2.4+ planning.
+- **Released**: @williamduong/kb@2.3.0 published to npm (208 files, 902.2 kB unpacked).
 
 ## 2026-04-30
 
