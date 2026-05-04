@@ -1,5 +1,5 @@
 ---
-intent_id: v2-3-x-notes-to-intent-migration
+intent_id: INT-2-3-2-notes-migration-closeout
 type: intent-impact
 ---
 
@@ -8,7 +8,7 @@ type: intent-impact
 ## Affected Areas
 
 - Layer C (maintainer workflow): `kb-root/*` references to planning flow may need minor wording updates.
-- Layer D (self-host runtime): `knowledge-base/intents/_active` grows with 4 new forward intents.
+- Layer D (self-host runtime): `knowledge-base/intents/_active` keeps explicit supporting migration intent for the 2.3.2 release line.
 - Layer E (scratch): `notes/` content reduced and clarified by purpose.
 
 ## Breaking Change
@@ -21,7 +21,7 @@ This is organizational/governance migration only. CLI commands and shipped npm l
 
 - Low risk for downstream package users (no shipped API/path change).
 - Moderate risk for maintainers if intent metadata is inconsistent across new workspaces.
-- Mitigation: create intents with `kb intent create`, validate with `kb intent status` after each creation.
+- Mitigation: keep this intent linked to `v2-3-2-closure-pass` and validate metadata before closing the release line.
 
 ## Impact Signals
 
@@ -31,6 +31,6 @@ This is organizational/governance migration only. CLI commands and shipped npm l
 
 ## Versioning Decision
 
-No version bump is needed before migration.
+No standalone version bump is owned by this intent.
 
-Reason: migration changes only maintainer/runtime documentation placement, not package behavior. Run `npm run version:check` before the next release as normal.
+Reason: migration changes only maintainer/runtime documentation placement, not package behavior. If the migration is shipped as part of the `2.3.2` closure pass, that version ownership belongs to `v2-3-2-closure-pass`, not to `INT-2-3-2-notes-migration-closeout`.

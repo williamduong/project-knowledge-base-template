@@ -149,6 +149,24 @@ Store the choice in `state.json` under `numberingPreference: { style: "sequentia
 5. **Print ID at start of every intent.** First output line for any intent-scoped task: `[INT-NNN] <title>`.
 6. **Sub-intents are real intents.** `INT-001.1` must have its own `intent.md` and archive path. Do not use sub-intent notation for tasks.
 
+## 6.1 Version-Embedded INT IDs
+
+When a KB tracks a versioned software project, INT IDs **may** embed the version in place of the sequential counter:
+
+```
+INT-<major>-<minor>-<patch>-<slug>   →  INT-2-3-2-notes-migration-closeout
+```
+
+Rules:
+- A version may have exactly **one** owner intent (identified by the version scope directly, e.g. `v2-3-2-closure-pass`).
+- Supporting intents for the same version use the version-embedded INT format above.
+- Supporting intents must not reuse the owner intent's exact version-scoped ID.
+- This format is an alternative to the sequential `INT-001` counter; choose one style per KB and record it in `state.json` under `numberingPreference.style`.
+
+Example:
+- valid: owner `v2-3-2-closure-pass` + supporting `INT-2-3-2-notes-migration-closeout`
+- invalid: owner `v2-3-2-closure-pass` + supporting `v2-3-2-notes-migration-closeout`
+
 ---
 
 ## 7. Examples

@@ -64,8 +64,14 @@ Plan files: `notes/upgrade-v1.3-*.md` ... `notes/upgrade-v3.0-*.md`.
 6. **Check `focus.md`** xem có conflict với active work không
 7. Nếu task vượt scope hiện tại (vd đang v1.3 mà user xin v2.0 work) → **cảnh báo**, hỏi confirm
 
+### 4.1.1 Intent ID
+
+- Owner intent ID = version scope: `v2-3-2-closure-pass`, `v2-4-team-gates`. Một version chỉ có 1 owner intent.
+- Supporting intent dùng format nhúng version: `INT-2-3-2-<slug>` (xem numbering-system.md §6.1).
+
 ### 4.2 Khi propose code/plan
 
+- **Minimal change first**: ưu tiên thay đổi nhỏ nhất đủ solve — không mở rộng scope nếu không được yêu cầu. Change lớn = chaos lớn.
 - **Verify trước assert**: đọc file thật, không đoán
 - **Tách `Current State` vs `Target State`** rõ ràng
 - **Mark uncertainty**: dùng `unverified`, `assumption`, `design-only` thay vì khẳng định

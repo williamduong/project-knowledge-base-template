@@ -65,6 +65,10 @@ Mọi feature ≥ 1 ngày work phải:
 - Có Phase 0 validation gate
 - Có exit criteria mỗi phase
 
+## P10.1. Tinh chỉnh nhỏ trước khi mở rộng
+
+Khi resolve vấn đề, ưu tiên thay đổi nhỏ nhất đủ solve — không refactor thêm, không mở rộng scope nếu không được yêu cầu rõ ràng. Change lớn = chaos lớn.
+
 ## P11. Solo workflow ưu tiên reversible
 
 - Tag git ngay khi release để rollback dễ

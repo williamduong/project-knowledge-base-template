@@ -1,5 +1,5 @@
 ---
-intent_id: v2-3-x-notes-to-intent-migration
+intent_id: INT-2-3-2-notes-migration-closeout
 type: intent-plan
 ---
 
@@ -7,13 +7,13 @@ type: intent-plan
 
 ## Goal
 
-Convert `notes/` from mixed backlog storage into a clean split:
+Close the remaining `2.3.x` notes migration work so `2.4+` planning starts from intent-owned workspaces instead of mixed `notes/` storage:
 - intent-managed planning lives under `knowledge-base/intents/`
 - historical evidence and operational scratch stay in `notes/`
 
-This migration is a workflow validation for v2.4+.
+This migration is a supporting closeout step for `v2-3-2-closure-pass`.
 
-Policy source intent: `v2-4-intent-first-version-governance` (must be approved before closing this migration).
+Policy source intent: `v2-4-intent-first-version-governance`.
 
 ## Files Touched
 
@@ -58,8 +58,8 @@ Policy source intent: `v2-4-intent-first-version-governance` (must be approved b
 - `notes/v1.4-phase0-prototype.js` (candidate move to `tools/legacy/`)
 
 ### Group E — Existing active intent alignment
-- `knowledge-base/intents/_active/v2-3-x-refactor-finish/intent.md`
-	- update cross-links after B-group intents are created
+- `knowledge-base/intents/_active/v2-3-2-closure-pass/intent.md`
+  - update cross-links after B-group intents are created
 
 ## Acceptance Criteria
 
@@ -67,4 +67,4 @@ Policy source intent: `v2-4-intent-first-version-governance` (must be approved b
 2. Four forward intents (`v2.4`, `v2.5`, `v2.6`, `v3.0`) exist under `_active` with initial `intent.md` summaries.
 3. `notes/` no longer contains forward roadmap files for v2.4+ and v3.0.
 4. `kb intent status` returns clean metadata for new intents (no malformed frontmatter).
-5. No package version bump is required or performed as part of this migration.
+5. This intent does not own the version bump; any release action is tracked only under `v2-3-2-closure-pass`.
