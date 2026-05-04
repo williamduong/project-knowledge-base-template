@@ -50,5 +50,5 @@ kb-test-sample/
 # Generic build outputs
 out/
 
-# kb orchestrator reports emitted to cwd (cleaned up via R5 intent migration)
+# kb orchestrator reports (legacy root outputs)
 kb-orch-report-*.json

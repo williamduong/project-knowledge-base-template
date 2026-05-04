@@ -45,6 +45,7 @@ function parseArgs(argv) {
 function printHelp() {
   console.log('KB Local Test Orchestrator');
   console.log('Usage: node tools/kb-orch.js run <plan.json> [--dry-run] [--output <file>]');
+  console.log('Default report path: notes/orch-reports/kb-orch-report-<timestamp>.json');
 }
 
 async function main(argv) {
