@@ -35,6 +35,28 @@ tags:
 3. Keep unneeded docs as placeholders (do not delete immediately)
 4. After first release, archive or remove unused modules via governance process
 
+## Three-Layer KB Model (Do Not Mix)
+
+This template ecosystem has three separate layers:
+
+1. Template source layer: `template/` (what is shipped to downstream users)
+2. Local maintainer layer: `kb-root/` (internal KBRoot notes, committed in this repo but excluded from npm `files` whitelist)
+3. Installed runtime KB layer: `<contentRoot>/...` created by `kb init` in a target repository
+
+Where `<contentRoot>` resolves to:
+
+- Tracked mode: `knowledge-base/`
+- Private-git mode: `.git/project-kb/content/` (with visible mount via `knowledge-base/`)
+
+Runtime commands must operate on `<contentRoot>`, not on `template/`.
+
+## Focus Ownership Model
+
+- Maintainer internal focus (authoring this template repo): `kb-root/focus.md` (committed, not shipped)
+- Project runtime focus (downstream repo execution): `<contentRoot>/.kb/runtime-plan.md` + `kb intent` workspaces
+
+If both exist, runtime focus is the source of truth for project execution status. Local KBRoot focus is only for maintainer coordination.
+
 ## Default Decisions Before Scanning
 
 - Verification strategy default: maximize `code-verified` coverage and execute it in phases.
@@ -265,10 +287,15 @@ kb intent apply <id> --release --yes
 kb intent cancel <id>
 ```
 
-**Staged files live at:** `knowledge-base/intents/_active/<id>/proposed-changes/<relative-from-kb-root>`
+**Staged files live at:** `<contentRoot>/intents/_active/<id>/proposed-changes/<relative-from-kb-root>`
 
 Example: to update `template/15-governance/review-cadence.md`, stage the file at  
 `proposed-changes/template/15-governance/review-cadence.md` inside the intent workspace.
+
+Mode examples:
+
+- Tracked mode: `knowledge-base/intents/_active/<id>/proposed-changes/...`
+- Private-git mode: `.git/project-kb/content/intents/_active/<id>/proposed-changes/...`
 
 **After apply:**
 - Staged files are written to the KB content root.
