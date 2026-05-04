@@ -21,6 +21,7 @@ const {
   applyStagedFiles,
   writeApplyRecord,
   archiveIntent,
+  sanitizeId,
 } = require('../lib/intent');
 const { analyzeIntentConflicts, suggestApplyOrder, generateLessonCandidates } = require('../lib/intent-intelligence');
 const { runRelease } = require('./release');
@@ -591,7 +592,7 @@ async function runExtract(ctx, options, cwd) {
   // 4. Suggest ID from title or timestamp
   let intentId = extractTitle ? sanitizeId(extractTitle) : null;
   if (!intentId) {
-    const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15);
+    const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
     intentId = `extracted-${ts}`;
   }
 
@@ -600,7 +601,7 @@ async function runExtract(ctx, options, cwd) {
   fs.mkdirSync(archiveRoot, { recursive: true });
 
   const now = new Date().toISOString();
-  const archiveName = `${intentId}-${now.replace(/[-:T]/g, '').slice(0, 15)}`;
+  const archiveName = `${intentId}-${now.replace(/[-:T]/g, '').slice(0, 14)}`;
   const archivePath = path.join(archiveRoot, archiveName);
   fs.mkdirSync(archivePath, { recursive: true });
 

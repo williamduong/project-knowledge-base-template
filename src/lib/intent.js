@@ -75,7 +75,7 @@ function suggestIntentId(branch) {
   }
   // Timestamp fallback: intent-YYYYMMDD-HHMMSS
   const now = new Date();
-  const ts = now.toISOString().replace(/[-:T]/g, '').slice(0, 15);
+  const ts = now.toISOString().replace(/[-:T]/g, '').slice(0, 14);
   return `intent-${ts}`;
 }
 
