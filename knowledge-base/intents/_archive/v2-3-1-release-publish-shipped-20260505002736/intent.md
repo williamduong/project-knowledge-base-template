@@ -1,7 +1,7 @@
 ---
 id: v2-3-1-release-publish
 mode: full
-status: open
+status: shipped
 created_at: 2026-05-04T14:38:15.656Z
 change_type: release
 change_scope:

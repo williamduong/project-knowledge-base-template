@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "cliVersion": "2.2.2",
-  "templateVersion": "v2.2.2",
+  "cliVersion": "2.3.2",
+  "templateVersion": "v2.3.2",
   "kbPatchRevision": 0,
-  "versionLineage": "v2.2.2",
+  "versionLineage": "v2.3.2",
   "storageMode": "tracked",
   "brandScope": "project-knowledge-base-template",
   "workspaceRoot": "D:\\Source\\template\\project-knowledge-base-template",
@@ -16,7 +16,7 @@
   "lastDriftCheckAt": "2026-05-04",
   "driftStatus": "aligned",
   "baselineScope": "whole repository on main",
-  "lastReconciledTemplateVersion": "v2.2.2",
+  "lastReconciledTemplateVersion": "v2.3.2",
   "notes": "Initialized by kb init against the current repository HEAD.",
   "metadataPolicy": "advisory",
   "ideIntegration": {

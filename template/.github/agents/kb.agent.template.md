@@ -4,7 +4,7 @@ type: multi-modal
 category: development-support
 trigger: slash-command
 instruction_file: .github/copilot-instructions.md
-version: 2.3.1
+version: 2.3.2
 ---
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle

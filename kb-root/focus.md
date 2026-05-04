@@ -10,11 +10,11 @@
 **Đang focus:** v2.3.x — Three-Layer Separation + Self-Host Profile refactor
 **Plan file:** [template/00-start-here/strategic-backlog.md](../template/00-start-here/strategic-backlog.md) (section "Refactor Program — Locked Decisions")
 **Status:** Phase R0–R4 done; Phase R5–R6 pending
-**Last shipped:** v2.2.2 (sync versions + README/npm docs alignment)
+**Last shipped:** v2.3.1 (governance + tooling hardening)
 
 ## Current Phase
 
-**Phase:** R4 → R5 (intent migration of notes/ + kb-root planning into runtime intents)
+**Phase:** R5–R6 (notes migration closeout + 2.3.2 release validation)
 
 **Done:**
 - R0: scanned all `.local/kb-agent` references; recovered files from VS Code local history after destructive PowerShell chain.
@@ -47,8 +47,9 @@
 
 | Version | Status | Notes |
 |---|---|---|
-| v2.2.2 | Shipped 2026-05-04 | Latest tag |
-| v2.3.x | In progress | Three-layer separation + self-host profile |
+| v2.2.2 | Shipped 2026-05-04 | Superseded |
+| v2.3.1 | Shipped 2026-05-04 | Governance + tooling hardening |
+| v2.3.2 | In progress | Namespace split + notes migration closeout |
 | v2.4+ | Backlog | Intent-driven planning migration follow-up |
 
 ## Notes / Reminders cho session sau
