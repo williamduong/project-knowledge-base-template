@@ -26,7 +26,7 @@ decision_summary: >
   planning with intent-first governance.
 review_after: 2026-06-30
 lesson_id: null
-lifecycle_state: in-progress
+lifecycle_state: proposed
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
