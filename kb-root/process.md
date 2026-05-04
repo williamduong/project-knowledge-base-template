@@ -209,6 +209,85 @@ Tiếp tục Workflow 1 (New Feature Plan) để draft intent và plan.
 
 ---
 
+## Workflow 9: Human-Gate (P20)
+
+**Trigger:** Agent gặp task cần actor khác — human, AI khác, external system — trong khi đang thực thi intent.
+
+**Rule:** KHÔNG hỏi trong chat. KHÔNG dừng. Ghi gate → tiếp tục.
+
+### Khi AI tạo gate
+
+1. Xác định `intent_id` hiện tại (từ context hoặc `kb intent list --active`).
+2. Xác định actor type: `human` / `human:<role>` / `ai:<name>` / `external:<system>`.
+3. Append gate block vào `knowledge-base/intents/_active/<id>/gates.md` (tạo file nếu chưa có).
+4. Đặt `status: pending`.
+5. Ghi `blocking: [<step IDs>]` — liệt kê các step trong plan bị block bởi gate này.
+6. Tiếp tục làm những step không bị block.
+
+**Gate ID:** `HG-NNN` — sequential, bắt đầu từ `HG-001` mỗi intent.
+
+**Gate format bắt buộc:**
+```
+## HG-NNN · pending
+
+**Actor:** <actor type>
+**Action:** <động từ + object cụ thể>
+**Why:** <impact nếu không làm — tối đa 2 câu>
+**Inputs needed:**
+- <item>
+**Expected output:** <kết quả cụ thể AI cần để resume>
+**Blocking:** [<step IDs>]
+**Priority:** high | medium | low
+**Created:** <ISO timestamp>
+**Done at:** —
+**Output received:** —
+```
+
+### Cuối mỗi session
+
+Nếu intent đang active có gates.md với ít nhất 1 gate `pending`:
+
+```
+## Pending Gates — <intent_id>
+
+HG-001 · pending  [high]  Actor: human
+  → <Action>
+  → Blocking: [P5-T1]
+
+Run: kb gates done HG-001 --intent <id> --output "..."
+     kb gates skip HG-001 --intent <id> --reason "..."
+```
+
+### Khi human mark done (forward-declared CLI — code v2.4.x)
+
+```
+kb gates done HG-001 --intent <id> --output "<output value>"
+```
+
+- Cập nhật `Done at:` + `Output received:` trong gates.md.
+- Xóa HG-001 khỏi `Blocking` list của các steps.
+- Agent resume từ đúng step bị block.
+
+### Close condition
+
+`kb intent apply <id>` kiểm tra `gates.md`:
+- Nếu có gate `pending` → báo lỗi, list gates, đề nghị `kb gates skip` hoặc giải quyết.
+- Override: `--skip-gates` + `--reason "..."` (ghi lại trong intent.md).
+
+### Actor types
+
+| Value | Ví dụ |
+|---|---|
+| `human` | Bất kỳ người nào |
+| `human:admin` | Admin của service/platform |
+| `human:designer` | UX review, visual sign-off |
+| `human:legal` | Contract, ToS review |
+| `ai:github-copilot` | Task cần Copilot chạy trong context khác |
+| `external:marketplace` | Action trên VS Code Marketplace portal |
+| `external:stripe` | Billing/payment action |
+
+---
+
 ## Append history
 
 | Ngày | Workflow | Lý do |
@@ -216,3 +295,4 @@ Tiếp tục Workflow 1 (New Feature Plan) để draft intent và plan.
 | 2026-04-30 | W1-W7 | Khởi tạo từ pattern session plan v1.3-v3.0 |
 | 2026-04-30 | W7 step 2 added (git cross-check) | Session 3 found focus.md stale by one full phase; git log was the only reliable signal |
 | 2026-05-05 | W8 | User yêu cầu 2-gate enforcement: active intent check + chaos estimate trước khi tạo intent/version mới |
+| 2026-05-05 | W9 | Human-gate workflow: AI không block chat — ghi task vào gates.md, tiếp tục làm, print summary cuối session |

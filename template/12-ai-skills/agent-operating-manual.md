@@ -259,6 +259,85 @@ Before creating any new intent or starting work on a new version, the agent MUST
 
 Both gates must pass (or receive explicit user override) before any plan is drafted or code is touched.
 
+## Human-Gate Protocol (v2.3.3.1)
+
+When the agent encounters a task that requires a different actor — human, another AI, or an external system — it MUST write a gate record and continue. **Never ask in chat. Never block.**
+
+### When to create a gate
+
+Create a gate when the task requires any of the following — and the agent cannot safely proceed without it:
+- Account creation, token generation, API key provisioning
+- Permission grant (org, repo, payment, service)
+- Manual UX testing or accessibility review
+- Production deploy approval or legal sign-off
+- External service actions (marketplace submission, payment, domain DNS)
+- Any credential the agent should not hold or generate
+
+### Gate record format
+
+Gates are stored in `gates.md` inside the intent folder (`knowledge-base/intents/_active/<id>/gates.md`).
+
+```
+## HG-NNN · pending
+
+**Actor:** human | human:<role> | ai:<name> | external:<system>
+**Action:** <imperative verb + object — specific, not vague>
+**Why:** <impact if not done — 1–2 sentences max>
+**Inputs needed:**
+- <item 1>
+- <item 2>
+**Expected output:** <concrete result the agent needs to resume>
+**Blocking:** [<plan step IDs, e.g. P5-T1>]
+**Priority:** high | medium | low
+**Created:** <ISO timestamp>
+**Done at:** —
+**Output received:** —
+```
+
+### Actor types
+
+| Value | Meaning |
+|---|---|
+| `human` | Any human — unspecified role |
+| `human:<role>` | e.g. `human:admin`, `human:designer`, `human:legal` |
+| `ai:<name>` | Another AI agent — e.g. `ai:github-copilot` |
+| `external:<system>` | External service action — e.g. `external:marketplace` |
+
+### Agent behavior rules
+
+1. **Write gate → continue immediately.** Do not wait.
+2. **Continue all non-blocked steps.** Only skip steps listed in `Blocking`.
+3. **End of session:** if any gate is `pending`, print a `## Pending Gates` summary with the `kb gates done` / `kb gates skip` commands.
+4. **Never ask a gateable question in chat.** If the need arises mid-task, create the gate record silently and keep going.
+
+### Session-end summary format
+
+```
+## Pending Gates — <intent_id>
+
+HG-001 · pending  [high]  Actor: human
+  → <Action line>
+  → Blocking: [P5-T1, P5-T2]
+
+To resolve:
+  kb gates done HG-001 --intent <id> --output "..."
+  kb gates skip HG-001 --intent <id> --reason "..."
+```
+
+### Close condition
+
+An intent cannot be closed (`kb intent apply`) while any gate is `pending`.  
+Override: `--skip-gates` flag requires an explicit `--reason`.
+
+### CLI surface (forward-declared — code in v2.4.x)
+
+| Command | Description |
+|---|---|
+| `kb gates list [--intent <id>]` | List all pending gates across active intents |
+| `kb gates done <HG-ID> --intent <id> [--output "..."]` | Mark done, record output |
+| `kb gates skip <HG-ID> --intent <id> --reason "..."` | Skip with reason |
+| `kb gates add --intent <id>` | Interactively create a gate (agent-facing) |
+
 ## Copilot Instruction Digest
 
 - Respect repository instructions and non-destructive editing.

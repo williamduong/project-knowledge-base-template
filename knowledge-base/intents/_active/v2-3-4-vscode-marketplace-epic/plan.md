@@ -21,6 +21,26 @@ type: intent-plan
 - [ ] Bump `package.json` 2.3.3 → 2.3.4 and publish
 - [ ] Update `TEMPLATE_CHANGELOG.md` with v2.3.4 entry
 
+## Phase P0.5 — Human-Gate Protocol (v2.3.3.1 → ships with v2.3.4)
+
+**Status:** in-progress (tracked in intent `v2-3-3-1-human-gate`)  
+**Note:** npm semver does not support 4-part versions. Ships as part of v2.3.4.
+
+**Deliverables (docs — this session):**
+
+- [x] Create intent `v2-3-3-1-human-gate` with locked design decisions
+- [x] Add P20 (human-gate rule) to `kb-root/principles.md`
+- [x] Add W9 (Human-Gate Workflow) to `kb-root/process.md`
+- [x] Add "Human-Gate Protocol (v2.3.3.1)" section to `template/12-ai-skills/agent-operating-manual.md`
+- [x] Create `knowledge-base/14-templates/gates.md.template`
+
+**Deliverables (CLI code — v2.4.x):**
+
+- [ ] `src/lib/gates.js` — `appendGate`, `listGates`, `markDone`, `markSkipped`, `hasPending`
+- [ ] `src/commands/gates.js` — `kb gates list | done | skip | add`
+- [ ] `kb intent apply` guard — block on pending gates, `--skip-gates` flag
+- [ ] Tests — `test/lib/gates.test.js`, `test/commands/gates.test.js`
+
 ## Phase P1 — Extension Scaffold (v2.4.x)
 
 **Status:** not-started  

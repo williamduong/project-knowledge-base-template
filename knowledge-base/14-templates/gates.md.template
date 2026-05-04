@@ -1,0 +1,41 @@
+---
+intent_id: REPLACE_WITH_INTENT_ID
+type: intent-gates
+generated_at: REPLACE_WITH_TIMESTAMP
+---
+
+# Gates — REPLACE_WITH_INTENT_ID
+
+> Managed by KB Agent. Human-gate records for tasks that require a non-AI actor.
+> AI writes to this file and continues — does NOT block workflow.
+> See `agent-operating-manual.md#human-gate-protocol` for full spec.
+
+---
+
+<!--
+INSTRUCTIONS FOR AI AGENTS:
+- Append one ## HG-NNN block per gate.
+- Do not delete or reorder existing blocks.
+- Status values: pending | in-progress | done | skipped
+- Run `kb gates done HG-NNN --intent <id> --output "..."` to mark done.
+- Run `kb gates skip HG-NNN --intent <id> --reason "..."` to skip.
+-->
+
+<!-- EXAMPLE — delete when adding first real gate:
+
+## HG-001 · pending
+
+**Actor:** human
+**Action:** Create VS Code Marketplace publisher account at https://marketplace.visualstudio.com/manage
+**Why:** `vsce publish` requires a verified publisher ID; without it P5 cannot proceed.
+**Inputs needed:**
+- Email address to register with
+- GitHub account URL (optional, for org association)
+**Expected output:** Publisher ID string (e.g. `williamduong`)
+**Blocking:** [P5-T1, P5-T2]
+**Priority:** high
+**Created:** 2026-05-05T02:00:00.000Z
+**Done at:** —
+**Output received:** —
+
+-->
