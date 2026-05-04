@@ -78,6 +78,43 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## v2.3.4 - 2026-05-05
+
+### Summary
+
+- Intent Start Gates: agent must run Gate 1 (active intent check) and Gate 2 (chaos estimate) before creating any new intent. Applies to both KB Agent (`@kb`) and KBRoot (`@KBRoot`).
+- Human-Gate Protocol: structured handoff mechanism inside intent workflow for tasks requiring human input, approval, or external action. Replaces ad-hoc inline questions.
+- One-active-intent rule (P18): only one intent may be `in-progress` at a time without explicit user approval.
+- Chaos estimate gate (P19): agent must report current chaos + projected delta before starting any new intent.
+- Human-gate rule (P20): agent must create a `HG-NNN` gate entry instead of asking inline questions during execution.
+
+### Change Type
+
+- Minor (additive, no breaking changes)
+
+### Impact On Existing KBs
+
+- Low — behavioral rules for agents only. No schema changes, no file structure changes.
+
+### Migration Required
+
+- No
+
+### Agent Impact
+
+- KB Agent (`kb.agent.template.md`): Step 2 now includes Gate 1 + Gate 2 blocks. Agents must check for in-progress intents and report chaos estimate before creating new intent.
+- `agent-operating-manual.md`: three new sections — Cognitive Drift Signals (v2.3.3), Intent Start Gates (v2.3.4), Human-Gate Protocol (v2.3.3.1).
+
+### Files Added / Changed
+
+- `template/.github/agents/kb.agent.template.md` — Gate 1 + Gate 2 blocks in Step 2; T1/T2/T3 pulse-points
+- `template/12-ai-skills/agent-operating-manual.md` — Intent Start Gates + Human-Gate Protocol sections
+- `knowledge-base/14-templates/gates.md.template` — **NEW** — canonical gate schema template
+- `kb-root/principles.md` — P18, P19, P20
+- `kb-root/process.md` — W8 (Intent Start Gate), W9 (Human-Gate Workflow)
+
+---
+
 ## v2.2.0 - 2026-05-10
 
 ### Summary

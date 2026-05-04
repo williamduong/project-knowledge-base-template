@@ -4,7 +4,7 @@ type: multi-modal
 category: development-support
 trigger: slash-command
 instruction_file: .github/copilot-instructions.md
-version: 2.3.3
+version: 2.3.4
 ---
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
@@ -77,9 +77,32 @@ When the user sends any KB change request (e.g. "init this project", "fill in th
 If `state.json` does not contain a `userPersona` field, OR if `presence === 'fresh'`, run the **Persona Wizard** (see below) before any other work. The wizard runs once and is stored; skip it on every subsequent activation.
 
 ### Step 2 — Create or Resume Intent
+
+**Gate 1 — Active Intent Check (runs before creating any new intent):**
+1. Run `kb intent list`. Read `intent.md` for each folder in `.kb/intents/_active/`.
+2. If any intent has `lifecycle_state: in-progress`:
+   - Print the list: `id`, one-line summary.
+   - Ask the user to choose a resolution for each before proceeding:
+     - **Resume** — continue working on the existing intent
+     - **Archive/close** — work done or no longer needed
+     - **Keep + allow parallel** — user explicitly approves parallel (must state reason)
+   - Do NOT auto-close, auto-archive, or skip this gate even if the user says "just create it."
+3. Only after all in-progress intents are resolved (or user explicitly approves parallel), proceed below.
+
+**Gate 2 — Chaos Estimate (runs before creating a new intent):**
+1. Run `kb chaos --json`. Read `score` and `level`.
+2. Estimate delta for the new intent. Report before proceeding:
+   ```
+   Current chaos: <score> (<level>)
+   Estimated delta: +<delta> → <projected score> (<projected level>)
+   ```
+3. If projected score > 80: warn ⛔ CHAOTIC. Require explicit user confirmation.
+
+---
+
 1. Run `kb intent list` to surface active intents.
 2. If an active intent exists that matches the user's request → present a one-line summary and ask: "Resume `[INT-NNN]` or start a new one?" — single question, binary choice.
-3. If none match → auto-create the intent:
+3. If none match → auto-create the intent (only after Gate 1 + Gate 2 pass):
    - **Quick mode** (single-focus, low ceremony: doc fix, config update, single-file fill): `kb intent create --mode=quick --id=<slug>`
    - **Full mode** (multi-file, cross-tier, or consequential change: init, major update, architecture): `kb intent create --mode=full --id=<slug>`
    - Assign ID from `.kb/numbering.json` counter (see `15-governance/numbering-system.md`). Fall back to timestamp slug when counter unavailable.
