@@ -14,7 +14,7 @@ related:
   - version-patch-prompts.md
   - ../00-start-here/how-to-use-this-kb.md
   - ../00-start-here/repository-revision-state.md
-  - ../00-start-here/finalization-plan.md
+  - ../00-start-here/strategic-backlog.md
 tags:
   - ai-agent
   - ide
@@ -85,7 +85,7 @@ kb doctor
 
 - Drift reconciliation is the same in every IDE: read `repository-revision-state.md`, compare baseline to current `HEAD`, then run a maintenance pass.
 - Template upgrades are the same in every IDE: read `TEMPLATE_CHANGELOG.md`, then use `version-patch-prompts.md`.
-- Queue discipline is the same in every IDE: update `finalization-plan.md` instead of keeping follow-up work only inside chat history.
+- Queue discipline is the same in every IDE: update `strategic-backlog.md` instead of keeping follow-up work only inside chat history.
 
 ## Support Model
 

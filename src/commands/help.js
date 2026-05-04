@@ -156,7 +156,7 @@ function runHelp({ packageJson, args }) {
   console.log('             --dry-run         Preview state assignment without modifying files.');
   console.log('  bootstrap-api  Generate endpoint docs from route/controller annotations.');
   console.log('             --dry-run         Preview endpoint doc creation/update only.');
-  console.log('  plan       Manage the KB finalization plan (finalization-plan.md).');
+  console.log('  plan       Manage the KB strategic backlog (strategic-backlog.md).');
   console.log('             list              Show pending and done plan items.');
   console.log('             add "<text>"      Append a new todo item with auto-incremented ID.');
   console.log('  show       Expose a hidden KB mount into the workspace (private-git mode).');

@@ -35,7 +35,7 @@ const CHANGED_FILES = [
   { status: 'A', path: 'template/.github/prompts/kb-ask.prompt.md' },
   { status: 'M', path: 'template/.github/prompts/kb-plan.prompt.md' },
   { status: 'M', path: 'template/.github/prompts/kb-run.prompt.md' },
-  { status: 'M', path: 'template/00-start-here/finalization-plan.md' },
+  { status: 'M', path: 'template/00-start-here/strategic-backlog.md' },
   { status: 'M', path: 'template/00-start-here/repository-revision-state.md' },
   { status: 'M', path: 'template/TEMPLATE_CHANGELOG.md' },
   { status: 'M', path: 'template/template.json' },
@@ -47,7 +47,7 @@ const CHANGED_FILES = [
 const BINDINGS = [
   // 00-start-here tier → CLI surface
   { doc: '00-start-here/how-to-use-this-kb.md', paths: ['src/commands/**', 'src/cli.js', 'bin/**'] },
-  { doc: '00-start-here/finalization-plan.md', paths: ['src/commands/init.js', 'src/commands/uninstall.js'] },
+  { doc: '00-start-here/strategic-backlog.md', paths: ['src/commands/init.js', 'src/commands/uninstall.js'] },
   { doc: '00-start-here/repository-revision-state.md', paths: ['src/lib/context.js', 'src/lib/kb-presence.js', 'src/commands/status.js'] },
   // 12-ai-skills tier → agents/prompts
   { doc: '12-ai-skills/agent-operating-manual.md', paths: ['template/.github/agents/**', 'template/.github/prompts/**'] },
@@ -66,7 +66,7 @@ const BINDINGS = [
 // - 2 binding cho tier 04/05/07 không có overlap với diff này (đúng — tier không touch).
 const EXPECTED_IMPACTED_DOCS = new Set([
   '00-start-here/how-to-use-this-kb.md',
-  '00-start-here/finalization-plan.md',
+  '00-start-here/strategic-backlog.md',
   '00-start-here/repository-revision-state.md',
   '15-governance/template-versioning-policy.md',
 ]);
@@ -76,7 +76,7 @@ const EXPECTED_UNBOUND = new Set([
 ]);
 
 const EXPECTED_SELF_EDITS = new Set([
-  // Phase 0 noted: template/00-start-here/finalization-plan.md
+  // Phase 0 noted: template/00-start-here/strategic-backlog.md
   // and template/00-start-here/repository-revision-state.md are KB content under template/ tier.
   // Template/ here is the SOURCE template, NOT a downstream KB contentRoot —
   // so on the *template* repo itself, contentRoot = "template" and these become self-edits.
@@ -85,7 +85,7 @@ const EXPECTED_SELF_EDITS = new Set([
   'template/.github/prompts/kb-ask.prompt.md',
   'template/.github/prompts/kb-plan.prompt.md',
   'template/.github/prompts/kb-run.prompt.md',
-  'template/00-start-here/finalization-plan.md',
+  'template/00-start-here/strategic-backlog.md',
   'template/00-start-here/repository-revision-state.md',
   'template/TEMPLATE_CHANGELOG.md',
   'template/template.json',

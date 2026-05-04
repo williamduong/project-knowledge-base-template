@@ -42,7 +42,18 @@ function parseArgs(args) {
 
 function resolvePlanPath(cwd) {
   const context = resolveExistingState({ workspaceRoot: cwd });
-  return path.join(context.contentRoot, '00-start-here', 'finalization-plan.md');
+  const strategicPath = path.join(context.contentRoot, '00-start-here', 'strategic-backlog.md');
+  const legacyPath = path.join(context.contentRoot, '00-start-here', 'finalization-plan.md');
+
+  if (fs.existsSync(strategicPath)) {
+    return strategicPath;
+  }
+  if (fs.existsSync(legacyPath)) {
+    return legacyPath;
+  }
+
+  // Default path for freshly initialized or not-yet-created queues.
+  return strategicPath;
 }
 
 function nextId(content) {
@@ -61,7 +72,7 @@ function nextId(content) {
 
 function addPlanItem({ planPath, text, owner, priority }) {
   if (!fs.existsSync(planPath)) {
-    throw new Error(`finalization-plan.md not found at: ${planPath}. Run kb init first.`);
+    throw new Error(`Queue file not found at: ${planPath}. Expected strategic-backlog.md (or legacy finalization-plan.md). Run kb init first.`);
   }
 
   const content = fs.readFileSync(planPath, 'utf8');
@@ -85,7 +96,7 @@ function addPlanItem({ planPath, text, owner, priority }) {
 
 function listPlanItems({ planPath }) {
   if (!fs.existsSync(planPath)) {
-    throw new Error(`finalization-plan.md not found at: ${planPath}. Run kb init first.`);
+    throw new Error(`Queue file not found at: ${planPath}. Expected strategic-backlog.md (or legacy finalization-plan.md). Run kb init first.`);
   }
 
   const content = fs.readFileSync(planPath, 'utf8');

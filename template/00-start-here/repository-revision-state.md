@@ -9,7 +9,7 @@ last_updated: 2026-05-02
 last_verified: 2026-05-02
 related:
   - how-to-use-this-kb.md
-  - finalization-plan.md
+  - strategic-backlog.md
   - ../12-ai-skills/agent-operating-manual.md
   - ../15-governance/self-evolution-doctrine.md
   - ../12-ai-skills/prompt-pack.md
@@ -72,7 +72,7 @@ When `Source Repository Git Baseline` and `HEAD` differ:
 3. Map changed implementation files to affected KB docs and `source_of_truth` references.
 4. Follow the maintenance loop in `15-governance/review-cadence.md`.
 5. Apply downgrade or upgrade rules from `15-governance/verification-policy.md`.
-6. Add or update queue items in `finalization-plan.md`.
+6. Add or update queue items in `strategic-backlog.md`.
 7. Run a KB patch pass for the affected docs, indexes, and governance metadata.
 8. Use the maintenance or version-patch prompts in `12-ai-skills/` when the change is broad enough to require a guided sweep.
 9. After synchronization is complete, update this file with the new baseline revision, audit time, and patch revision if the KB changed.

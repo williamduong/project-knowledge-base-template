@@ -32,9 +32,9 @@
           },
           {
             "type": "file",
-            "name": "finalization-plan.md",
-            "repoPath": "template/00-start-here/finalization-plan.md",
-            "publicPath": "00-start-here/finalization-plan.md"
+            "name": "strategic-backlog.md",
+            "repoPath": "template/00-start-here/strategic-backlog.md",
+            "publicPath": "00-start-here/strategic-backlog.md"
           },
           {
             "type": "file",

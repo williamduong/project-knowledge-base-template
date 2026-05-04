@@ -40,10 +40,10 @@
 - **File:** `src/commands/plan.js` (new)
 - **File:** `src/cli.js` (modified)
 - **Commands:**
-  - `kb plan list` — Display pending and done items from `finalization-plan.md`
+  - `kb plan list` — Display pending and done items from `strategic-backlog.md`
   - `kb plan add "<text>" [--owner X] [--priority P0|P1|P2]` — Append new item with auto-increment ID
 - **Benefit:** Structured capture of KB maintenance intent and target-state
-- **Integration:** Feeds into `finalization-plan.md`
+- **Integration:** Feeds into `strategic-backlog.md`
 
 ### 5. **Bootstrap Command** ✅
 - **File:** `src/commands/bootstrap.js` (new)
@@ -202,7 +202,7 @@ All stub files point to: `knowledge-base/00-start-here/INDEX.md`
 - [x] All commands parse arguments correctly
 - [x] `kb init` creates all files and adapters
 - [x] `kb bootstrap` detects multiple stacks
-- [x] `kb plan add/list` work with finalization-plan.md
+- [x] `kb plan add/list` work with strategic-backlog.md
 - [x] Pre-commit hook installs without overwriting
 - [x] `kb test` validates frontmatter 100%
 - [x] `kb sync` detects baseline drift

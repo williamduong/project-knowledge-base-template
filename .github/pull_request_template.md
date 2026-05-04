@@ -12,4 +12,4 @@
 ## Drift And Sync Checklist
 
 - [ ] If runtime/module changes are included, KB drift review was run.
-- [ ] `00-start-here/finalization-plan.md` queue updated when unresolved follow-ups remain.
+- [ ] `00-start-here/strategic-backlog.md` queue updated when unresolved follow-ups remain.

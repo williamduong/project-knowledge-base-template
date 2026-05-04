@@ -192,9 +192,11 @@ function mapDiffToDocuments({ diffRows, documents }) {
 }
 
 function updateFinalizationQueue({ contentRoot, mappedDocs, baseline, head, date }) {
-  const queuePath = path.join(contentRoot, '00-start-here', 'finalization-plan.md');
+  const strategicPath = path.join(contentRoot, '00-start-here', 'strategic-backlog.md');
+  const legacyPath = path.join(contentRoot, '00-start-here', 'finalization-plan.md');
+  const queuePath = fs.existsSync(strategicPath) ? strategicPath : legacyPath;
   if (!fs.existsSync(queuePath)) {
-    return { queuePath, updated: false, reason: 'finalization-plan.md not found in content root' };
+    return { queuePath: strategicPath, updated: false, reason: 'strategic-backlog.md (or legacy finalization-plan.md) not found in content root' };
   }
 
   const startMarker = '<!-- KB_SYNC_AUTO_QUEUE_START -->';

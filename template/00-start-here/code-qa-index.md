@@ -62,5 +62,5 @@ Next: <optional follow-up>
 ## Maintenance
 
 - Update this index when a new top-level KB folder is added.
-- When a frequently-asked intent has no Primary Doc, file a `finalization-plan.md` item to create one.
+- When a frequently-asked intent has no Primary Doc, file a `strategic-backlog.md` item to create one.
 - Treat this file as `design-only` until the downstream KB has populated the referenced docs to `code-verified`.

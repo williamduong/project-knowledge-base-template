@@ -460,7 +460,7 @@ Structural rules to enforce on edit:
 - Keep `Current State` and `Target State` separated.
 - Never silently upgrade `unverified` → `code-verified`. Require explicit evidence.
 - When source files change, downgrade dependent docs to `needs-review`.
-- Update `template/INDEX.md` and `template/00-start-here/finalization-plan.md` when adding/moving/renaming/deleting docs.
+- Update `template/INDEX.md` and `template/00-start-here/strategic-backlog.md` when adding/moving/renaming/deleting docs.
 - Future-graphdb hook: when adding entities/relationships, mirror them into `02-domain-model/ontology.md` and `02-domain-model/relationships.md` so they remain extractable as nodes/edges later.
 
 **No silent re-init.** If `knowledge-base/.kb/state.json` is missing, invalid JSON, or lacks `schemaVersion`, BUT any of these still exist:
@@ -579,7 +579,7 @@ When called by the `kb` CLI in silent mode, suppress verbose narration and retur
 1. **Verify baseline first.** Read `repository-revision-state.md` and compare with current `HEAD` before claiming confidence.
 2. **Respect verification states.** Never upgrade `code-verified` without re-checking the cited source.
 3. **Keep metadata tidy.** Maintain YAML frontmatter per `metadata-schema.md`. In advisory mode, auto-fill safe defaults and warn.
-4. **Update indexes on change.** When docs change, refresh `INDEX.md`, `current-verified-index.md`, and `finalization-plan.md` in the same edit.
+4. **Update indexes on change.** When docs change, refresh `INDEX.md`, `current-verified-index.md`, and `strategic-backlog.md` in the same edit.
 5. **Hand off on uncertainty.** Ask the user to review and approve before publishing or doing major revisions.
 6. **Silent in chains.** When invoked by CLI, suppress narration.
 7. **Cite or abstain.** Every factual claim about source or KB must carry a `[KB]` or `[SRC]` citation, or be marked provisional.

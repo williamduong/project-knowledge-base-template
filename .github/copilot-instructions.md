@@ -21,7 +21,7 @@ Then read only the task-specific folder files you need.
 - Workspace hook enforcement lives in `.github/hooks/revision-state-guard.json` and should remain aligned with this policy.
 - If the workspace is a git repository, compare the stored baseline revision with the current `HEAD` revision before trusting current KB content.
 - If the stored revision differs from `HEAD`, collect change evidence from the stored baseline to the current revision using git history and diff.
-- Use that change evidence to detect drift, downgrade verification where needed, update `template/00-start-here/finalization-plan.md`, and run the maintenance loop defined by repository governance.
+- Use that change evidence to detect drift, downgrade verification where needed, update `template/00-start-here/strategic-backlog.md`, and run the maintenance loop defined by repository governance.
 - After drift is reconciled, write the new baseline revision and audit time back to `template/00-start-here/repository-revision-state.md`.
 - If the workspace is not yet a git repository, preserve an explicit placeholder state instead of inventing a revision.
 

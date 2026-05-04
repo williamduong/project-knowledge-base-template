@@ -98,7 +98,7 @@ last_updated: ${today}
 last_verified: ${today}
 related:
   - how-to-use-this-kb.md
-  - finalization-plan.md
+  - strategic-backlog.md
   - ../12-ai-skills/agent-operating-manual.md
   - ../12-ai-skills/prompt-pack.md
   - ../15-governance/review-cadence.md

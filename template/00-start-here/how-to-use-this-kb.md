@@ -41,7 +41,7 @@ tags:
 - Start with the most operationally important `reference` and `implementation` docs, then expand section by section.
 - Use `design-only` only for architecture or target-state material that genuinely cannot be verified yet.
 - Use `unverified` as a temporary fallback, not as the default operating mode.
-- Review queue source of truth default: keep it in [finalization-plan.md](finalization-plan.md).
+- Review queue source of truth default: keep it in [strategic-backlog.md](strategic-backlog.md).
 - If an external issue tracker is used later, treat KB as the initial canonical queue and mirror outwards only when automation justifies it.
 
 ## Frontend Taxonomy Guard
@@ -149,7 +149,7 @@ Reference: [.github/agents/kb.agent.md](.github/agents/kb.agent.md) for the full
 
 After each step:
 - Review the plan file at `.kb/runtime-plan.md`
-- Fill in high-priority items (marked P0 in [finalization-plan.md](finalization-plan.md))
+- Fill in high-priority items (marked P0 in [strategic-backlog.md](strategic-backlog.md))
 - Run `/kb-run` again to continue, or `kb maintain` from CLI for the same pipeline
 
 ### Maintenance: Keep KB in Sync Over Time

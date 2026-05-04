@@ -21,7 +21,7 @@ tags:
 - Direct prompt channel: maintenance is triggered by explicit user prompt to audit or enrich KB.
 - Scheduled channel: maintenance is triggered by weekly, monthly, and quarterly cadence.
 
-All channels feed one queue in 00-start-here/finalization-plan.md.
+All channels feed one queue in 00-start-here/strategic-backlog.md.
 
 ## Triggered Review
 
@@ -49,7 +49,7 @@ Before production release, re-check:
 
 ## Queue Management
 
-- Keep review queue in 00-start-here/finalization-plan.md or issue tracker
+- Keep review queue in 00-start-here/strategic-backlog.md or issue tracker
 - Include reason, owner, due date, source_of_truth
 
 ## Standard Execution Loop

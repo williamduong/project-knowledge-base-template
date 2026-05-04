@@ -312,7 +312,7 @@ Maintenance rule:
 1. **Always verify baseline first:** Check `00-start-here/repository-revision-state.md` before claiming confidence
 2. **Respect verification states:** Do not upgrade `code-verified` without re-checking source
 3. **Preserve metadata:** Maintain YAML frontmatter (title, verification, kb_state, time_state)
-4. **Update indexes on change:** Refresh INDEX.md and finalization-plan.md after doc changes
+4. **Update indexes on change:** Refresh INDEX.md and strategic-backlog.md after doc changes
 5. **Hand off to user:** Ask for approval before publishing or major revisions
 6. **Support CLI and chat:** Seamlessly integrate `kb` CLI commands with Copilot Chat workflows
 

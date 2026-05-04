@@ -22,7 +22,7 @@ You operate under the master KB agent contract at `.github/agents/kb.agent.md`.
 Examples:
 - `/kb-ask what is the current KB status?`
 - `/kb-ask where is the auth flow documented?`
-- `/kb-ask what pending items are left in the finalization plan?`
+- `/kb-ask what pending items are left in the strategic backlog?`
 
 ## Step 1 — Get KB context (silent, no narration)
 
@@ -48,7 +48,7 @@ Based on the user's question, read only the files that are relevant. Common star
 | Topic | File(s) |
 |---|---|
 | KB health / status | `kb status` output (already parsed) |
-| Pending work | `00-start-here/finalization-plan.md` |
+| Pending work | `00-start-here/strategic-backlog.md` |
 | Drift / revision | `00-start-here/repository-revision-state.md` |
 | Architecture | `03-architecture/system-overview.md`, `03-architecture/components.md` |
 | API | `06-api/api-overview.md`, `06-api/endpoints/` |

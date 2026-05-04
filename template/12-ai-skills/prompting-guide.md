@@ -12,7 +12,7 @@ related:
   - prompt-pack.md
   - version-patch-prompts.md
   - ../00-start-here/how-to-use-this-kb.md
-  - ../00-start-here/finalization-plan.md
+  - ../00-start-here/strategic-backlog.md
   - ../TEMPLATE_CHANGELOG.md
 tags:
   - ai-agent
@@ -30,7 +30,7 @@ Use this guide to choose the best prompt style for each objective when working w
 Unless your repository says otherwise, agent should assume:
 
 - verification target is maximize code-verified coverage in phases
-- review queue source of truth is 00-start-here/finalization-plan.md
+- review queue source of truth is 00-start-here/strategic-backlog.md
 - frontend includes any human interaction surface (UI, Swagger, CLI, dashboards, external consoles)
 - no unnecessary clarification questions when template defaults already define the behavior
 
@@ -49,13 +49,13 @@ Use this structure for reliable results:
 ## Build KB From Scratch
 
 ```prompt
-Read INDEX.md, how-to-use-this-kb.md, and finalization-plan.md. Build a complete knowledge base for project <PROJECT_NAME> using this template, fill placeholders, maximize code-verified coverage in phases, update indexes and governance, do not ask setup questions, and report only final results with changed files and risks.
+Read INDEX.md, how-to-use-this-kb.md, and strategic-backlog.md. Build a complete knowledge base for project <PROJECT_NAME> using this template, fill placeholders, maximize code-verified coverage in phases, update indexes and governance, do not ask setup questions, and report only final results with changed files and risks.
 ```
 
 ## Maintenance Sweep
 
 ```prompt
-Run a maintenance sweep of the current knowledge base using review-cadence and verification-policy, detect drift, apply verification downgrade/upgrade correctly, update finalization-plan queue, refresh indexes, and report completed changes plus unresolved items.
+Run a maintenance sweep of the current knowledge base using review-cadence and verification-policy, detect drift, apply verification downgrade/upgrade correctly, update strategic-backlog queue, refresh indexes, and report completed changes plus unresolved items.
 ```
 
 ## API-Only Project Intake
@@ -67,7 +67,7 @@ Analyze this API-only source and document all interaction surfaces as frontend e
 ## Incident / Bug Documentation Update
 
 ```prompt
-Given this production issue context, update impacted KB docs (operations, backend, api, security, testing), separate current vs target state, add evidence links, update verification states, and add follow-up tasks in finalization-plan.
+Given this production issue context, update impacted KB docs (operations, backend, api, security, testing), separate current vs target state, add evidence links, update verification states, and add follow-up tasks in strategic-backlog.
 ```
 
 ## Feature Delivery With Doc Sync

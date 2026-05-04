@@ -1,12 +1,12 @@
 ---
-title: Finalization Plan
+title: Strategic Backlog
 type: orientation
 status: active
 owner: knowledge-management
 time_state: current
 verification: unverified
-last_updated: 2026-05-02
-last_verified: 2026-05-02
+last_updated: 2026-05-04
+last_verified: 2026-05-04
 related:
 	- current-verified-index.md
 	- target-state-index.md
@@ -18,7 +18,7 @@ tags:
 	- review-queue
 ---
 
-# Finalization Plan
+# Strategic Backlog
 
 Operational queue for KB maintenance and completion.
 

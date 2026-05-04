@@ -229,7 +229,7 @@ An agent may:
 
 - Create or update a document if the change is scoped to the task at hand and follows the frontmatter schema.
 - Upgrade `unverified` to `code-verified` only after directly checking the `source_of_truth`.
-- Add entries to `00-start-here/finalization-plan.md` to queue deferred work.
+- Add entries to `00-start-here/strategic-backlog.md` to queue deferred work.
 
 An agent must not:
 

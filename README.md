@@ -108,7 +108,7 @@ Currently implemented commands:
 
 **Lifecycle**
 
-- `plan list` / `plan add "<description>" [--owner <name>] [--priority P0|P1|P2]` — Manage finalization-plan.md
+- `plan list` / `plan add "<description>" [--owner <name>] [--priority P0|P1|P2]` — Manage strategic-backlog.md
 - `show [--backup-existing]` (private-git mode)
 - `hide [--restore-backup]` (private-git mode)
 - `test [--sample <count>] [--all]`
@@ -305,7 +305,7 @@ After deployment, the site will be available at:
 1. Read [template/INDEX.md](template/INDEX.md) for the full template map.
 2. Choose the project archetype in [template/00-start-here/project-scope-matrix.md](template/00-start-here/project-scope-matrix.md).
 3. Read [template/00-start-here/how-to-use-this-kb.md](template/00-start-here/how-to-use-this-kb.md) for working mode and default decisions.
-4. Start or refine the maintenance queue in [template/00-start-here/finalization-plan.md](template/00-start-here/finalization-plan.md).
+4. Start or refine the maintenance queue in [template/00-start-here/strategic-backlog.md](template/00-start-here/strategic-backlog.md).
 5. Use the documents under `template/14-templates/` and fill only the modules that are relevant to the project.
 
 ## Recommended Reading Paths

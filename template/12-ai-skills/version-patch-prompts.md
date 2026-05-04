@@ -38,13 +38,13 @@ git log --stat <BASELINE>..HEAD
 
 ```text
 # terminal output
-M template/00-start-here/finalization-plan.md
+M template/00-start-here/strategic-backlog.md
 ```
 
 ## Generic Version Patch Prompt
 
 ```prompt
-Read TEMPLATE_CHANGELOG.md, template-versioning-policy.md, 00-start-here/repository-revision-state.md, and the relevant migration note. Upgrade this project KB from template version <OLD_VERSION> to <NEW_VERSION>, reconcile any source drift from the stored brand-scoped baseline commit first, apply required structural and governance changes, refresh indexes and verification states where needed, update finalization-plan queue, and report completed migration work plus pending items.
+Read TEMPLATE_CHANGELOG.md, template-versioning-policy.md, 00-start-here/repository-revision-state.md, and the relevant migration note. Upgrade this project KB from template version <OLD_VERSION> to <NEW_VERSION>, reconcile any source drift from the stored brand-scoped baseline commit first, apply required structural and governance changes, refresh indexes and verification states where needed, update the strategic-backlog queue, and report completed migration work plus pending items.
 ```
 
 ## Minor Upgrade Prompt

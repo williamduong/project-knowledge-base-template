@@ -98,7 +98,7 @@ function Test-GuardBypassTarget {
         return $false
     }
 
-    return $ToolInputJson -match 'repository-revision-state\.md|finalization-plan\.md|\.github[\\/]hooks|revision-state-guard\.ps1'
+    return $ToolInputJson -match 'repository-revision-state\.md|strategic-backlog\.md|finalization-plan\.md|\.github[\\/]hooks|revision-state-guard\.ps1'
 }
 
 function Test-GitHistoryReviewed {

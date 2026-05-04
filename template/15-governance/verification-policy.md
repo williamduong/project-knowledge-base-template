@@ -12,7 +12,7 @@ related:
 	- review-cadence.md
 	- link-and-ownership-policy.md
 	- ../00-start-here/current-verified-index.md
-	- ../00-start-here/finalization-plan.md
+	- ../00-start-here/strategic-backlog.md
 tags:
 	- governance
 	- verification
@@ -68,7 +68,7 @@ Defines how documents move between verification states and how maintenance is tr
 
 - source_of_truth file paths in frontmatter
 - current-verified-index entries
-- review tasks tracked in finalization-plan
+- review tasks tracked in strategic-backlog
 
 ## Open Questions
 

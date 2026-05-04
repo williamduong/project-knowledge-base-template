@@ -40,19 +40,21 @@ M template/12-ai-skills/prompt-pack.md
 ## One-Line Prompt For Full KB Build
 
 ```prompt
-Read all guidance in knowledge-base/INDEX.md and 00-start-here/how-to-use-this-kb.md, follow finalization-plan.md, automatically build a complete knowledge base for project <PROJECT_NAME>, maximize phased code-verified coverage, update indexes and governance, do not ask setup questions, and report final results only.
+Read all guidance in knowledge-base/INDEX.md and 00-start-here/how-to-use-this-kb.md, follow strategic-backlog.md, automatically build a complete knowledge base for project <PROJECT_NAME>, maximize phased code-verified coverage, update indexes and governance, do not ask setup questions, and report final results only.
 ```
 
 ## One-Line Prompt For Maintenance Mode
 
 ```prompt
-Scan and maintain the current knowledge base using review-cadence and verification-policy, detect drift, apply verification downgrade or upgrade according to policy, update the finalization-plan queue, and report completed changes.
+Scan and maintain the current knowledge base using review-cadence and verification-policy, detect drift, apply verification downgrade or upgrade according to policy, update the strategic-backlog queue, and report completed changes.
+
 ```
 
 ## One-Line Prompt For Git Drift Reconciliation
 
 ```prompt
-Read 00-start-here/repository-revision-state.md and compare the stored baseline revision with the current git HEAD. If they differ, collect git log and git diff from the stored revision to HEAD, identify drifted docs, run the maintenance loop using review-cadence and verification-policy, update the finalization-plan queue, resynchronize affected content, then write the new baseline into repository-revision-state.md.
+Read 00-start-here/repository-revision-state.md and compare the stored baseline revision with the current git HEAD. If they differ, collect git log and git diff from the stored revision to HEAD, identify drifted docs, run the maintenance loop using review-cadence and verification-policy, update the strategic-backlog queue, resynchronize affected content, then write the new baseline into repository-revision-state.md.
+
 ```
 
 ## One-Line Prompt For Brand-Scoped KB Patch
@@ -90,7 +92,8 @@ Required metadata checks:
 Link/index updates:
 Verification downgrade/upgrade actions:
 Intake channel: workflow | direct-prompt | scheduled
-Queue update rule: update finalization-plan first
+Queue update rule: update strategic-backlog first
+
 Target verification coverage for this run:
 Stored baseline revision:
 Current HEAD revision:
