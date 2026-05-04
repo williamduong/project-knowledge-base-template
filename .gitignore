@@ -27,23 +27,28 @@ _cacache/
 _logs/
 _update-notifier-last-checked
 
-# Private note
+# Private notes (scratch); allowlist tracked subpaths below
 notes/*
+!notes/.gitkeep
 
-# Local-only project agent (William's internal agent, never ship/commit)
-.local/
-.github/agents/KBRoot.agent.md
+# Self-host KB runtime (Layer D) — committed but exclude cache/log noise
+knowledge-base/.kb/_cacache/
+knowledge-base/.kb/_logs/
+knowledge-base/.kb/cache/
+knowledge-base/.kb/logs/
 
+# Self-host generated agent files — track when produced by `kb init` on this repo
+# (No ignore needed; previously ignored entries removed for self-host profile)
 
-# kb init / kb ide test artifacts — generated when dogfooding kb on this repo root
-knowledge-base/
-AGENTS.md
-.github/agents/kb.agent.md
-.github/prompts/
-
-# Sample repos for local testing only
+# Sample repos and test sandboxes (Layer E)
 sample_repo/
+kb-test-sample/
 
-# Local orchestrator generated outputs
-kb-orch-report-*.json
+# Per-developer editor settings
+# (.vscode/ already ignored above)
+
+# Generic build outputs
 out/
+
+# kb orchestrator reports emitted to cwd (cleaned up via R5 intent migration)
+kb-orch-report-*.json
