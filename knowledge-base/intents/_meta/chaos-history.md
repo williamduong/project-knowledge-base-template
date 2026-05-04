@@ -6,3 +6,71 @@
 > Semantics: AI agent confidence index. Low score = every area explainable.
 
 <!-- Each snapshot block below is appended by `kb chaos`. -->
+
+---
+score: 82.4
+level: chaotic
+structural_reduction: 0
+coverage_reduction: 2.6
+testing_reduction: 15
+intent_reduction: 0
+release_reduction: 0
+formula_version: subtractive-v1
+topDriverIds: 
+measuredAt: 2026-05-04T17:55:47.927Z
+structural: 0
+debtPressure: 15
+coverageGap: 2.6
+cognitiveLoad: 0
+instability: 0
+
+---
+score: 73
+level: unstable
+structural_reduction: 11.3
+coverage_reduction: 8.4
+testing_reduction: 7.3
+intent_reduction: 0
+release_reduction: 0
+formula_version: subtractive-v1
+topDriverIds: 
+measuredAt: 2026-05-04T17:56:04.924Z
+structural: 11.3
+debtPressure: 7.3
+coverageGap: 8.4
+cognitiveLoad: 0
+instability: 0
+
+---
+score: 66.4
+level: unstable
+structural_reduction: 11.3
+coverage_reduction: 8.4
+testing_reduction: 7.3
+intent_reduction: 0
+release_reduction: 0
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-04T18:02:27.189Z
+structural: 11.3
+debtPressure: 7.3
+coverageGap: 8.4
+cognitiveLoad: 0
+instability: 0
+
+---
+score: 76.6
+level: chaotic
+structural_reduction: 0
+coverage_reduction: 2.6
+testing_reduction: 15
+intent_reduction: 0
+release_reduction: 0
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-04T18:10:12.079Z
+structural: 0
+debtPressure: 15
+coverageGap: 2.6
+cognitiveLoad: 0
+instability: 0

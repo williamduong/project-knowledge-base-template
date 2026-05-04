@@ -15,10 +15,13 @@ impact_signals:
 decision_summary: "Add Reflective Pulse Protocol — self-assessment mechanism for KB Agent to surface agreement drift and grounding score at key workflow points."
 review_after: 2026-05-31
 lesson_id: null
-lifecycle_state: proposed
+lifecycle_state: superseded
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
+design_decisions_locked: 2026-05-05
+superseded_by: v2-3-4-cognitive-drift-signal
+superseded_at: 2026-05-05
 ---
 
 # Intent: v2-3-3-reflective-pulse-protocol
@@ -36,14 +39,16 @@ Depends on: v2.3.2 closure pass shipped.
 | "Z1 Analyze + Spec" trigger | Step 3 (Plan as Intent Sub-Tasks) in `kb.agent.template.md` — when user provides multiple assertions about scope/feasibility without evidence |
 | "Role 4 Reasoner" trigger | ✅ Role 4 in `kb.agent.template.md` — before conflict resolution recommendation |
 | "suggest-lessons / next intent" trigger | ✅ Before `kb intent suggest-lessons` output |
-| "pulse output stored in intent session" | To be defined: `.kb/pulse-log.jsonl` append-only per session, or within intent workspace `pulse/` subfolder |
+| "pulse output stored in intent session" | `.kb/pulse-log.jsonl` — append-only per session, flat file |
 
-## Open Design Decisions (KBRoot to resolve)
+## Design Decisions (Locked 2026-05-05)
 
-1. Storage format for pulse output — JSONL append at `.kb/pulse-log.jsonl` vs per-intent `pulse/` subfolder.
-2. Exact thresholds for `agreement_drift > X` and `grounding < Y` to trigger failure_modes display.
-3. Name of explicit-invoke prompt/command (e.g. `/kb-pulse` or `kb intent pulse`).
-4. Whether pulse output is printed inline in agent response or only stored silently.
+| # | Decision | Choice |
+|---|---|---|
+| D1 | Storage format | `.kb/pulse-log.jsonl` — flat append per session |
+| D2 | Thresholds | `agreement_drift > 0.6` OR `grounding < 0.5` triggers full output |
+| D3 | Explicit invoke | Both: prompt file `kb-pulse.prompt.template.md` + CLI `kb intent pulse [<id>]` |
+| D4 | Output display | Conditional — compact if OK, full with `failure_modes` if threshold exceeded |
 
 ## Plan
 

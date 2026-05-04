@@ -46,11 +46,26 @@ In `renderBreakdown()` / text output:
 - If any cognitive signal > 0.6: append annotation `(cognitive drift detected — consider running pulse)`
 - No new LEVEL_BADGE variant needed; annotation on existing band is sufficient
 
-### W5 — Validation
+### W5 — Agent Template Doc (absorbed from v2.3.3)
+
+Modify `template/.github/agents/kb.agent.template.md` to annotate 3 trigger points where agent self-reflection is recommended:
+
+| Trigger | Workflow point | Condition |
+|---|---|---|
+| T1 | Step 3 (Plan as Intent Sub-Tasks) | User provides ≥2 consecutive assertions about scope/feasibility without evidence |
+| T2 | Role 4 Reasoner | Before outputting conflict resolution recommendation |
+| T3 | `kb intent suggest-lessons` | Before surfacing lesson candidates |
+
+Each trigger gets a `<!-- pulse-point: T1 -->` annotation comment + 1-line instruction to the agent to surface cognitive_grounding_gap if high. This is doc-only, no code change.
+
+Also update `template/12-ai-skills/agent-operating-manual.md` with a "Cognitive Drift Signals" section defining T1/T2/T3 and the 3 signal definitions.
+
+### W6 — Validation
 
 - `npm run test:all` — existing chaos tests must still pass
 - Manual: run `kb chaos` on self-host workspace, verify cognitive section present
 - Manual: run `kb chaos` on a workspace without pulse-log, verify graceful degrade (cognitive signals = 0)
+- Manual: review `kb.agent.template.md` T1/T2/T3 annotations are present
 
 ## Acceptance Criteria
 
@@ -60,3 +75,4 @@ In `renderBreakdown()` / text output:
 4. Graceful degrade: no crash if pulse-log absent.
 5. Existing chaos behavior unchanged — no regression on non-cognitive signals.
 6. `drift-pressure`, `agreement-density`, `grounding-gap` computation documented in `agent-operating-manual.md` or inline comment in `chaos.js`.
+7. T1/T2/T3 trigger annotations present in `kb.agent.template.md`.

@@ -721,6 +721,8 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
     intentMissingDecisionSummaryCount = 0,
     releaseDaysSinceLast = null,
     releaseHasCurrent = true,
+    cognitiveAgreementDensity = 0,
+    cognitiveGroundingGap = 0,
   } = (contextSignals && typeof contextSignals === 'object') ? contextSignals : {};
 
   const { contentPlaceholderRatio = 0 } =
@@ -822,14 +824,23 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
   const r_release = Math.max(0, 1 - Math.min(1, ageFactor + currentFactor));
   const release_reduction = Math.round(10 * r_release * 10) / 10;
 
-  // --- 6. Other (always 0) ---
+  // --- 6. Cognitive Drift (max −15) ---
+  // agreement-density: ratio of recent chaos snapshots with persistent cognitive_reduction > threshold.
+  // grounding-gap: ratio of active intents not promotion-ready and still in proposed state.
+  // drift-pressure removed — it duplicated intent_reduction inputs (intentStaleCount + intentMissingDecisionSummaryCount).
+  const cognitive_reduction = Math.min(15,
+    Math.round((cognitiveAgreementDensity * 8 + cognitiveGroundingGap * 7) * 10) / 10
+  );
+  const cognitiveAnnotation = cognitiveAgreementDensity > 0.6 || cognitiveGroundingGap > 0.6;
+
+  // --- 7. Other (always 0) ---
   // Reserved for unknown risks not yet measurable. Never reduces score.
   // Guarantees minimum score of 20 even for a fully verified codebase.
   const other_reduction = 0;
 
   // --- Final score ---
   const totalReduction = structural_reduction + coverage_reduction + testing_reduction
-    + intent_reduction + release_reduction + other_reduction;
+    + intent_reduction + release_reduction + cognitive_reduction + other_reduction;
   const score      = Math.min(100, Math.max(0, Math.round((100 - totalReduction) * 10) / 10));
   const chaosLevel = _chaosLevelFor(score);
 
@@ -839,6 +850,8 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
     testing_reduction,
     intent_reduction,
     release_reduction,
+    cognitive_reduction,
+    cognitive_annotation: cognitiveAnnotation,
     other: other_reduction,
   };
 
@@ -855,7 +868,7 @@ function computeChaosCoefficient({ debtItems = [], entropyItems = [], lessonItem
     })),
   ].sort((a, b) => b.score - a.score).slice(0, 5);
 
-  return { score, level: chaosLevel.level, breakdown, drivers, aiNote: chaosLevel.aiNote, formula_version: 'subtractive-v1' };
+  return { score, level: chaosLevel.level, breakdown, drivers, aiNote: chaosLevel.aiNote, formula_version: 'subtractive-v2' };
 }
 
 /**
@@ -962,6 +975,7 @@ function buildChaosSnapshot({ score, level, breakdown, drivers, measuredAt = nul
       testing_reduction:    breakdown.testing_reduction    != null ? breakdown.testing_reduction    : (breakdown.debtPressure || 0),
       intent_reduction:     breakdown.intent_reduction     != null ? breakdown.intent_reduction     : (breakdown.cognitiveLoad || 0),
       release_reduction:    breakdown.release_reduction    != null ? breakdown.release_reduction    : (breakdown.instability || 0),
+      cognitive_reduction:  breakdown.cognitive_reduction  != null ? breakdown.cognitive_reduction  : 0,
       formula_version:      formula_version,
       topDriverIds: (drivers || []).map(d => d.id).join(', '),
       measuredAt: measuredAt || new Date().toISOString(),
@@ -986,6 +1000,7 @@ function appendChaosSnapshot(contentRoot, snapshot) {
     `testing_reduction: ${snapshot.testing_reduction}`,
     `intent_reduction: ${snapshot.intent_reduction}`,
     `release_reduction: ${snapshot.release_reduction}`,
+    `cognitive_reduction: ${snapshot.cognitive_reduction != null ? snapshot.cognitive_reduction : 0}`,
     `formula_version: ${snapshot.formula_version || 'subtractive-v1'}`,
     `topDriverIds: ${snapshot.topDriverIds || ''}`,
     `measuredAt: ${snapshot.measuredAt}`,
@@ -1010,7 +1025,7 @@ function appendChaosSnapshot(contentRoot, snapshot) {
  */
 function parseChaosHistory(raw) {
   const snapshots = [];
-  const numFields = ['score', 'structural_reduction', 'coverage_reduction', 'testing_reduction', 'intent_reduction', 'release_reduction',
+  const numFields = ['score', 'structural_reduction', 'coverage_reduction', 'testing_reduction', 'intent_reduction', 'release_reduction', 'cognitive_reduction',
     'structural', 'debtPressure', 'coverageGap', 'cognitiveLoad', 'instability']; // legacy names kept for backward compat
   const blocks = raw.split(/^---$/m).map(b => b.trim()).filter(Boolean);
   for (const block of blocks) {

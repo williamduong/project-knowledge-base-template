@@ -4,7 +4,7 @@ type: multi-modal
 category: development-support
 trigger: slash-command
 instruction_file: .github/copilot-instructions.md
-version: 2.3.2
+version: 2.3.3
 ---
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
@@ -87,6 +87,9 @@ If `state.json` does not contain a `userPersona` field, OR if `presence === 'fre
 
 ### Step 3 — Plan as Intent Sub-Tasks
 Generate the action plan as phases and tasks scoped to the intent. Use the `[INT-NNN][PH-N][T-N]` reference format defined in `15-governance/numbering-system.md`. Do NOT write a separate `runtime-plan.md` unless the user explicitly requests a persistent plan file.
+
+<!-- pulse-point: T1 -->
+> **Cognitive grounding check (T1):** If the user has provided 2 or more consecutive assertions about scope, feasibility, or architecture without evidence or a test plan, briefly surface your grounding state before committing to the plan: list what is a confirmed fact vs what is an inference vs what is unknown. If `kb chaos --json` shows `cognitive_reduction > 6`, flag it explicitly.
 
 ### Step 4 — Execute with Minimal Interruption
 Execute all non-blocking tasks in sequence within the same session. **Only pause for:**
@@ -540,6 +543,12 @@ The agent reasons across intent evidence, conflict signals, lesson patterns, and
 - Every AI-driven recommendation MUST include: evidence source, pattern type, confidence signal.
 - Never present a strategy or suggestion without the evidence that drove it.
 - If evidence is thin (< 2 data points), label the suggestion as **low-confidence** and do not advocate strongly.
+
+<!-- pulse-point: T2 -->
+> **Cognitive grounding check (T2):** Before outputting any conflict resolution recommendation, verify your evidence base: state whether the recommendation is derived from KB data, from inference, or from assumption. If evidence covers fewer than 2 data points, label the recommendation **low-confidence**.
+
+<!-- pulse-point: T3 -->
+> **Cognitive grounding check (T3):** Before surfacing `kb intent suggest-lessons` candidates, confirm the archive evidence behind each pattern. If a candidate has fewer than 2 supporting intent records, label it **low-confidence** and do not advocate strongly.
 
 ---
 

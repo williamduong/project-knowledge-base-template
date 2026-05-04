@@ -471,6 +471,7 @@ function renderBreakdown(breakdown) {
     ['testing',     '−15', breakdown.testing_reduction],
     ['intent',      '−15', breakdown.intent_reduction],
     ['release',     '−10', breakdown.release_reduction],
+    ['cognitive',   '−15', breakdown.cognitive_reduction],
     ['other',       '  0', breakdown.other],
   ];
   const lines = [];
@@ -481,7 +482,10 @@ function renderBreakdown(breakdown) {
     lines.push(`    ${pad(name, 22)} max${pad(weight, 4)} reduction=${pad(v.toFixed(1), 5, true)}`);
   }
   lines.push('  ' + '─'.repeat(44));
-  lines.push(`    formula: subtractive-v1  (100 − reductions = score)`);
+  lines.push(`    formula: subtractive-v2  (100 − reductions = score)`);
+  if (breakdown.cognitive_annotation) {
+    lines.push(`    (cognitive drift detected — consider reviewing agent grounding)`);
+  }
   return lines.join('\n');
 }
 
@@ -580,6 +584,8 @@ function deriveChaosContextSignals(contentRoot) {
     intentMissingDecisionSummaryCount: 0,
     releaseDaysSinceLast: null,
     releaseHasCurrent: true,
+    cognitiveAgreementDensity: 0,
+    cognitiveGroundingGap: 0,
   };
 
   try {
@@ -604,6 +610,7 @@ function deriveChaosContextSignals(contentRoot) {
   try {
     const ids = listActiveIntentIds(contentRoot);
     signals.intentActiveCount = ids.length;
+    let groundingGapCount = 0;
     for (const id of ids) {
       try {
         const meta = readIntentMeta(contentRoot, id);
@@ -612,13 +619,33 @@ function deriveChaosContextSignals(contentRoot) {
         if (!meta.decision_summary || String(meta.decision_summary).trim() === '') {
           signals.intentMissingDecisionSummaryCount += 1;
         }
+        // grounding-gap: proposed lifecycle + not promotion-ready
+        if (meta.promotion_ready === false && (meta.lifecycle_state === 'proposed' || !meta.lifecycle_state)) {
+          groundingGapCount += 1;
+        }
       } catch (_) {
         signals.intentStaleCount += 1;
         signals.intentMissingDecisionSummaryCount += 1;
       }
     }
+    if (signals.intentActiveCount > 0) {
+      signals.cognitiveGroundingGap = Math.min(1, groundingGapCount / signals.intentActiveCount);
+    }
   } catch (_) {
     // Keep defaults when intent data is unavailable.
+  }
+
+  // agreement-density: ratio of last 10 chaos snapshots where cognitive_reduction exceeded threshold.
+  // Uses chaos-history.md (already written by kb chaos) — no new file needed.
+  try {
+    const { snapshots } = readChaosHistory(contentRoot);
+    const recent = snapshots.slice(-10);
+    if (recent.length > 0) {
+      const driftCount = recent.filter(s => typeof s.cognitive_reduction === 'number' && s.cognitive_reduction > 6).length;
+      signals.cognitiveAgreementDensity = Math.min(1, driftCount / recent.length);
+    }
+  } catch (_) {
+    // cognitiveAgreementDensity stays 0
   }
 
   try {

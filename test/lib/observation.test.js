@@ -874,7 +874,7 @@ test('computeChaosCoefficient: empty input returns score ~50 and manageable (unk
   const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
   assert.equal(r.score, 50);
   assert.equal(r.level, 'manageable');
-  assert.equal(r.formula_version, 'subtractive-v1');
+  assert.equal(r.formula_version, 'subtractive-v2');
   assert.ok(r.aiNote.length > 0);
 });
 
@@ -1356,4 +1356,62 @@ test('estimateDeltaChaos: delta 5-9 same level triggers watch', () => {
 test('estimateDeltaChaos: no warning field in return', () => {
   const r = estimateDeltaChaos(50, {});
   assert.equal(r.warning, undefined);
+});
+
+// ---------------------------------------------------------------------------
+// computeChaosCoefficient: cognitive drift signals
+// ---------------------------------------------------------------------------
+
+test('computeChaosCoefficient: cognitive signals absent → cognitive_reduction = 0, score unchanged vs baseline', () => {
+  const base = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
+  assert.equal(base.breakdown.cognitive_reduction, 0);
+  assert.equal(base.breakdown.cognitive_annotation, false);
+  assert.equal(base.score, 50); // structural(0)+coverage(20)+testing(15)+intent(15)+release(0)+cognitive(0)=50
+});
+
+test('computeChaosCoefficient: high cognitiveDriftPressure increases cognitive_reduction', () => {
+  // drift-pressure removed from formula; cognitiveAgreementDensity takes its place
+  const r = computeChaosCoefficient({
+    debtItems: [], entropyItems: [], lessonItems: [],
+    contextSignals: { cognitiveAgreementDensity: 1.0, cognitiveGroundingGap: 0 },
+  });
+  // agreementDensity * 8 = 8.0
+  assert.equal(r.breakdown.cognitive_reduction, 8.0);
+  assert.equal(r.breakdown.cognitive_annotation, true);
+  assert.ok(r.score < 50);
+});
+
+test('computeChaosCoefficient: all cognitive signals max → cognitive_reduction capped at 15', () => {
+  const r = computeChaosCoefficient({
+    debtItems: [], entropyItems: [], lessonItems: [],
+    contextSignals: { cognitiveAgreementDensity: 1.0, cognitiveGroundingGap: 1.0 },
+  });
+  // 8 + 7 = 15 — exactly at cap
+  assert.equal(r.breakdown.cognitive_reduction, 15);
+  assert.equal(r.breakdown.cognitive_annotation, true);
+});
+
+test('computeChaosCoefficient: only grounding-gap → annotation true when gap = 1.0 (exceeds 0.6 threshold)', () => {
+  const r = computeChaosCoefficient({
+    debtItems: [], entropyItems: [], lessonItems: [],
+    contextSignals: { cognitiveAgreementDensity: 0, cognitiveGroundingGap: 1.0 },
+  });
+  // grounding * 7 = 7.0; grounding > 0.6 → annotation true
+  assert.equal(r.breakdown.cognitive_reduction, 7.0);
+  assert.equal(r.breakdown.cognitive_annotation, true);
+});
+
+test('computeChaosCoefficient: low grounding-gap → annotation false (below threshold)', () => {
+  const r = computeChaosCoefficient({
+    debtItems: [], entropyItems: [], lessonItems: [],
+    contextSignals: { cognitiveAgreementDensity: 0, cognitiveGroundingGap: 0.3 },
+  });
+  // grounding * 7 = 2.1; grounding <= 0.6 → annotation false
+  assert.equal(r.breakdown.cognitive_reduction, 2.1);
+  assert.equal(r.breakdown.cognitive_annotation, false);
+});
+
+test('computeChaosCoefficient: formula_version is subtractive-v2', () => {
+  const r = computeChaosCoefficient({ debtItems: [], entropyItems: [], lessonItems: [] });
+  assert.equal(r.formula_version, 'subtractive-v2');
 });

@@ -23,12 +23,11 @@
 - R3: rewrote self-host section of `.gitignore` — track `knowledge-base/`, `.github/agents/`, `.github/prompts/`, `AGENTS.md`; ignore only `knowledge-base/.kb/{_cacache,_logs,cache,logs}/`.
 - R4: ran `kb init --mode tracked --yes` to materialize Layer D under `knowledge-base/`. Restored `.github/hooks/revision-state-guard.json` accidentally removed by `kb uninstall --force`.
 
-**Next action (R5):**
-1. Migrate long-term planning notes from `notes/upgrade-v*.md`, `notes/release-notes-*.md` into `knowledge-base/intents/_active/<id>/` workspaces.
-2. Migrate `kb-root/focus.md`, `kb-root/knowledge.md` operational state into runtime intent + `knowledge-base/.kb/runtime-plan.md` per Focus Ownership Model.
-3. After migration, `notes/` contains only true scratch.
-
-**R6:** validate test matrix (tracked + private-git modes), bump 2.3.x, release.
+**Next action (R6):**
+1. Build v2.3.4 — W1-W4 code changes in `chaos.js` + `observation.js`; W5 doc changes in `kb.agent.template.md` + `agent-operating-manual.md`.
+2. Validate: `npm run test:all` + manual smoke test on self-host.
+3. Bump `package.json` to `2.3.3` (v2.3.3 skipped — merged), commit, tag, publish.
+4. Close v2.3.4 intent, update focus to v2.4.x.
 
 ## Active Blockers
 
@@ -50,8 +49,8 @@
 | v2.2.2 | Shipped 2026-05-04 | Superseded |
 | v2.3.1 | Shipped 2026-05-04 | Governance + tooling hardening |
 | v2.3.2 | Shipped 2026-05-05 | Namespace split + notes migration closeout |
-| v2.3.3 | Next (open intent) | Reflective Pulse Protocol |
-| v2.3.4 | Queued (open intent) | Cognitive Drift Signal for kb chaos |
+| v2.3.3 | Superseded 2026-05-05 | Merged into v2.3.4 (no standalone ship) |
+| v2.3.4 | Next (in-progress) | Cognitive Drift Signal + absorbed pulse triggers |
 | v2.4.x | Backlog | Intent-first version governance (seeded) |
 | v2.4+ | Backlog | Intent-driven planning migration follow-up |
 

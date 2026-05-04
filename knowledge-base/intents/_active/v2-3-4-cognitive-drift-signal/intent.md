@@ -7,6 +7,7 @@ change_type: feature
 change_scope:
   - src/commands/chaos.js
   - template/12-ai-skills/agent-operating-manual.md
+  - template/.github/agents/kb.agent.template.md
 impact_signals:
   - chaos-formula-bump
   - agent-behavior
@@ -14,10 +15,12 @@ impact_signals:
 decision_summary: "Add cognitive drift dimension to kb chaos command — measures agreement pressure across intent history, not just technical debt."
 review_after: 2026-05-31
 lesson_id: null
-lifecycle_state: proposed
+lifecycle_state: in-progress
 promotion_ready: false
 linked_signals: []
-promote_decision_ref: v2-3-3-reflective-pulse-protocol
+promote_decision_ref: null
+design_decisions_locked: 2026-05-05
+absorbs: v2-3-3-reflective-pulse-protocol
 ---
 
 # Intent: v2-3-4-cognitive-drift-signal
@@ -26,7 +29,9 @@ promote_decision_ref: v2-3-3-reflective-pulse-protocol
 
 Extend `kb chaos` with a cognitive drift section measuring how much the agent has been following unverified direction across recent intents. Three new signals: `drift-pressure`, `agreement-density`, `grounding-gap`. These feed into total chaos score with low weight. Formula string bumped from `subtractive-v1` to `subtractive-v2`.
 
-Dependency: v2.3.3 (Reflective Pulse Protocol) should ship first. Patch 2 gracefully degrades if pulse data is absent.
+Absorbs v2.3.3 (Reflective Pulse Protocol): agent trigger points T1/T2/T3 are folded into this intent as a doc-only workstream. `pulse-log.jsonl` remains a future enrichment path; all three signals have graceful degrade paths that work without it.
+
+No blocking dependency on v2.3.3 — ships standalone.
 
 ## Terminology Mapping (Brief → This System)
 
@@ -37,12 +42,14 @@ Dependency: v2.3.3 (Reflective Pulse Protocol) should ship first. Patch 2 gracef
 | "agreement-density" | Computed from archived intent `pulse-log.jsonl` if available (v2.3.3); graceful degrade to 0 if absent |
 | "grounding-gap" | Ratio of intents with `promotion_ready: false` and no `proposed-changes/` staged files |
 
-## Open Design Decisions (KBRoot to resolve)
+## Design Decisions (Locked 2026-05-05)
 
-1. Weight of cognitive drift in total score — suggest max 15 points to avoid spike on healthy projects.
-2. How to read `agreement-density` from intent history without pulse data (graceful degrade path).
-3. Whether "spike (cognitive)" is a new LEVEL_BADGE variant or an annotation string on existing bands.
-4. Threshold for `drift-pressure` to trigger sub-classification.
+| # | Decision | Choice |
+|---|---|---|
+| D1 | Cognitive weight | Max 15 points total (formula slots: drift×7 + agreement×5 + grounding×3) |
+| D2 | Graceful degrade | `agreement-density` → 0.0 if no pulse-log; `drift-pressure` → derived from `intentStaleCount`+`intentMissingDecisionSummaryCount`; `grounding-gap` → always computable from frontmatter |
+| D3 | "spike (cognitive)" rendering | Annotation string on existing bands, not a new LEVEL_BADGE variant |
+| D4 | Trigger threshold | `drift-pressure > 0.6` triggers annotation; `agreement-density > 0.6` same |
 
 ## Plan
 

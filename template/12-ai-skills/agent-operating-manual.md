@@ -190,6 +190,33 @@ To avoid context collision between maintainer operations and shipped user behavi
 4. Do not remove shipped KB Agent files or prompt files from template/npm payload only to prevent local overlap; enforce separation through activation context and validation scope.
 5. Any maintainer-only prompt/agent surface should use explicit maintainer naming and remain outside shipped template surface unless intentionally published.
 
+## Cognitive Drift Signals (v2.3.3)
+
+`kb chaos` measures two cognitive drift signals alongside structural and coverage metrics.
+
+### Signal Definitions
+
+| Signal | Source | Meaning |
+|---|---|---|
+| `agreement-density` | Ratio of last 10 `kb chaos` snapshots where `cognitive_reduction > 6` | Persistent pattern of high cognitive drift across sessions |
+| `grounding-gap` | Ratio of active intents with `promotion_ready: false` and `lifecycle_state: proposed` | Intents that have not been grounded by evidence or staged changes |
+
+### Trigger Points (T1/T2/T3)
+
+The KB Agent template marks three trigger points where grounding self-checks apply:
+
+| ID | Location | Condition |
+|---|---|---|
+| T1 | Step 3 — Plan as Intent Sub-Tasks | User provides ≥2 consecutive assertions about scope/feasibility without evidence |
+| T2 | Role 4 — Before conflict resolution recommendation | Always; label low-confidence if < 2 data points |
+| T3 | Role 4 — Before `suggest-lessons` output | Always; label each candidate low-confidence if < 2 supporting intents |
+
+### Thresholds
+
+- `cognitive_reduction > 6` in a single snapshot → annotation flag in `kb chaos` output
+- `agreement-density > 0.6` OR `grounding-gap > 0.6` → `(cognitive drift detected)` annotation in output
+- Formula slot: `agreement-density ×8 + grounding-gap ×7`, capped at 15 points total
+
 ## Copilot Instruction Digest
 
 - Respect repository instructions and non-destructive editing.
