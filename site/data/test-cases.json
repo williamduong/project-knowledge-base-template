@@ -1,6 +1,6 @@
 {
   "title": "MCP Validation Test Cases",
-  "updatedAt": "2026-05-02",
+  "updatedAt": "2026-05-04",
   "items": [
     {
       "id": "TC-MCP-001",
@@ -46,6 +46,19 @@
       "steps": ["Create dispatch task", "Execute per-scope agent runs", "Merge result report"],
       "expected": "No cross-scope edits; consolidated report generated.",
       "status": "planned"
+    },
+    {
+      "id": "TC-MCP-006",
+      "level": "medium",
+      "targetRepo": "sample_repo/realworld-express",
+      "objective": "Manual smoke for kb next priority shift after applying suggested action.",
+      "steps": [
+        "kb next",
+        "kb mark --file 00-start-here/current-verified-index.md --state verified",
+        "kb next"
+      ],
+      "expected": "Second kb next shows total actionable reduced by 1 and moves next-best-action to the next review backlog doc.",
+      "status": "passed"
     }
   ]
 }

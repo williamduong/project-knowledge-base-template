@@ -103,6 +103,7 @@ function computeImpact({ workspaceRoot, ctx = null }) {
     const fm = readDocFrontmatter(path.join(resolvedCtx.contentRoot, binding.doc));
     impacted.push({
       doc: normalizeDocPath(binding.doc),
+      kb_state: (fm && typeof fm.kb_state === 'string') ? fm.kb_state : null,
       last_verified: (fm && typeof fm.last_verified === 'string') ? fm.last_verified : null,
       last_verified_commit: (fm && typeof fm.last_verified_commit === 'string') ? fm.last_verified_commit : null,
       verification: (fm && typeof fm.verification === 'string') ? fm.verification : null,

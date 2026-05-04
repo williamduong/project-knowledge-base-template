@@ -4,9 +4,10 @@ This repository is a multi-project knowledge base template for documenting softw
 
 It is designed for teams that want a consistent documentation baseline across different project archetypes such as web apps, API platforms, data and AI systems, internal enterprise tools, and extension or integration products.
 
-## Current Template Version
+## Current Runtime Focus
 
-- Template version: `v2.2.0`
+- Runtime focus: `v2.3.x (solo-first)`
+- Current messaging baseline: prioritize executable now-path (`init -> bootstrap -> index -> next`) and avoid over-claiming deferred phases
 - License: GNU AGPL v3 with separate commercial licensing available
 - Baseline state file for downstream projects: [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md)
 
@@ -14,14 +15,18 @@ It is designed for teams that want a consistent documentation baseline across di
 
 This repository now includes a preview CLI scaffold (`kb`) for local initialization and maintenance workflow bootstrapping.
 
-### Quick Start (1 command, no global install)
+### Quick Start (5-minute path)
 
 ```bash
 cd <your-repo>
 npx @williamduong/kb@latest init --yes
+kb bootstrap --dry-run
+kb bootstrap
+kb index
+kb next
 ```
 
-That single command installs the KB template, the `@kb` master agent, and the `/kb-plan` + `/kb-run` chat prompts into your repo. Then open Copilot Chat (or any agent that resolves `AGENTS.md`) and run `/kb-run`.
+The first command installs the KB template, the `@kb` master agent, and the `/kb-plan` + `/kb-run` chat prompts into your repo. Then run the follow-up commands to scaffold docs, build index, and get the next best action from `kb next`.
 
 > **Two-step bootstrap (important).** The `@kb` agent and `/kb-*` prompts are **per-project files** that live in your repo's `.github/`. They do not exist until `kb init` writes them. Order is always: **(1) install or `npx` the CLI → (2) `kb init` inside the target repo → (3) chat with `@kb` / `/kb-run`**.
 
@@ -49,6 +54,9 @@ npx @williamduong/kb help
 Core lifecycle commands (default user path):
 
 - `init [--mode private-git|tracked] [--brand <name>] [--yes]` - Install KB into the workspace.
+- `bootstrap [--dry-run]` - Generate initial stub docs from source signals.
+- `index` - Build KB index summary.
+- `next [--json]` - Show the next best KB action by priority (drift -> review -> missing -> source).
 - `update [--accept-baseline]` - Sync state and refresh template version metadata.
 - `maintain [--accept-baseline] [--fast]` - Run one maintenance pipeline (sync + checks).
 - `uninstall [--keep-ai-files] [--remove-hook] [--force]` - Remove KB setup from workspace.

@@ -19,6 +19,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kb status [--json]');
     console.log('  kb impact <doc-or-code> [--depth=N] [--json]');
     console.log('  kb scan [--recursive] [--depth=N] [--json]');
+    console.log('  kb next [--json]');
     console.log('  kb verify <doc> [--json]   |   kb verify --all [--json]');
     console.log('  kb baseline show [--json]   |   kb baseline set <sha|--to-head> [--yes] [--json]');
     console.log('  kb release init [--ignore-prerelease|--include-prerelease] [--json]');
@@ -97,6 +98,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kb status [--json]');
   console.log('  kb impact <doc-or-code> [--depth=N] [--json]');
   console.log('  kb scan [--recursive] [--depth=N] [--json]');
+  console.log('  kb next [--json]');
   console.log('  kb verify <doc> [--json]');
   console.log('  kb verify --all [--json]');
   console.log('  kb baseline show [--json]');
@@ -180,6 +182,9 @@ function runHelp({ packageJson, args }) {
   console.log('  scan       Scan git diff (baseline..HEAD), bind code changes to docs, write impact.json.');
   console.log('             --recursive      Expand related_strong neighbours into transitive_impacted[].');
   console.log('             --depth=N        Recursive depth (capped at impact.maxDepth, default impact.defaultDepth).');
+  console.log('             --json           Machine-readable JSON.');
+  console.log('  next       Summarize the next most useful KB actions for a solo workflow.');
+  console.log('             Prioritizes: drift unresolved -> review backlog -> missing critical docs -> stale source mirror.');
   console.log('             --json           Machine-readable JSON.');
   console.log('  verify     Bump last_verified + last_verified_commit (current HEAD) for a doc.');
   console.log('             Clears matching entries from impact.json on success.');

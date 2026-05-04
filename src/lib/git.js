@@ -108,12 +108,28 @@ function getWorkingTreeStatus(workspaceRoot) {
     }));
 }
 
+function isAncestor(workspaceRoot, ancestorSha, descendantSha = 'HEAD') {
+  if (!ancestorSha || !descendantSha) {
+    return false;
+  }
+  try {
+    execSync(`git merge-base --is-ancestor ${ancestorSha} ${descendantSha}`, {
+      cwd: workspaceRoot,
+      stdio: 'ignore',
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 module.exports = {
   getChangedFilesSince,
   getGitDiffNameStatus,
   getGitLogRange,
   getGitMetadata,
   getWorkingTreeStatus,
+  isAncestor,
   parseDiffNameStatus,
   runGitCommand,
 };

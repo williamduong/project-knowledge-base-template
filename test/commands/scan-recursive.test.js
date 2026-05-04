@@ -17,6 +17,11 @@ test('scan parseArgs: --recursive + --depth=3', () => {
   assert.equal(o.depth, 3);
 });
 
+test('scan parseArgs: --no-auto-downgrade flag', () => {
+  const o = parseArgs(['--no-auto-downgrade']);
+  assert.equal(o.noAutoDowngrade, true);
+});
+
 test('scan parseArgs: --depth=invalid throws', () => {
   assert.throws(() => parseArgs(['--depth=abc']), /non-negative integer/);
   assert.throws(() => parseArgs(['--depth=-1']), /non-negative integer/);

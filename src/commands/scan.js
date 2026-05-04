@@ -1,13 +1,18 @@
 const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
+const { shouldAutoDowngradeDoc } = require('../lib/auto-downgrade');
+const { matchPaths, normalizePath } = require('../lib/binding-matcher');
+const { getChangedFilesSince, getWorkingTreeStatus, isAncestor } = require('../lib/git');
 const { computeImpact, deriveVerdict, writeImpactFile } = require('../lib/impact');
 const { buildGraph, findRecursiveImpact } = require('../lib/impact-graph');
+const { listAllDocBindings, normalizeDocPath } = require('../lib/bindings');
 const { loadConfig, getConfigValue } = require('../lib/config');
+const { updateFrontmatterFields } = require('../lib/frontmatter');
 const { readSourceIndex, refreshIndex } = require('../lib/source-index');
 
 function parseArgs(args) {
-  const options = { json: false, quiet: false, recursive: false, depth: null };
+  const options = { json: false, quiet: false, recursive: false, depth: null, noAutoDowngrade: false };
   for (const arg of args || []) {
     if (arg === '--json') {
       options.json = true;
@@ -21,6 +26,10 @@ function parseArgs(args) {
       options.recursive = true;
       continue;
     }
+    if (arg === '--no-auto-downgrade') {
+      options.noAutoDowngrade = true;
+      continue;
+    }
     const depthMatch = /^--depth=(.+)$/.exec(arg);
     if (depthMatch) {
       const n = Number(depthMatch[1]);
@@ -30,9 +39,90 @@ function parseArgs(args) {
       options.depth = n;
       continue;
     }
-    throw new Error(`Unknown scan option "${arg}". Supported: --json, --quiet, --recursive, --depth=N`);
+    throw new Error(`Unknown scan option "${arg}". Supported: --json, --quiet, --recursive, --depth=N, --no-auto-downgrade`);
   }
   return options;
+}
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function autoDowngradeVerifiedDocs({ impactData, workspaceRoot, ctx, head }) {
+  const result = { autoDowngraded: [], deferred: [] };
+  if (!impactData || impactData.skipped_reason) {
+    impactData.auto_downgraded = result.autoDowngraded;
+    impactData.auto_downgrade_deferred = result.deferred;
+    return result;
+  }
+
+  const bindingsByDoc = new Map(
+    listAllDocBindings(ctx.contentRoot).map((entry) => [normalizeDocPath(entry.doc), entry.paths || []])
+  );
+
+  const contentRootRel = normalizePath(path.relative(workspaceRoot, ctx.contentRoot));
+  const contentPrefix = contentRootRel ? `${contentRootRel}/` : '';
+  const dirtyDocs = new Set(
+    getWorkingTreeStatus(workspaceRoot)
+      .map((entry) => normalizePath(entry.filePath))
+      .filter(Boolean)
+  );
+  const diffCache = new Map();
+
+  for (const entry of impactData.impacted || []) {
+    const doc = normalizeDocPath(entry.doc);
+    const bindingPaths = bindingsByDoc.get(doc) || [];
+    const docWorkspacePath = contentPrefix ? `${contentPrefix}${doc}` : doc;
+    const dirty = dirtyDocs.has(docWorkspacePath);
+    let changedPathsSinceVerify = [];
+
+    if (entry.last_verified_commit && entry.last_verified_commit !== 'NOT_AVAILABLE' && isAncestor(workspaceRoot, entry.last_verified_commit, head || 'HEAD')) {
+      if (!diffCache.has(entry.last_verified_commit)) {
+        const changed = getChangedFilesSince(workspaceRoot, entry.last_verified_commit, head || 'HEAD');
+        diffCache.set(entry.last_verified_commit, changed.map((item) => item.path));
+      }
+      changedPathsSinceVerify = diffCache.get(entry.last_verified_commit);
+    }
+
+    const decision = shouldAutoDowngradeDoc({
+      kbState: entry.kb_state,
+      lastVerifiedCommit: entry.last_verified_commit,
+      bindingPaths,
+      changedPathsSinceVerify,
+      isDirty: dirty,
+    });
+
+    if (!decision.shouldDowngrade) {
+      if (decision.reason === 'doc-dirty') {
+        result.deferred.push({ doc, reason: decision.reason });
+      }
+      continue;
+    }
+
+    const absDocPath = path.join(ctx.contentRoot, doc);
+    const raw = require('fs').readFileSync(absDocPath, 'utf8');
+    const updated = updateFrontmatterFields(raw, {
+      kb_state: 'needs-review',
+      downgraded_at: todayIso(),
+      downgraded_from: 'verified',
+      downgrade_reason: decision.reason,
+    });
+    require('fs').writeFileSync(absDocPath, updated, 'utf8');
+
+    entry.kb_state = 'needs-review';
+    entry.auto_downgraded = true;
+    entry.downgrade_reason = decision.reason;
+    entry.binding_changes_since_verify = matchPaths(changedPathsSinceVerify, bindingPaths);
+    result.autoDowngraded.push({
+      doc,
+      reason: decision.reason,
+      matched_changes: entry.binding_changes_since_verify,
+    });
+  }
+
+  impactData.auto_downgraded = result.autoDowngraded;
+  impactData.auto_downgrade_deferred = result.deferred;
+  return result;
 }
 
 /**
@@ -76,6 +166,20 @@ function printHumanReport(impactData, verdict, filePath, options) {
   console.log(`  impacted docs   : ${impactData.impacted.length}`);
   for (const item of impactData.impacted) {
     console.log(`    - ${item.doc}  (${item.matched_changes.length} match, source=${item.binding_source})`);
+  }
+
+  if ((impactData.auto_downgraded || []).length > 0) {
+    console.log(`  auto-downgraded : ${impactData.auto_downgraded.length}`);
+    for (const entry of impactData.auto_downgraded) {
+      console.log(`    - ${entry.doc}  (${entry.reason})`);
+    }
+  }
+
+  if ((impactData.auto_downgrade_deferred || []).length > 0) {
+    console.log(`  downgrade deferred: ${impactData.auto_downgrade_deferred.length}`);
+    for (const entry of impactData.auto_downgrade_deferred) {
+      console.log(`    - ${entry.doc}  (${entry.reason})`);
+    }
   }
 
   if (options.recursive) {
@@ -139,6 +243,13 @@ function runScan({ args, cwd }) {
     addTransitiveImpact({ impactData, ctx: context, depth });
   }
 
+  if (!options.noAutoDowngrade) {
+    autoDowngradeVerifiedDocs({ impactData, workspaceRoot, ctx: context, head: impactData.head || 'HEAD' });
+  } else {
+    impactData.auto_downgraded = [];
+    impactData.auto_downgrade_deferred = [];
+  }
+
   const filePath = writeImpactFile(context.contentRoot, impactData);
   const verdict = deriveVerdict(impactData);
 
@@ -181,4 +292,5 @@ module.exports = {
   runScan,
   parseArgs,
   addTransitiveImpact,
+  autoDowngradeVerifiedDocs,
 };

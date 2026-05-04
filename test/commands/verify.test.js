@@ -33,45 +33,7 @@ test('parseArgs: unknown option throws', () => {
   assert.throws(() => parseArgs(['doc.md', '--bogus']), /Unknown verify option/);
 });
 
-test('findFrontmatterBounds: detects valid block', () => {
-  const text = '---\ntitle: x\n---\nbody';
-  const b = findFrontmatterBounds(text);
-  assert.ok(b);
-  assert.equal(b.endLine, 2);
-});
-
-test('findFrontmatterBounds: returns null when missing', () => {
-  assert.equal(findFrontmatterBounds('# no frontmatter'), null);
-});
-
-test('updateFrontmatterFields: updates existing field, preserves others', () => {
-  const text = '---\ntitle: x\nlast_verified: 2025-01-01\n---\nbody';
-  const out = updateFrontmatterFields(text, { last_verified: '2026-05-01' });
-  assert.match(out, /last_verified: 2026-05-01/);
-  assert.match(out, /title: x/);
-  assert.match(out, /\nbody$/);
-});
-
-test('updateFrontmatterFields: inserts new field when missing', () => {
-  const text = '---\ntitle: x\n---\nbody';
-  const out = updateFrontmatterFields(text, { last_verified_commit: 'abc123' });
-  assert.match(out, /last_verified_commit: abc123/);
-  // Inserted before closing ---
-  const idx = out.indexOf('last_verified_commit: abc123');
-  const closing = out.indexOf('\n---\nbody');
-  assert.ok(idx < closing);
-});
-
-test('updateFrontmatterFields: updates one + inserts another', () => {
-  const text = '---\ntitle: x\nlast_verified: 2025-01-01\n---\nbody';
-  const out = updateFrontmatterFields(text, {
-    last_verified: '2026-05-01',
-    last_verified_commit: 'sha',
-  });
-  assert.match(out, /last_verified: 2026-05-01/);
-  assert.match(out, /last_verified_commit: sha/);
-});
-
-test('updateFrontmatterFields: throws when no frontmatter', () => {
-  assert.throws(() => updateFrontmatterFields('plain text', { x: 'y' }), /No frontmatter block/);
+test('verify re-exports frontmatter helpers', () => {
+  assert.equal(typeof findFrontmatterBounds, 'function');
+  assert.equal(typeof updateFrontmatterFields, 'function');
 });

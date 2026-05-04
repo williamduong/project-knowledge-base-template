@@ -18,6 +18,7 @@
 
     {"command":"kb impact","group":"governance","stability":"stable","purpose":"Graph-based impact tracing for docs/code."},
     {"command":"kb scan [--recursive] [--depth=N]","group":"governance","stability":"stable","purpose":"Scan drift and write impact report. Reports stale source-mirror docs when source-index.json is present (v2.2)."},
+    {"command":"kb next [--json]","group":"governance","stability":"stable","purpose":"(v2.3) Show the next best KB action by prioritizing drift unresolved, review backlog, missing critical docs, and stale source mirror coverage."},
     {"command":"kb verify","group":"governance","stability":"stable","purpose":"Mark doc(s) verified with commit stamp."},
     {"command":"kb baseline show|set","group":"governance","stability":"stable","purpose":"Inspect or update baseline revision pointer."},
     {"command":"kb doctor","group":"governance","stability":"stable","purpose":"Run environment and readiness diagnostics."},

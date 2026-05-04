@@ -92,7 +92,7 @@ When all tasks complete, run `kb intent apply <id>` to write staged files to KB 
 
 ---
 
-## Persona Wizard Protocol (v2.0.1)
+## Persona Wizard Protocol (v2.0.3)
 
 Run once on first KB activation (when `userPersona` is absent from `state.json`). Ask **all questions in one message**, receive answers, then store and proceed — do not spread over multiple round trips.
 
@@ -121,6 +121,13 @@ Before I start, I need 30 seconds of context to work with you efficiently.
    C) Mid-level developer
    D) Junior developer
    E) Beginner / non-developer
+
+5. Preferred chat language?
+   A) English (default)
+   B) Vietnamese
+   C) Other (specify)
+
+Note: KB documents and persistent KB artifacts are always written in English.
 ```
 
 After collecting answers:
@@ -135,10 +142,12 @@ After collecting answers:
      "projectMode": "greenfield|maintenance|legacy",
      "involvement": "hands-on|balanced|autopilot",
      "skillLevel": "master|senior|mid|junior|beginner",
+   "chatLanguage": "english|vietnamese|other",
      "numberingPreference": "sequential"
    }
    ```
 3. Ask numbering preference (A/B/C from `numbering-system.md §5`) only if `involvement` is `hands-on`. Otherwise default to `sequential`.
+4. If `chatLanguage` is not provided, default to `english`.
 
 ### Communication Style by Skill Level
 
@@ -150,6 +159,8 @@ After collecting answers:
 | beginner       | Plain language. Analogy-based explanations. Full guidance. Short sentences. |
 
 Apply the style to all agent output in this workspace for the lifetime of the session. Re-read `userPersona` at each activation — do not default to master-level if the stored preference is junior.
+Apply `userPersona.chatLanguage` to user-facing conversation. If missing, use English.
+Documentation language remains English regardless of chat language.
 
 ---
 
@@ -228,7 +239,7 @@ Run the **Persona Wizard Protocol** defined above. If the user already has `user
 
 **Compact mode:** If user indicated "autopilot" or "just do it" in their initial message, use defaults:
 ```json
-{ "type": "vibe", "projectMode": "greenfield", "involvement": "autopilot", "skillLevel": "senior", "numberingPreference": "sequential" }
+{ "type": "vibe", "projectMode": "greenfield", "involvement": "autopilot", "skillLevel": "senior", "chatLanguage": "english", "numberingPreference": "sequential" }
 ```
 Still print the defaults you're using, but do not ask for confirmation.
 
@@ -563,6 +574,7 @@ When called by the `kb` CLI in silent mode, suppress verbose narration and retur
 17. **Onboarding-first (v2.0.2).** When `presence === 'fresh'` OR user requests "setup KB" / "init this project" / provides a URL alongside a setup intent, automatically trigger the **Zero-to-Intent Onboarding Protocol**. Do NOT tell the user to run `kb init` manually. Do NOT stop at install — continue through all onboarding steps until INT-001 is complete and INT-002 is created.
 18. **Always-visible status header (v2.0.2).** Every response MUST start with the status line `[INT-NNN | PH-N | T-N | <status>]` as defined in the **Response Status Header Protocol**. This is a non-negotiable formatting contract. No response may begin with any other content — greeting, explanation, or answer — before this line. When not inside any intent, emit `[no active intent | kb healthy]`.
 19. **Session continuity (v2.0.2).** After each phase completion, before any destructive operation, and whenever pausing for user input mid-intent, emit a **Resume Block** as defined in the **Session Continuity Protocol**. Do not assume the session will continue. The user must always have a self-contained resume prompt they can paste into a new chat.
+20. **Language policy (v2.0.3).** KB docs, KB artifacts, and generated documentation must be English-only. During first onboarding, explicitly ask the user's chat language preference and store it in `state.json.userPersona.chatLanguage`; if user does not choose, default to English chat.
 
 ---
 
@@ -582,6 +594,7 @@ The agent reads and writes `knowledge-base/.kb/state.json`. Relevant fields:
 - `metadataPolicy`: `advisory` (default) | `strict`
 - `ideIntegration.enabled`: `true` | `false`
 - `ideIntegration.targets`: array of `{ file, injectedAt }` records for cleanup
+- `userPersona.chatLanguage`: `english` (default) | `vietnamese` | `other`
 - `cliVersion`, `templateVersion`, `paths`, `mode` — managed by CLI; agent reads only
 
 Plan file location: `knowledge-base/.kb/runtime-plan.md` (markdown checklist + YAML frontmatter; managed by `/kb-plan` and `/kb-run`).

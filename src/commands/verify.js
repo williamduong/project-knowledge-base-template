@@ -4,6 +4,11 @@ const fs = require('fs');
 const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
+const {
+  findFrontmatterBounds,
+  removeFrontmatterFields,
+  updateFrontmatterFields,
+} = require('../lib/frontmatter');
 const { getGitMetadata, getWorkingTreeStatus } = require('../lib/git');
 const { readImpactFile, writeImpactFile } = require('../lib/impact');
 const { normalizeDocPath } = require('../lib/bindings');
@@ -30,53 +35,6 @@ function parseArgs(args) {
     options.target = rest[0];
   }
   return options;
-}
-
-function findFrontmatterBounds(text) {
-  if (!text.startsWith('---\n') && !text.startsWith('---\r\n')) return null;
-  const lines = text.split(/\r?\n/);
-  if (lines[0].trim() !== '---') return null;
-  for (let i = 1; i < lines.length; i += 1) {
-    if (lines[i].trim() === '---') {
-      return { startLine: 0, endLine: i, lines };
-    }
-  }
-  return null;
-}
-
-/**
- * Update or insert simple `key: value` lines inside the frontmatter block.
- * Returns the new file content. Throws if no frontmatter block exists.
- */
-function updateFrontmatterFields(text, updates) {
-  const bounds = findFrontmatterBounds(text);
-  if (!bounds) {
-    throw new Error('No frontmatter block (--- ... ---) found in document.');
-  }
-  const { lines, endLine } = bounds;
-  const newLines = lines.slice();
-  const remainingUpdates = new Map(Object.entries(updates));
-
-  for (let i = 1; i < endLine; i += 1) {
-    const m = /^([A-Za-z0-9_-]+):\s*(.*)$/.exec(newLines[i]);
-    if (!m) continue;
-    const key = m[1];
-    if (remainingUpdates.has(key)) {
-      newLines[i] = `${key}: ${remainingUpdates.get(key)}`;
-      remainingUpdates.delete(key);
-    }
-  }
-
-  if (remainingUpdates.size > 0) {
-    const insertAt = endLine;
-    const inserts = [];
-    for (const [key, value] of remainingUpdates.entries()) {
-      inserts.push(`${key}: ${value}`);
-    }
-    newLines.splice(insertAt, 0, ...inserts);
-  }
-
-  return newLines.join('\n');
 }
 
 function todayIso() {
@@ -106,6 +64,7 @@ function verifyOneDoc({ contentRoot, workspaceRoot, docRel, headSha }) {
       last_verified: todayIso(),
       last_verified_commit: headSha || 'NOT_AVAILABLE',
     });
+    updated = removeFrontmatterFields(updated, ['downgraded_at', 'downgraded_from', 'downgrade_reason']);
   } catch (err) {
     return { doc: docRel, ok: false, reason: err.message };
   }

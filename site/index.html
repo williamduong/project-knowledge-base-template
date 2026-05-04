@@ -104,13 +104,13 @@
 
     <main>
       <section class="hero">
-        <p class="eyebrow">Project Auto Documentation system</p>
-        <h1>Structured project knowledge, ready for teams and agents.</h1>
+        <p class="eyebrow">v2.3.x solo-first workflow</p>
+        <h1>Start fast with KB, keep docs grounded to real code changes.</h1>
         <p class="subtitle">
-          A concise template for product, architecture, operations, and AI workflow documentation.
+          This landing focuses on what is executable now: initialize, bootstrap, scan, and move with the next best action. Team-scale and ecosystem features stay explicitly marked as future direction.
         </p>
         <div class="actions">
-          <a class="btn btn-primary" href="#getting-started">
+          <a class="btn btn-primary" href="#quickstart">
             <span class="btn-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" role="img" focusable="false">
                 <path d="M6 5.5A2.5 2.5 0 0 1 8.5 3H19v15H8.5A2.5 2.5 0 0 0 6 20.5z"></path>
@@ -119,578 +119,266 @@
                 <path d="M9 11h7"></path>
               </svg>
             </span>
-            <span>Getting started!</span>
+            <span>Start in 5 minutes</span>
           </a>
-          <a class="btn btn-secondary" href="#workflow">
+          <a class="btn btn-secondary" href="#next-action">
             <span class="btn-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" role="img" focusable="false">
                 <path d="m5 7 4 5-4 5"></path>
                 <path d="M12 17h7"></path>
               </svg>
             </span>
-            <span>How it work?</span>
+            <span>Use kb next</span>
           </a>
-          <a class="btn btn-ghost" href="./docs.html?path=00-start-here/knowledge-base-architecture.md">
+          <a class="btn btn-ghost" href="#troubleshoot">
             <span class="btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <circle cx="12" cy="12" r="8"></circle>
+                <path d="M12 8v5"></path>
+                <path d="M12 16h.01"></path>
+              </svg>
+            </span>
+            <span>Need help?</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="pillars" aria-label="Current focus">
+        <article>
+          <div class="feature-head">
+            <span class="icon-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M4 12h16"></path>
+                <path d="M12 4v16"></path>
+              </svg>
+            </span>
+            <h2>What ships now</h2>
+          </div>
+          <p>Solo core runtime is ready now: init, bootstrap, index, scan, verify, baseline, doctor, and kb next.</p>
+        </article>
+        <article>
+          <div class="feature-head">
+            <span class="icon-badge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img" focusable="false">
+                <path d="M5 6h14"></path>
+                <path d="M5 12h14"></path>
+                <path d="M5 18h9"></path>
+              </svg>
+            </span>
+            <h2>How to work daily</h2>
+          </div>
+          <p>Use kb next to prioritize action in order: drift unresolved, review backlog, missing docs, then source mirror gaps.</p>
+        </article>
+        <article>
+          <div class="feature-head">
+            <span class="icon-badge" aria-hidden="true">
               <svg viewBox="0 0 24 24" role="img" focusable="false">
                 <path d="M12 3 5 6.5v5.8c0 4.2 2.8 7.1 7 8.7 4.2-1.6 7-4.5 7-8.7V6.5z"></path>
                 <path d="M9 12h6"></path>
-                <path d="M12 9v6"></path>
               </svg>
             </span>
-            <span>Design philosophy...</span>
-          </a>
+            <h2>Future direction, clearly gated</h2>
+          </div>
+          <p>Cross-project registry, multi-agent orchestration, and ecosystem contract runtime are intentionally deferred, not claimed as current runtime.</p>
+        </article>
+      </section>
+
+      <section id="quickstart" class="gs-section" aria-label="Quick start">
+        <p class="section-eyebrow">Quick start</p>
+        <h2 class="section-title">5-minute bootstrap</h2>
+        <p class="section-sub">
+          Run this in your target repository. This path is optimized for fast understanding and immediate execution.
+          <a class="text-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Full setup guide &rarr;</a>
+        </p>
+        <div class="workflow-layout">
+          <div class="wf-card">
+            <div class="wf-card-head">
+              <span class="icon-badge icon-badge-small" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <path d="M6 6h12v12H6z"></path>
+                </svg>
+              </span>
+              <span class="wf-card-title">Step 1-2</span>
+            </div>
+            <p class="wf-card-desc">Initialize and scaffold basic docs from source signals.</p>
+            <div class="code-block">
+              <div class="code-label">Terminal</div>
+<pre>cd &lt;your-repo&gt;
+npx @williamduong/kb@latest init --yes
+kb bootstrap --dry-run
+kb bootstrap</pre>
+            </div>
+          </div>
+          <div class="wf-card">
+            <div class="wf-card-head">
+              <span class="icon-badge icon-badge-small" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <path d="M5 12h14"></path>
+                  <path d="m13 6 6 6-6 6"></path>
+                </svg>
+              </span>
+              <span class="wf-card-title">Step 3-4</span>
+            </div>
+            <p class="wf-card-desc">Build index, then let kb next tell you what to do next.</p>
+            <div class="code-block">
+              <div class="code-label">Terminal</div>
+<pre>kb index
+kb next
+
+# Optional for tool integration
+kb next --json</pre>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="pillars" aria-label="Core capabilities">
-        <article>
-          <div class="feature-head">
-            <span class="icon-badge" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <rect x="3" y="5" width="7" height="6" rx="1.5"></rect>
-                <rect x="14" y="5" width="7" height="6" rx="1.5"></rect>
-                <rect x="3" y="13" width="7" height="6" rx="1.5"></rect>
-                <path d="M14 16h7"></path>
-                <path d="M17.5 13v6"></path>
-              </svg>
-            </span>
-            <h2>Multi-project baseline</h2>
+      <section id="next-action" class="workflow-section" aria-label="Next action center">
+        <p class="section-eyebrow">Action center</p>
+        <h2 class="section-title">Use kb next as daily navigator</h2>
+        <p class="section-sub">The output is designed to be actionable and copy/paste friendly: run suggestion, rerun kb next, repeat.</p>
+        <div class="workflow-layout">
+          <div class="wf-card">
+            <div class="wf-card-head">
+              <span class="icon-badge icon-badge-small" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <path d="M5 7h14"></path>
+                  <path d="M5 12h10"></path>
+                  <path d="M5 17h8"></path>
+                </svg>
+              </span>
+              <span class="wf-card-title">Expected behavior</span>
+            </div>
+            <ul class="wf-agent-points">
+              <li><span class="wf-point-label">Priority order</span>drift unresolved &rarr; review backlog &rarr; missing docs &rarr; source mirror coverage</li>
+              <li><span class="wf-point-label">Command loop</span>run suggested command, then rerun kb next to move queue forward</li>
+              <li><span class="wf-point-label">Machine-readable</span>use kb next --json for scripts and automation hooks</li>
+            </ul>
+            <div class="wf-card-links">
+              <a class="chip-link" href="./cli-commands.html">CLI commands catalog</a>
+              <a class="chip-link" href="./test-cases.html">Manual test catalog</a>
+            </div>
           </div>
-          <p>One KB structure for apps, APIs, internal tools, and AI-heavy systems.</p>
-        </article>
-        <article>
-          <div class="feature-head">
-            <span class="icon-badge" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <path d="M12 3 5.5 6v5.5c0 4.2 2.6 7.4 6.5 9.5 3.9-2.1 6.5-5.3 6.5-9.5V6z"></path>
-                <path d="m9.4 12.2 1.8 1.8 3.5-4"></path>
-              </svg>
-            </span>
-            <h2>Governance-first</h2>
+          <div class="wf-card">
+            <div class="wf-card-head">
+              <span class="icon-badge icon-badge-small" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <path d="M6 4h12v16H6z"></path>
+                  <path d="M9 8h6"></path>
+                  <path d="M9 12h6"></path>
+                </svg>
+              </span>
+              <span class="wf-card-title">Companion commands</span>
+            </div>
+            <div class="cmd-table">
+              <div class="cmd-row">
+                <code class="cmd-name">kb scan --recursive --depth=2</code>
+                <span class="cmd-desc">Make drift explicit with impact evidence.</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb verify &lt;doc&gt;</code>
+                <span class="cmd-desc">Close resolved review items with verification stamp.</span>
+              </div>
+              <div class="cmd-row">
+                <code class="cmd-name">kb doctor --strict</code>
+                <span class="cmd-desc">Use as release-readiness gate for current workspace state.</span>
+              </div>
+            </div>
           </div>
-          <p>Verification state, review cadence, and drift control are built into the template.</p>
-        </article>
-        <article>
-          <div class="feature-head">
-            <span class="icon-badge" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <rect x="7" y="7" width="10" height="10" rx="2"></rect>
-                <path d="M9 11.5h6"></path>
-                <path d="M9 14.5h4"></path>
-                <path d="M12 3v2"></path>
-                <path d="M4 12H2"></path>
-                <path d="M22 12h-2"></path>
-                <path d="M6 6 4.5 4.5"></path>
-                <path d="m18 6 1.5-1.5"></path>
-              </svg>
-            </span>
-            <h2>AI Agent-ready</h2>
-          </div>
-          <p>Prompt packs and operating rules let agents work with less guesswork and less drift. <code>kb init</code> auto-detects the active IDE, generates the relevant adapter file, and creates project-scoped KB prompts for the first Copilot handoff.</p>
-        </article>
+        </div>
       </section>
 
-      <section class="pillars" aria-label="Latest release">
-        <article>
-          <div class="feature-head">
-            <span class="icon-badge" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <path d="M7 4.5h7l3 3V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2z"></path>
-                <path d="M14 4.5v3h3"></path>
-                <path d="M8.5 12h7"></path>
-                <path d="M8.5 15.5h5"></path>
-              </svg>
-            </span>
-            <h2>Latest Release: v2.2.0</h2>
-          </div>
-          <p>Source Mirror ships: <code>kb extract &lt;source-file&gt; [--target-doc=&lt;path&gt;]</code> generates a structured AI extraction prompt for any source file and tracks source-to-doc linkage in <code>.kb/source-index.json</code>. <code>kb scan</code> now reports stale docs (source changed since last extraction). The Chaos Coefficient formula gains a <code>stale_penalty</code>: stale source mirror docs proportionally reduce the coverage score. CLI never calls an LLM directly — it creates a prompt file you run in Copilot, Claude, or ChatGPT. Also in v2.1: <code>kb intent extract &lt;commit-range&gt;</code> retroactively packages ad-hoc KB commits into archived sub-intents, and <code>kb release notes --with-intents</code> enriches output with intent context.</p>
-          <p><a class="text-link" href="./docs.html?path=TEMPLATE_CHANGELOG.md">Read the full release notes in the template changelog &rarr;</a></p>
-        </article>
-      </section>
-
-      <section id="getting-started" class="gs-section" aria-label="Getting started">
-        <p class="section-eyebrow">Get started</p>
-        <h2 class="section-title">Getting Started In 3 Steps</h2>
-        <p class="section-sub">
-          Before you begin, make sure you have <strong>Node.js 18+</strong>, <strong>Git</strong>, and a code editor
-          (VS Code, Cursor, or Claude recommended). No other runtime or service is required to bootstrap a local KB.
-          <a class="text-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Read the full setup guide in Docs &rarr;</a>
-        </p>
-
-        <div class="gs-steps">
-
-          <div class="gs-card">
-            <div class="gs-card-head">
-              <span class="gs-step-num">01</span>
-              <div>
-                <h3>Install + Initialize KB</h3>
-                <p>One-liner with <code>npx</code> (no global install) is the fastest path. Or install globally if you'll use <code>kb</code> often. Mode is auto-detected (private-git if <code>.git</code> exists, otherwise tracked). The <code>@kb</code> agent and <code>/kb-*</code> prompts only appear <em>after</em> <code>kb init</code> writes them into your repo.</p>
-              </div>
-            </div>
-            <div class="code-block">
-              <div class="code-label">Terminal — fastest (no install)</div>
-<pre>cd &lt;your-repo&gt;
-npx @williamduong/kb@latest init --yes</pre>
-            </div>
-            <div class="code-block">
-              <div class="code-label">Terminal — global install</div>
-<pre>npm install -g @williamduong/kb@latest
-cd &lt;your-repo&gt;
-kb init</pre>
-            </div>
-            <div class="gs-card-links">
-              <a class="chip-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">Setup guide</a>
-              <a class="chip-link" href="./docs.html?path=TEMPLATE_CHANGELOG.md">Release notes</a>
-            </div>
-          </div>
-
-          <div class="gs-card">
-            <div class="gs-card-head">
-              <span class="gs-step-num">02</span>
-              <div>
-                <h3>Drive the KB from chat with /kb-run</h3>
-                <p>Open Copilot Chat (VS Code, Cursor, Claude) in your workspace and run <code>/kb-run</code>. It auto-inits if needed, writes a runtime plan, and executes one resumable step at a time.</p>
-              </div>
-            </div>
-            <div class="code-block">
-              <div class="code-label">Copilot Chat (VS Code / Cursor / Claude)</div>
-<pre>/kb-plan      # analyze workspace, write knowledge-base/.kb/runtime-plan.md
-/kb-run       # execute next pending step (resumable)
-/kb-ask       # read-only KB-first Q&amp;A (no edits)
-
-@kb What database does this project use?
-@kb What are the main components?
-@kb How do I add an extension?
-@kb audit metadata
-@kb status</pre>
-            </div>
-            <div class="gs-card-links">
-              <a class="chip-link" href="./docs.html?path=12-ai-skills/agent-operating-manual.md">Agent guide</a>
-              <a class="chip-link" href="./docs.html?path=00-start-here/code-qa-index.md">Code Q&amp;A index</a>
-            </div>
-          </div>
-
-          <div class="gs-card">
-            <div class="gs-card-head">
-              <span class="gs-step-num">03</span>
-              <div>
-                <h3>Review & Publish</h3>
-                <p>Review generated stubs, fill in content, then run <code>kb maintain</code> for one-command sync and validation. Your KB is now ready for team collaboration and AI agent reference.</p>
-              </div>
+      <section id="troubleshoot" class="workflow-section" aria-label="Troubleshooting">
+        <p class="section-eyebrow">Troubleshooting</p>
+        <h2 class="section-title">If you get stuck, start here</h2>
+        <p class="section-sub">Run diagnostics first, then follow docs by symptom. This reduces random trial-and-error.</p>
+        <div class="workflow-layout">
+          <div class="wf-card">
+            <div class="wf-card-head">
+              <span class="icon-badge icon-badge-small" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <circle cx="12" cy="12" r="8"></circle>
+                  <path d="M12 8v5"></path>
+                  <path d="M12 16h.01"></path>
+                </svg>
+              </span>
+              <span class="wf-card-title">First-response checklist</span>
             </div>
             <div class="code-block">
               <div class="code-label">Terminal</div>
-<pre>kb maintain
-
-# (Optional) faster checks for large repositories
-kb maintain --fast
-
-# (Optional) reconcile baseline/version metadata
-kb update</pre>
+<pre>kb doctor
+kb status
+kb help --advanced
+kb next</pre>
             </div>
-            <div class="gs-card-links">
-              <a class="chip-link" href="./docs.html?path=README.md">CLI reference</a>
-              <a class="chip-link" href="./docs.html?path=12-ai-skills/version-patch-prompts.md">Maintenance prompts</a>
-            </div>
+            <p class="wf-card-desc">If KB state looks partial or corrupted, use the documented recovery path before re-running init.</p>
           </div>
-
-        </div>
-      </section>
-      <div class="vspace"></div>
-      <section id="workflow" class="workflow-section" aria-label="How it works">
-        <h2 class="section-title">CLI Backbone + Agent Operating Model</h2>
-        <p class="section-sub">The CLI manages the KB lifecycle. The agent stays disciplined because the KB already contains the operating manual, prompt pack, and governance rules it must read first.</p>
-        <div class="workflow-layout">
-
-          <!-- CLI -->
           <div class="wf-card">
             <div class="wf-card-head">
               <span class="icon-badge icon-badge-small" aria-hidden="true">
                 <svg viewBox="0 0 24 24" role="img" focusable="false">
-                  <path d="m5 7 4 5-4 5"></path>
-                  <path d="M12 17h7"></path>
+                  <path d="M6 5.5A2.5 2.5 0 0 1 8.5 3H19v15H8.5A2.5 2.5 0 0 0 6 20.5z"></path>
+                  <path d="M6 5.5v15"></path>
                 </svg>
               </span>
-              <span class="wf-card-title">CLI Backbone</span>
+              <span class="wf-card-title">Where to find answers</span>
             </div>
-            <p class="wf-card-desc">Scaffold, fill, track, and maintain &mdash; the full KB lifecycle in one CLI.</p>
-            <p class="wf-card-group-label">Scaffold &amp; Fill</p>
-            <div class="cmd-table">
-              <div class="cmd-row">
-                <code class="cmd-name">kb init</code>
-                <span class="cmd-desc">Scaffold KB; auto-detect mode, create KB agent prompts, and generate the relevant AI IDE adapter</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb bootstrap</code>
-                <span class="cmd-desc">Scan source code; generate stub docs for arch, API, DB, and ops tiers</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb index</code>
-                <span class="cmd-desc">Build fill-rate summary: doc count, placeholder count per tier</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb questions</code>
-                <span class="cmd-desc">Generate intake questions from placeholders; <code class="cmd-flag">--chat --batch N</code> for 5-question AI chat batches</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb mark</code>
-                <span class="cmd-desc">Set <code class="cmd-flag">kb_state</code> on any doc: template &rarr; autofilled &rarr; needs-review &rarr; verified</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb normalize-state</code>
-                <span class="cmd-desc">Assign <code class="cmd-flag">kb_state: template</code> to all docs that are currently unset</span>
-              </div>
-            </div>
-            <p class="wf-card-group-label">Lifecycle</p>
-            <div class="cmd-table">
-              <div class="cmd-row">
-                <code class="cmd-name">kb plan</code>
-                <span class="cmd-desc">Manage finalization plan items (<code class="cmd-flag">list</code> / <code class="cmd-flag">add</code>)</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb show / hide</code>
-                <span class="cmd-desc">Expose or retract the KB mount in private-git mode</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb status</code>
-                <span class="cmd-desc">Report KB presence, mode, and state with a <code class="cmd-flag">--json</code> mode for prompts and CI</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb ide</code>
-                <span class="cmd-desc"><code class="cmd-flag">enable</code> / <code class="cmd-flag">disable</code> IDE integration (Copilot, Cursor, Claude) without touching internals</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb maintain</code>
-                <span class="cmd-desc">One-command maintenance pipeline: sync + doc checks + test + doctor</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb sync</code>
-                <span class="cmd-desc">Collect drift evidence since baseline; write sync report</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb update</code>
-                <span class="cmd-desc">Run sync then stamp the new template version state (refuses to downgrade)</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb doctor</code>
-                <span class="cmd-desc">Publish-readiness checks; <code class="cmd-flag">--strict</code> exits&nbsp;1 on any WARN</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb test</code>
-                <span class="cmd-desc">Smoke-test template structure against expected schema</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb uninstall</code>
-                <span class="cmd-desc">Remove KB content and generated AI helper files; <code class="cmd-flag">--keep-ai-files</code> preserves IDE adapters</span>
-              </div>
-            </div>
-            <p class="wf-card-group-label">Analysis &amp; Intelligence</p>
-            <div class="cmd-table">
-              <div class="cmd-row">
-                <code class="cmd-name">kb impact</code>
-                <span class="cmd-desc">Recursive impact analysis: traverse <code class="cmd-flag">related_strong</code> + <code class="cmd-flag">binds_to</code> edges to surface affected docs</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb scan</code>
-                <span class="cmd-desc">Scan git diff since baseline, bind code changes to docs, write <code class="cmd-flag">impact.json</code>; <code class="cmd-flag">--recursive</code> expands neighbours</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb verify</code>
-                <span class="cmd-desc">Stamp <code class="cmd-flag">last_verified</code> + verified commit on a doc; <code class="cmd-flag">--all</code> clears resolved entries from impact.json</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb baseline</code>
-                <span class="cmd-desc">Inspect or set the source git baseline (<code class="cmd-flag">show</code> / <code class="cmd-flag">set &lt;sha&gt;</code> / <code class="cmd-flag">set --to-head</code>)</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb chaos</code>
-                <span class="cmd-desc">Compute KB Chaos Coefficient (0&ndash;100): aggregates debt, entropy, coverage gap, cognitive load; detects spikes &ge;10 pts</span>
-              </div>
-            </div>
-            <p class="wf-card-group-label">Graph &amp; Release</p>
-            <div class="cmd-table">
-              <div class="cmd-row">
-                <code class="cmd-name">kb graph</code>
-                <span class="cmd-desc"><code class="cmd-flag">export</code> writes entity/relation JSONL; <code class="cmd-flag">check</code> validates node references and relation types</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb release</code>
-                <span class="cmd-desc"><code class="cmd-flag">init-pipeline</code> / <code class="cmd-flag">plan</code> / <code class="cmd-flag">run</code> &mdash; declare your release as YAML and execute it; <code class="cmd-flag">notes</code> generates release notes from git range</span>
-              </div>
-            </div>
-            <p class="wf-card-group-label">Intent Workspace</p>
-            <div class="cmd-table">
-              <div class="cmd-row">
-                <code class="cmd-name">kb intent create</code>
-                <span class="cmd-desc">Create a structured workspace for a KB change batch; suggests ID from current git branch</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb intent apply</code>
-                <span class="cmd-desc">Write staged files to KB core, archive workspace; conflict detection + resolution strategy shown before proceeding</span>
-              </div>
-              <div class="cmd-row">
-                <code class="cmd-name">kb intent suggest-lessons</code>
-                <span class="cmd-desc">Analyze recent applied intents; surface lesson candidates to improve the KB over time</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Agent -->
-          <div class="wf-card">
-            <div class="wf-card-head">
-              <span class="icon-badge icon-badge-small" aria-hidden="true">
-                <svg viewBox="0 0 24 24" role="img" focusable="false">
-                  <rect x="7" y="7" width="10" height="10" rx="2"></rect>
-                  <path d="M9 11.5h6"></path>
-                  <path d="M12 3v2"></path>
-                </svg>
-              </span>
-              <span class="wf-card-title">Agent Operating Model</span>
-            </div>
-            <p class="wf-card-desc">The KB is the agent&rsquo;s source of truth. The CLI keeps it coherent; the agent reads first, then acts.</p>
-            <ul class="wf-agent-points">
-              <li>
-                <span class="wf-point-label">Read before acting</span>
-                Opens <code>INDEX.md</code> + operating manual on every session start.
-              </li>
-              <li>
-                <span class="wf-point-label">Prompt Pack</span>
-                Pre-built workflows for each action &mdash; no ad-hoc processes invented.
-              </li>
-              <li>
-                <span class="wf-point-label">Revision-aware</span>
-                Checks baseline stamp to detect stale docs before trusting content.
-              </li>
-              <li>
-                <span class="wf-point-label">Verify after writing</span>
-                Runs <code>kb doctor</code> and prepares KB changes to ship with related code updates.
-              </li>
-            </ul>
             <div class="wf-card-links">
-              <a class="chip-link" href="./docs.html?path=12-ai-skills/agent-operating-manual.md">Agent Operating Manual</a>
-              <a class="chip-link" href="./docs.html?path=12-ai-skills/prompt-pack.md">Prompt Library</a>
-              <a class="chip-link" href="./docs.html?path=00-start-here/repository-revision-state.md">Revision State</a>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      <section class="flows-section" aria-label="Core workflows">
-        <p class="section-eyebrow">In practice</p>
-        <h2 class="section-title">Three Core Workflows</h2>
-        <p class="section-sub">The KB fits into three recurring moments in any project lifecycle.</p>
-
-        <div class="flow-groups">
-
-          <div class="flow-group">
-            <h3 class="flow-title">
-              <span class="flow-num">1</span>
-              First init &mdash; bootstrapping a new knowledge base
-            </h3>
-            <div class="flow-row" role="list">
-              <div class="flow-step" role="listitem">
-                <span class="flow-step-label">Prereqs</span>
-                <span class="flow-step-body">Git repo + Node.js 18+</span>
-              </div>
-              <div class="flow-step" role="listitem">
-                <span class="flow-step-label">Install</span>
-                <span class="flow-step-body"><code>npm install -g @williamduong/kb@latest</code></span>
-              </div>
-              <div class="flow-step" role="listitem">
-                <span class="flow-step-label">Scaffold</span>
-                <span class="flow-step-body"><code>kb init --mode private-git</code><br>KB lands in <code>.git/project-kb/</code></span>
-              </div>
-              <div class="flow-step" role="listitem">
-                <span class="flow-step-label">Mount</span>
-                <span class="flow-step-body"><code>kb show</code> exposes visible symlink in workspace</span>
-              </div>
-              <div class="flow-step" role="listitem">
-                <span class="flow-step-label">Bootstrap</span>
-                <span class="flow-step-body"><code>kb bootstrap</code> scans source and fills stub docs for arch, API, DB &amp; ops</span>
-              </div>
-              <div class="flow-step flow-step-accent" role="listitem">
-                <span class="flow-step-label">Fill via chat</span>
-                <span class="flow-step-body"><code>kb questions --chat --batch 1</code> &rarr; paste into AI chat &rarr; agent fills KB &rarr; repeat batches until done</span>
-                <div class="flow-step-links">
-                  <a href="./docs.html?path=12-ai-skills/prompt-pack.md" class="flow-step-btn">Browse prompts &rarr;</a>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flow-group">
-            <h3 class="flow-title">
-              <span class="flow-num">2</span>
-              Vibe coding &mdash; AI-assisted development with a live KB
-            </h3>
-            <div class="flow-row" role="list">
-              <div class="flow-step flow-step-wide" role="listitem">
-                <span class="flow-step-label">Step 1 &mdash; Pick an action prompt</span>
-                <span class="flow-step-body">Choose a prompt that matches what you&rsquo;re building. Paste it into your AI chat to start the session.</span>
-                <div class="flow-step-links">
-                  <a href="./docs.html?path=12-ai-skills/prompting-guide.md" class="flow-step-btn">Build feature</a>
-                  <a href="./docs.html?path=12-ai-skills/prompt-pack.md" class="flow-step-btn">Patch docs</a>
-                  <a href="./docs.html?path=03-architecture/adr/adr-001-json-composition-format.md" class="flow-step-btn">Add ADR</a>
-                  <a href="./docs.html?path=12-ai-skills/version-patch-prompts.md" class="flow-step-btn">Refactor + update KB</a>
-                  <a href="./docs.html?path=12-ai-skills/prompt-pack.md" class="flow-step-btn">See all &rarr;</a>
-                </div>
-              </div>
-              <div class="flow-step flow-step-wide flow-step-accent" role="listitem">
-                <span class="flow-step-label">Step 2 &mdash; KB runs automatically</span>
-                <ul class="flow-step-list">
-                  <li>Reads <code>INDEX.md</code> + operating manual for grounding</li>
-                  <li>Fills or updates relevant KB docs aligned with code changes</li>
-                  <li>Stamps <code>verification</code> and <code>time_state</code> fields</li>
-                  <li>Runs <code>kb doctor</code> and prepares doc updates for the same changeset</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div class="flow-group">
-            <h3 class="flow-title">
-              <span class="flow-num">3</span>
-              Source sync &mdash; reflecting code changes back into KB
-            </h3>
-            <p class="flow-note">After a successful bootstrap, run <code>kb maintain</code> as your default maintenance path. Use <code>kb sync --accept-baseline</code> only after reviewing drift evidence.</p>
-            <div class="flow-row" role="list">
-              <div class="flow-step" role="listitem">
-                <span class="flow-step-label">Step 1 &mdash; Trigger</span>
-                <span class="flow-step-body">Run <code>kb maintain</code> manually<br>&mdash; or ask your AI agent to execute <code>kb maintain</code> in this workspace</span>
-              </div>
-              <div class="flow-step" role="listitem">
-                <span class="flow-step-label">Step 2 &mdash; KB auto-runs</span>
-                <ul class="flow-step-list">
-                  <li>Collects drift evidence from last baseline</li>
-                  <li>Updates affected KB docs to match source</li>
-                  <li>Stamps revision state + publishes sync report</li>
-                </ul>
-              </div>
-              <div class="flow-step flow-step-accent" role="listitem">
-                <span class="flow-step-label">Step 3 &mdash; Continue execution</span>
-                <span class="flow-step-body">Review the sync report, then continue your current coding or documentation workflow with refreshed KB context.</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      <section class="roadmap-section" aria-label="Roadmap">
-        <p class="section-eyebrow">What&rsquo;s coming</p>
-        <h2 class="section-title">Roadmap &amp; Planned Features</h2>
-        <p class="section-sub">The KB template ships in versioned waves. Each wave stands alone in user value while building the foundation for the next. Dates are not committed; ordering is.</p>
-        <div class="roadmap-grid">
-          <div class="roadmap-card">
-            <span class="roadmap-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <path d="M3 12h6l3-7 3 14 3-7h3"></path>
-              </svg>
-            </span>
-            <div>
-              <h3>v1.3 &mdash; Git binding &amp; impact surface <span style="opacity:.7;font-weight:400">(shipped)</span></h3>
-              <p>Bind any KB doc to one or more code paths via <code>kb bind</code>. <code>kb scan</code> walks the diff since the last baseline and reports which docs are impacted, with KB self-edits filtered out.</p>
-            </div>
-          </div>
-          <div class="roadmap-card">
-            <span class="roadmap-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <circle cx="6" cy="6" r="2"></circle>
-                <circle cx="18" cy="6" r="2"></circle>
-                <circle cx="6" cy="18" r="2"></circle>
-                <circle cx="18" cy="18" r="2"></circle>
-                <path d="M8 6h8M6 8v8M18 8v8M8 18h8"></path>
-              </svg>
-            </span>
-            <div>
-              <h3>v1.4 &mdash; Impact engine, recursive expansion, cycle detection <span style="opacity:.7;font-weight:400">(shipped)</span></h3>
-              <p>An in-memory graph (graphology) turns a code change into a ranked list of affected docs. <code>kb scan --recursive</code> expands <code>related_strong</code> neighbours into a transitive impact list, <code>kb verify</code> stamps a verified commit per doc, <code>kb baseline</code> manages the source git baseline, and <code>kb doctor</code> flags strong-edge cycles. Governance: <code>15-governance/impact-policy.md</code>.</p>
-            </div>
-          </div>
-          <div class="roadmap-card">
-            <span class="roadmap-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <path d="M7 4.5h7l3 3V19a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-12a2 2 0 0 1 2-2z"></path>
-                <path d="M14 4.5v3h3"></path>
-                <path d="M8.5 12h7"></path>
-                <path d="M8.5 15.5h5"></path>
-              </svg>
-            </span>
-            <div>
-              <h3>v1.5 &mdash; Catalog &amp; deterministic release notes <span style="opacity:.7;font-weight:400">(shipped)</span></h3>
-              <p>A queryable catalog of every doc, binding, and verification stamp. Release notes are generated deterministically from git history and impact data, ready for any downstream KB. <code>kb release init</code>, <code>kb release list</code>, <code>kb release notes</code>.</p>
-            </div>
-          </div>
-          <div class="roadmap-card">
-            <span class="roadmap-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <path d="M5 12h14"></path>
-                <path d="m13 6 6 6-6 6"></path>
-              </svg>
-            </span>
-            <div>
-              <h3>v1.6 &mdash; Release pipeline orchestrator (optional) <span style="opacity:.7;font-weight:400">(shipped)</span></h3>
-              <p>Declare your release workflow as YAML and execute it with <code>kb release run</code>. Steps run sequentially, outputs are captured, and dangerous commands are rejected before execution. Also includes <code>kb chaos</code> (v1.8 KB Chaos Coefficient) and <code>kb graph export/check</code> (v1.9 entity/relation graph).</p>
-            </div>
-          </div>
-          <div class="roadmap-card">
-            <span class="roadmap-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <rect x="7" y="7" width="10" height="10" rx="2"></rect>
-                <path d="M9 11.5h6"></path>
-                <path d="M12 3v2"></path>
-                <path d="M4 12H2"></path>
-                <path d="M22 12h-2"></path>
-              </svg>
-            </span>
-            <div>
-              <h3>v2.0 &mdash; Intent layer &amp; KB Agent <span style="opacity:.7;font-weight:400">(shipped)</span></h3>
-              <p>Structured intent workspaces (<code>kb intent create/status/list/apply/cancel/suggest-lessons</code>) with conflict detection and resolution strategies. The bundled KB Agent gains Role 4 Reasoner for intent conflict arbitration. <code>ai-decision-context.json</code> archived after each apply for audit.</p>
-            </div>
-          </div>
-          <div class="roadmap-card">
-            <span class="roadmap-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" role="img" focusable="false">
-                <path d="M4 19V5"></path>
-                <path d="M4 19h16"></path>
-                <rect x="6" y="11" width="3" height="6"></rect>
-                <rect x="11" y="7" width="3" height="10"></rect>
-                <rect x="16" y="13" width="3" height="4"></rect>
-              </svg>
-            </span>
-            <div>
-              <h3>v3.0 &mdash; 3-tier KB platform <span style="opacity:.7;font-weight:400">(draft, gated)</span></h3>
-              <p>Workspace, organisation, and platform tiers with shared identity and cross-repo discovery. Locked behind explicit trigger conditions; not committed until usage from v2.x justifies the lift.</p>
+              <a class="chip-link" href="./docs.html?path=00-start-here/how-to-use-this-kb.md">How-to-use guide</a>
+              <a class="chip-link" href="./docs.html?path=00-start-here/repository-revision-state.md">Revision state and drift baseline</a>
+              <a class="chip-link" href="./docs.html?path=15-governance/metadata-schema.md">Metadata schema</a>
+              <a class="chip-link" href="./docs.html?path=00-start-here/finalization-plan.md">Review backlog source of truth</a>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="blog-section" aria-label="Blog and test articles">
-        <p class="section-eyebrow">From the blog</p>
-        <h2 class="section-title">Articles &amp; Field Notes</h2>
-        <p class="section-sub">Real usage notes, verification experiments, and lessons from applying the KB template on live projects.</p>
-        <div class="blog-grid">
-          <div class="blog-card blog-card-soon">
-            <span class="blog-badge">Coming soon</span>
-            <h3>Testing the KB template on a greenfield SaaS project</h3>
-            <p>First-pass notes from bootstrapping a full KB for a new product: what worked, what gaps emerged in the governance layer.</p>
-          </div>
-          <div class="blog-card blog-card-soon">
-            <span class="blog-badge">Coming soon</span>
-            <h3>How bi-temporal tracking changes documentation quality</h3>
-            <p>A look at why "when was this known" matters as much as "what is currently true" for long-lived documentation.</p>
-          </div>
-          <div class="blog-card blog-card-soon">
-            <span class="blog-badge">Coming soon</span>
-            <h3>Agent drift: what happens when the agent skips revision state</h3>
-            <p>Observations from running AI agents on a KB without reading the revision state first — and the inconsistencies that followed.</p>
-          </div>
-        </div>
-        <div class="blog-cta">
-          <a class="btn btn-ghost" href="https://williamresearch.com/">Read the blog &rarr;</a>
+      <section class="roadmap-section" aria-label="Current and future direction">
+        <p class="section-eyebrow">Direction</p>
+        <h2 class="section-title">Now, next, later</h2>
+        <p class="section-sub">Current runtime is optimized for solo execution. Future phases remain explicit and deferred until command surface is shipped.</p>
+        <div class="pillars">
+          <article>
+            <div class="feature-head">
+              <span class="icon-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <path d="M5 12h14"></path>
+                  <path d="m13 6 6 6-6 6"></path>
+                </svg>
+              </span>
+              <h2>Now (v2.3.x reality)</h2>
+            </div>
+            <p>Solo core plus supported Phase-2 subset: strict doctor gate, release notes/catalog, chaos score, intent workspace workflow.</p>
+          </article>
+          <article>
+            <div class="feature-head">
+              <span class="icon-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <path d="M4 19V5"></path>
+                  <path d="M4 19h16"></path>
+                  <rect x="6" y="11" width="3" height="6"></rect>
+                  <rect x="11" y="7" width="3" height="10"></rect>
+                  <rect x="16" y="13" width="3" height="4"></rect>
+                </svg>
+              </span>
+              <h2>Next (when shipped)</h2>
+            </div>
+            <p>PR gate integration and stronger team workflow controls become runtime features once command path is stable and testable.</p>
+          </article>
+          <article>
+            <div class="feature-head">
+              <span class="icon-badge" aria-hidden="true">
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <circle cx="6" cy="6" r="2"></circle>
+                  <circle cx="18" cy="6" r="2"></circle>
+                  <circle cx="6" cy="18" r="2"></circle>
+                  <circle cx="18" cy="18" r="2"></circle>
+                  <path d="M8 6h8M6 8v8M18 8v8M8 18h8"></path>
+                </svg>
+              </span>
+              <h2>Later (deferred)</h2>
+            </div>
+            <p>Cross-project registry, multi-agent orchestrator, and ecosystem-level contract gating stay deferred and should be treated as design review only.</p>
+          </article>
         </div>
       </section>
     </main>
