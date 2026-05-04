@@ -29,6 +29,24 @@ Operational queue for KB maintenance and completion.
 - If later mirrored to Jira, GitHub Issues, or another tracker, this file should still summarize current queue state and linking keys.
 - Do not ask where to place the queue during first-pass KB generation; use this file by default.
 
+## Intent-First Version Contract (Mandatory)
+
+All non-trivial planning/execution work must be tracked through intent workspaces with explicit version ownership.
+
+Required trace chain:
+
+1. Strategic backlog item (portfolio scope)
+2. Version owner intent in `<contentRoot>/intents/_active/<version-scope-id>/`
+3. Intent `plan.md` and `impact.md`
+4. Task-level execution steps inside the intent plan
+
+Mandatory rules:
+
+- Every backlog item must declare a concrete target version (`vX.Y` or `vX.Y.x`), not a generic future bucket.
+- Every target version must map to one active owner intent.
+- New long-term roadmap docs must not be created in `notes/`; use intents.
+- `notes/` is allowed only for historical evidence or short-lived operational scratch.
+
 ## Three-Layer KB Separation (Mandatory)
 
 This project operates with three distinct KB layers. Do not collapse them.
@@ -66,6 +84,7 @@ Rules:
 | KB-008 | Enforce three-layer KB separation for self-hosting (template vs KBRoot local vs installed runtime KB) | knowledge-management | P0 | 2026-05-15 | todo | Add docs and command output wording to consistently reference `<contentRoot>` and prevent template/runtime path confusion in tracked vs private-git modes. |
 | KB-009 | Define focus ownership model (KBRoot local focus vs intent/runtime focus) | knowledge-management | P0 | 2026-05-15 | todo | Keep project execution focus in installed KB runtime artifacts (`.kb/runtime-plan.md`, intents), keep maintainer-only focus in `kb-root/focus.md`, and document non-shipping boundary clearly. |
 | KB-010 | Introduce git-tracked self-host profile for this repository | knowledge-management | P0 | 2026-05-20 | todo | Make self-host KB artifacts explicitly trackable in git without mixing with template payload; keep downstream defaults unchanged. |
+| KB-011 | Enforce intent-first, version-scoped traceability from backlog -> intent -> plan -> task | knowledge-management | P0 | 2026-05-18 | in-progress | Governance intent `v2-4-intent-first-version-governance` defines mandatory chain and sequencing with notes migration. |
 
 ## Refactor Program: Three-Layer Separation + Git-Tracked Self-Hosting
 
@@ -191,6 +210,7 @@ Notes migration policy (locked):
 
 - Keep `notes/` ignored as scratch.
 - Migrate long-term planning into KB intent workspaces under Layer D (`knowledge-base/intents/_active/...`) after self-host install.
+- Every migrated planning scope must be assigned to a version owner intent (`v2-4-*`, `v2-5-*`, etc.) and linked from this backlog.
 
 Generated reports policy (locked):
 

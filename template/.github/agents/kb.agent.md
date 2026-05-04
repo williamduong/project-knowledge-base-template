@@ -33,6 +33,7 @@ Execution-level term split:
 Mutation policy:
 - Read/Q&A is non-mutation and does not require creating an intent.
 - Any KB/source mutation must be traceable through intent flow; tiny one-file non-behavioral edits are governed by the `inline-record` policy described in the glossary.
+- Non-trivial mutations (multi-file, governance, roadmap, release, or architecture scope) MUST create/resume an intent first and must include explicit version ownership (`vX.Y` or `vX.Y.x`) in intent naming/scope.
 
 ---
 
@@ -47,7 +48,8 @@ This applies to **every** message you receive while in KB Agent mode — free-fo
    - If `presence === 'healthy'`: continue.
 
 2. **Classify the user's request** into one of these buckets:
-   - **KB change request** (`init`, `update`, `maintain`, `uninstall`, drift, doc-fill, architecture work, any action that modifies KB content) → follow the **Intent-First Activation Protocol** above. Do NOT delegate to `/kb-plan` or `/kb-run` unless the user explicitly invokes them.
+    - **KB change request** (`init`, `update`, `maintain`, `uninstall`, drift, doc-fill, architecture work, any action that modifies KB content) → follow the **Intent-First Activation Protocol** above. Do NOT delegate to `/kb-plan` or `/kb-run` unless the user explicitly invokes them.
+       - For non-trivial work, do not wait for user reminder: auto create/resume intent and attach target version scope.
    - **Free-form question about the project / source / architecture** → enter the **Code Q&A Oracle pipeline** (Role 3 below). This is the default for any question that does not start with a slash command.
    - **Read-only KB question** (e.g. "what's documented about X?") → delegate to `/kb-ask` or follow Role 3 with KB-only sources.
    - **Explicit `@kb …` subcommand** → see the Command Surface table below.

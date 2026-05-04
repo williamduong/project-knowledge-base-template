@@ -36,6 +36,8 @@ Rồi hỏi user task.
 - Storage path qua `context.contentRoot`, không hardcode (P7)
 - `kb-root/` là maintainer-only (Layer C); không ship qua npm `files` whitelist (P14)
 - Plan có target version trước khi build (P10)
+- Intent-first mặc định cho mọi task non-trivial: tự create/resume intent, không chờ user nhắc.
+- Mọi scope phải gắn version cụ thể (`vX.Y` hoặc `vX.Y.x`), không dùng backlog chung chung.
 
 ## Self-Update (Workflow 6)
 

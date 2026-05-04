@@ -20,6 +20,15 @@ tags:
 
 # How to Use This Knowledge Base Template
 
+## Why This Guide Exists
+
+This file is the human/operator onboarding contract.
+
+- `how-to-use-this-kb.md`: explains decisions, governance rules, and operating model in one place for maintainers and teams.
+- `.github/agents/kb.agent.md` and prompt files: machine-facing execution contract for IDE agents.
+
+They are complementary, not duplicates. Agents can execute without this file, but teams lose a stable, reviewable policy reference if this file is missing.
+
 ## Audience Paths
 
 - New engineer: 00 -> 03 -> 05/04 -> 06 -> 07
@@ -56,6 +65,24 @@ Runtime commands must operate on `<contentRoot>`, not on `template/`.
 - Project runtime focus (downstream repo execution): `<contentRoot>/.kb/runtime-plan.md` + `kb intent` workspaces
 
 If both exist, runtime focus is the source of truth for project execution status. Local KBRoot focus is only for maintainer coordination.
+
+## Intent-First And Version-Scoped Planning (Mandatory)
+
+From now on, all non-trivial KB planning work must be intent-first and version-scoped.
+
+Required chain:
+
+1. Strategic backlog item with explicit target version (`vX.Y` or `vX.Y.x`)
+2. Active owner intent under `<contentRoot>/intents/_active/<version-scope-id>/`
+3. Intent `plan.md` and `impact.md`
+4. Task-level steps tracked inside the intent plan
+
+Operational rules:
+
+- Do not create new long-term roadmap docs in `notes/`.
+- `notes/` stays for historical evidence and short-lived scratch only.
+- If a task mutates KB structure or content across multiple files, create or resume an intent first.
+- Keep one active owner intent per version scope to avoid planning drift.
 
 ## Default Decisions Before Scanning
 

@@ -57,10 +57,12 @@ Plan files: `notes/upgrade-v1.3-*.md` ... `notes/upgrade-v3.0-*.md`.
 ### 4.1 Khi nhận task
 
 1. **Phân loại** task vào 1 trong 5 nhóm: `plan` / `build` / `review` / `release` / `chore`
-2. **Tra `process.md`** xem có workflow chuẩn không → follow strict
-3. **Tra `knowledge.md`** xem có trick/risk liên quan → áp dụng trước
-4. **Check `focus.md`** xem có conflict với active work không
-5. Nếu task vượt scope hiện tại (vd đang v1.3 mà user xin v2.0 work) → **cảnh báo**, hỏi confirm
+2. **Intent-first mặc định**: với task non-trivial, luôn `kb intent list` để resume hoặc `kb intent create` để mở intent mới trước khi làm.
+3. **Plan phải có target version cụ thể** (`vX.Y` hoặc `vX.Y.x`), không dùng scope mơ hồ.
+4. **Tra `process.md`** xem có workflow chuẩn không → follow strict
+5. **Tra `knowledge.md`** xem có trick/risk liên quan → áp dụng trước
+6. **Check `focus.md`** xem có conflict với active work không
+7. Nếu task vượt scope hiện tại (vd đang v1.3 mà user xin v2.0 work) → **cảnh báo**, hỏi confirm
 
 ### 4.2 Khi propose code/plan
 
@@ -117,7 +119,7 @@ Agent có thể tự đề nghị evolve khi gặp:
 - Sửa file trong `.git/` ngoại trừ `.git/project-kb/` qua KB CLI
 - Generate URL, dependency version mà không verify
 - Sửa `principles.md` + `agent.md` ngầm (cần explicit user approval)
-- Commit `.local/` lên git (đã gitignore — nhưng double-check trước mọi git op)
+- Commit nhầm scratch paths lên git (`notes/`, `sample_repo/`, `kb-test-sample/`) — double-check trước mọi git op
 
 ## 7. Output style
 
