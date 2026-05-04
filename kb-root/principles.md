@@ -1,0 +1,122 @@
+# Principles — KB Project Agent
+
+> Nguyên tắc bất biến (đổi cẩn thận, cần explicit user approval).
+> Append nguyên tắc mới vào cuối với section riêng + ngày + lý do.
+
+---
+
+## P1. Code over docs khi mâu thuẫn
+
+Khi plan/doc nói A, code nói B → tin code, update doc.
+Lý do: code là source of truth runtime; doc dễ stale.
+
+## P2. Verify trước assert
+
+Không khẳng định "file X có Y" mà chưa đọc file X. Đọc thật, quote thật.
+Lý do: đã từng tự tin sai về `kb mark` API và phải sửa lại plan v1.3.
+
+## P3. Backward compat strict cho minor bump
+
+Minor version bump (vd v1.3 từ v1.2) **KHÔNG** được phá user v1.2.x.
+- KB cũ không có field mới → behave silently
+- Lệnh cũ giữ signature
+- Migration tự động hoặc tự skip cleanly
+
+## P4. Breaking change chỉ khi major bump + có doc migration
+
+v2.0 được phá v1.x. v1.x không được phá nhau.
+
+## P5. Additive thay vì refactor khi có thể
+
+Thêm file mới > sửa file cũ + thêm field optional > đổi schema bắt buộc.
+Lý do: rollback dễ, blast radius nhỏ.
+
+## P6. Single source of truth cho version
+
+`package.json.version` là canonical. Mọi file khác sync qua `npm run version:sync`.
+KHÔNG hardcode version trong nhiều nơi.
+
+## P7. Storage path qua `context.contentRoot`
+
+KHÔNG hardcode `knowledge-base/.kb/...`. Luôn:
+```js
+const ctx = resolveExistingState({ workspaceRoot });
+const path = path.join(ctx.contentRoot, '.kb', '<file>');
+```
+Lý do: hỗ trợ cả `tracked` và `private-git` mode.
+
+## P8. Baseline từ `state.json`, không parse markdown
+
+`state.sourceRepositoryGitBaseline` là canonical runtime.
+`repository-revision-state.md` chỉ là human render.
+
+## P9. Defer over-engineering — evidence-driven
+
+Feature mới chỉ build khi có:
+- User pain thật (signal cụ thể)
+- Hoặc dependency của feature đã commit
+KHÔNG build "vì sau này có thể cần". Ghi vào carry-forward.
+
+## P10. Plan có target version trước khi build
+
+Mọi feature ≥ 1 ngày work phải:
+- Có file `notes/upgrade-vX.Y-*.md`
+- Có version target rõ
+- Có Phase 0 validation gate
+- Có exit criteria mỗi phase
+
+## P11. Solo workflow ưu tiên reversible
+
+- Tag git ngay khi release để rollback dễ
+- Tránh `git push --force`, `git reset --hard` trên branch chính
+- Confirm trước destructive ops
+- `--dry-run` trước `--apply` cho lệnh nguy hiểm
+
+## P12. Vietnamese discussion, English code
+
+Discussion + plan = tiếng Việt.
+Identifier (function, variable, file path, command) = tiếng Anh.
+Doc cho user downstream = tiếng Anh (template content).
+
+## P13. KB Agent (v2.0) ≠ KB Project Agent (file này)
+
+- **KB Agent** (v2.0 ship feature): observer cho user downstream, sống trong `knowledge-base/.kb/agent/`
+- **KB Project Agent** (`.local/kb-agent/`): chỉ cho William, không ship
+Đừng nhầm lẫn.
+
+## P14. `.local/` không bao giờ commit
+
+`.local/` đã gitignore. Trước mọi `git add`, double-check không add nhầm.
+Trước mọi `git commit -A`, hỏi user confirm.
+
+## P15. Test trên template repo trước downstream
+
+Mọi feature mới dogfood trên chính template repo này trước khi smoke test downstream.
+Lý do: template repo có git history dày, edge case nhiều.
+
+## P16. Mọi phần chưa verify phải có manual follow-up rõ ràng
+
+Nếu trong session còn hạng mục chưa test/verify được bằng tool (smoke downstream, publish, human review, external auth...), agent bắt buộc liệt kê thành checklist "Manual follow-up" để user xử lý sau.
+- Ghi rõ: việc cần làm, command gợi ý, expected outcome
+- Không được kết thúc task chỉ với câu "chưa verify" chung chung
+- Mặc định phản ánh trong mục `Not verified` + `Next`
+
+## P17. Register-first trước khi tạo file mới
+
+Trước khi agent tạo file, bắt buộc khai báo với KB theo thứ tự:
+1. Chọn thư mục: dùng folder hiện có hay tạo folder mới
+2. Chọn thao tác: ưu tiên edit file hiện có; chỉ create khi không thể reuse
+3. Khai báo metadata: mục đích file, tên file, path dự kiến, owner/type/verification ban đầu
+4. Khai báo đăng ký: file sẽ được add vào index/routing nào (`intent-index`, `code-qa-index`, hoặc index folder liên quan)
+
+Không được tạo file trước rồi mới quay lại bổ sung đăng ký.
+
+---
+
+## Append history
+
+| Ngày | Nguyên tắc | Lý do thêm |
+|---|---|---|
+| 2026-04-30 | P1-P15 | Khởi tạo từ context dự án + lessons từ session plan v1.3-v3.0 |
+| 2026-05-01 | P16 | User yêu cầu mọi phần chưa test/verify phải ghi manual follow-up rõ ràng để xử lý sau |
+| 2026-05-01 | P17 | User yêu cầu register-first: phải khai báo folder/edit-vs-create/purpose+path và đăng ký KB trước khi tạo file |
