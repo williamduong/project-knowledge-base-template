@@ -14,7 +14,7 @@
 
 ## Current Phase
 
-**Phase:** R5–R6 (notes migration closeout + 2.3.2 release validation)
+**Phase:** R6 — 2.3.x continuation (v2.3.3 → v2.3.4 → close line)
 
 **Done:**
 - R0: scanned all `.local/kb-agent` references; recovered files from VS Code local history after destructive PowerShell chain.
@@ -50,7 +50,9 @@
 | v2.2.2 | Shipped 2026-05-04 | Superseded |
 | v2.3.1 | Shipped 2026-05-04 | Governance + tooling hardening |
 | v2.3.2 | Shipped 2026-05-05 | Namespace split + notes migration closeout |
-| v2.4.x | Next | Intent-first version governance (seeded) |
+| v2.3.3 | Next (open intent) | Reflective Pulse Protocol |
+| v2.3.4 | Queued (open intent) | Cognitive Drift Signal for kb chaos |
+| v2.4.x | Backlog | Intent-first version governance (seeded) |
 | v2.4+ | Backlog | Intent-driven planning migration follow-up |
 
 ## Notes / Reminders cho session sau
