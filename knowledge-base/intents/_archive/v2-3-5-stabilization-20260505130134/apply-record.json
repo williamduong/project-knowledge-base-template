@@ -1,0 +1,21 @@
+{
+  "intent_id": "v2-3-5-stabilization",
+  "mode": "full",
+  "applied_at": "2026-05-05T06:00:46.155Z",
+  "applied_files": [
+    "kb-root/agent.md",
+    "knowledge-base/12-ai-skills/agent-operating-manual.md",
+    "src/commands/intent.js",
+    "test/commands/intent.test.js"
+  ],
+  "change_type": "governance",
+  "change_scope": [
+    "kb-root/agent.md",
+    "knowledge-base/12-ai-skills/agent-operating-manual.md",
+    "src/commands/intent.js",
+    "test/commands/intent.test.js"
+  ],
+  "impact_signals": [],
+  "decision_summary": ">",
+  "review_after": "2026-05-19"
+}

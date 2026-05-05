@@ -353,8 +353,8 @@ function cancelIntent(contentRoot, intentId) {
  */
 function archiveFolderName(intentId, timestamp) {
   const ts = (timestamp || new Date().toISOString())
-    .replace(/[-:T]/g, '')
-    .slice(0, 15);
+    .replace(/[-:T.]/g, '')
+    .slice(0, 14);
   return `${intentId}-${ts}`;
 }
 
