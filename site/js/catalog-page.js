@@ -74,7 +74,7 @@
       '    <h3>' + escapeHtml(item.id || 'TC') + '</h3>',
       '    ' + statusChip(item.status),
       '  </header>',
-      '  <p class="meta"><strong>Level:</strong> ' + escapeHtml(item.level || '-') + ' <span class="dot">•</span> <strong>Target:</strong> ' + escapeHtml(item.targetRepo || '-') + '</p>',
+      '  <p class="meta"><strong>Cadence:</strong> ' + escapeHtml(item.cadence || item.level || '-') + ' <span class="dot">•</span> <strong>When:</strong> ' + escapeHtml(item.context || item.targetRepo || '-') + '</p>',
       '  <p><strong>Objective:</strong> ' + escapeHtml(item.objective || '') + '</p>',
       '  <div><strong>Steps:</strong><ol>' + steps + '</ol></div>',
       '  <p><strong>Expected:</strong> ' + escapeHtml(item.expected || '') + '</p>',

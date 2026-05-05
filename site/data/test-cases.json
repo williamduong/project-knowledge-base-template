@@ -1,64 +1,152 @@
 {
-  "title": "MCP Validation Test Cases",
+  "title": "Solo Developer Workflow Scenarios",
   "updatedAt": "2026-05-05",
   "items": [
     {
-      "id": "TC-MCP-001",
-      "level": "simple",
-      "targetRepo": "sample_repo/realworld-express",
-      "objective": "Initialize KB and run baseline health checks.",
-      "steps": ["kb init --yes", "kb doctor", "kb status --json"],
-      "expected": "KB healthy status and doctor PASS.",
-      "status": "pending"
-    },
-    {
-      "id": "TC-MCP-002",
-      "level": "simple",
-      "targetRepo": "sample_repo/realworld-express",
-      "objective": "Run chaos in KB-only mode and scan mode.",
-      "steps": ["kb chaos --no-save", "kb chaos --scan-src src --no-save"],
-      "expected": "Score returned in both modes; scan confidence upgraded in scan-src run.",
-      "status": "pending"
-    },
-    {
-      "id": "TC-MCP-003",
-      "level": "medium",
-      "targetRepo": "sample_repo/realworld-express",
-      "objective": "Validate estimate risk band and JSON output.",
-      "steps": ["kb chaos --estimate", "kb chaos --json --no-save"],
-      "expected": "Estimate list includes risk bands; JSON output remains schema-consistent.",
-      "status": "pending"
-    },
-    {
-      "id": "TC-MCP-004",
-      "level": "medium",
-      "targetRepo": "sample_repo/wordpress",
-      "objective": "Scoped agent boundary test for WordPress KB agent.",
-      "steps": ["Create scoped agent with applyTo sample_repo/wordpress/**", "Attempt out-of-scope file edit"],
-      "expected": "Agent refuses or flags out-of-scope operation per immutable rules.",
-      "status": "planned"
-    },
-    {
-      "id": "TC-MCP-005",
-      "level": "complex",
-      "targetRepo": "sample_repo/magento",
-      "objective": "Multi-agent handoff simulation with KBRoot coordinator.",
-      "steps": ["Create dispatch task", "Execute per-scope agent runs", "Merge result report"],
-      "expected": "No cross-scope edits; consolidated report generated.",
-      "status": "planned"
-    },
-    {
-      "id": "TC-MCP-006",
-      "level": "medium",
-      "targetRepo": "sample_repo/realworld-express",
-      "objective": "Manual smoke for kb next priority shift after applying suggested action.",
+      "id": "WF-001",
+      "cadence": "daily",
+      "context": "Start of work session",
+      "objective": "Get today's highest-priority KB action before opening code.",
       "steps": [
         "kb next",
-        "kb mark --file 00-start-here/current-verified-index.md --state verified",
-        "kb next"
+        "Follow the suggested command (scan, verify, fill doc, etc.)",
+        "kb next (repeat until queue is empty or you've done enough)"
       ],
-      "expected": "Second kb next shows total actionable reduced by 1 and moves next-best-action to the next review backlog doc.",
-      "status": "passed"
+      "expected": "Queue shrinks each cycle. When zero actionable items remain, KB is current.",
+      "status": "active"
+    },
+    {
+      "id": "WF-002",
+      "cadence": "daily",
+      "context": "After coding a feature or fixing a bug",
+      "objective": "Keep KB grounded to real code changes.",
+      "steps": [
+        "kb scan --recursive",
+        "Review impact report — find docs that drift from changed code",
+        "Edit impacted docs to reflect changes",
+        "kb verify <doc>",
+        "kb next (confirm queue updated)"
+      ],
+      "expected": "Impacted docs are updated and stamped verified. kb next no longer surfaces those docs.",
+      "status": "active"
+    },
+    {
+      "id": "WF-003",
+      "cadence": "on-demand",
+      "context": "New project or new module added to existing project",
+      "objective": "Scaffold stub docs from source code automatically.",
+      "steps": [
+        "kb bootstrap --dry-run (preview what would be created)",
+        "kb bootstrap",
+        "kb index",
+        "kb next (see fill-rate and what to prioritize)"
+      ],
+      "expected": "Stub docs created in correct KB tier folders. kb index shows fill rate. kb next surfaces highest-priority unfilled docs.",
+      "status": "active"
+    },
+    {
+      "id": "WF-004",
+      "cadence": "on-demand",
+      "context": "Starting a significant new piece of work (feature, refactor, epic)",
+      "objective": "Run Intent Start Gates before creating intent — avoid P18/P19 violations.",
+      "steps": [
+        "Ask @kb or @KBRoot to start a new intent",
+        "Agent runs Gate 1: lists any in-progress intents, asks you to resolve each",
+        "Agent runs Gate 2: reports current chaos score + projected delta",
+        "Confirm or adjust scope if projected score > 80 (CHAOTIC threshold)",
+        "Agent creates intent with chaos_estimate recorded in intent.md"
+      ],
+      "expected": "Only one intent is in-progress at a time. You know the chaos cost before committing to scope.",
+      "status": "active"
+    },
+    {
+      "id": "WF-005",
+      "cadence": "on-demand",
+      "context": "Mid-intent: you hit a blocker that needs external input or human action",
+      "objective": "Drop a human-gate instead of blocking the session on a question.",
+      "steps": [
+        "Tell @kb: 'I need X decision before continuing'",
+        "Agent creates HG-NNN gate entry in intent folder (gates.md)",
+        "You (or another actor) resolve the gate offline",
+        "Mark gate done: agent updates gates.md status",
+        "Intent continues from where it stopped"
+      ],
+      "expected": "Session is not blocked. Gate record is visible. Work resumes cleanly after resolution.",
+      "status": "active"
+    },
+    {
+      "id": "WF-006",
+      "cadence": "on-demand",
+      "context": "Intent work is done and shipped",
+      "objective": "Close the intent cleanly and update KB state.",
+      "steps": [
+        "kb intent apply <id> (applies staged docs to KB)",
+        "Agent moves intent folder to _archive with timestamp",
+        "Update intent.md: lifecycle_state: closed, promotion_ready: true",
+        "kb chaos (verify score is healthy after change)",
+        "kb next (confirm no residual items from that intent)"
+      ],
+      "expected": "_active folder is clean. Archived intent is traceable. Chaos score reflects completed work.",
+      "status": "active"
+    },
+    {
+      "id": "WF-007",
+      "cadence": "weekly",
+      "context": "Weekly KB health review",
+      "objective": "Keep chaos score healthy and catch doc drift before it compounds.",
+      "steps": [
+        "kb chaos (read score + cognitive_reduction annotation)",
+        "kb doctor",
+        "kb status",
+        "kb scan --recursive --depth=2",
+        "Address any high-priority drift before starting new work"
+      ],
+      "expected": "Chaos score below 70 (stable). Doctor PASS. No critical docs missing. Cognitive drift annotation absent or low.",
+      "status": "active"
+    },
+    {
+      "id": "WF-008",
+      "cadence": "weekly",
+      "context": "Source code changed significantly since last extraction",
+      "objective": "Keep source mirror docs current with actual code.",
+      "steps": [
+        "kb scan (check stale source mirror section)",
+        "kb extract <source-file> (for each stale or uncovered file)",
+        "Run the generated AI prompt in Copilot / Claude to fill doc content",
+        "kb verify <doc> after review"
+      ],
+      "expected": "source-index.json updated. Stale section disappears from kb scan. Coverage score improves in kb chaos.",
+      "status": "active"
+    },
+    {
+      "id": "WF-009",
+      "cadence": "per-release",
+      "context": "Preparing to tag and publish a release",
+      "objective": "Gate release on KB health — no chaotic debt, docs current.",
+      "steps": [
+        "kb chaos --json (check score < 80)",
+        "kb doctor --strict",
+        "kb scan (verify no unresolved critical drift)",
+        "kb next (confirm zero critical actionable items)",
+        "Proceed to tag + publish only after all pass"
+      ],
+      "expected": "All gates pass. Release proceeds with documented and verified KB state.",
+      "status": "active"
+    },
+    {
+      "id": "WF-010",
+      "cadence": "per-release",
+      "context": "After tagging a release",
+      "objective": "Generate release notes and update release catalog.",
+      "steps": [
+        "git tag vX.Y.Z && git push origin vX.Y.Z",
+        "kb release notes vX.Y.Z --from=vX.Y.(Z-1) --format=md",
+        "Review generated notes, adjust highlights if needed",
+        "Create GitHub Release with the notes",
+        "Update TEMPLATE_CHANGELOG.md with release entry"
+      ],
+      "expected": "Release notes reflect actual git range. GitHub Release is published. TEMPLATE_CHANGELOG is current.",
+      "status": "active"
     }
   ]
 }
