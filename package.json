@@ -88,5 +88,8 @@
     "graphology-traversal": "^0.3.1",
     "js-yaml": "^4.1.1",
     "minimatch": "^10.2.5"
+  },
+  "devDependencies": {
+    "@williamduong/kb": "^2.3.6"
   }
 }

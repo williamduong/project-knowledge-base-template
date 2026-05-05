@@ -1,0 +1,15 @@
+{
+  "intent_id": "v2-3-6-planned-backlog",
+  "mode": "full",
+  "applied_at": "2026-05-05T06:33:56.701Z",
+  "applied_files": [
+    "kb-root/process.md"
+  ],
+  "change_type": "governance",
+  "change_scope": [
+    "kb-root/process.md"
+  ],
+  "impact_signals": [],
+  "decision_summary": "Add mandatory focus.md update step (step 7) to Workflow 7 Session Handoff — prevents stale bootstrap context across sessions.",
+  "review_after": null
+}

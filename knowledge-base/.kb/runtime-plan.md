@@ -1,28 +1,27 @@
 ---
-plan_version: 1
+plan_version: 2
 created: 2026-05-04
-last_updated: 2026-05-04
-current_step: 6
+last_updated: 2026-05-05
+current_step: 2
 metadata_policy: advisory
-intent_id: v2-3-2-closure-pass
+intent_id: v2-3-6-planned-backlog
 ---
 
 # KB Runtime Plan
 
-> Generated and curated for the `2.3.2` closure pass. This plan is the execution checklist for closing the `2.3.x` line before opening `2.4`.
+> Inter-release state after v2.3.6. Active intent: `v2-3-6-planned-backlog` (governance).
+> Next milestone: close out v2.3.6 intent, then open v2.4.x planning.
 
 ## Steps
 
-- [x] step-1 (status: done) — custom:classify-post-v2-3-1-scope — Confirm every unreleased change after tag `v2.3.1` is either `ship in 2.3.2` or `defer to >=2.4` under an explicit intent.
-- [x] step-2 (status: done) — custom:close-notes-migration — Execute supporting intent `INT-2-3-2-notes-migration-closeout` and record any deferred note categories with reasons.
-- [x] step-3 (status: done) — custom:sync-self-host-state — Update self-host runtime state and maintainer status docs so they no longer report stale `2.2.2`.
-- [x] step-4 (status: done) — custom:reconcile-v2-3-intents — Resolve the stale `v2-3-1-release-publish` intent and remove ambiguity from any remaining active `v2-3-*` intents.
-- [x] step-5 (status: done) — maintain — Run the `2.3.2` closeout validation slice: `version:check`, `test:all`, `pack:smoke`, and downstream clean `kb init` projection smoke.
-- [x] step-6 (status: done) — custom:prepare-v2-3-2-release — Prepare release notes/version sync for `2.3.2` and confirm the line is closed cleanly before starting `2.4`.
+- [x] step-1 (status: done) — custom:ship-v2-3-6 — Release v2.3.6 hotfix (archiveFolderName trailing dot EPERM on Windows). Published npm, tagged, GitHub release created.
+- [ ] step-2 (status: pending) — custom:close-v2-3-6-intent — Run `kb intent apply v2-3-6-planned-backlog` to finalize the governance change (Workflow 7 focus.md step). The staged `kb-root/process.md` was already committed manually; apply closes the intent record.
+- [ ] step-3 (status: pending) — custom:triage-v2-3-6-backlog — Review remaining items in `v2-3-6-planned-backlog` (if any beyond the committed change). Close or promote to v2.4.x scope.
+- [ ] step-4 (status: not-started) — custom:open-v2-4-planning — Create intent `v2-4-0-extension-scaffold` and draft plan in `notes/upgrade-v2.4-extension-scaffold-plan.md`. Scope: VSCode extension scaffold + core commands port.
 
 ## Notes
 
-- Owner intent: `v2-3-2-closure-pass`.
-- Supporting governance intent: `INT-2-3-2-notes-migration-closeout`.
-- Historical release intent `v2-3-1-release-publish` must be resolved as part of step 4 before `2.3.2` can be considered closed.
-- `v2-4+` intents stay active as forward owners but must not absorb unresolved `2.3.x` scope silently.
+- `v2-3-6-planned-backlog` staged `kb-root/process.md` — change committed to git but `kb intent apply` not yet executed.
+- `kb` not installed globally — use `node ./bin/kb.js` locally or `npx @williamduong/kb` downstream.
+- Known backlog bug (not yet scoped): `kb uninstall --force` removes tracked `.github/hooks/revision-state-guard.json`. Defer to v2.4.x or patch in v2.3.7 if blocking.
+- v2.4.x forward: VSCode extension scaffold → v2.5 chat participant → v2.6 Marketplace publish → v3.0 full agent surface.
