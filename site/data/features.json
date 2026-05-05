@@ -1,6 +1,6 @@
 {
   "title": "KB Feature Catalog",
-  "updatedAt": "2026-05-04",
+  "updatedAt": "2026-05-05",
   "items": [
     {
       "id": "FT-001",
@@ -47,7 +47,7 @@
       "name": "Chaos Coefficient",
       "scope": "Observation",
       "status": "active",
-      "summary": "Compute AI confidence index with deep scan, KB context signals, and risk estimate bands. v2.2 adds stale_penalty: stale source mirror docs proportionally reduce coverage score.",
+      "summary": "Compute AI confidence index with deep scan, KB context signals, and risk estimate bands. v2.2 adds stale_penalty for stale source mirror docs. v2.3.3 adds cognitive drift signals: agreement_density and grounding_gap feed into cognitive_reduction via subtractive-v2 formula. T1/T2/T3 pulse-points surface drift before agent commits to plan.",
       "references": ["kb chaos", "src/commands/chaos.js", "src/lib/observation.js", "src/lib/source-index.js"]
     },
     {
@@ -73,6 +73,22 @@
       "status": "active",
       "summary": "Retroactive intent extraction: kb intent extract packages ad-hoc KB commits into archived sub-intents. Release notes enrichment: --with-intents flag adds intent context to kb release notes output.",
       "references": ["kb intent extract", "src/commands/intent.js", "src/commands/release.js"]
+    },
+    {
+      "id": "FT-011",
+      "name": "Intent Start Gates",
+      "scope": "Governance",
+      "status": "active",
+      "summary": "Two-gate protocol before any new intent: Gate 1 checks for existing in-progress intents and requires user resolution; Gate 2 reports current chaos score + projected delta before proceeding. Cannot be skipped. Applies to both KB Agent and KBRoot.",
+      "references": ["template/.github/agents/kb.agent.template.md", "template/12-ai-skills/agent-operating-manual.md", "kb-root/principles.md P18/P19"]
+    },
+    {
+      "id": "FT-012",
+      "name": "Human-Gate Protocol",
+      "scope": "Governance",
+      "status": "active",
+      "summary": "Structured handoff mechanism for tasks requiring human input, approval, or external action during intent execution. Agent drops a typed HG-NNN gate record instead of blocking on inline chat questions. Supports actor types: human, human-role, external-ai, external-system.",
+      "references": ["knowledge-base/14-templates/gates.md.template", "template/12-ai-skills/agent-operating-manual.md", "kb-root/process.md W9"]
     },
     {
       "id": "FT-008",

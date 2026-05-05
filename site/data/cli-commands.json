@@ -1,6 +1,6 @@
 {
   "title": "KB CLI Command Catalog",
-  "updatedAt": "2026-05-04",
+  "updatedAt": "2026-05-05",
   "items": [
     {"command":"kb init","group":"core","stability":"stable","purpose":"Install KB template into a repository."},
     {"command":"kb update","group":"core","stability":"stable","purpose":"Sync KB state and template metadata updates."},
