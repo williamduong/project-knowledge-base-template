@@ -1,4 +1,4 @@
----
+﻿---
 title: Template Changelog
 type: orientation
 status: active
@@ -77,6 +77,47 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 - TODO
 
 ## Current Entries
+
+## v2.3.5 - 2026-05-05
+
+### Summary
+
+- `kb intent list` enhanced: displays status/mode/staged_count as a formatted table; pager activates automatically when output exceeds terminal height (`less` on Unix, `more` on Windows).
+- `kb intent create` version monotonicity guard: rejects new versioned intent IDs that are not strictly greater than the highest existing active versioned intent.
+- `kb ingest` new command: registers a source file into the KB ingestion pipeline. Text files chunked immediately (status=ready); binary types produce a structured stub payload (status=requires-parser).
+- `kb extract --apply=<file>`: new flag to write the extraction prompt directly to a file (requires `--target-doc`).
+- Agent output contract: mandatory `Handoff` table routes pending tasks to explicit owners (HUMAN / CLI / @KBRoot / @kb).
+
+### Change Type
+
+- Minor (additive, backward compatible)
+
+### Impact On Existing KBs
+
+- Low. `kb intent list --json` output shape changed: items are now objects `{id, status, mode, staged_count, warnings}` instead of plain strings.
+
+### Migration Required
+
+- No. If parsing `kb intent list --json` programmatically, update to read `active_intents[].id` instead of `active_intents[]`.
+
+### Agent Impact
+
+- `agent-operating-manual.md`: Output Contract now includes mandatory Handoff table format.
+- `kb-root/agent.md`: output style section 7 updated with Handoff rule.
+
+### Files Added / Changed
+
+- `src/commands/intent.js` — `runList` table+pager; version guard in `runCreate`; `printWithPager`
+- `src/commands/extract.js` — `--apply=<file>` flag
+- `src/commands/ingest.js` — **NEW** — `kb ingest` command
+- `src/cli.js` — wire `kb ingest`
+- `src/commands/help.js` — add `kb extract` and `kb ingest`; update `intent list` description
+- `knowledge-base/12-ai-skills/agent-operating-manual.md` — Handoff table in Output Contract
+- `kb-root/agent.md` — Handoff rule in output style
+- `template/12-ai-skills/agent-operating-manual.md` — Handoff table synced from KB source
+
+---
+
 
 ## v2.3.4 - 2026-05-05
 

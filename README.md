@@ -146,7 +146,9 @@ Currently implemented commands:
 **Source Mirror (v2.2)**
 
 - `extract <source-file> [--target-doc=<path>] [--model=<hint>] [--yes]` — Generate an AI extraction prompt for a source file; track source→doc linkage in `.kb/source-index.json`. CLI does **not** call any LLM — it creates a prompt file the user runs in their AI tool.
+- `extract [<source-file>] --apply <output-file> --target-doc=<path>` — Apply AI-generated markdown output into the target KB doc and refresh source-index tracking when source path is available.
 - `extract --uncovered` — List source files tracked in source-index without a covering KB doc
+- `ingest <source-file> [--type=auto|text|pdf|image|docx|xlsx] [--json]` — Build a canonical ingestion payload under `.kb/ingestion/`. Text types are extracted directly; non-text types return deterministic parser-required guidance in this patch line.
 
 **Release Catalog & Pipeline**
 

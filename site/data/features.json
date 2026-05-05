@@ -97,6 +97,30 @@
       "status": "planned",
       "summary": "Introduce per-repo scoped KB agents and coordinator workflow with strict folder boundaries.",
       "references": ["notes/upgrade-v3.0-platform-plan.md", "MCP roadmap"]
-    }
-  ]
-}
+    },
+    {
+      "id": "FT-013",
+      "name": "KB Ingest Pipeline",
+      "scope": "Source Mirror",
+      "status": "active",
+      "summary": "(v2.3.5) Register source files into the KB ingestion pipeline. Text files are chunked immediately (status=ready). Binary types (pdf/image/docx/xlsx) produce a structured stub payload (status=requires-parser) stored under .kb/ingestion/.",
+      "references": ["kb ingest", "src/commands/ingest.js"]
+    },
+    {
+      "id": "FT-014",
+      "name": "Intent List Table + Version Guard",
+      "scope": "Intent",
+      "status": "active",
+      "summary": "(v2.3.5) kb intent list now displays a formatted table (id/status/mode/staged count) with automatic pager for long output. kb intent create enforces strict version monotonicity — rejects versioned IDs not greater than the current highest active intent.",
+      "references": ["kb intent list", "kb intent create", "src/commands/intent.js"]
+    },
+    {
+      "id": "FT-015",
+      "name": "Agent Handoff Output Contract",
+      "scope": "Governance",
+      "status": "active",
+      "summary": "(v2.3.5) Agent output contract now requires a Handoff table at the end of substantial tasks, explicitly routing pending work to the correct owner: HUMAN, CLI, @KBRoot, or @kb.",
+      "references": ["knowledge-base/12-ai-skills/agent-operating-manual.md", "kb-root/agent.md"]
+    },
+    {
+      "id": "FT-008",

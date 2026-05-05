@@ -16,6 +16,7 @@ function parseArgs(args) {
     yes: false,
     sourcePath: null,
     targetDoc: null,
+    applyFile: null,
     model: null,
     uncovered: false,
   };
@@ -26,6 +27,19 @@ function parseArgs(args) {
     if (arg === '--json') { options.json = true; continue; }
     if (arg === '--yes' || arg === '-y') { options.yes = true; continue; }
     if (arg === '--uncovered') { options.uncovered = true; continue; }
+    if (arg === '--apply') {
+      const nextArg = (args || [])[i + 1];
+      if (!nextArg || nextArg.startsWith('--')) {
+        throw new Error('kb extract --apply requires an output file path');
+      }
+      options.applyFile = nextArg.trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--apply=')) {
+      options.applyFile = arg.slice('--apply='.length).trim();
+      continue;
+    }
     if (arg.startsWith('--target-doc=')) {
       options.targetDoc = arg.slice('--target-doc='.length).trim();
       continue;
@@ -38,11 +52,15 @@ function parseArgs(args) {
       rest.push(arg);
       continue;
     }
-    throw new Error(`Unknown extract option "${arg}". Supported: --target-doc=<path>, --model=<hint>, --uncovered, --yes, --json`);
+    throw new Error(`Unknown extract option "${arg}". Supported: --target-doc=<path>, --apply=<output-file>, --model=<hint>, --uncovered, --yes, --json`);
   }
 
-  if (!options.uncovered && rest.length === 0) {
+  if (!options.uncovered && !options.applyFile && rest.length === 0) {
     throw new Error('kb extract requires a source file path or --uncovered flag');
+  }
+
+  if (options.applyFile && !options.targetDoc) {
+    throw new Error('kb extract --apply requires --target-doc=<path>');
   }
 
   if (rest.length > 0) options.sourcePath = rest[0];
@@ -96,6 +114,33 @@ function buildExtractionPrompt({ sourcePath, sourceContent, targetDocPath, exist
     .replace('{EXISTING_DOC_CONTENT}', existing);
 }
 
+function resolvePathFromCwd(cwd, inputPath) {
+  if (!inputPath) return null;
+  return path.isAbsolute(inputPath) ? inputPath : path.join(cwd, inputPath);
+}
+
+function resolvePathUnderContentRoot(contentRoot, targetPath) {
+  const root = path.resolve(contentRoot);
+  const abs = path.resolve(root, targetPath);
+  if (abs !== root && !abs.startsWith(`${root}${path.sep}`)) {
+    throw new Error(`target doc path escapes KB root: ${targetPath}`);
+  }
+  return abs;
+}
+
+function toWorkspaceRelativePath(workspaceRoot, maybePath) {
+  if (!maybePath) return null;
+  const abs = resolvePathFromCwd(workspaceRoot, maybePath);
+  if (!fs.existsSync(abs)) return null;
+  return path.relative(workspaceRoot, abs).replace(/\\/g, '/');
+}
+
+function extractSourcePathFromFrontmatter(markdown) {
+  const match = markdown.match(/^---[\s\S]*?extraction_sources:[\s\S]*?-\s*path:\s*['"]?([^\r\n'"#]+)['"]?/m);
+  if (!match) return null;
+  return String(match[1] || '').trim();
+}
+
 // ---------------------------------------------------------------------------
 // Run
 // ---------------------------------------------------------------------------
@@ -129,6 +174,50 @@ async function runExtract({ args, cwd }) {
     }
     console.log('');
     console.log('Run: kb extract <source-path> --target-doc=<doc-path>');
+    return;
+  }
+
+  if (options.applyFile) {
+    const absOutputFile = resolvePathFromCwd(cwd, options.applyFile);
+    if (!fs.existsSync(absOutputFile)) {
+      throw new Error(`Apply file not found: ${absOutputFile}`);
+    }
+
+    const outputMarkdown = fs.readFileSync(absOutputFile, 'utf8');
+    const absTargetDoc = resolvePathUnderContentRoot(ctx.contentRoot, options.targetDoc);
+    fs.mkdirSync(path.dirname(absTargetDoc), { recursive: true });
+    fs.writeFileSync(absTargetDoc, outputMarkdown, 'utf8');
+
+    const sourceFromArg = toWorkspaceRelativePath(cwd, options.sourcePath);
+    const sourceFromFrontmatter = toWorkspaceRelativePath(cwd, extractSourcePathFromFrontmatter(outputMarkdown));
+    const trackedSourcePath = sourceFromArg || sourceFromFrontmatter;
+
+    if (trackedSourcePath) {
+      upsertEntry(ctx.contentRoot, cwd, { sourcePath: trackedSourcePath, docPath: options.targetDoc });
+      refreshIndex(ctx.contentRoot, cwd);
+    }
+
+    if (options.json) {
+      console.log(JSON.stringify({
+        command: 'kb extract',
+        action: 'apply',
+        output_file: absOutputFile,
+        target_doc: options.targetDoc,
+        tracked_source: trackedSourcePath,
+        status: 'applied',
+      }, null, 2));
+      return;
+    }
+
+    console.log('Extraction output applied successfully.');
+    console.log(`Output  : ${absOutputFile}`);
+    console.log(`Target  : ${options.targetDoc}`);
+    if (trackedSourcePath) {
+      console.log(`Source  : ${trackedSourcePath} (source-index updated)`);
+    } else {
+      console.log('Source  : not detected (source-index not updated)');
+      console.log('Hint    : pass source file as positional arg or include extraction_sources.frontmatter path');
+    }
     return;
   }
 

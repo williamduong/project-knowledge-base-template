@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-05-04
-last_verified: 2026-05-04
+last_updated: 2026-05-05
+last_verified: 2026-05-05
 related:
   - how-to-use-this-kb.md
   - strategic-backlog.md
@@ -30,9 +30,9 @@ Stores the last repository baseline that agents used when they verified, upgrade
 
 | Field | Value |
 |---|---|
-| KB Template Version | v2.2.2 |
+| KB Template Version | v2.3.2 |
 | KB Patch Revision | 0 |
-| Version Lineage | v2.2.2 |
+| Version Lineage | v2.3.2 |
 | Brand Scope | project-knowledge-base-template |
 | Source Repository Identifier | git@github.com:williamduong/project-knowledge-base-template.git |
 | Source Default Branch | main |
@@ -45,17 +45,17 @@ For downstream project use, the Brand Scope field should identify the product or
 |---|---|
 | Source Repository Git Baseline | e157d9c61caf325f5816cff25d4987a27b294909 |
 | Baseline Captured At | 2026-05-04 |
-| Last Drift Check At | 2026-05-04 |
-| Drift Status | aligned |
+| Last Drift Check At | 2026-05-05 |
+| Drift Status | drift-detected |
 | Baseline Scope | whole repository on main |
-| Last Reconciled Template Version | v2.2.2 |
-| Notes | Initialized by kb init against the current repository HEAD. |
+| Last Reconciled Template Version | v2.3.2 |
+| Notes | Sync detected drift. Review report before reconciliation: D:\Source\template\project-knowledge-base-template\knowledge-base\.kb\reports\sync-report-20260505-040116.md Queue updated: D:\Source\template\project-knowledge-base-template\knowledge-base\00-start-here\strategic-backlog.md |
 
 ## Machine State
 
 | Field | Value |
 |---|---|
-| CLI Version | 2.2.2 |
+| CLI Version | 2.3.2 |
 | Storage Mode | tracked |
 | State File | knowledge-base/.kb/state.json |
 | Content Root | D:\Source\template\project-knowledge-base-template\knowledge-base |

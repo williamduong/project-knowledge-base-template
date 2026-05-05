@@ -324,3 +324,17 @@ Use this checklist before starting implementation work for v1.7 Phase 0.
 - [ ] At least one end-to-end dry run confirms evidence trail from intent creation to archive readiness.
 - [ ] No new version-boundary conflicts are introduced in plan or governance docs.
 - [ ] Carry-forward `KB-007` remains tracked for post-cycle threshold validation.
+
+<!-- KB_SYNC_AUTO_QUEUE_START -->
+
+## Auto Drift Queue (Generated)
+
+| ID | Work Item | Owner | Priority | Due Date | Status | Notes |
+|---|---|---|---|---|---|---|
+| KB-DRIFT-001 | Re-verify 03-architecture/system-overview.md | engineering | P1 | 2026-05-05 | todo | source drift e157d9c61caf325f5816cff25d4987a27b294909..5575ab448af419e9b457c187485c29d094191e76, matched files: 1 |
+| KB-DRIFT-002 | Re-verify 05-backend/services-overview.md | engineering | P1 | 2026-05-05 | todo | source drift e157d9c61caf325f5816cff25d4987a27b294909..5575ab448af419e9b457c187485c29d094191e76, matched files: 5 |
+| KB-DRIFT-003 | Re-verify 06-api/api-overview.md | engineering | P1 | 2026-05-05 | todo | source drift e157d9c61caf325f5816cff25d4987a27b294909..5575ab448af419e9b457c187485c29d094191e76, matched files: 1 |
+| KB-DRIFT-004 | Re-verify 07-database/schema-overview.md | engineering | P1 | 2026-05-05 | todo | source drift e157d9c61caf325f5816cff25d4987a27b294909..5575ab448af419e9b457c187485c29d094191e76, matched files: 1 |
+| KB-DRIFT-005 | Re-verify 09-operations/configuration-deployment.md | engineering | P1 | 2026-05-05 | todo | source drift e157d9c61caf325f5816cff25d4987a27b294909..5575ab448af419e9b457c187485c29d094191e76, matched files: 1 |
+
+<!-- KB_SYNC_AUTO_QUEUE_END -->

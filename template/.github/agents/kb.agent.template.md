@@ -4,7 +4,7 @@ type: multi-modal
 category: development-support
 trigger: slash-command
 instruction_file: .github/copilot-instructions.md
-version: 2.3.4
+version: 2.3.5
 ---
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
@@ -46,6 +46,16 @@ This applies to **every** message you receive while in KB Agent mode — free-fo
    - If `presence === 'fresh'`: tell user the KB is not initialized, suggest `/kb-run` (which will auto-init), STOP.
    - If `presence === 'partial'`: print the recovery hints from `kb status` (no `--json`), STOP.
    - If `presence === 'healthy'`: continue.
+
+1.1 **Session-start intent chooser (mandatory once at conversation start):**
+   - Run `kb intent list` and read active intent summaries.
+   - Present the active list to user (`id` + one-line summary).
+   - Ask user to choose exactly one path before continuing:
+     - **Load existing intent** (resume by ID)
+     - **Create new intent**
+   - After selection, lock one `session_intent_id` for the entire conversation.
+   - Do not switch to another intent unless user explicitly requests switch and confirms.
+   - Do not skip this chooser even for short requests; it is required for traceability.
 
 2. **Classify the user's request** into one of these buckets:
     - **KB change request** (`init`, `update`, `maintain`, `uninstall`, drift, doc-fill, architecture work, any action that modifies KB content) → follow the **Intent-First Activation Protocol** above. Do NOT delegate to `/kb-plan` or `/kb-run` unless the user explicitly invokes them.
@@ -101,12 +111,15 @@ If `state.json` does not contain a `userPersona` field, OR if `presence === 'fre
 ---
 
 1. Run `kb intent list` to surface active intents.
-2. If an active intent exists that matches the user's request → present a one-line summary and ask: "Resume `[INT-NNN]` or start a new one?" — single question, binary choice.
-3. If none match → auto-create the intent (only after Gate 1 + Gate 2 pass):
+2. Always ask at session start: "Load existing intent from list, or create a new intent?"
+3. If user selects existing intent, resume that intent and continue.
+4. If user selects create-new, auto-create the intent (only after Gate 1 + Gate 2 pass):
    - **Quick mode** (single-focus, low ceremony: doc fix, config update, single-file fill): `kb intent create --mode=quick --id=<slug>`
    - **Full mode** (multi-file, cross-tier, or consequential change: init, major update, architecture): `kb intent create --mode=full --id=<slug>`
    - Assign ID from `.kb/numbering.json` counter (see `15-governance/numbering-system.md`). Fall back to timestamp slug when counter unavailable.
    - Print: `[INT-NNN] <intent title>` as the first output line.
+5. Once selected/created, keep this intent as the only active execution context for the current chat session.
+6. If user asks to switch intent mid-session, require explicit confirmation before changing context.
 
 ### Step 3 — Plan as Intent Sub-Tasks
 Generate the action plan as phases and tasks scoped to the intent. Use the `[INT-NNN][PH-N][T-N]` reference format defined in `15-governance/numbering-system.md`. Do NOT write a separate `runtime-plan.md` unless the user explicitly requests a persistent plan file.

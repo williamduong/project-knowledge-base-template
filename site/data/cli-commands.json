@@ -39,6 +39,9 @@
     {"command":"kb chaos --estimate","group":"observation","stability":"stable","purpose":"Show forward estimate plans with risk bands."},
 
     {"command":"kb extract <source-file>","group":"source-mirror","stability":"stable","purpose":"(v2.2) Generate AI extraction prompt for a source file; track source→doc linkage in source-index.json."},
-    {"command":"kb extract --uncovered","group":"source-mirror","stability":"stable","purpose":"(v2.2) List tracked source files with no covering KB doc."}
+    {"command":"kb extract --apply=<file>","group":"source-mirror","stability":"stable","purpose":"(v2.3.5) Write extraction prompt directly to an output file (requires --target-doc)."},
+    {"command":"kb extract --uncovered","group":"source-mirror","stability":"stable","purpose":"(v2.2) List tracked source files with no covering KB doc."},
+    {"command":"kb ingest <source-file>","group":"source-mirror","stability":"stable","purpose":"(v2.3.5) Register source file into KB ingestion pipeline. Text: chunked immediately (ready). Binary: parser-stub payload (requires-parser)."},
+    {"command":"kb intent list [--json]","group":"intent","stability":"stable","purpose":"(v2.3.5) List active intents as a table (id/status/mode/staged count). Pager activates for long output."}
   ]
 }
