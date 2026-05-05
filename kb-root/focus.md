@@ -7,68 +7,67 @@
 
 ## Active Version Target
 
-**Đang focus:** v2.3.4 — VSCode Marketplace Epic (P0 governance cleanup)
-**Intent:** [knowledge-base/intents/_active/v2-3-4-vscode-marketplace-epic/](../knowledge-base/intents/_active/v2-3-4-vscode-marketplace-epic/)
-**Status:** Phase P0 in-progress
-**Last shipped:** v2.3.3 (cognitive drift signals + subtractive-v2 formula)
+**Đang focus:** v2.3.x maintenance / v2.4.x planning (VSCode extension)
+**Intent active:** `v2-3-6-planned-backlog` (open, 0 staged — backlog chờ, chưa có task cụ thể)
+**Status:** Idle — không có P0 nào đang chạy
+**Last shipped:** v2.3.6 (2026-05-05) — hotfix archive folder trailing dot on Windows
 
 ## Current Phase
 
-**Phase:** P0 — Governance cleanup + 2-gate workflow docs
+**Phase:** Inter-release — không có phase đang chạy
 
-**Done (this session):**
-- Shipped v2.3.3: cognitive drift signals (`subtractive-v2`), T1/T2/T3 pulse-points in agent template.
-- Archived `v2-3-4-cognitive-drift-signal` intent (shipped as v2.3.3).
-- Removed duplicate `v2-4-intent-first-version-governance` active stub.
-- Archived `v2-4-team-gates` → superseded by v2.3.4 epic.
-- Added P18 (one active intent rule) + P19 (chaos estimate gate) to `principles.md`.
-- Added Workflow 8 (Intent Start Gate) to `process.md`.
-- Added "Intent Start Gates (v2.3.4)" section to `agent-operating-manual.md`.
-- Created `v2-3-4-vscode-marketplace-epic` intent + plan.
+**Done (sessions gần nhất — 2026-05-05):**
+- Shipped v2.3.4: VSCode Marketplace Epic governance cleanup, human-gate protocol.
+- Shipped v2.3.5: `kb intent list` table+pager, version monotonicity guard, `kb ingest`, `kb extract --apply`, agent Handoff table contract.
+- Shipped v2.3.6: hotfix `archiveFolderName` trailing dot EPERM trên Windows (`slice(0,14)` + strip `.` trong regex).
+- Archived intent `v2-3-5-stabilization` → `_archive/v2-3-5-stabilization-20260505130134`.
+- Global `kb` uninstalled khỏi máy maintainer.
+- Bug fix: `src/lib/intent.js` — `archiveFolderName` regex thiếu `.` → Windows EPERM khi archive.
 
-**Next action (P0 remaining):**
-1. Bump `package.json` 2.3.3 → 2.3.4.
-2. Update `TEMPLATE_CHANGELOG.md` with v2.3.4 entry.
-3. Commit + tag v2.3.4 + publish npm.
-4. Close this P0 phase, move to P1 (extension scaffold planning).
+**Next action:**
+- Không có P0 đang pending.
+- Nếu tiếp tục: lên kế hoạch v2.4.x (extension scaffold) hoặc xử lý backlog trong `v2-3-6-planned-backlog`.
 
 ## Active Blockers
 
-- Pending decision: confirm release semver. Plan said patch 2.3.x but refactor changes default ignore semantics; consider MINOR 2.3.0.
-- Bug noted: `kb uninstall --force` removes tracked `.github/hooks/revision-state-guard.json`. Backlog candidate.
+- Không có blocker cứng.
+- `v2-3-6-planned-backlog` còn 0 staged — cần triage nếu muốn dùng.
+- Bug noted (backlog): `kb uninstall --force` removes tracked `.github/hooks/revision-state-guard.json`.
 
 ## Recent Decisions (last 5)
 
-1. Three-layer model locked: A=ship, B=verify, C=kb-root maintainer (committed, not shipped), D=self-host runtime, E=scratch.
-2. Self-host profile uses tracked mode (`knowledge-base/`) for git visibility.
-3. `.local/` renamed to `kb-root/` (top-level, no leading dot).
-4. Root ephemeral reports relocated under `notes/` (gitignored) until intent migration captures them.
-5. Manual test docs moved to `test-plans/` (Layer B).
+1. Hotfix policy: lỗi ảnh hưởng Windows users → publish patch version ngay thay vì chờ.
+2. `archiveFolderName` fix: thêm `.` vào regex replace + `slice(0,14)` để tránh trailing dot trên Windows.
+3. Global kb uninstall → dùng local devDependency hoặc `npx` cho downstream projects.
+4. Intent apply EPERM workaround: nếu CLI lỗi, dùng PowerShell `Move-Item` thủ công rồi commit.
+5. Release rule giữ nguyên: tag AFTER publish, không push trước khi npm publish thành công.
 
 ## Roadmap Status
 
 | Version | Status | Notes |
 |---|---|---|
-| v2.3.2 | Shipped 2026-05-04 | Namespace split + notes migration closeout |
-| v2.3.3 | Shipped 2026-05-05 | Cognitive drift signals + subtractive-v2 formula |
-| v2.3.4 | In-progress (P0) | VSCode Marketplace Epic — governance cleanup phase |
-| v2.4.x | Planned (P1/P2) | Extension scaffold + core commands |
-| v2.5.x | Planned (P3/P4) | Chat participant + template scaffolding via extension |
-| v2.6.x | Planned (P5) | Marketplace publish |
+| v2.3.2 | Shipped 2026-05-04 | Namespace split + notes migration |
+| v2.3.3 | Shipped 2026-05-05 | Cognitive drift signals + subtractive-v2 |
+| v2.3.4 | Shipped 2026-05-05 | VSCode Marketplace Epic governance cleanup |
+| v2.3.5 | Shipped 2026-05-05 | intent list table, ingest, extract --apply, handoff contract |
+| v2.3.6 | Shipped 2026-05-05 | Hotfix: archive folder trailing dot on Windows |
+| v2.4.x | Planned | VSCode extension scaffold + core commands |
+| v2.5.x | Planned | Chat participant + template scaffolding via extension |
+| v2.6.x | Planned | Marketplace publish |
 | v3.0 | Long-term | Full agent surface in VS Code |
 
 ## Notes / Reminders cho session sau
 
-- Khi commit batch refactor: stage in logical commits — doc updates / `.gitignore` + relocations / `kb-root/` add / self-host init artifacts.
-- Sau R5 migration, đặt rule: long-term planning chỉ tồn tại dưới `knowledge-base/intents/`, không quay lại `notes/`.
-- Workflow 7 update: bootstrap đọc `kb-root/` thay cho `.local/kb-agent/`.
+- `kb` không cài global — dùng `node ./bin/kb.js` trong workspace này hoặc `npx @williamduong/kb` cho downstream.
+- Khi `kb intent apply` gặp EPERM (trailing dot đã fix ở v2.3.6), kiểm tra lại version CLI đang dùng.
+- focus.md phải được update cuối mỗi session trước khi kết thúc — đây là nguồn truth duy nhất cho bootstrap.
 
 ## Last Session Summary
 
-**Date:** 2026-05-04
-**Task:** Refactor Phase R0–R4
+**Date:** 2026-05-05
+**Task:** Full release v2.3.5 + v2.3.6 hotfix
 **Output:**
-- Layer model codified in strategic-backlog and how-to-use-this-kb.
-- `kb-root/` materialized at top-level with all 7 maintainer files restored.
-- Self-host runtime initialized in tracked mode under `knowledge-base/`.
-- Git diff ready for staged commit.
+- v2.3.5: intent list table+pager, version guard, kb ingest, kb extract --apply, agent handoff contract. Published npm, tagged, GitHub release.
+- v2.3.6: hotfix archiveFolderName EPERM Windows. Published npm, tagged, GitHub release.
+- Intent v2-3-5-stabilization closed (archived thủ công do EPERM bug chưa fix khi apply).
+- Bug fix committed và shipped ngay trong v2.3.6.
