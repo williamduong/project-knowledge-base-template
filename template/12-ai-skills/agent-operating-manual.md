@@ -33,10 +33,12 @@ Provide a single location for future coding agents to read KB conventions before
 5. Read `00-start-here/repository-revision-state.md` and compare the stored brand-scoped git baseline with current `HEAD` when git is available.
 6. If the baseline differs, inspect git log and diff from the stored revision forward, detect drift, and route work through the maintenance loop before trusting current KB content.
 7. If the stored template version differs from the active template version, run the version-patch flow in the same pass.
-8. Stage files under `proposed-changes/` within the intent workspace. Do not write KB files directly outside an intent workspace unless the change meets the inline-record policy (see `00-start-here/glossary.md` §A6).
-9. Batch non-blocking tasks. Only pause for user input at destructive ops, approval gates, or genuine ambiguity.
-10. Apply with `kb intent apply <id>` when done. Archive evidence.
-11. Output a concise completion report with numbered references and suggested next intent.
+8. If active intents show legacy schema fields or runtime warns about missing `schema_version`, run `kb migrate --to=<active-template-version> --dry-run` before mutating intent metadata.
+9. Before apply/close or release review, run `kb intent cleanup --json` so missing focus or wave fields are surfaced explicitly.
+10. Stage files under `proposed-changes/` within the intent workspace. Do not write KB files directly outside an intent workspace unless the change meets the inline-record policy (see `00-start-here/glossary.md` §A6).
+11. Batch non-blocking tasks. Only pause for user input at destructive ops, approval gates, or genuine ambiguity.
+12. Apply with `kb intent apply <id>` when done. Archive evidence.
+13. Output a concise completion report with numbered references and suggested next intent.
 
 ## Session-Start Intent Chooser (v2.3.3.2)
 
@@ -200,7 +202,7 @@ To avoid context collision between maintainer operations and shipped user behavi
 
 1. User-experience acceptance for shipped KB Agent behavior (`@kb`, `/kb-plan`, `/kb-run`, `/kb-ask`) must run in a downstream clean workspace with KB Agent active and KBRoot inactive.
 2. Self-host workspace validation is maintainer-mode only: governance, migration, packaging, and CLI smoke.
-3. CLI deterministic behavior (`kb status`, `kb intent`, `kb maintain`, `kb release`) can be validated in both environments, but prompt/persona behavior must be accepted only in the target persona environment.
+3. CLI deterministic behavior (`kb status`, `kb intent`, `kb maintain`, `kb release`, `kb migrate`, `kb intent cleanup`) can be validated in both environments, but prompt/persona behavior must be accepted only in the target persona environment.
 4. Do not remove shipped KB Agent files or prompt files from template/npm payload only to prevent local overlap; enforce separation through activation context and validation scope.
 5. Any maintainer-only prompt/agent surface should use explicit maintainer naming and remain outside shipped template surface unless intentionally published.
 
@@ -272,6 +274,32 @@ Before creating any new intent or starting work on a new version, the agent MUST
 | Chaos-reducing work (tests, debt paydown) | −5 to −15 |
 
 Both gates must pass (or receive explicit user override) before any plan is drafted or code is touched.
+
+## Large-Intent Branch Gate (v2.4.x)
+
+After the chaos estimate gate and before creating/starting a large intent, the agent must confirm branch strategy with the user.
+
+Large intent criteria (any one):
+- Estimated chaos delta >= +10
+- Expected change scope >= 10 files
+- Cross-module/runtime plus governance/docs in the same intent
+
+Required behavior:
+1. Ask: create a dedicated branch now or continue on current branch.
+2. If creating a branch, propose a name such as `intent/vX-Y-<slug>` or `feat/vX-Y-<slug>`.
+3. Do not begin implementation until the branch decision is explicit.
+4. If the user declines branch creation, log an explicit override note in the intent plan/context.
+
+## Deterministic-First Rule Placement (v2.4.x)
+
+For intent workflow and KB Agent behavior, place invariant rules in deterministic CLI/runtime logic first, then align docs and prompts.
+
+Priority order:
+1. CLI/runtime enforcement (deterministic, testable)
+2. Governance/docs synchronization with runtime behavior
+3. Agent prompt/orchestration that executes and coordinates those rules
+
+Do not rely on prompt-only AI generation as the source of truth for behavior that requires consistent and verifiable outcomes.
 
 ## Human-Gate Protocol (v2.3.3.1)
 
@@ -382,6 +410,7 @@ This manual follows `15-governance/self-evolution-doctrine.md` and its loop taxo
 | v2.0 | Reason across evidence, metrics, lessons, and graph context. |
 | v2.1 | Retroactively package ad-hoc KB commits into intent archives; enrich release notes with intent context. |
 | v2.2 | Track source-to-doc linkage; detect stale docs when source changes; generate extraction prompts for AI-assisted doc creation. |
+| v2.4 | Canonical intent schema maintenance: advisory cleanup for focus/wave drift and explicit migration of legacy intent frontmatter. |
 
 Rule:
 - Agents must not claim capabilities that belong to a later version unless explicitly running in that version context.

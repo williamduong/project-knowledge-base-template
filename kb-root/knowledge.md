@@ -209,6 +209,18 @@
 **Apply:** foundation.md luôn ghi "e.g." cho framework/tech examples; phần crucial là entity model + axioms, không frameworks.
 **Reconsider:** Chỉ lock scope khi có evidence từ v2.4+ smoke tests.
 
+### D17. Large-intent branch confirmation becomes mandatory gate
+**Ngày:** 2026-05-07
+**Lý do:** Intent lớn (vd v2.4 scope) có blast radius cao, cần branch decision explicit trước khi build để tránh trộn risk vào main flow.
+**Rule:** Sau chaos estimate, nếu delta >= +10 hoặc scope >= 10 files hoặc cross-module + governance, agent phải hỏi user có tạo branch mới không.
+**Apply:** Workflow 8 Gate 3.
+
+### D18. Deterministic-first for intent and KB Agent logic
+**Ngày:** 2026-05-07
+**Lý do:** Rule nhất quán thuộc về CLI/runtime sẽ testable và stable hơn so với nhồi rule vào prompt/context AI.
+**Rule:** CLI/runtime rule -> docs sync -> AI orchestration.
+**Apply:** Dùng AI để chọn flow và gọi lệnh, không coi AI generation là source of truth cho invariant behavior.
+
 ---
 
 ## Append history
@@ -310,3 +322,4 @@
 | 2026-05-04 | R13, R14 | npm version bare + CRLF drift — release rules |
 | 2026-05-04 | T8-T10, R15-R18, D10-D14 | v2.3.x refactor complete + three-layer locked |
 | 2026-05-04 | R19 | npm publish auth — agent tự send Enter mở browser |
+| 2026-05-07 | D17-D18 | Thêm gate branch cho intent lớn + deterministic-first cho rule placement |

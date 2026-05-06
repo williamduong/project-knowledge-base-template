@@ -219,6 +219,22 @@ npm publish --access public
 4. Nếu projected score > 80: cảnh báo ⛔ CHAOTIC, yêu cầu explicit confirm.
 5. Ghi `chaos_estimate` vào `intent.md` của intent mới.
 
+### Gate 3 — Branch Confirmation For Large Intent (P22)
+
+Sau khi có chaos estimate, kiểm tra scope có phải intent lớn không.
+
+Intent lớn nếu thỏa ít nhất một điều kiện:
+- chaos delta >= +10
+- scope dự kiến >= 10 files
+- cross-module/runtime + governance/docs trong cùng intent
+
+Nếu là intent lớn, bắt buộc hỏi user:
+1. Có tạo branch mới cho intent này không?
+2. Nếu có, branch naming theo `intent/vX-Y-<slug>` hoặc `feat/vX-Y-<slug>`.
+
+Chỉ bắt đầu build sau khi user xác nhận lựa chọn branch.
+Nếu user chọn không tạo branch, ghi explicit override vào intent notes/plan.
+
 **Heuristic chaos_delta:**
 | Scope | Delta estimate |
 |---|---|
@@ -231,6 +247,30 @@ npm publish --access public
 ### Sau khi cả 2 gate pass
 
 Tiếp tục Workflow 1 (New Feature Plan) để draft intent và plan.
+
+Khi Gate 3 được áp dụng, chỉ tiếp tục sau khi branch decision đã được xác nhận.
+
+---
+
+## Workflow 10: Deterministic-First Rule Placement (P23)
+
+**Trigger:** User đề nghị thêm governance/rule mới cho intent, CLI, hoặc KB Agent.
+
+**Mục tiêu:** Ưu tiên encode rule ở lớp deterministic (CLI/runtime) trước, AI chỉ orchestration.
+
+**Steps:**
+
+1. Xác định rule thuộc lớp nào:
+   - runtime/CLI deterministic
+   - governance documentation
+   - AI orchestration/prompt behavior
+2. Nếu rule ảnh hưởng output đúng-sai hoặc workflow invariants:
+   - ưu tiên design ở CLI/runtime trước
+   - thêm test coverage cho behavior deterministic
+3. Cập nhật docs/prompt theo behavior đã chốt từ runtime, không đảo ngược thứ tự.
+4. Nếu chưa kịp implement runtime:
+   - ghi rõ rule ở trạng thái provisional trong docs
+   - tạo follow-up intent để migrate rule vào CLI/runtime.
 
 ---
 

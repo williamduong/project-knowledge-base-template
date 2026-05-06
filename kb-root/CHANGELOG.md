@@ -11,16 +11,12 @@
 
 ## 2026-05-06
 
-- **Downstream-first governance lock**: Updated P15 and added P21 so self-host/template validation is only preflight; every plan/build/release now treats downstream KB Agent ship surface as the primary acceptance target.
-- **Intent hardening (planning-only gate)**: Updated active intent `INT-2-3-6-upgrade-foundation-and-direction` with explicit execution gates (G1 human review, G2 detailed v2.4 Phase 0 plan lock) and deferred backlog queue order B1→B2→B3→B4 to prevent scope drift and structure breakage.
-- **Focus sync**: Updated `focus.md` status/next-action to enforce gate-first planning and keep VSCode extension scaffold deferred until Phase 0 planning artifacts are approved.
-- **B1 review scaffold added**: Added structured skeleton in active intent for Phase 0 spec drafting (entity model, operator protocol, backend acceptance criteria, DoD) so owner can review before any start.
-- **CLI hotfix (local, pending release)**: Hardened `kb intent list` against missing legacy `mode/status` to prevent `padEnd` crash. Local `node ./bin/kb.js intent list` passes; `npx @williamduong/kb@latest` still fails until next publish includes patch.
-- **Release-mini checklist prepared (no execution)**: Added isolated release lane in active intent (go/no-go, preflight, post-release verification) so hotfix can be published quickly on explicit owner command without disrupting B1-B4 planning order.
-- **Released 2.3.7**: Published patch with `intent list` compatibility fix; `npx -y @williamduong/kb@latest intent list` now passes. Created release tag `v2.3.7` after publish success.
-- **npx command collision note**: Confirmed unscoped `npx kb` can resolve another package outside this repo; standardize on scoped invocation `npx @williamduong/kb@latest ...` or `npx --package @williamduong/kb@latest kb ...`.
 
 ## 2026-05-04
+
+- Added branch confirmation gate for large intents (P22 / Workflow 8 Gate 3).
+- Added deterministic-first rule placement policy for intent and KB Agent logic (P23 / Workflow 10).
+- Synced downstream-shipped agent contracts with the same branch + deterministic-first requirements.
 
 - **Three-layer separation refactor (Phase R0–R6 COMPLETE)**: Refactored KB model into 5-layer architecture: ship (A)/verify (B)/kb-root (C)/self-host (D)/scratch (E). Renamed `.local/kb-agent/` → `kb-root/`; updated all internal refs.
 - **kb-root promoted to Layer C**: `.github/agents/KBRoot.agent.md` now authoritative for maintainer operations; bootstrap + Self-Update workflow references kb-root/ instead of .local/.

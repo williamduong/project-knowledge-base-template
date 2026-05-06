@@ -165,6 +165,33 @@ Khi plan bất kỳ upgrade nào cho KB/agent/runtime:
 
 Rule này áp dụng mặc định cho plan, build, review, release, và post-release verification.
 
+## P22. Large intent requires branch confirmation
+
+Trước khi bắt đầu intent lớn, agent bắt buộc hỏi user có cần tạo branch mới không.
+
+Intent được xem là lớn nếu thỏa ít nhất 1 điều kiện:
+1. Chaos delta estimate >= +10
+2. Scope dự kiến chạm >= 10 files
+3. Cross-module/runtime + governance/docs cùng lúc
+
+Nếu user chọn tạo branch:
+- Agent đề xuất branch name theo scope version (`intent/vX-Y-<slug>` hoặc `feat/vX-Y-<slug>`)
+- Chỉ tiếp tục implementation sau khi branch đã được xác nhận/chuẩn bị.
+
+Nếu user từ chối tạo branch:
+- Agent tiếp tục trên branch hiện tại nhưng phải log explicit override trong plan/intent context.
+
+## P23. Deterministic-first, AI-orchestration-second
+
+Ưu tiên đưa rule vào CLI/runtime deterministic logic thay vì encode rule quá nhiều trong prompt AI.
+
+Thứ tự ưu tiên thực thi:
+1. CLI/runtime rule (deterministic, testable)
+2. Governance docs bám theo runtime behavior
+3. AI agent orchestration dùng rule có sẵn để quyết định flow
+
+AI generation không được coi là source of truth cho hành vi nhất quán khi đã có rule engine/CLI tương ứng.
+
 ---
 
 ## Append history
@@ -178,3 +205,5 @@ Rule này áp dụng mặc định cho plan, build, review, release, và post-re
 | 2026-05-05 | P19 | Chaos estimate bắt buộc trước khi bắt đầu intent: báo score hiện tại + delta dự kiến + yêu cầu confirm nếu dự kiến > 80 |
 | 2026-05-05 | P20 | Human-gate thay câu hỏi inline: ghi gate record vào gates.md, tiếp tục làm việc, không block chat |
 | 2026-05-06 | P21 + P15 update | Chuyển governance sang downstream-first: template/self-host chỉ là preflight, không phải acceptance cuối |
+| 2026-05-07 | P22 | Intent lớn bắt buộc hỏi user có cần branch mới không trước khi build |
+| 2026-05-07 | P23 | Deterministic-first: rule nên nằm ở CLI/runtime, AI chủ yếu orchestration |

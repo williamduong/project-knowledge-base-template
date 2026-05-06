@@ -108,6 +108,15 @@ If `state.json` does not contain a `userPersona` field, OR if `presence === 'fre
    ```
 3. If projected score > 80: warn ⛔ CHAOTIC. Require explicit user confirmation.
 
+**Gate 3 — Branch Confirmation For Large Intent (runs after chaos estimate):**
+1. Classify intent as large if any condition is true:
+   - estimated chaos delta >= +10
+   - expected scope >= 10 files
+   - cross-module/runtime changes combined with governance/docs changes
+2. If large, ask user whether to create a dedicated branch before implementation.
+3. If yes, propose `intent/vX-Y-<slug>` or `feat/vX-Y-<slug>` and wait for explicit confirmation.
+4. If no, continue only after logging an explicit override note in the intent context.
+
 ---
 
 1. Run `kb intent list` to surface active intents.
@@ -120,6 +129,17 @@ If `state.json` does not contain a `userPersona` field, OR if `presence === 'fre
    - Print: `[INT-NNN] <intent title>` as the first output line.
 5. Once selected/created, keep this intent as the only active execution context for the current chat session.
 6. If user asks to switch intent mid-session, require explicit confirmation before changing context.
+
+### Deterministic-First Execution Contract
+
+For intent and KB behavior rules, prioritize deterministic enforcement in CLI/runtime logic over prompt-only policy text.
+
+Execution order:
+1. Use CLI/runtime commands as source of behavioral truth.
+2. Keep docs/prompts synchronized to deterministic behavior.
+3. Use AI to orchestrate decisions and command sequencing, not to replace invariant rule enforcement.
+
+If deterministic support does not exist yet for a required rule, mark the rule as provisional and create a follow-up intent to migrate it into CLI/runtime.
 
 ### Step 3 — Plan as Intent Sub-Tasks
 Generate the action plan as phases and tasks scoped to the intent. Use the `[INT-NNN][PH-N][T-N]` reference format defined in `15-governance/numbering-system.md`. Do NOT write a separate `runtime-plan.md` unless the user explicitly requests a persistent plan file.
@@ -613,9 +633,11 @@ User-facing commands the agent recognizes in chat:
 | `@kb intent create [<id>]` | Create a new intent workspace (`kb intent create`) |
 | `@kb intent status [<id>]` | Show status of one or all active intents |
 | `@kb intent list` | List active intent IDs |
+| `@kb intent cleanup` | Audit active intent metadata for missing focus fields, wave, stale focus, and aged records |
 | `@kb intent apply <id>` | Apply staged files to KB core and archive the intent workspace |
 | `@kb intent cancel <id>` | Discard an active intent workspace (irreversible) |
 | `@kb intent suggest-lessons` | Scan archived intents for recurring patterns and output human-reviewable lesson candidates |
+| `@kb migrate --to=<version>` | Preview or persist legacy intent schema migration to the canonical target version |
 
 When called by the `kb` CLI in silent mode, suppress verbose narration and return only the actionable result.
 
@@ -643,6 +665,7 @@ When called by the `kb` CLI in silent mode, suppress verbose narration and retur
 18. **Always-visible status header (v2.0.2).** Every response MUST start with the status line `[INT-NNN | PH-N | T-N | <status>]` as defined in the **Response Status Header Protocol**. This is a non-negotiable formatting contract. No response may begin with any other content — greeting, explanation, or answer — before this line. When not inside any intent, emit `[no active intent | kb healthy]`.
 19. **Session continuity (v2.0.2).** After each intent-phase completion, before any destructive operation, and whenever pausing for user input mid-intent, emit a **Resume Block** as defined in the **Session Continuity Protocol**. Do not assume the session will continue. The user must always have a self-contained resume prompt they can paste into a new chat.
 20. **Language policy (v2.0.3).** KB docs, KB artifacts, and generated documentation must be English-only. During first onboarding, explicitly ask the user's chat language preference and store it in `state.json.userPersona.chatLanguage`; if user does not choose, default to English chat.
+21. **Legacy intent schema guard (v2.4).** If runtime warns that active intents are missing `schema_version` or still use legacy fields, surface `kb migrate --to=<templateVersion> --dry-run` before changing intent metadata. Use `kb intent cleanup --json` to report owner-facing focus/wave gaps before claiming an intent is ready.
 
 ---
 
