@@ -3,10 +3,10 @@ id: INT-2-3-6-upgrade-foundation-and-direction
 version_scope: v2.3.6, v2.4+
 title: Upgrade Foundation and Direction
 description: Establish abstract KB architecture model (Core/Operators/Backends) for v2.4+ without locking scope to specific frameworks/backends.
-status: active
+status: closed
 mode: mini
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-06T22:00:00Z
+updated_at: 2026-05-06T22:30:00Z
 owner: William Duong (KBRoot)
 chaos_estimate: 5
 chaos_delta: 0
@@ -509,9 +509,30 @@ Purpose: keep a ready-to-run patch release path for the `intent list` hotfix, wi
 - [x] Update this intent runtime note to "released"
 - [x] Add release evidence to changelog/release notes
 
-## 9. Lessons Learned (Post-Intent)
+## 9. Closing Note
 
-(Will fill after v2.4 Phase 0 dogfood. Learning entry triggers when intent closes.)
+**Intent closed:** 2026-05-06 22:30 UTC
+
+**Status transition:** `active` → `closed` (planning phase complete)
+
+**What was delivered:**
+- ✅ Foundation model (3-layer, axioms, entity example)
+- ✅ D16 decision (foundation scope policy)
+- ✅ v2.4 Phase 0 detailed plan (B1-B4 queue + risk matrix)
+- ✅ Gates G1+G2 passed (scope confirmed, plan approved)
+
+**What's next:**
+- B1 implementation deferred to new intent (v2.4 Phase 0 Entity Model Spec) in next session
+- B1 deliverables: `knowledge-base/07-database/entity-model.md`, `knowledge-base/06-api/operator-protocol.md`, `knowledge-base/07-database/backend-abstraction-layer.md`
+- B2-B4 remain in deferred queue (strict sequencing)
+
+**This intent moves to archive.** Reference remaining in `knowledge-base/intents/_archive/INT-2-3-6-...` for audit + historical lookup.
+
+---
+
+## 10. Lessons Learned (Post-Intent)
+
+(Will fill after v2.4 Phase 0 dogfood. Learning entry triggers when B1 completes.)
 
 ---
 
