@@ -8,6 +8,7 @@ const { resolveExistingState } = require('../lib/context');
 const { readImpactFile } = require('../lib/impact');
 const { buildGraph, coerceListField, collectMarkdownFiles, findStrongCycles } = require('../lib/impact-graph');
 const { parseFrontmatter } = require('../lib/kb-analysis');
+const { listActiveIntentIds, listClosedIntentRecords, workspaceIntentMetaPath, intentWorkspacePath } = require('../lib/intent');
 
 function parseMinNodeMajor(range) {
   const match = /(\d+)/.exec(range || '');
@@ -52,6 +53,35 @@ function scanLastVerifiedCommitMissing(contentRoot) {
     }
   }
   return stale;
+}
+
+function scanLegacySchemaIntents(contentRoot) {
+  const legacy = [];
+  let ids = [];
+  try { ids = listActiveIntentIds(contentRoot); } catch { return legacy; }
+  for (const id of ids) {
+    const workspacePath = intentWorkspacePath(contentRoot, id);
+    const metaPath = workspaceIntentMetaPath(workspacePath);
+    if (!fs.existsSync(metaPath)) continue;
+    let text;
+    try { text = fs.readFileSync(metaPath, 'utf8'); } catch { continue; }
+    const meta = parseFrontmatter(text);
+    if (!meta) continue;
+    if (!meta.schema_version && (meta.status || meta.lifecycle_state || meta.legacy)) {
+      legacy.push(id);
+    }
+  }
+  // Also check closed intents
+  let closed = [];
+  try { closed = listClosedIntentRecords(contentRoot); } catch { return legacy; }
+  for (const record of closed) {
+    if (!record.metaPath || !fs.existsSync(record.metaPath)) continue;
+    const meta = record.meta || {};
+    if (!meta.schema_version && (meta.status || meta.lifecycle_state || meta.legacy)) {
+      legacy.push(record.id);
+    }
+  }
+  return legacy;
 }
 
 function parseDoctorArgs(args) {
@@ -370,6 +400,30 @@ function runDoctor({ args, cwd, packageJson }) {
         detail: `Failed to scan last_verified_commit: ${err.message}`,
       });
     }
+
+    // legacy-schema-migration: detect intent files that still use pre-v2.4 schema (missing schema_version)
+    try {
+      const legacyIntents = scanLegacySchemaIntents(impactCtx.contentRoot);
+      if (legacyIntents.length > 0) {
+        checks.push({
+          name: 'legacy-schema-migration',
+          status: 'WARN',
+          detail: `${legacyIntents.length} intent(s) use pre-v2.4 schema (no schema_version). Run "kb migrate --to=v2.4.0" to upgrade. Affected: ${legacyIntents.slice(0, 5).join(', ')}${legacyIntents.length > 5 ? ' ...' : ''}.`,
+        });
+      } else {
+        checks.push({
+          name: 'legacy-schema-migration',
+          status: 'PASS',
+          detail: 'All active/closed intents have schema_version. No migration needed.',
+        });
+      }
+    } catch (err) {
+      checks.push({
+        name: 'legacy-schema-migration',
+        status: 'WARN',
+        detail: `Failed to scan intent schema versions: ${err.message}`,
+      });
+    }
   }
 
   const presence = detectKbArtifacts(workspaceRoot);
@@ -434,5 +488,6 @@ function runDoctor({ args, cwd, packageJson }) {
 module.exports = {
   detectUnregisteredNewDocs,
   isNewDocStatus,
+  scanLegacySchemaIntents,
   runDoctor,
 };

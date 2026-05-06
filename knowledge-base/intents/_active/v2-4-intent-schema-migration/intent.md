@@ -9,9 +9,9 @@ impact_signals: []
 decision_summary: "Implement the dedicated legacy intent migration track for v2.4 with read-only dry-run tooling, folder-first lifecycle mapping, and lazy-on-read compatibility boundaries."
 review_after: null
 focus:
-  current: "Implement kb migrate --to=v2.4.0 --dry-run and validate legacy fixtures"
-  last_updated: 2026-05-06
-  next_action: "Add write-path; validate on real workspace; release v2.4.0"
+  current: "Add legacy-schema-migration check to kb doctor; close write-path scope"
+  last_updated: 2026-05-07
+  next_action: "Run acceptance on downstream clean workspace; promote to released"
 architecture_position:
   wave: "v2.4.x"
 lesson_id: null
@@ -28,8 +28,8 @@ migration_note: "migrated active via active scope to v2.4.0"
 
 ## Summary
 
-Separate migration track for legacy intent metadata after the v2.4 governance checkpoint.
-This slice intentionally limits itself to read-only migration planning so legacy compatibility can be isolated without adding new write blast radius.
+Dedicated migration track for legacy intent metadata at the v2.4 governance checkpoint.
+Covers: dry-run preview, full write-path with DELETE_SENTINEL field removal, archive marker-only handling, and `kb doctor` integration to auto-surface migration need on workspace health checks.
 
 ## Plan
 
@@ -42,8 +42,11 @@ This slice intentionally limits itself to read-only migration planning so legacy
 ## Staged Files
 
 - src/commands/migrate.js
+- src/commands/doctor.js
 - src/cli.js
 - src/commands/help.js
 - test/commands/migrate.test.js
 - knowledge-base/src/commands/migrate.js
 - knowledge-base/test/commands/migrate.test.js
+- template/15-governance/migrations/migrate-v2.3.5-to-v2.4.0.md
+- template/15-governance/migrations/README.md
