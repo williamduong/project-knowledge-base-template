@@ -134,7 +134,6 @@ function buildIntentMeta({ intentId, mode, changeType }) {
   const reserveFields = mode === 'full'
     ? [
         'lesson_id: null',
-        'lifecycle_state: proposed',
         'promotion_ready: false',
         'linked_signals: []',
         'promote_decision_ref: null',
@@ -158,7 +157,7 @@ function buildIntentMeta({ intentId, mode, changeType }) {
     `review_after: null`,
   ];
   if (reserveFields) {
-    lines.push('# v1.8-ready reserve fields (do not remove):');
+    lines.push('# v1.8+ reserve fields:');
     lines.push(reserveFields);
   }
   lines.push('---');

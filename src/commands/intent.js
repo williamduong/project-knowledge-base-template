@@ -57,6 +57,8 @@ function parseArgs(args) {
     current: null,
     nextAction: null,
     lastUpdated: null,
+    stale: false,
+    aged: false,
   };
 
   const setListScope = (scope) => {
@@ -71,6 +73,8 @@ function parseArgs(args) {
     const arg = args[i];
     if (arg === '--json') { options.json = true; continue; }
     if (arg === '--yes' || arg === '-y') { options.yes = true; continue; }
+    if (arg === '--stale') { options.stale = true; continue; }
+    if (arg === '--aged') { options.aged = true; continue; }
     if (arg === '--backlog') { setListScope('backlog'); continue; }
     if (arg === '--closed') { setListScope('closed'); continue; }
     if (arg === '--archived') { setListScope('archived'); continue; }
@@ -206,6 +210,8 @@ function parseArgs(args) {
     // no-op here, handled in runIntent
   } else if (options.sub === 'suggest-lessons') {
     // no positional args
+  } else if (options.sub === 'cleanup') {
+    // no positional args; optional --stale, --aged handled via flag parse above
   } else if (options.sub === 'extract') {
     // kb intent extract <range> [--title="..."] [--type=...]
     if (rest.length < 2) {
@@ -213,7 +219,7 @@ function parseArgs(args) {
     }
     options.commitRange = rest[1];
   } else {
-    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, close, cancel, archive, apply, suggest-lessons, extract`);
+    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, cleanup, close, cancel, archive, apply, suggest-lessons, extract`);
   }
 
   return options;
@@ -450,6 +456,9 @@ function collectIntentStatusFromRecord(record) {
   };
 
   const warnings = [];
+  if (!rawMeta.schema_version && (rawMeta.status || rawMeta.lifecycle_state || rawMeta.legacy)) {
+    warnings.push(`Legacy schema detected (no schema_version). Run "kb migrate --to=v2.4.0" to persist canonical schema.`);
+  }
   if (record.scope === 'active' && (!meta.decision_summary || meta.decision_summary === '')) {
     warnings.push('decision_summary is empty — fill it before applying.');
   }
@@ -738,6 +747,173 @@ async function runCancel(ctx, options) {
   } else {
     console.log(`Intent "${intentId}" closed as dropped via deprecated cancel alias.`);
     console.log(`Path: ${closedPath}`);
+  }
+}
+
+async function runCleanup(ctx, options) {
+  const { json, stale: filterStale, aged: filterAged } = options;
+  const STALE_DAYS = 14;
+  const AGED_DAYS = 30;
+  const now = Date.now();
+
+  const findings = [];
+
+  // Scan active intents
+  const activeRecords = listIntentRecords(ctx.contentRoot, {
+    includeBacklog: false, includeActive: true, includeClosed: false, includeArchived: false,
+  });
+
+  for (const record of activeRecords) {
+    const meta = record.meta || {};
+    const id = record.id;
+
+    // D40 rule 1+2: focus block missing fields
+    const focus = meta.focus && typeof meta.focus === 'object' ? meta.focus : null;
+    if (!focus || !focus.current || String(focus.current).trim() === '') {
+      findings.push({
+        severity: 'critical',
+        intent_id: id,
+        rule: 'missing-focus-current',
+        message: 'focus.current is required for active intent',
+        suggested_command: `kb intent focus ${id} --current "..." --next "..."`,
+      });
+    }
+    if (!focus || !focus.next_action || String(focus.next_action).trim() === '') {
+      findings.push({
+        severity: 'critical',
+        intent_id: id,
+        rule: 'missing-focus-next-action',
+        message: 'focus.next_action is required for active intent',
+        suggested_command: `kb intent focus ${id} --next "..."`,
+      });
+    }
+
+    // D40 rule 3: stale focus
+    if (focus && focus.last_updated) {
+      const lastUpdated = new Date(focus.last_updated).getTime();
+      if (!Number.isNaN(lastUpdated)) {
+        const ageDays = (now - lastUpdated) / (1000 * 60 * 60 * 24);
+        if (ageDays > STALE_DAYS) {
+          findings.push({
+            severity: 'warning',
+            intent_id: id,
+            rule: 'stale-focus',
+            message: `focus.last_updated is ${Math.floor(ageDays)} days old (threshold: ${STALE_DAYS})`,
+            suggested_command: `kb intent focus ${id} --current "..." --next "..."`,
+          });
+        }
+      }
+    } else if (!focus || !focus.last_updated) {
+      findings.push({
+        severity: 'warning',
+        intent_id: id,
+        rule: 'missing-focus-last-updated',
+        message: 'focus.last_updated is missing',
+        suggested_command: `kb intent focus ${id} --current "..." --next "..."`,
+      });
+    }
+
+    // D40 rule 4: missing architecture_position.wave
+    if (!meta.architecture_position || !meta.architecture_position.wave) {
+      findings.push({
+        severity: 'warning',
+        intent_id: id,
+        rule: 'missing-wave',
+        message: 'architecture_position.wave is missing',
+        suggested_command: null,
+      });
+    }
+
+    // D40 rule 5: missing v2.4 required fields (post-v2.4 intents only, i.e. no legacy flag)
+    if (!meta.legacy) {
+      if (!meta.type) {
+        findings.push({ severity: 'warning', intent_id: id, rule: 'missing-type', message: 'type field is missing (required for post-v2.4 intents)', suggested_command: null });
+      }
+      if (!meta.strategic_mode) {
+        findings.push({ severity: 'warning', intent_id: id, rule: 'missing-strategic-mode', message: 'strategic_mode is missing (required for post-v2.4 intents)', suggested_command: null });
+      }
+      if (!meta.urgency) {
+        findings.push({ severity: 'warning', intent_id: id, rule: 'missing-urgency', message: 'urgency is missing (required for post-v2.4 intents)', suggested_command: null });
+      }
+    }
+  }
+
+  // D40 rule 6: closed intents aged beyond threshold
+  const closedRecords = listIntentRecords(ctx.contentRoot, {
+    includeBacklog: false, includeActive: false, includeClosed: true, includeArchived: false,
+  });
+
+  for (const record of closedRecords) {
+    const meta = record.meta || {};
+    const id = record.id;
+    const closedAt = meta.closed_at ? new Date(meta.closed_at).getTime() : null;
+    if (closedAt && !Number.isNaN(closedAt)) {
+      const ageDays = (now - closedAt) / (1000 * 60 * 60 * 24);
+      if (ageDays > AGED_DAYS) {
+        findings.push({
+          severity: 'warning',
+          intent_id: id,
+          rule: 'closed-aged',
+          message: `Closed ${Math.floor(ageDays)} days ago (threshold: ${AGED_DAYS}). Candidate for archive.`,
+          suggested_command: `kb intent archive ${id}`,
+        });
+      }
+    }
+  }
+
+  // Filter by flag
+  const filtered = findings.filter((f) => {
+    if (filterStale && !filterAged) {
+      return f.rule !== 'closed-aged';
+    }
+    if (filterAged && !filterStale) {
+      return f.rule === 'closed-aged';
+    }
+    return true;
+  });
+
+  const critical = filtered.filter((f) => f.severity === 'critical');
+  const warnings = filtered.filter((f) => f.severity === 'warning');
+
+  if (json) {
+    console.log(JSON.stringify({
+      command: 'kb intent cleanup',
+      critical: critical.length,
+      warning: warnings.length,
+      findings: filtered,
+    }, null, 2));
+    return;
+  }
+
+  console.log('Intent cleanup report');
+  console.log(`  critical: ${critical.length}`);
+  console.log(`  warning:  ${warnings.length}`);
+
+  if (critical.length > 0) {
+    console.log('');
+    console.log('CRITICAL');
+    for (const f of critical) {
+      console.log(`  - ${f.intent_id}: ${f.message}`);
+      if (f.suggested_command) {
+        console.log(`    fix: ${f.suggested_command}`);
+      }
+    }
+  }
+
+  if (warnings.length > 0) {
+    console.log('');
+    console.log('WARNING');
+    for (const f of warnings) {
+      console.log(`  - ${f.intent_id}: ${f.message}`);
+      if (f.suggested_command) {
+        console.log(`    suggestion: ${f.suggested_command}`);
+      }
+    }
+  }
+
+  if (filtered.length === 0) {
+    console.log('');
+    console.log('No issues found.');
   }
 }
 
@@ -1154,6 +1330,8 @@ async function runIntent({ args, cwd }) {
     await runApply(ctx, options, cwd);
   } else if (options.sub === 'suggest-lessons') {
     await runSuggestLessons(ctx, options);
+  } else if (options.sub === 'cleanup') {
+    await runCleanup(ctx, options);
   } else if (options.sub === 'extract') {
     await runExtract(ctx, options, cwd);
   }
@@ -1169,6 +1347,7 @@ function printHelp() {
   console.log('  kb intent status [<id-or-slug>] [--json]');
   console.log('  kb intent list [--backlog|--closed|--archived|--all] [--json]');
   console.log('  kb intent focus <id> [--current="..."] [--next="..."] [--date=YYYY-MM-DD] [--json]');
+  console.log('  kb intent cleanup [--stale] [--aged] [--json]');
   console.log('  kb intent apply <id> [--release] [--yes] [--json]');
   console.log('  kb intent close <id> --type=released --release=vX.Y.Z [--json]');
   console.log('  kb intent close <id> --type=dropped --reason="..." [--json]');
@@ -1190,6 +1369,10 @@ function printHelp() {
   console.log('  list            List intents by scope. Default scope is active only.');
   console.log('                  Flags: --backlog, --closed, --archived, --all');
   console.log('  focus           Update focus block fields on an active intent.');
+  console.log('  cleanup         Advisory scan — reports stale/missing-focus active intents and aged closed intents.');
+  console.log('                  --stale  Focus on active intents with stale/missing focus (default: 14 day threshold).');
+  console.log('                  --aged   Focus on closed intents eligible for archive (default: 30 day threshold).');
+  console.log('                  --json   Machine-readable output. Never auto-mutates.');
   console.log('  apply           Write staged files from proposed-changes/ to the KB content root.');
   console.log('                  Builds apply-record.json and keeps the intent active until explicit close.');
   console.log('                  --release  Trigger release pipeline after apply (apply must complete first).');

@@ -297,7 +297,8 @@ test('buildIntentMeta: full mode includes all reserve fields', () => {
   const fm = parseIntentFrontmatter(text);
   assert.equal(fm.mode, 'full');
   assert.equal(fm.lesson_id, null);
-  assert.equal(fm.lifecycle_state, 'proposed');
+  // lifecycle_state removed from new intents post-v2.4 (D27 cleanup)
+  assert.equal(fm.lifecycle_state, undefined);
   assert.equal(fm.promotion_ready, false);
 });
 
@@ -1008,4 +1009,49 @@ test('runIntent cancel: closes active intent as dropped alias', async () => {
   assert.equal(parsed.deprecated, true);
   assert.ok(fs.existsSync(closedIntentWorkspacePath(contentRoot, 'legacy-cancel', 'dropped')));
   assert.ok(!fs.existsSync(intentWorkspacePath(contentRoot, 'legacy-cancel')));
+});
+
+test('runIntent cleanup: reports critical when focus.current is empty', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'v2-4-no-focus', mode: 'quick', changeType: 'docs' });
+
+  const captured = await captureConsole(() => runIntent({ args: ['cleanup', '--json'], cwd: root }));
+  const parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.command, 'kb intent cleanup');
+  assert.ok(parsed.critical > 0 || parsed.warning > 0);
+  const finding = parsed.findings.find((f) => f.intent_id === 'v2-4-no-focus');
+  assert.ok(finding, 'should have a finding for v2-4-no-focus');
+});
+
+test('runIntent cleanup: no issues when focus is fully filled', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'v2-4-clean', mode: 'quick', changeType: 'docs' });
+  // Update focus so it's fully filled and recent
+  const { updateIntentFocus } = require('../../src/lib/intent');
+  const today = new Date().toISOString().slice(0, 10);
+  updateIntentFocus(contentRoot, 'v2-4-clean', {
+    current: 'implementing feature',
+    nextAction: 'write tests',
+    lastUpdated: today,
+  });
+
+  const captured = await captureConsole(() => runIntent({ args: ['cleanup', '--json'], cwd: root }));
+  const parsed = JSON.parse(captured.stdout);
+  const focusFindings = parsed.findings.filter(
+    (f) => f.intent_id === 'v2-4-clean' && (f.rule === 'missing-focus-current' || f.rule === 'missing-focus-next-action' || f.rule === 'stale-focus')
+  );
+  assert.equal(focusFindings.length, 0, 'should have no focus findings for clean intent');
+});
+
+test('runIntent cleanup: --stale excludes aged closed findings', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'v2-4-stale-only', mode: 'quick', changeType: 'docs' });
+
+  const captured = await captureConsole(() => runIntent({ args: ['cleanup', '--stale', '--json'], cwd: root }));
+  const parsed = JSON.parse(captured.stdout);
+  const agedFindings = parsed.findings.filter((f) => f.rule === 'closed-aged');
+  assert.equal(agedFindings.length, 0, '--stale should exclude closed-aged findings');
 });
