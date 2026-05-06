@@ -110,6 +110,43 @@ test('collectIntentMigrations: reports active, closed, and archived legacy fixtu
   assert.ok(archived.proposed_updates.some((entry) => entry.field === 'legacy_status'));
 });
 
+test('runMigrate: write-path updates active/closed but not archived', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+
+  const activeMetaPath = path.join(contentRoot, 'intents', '_active', 'legacy-active', 'intent.md');
+  writeLegacyIntent(activeMetaPath, [
+    'id: legacy-active',
+    'mode: quick',
+    'status: open',
+    'change_type: docs',
+  ]);
+
+  const archiveMetaPath = path.join(contentRoot, 'intents', '_archive', 'legacy-archived-20260506120000', 'intent.md');
+  writeLegacyIntent(archiveMetaPath, [
+    'id: legacy-archived',
+    'mode: quick',
+    'status: closed',
+    'change_type: docs',
+  ]);
+
+  const archiveBefore = fs.readFileSync(archiveMetaPath, 'utf8');
+  const output = await captureConsole(() => runMigrate({ args: ['--to=v2.4.0', '--json'], cwd: root }));
+  const archiveAfter = fs.readFileSync(archiveMetaPath, 'utf8');
+
+  const parsed = JSON.parse(output);
+  assert.equal(parsed.dry_run, false);
+  assert.equal(parsed.written_count, 1);
+  assert.ok(parsed.written.includes('legacy-active'));
+
+  // Archive file must NOT be modified
+  assert.equal(archiveAfter, archiveBefore);
+
+  // Active file must have schema_version written
+  const activeAfter = fs.readFileSync(activeMetaPath, 'utf8');
+  assert.ok(activeAfter.includes('schema_version: v2.4.0'));
+});
+
 test('runMigrate: dry-run JSON preview stays read-only', async () => {
   const root = tmpRoot();
   const contentRoot = initTrackedWorkspace(root);

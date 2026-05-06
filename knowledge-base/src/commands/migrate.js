@@ -1,9 +1,10 @@
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
-const { listIntentRecords } = require('../lib/intent');
+const { listIntentRecords, parseIntentFrontmatter, writeIntentFrontmatter } = require('../lib/intent');
 
 function normalizeTargetVersion(raw) {
   const value = String(raw || '').trim();
@@ -129,6 +130,7 @@ function inspectIntentMigration(record, targetVersion) {
     slug: record.slug || null,
     scope: record.scope,
     path: record.workspacePath || record.metaPath,
+    meta_path: record.metaPath || null,
     canonical_lifecycle: canonicalLifecycle,
     write_mode: isArchived ? 'marker-only' : 'full',
     legacy: proposedUpdates.length > 0,
@@ -163,40 +165,90 @@ function collectIntentMigrations(contentRoot, targetVersion) {
   };
 }
 
+function applyProposedUpdates(meta, proposedUpdates) {
+  const updated = Object.assign({}, meta);
+  for (const update of proposedUpdates) {
+    updated[update.field] = update.to;
+  }
+  return updated;
+}
+
 async function runMigrate({ args, cwd }) {
   const options = parseArgs(args);
-  if (!options.dryRun) {
-    throw new Error('kb migrate currently supports only --dry-run in this slice.');
-  }
-
   const workspaceRoot = path.resolve(cwd);
   const context = resolveExistingState({ workspaceRoot });
   const result = collectIntentMigrations(context.contentRoot, options.targetVersion);
 
+  if (options.dryRun) {
+    if (options.json) {
+      console.log(JSON.stringify({
+        command: 'kb migrate',
+        dry_run: true,
+        workspace_root: workspaceRoot,
+        ...result,
+      }, null, 2));
+      return;
+    }
+
+    console.log('kb migrate: DRY-RUN');
+    console.log(`Target: ${result.target_version}`);
+    console.log(`Legacy intents: ${result.legacy_count}/${result.count}`);
+    console.log(`Full-write candidates: ${result.full_write_count}`);
+    console.log(`Marker-only archive candidates: ${result.marker_only_count}`);
+    console.log(`Warnings: ${result.warning_count}`);
+
+    const preview = result.intents.filter((item) => item.legacy).slice(0, 20);
+    if (preview.length > 0) {
+      console.log('');
+      console.log('Preview:');
+      for (const item of preview) {
+        const fields = item.proposed_updates.map((entry) => entry.field).join(', ');
+        console.log(`  [${item.scope}] ${item.id} -> ${item.canonical_lifecycle} (${item.write_mode}; ${fields})`);
+      }
+    }
+    return;
+  }
+
+  // Live write-path: only full-write (active/closed), archive stays marker-only
+  const fullWriteItems = result.intents.filter((item) => item.legacy && item.write_mode === 'full');
+  const written = [];
+  const skipped = [];
+
+  for (const item of fullWriteItems) {
+    if (!item.meta_path) {
+      skipped.push({ id: item.id, reason: 'no meta_path resolved' });
+      continue;
+    }
+    const rawText = fs.readFileSync(item.meta_path, 'utf8');
+    const liveMeta = parseIntentFrontmatter(rawText);
+    const updatedMeta = applyProposedUpdates(liveMeta, item.proposed_updates);
+    writeIntentFrontmatter(item.meta_path, updatedMeta);
+    written.push(item.id);
+  }
+
   if (options.json) {
     console.log(JSON.stringify({
       command: 'kb migrate',
-      dry_run: true,
+      dry_run: false,
       workspace_root: workspaceRoot,
-      ...result,
+      target_version: result.target_version,
+      written_count: written.length,
+      skipped_count: skipped.length,
+      marker_only_count: result.marker_only_count,
+      written,
+      skipped,
     }, null, 2));
     return;
   }
 
-  console.log('kb migrate: DRY-RUN');
+  console.log(`kb migrate: DONE`);
   console.log(`Target: ${result.target_version}`);
-  console.log(`Legacy intents: ${result.legacy_count}/${result.count}`);
-  console.log(`Full-write candidates: ${result.full_write_count}`);
-  console.log(`Marker-only archive candidates: ${result.marker_only_count}`);
-  console.log(`Warnings: ${result.warning_count}`);
-
-  const preview = result.intents.filter((item) => item.legacy).slice(0, 20);
-  if (preview.length > 0) {
-    console.log('');
-    console.log('Preview:');
-    for (const item of preview) {
-      const fields = item.proposed_updates.map((entry) => entry.field).join(', ');
-      console.log(`  [${item.scope}] ${item.id} -> ${item.canonical_lifecycle} (${item.write_mode}; ${fields})`);
+  console.log(`Written (full): ${written.length}`);
+  console.log(`Skipped: ${skipped.length}`);
+  console.log(`Archive unchanged (marker-only): ${result.marker_only_count}`);
+  if (written.length > 0) {
+    for (const id of written) {
+      console.log(`  [written] ${id}`);
     }
   }
 }
