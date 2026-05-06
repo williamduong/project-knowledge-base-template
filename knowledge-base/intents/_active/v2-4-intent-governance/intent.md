@@ -2,18 +2,23 @@
 id: v2-4-intent-governance
 mode: full
 status: open
-created_at: 2026-05-06T10:39:54.196Z
+created_at: "2026-05-06T10:39:54.196Z"
 change_type: governance
 change_scope: []
 impact_signals: []
 decision_summary: "Lock v2.4 intent governance plan (D17-D56): schema, lifecycle, folder/CLI model, cleanup/release linkage, and separate migration track policy."
 review_after: null
-# v1.8-ready reserve fields (do not remove):
 lesson_id: null
 lifecycle_state: proposed
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
+schema_version: v2.4.0
+lifecycle: active
+legacy_status: open
+legacy_lifecycle_state: proposed
+legacy: true
+migration_note: "derived active via active scope during v2.4.0 migration preview"
 ---
 
 # Intent: v2-4-intent-governance

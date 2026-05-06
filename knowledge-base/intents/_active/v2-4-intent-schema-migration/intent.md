@@ -2,7 +2,7 @@
 id: v2-4-intent-schema-migration
 mode: full
 lifecycle: active
-created_at: 2026-05-06T00:00:00.000Z
+created_at: "2026-05-06T00:00:00.000Z"
 change_type: governance
 change_scope: []
 impact_signals: []
@@ -12,12 +12,15 @@ focus:
   current: "Implement kb migrate --to=v2.4.0 --dry-run and validate legacy fixtures."
   last_updated: 2026-05-06
   next_action: "Add write path only after dry-run semantics are stable and reviewed."
-# v1.8-ready reserve fields (do not remove):
 lesson_id: null
 lifecycle_state: proposed
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
+schema_version: v2.4.0
+legacy_lifecycle_state: proposed
+legacy: true
+migration_note: "derived active via active scope during v2.4.0 migration preview"
 ---
 
 # Intent: v2-4-intent-schema-migration
