@@ -7,10 +7,10 @@
 
 ## Active Version Target
 
-**Đang focus:** v2.3.x maintenance / v2.4.x planning (VSCode extension)
-**Intent active:** `v2-3-6-planned-backlog` (open, 0 staged — backlog chờ, chưa có task cụ thể)
-**Status:** Idle — không có P0 nào đang chạy
-**Last shipped:** v2.3.6 (2026-05-05) — hotfix archive folder trailing dot on Windows
+**Đang focus:** v2.3.7 (completed), v2.4.x planning (VSCode extension)
+**Intent active:** `INT-2-3-6-upgrade-foundation-and-direction` (open, staged — conceptual foundation for v2.4+, no release)
+**Status:** Foundation phase completed; planning-only gate active (G1 human review + G2 plan lock) before any implementation
+**Last shipped:** v2.3.7 (2026-05-06) — hotfix `intent list` legacy metadata compatibility (`padEnd` crash)
 
 ## Current Phase
 
@@ -25,13 +25,15 @@
 - Bug fix: `src/lib/intent.js` — `archiveFolderName` regex thiếu `.` → Windows EPERM khi archive.
 
 **Next action:**
-- Không có P0 đang pending.
-- Nếu tiếp tục: lên kế hoạch v2.4.x (extension scaffold) hoặc xử lý backlog trong `v2-3-6-planned-backlog`.
+- B1: Lock v2.4 Phase 0 detailed plan (entity model + operator protocol + backend abstraction criteria)
+- B2: Prepare validation package (dogfood checklist + evidence format)
+- B3: Keep VSCode extension scaffold deferred until B1+B2 completed and approved
+- Release-mini lane completed for 2.3.7; keep the checklist template for future patch lanes
 
 ## Active Blockers
 
 - Không có blocker cứng.
-- `v2-3-6-planned-backlog` còn 0 staged — cần triage nếu muốn dùng.
+- `INT-2-3-6-upgrade-foundation-and-direction` open, không release scope → tự free.
 - Bug noted (backlog): `kb uninstall --force` removes tracked `.github/hooks/revision-state-guard.json`.
 
 ## Recent Decisions (last 5)
@@ -51,6 +53,7 @@
 | v2.3.4 | Shipped 2026-05-05 | VSCode Marketplace Epic governance cleanup |
 | v2.3.5 | Shipped 2026-05-05 | intent list table, ingest, extract --apply, handoff contract |
 | v2.3.6 | Shipped 2026-05-05 | Hotfix: archive folder trailing dot on Windows |
+| v2.3.7 | Shipped 2026-05-06 | Hotfix: `intent list` fallback for missing `mode/status` in legacy intents |
 | v2.4.x | Planned | VSCode extension scaffold + core commands |
 | v2.5.x | Planned | Chat participant + template scaffolding via extension |
 | v2.6.x | Planned | Marketplace publish |
@@ -59,6 +62,7 @@
 ## Notes / Reminders cho session sau
 
 - `kb` không cài global — dùng `node ./bin/kb.js` trong workspace này hoặc `npx @williamduong/kb` cho downstream.
+- Tránh `npx kb` ở ngoài repo này vì có thể resolve package khác tên `kb`; dùng `npx @williamduong/kb@latest <cmd>` hoặc `npx --package @williamduong/kb@latest kb <cmd>`.
 - Khi `kb intent apply` gặp EPERM (trailing dot đã fix ở v2.3.6), kiểm tra lại version CLI đang dùng.
 - focus.md phải được update cuối mỗi session trước khi kết thúc — đây là nguồn truth duy nhất cho bootstrap.
 

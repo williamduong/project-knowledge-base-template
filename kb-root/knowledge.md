@@ -196,6 +196,13 @@
 **Apply:** Phase 3 encode 3 mapping này làm default seed cho `kb bind suggest`. Downstream user override per-archetype (vd `04-frontend/` → `web/` hoặc `app/`).
 **Trade-off:** Heuristic chỉ mạnh cho repo dạng "tooling/template"; web/data archetype cần mapping riêng — defer collect data từ smoke test downstream.
 
+### D16. Foundation model không khóa scope operator/backend
+**Ngày:** 2026-05-05
+**Lý do:** KB v2.4+ foundation.md định nghĩa Layers (Core/Operators/Backends) **abstract**, không liệt kê tên cụ thể tools/frameworks mà có thể integrate sau này (LangGraph, AutoGen, CrewAI, ... cho Operators; GraphDB, RAG, SQL, ... cho Backends chỉ là examples).
+**Why:** Scope thay đổi → không cập nhật foundation + chối trách nhiệm. Thay vào đó, foundation define **protocol contract** (entity model + operator semantics + backend abstraction), cho phép any-implementation-satisfying-contract.
+**Apply:** foundation.md luôn ghi "e.g." cho framework/tech examples; phần crucial là entity model + axioms, không frameworks.
+**Reconsider:** Chỉ lock scope khi có evidence từ v2.4+ smoke tests.
+
 ---
 
 ## Append history

@@ -4,6 +4,21 @@
 
 ---
 
+## 2026-05-05
+
+- **Intent `INT-2-3-6-upgrade-foundation-and-direction` created**: Conceptual foundation.md added to kb-root (v2.4+ model without scope lock). KB layers (Core/Operators/Backends) defined abstract; operator/backend examples marked as "e.g." not constraints. Entity model & axioms locked; implementations vary. D16 (foundation scope policy) appended to knowledge.md.
+- **foundation.md (kb-root)**: 3-layer model (KB Core = governance, Operators = execution, Backends = storage) with entity model contract. Axiom 1: KB governs not executes. Axiom 2: KB chooses entity model not storage. Next steps: formalize entity model, operator protocol, multi-backend abstraction.
+
+## 2026-05-06
+
+- **Intent hardening (planning-only gate)**: Updated active intent `INT-2-3-6-upgrade-foundation-and-direction` with explicit execution gates (G1 human review, G2 detailed v2.4 Phase 0 plan lock) and deferred backlog queue order B1→B2→B3→B4 to prevent scope drift and structure breakage.
+- **Focus sync**: Updated `focus.md` status/next-action to enforce gate-first planning and keep VSCode extension scaffold deferred until Phase 0 planning artifacts are approved.
+- **B1 review scaffold added**: Added structured skeleton in active intent for Phase 0 spec drafting (entity model, operator protocol, backend acceptance criteria, DoD) so owner can review before any start.
+- **CLI hotfix (local, pending release)**: Hardened `kb intent list` against missing legacy `mode/status` to prevent `padEnd` crash. Local `node ./bin/kb.js intent list` passes; `npx @williamduong/kb@latest` still fails until next publish includes patch.
+- **Release-mini checklist prepared (no execution)**: Added isolated release lane in active intent (go/no-go, preflight, post-release verification) so hotfix can be published quickly on explicit owner command without disrupting B1-B4 planning order.
+- **Released 2.3.7**: Published patch with `intent list` compatibility fix; `npx -y @williamduong/kb@latest intent list` now passes. Created release tag `v2.3.7` after publish success.
+- **npx command collision note**: Confirmed unscoped `npx kb` can resolve another package outside this repo; standardize on scoped invocation `npx @williamduong/kb@latest ...` or `npx --package @williamduong/kb@latest kb ...`.
+
 ## 2026-05-04
 
 - **Three-layer separation refactor (Phase R0–R6 COMPLETE)**: Refactored KB model into 5-layer architecture: ship (A)/verify (B)/kb-root (C)/self-host (D)/scratch (E). Renamed `.local/kb-agent/` → `kb-root/`; updated all internal refs.

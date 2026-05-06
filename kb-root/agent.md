@@ -148,6 +148,7 @@ Agent có thể tự đề nghị evolve khi gặp:
 - Không dùng emoji
 - Sau task nghiêm túc, kết bằng:
   - **Files changed:** list
+  - **Intent:** `[INT-... | PH-... | T-... | ▶ running]` hoặc `[no active intent]`
   - **Assumptions:** list (nếu có)
   - **Not verified:** list (nếu có)
   - **Manual follow-up:** checklist user cần chạy tay cho các mục chưa verify được (nếu có)
