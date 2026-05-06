@@ -1,6 +1,6 @@
 {
   "title": "KB Feature Catalog",
-  "updatedAt": "2026-05-05",
+  "updatedAt": "2026-05-06",
   "items": [
     {
       "id": "FT-001",
@@ -80,7 +80,7 @@
       "scope": "Governance",
       "status": "active",
       "summary": "Two-gate protocol before any new intent: Gate 1 checks for existing in-progress intents and requires user resolution; Gate 2 reports current chaos score + projected delta before proceeding. Cannot be skipped. Applies to both KB Agent and KBRoot.",
-      "references": ["template/.github/agents/kb.agent.template.md", "template/12-ai-skills/agent-operating-manual.md", "kb-root/principles.md P18/P19"]
+      "references": ["template/.github/agents/kb.agent.template.md", "template/12-ai-skills/agent-operating-manual.md", "template/00-start-here/how-to-use-this-kb.md"]
     },
     {
       "id": "FT-012",
@@ -88,7 +88,7 @@
       "scope": "Governance",
       "status": "active",
       "summary": "Structured handoff mechanism for tasks requiring human input, approval, or external action during intent execution. Agent drops a typed HG-NNN gate record instead of blocking on inline chat questions. Supports actor types: human, human-role, external-ai, external-system.",
-      "references": ["knowledge-base/14-templates/gates.md.template", "template/12-ai-skills/agent-operating-manual.md", "kb-root/process.md W9"]
+      "references": ["template/14-templates/README.md", "template/12-ai-skills/agent-operating-manual.md", "template/00-start-here/how-to-use-this-kb.md"]
     },
     {
       "id": "FT-008",
@@ -120,7 +120,15 @@
       "scope": "Governance",
       "status": "active",
       "summary": "(v2.3.5) Agent output contract now requires a Handoff table at the end of substantial tasks, explicitly routing pending work to the correct owner: HUMAN, CLI, @KBRoot, or @kb.",
-      "references": ["knowledge-base/12-ai-skills/agent-operating-manual.md", "kb-root/agent.md"]
+      "references": ["template/12-ai-skills/agent-operating-manual.md", "template/.github/agents/kb.agent.template.md"]
     },
     {
-      "id": "FT-008",
+      "id": "FT-016",
+      "name": "Intent Schema Migration And Cleanup",
+      "scope": "Intent",
+      "status": "active",
+      "summary": "(v2.4) Split intent maintenance into two paths: `kb intent cleanup` reports owner-facing focus/wave drift, while `kb migrate --to=<version>` migrates active/closed intents to canonical schema_version + legacy_* fields, removes renamed originals, and leaves archive intents marker-only.",
+      "references": ["kb intent cleanup", "kb migrate --to=v2.4.0", "template/15-governance/migrations/migrate-v2.3.5-to-v2.4.0.md"]
+    }
+  ]
+}

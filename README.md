@@ -6,7 +6,7 @@ It is designed for teams that want a consistent documentation baseline across di
 
 ## Current Runtime Focus
 
-- Runtime focus: `v2.3.x (solo-first)`
+- Runtime focus: `v2.4.x (solo-first + intent schema maintenance)`
 - Current messaging baseline: prioritize executable now-path (`init -> bootstrap -> index -> next`) and avoid over-claiming deferred phases
 - License: GNU AGPL v3 with separate commercial licensing available
 - Baseline state file for downstream projects: [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md)
@@ -138,10 +138,15 @@ Currently implemented commands:
 - `intent create [<id>] [--mode=quick|full] [--change-type=<type>]` — Create a structured intent workspace for a KB change batch
 - `intent status [<id>]` — Show staged files, warnings, plan/impact presence for one or all intents
 - `intent list` — List all active intent IDs
+- `intent cleanup [--stale] [--aged] [--json]` — Audit active intents for missing focus metadata, missing wave, stale focus, and aged closed records
 - `intent apply <id> [--release] [--yes]` — Write staged files to KB core, archive workspace, optionally trigger release pipeline
 - `intent cancel <id>` — Delete an active intent workspace (irreversible)
 - `intent suggest-lessons` — Analyze recent applied intents and surface lesson candidates for KB improvement
 - `intent extract <commit-range> [--title=...] [--type=...]` — (v2.1) Retroactively package ad-hoc KB commits into archived sub-intents
+
+**Intent Schema Maintenance (v2.4)**
+
+- `migrate --to=<version> [--dry-run] [--json]` — Inspect or persist legacy intent frontmatter into the canonical schema for the target version
 
 **Source Mirror (v2.2)**
 
@@ -266,11 +271,24 @@ kb intent apply my-intent --release
 
 # After multiple applies: surface lesson candidates for KB improvement
 kb intent suggest-lessons
+
+# Audit active intents for missing focus/wave metadata before release
+kb intent cleanup --json
+
+# Inspect legacy intent schema changes before writing
+kb migrate --to=v2.4.0 --dry-run --json
 ```
 
 Conflict resolution: when two intents modify the same file, `kb intent apply` detects the conflict and shows a concrete resolution strategy (`resolve-first`, `merge`, etc.) before proceeding.
 
 After each apply, `ai-decision-context.json` is written to the intent archive — records the conflict analysis and decision context for future review.
+
+For KBs created before v2.4, the CLI now distinguishes between advisory cleanup and schema migration:
+
+- `kb intent cleanup` reports missing `focus.current`, `focus.next_action`, `focus.last_updated`, and `architecture_position.wave` so maintainers can fix owner-visible planning gaps.
+- `kb migrate --to=v2.4.0` rewrites legacy intent frontmatter into the canonical schema (`schema_version`, `legacy_status`, `legacy_lifecycle_state`, migration note), removes renamed original fields (`status`, `lifecycle_state`) on full-write intents, and preserves archive folders as marker-only.
+- When runtime detects legacy intent metadata without `schema_version`, it warns and points maintainers to `kb migrate --to=v2.4.0` before claiming the KB is fully current.
+- Full-write path applies to active/closed intents. Archive intents stay read-only marker records during migration.
 
 ## What This Repository Contains
 

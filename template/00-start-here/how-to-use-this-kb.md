@@ -84,6 +84,27 @@ Operational rules:
 - If a task mutates KB structure or content across multiple files, create or resume an intent first.
 - Keep one active owner intent per version scope to avoid planning drift.
 
+## Legacy Intent Schema Maintenance (v2.4)
+
+If a downstream KB was created before the v2.4 intent schema, treat intent maintenance as two separate operations:
+
+1. Advisory cleanup: run `kb intent cleanup --json` to find missing `focus.current`, `focus.next_action`, `focus.last_updated`, and `architecture_position.wave` fields.
+2. Schema migration: run `kb migrate --to=v2.4.0 --dry-run --json` to preview legacy intent frontmatter rewrites before writing them.
+
+Use cleanup for owner-facing planning gaps. Use migration for legacy schema fields such as `status` or `lifecycle_state` that now need canonical `schema_version`, `legacy_status`, and `legacy_lifecycle_state` handling.
+
+Migration write-path semantics in v2.4:
+
+- Full-write applies to active and closed intents.
+- Archive intents remain marker-only (read-only during migrate write).
+- Renamed legacy fields (`status`, `lifecycle_state`) are removed after their values are preserved in `legacy_status` and `legacy_lifecycle_state`.
+
+Operational expectation:
+
+- Run cleanup before a release or major maintenance sweep.
+- Run migrate before claiming a legacy KB is fully aligned with v2.4 intent governance.
+- Treat archive folders as marker-only in v2.4 migration; active and closed intents are the writable path.
+
 ## Default Decisions Before Scanning
 
 - Verification strategy default: maximize `code-verified` coverage and execute it in phases.

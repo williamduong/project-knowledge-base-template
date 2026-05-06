@@ -1,6 +1,6 @@
 {
   "title": "KB CLI Command Catalog",
-  "updatedAt": "2026-05-05",
+  "updatedAt": "2026-05-06",
   "items": [
     {"command":"kb init","group":"core","stability":"stable","purpose":"Install KB template into a repository."},
     {"command":"kb update","group":"core","stability":"stable","purpose":"Sync KB state and template metadata updates."},
@@ -28,8 +28,10 @@
     {"command":"kb release plan|run|init-pipeline","group":"release","stability":"stable","purpose":"Preview/execute release pipeline DSL."},
 
     {"command":"kb intent create|status|list|apply|cancel","group":"intent","stability":"stable","purpose":"Manage intent workspaces for structured KB updates."},
+    {"command":"kb intent cleanup [--stale] [--aged] [--json]","group":"intent","stability":"stable","purpose":"(v2.4) Audit active intents for missing focus metadata, missing wave, stale focus, and aged records."},
     {"command":"kb intent suggest-lessons","group":"intent","stability":"stable","purpose":"Analyze applied intents and surface lesson candidates."},
     {"command":"kb intent extract <range>","group":"intent","stability":"stable","purpose":"(v2.1) Retroactively package ad-hoc KB commits into archived sub-intents with snapshot."},
+    {"command":"kb migrate --to=<version> [--dry-run] [--json]","group":"intent","stability":"stable","purpose":"(v2.4) Preview or persist legacy intent schema migration: full-write for active/closed intents, archive marker-only, and renamed legacy fields moved to legacy_* then removed from originals."},
 
     {"command":"kb plan list|add","group":"planning","stability":"stable","purpose":"Manage finalization plan TODO list."},
     {"command":"kb show|hide","group":"storage","stability":"stable","purpose":"Expose/hide KB mount in private-git mode."},

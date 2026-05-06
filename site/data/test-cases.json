@@ -1,6 +1,6 @@
 {
   "title": "Solo Developer Workflow Scenarios",
-  "updatedAt": "2026-05-05",
+  "updatedAt": "2026-05-06",
   "items": [
     {
       "id": "WF-001",
@@ -146,6 +146,21 @@
         "Update TEMPLATE_CHANGELOG.md with release entry"
       ],
       "expected": "Release notes reflect actual git range. GitHub Release is published. TEMPLATE_CHANGELOG is current.",
+      "status": "active"
+    },
+    {
+      "id": "WF-011",
+      "cadence": "per-release",
+      "context": "Downstream acceptance pass for v2.4 intent schema maintenance",
+      "objective": "Validate cleanup and migrate behavior in a clean workspace before push/publish decisions.",
+      "steps": [
+        "Create a clean test repo folder and run: npx @williamduong/kb@latest init --yes",
+        "Prepare one legacy intent with status/lifecycle_state fields under intents/_active",
+        "Run: kb migrate --to=v2.4.0 --dry-run --json and confirm proposed legacy_* mapping",
+        "Run: kb migrate --to=v2.4.0 --json and verify original status/lifecycle_state fields are removed on active/closed intents",
+        "Run: kb intent cleanup --json and confirm missing focus/wave findings are explicit"
+      ],
+      "expected": "Downstream workspace shows canonical schema fields, no duplicated renamed legacy fields on full-write intents, archive intents remain marker-only, and cleanup findings are deterministic.",
       "status": "active"
     }
   ]

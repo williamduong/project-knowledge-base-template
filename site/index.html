@@ -335,7 +335,7 @@ kb next</pre>
       <section class="roadmap-section" aria-label="Current and future direction">
         <p class="section-eyebrow">Direction</p>
         <h2 class="section-title">Now, next, later</h2>
-        <p class="section-sub">Current runtime is optimized for solo execution. Future phases remain explicit and deferred until command surface is shipped.</p>
+        <p class="section-sub">Current runtime is optimized for solo execution and explicit downstream maintenance. Future phases remain explicit and deferred until command surface is shipped.</p>
         <div class="pillars">
           <article>
             <div class="feature-head">
@@ -345,9 +345,9 @@ kb next</pre>
                   <path d="m13 6 6 6-6 6"></path>
                 </svg>
               </span>
-              <h2>Now (v2.3.x reality)</h2>
+              <h2>Now (v2.4.x reality)</h2>
             </div>
-            <p>Solo core plus supported Phase-2 subset: strict doctor gate, release notes/catalog, chaos score with cognitive drift signals (v2.3.3), intent workspace workflow, agent governance gates — one-active-intent rule, chaos estimate gate, and human-gate protocol (v2.3.4) — plus v2.3.5 stabilization: <code>kb intent list</code> table+pager, version monotonicity guard, <code>kb ingest</code>, <code>kb extract --apply</code>, and agent Handoff table output contract.</p>
+            <p>Solo core plus supported Phase-2 subset: strict doctor gate, release notes/catalog, chaos score with cognitive drift signals (v2.3.3), intent workspace workflow, agent governance gates, v2.3.5 stabilization, and v2.4 intent schema maintenance: <code>kb intent cleanup</code> audits missing focus or wave metadata, while <code>kb migrate --to=v2.4.0</code> upgrades legacy intent frontmatter on active/closed intents, removes renamed original fields after mapping to <code>legacy_*</code>, and keeps archive intents marker-only.</p>
           </article>
           <article>
             <div class="feature-head">
