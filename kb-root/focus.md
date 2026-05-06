@@ -8,8 +8,8 @@
 ## Active Version Target
 
 **Đang focus:** v2.3.7 (completed), v2.4 Phase 0 planning (entity model + operator protocol)
-**Intent active:** `INT-2-3-6-upgrade-foundation-and-direction` (active — B1 implementation ready)
-**Status:** Foundation + plan locked (G1+G2 PASS 2026-05-06); B1 work ready to start; B2-B4 deferred in queue
+**Intent active:** None (INT-2-3-6 closed, archived; awaiting new intent briefing)
+**Status:** Foundation + plan complete and archived. Next session: v2.4 Phase 0 B1 implementation intent
 **Last shipped:** v2.3.7 (2026-05-06) — hotfix `intent list` legacy metadata compatibility (`padEnd` crash)
 
 ## Current Phase
