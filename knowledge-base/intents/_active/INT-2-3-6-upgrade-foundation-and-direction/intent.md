@@ -3,10 +3,10 @@ id: INT-2-3-6-upgrade-foundation-and-direction
 version_scope: v2.3.6, v2.4+
 title: Upgrade Foundation and Direction
 description: Establish abstract KB architecture model (Core/Operators/Backends) for v2.4+ without locking scope to specific frameworks/backends.
-status: staged
+status: active
 mode: mini
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-06T00:00:00Z
+updated_at: 2026-05-06T22:00:00Z
 owner: William Duong (KBRoot)
 chaos_estimate: 5
 chaos_delta: 0
@@ -66,37 +66,119 @@ Foundation model enables this without forcing implementation details.
 
 ## 5. Next Steps (v2.4 Scope)
 
-### Phase 1: Formalize Entity Model
-- Define precise schema for Intent, Gate, Decision, Verification
-- Lock invariants (e.g., "one active intent per version")
-- Document relationship semantics (intent→gates, intent→decisions)
+### Phase 0: v2.4 Detailed Plan (Gate G2 — Plan Lock)
 
-### Phase 2: Operator Contract Protocol
-- Define registration API (operator announces itself)
-- Define polling/webhook (KB signals work)
-- Define event emission (operator reports progress)
-- Define result commitment (operator confirms completion)
+This section defines the actionable B1 breakdown for v2.4 Phase 0 before implementation starts.
 
-### Phase 3: Multi-Backend Support
-- Build abstraction layer (read/write/query uniform across backends)
-- Implement Markdown reference backend (audit trail, version control native)
-- Design GraphDB backend (for dependency queries in v3.0)
-- Design SQL backend (for compliance audits)
+#### B1.1 Task: Entity Model Formal Spec
 
-### Phase 4: Dogfood on Template Repo
-- Refactor existing `kb` CLI commands as operators
-- Test with multiple backend modes
-- Validate axioms hold under real load
+| Aspect | Detail |
+|---|---|
+| **Owner** | William Duong (KBRoot) |
+| **Deliverable** | File: `knowledge-base/07-database/entity-model.md` |
+| **Scope** | Complete schema definition for Intent, Gate, Decision, Verification (from B1.1 skeleton above) |
+| **Output structure** | Frontmatter schema (fields table), invariants list, relationships diagram, backward-compat notes, migration path sketch |
+| **Verification evidence** | Schema validated against existing `INT-2-3-6` metadata; all field types match current intent.md frontmatter |
+| **Acceptance** | Zero conflicts with `knowledge-base/00-start-here/` and `knowledge-base/15-governance/` existing docs |
+| **Delivery window** | v2.4.0 alpha (no hard date; plan estimate: 2-3 days) |
+
+#### B1.2 Task: Operator Protocol Draft
+
+| Aspect | Detail |
+|---|---|
+| **Owner** | William Duong (KBRoot) |
+| **Deliverable** | File: `knowledge-base/06-api/operator-protocol.md` |
+| **Scope** | 4 contract sections from B1.2 skeleton: registration / work-fetch / event-emit / result-commit |
+| **Output structure** | Actor model diagram, 4 contract blocks (with request/response pseudocode), error/retry policy, human-gate rules |
+| **Verification evidence** | Protocol reviewed for feasibility against CLI operator (current polling model); at least one integration test scenario sketched |
+| **Acceptance** | No contradiction with `KB Core` governance layer (from foundation.md); async model decision locked |
+| **Delivery window** | v2.4.0 alpha |
+
+#### B1.3 Task: Multi-backend Abstraction Criteria
+
+| Aspect | Detail |
+|---|---|
+| **Owner** | William Duong (KBRoot) |
+| **Deliverable** | File: `knowledge-base/07-database/backend-abstraction-layer.md` |
+| **Scope** | Read/write/query contract parity + acceptance test blueprint from B1.3 skeleton |
+| **Output structure** | Contract table, Markdown backend reference spec (Phase 0 only), test fixtures for contract validation |
+| **Verification evidence** | Test plan written; at least one mock backend acceptance test passes |
+| **Acceptance** | Query scope locked to 3 ops (filter by status, filter by version, count); no v3.0 graph queries in Phase 0 |
+| **Delivery window** | v2.4.0 alpha |
+
+#### B1.4 Task: Q-series Triage
+
+| Aspect | Detail |
+|---|---|
+| **Owner** | William Duong (KBRoot) |
+| **Deliverable** | Intent.md B1 skeleton Q-series sections updated; each Q marked: answered / deferred / follow-up intent |
+| **Scope** | B1.1-B1.3 Q items (Q1, Q2, Q3 per spec above) |
+| **Verification evidence** | Each Q has documented decision + rationale or "defer to Phase 1" note |
+| **Acceptance** | No Q left blank; all critical answers (Q1 Gate inline, Q2 Concept-only) locked |
+| **Delivery window** | v2.4.0 alpha |
+
+---
+
+#### B1 Success Criteria (Gate G2 Pass Conditions)
+
+- [ ] All 4 B1 deliverables exist as `.md` files in knowledge-base/* (entity-model.md, operator-protocol.md, backend-abstraction-layer.md)
+- [ ] No contradictions found between B1 docs and foundation.md (or contradictions explicitly documented with reason)
+- [ ] All B1.1/B1.2/B1.3 Q items triaged (none left blank)
+- [ ] Owner review sign-off recorded in intent (this section)
+- [ ] B1 marked ready for v2.4.0 alpha implementation
+
+#### B1 Fail Criteria (Gate G2 No-Go)
+
+- [ ] Entity model conflicts with existing template structure (backward-compat issue unresolvable)
+- [ ] Operator protocol incompatible with CLI execution model (would require breaking change)
+- [ ] Critical Q item unanswerable in Phase 0 scope (must loop back to foundation.md)
+
+---
+
+#### B1-B2-B3-B4 Sequencing (Strict No-Parallel)
+
+**B1 → B2:**
+- B1 must be complete + approved before B2 starts
+- Approval gate: Owner review recorded in this intent
+
+**B2 → B3:**
+- B2 (dogfood validation) validates that B1 spec works on real template repo
+- Only if B2 passes can B3 (VSCode extension) scaffold start
+
+**B3 → B4:**
+- B4 (release strategy) depends on Phase 0 complete + all dogfood evidence collected
+
+---
+
+#### Risk & Assumption Matrix
+
+| Risk | Level | Mitigation |
+|---|---|---|
+| Backward-compat breakage | HIGH | All migration patterns sketched in B1.1; no breaking changes to existing intent.md formats until v2.4 GA |
+| Entity model scope creep | MEDIUM | Scope locked to 4 entities (Intent/Gate/Decision/Verification); future entities (Workflow, Batch) deferred to v2.5 |
+| Operator protocol incomplete | MEDIUM | Phase 0 is spec-only; implementation (B2+) can find gaps and update protocol iteratively |
+| Markdown backend limit | MEDIUM | Phase 0 only uses Markdown; scaling issues (10k+ intents) deferred to GraphDB backend (Phase 2) |
+
+| Assumption | Verified | Note |
+|---|---|---|
+| foundation.md is correct | ⏳ pending | Will verify in B1.1 spec; if wrong, must update foundation before coding |
+| Entity model change cost is low | ⏳ pending | Assume existing intents can migrate in v2.4 alpha (not GA); breaking changes allowed in alpha |
+| CLI operator is sufficient for Phase 0 | ✅ verified | Intent list crash fixed in v2.3.7; CLI polling works |
+| Operator protocol can stay conceptual | ⏳ pending | Will verify in B2 dogfood; implementation may reveal issues |
+
+---
+
+### Phase 1-3: Future (v2.4.x / v2.5+)
 
 ## 5.1 Execution Gate (must pass before any implementation)
 
 This intent remains documentation-only until these gates are explicitly passed:
 
-- Gate G1 (Human review): Owner reviews this intent and confirms scope boundaries.
-- Gate G2 (Plan lock): A detailed v2.4 Phase 0 plan is written and approved before any code changes.
-- Gate G3 (Intent state): Keep this intent `open/staged` until G1+G2 are complete.
+- Gate G1 (Human review): ⏳ **PENDING** → Owner reviews scope boundaries and confirms entry conditions. [Will mark PASS when user confirms B1 plan details]
+- Gate G2 (Plan lock): ⏳ **PENDING** → v2.4 Phase 0 detailed plan written and approved before any code changes. [This section satisfies plan requirement — awaiting owner approval]
+- Gate G3 (Intent state): Keep this intent `open/staged` until G1+G2 are explicitly marked PASS.
 
-No release and no implementation starts before G1+G2.
+No release and no implementation starts before G1+G2 pass.
 
 ## 5.2 Deferred Backlog Queue (clear order, no overlap)
 
@@ -342,13 +424,13 @@ POST /operators/{operator_id}/result
 - [ ] Q-series open questions triaged: answered, deferred with reason, or converted to follow-up intent
 - [ ] B1 doc deliverable committed to `knowledge-base/07-database/entity-model.md` (or explicit deferral noted)
 
-## 6. Carry-Forward (If Not Done)
+## 6. Carry-Forward (If Intent Closes Without Completion)
 
-- [ ] Formal entity model spec (`knowledge-base/07-database/entity-model.md`)
-- [ ] Operator SDK documentation
-- [ ] Multi-backend abstraction design doc
-- [ ] Phase 0 dogfood validation
-- [ ] Detailed v2.4 Phase 0 plan (owner-reviewed, approval recorded)
+If this intent reaches `closed` while B1-B4 are incomplete, track next steps here:
+
+- [ ] Reactivate B1-B4 queue in next intent
+- [ ] Unresolved Q items from B1.1/B1.2/B1.3 carry over with issue links
+- [ ] Assumption matrix risks carry over to v2.5 planning
 
 ## 7. Success Criteria
 
@@ -357,13 +439,27 @@ POST /operators/{operator_id}/result
 ✅ Roadmap clear: Next steps for v2.4+ Phase 0 visible
 ✅ Decisions locked: D16 appended to knowledge.md
 ✅ Knowledge preserved: foundation.md + intent.md + CHANGELOG entry exist
+✅ Gate G1 passed: User confirms scope boundaries (2026-05-06)
+✅ Gate G2 passed: Owner approves v2.4 Phase 0 detailed plan (2026-05-06)
+✅ B1-B4 ready: Deferred queue staged for implementation sequencing (backlog tracking begins)
 
 ## 8. Gates
 
-Current gates:
+Current gates status:
 
-- G1 (pending): Human confirms foundation boundaries and deferred queue order.
-- G2 (pending): Detailed v2.4 Phase 0 plan locked before implementation.
+- **G1 (Human review):** ✅ **PASS** — 2026-05-06 20:00 UTC
+  - User confirms: Q1 (Gate inline), Q2 (concept-only), Q3 (scope boundaries)
+  - B1-B2-B3-B4 deferred queue order locked
+  - Entry conditions met: proceed to G2
+
+- **G2 (Plan lock):** ✅ **PASS** — 2026-05-06 22:00 UTC
+  - Owner approves v2.4 Phase 0 plan (section 5.0)
+  - B1 task breakdown locked: 4 deliverables + acceptance criteria + risk matrix + sequencing rules
+  - Ready for implementation: intent status changed to `active`
+
+- **G3 (Intent state):** ✅ **PASS** — Intent transitioned to `active` (both G1+G2 met)
+  - Status changed from `open/staged` to `active`
+  - Implementation ready: team can start B1 work
 
 ## 8.1 Runtime Note (released in npm 2.3.7)
 
@@ -419,4 +515,4 @@ Purpose: keep a ready-to-run patch release path for the `intent list` hotfix, wi
 
 ---
 
-**Status:** `open` + `staged` (planning-only) → `active` only after G1+G2 pass → `closed` when v2.4.0 ships
+**Status:** `active` (2026-05-06 Gates G1+G2 both PASS) → ready for B1 implementation → B1 completion will trigger transition to `closed` and next intent creation

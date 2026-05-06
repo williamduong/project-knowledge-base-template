@@ -7,9 +7,9 @@
 
 ## Active Version Target
 
-**Đang focus:** v2.3.7 (completed), v2.4.x planning (VSCode extension)
-**Intent active:** `INT-2-3-6-upgrade-foundation-and-direction` (open, staged — conceptual foundation for v2.4+, no release)
-**Status:** Foundation phase completed; planning-only gate active (G1 human review + G2 plan lock) before any implementation
+**Đang focus:** v2.3.7 (completed), v2.4 Phase 0 planning (entity model + operator protocol)
+**Intent active:** `INT-2-3-6-upgrade-foundation-and-direction` (active — B1 implementation ready)
+**Status:** Foundation + plan locked (G1+G2 PASS 2026-05-06); B1 work ready to start; B2-B4 deferred in queue
 **Last shipped:** v2.3.7 (2026-05-06) — hotfix `intent list` legacy metadata compatibility (`padEnd` crash)
 
 ## Current Phase
@@ -25,10 +25,9 @@
 - Bug fix: `src/lib/intent.js` — `archiveFolderName` regex thiếu `.` → Windows EPERM khi archive.
 
 **Next action:**
-- B1: Lock v2.4 Phase 0 detailed plan (entity model + operator protocol + backend abstraction criteria)
-- B2: Prepare validation package (dogfood checklist + evidence format)
-- B3: Keep VSCode extension scaffold deferred until B1+B2 completed and approved
-- Release-mini lane completed for 2.3.7; keep the checklist template for future patch lanes
+- **Immediate:** User has large intent to process — await briefing
+- **B1 Phase 0 (after current intent):** Implement entity model spec + operator protocol draft + backend abstraction criteria (4 deliverables, see INT-2-3-6 section 5.0)
+- **B2-B4 pending:** Deferred until B1 complete
 
 ## Active Blockers
 
