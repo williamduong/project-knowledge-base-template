@@ -32,6 +32,7 @@ const { runGraph } = require('./commands/graph');
 const { runExtract } = require('./commands/extract');
 const { runIngest } = require('./commands/ingest');
 const { runNext } = require('./commands/next');
+const { runMigrate } = require('./commands/migrate');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -148,6 +149,11 @@ async function run(argv) {
 
   if (command === 'next') {
     await runNext({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'migrate') {
+    await runMigrate({ args: rest, cwd: process.cwd() });
     return;
   }
 
