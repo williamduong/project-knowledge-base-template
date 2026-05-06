@@ -7,6 +7,12 @@ change_scope: []
 impact_signals: []
 decision_summary: "Lock v2.4 intent governance plan (D17-D56): schema, lifecycle, folder/CLI model, cleanup/release linkage, and separate migration track policy."
 review_after: null
+focus:
+  current: "Stabilize v2.4 governance - lock schema/lifecycle/CLI semantics"
+  last_updated: 2026-05-06
+  next_action: "Promote intent schema migration; publish v2.4.0 to npm"
+architecture_position:
+  wave: "v2.4.x"
 lesson_id: null
 promotion_ready: false
 linked_signals: []

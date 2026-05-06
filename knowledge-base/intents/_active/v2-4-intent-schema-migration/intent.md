@@ -9,9 +9,11 @@ impact_signals: []
 decision_summary: "Implement the dedicated legacy intent migration track for v2.4 with read-only dry-run tooling, folder-first lifecycle mapping, and lazy-on-read compatibility boundaries."
 review_after: null
 focus:
-  current: "Implement kb migrate --to=v2.4.0 --dry-run and validate legacy fixtures."
+  current: "Implement kb migrate --to=v2.4.0 --dry-run and validate legacy fixtures"
   last_updated: 2026-05-06
-  next_action: "Add write path only after dry-run semantics are stable and reviewed."
+  next_action: "Add write-path; validate on real workspace; release v2.4.0"
+architecture_position:
+  wave: "v2.4.x"
 lesson_id: null
 promotion_ready: false
 linked_signals: []
