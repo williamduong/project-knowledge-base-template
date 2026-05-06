@@ -13,14 +13,13 @@ focus:
   last_updated: 2026-05-06
   next_action: "Add write path only after dry-run semantics are stable and reviewed."
 lesson_id: null
-lifecycle_state: proposed
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
 schema_version: v2.4.0
 legacy_lifecycle_state: proposed
 legacy: true
-migration_note: "derived active via active scope during v2.4.0 migration preview"
+migration_note: "migrated active via active scope to v2.4.0"
 ---
 
 # Intent: v2-4-intent-schema-migration

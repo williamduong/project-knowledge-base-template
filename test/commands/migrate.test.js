@@ -67,7 +67,9 @@ test('inspectIntentMigration: maps superseded legacy state to dropped close type
   assert.equal(result.canonical_lifecycle, 'closed');
   assert.equal(result.write_mode, 'full');
   assert.ok(result.proposed_updates.some((entry) => entry.field === 'legacy_status' && entry.to === 'closed'));
+  assert.ok(result.proposed_updates.some((entry) => entry.field === 'status' && entry.to === '__DELETE__'));
   assert.ok(result.proposed_updates.some((entry) => entry.field === 'legacy_lifecycle_state' && entry.to === 'superseded'));
+  assert.ok(result.proposed_updates.some((entry) => entry.field === 'lifecycle_state' && entry.to === '__DELETE__'));
   assert.ok(result.proposed_updates.some((entry) => entry.field === 'close_type' && entry.to === 'dropped'));
   assert.ok(result.proposed_updates.some((entry) => entry.field === 'drop_reason' && /superseded by unknown/.test(entry.to)));
 });
@@ -142,9 +144,11 @@ test('runMigrate: write-path updates active/closed but not archived', async () =
   // Archive file must NOT be modified
   assert.equal(archiveAfter, archiveBefore);
 
-  // Active file must have schema_version written
+  // Active file must have schema_version written and legacy status field removed
   const activeAfter = fs.readFileSync(activeMetaPath, 'utf8');
   assert.ok(activeAfter.includes('schema_version: v2.4.0'));
+  assert.ok(activeAfter.includes('legacy_status: open'));
+  assert.ok(!activeAfter.includes('\nstatus: '), 'original status field should be removed');
 });
 
 test('runMigrate: dry-run JSON preview stays read-only', async () => {

@@ -6,6 +6,8 @@ const path = require('path');
 const { resolveExistingState } = require('../lib/context');
 const { listIntentRecords, parseIntentFrontmatter, writeIntentFrontmatter } = require('../lib/intent');
 
+const DELETE_SENTINEL = '__DELETE__';
+
 function normalizeTargetVersion(raw) {
   const value = String(raw || '').trim();
   if (!/^v?\d+\.\d+\.\d+$/.test(value)) {
@@ -87,11 +89,13 @@ function inspectIntentMigration(record, targetVersion) {
   if (Object.prototype.hasOwnProperty.call(meta, 'status')) {
     legacySignals.push('status');
     proposedUpdates.push({ field: 'legacy_status', from: null, to: meta.status });
+    proposedUpdates.push({ field: 'status', from: meta.status, to: DELETE_SENTINEL, reason: 'renamed to legacy_status' });
   }
 
   if (Object.prototype.hasOwnProperty.call(meta, 'lifecycle_state')) {
     legacySignals.push('lifecycle_state');
     proposedUpdates.push({ field: 'legacy_lifecycle_state', from: null, to: meta.lifecycle_state });
+    proposedUpdates.push({ field: 'lifecycle_state', from: meta.lifecycle_state, to: DELETE_SENTINEL, reason: 'renamed to legacy_lifecycle_state' });
   }
 
   if (String(meta.lifecycle_state || '').toLowerCase() === 'superseded') {
@@ -117,7 +121,7 @@ function inspectIntentMigration(record, targetVersion) {
     proposedUpdates.push({
       field: 'migration_note',
       from: meta.migration_note || null,
-      to: `derived ${canonicalLifecycle} via ${record.scope} scope during ${targetVersion} migration preview`,
+      to: `migrated ${canonicalLifecycle} via ${record.scope} scope to ${targetVersion}`,
     });
   }
 
@@ -168,7 +172,11 @@ function collectIntentMigrations(contentRoot, targetVersion) {
 function applyProposedUpdates(meta, proposedUpdates) {
   const updated = Object.assign({}, meta);
   for (const update of proposedUpdates) {
-    updated[update.field] = update.to;
+    if (update.to === DELETE_SENTINEL) {
+      delete updated[update.field];
+    } else {
+      updated[update.field] = update.to;
+    }
   }
   return updated;
 }
