@@ -11,6 +11,7 @@
 
 ## 2026-05-06
 
+- **Downstream-first governance lock**: Updated P15 and added P21 so self-host/template validation is only preflight; every plan/build/release now treats downstream KB Agent ship surface as the primary acceptance target.
 - **Intent hardening (planning-only gate)**: Updated active intent `INT-2-3-6-upgrade-foundation-and-direction` with explicit execution gates (G1 human review, G2 detailed v2.4 Phase 0 plan lock) and deferred backlog queue order B1→B2→B3→B4 to prevent scope drift and structure breakage.
 - **Focus sync**: Updated `focus.md` status/next-action to enforce gate-first planning and keep VSCode extension scaffold deferred until Phase 0 planning artifacts are approved.
 - **B1 review scaffold added**: Added structured skeleton in active intent for Phase 0 spec drafting (entity model, operator protocol, backend acceptance criteria, DoD) so owner can review before any start.

@@ -93,10 +93,12 @@ Doc cho user downstream = tiếng Anh (template content).
 `.local/` đã gitignore. Trước mọi `git add`, double-check không add nhầm.
 Trước mọi `git commit -A`, hỏi user confirm.
 
-## P15. Test trên template repo trước downstream
+## P15. Template repo là preflight, không phải acceptance cuối
 
-Mọi feature mới dogfood trên chính template repo này trước khi smoke test downstream.
-Lý do: template repo có git history dày, edge case nhiều.
+Mọi feature mới dogfood trên chính template repo này trước khi test downstream.
+Nhưng pass trên self-host/template repo KHÔNG đủ để kết luận feature đã xong.
+Acceptance cuối cho KB Agent phải dựa trên downstream surface thực sự ship cho user.
+Lý do: template repo có git history dày, edge case nhiều, nhưng vẫn chỉ là maintainer workspace.
 
 ## P16. Mọi phần chưa verify phải có manual follow-up rõ ràng
 
@@ -150,6 +152,19 @@ Intent **không thể close** nếu còn gate `pending` — trừ khi explicit s
 
 Áp dụng cho: human, human:<role>, ai:<name>, external:<system>.
 
+## P21. Downstream-first planning và acceptance
+
+Khi plan bất kỳ upgrade nào cho KB/agent/runtime:
+1. Downstream KB Agent là primary target; KBRoot chỉ là maintainer/control surface.
+2. Mọi plan phải phân biệt rõ:
+	- Cái gì ship cho downstream (`package.json.files`, `template/`, `src/`, generated destinations)
+	- Cái gì chỉ phục vụ self-host (`kb-root/`, `knowledge-base/`, maintainer prompts, notes)
+3. Không được coi thay đổi trong self-host docs/intents là bằng chứng downstream đã được update.
+4. Mọi phase phải có ít nhất một acceptance check ở downstream surface tương ứng hoặc chỉ rõ vì sao chưa thể chạy.
+5. Nếu self-host và downstream lệch nhau, ưu tiên fix downstream trước; self-host sync theo sau.
+
+Rule này áp dụng mặc định cho plan, build, review, release, và post-release verification.
+
 ---
 
 ## Append history
@@ -162,3 +177,4 @@ Intent **không thể close** nếu còn gate `pending` — trừ khi explicit s
 | 2026-05-05 | P18 | Một version code chỉ được 1 active intent; phải hỏi user trước khi tạo mới nếu còn intent chưa đóng |
 | 2026-05-05 | P19 | Chaos estimate bắt buộc trước khi bắt đầu intent: báo score hiện tại + delta dự kiến + yêu cầu confirm nếu dự kiến > 80 |
 | 2026-05-05 | P20 | Human-gate thay câu hỏi inline: ghi gate record vào gates.md, tiếp tục làm việc, không block chat |
+| 2026-05-06 | P21 + P15 update | Chuyển governance sang downstream-first: template/self-host chỉ là preflight, không phải acceptance cuối |

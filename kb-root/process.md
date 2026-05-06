@@ -18,16 +18,19 @@
    - `notes/upgrade-v*.md` của version hiện tại + version trước đó
    - `template/00-start-here/repository-revision-state.md`
    - Code thật của file/module sẽ chạm
+   - Ship surface thật: `package.json.files`, `src/`, `template/`, generated downstream destinations
 4. **Verify assumptions** trong codebase (đừng đoán API)
 5. **Draft plan structure**:
    - Header: version target, depends on, status
    - Mục tiêu (rõ "giá trị tức thì" + "tiền đề cho version sau")
+   - Primary target: downstream user outcome; self-host benefit chỉ là secondary/supporting
    - Quyết định đã chốt (table)
+   - Ship-surface map: downstream vs self-host artifacts
    - Mental model + diagram nếu cần
    - Phase breakdown (vX.Y.Z Phase 0 validation BẮT BUỘC)
    - Tổng thời lượng
    - Risks + mitigation
-   - Verification matrix
+   - Verification matrix, trong đó downstream acceptance là bắt buộc cho mỗi phase có user-facing impact
    - Mapping sang code base
    - Reuse cho version sau
    - Carry-forward
@@ -44,20 +47,24 @@
 1. **Đọc plan file** `notes/upgrade-vX.Y-*.md` đầy đủ
 2. **Verify vX.Y.Z Phase trước đã exit** (check criteria phase đó)
 3. **Tạo todo list** với `manage_todo_list` cho vX.Y.Z Phase hiện tại
-4. **Đọc code thật** trước khi sửa (`read_file` lớn, không nhiều lần nhỏ)
-5. **Register-first declaration cho file changes**:
+4. **Xác định acceptance surface của phase**:
+   - downstream runtime/package/template nào phải đổi thật
+   - phần nào chỉ là self-host support docs/governance
+   - phase không được coi là done nếu downstream acceptance chưa pass hoặc chưa có manual follow-up rõ
+5. **Đọc code thật** trước khi sửa (`read_file` lớn, không nhiều lần nhỏ)
+6. **Register-first declaration cho file changes**:
    - Quyết định folder: reuse folder hiện có hay tạo mới
    - Quyết định edit vs create: ưu tiên edit nếu file phù hợp đã tồn tại
    - Khai báo file mới (nếu có): purpose + tên + path + metadata cơ bản
    - Khai báo index/routing cần cập nhật cùng change set
-6. **Implement từng deliverable**:
+7. **Implement từng deliverable**:
    - File mới: `create_file`
    - Sửa file: `replace_string_in_file` với 3-5 dòng context trước/sau
    - Multiple edits: `multi_replace_string_in_file` parallel
-7. **Sau mỗi file**: `get_errors` validate
-8. **Sau vX.Y.Z Phase**: chạy smoke test theo verification matrix
-9. **Nếu còn hạng mục chưa verify được bằng tool**: ghi checklist `Manual follow-up` (task + command + expected result) trong output cuối để user chạy tiếp
-10. **Update CHANGELOG.md** của agent: ghi 1 dòng "v1.3 Phase N: <summary>"
+8. **Sau mỗi file**: `get_errors` validate
+9. **Sau vX.Y.Z Phase**: chạy smoke test theo verification matrix, ưu tiên downstream acceptance trước khi self-host sync
+10. **Nếu còn hạng mục chưa verify được bằng tool**: ghi checklist `Manual follow-up` (task + command + expected result) trong output cuối để user chạy tiếp
+11. **Update CHANGELOG.md** của agent: ghi 1 dòng "v1.3 Phase N: <summary>"
 
 ## Workflow 3: Code Review trước Build
 
@@ -72,6 +79,8 @@
    - File path tồn tại?
    - API signature plan giả định vs hiện tại?
    - Dependency đã có trong `package.json` chưa?
+   - Ship surface downstream đã được nêu rõ chưa?
+   - Acceptance evidence có dựa vào downstream hay đang dựa nhầm vào self-host?
 4. **List 5-10 điểm cần điều chỉnh** với recommendation
 5. **Hỏi user từng điểm** (`vscode_askQuestions` A/B/C)
 6. **Apply quyết định** vào plan với `multi_replace_string_in_file`
@@ -90,10 +99,11 @@
 4. ✅ `npm run doc:gate` pass
 5. ✅ `npm run doctor` pass
 6. ✅ `npm run pack:smoke` pass
-7. ✅ `git status` clean
-8. ✅ `TEMPLATE_CHANGELOG.md` có entry vX.Y.Z
-9. ✅ `repository-revision-state.md` baseline updated nếu major
-10. ✅ Kill rogue cache: `_cacache/`, `_logs/`, `_update-notifier-last-checked` không tồn tại trong git
+7. ✅ Downstream pre-release smoke pass trên packed artifact hoặc clean workspace
+8. ✅ `git status` clean
+9. ✅ `TEMPLATE_CHANGELOG.md` có entry vX.Y.Z
+10. ✅ `repository-revision-state.md` baseline updated nếu major
+11. ✅ Kill rogue cache: `_cacache/`, `_logs/`, `_update-notifier-last-checked` không tồn tại trong git
 
 **Release steps** (luôn confirm trước):
 
@@ -111,7 +121,8 @@ npm publish --access public
 **Post-release:**
 
 - Update `focus.md`: ghi version vừa ship + clear active blocker
-- Smoke test downstream: `npx @williamduong/kb@latest init` trên temp dir
+- Re-run downstream smoke trên published package: `npx @williamduong/kb@latest init` trên temp dir
+- Nếu self-host docs/intents cần sync theo release vừa ship, làm sau khi downstream smoke pass
 
 ## Workflow 5: Bug Fix Patch
 
@@ -120,12 +131,13 @@ npm publish --access public
 **Steps:**
 
 1. **Reproduce** trên template repo trước
-2. **Locate root cause** (đọc code, không patch triệu chứng)
-3. **Bump patch version** (X.Y.Z+1)
-4. **Sửa minimal** (P5 — additive khi có thể)
-5. **Test fix** + regression test cho similar paths
-6. **Run Workflow 4 release**
-7. **Ghi `knowledge.md` section Risks** nếu bug đáng học
+2. **Reproduce hoặc confirm impact** trên downstream surface nếu bug liên quan ship/runtime user-facing
+3. **Locate root cause** (đọc code, không patch triệu chứng)
+4. **Bump patch version** (X.Y.Z+1)
+5. **Sửa minimal** (P5 — additive khi có thể)
+6. **Test fix** + regression test cho similar paths, gồm downstream path nếu bug nằm ở downstream UX
+7. **Run Workflow 4 release**
+8. **Ghi `knowledge.md` section Risks** nếu bug đáng học
 
 ## Workflow 6: Self-Update Agent
 

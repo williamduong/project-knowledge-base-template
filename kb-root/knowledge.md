@@ -143,6 +143,12 @@
 **Tác động:** 2 intent in-progress đồng thời, vi phạm rule vừa viết chính mình
 **Phòng:** Sau khi viết bất kỳ governance rule nào, ngay lập tức chạy check hiện tại để verify không có existing state nào vi phạm rule mới. "Write rule → immediately self-audit current state."
 
+### R16. Self-host pass != downstream shipped
+**Ngày:** 2026-05-06
+**Trigger:** Intent governance/migration changes được xác nhận nhanh trên `knowledge-base/` self-host workspace, trong khi downstream ship surface chưa được review cùng mức.
+**Tác động:** Tưởng như upgrade "xong" nhưng downstream KB Agent chưa phản ánh đầy đủ; các upgrade lớn về sau dễ bị lệch giữa maintainer workspace và user runtime.
+**Phòng:** P21 downstream-first. Mọi plan/review/release phải map rõ downstream artifacts, downstream acceptance, và xem self-host chỉ là preflight/supporting evidence.
+
 ---
 
 ## Decisions (chốt và rationale)
