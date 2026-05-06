@@ -7,14 +7,15 @@
 
 ## Active Version Target
 
-**Đang focus:** v2.3.7 (completed), v2.4 Phase 0 planning (entity model + operator protocol)
-**Intent active:** None (INT-2-3-6 closed, archived; awaiting new intent briefing)
-**Status:** Foundation + plan complete and archived. Next session: v2.4 Phase 0 B1 implementation intent
+**Đang focus:** v2.4 Phase 0 intent governance implementation planning (S0-S8 composed)
+**Intent active:** v2-4-intent-governance (full mode, created 2026-05-06)
+**Status:** Core governance plan locked (D17-D56). Ready to move into implementation sequencing.
+**CLI target (working version):** v2.4.0
 **Last shipped:** v2.3.7 (2026-05-06) — hotfix `intent list` legacy metadata compatibility (`padEnd` crash)
 
 ## Current Phase
 
-**Phase:** Inter-release — không có phase đang chạy
+**Phase:** v2.4 Phase 0 — intent governance plan complete, pre-implementation handoff
 
 **Done (sessions gần nhất — 2026-05-05):**
 - Shipped v2.3.4: VSCode Marketplace Epic governance cleanup, human-gate protocol.
@@ -25,8 +26,8 @@
 - Bug fix: `src/lib/intent.js` — `archiveFolderName` regex thiếu `.` → Windows EPERM khi archive.
 
 **Next action:**
-- **Immediate:** User has large intent to process — await briefing
-- **B1 Phase 0 (after current intent):** Implement entity model spec + operator protocol draft + backend abstraction criteria (4 deliverables, see INT-2-3-6 section 5.0)
+- **Immediate:** Start implementation breakdown from `notes/upgrade-v2.4-intent-governance-plan.md` (owner intent: `v2-4-intent-governance`)
+- **Migration track:** Keep `INT-2-4-intent-schema-migration` separate; activate only after core checkpoint
 - **B2-B4 pending:** Deferred until B1 complete
 
 ## Active Blockers

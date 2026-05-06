@@ -8,6 +8,8 @@ const path = require('path');
 
 const {
   parseArgs,
+  runIntent,
+  runApply,
   parseIntentVersionFromId,
   compareVersionTuple,
   enforceIntentVersionProgression,
@@ -16,18 +18,27 @@ const {
   sanitizeId,
   suggestIntentId,
   buildIntentMeta,
+  buildBacklogIntentMeta,
   buildPlanStub,
   buildImpactStub,
   parseIntentFrontmatter,
+  serializeIntentFrontmatter,
+  createBacklogIntent,
+  activateBacklogIntent,
   createIntentWorkspace,
   readIntentMeta,
+  listBacklogIntentIds,
   listActiveIntentIds,
   listStagedFiles,
   validateStagedFilePaths,
   cancelIntent,
+  updateIntentFocus,
+  closeIntent,
   archiveIntent,
   archiveFolderName,
   intentWorkspacePath,
+  backlogIntentPath,
+  closedIntentWorkspacePath,
   proposedChangesPath,
   VALID_MODES,
   // Phase 2
@@ -40,6 +51,32 @@ const {
 
 function tmpRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'kb-intent-'));
+}
+
+function initTrackedWorkspace(root) {
+  const kbRoot = path.join(root, 'knowledge-base');
+  fs.mkdirSync(path.join(kbRoot, '.kb'), { recursive: true });
+  fs.writeFileSync(path.join(kbRoot, '.kb', 'state.json'), '{}\n', 'utf8');
+  return kbRoot;
+}
+
+async function captureConsole(fn) {
+  const logs = [];
+  const warns = [];
+  const originalLog = console.log;
+  const originalWarn = console.warn;
+  console.log = (...args) => logs.push(args.join(' '));
+  console.warn = (...args) => warns.push(args.join(' '));
+  try {
+    await fn();
+  } finally {
+    console.log = originalLog;
+    console.warn = originalWarn;
+  }
+  return {
+    stdout: logs.join('\n'),
+    stderr: warns.join('\n'),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -86,9 +123,32 @@ test('intent parseArgs: status without id', () => {
   assert.equal(o.intentId, null);
 });
 
+test('intent parseArgs: draft with slug', () => {
+  const o = parseArgs(['draft', 'intent-governance']);
+  assert.equal(o.sub, 'draft');
+  assert.equal(o.intentId, 'intent-governance');
+});
+
+test('intent parseArgs: activate requires slug and wave', () => {
+  const o = parseArgs(['activate', 'intent-governance', '--wave=v2.4', '--mode=full']);
+  assert.equal(o.sub, 'activate');
+  assert.equal(o.wave, 'v2.4');
+  assert.equal(o.mode, 'full');
+  assert.throws(() => parseArgs(['activate', 'intent-governance']), /requires --wave/);
+});
+
 test('intent parseArgs: list', () => {
   const o = parseArgs(['list']);
   assert.equal(o.sub, 'list');
+});
+
+test('intent parseArgs: list scope flags', () => {
+  assert.equal(parseArgs(['list', '--closed']).listScope, 'closed');
+  assert.equal(parseArgs(['list', '--backlog']).listScope, 'backlog');
+  assert.equal(parseArgs(['list', '--archived']).listScope, 'archived');
+  assert.equal(parseArgs(['list', '--all']).listScope, 'all');
+  assert.throws(() => parseArgs(['list', '--closed', '--archived']), /accepts only one scope flag/);
+  assert.throws(() => parseArgs(['status', '--closed']), /List scope flags are only valid/);
 });
 
 test('intent parseArgs: cancel with id', () => {
@@ -99,6 +159,32 @@ test('intent parseArgs: cancel with id', () => {
 
 test('intent parseArgs: cancel without id throws', () => {
   assert.throws(() => parseArgs(['cancel']), /requires an intent ID/);
+});
+
+test('intent parseArgs: focus requires id and a field', () => {
+  const o = parseArgs(['focus', 'my-intent', '--current=Investigating']);
+  assert.equal(o.sub, 'focus');
+  assert.equal(o.current, 'Investigating');
+  assert.throws(() => parseArgs(['focus', 'my-intent']), /requires --current or --next/);
+});
+
+test('intent parseArgs: archive with id', () => {
+  const o = parseArgs(['archive', 'my-intent']);
+  assert.equal(o.sub, 'archive');
+  assert.equal(o.intentId, 'my-intent');
+});
+
+test('intent parseArgs: close validates release and drop modes', () => {
+  const released = parseArgs(['close', 'my-intent', '--type=released', '--release=v2.4.0']);
+  assert.equal(released.closeType, 'released');
+  assert.equal(released.release, 'v2.4.0');
+
+  const dropped = parseArgs(['close', 'my-intent', '--type=dropped', '--reason=No longer needed']);
+  assert.equal(dropped.closeType, 'dropped');
+  assert.equal(dropped.reason, 'No longer needed');
+
+  assert.throws(() => parseArgs(['close', 'my-intent', '--type=released']), /requires --release/);
+  assert.throws(() => parseArgs(['close', 'my-intent', '--type=dropped']), /requires --reason/);
 });
 
 test('intent parseArgs: unknown subcommand throws', () => {
@@ -199,7 +285,8 @@ test('buildIntentMeta: quick mode has no reserve fields', () => {
   const fm = parseIntentFrontmatter(text);
   assert.equal(fm.id, 'test-id');
   assert.equal(fm.mode, 'quick');
-  assert.equal(fm.status, 'open');
+  assert.equal(fm.status, undefined);
+  assert.equal(fm.lifecycle, 'active');
   assert.equal(fm.change_type, 'docs');
   // reserve fields should NOT be present in quick mode frontmatter
   assert.equal(fm.lesson_id, undefined);
@@ -212,6 +299,26 @@ test('buildIntentMeta: full mode includes all reserve fields', () => {
   assert.equal(fm.lesson_id, null);
   assert.equal(fm.lifecycle_state, 'proposed');
   assert.equal(fm.promotion_ready, false);
+});
+
+test('buildBacklogIntentMeta: contains backlog lifecycle and nested blocks', () => {
+  const text = buildBacklogIntentMeta({ slug: 'intent-governance', title: 'Intent Governance', description: 'Upgrade flow', wave: 'v2.4' });
+  const fm = parseIntentFrontmatter(text);
+  assert.equal(fm.slug, 'intent-governance');
+  assert.equal(fm.lifecycle, 'backlog');
+  assert.equal(fm.focus.current, '');
+  assert.equal(fm.architecture_position.wave, 'v2.4');
+});
+
+test('serializeIntentFrontmatter: writes nested objects', () => {
+  const text = serializeIntentFrontmatter({
+    lifecycle: 'active',
+    focus: { current: 'Investigate', next_action: 'Patch', last_updated: '2026-05-06' },
+  });
+  assert.ok(text.includes('focus:'));
+  assert.ok(text.includes('  current: Investigate'));
+  const parsed = parseIntentFrontmatter(text);
+  assert.equal(parsed.focus.next_action, 'Patch');
 });
 
 test('buildIntentMeta: contains decision_summary empty string', () => {
@@ -285,6 +392,38 @@ test('createIntentWorkspace: throws if workspace already exists', () => {
   );
 });
 
+test('createBacklogIntent: creates markdown backlog file', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  const filePath = createBacklogIntent(contentRoot, { slug: 'intent-governance', title: 'Intent Governance', description: 'Upgrade intent flow', wave: 'v2.4' });
+
+  assert.ok(fs.existsSync(filePath));
+  const meta = parseIntentFrontmatter(fs.readFileSync(filePath, 'utf8'));
+  assert.equal(meta.lifecycle, 'backlog');
+  assert.equal(meta.architecture_position.wave, 'v2.4');
+});
+
+test('activateBacklogIntent: promotes backlog file into active workspace', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  createBacklogIntent(contentRoot, { slug: 'intent-governance', title: 'Intent Governance', description: 'Upgrade flow', wave: 'v2.4' });
+
+  const wsPath = activateBacklogIntent(contentRoot, {
+    slug: 'intent-governance',
+    intentId: 'v2-4-intent-governance',
+    mode: 'full',
+    changeType: 'governance',
+    wave: 'v2.4',
+  });
+
+  assert.ok(fs.existsSync(wsPath));
+  assert.ok(!fs.existsSync(backlogIntentPath(contentRoot, 'intent-governance')));
+  const meta = readIntentMeta(contentRoot, 'v2-4-intent-governance');
+  assert.equal(meta.lifecycle, 'active');
+  assert.equal(meta.slug, 'intent-governance');
+  assert.equal(meta.architecture_position.wave, 'v2.4');
+});
+
 // ---------------------------------------------------------------------------
 // readIntentMeta
 // ---------------------------------------------------------------------------
@@ -297,7 +436,8 @@ test('readIntentMeta: returns parsed frontmatter', () => {
   const meta = readIntentMeta(contentRoot, 'my-intent');
   assert.equal(meta.id, 'my-intent');
   assert.equal(meta.mode, 'quick');
-  assert.equal(meta.status, 'open');
+  assert.equal(meta.status, undefined);
+  assert.equal(meta.lifecycle, 'active');
 });
 
 test('readIntentMeta: throws for missing intent', () => {
@@ -326,6 +466,13 @@ test('listActiveIntentIds: returns list of created intents', () => {
   assert.ok(ids.includes('alpha'));
   assert.ok(ids.includes('beta'));
   assert.equal(ids.length, 2);
+});
+
+test('listBacklogIntentIds: returns markdown slugs from backlog folder', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  createBacklogIntent(contentRoot, { slug: 'intent-governance', title: 'Intent Governance', description: 'Upgrade flow' });
+  assert.deepEqual(listBacklogIntentIds(contentRoot), ['intent-governance']);
 });
 
 // ---------------------------------------------------------------------------
@@ -392,14 +539,35 @@ test('cancelIntent: removes workspace directory', () => {
   const wsPath = intentWorkspacePath(contentRoot, 'to-cancel');
   assert.ok(fs.existsSync(wsPath));
 
-  cancelIntent(contentRoot, 'to-cancel');
+  const closedPath = cancelIntent(contentRoot, 'to-cancel');
   assert.ok(!fs.existsSync(wsPath));
+  assert.ok(fs.existsSync(closedPath));
+  const meta = parseIntentFrontmatter(fs.readFileSync(path.join(closedPath, 'intent.md'), 'utf8'));
+  assert.equal(meta.close_type, 'dropped');
+  assert.equal(meta.drop_reason, 'cancelled via legacy command');
 });
 
 test('cancelIntent: throws for non-existent intent', () => {
   const root = tmpRoot();
   const contentRoot = path.join(root, 'knowledge-base');
   assert.throws(() => cancelIntent(contentRoot, 'ghost'), /not found/);
+});
+
+test('updateIntentFocus: writes nested focus block into active intent frontmatter', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  createIntentWorkspace(contentRoot, { intentId: 'focus-intent', mode: 'quick', changeType: 'docs' });
+
+  updateIntentFocus(contentRoot, 'focus-intent', {
+    current: 'Investigating command surface',
+    nextAction: 'Implement activate',
+    lastUpdated: '2026-05-06',
+  });
+
+  const meta = readIntentMeta(contentRoot, 'focus-intent');
+  assert.equal(meta.focus.current, 'Investigating command surface');
+  assert.equal(meta.focus.next_action, 'Implement activate');
+  assert.equal(meta.focus.last_updated, '2026-05-06');
 });
 
 // ---------------------------------------------------------------------------
@@ -437,6 +605,66 @@ test('archiveIntent: throws for non-existent intent', () => {
   const root = tmpRoot();
   const contentRoot = path.join(root, 'knowledge-base');
   assert.throws(() => archiveIntent(contentRoot, 'ghost'), /not found/);
+});
+
+test('archiveIntent: also archives closed intent workspaces', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  const closedPath = closedIntentWorkspacePath(contentRoot, 'closed-intent', 'released');
+  fs.mkdirSync(closedPath, { recursive: true });
+  fs.writeFileSync(path.join(closedPath, 'intent.md'), buildIntentMeta({ intentId: 'closed-intent', mode: 'quick', changeType: 'docs' }));
+
+  const archivePath = archiveIntent(contentRoot, 'closed-intent', '2026-05-02T10:00:00.000Z');
+  assert.ok(fs.existsSync(archivePath));
+  assert.ok(!fs.existsSync(closedPath));
+});
+
+test('closeIntent: moves active intent into released closed folder', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  createIntentWorkspace(contentRoot, { intentId: 'close-me', mode: 'quick', changeType: 'docs' });
+
+  const closedPath = closeIntent(contentRoot, 'close-me', {
+    closeType: 'released',
+    releaseRef: 'v2.4.0',
+    timestamp: '2026-05-06T12:00:00.000Z',
+  });
+
+  assert.ok(fs.existsSync(closedPath));
+  assert.ok(!fs.existsSync(intentWorkspacePath(contentRoot, 'close-me')));
+  const meta = parseIntentFrontmatter(fs.readFileSync(path.join(closedPath, 'intent.md'), 'utf8'));
+  assert.equal(meta.lifecycle, 'closed');
+  assert.equal(meta.status, undefined);
+  assert.equal(meta.close_type, 'released');
+  assert.equal(meta.release_ref, 'v2.4.0');
+});
+
+test('closeIntent: normalizes legacy status into legacy_status', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  createIntentWorkspace(contentRoot, { intentId: 'legacy-close', mode: 'quick', changeType: 'docs' });
+
+  const metaPath = path.join(intentWorkspacePath(contentRoot, 'legacy-close'), 'intent.md');
+  const legacyText = fs.readFileSync(metaPath, 'utf8').replace('lifecycle: active', 'status: open\nlifecycle: active');
+  fs.writeFileSync(metaPath, legacyText, 'utf8');
+
+  const closedPath = closeIntent(contentRoot, 'legacy-close', {
+    closeType: 'released',
+    releaseRef: 'v2.4.0',
+    timestamp: '2026-05-06T12:00:00.000Z',
+  });
+
+  const meta = parseIntentFrontmatter(fs.readFileSync(path.join(closedPath, 'intent.md'), 'utf8'));
+  assert.equal(meta.status, undefined);
+  assert.equal(meta.legacy_status, 'open');
+  assert.equal(meta.lifecycle, 'closed');
+});
+
+test('closeIntent: requires drop reason for dropped intents', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  createIntentWorkspace(contentRoot, { intentId: 'drop-me', mode: 'quick', changeType: 'docs' });
+  assert.throws(() => closeIntent(contentRoot, 'drop-me', { closeType: 'dropped' }), /dropReason/);
 });
 
 // ---------------------------------------------------------------------------
@@ -523,6 +751,28 @@ test('applyStagedFiles: classifies existing file as modified', () => {
   assert.equal(results[0].op, 'modified');
   const content = fs.readFileSync(path.join(contentRoot, 'template', '15-governance', 'review-cadence.md'), 'utf8');
   assert.equal(content, '# New Content');
+});
+
+test('runApply: keeps intent active after applying staged files', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'apply-stays-active', mode: 'quick', changeType: 'docs' });
+
+  const pcDir = proposedChangesPath(contentRoot, 'apply-stays-active');
+  const subDir = path.join(pcDir, 'template', '15-governance');
+  fs.mkdirSync(subDir, { recursive: true });
+  fs.writeFileSync(path.join(subDir, 'review-cadence.md'), '# New Content');
+
+  await captureConsole(() => runApply(
+    { contentRoot },
+    { intentId: 'apply-stays-active', yes: true, json: true, release: false },
+    root
+  ));
+
+  assert.ok(fs.existsSync(intentWorkspacePath(contentRoot, 'apply-stays-active')));
+  assert.ok(fs.existsSync(path.join(intentWorkspacePath(contentRoot, 'apply-stays-active'), 'apply-record.json')));
+  const archiveRoot = path.join(contentRoot, 'intents', '_archive');
+  assert.ok(!fs.existsSync(archiveRoot) || fs.readdirSync(archiveRoot).length === 0);
 });
 
 // ---------------------------------------------------------------------------
@@ -687,4 +937,75 @@ test('intent parseArgs: apply with --release flag', () => {
 
 test('intent parseArgs: apply without id throws', () => {
   assert.throws(() => parseArgs(['apply']), /requires an intent ID/);
+});
+
+test('runIntent status: resolves backlog, closed, and archived refs', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+
+  createBacklogIntent(contentRoot, { slug: 'intent-governance', title: 'Intent Governance', description: 'Backlog item' });
+  createIntentWorkspace(contentRoot, { intentId: 'closed-item', mode: 'quick', changeType: 'docs' });
+  closeIntent(contentRoot, 'closed-item', { closeType: 'released', releaseRef: 'v2.4.0' });
+  createIntentWorkspace(contentRoot, { intentId: 'archived-item', mode: 'quick', changeType: 'docs' });
+  closeIntent(contentRoot, 'archived-item', { closeType: 'dropped', dropReason: 'Superseded' });
+  archiveIntent(contentRoot, 'archived-item', '2026-05-06T12:00:00.000Z');
+
+  let captured = await captureConsole(() => runIntent({ args: ['status', 'intent-governance', '--json'], cwd: root }));
+  let parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.scope, 'backlog');
+  assert.equal(parsed.status, 'open');
+
+  captured = await captureConsole(() => runIntent({ args: ['status', 'closed-item', '--json'], cwd: root }));
+  parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.scope, 'closed');
+  assert.equal(parsed.close_type, 'released');
+  assert.equal(parsed.release_ref, 'v2.4.0');
+
+  captured = await captureConsole(() => runIntent({ args: ['status', 'archived-item', '--json'], cwd: root }));
+  parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.scope, 'archived');
+  assert.equal(parsed.status, 'closed');
+});
+
+test('runIntent list: respects v2.4 scope flags', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+
+  createBacklogIntent(contentRoot, { slug: 'intent-governance', title: 'Intent Governance', description: 'Backlog item' });
+  createIntentWorkspace(contentRoot, { intentId: 'active-item', mode: 'quick', changeType: 'docs' });
+  createIntentWorkspace(contentRoot, { intentId: 'closed-item', mode: 'quick', changeType: 'docs' });
+  closeIntent(contentRoot, 'closed-item', { closeType: 'released', releaseRef: 'v2.4.0' });
+  createIntentWorkspace(contentRoot, { intentId: 'archived-item', mode: 'quick', changeType: 'docs' });
+  closeIntent(contentRoot, 'archived-item', { closeType: 'dropped', dropReason: 'Superseded' });
+  archiveIntent(contentRoot, 'archived-item', '2026-05-06T12:00:00.000Z');
+
+  let captured = await captureConsole(() => runIntent({ args: ['list', '--json'], cwd: root }));
+  let parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.scope, 'active');
+  assert.equal(parsed.count, 1);
+  assert.equal(parsed.intents[0].intent_id, 'active-item');
+
+  captured = await captureConsole(() => runIntent({ args: ['list', '--closed', '--json'], cwd: root }));
+  parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.scope, 'closed');
+  assert.equal(parsed.count, 1);
+  assert.equal(parsed.intents[0].close_type, 'released');
+
+  captured = await captureConsole(() => runIntent({ args: ['list', '--all', '--json'], cwd: root }));
+  parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.scope, 'all');
+  assert.equal(parsed.count, 4);
+});
+
+test('runIntent cancel: closes active intent as dropped alias', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'legacy-cancel', mode: 'quick', changeType: 'docs' });
+
+  const captured = await captureConsole(() => runIntent({ args: ['cancel', 'legacy-cancel', '--yes', '--json'], cwd: root }));
+  const parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.close_type, 'dropped');
+  assert.equal(parsed.deprecated, true);
+  assert.ok(fs.existsSync(closedIntentWorkspacePath(contentRoot, 'legacy-cancel', 'dropped')));
+  assert.ok(!fs.existsSync(intentWorkspacePath(contentRoot, 'legacy-cancel')));
 });

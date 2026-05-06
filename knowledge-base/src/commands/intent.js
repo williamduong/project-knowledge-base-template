@@ -9,6 +9,8 @@ const { getGitMetadata } = require('../lib/git');
 const {
   VALID_MODES,
   createIntentWorkspace,
+  createBacklogIntent,
+  activateBacklogIntent,
   readIntentMeta,
   listActiveIntentIds,
   listStagedFiles,
@@ -21,7 +23,13 @@ const {
   applyStagedFiles,
   writeApplyRecord,
   archiveIntent,
+  updateIntentFocus,
+  closeIntent,
   sanitizeId,
+  listIntentRecords,
+  resolveIntentRecord,
+  listStagedFilesFromWorkspace,
+  deriveIntentStatus,
 } = require('../lib/intent');
 const { analyzeIntentConflicts, suggestApplyOrder, generateLessonCandidates } = require('../lib/intent-intelligence');
 const { runRelease } = require('./release');
@@ -34,6 +42,7 @@ function parseArgs(args) {
   const options = {
     sub: null,
     intentId: null,
+    listScope: 'active',
     mode: 'quick',
     changeType: 'docs',
     yes: false,
@@ -42,6 +51,19 @@ function parseArgs(args) {
     commitRange: null,
     extractTitle: null,
     extractType: 'docs',
+    closeType: null,
+    wave: null,
+    reason: null,
+    current: null,
+    nextAction: null,
+    lastUpdated: null,
+  };
+
+  const setListScope = (scope) => {
+    if (options.listScope !== 'active' && options.listScope !== scope) {
+      throw new Error('kb intent list accepts only one scope flag: --backlog | --closed | --archived | --all.');
+    }
+    options.listScope = scope;
   };
 
   const rest = [];
@@ -49,6 +71,10 @@ function parseArgs(args) {
     const arg = args[i];
     if (arg === '--json') { options.json = true; continue; }
     if (arg === '--yes' || arg === '-y') { options.yes = true; continue; }
+    if (arg === '--backlog') { setListScope('backlog'); continue; }
+    if (arg === '--closed') { setListScope('closed'); continue; }
+    if (arg === '--archived') { setListScope('archived'); continue; }
+    if (arg === '--all') { setListScope('all'); continue; }
     if (arg.startsWith('--mode=')) {
       options.mode = arg.slice('--mode='.length).trim();
       continue;
@@ -63,6 +89,31 @@ function parseArgs(args) {
     }
     if (arg.startsWith('--type=')) {
       options.extractType = arg.slice('--type='.length).trim();
+      options.closeType = arg.slice('--type='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--wave=')) {
+      options.wave = arg.slice('--wave='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--reason=')) {
+      options.reason = arg.slice('--reason='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--current=')) {
+      options.current = arg.slice('--current='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--next=')) {
+      options.nextAction = arg.slice('--next='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--date=')) {
+      options.lastUpdated = arg.slice('--date='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--release=')) {
+      options.release = arg.slice('--release='.length).trim();
       continue;
     }
     if (arg === '--release') { options.release = true; continue; }
@@ -74,10 +125,14 @@ function parseArgs(args) {
   }
 
   if (rest.length === 0) {
-    throw new Error('kb intent requires a subcommand: create | status | list | cancel');
+    throw new Error('kb intent requires a subcommand: create | draft | activate | status | list | focus | close | cancel | archive');
   }
 
   options.sub = rest[0];
+
+  if (options.listScope !== 'active' && options.sub !== 'list') {
+    throw new Error('List scope flags are only valid with "kb intent list".');
+  }
 
   if (options.sub === 'create') {
     // Optional positional ID
@@ -86,6 +141,22 @@ function parseArgs(args) {
     }
     if (!VALID_MODES.has(options.mode)) {
       throw new Error(`kb intent create: invalid mode "${options.mode}". Supported: quick, full`);
+    }
+  } else if (options.sub === 'draft') {
+    if (rest.length < 2) {
+      throw new Error('kb intent draft requires a slug.');
+    }
+    options.intentId = rest[1];
+  } else if (options.sub === 'activate') {
+    if (rest.length < 2) {
+      throw new Error('kb intent activate requires a backlog slug.');
+    }
+    options.intentId = rest[1];
+    if (!options.wave) {
+      throw new Error('kb intent activate requires --wave=<version>.');
+    }
+    if (!VALID_MODES.has(options.mode)) {
+      throw new Error(`kb intent activate: invalid mode "${options.mode}". Supported: quick, full`);
     }
   } else if (options.sub === 'status') {
     if (rest.length >= 2) {
@@ -98,6 +169,33 @@ function parseArgs(args) {
       throw new Error('kb intent cancel requires an intent ID.');
     }
     options.intentId = rest[1];
+  } else if (options.sub === 'focus') {
+    if (rest.length < 2) {
+      throw new Error('kb intent focus requires an intent ID.');
+    }
+    options.intentId = rest[1];
+    if (options.current === null && options.nextAction === null) {
+      throw new Error('kb intent focus requires --current or --next.');
+    }
+  } else if (options.sub === 'archive') {
+    if (rest.length < 2) {
+      throw new Error('kb intent archive requires an intent ID.');
+    }
+    options.intentId = rest[1];
+  } else if (options.sub === 'close') {
+    if (rest.length < 2) {
+      throw new Error('kb intent close requires an intent ID.');
+    }
+    options.intentId = rest[1];
+    if (options.closeType !== 'released' && options.closeType !== 'dropped') {
+      throw new Error('kb intent close requires --type=released|dropped.');
+    }
+    if (options.closeType === 'released' && !options.release) {
+      throw new Error('kb intent close --type=released requires --release=vX.Y.Z.');
+    }
+    if (options.closeType === 'dropped' && !options.reason) {
+      throw new Error('kb intent close --type=dropped requires --reason="...".');
+    }
   } else if (options.sub === 'apply') {
     if (rest.length < 2) {
       throw new Error('kb intent apply requires an intent ID.');
@@ -115,7 +213,7 @@ function parseArgs(args) {
     }
     options.commitRange = rest[1];
   } else {
-    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, status, list, cancel, apply, suggest-lessons, extract`);
+    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, close, cancel, archive, apply, suggest-lessons, extract`);
   }
 
   return options;
@@ -278,42 +376,106 @@ async function runCreate(ctx, options, cwd) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Subcommand: status
-// ---------------------------------------------------------------------------
+async function runDraft(ctx, options) {
+  const slug = sanitizeId(options.intentId);
+  if (!slug) {
+    throw new Error(`Invalid backlog slug "${options.intentId}".`);
+  }
+  const filePath = createBacklogIntent(ctx.contentRoot, { slug, title: slug, description: '' });
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kb intent draft',
+      slug,
+      path: filePath,
+      status: 'created',
+    }, null, 2));
+    return;
+  }
+  console.log(`Backlog intent "${slug}" created.`);
+  console.log(`Path: ${filePath}`);
+}
 
-function collectIntentStatus(ctx, intentId) {
-  const rawMeta = readIntentMeta(ctx.contentRoot, intentId);
-  const staged = listStagedFiles(ctx.contentRoot, intentId);
+async function runActivate(ctx, options) {
+  const slug = sanitizeId(options.intentId);
+  if (!slug) {
+    throw new Error(`Invalid backlog slug "${options.intentId}".`);
+  }
+  const intentId = `v${String(options.wave).replace(/^v/i, '').replace(/\./g, '-')}-${slug}`;
+  const wsPath = activateBacklogIntent(ctx.contentRoot, {
+    slug,
+    intentId,
+    mode: options.mode,
+    changeType: options.changeType,
+    wave: options.wave,
+  });
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kb intent activate',
+      slug,
+      intent_id: intentId,
+      workspace: wsPath,
+      status: 'activated',
+    }, null, 2));
+    return;
+  }
+  console.log(`Backlog intent "${slug}" activated as "${intentId}".`);
+  console.log(`Workspace: ${wsPath}`);
+}
+
+function getListScopeOptions(scope) {
+  return {
+    includeBacklog: scope === 'backlog' || scope === 'all',
+    includeActive: scope === 'active' || scope === 'all',
+    includeClosed: scope === 'closed' || scope === 'all',
+    includeArchived: scope === 'archived' || scope === 'all',
+  };
+}
+
+function collectIntentStatusFromRecord(record) {
+  const rawMeta = record.meta || {};
+  const workspacePath = record.workspacePath;
+  const staged = workspacePath ? listStagedFilesFromWorkspace(workspacePath) : [];
   const pathIssues = validateStagedFilePaths(staged);
-  const wsPath = intentWorkspacePath(ctx.contentRoot, intentId);
-  const hasPlan = fs.existsSync(path.join(wsPath, 'plan.md'));
-  const hasImpact = fs.existsSync(path.join(wsPath, 'impact.md'));
-  const hasLesson = fs.existsSync(path.join(wsPath, 'lesson-candidate.md'));
-  const hasApplyRecord = fs.existsSync(path.join(wsPath, 'apply-record.json'));
+  const hasPlan = workspacePath ? fs.existsSync(path.join(workspacePath, 'plan.md')) : false;
+  const hasImpact = workspacePath ? fs.existsSync(path.join(workspacePath, 'impact.md')) : false;
+  const hasLesson = workspacePath ? fs.existsSync(path.join(workspacePath, 'lesson-candidate.md')) : false;
+  const hasApplyRecord = workspacePath ? fs.existsSync(path.join(workspacePath, 'apply-record.json')) : false;
+  const lifecycle = record.lifecycle || rawMeta.lifecycle || 'unknown';
 
-  // Backward compatibility: older intents may not have explicit status/mode fields.
   const meta = {
     ...rawMeta,
-    status: String(rawMeta.status || rawMeta.lifecycle_state || 'unknown'),
-    mode: String(rawMeta.mode || ((hasPlan || hasImpact) ? 'full' : 'mini')),
+    lifecycle,
+    status: deriveIntentStatus(lifecycle),
+    mode: String(rawMeta.mode || ((hasPlan || hasImpact) ? 'full' : 'quick')),
   };
 
   const warnings = [];
-  if (!meta.decision_summary || meta.decision_summary === '') {
+  if (record.scope === 'active' && (!meta.decision_summary || meta.decision_summary === '')) {
     warnings.push('decision_summary is empty — fill it before applying.');
   }
-  if (meta.mode === 'full' && !hasPlan) {
+  if (record.scope === 'active' && meta.mode === 'full' && !hasPlan) {
     warnings.push('plan.md missing — required for full mode.');
   }
-  if (meta.mode === 'full' && !hasImpact) {
+  if (record.scope === 'active' && meta.mode === 'full' && !hasImpact) {
     warnings.push('impact.md missing — required for full mode.');
   }
   for (const issue of pathIssues) {
     warnings.push(`Staged file path issue: ${issue.file} — ${issue.issue}`);
   }
 
-  return { meta, staged, hasPlan, hasImpact, hasLesson, hasApplyRecord, warnings };
+  return { record, meta, staged, hasPlan, hasImpact, hasLesson, hasApplyRecord, warnings };
+}
+
+// ---------------------------------------------------------------------------
+// Subcommand: status
+// ---------------------------------------------------------------------------
+
+function collectIntentStatus(ctx, intentId) {
+  const record = resolveIntentRecord(ctx.contentRoot, intentId);
+  if (!record) {
+    throw new Error(`Intent or backlog item "${intentId}" not found across backlog, active, closed, or archive state.`);
+  }
+  return collectIntentStatusFromRecord(record);
 }
 
 async function runStatus(ctx, options) {
@@ -326,9 +488,16 @@ async function runStatus(ctx, options) {
     if (json) {
       console.log(JSON.stringify({
         command: 'kb intent status',
-        intent_id: options.intentId,
+        intent_id: info.record.id,
+        slug: info.record.slug,
+        scope: info.record.scope,
+        path: info.record.workspacePath || info.record.metaPath,
+        lifecycle: info.meta.lifecycle,
         mode: info.meta.mode,
         status: info.meta.status,
+        close_type: info.meta.close_type || null,
+        release_ref: info.meta.release_ref || null,
+        drop_reason: info.meta.drop_reason || null,
         staged_count: info.staged.length,
         staged: info.staged,
         plan: info.hasPlan,
@@ -338,9 +507,24 @@ async function runStatus(ctx, options) {
         warnings: info.warnings,
       }, null, 2));
     } else {
-      console.log(`Intent: ${options.intentId}`);
+      console.log(`Intent: ${info.record.id}`);
+      if (info.record.slug) {
+        console.log(`Slug:   ${info.record.slug}`);
+      }
+      console.log(`Scope:  ${info.record.scope}`);
+      console.log(`Path:   ${info.record.workspacePath || info.record.metaPath}`);
+      console.log(`Life:   ${info.meta.lifecycle}`);
       console.log(`Mode:   ${info.meta.mode}`);
       console.log(`Status: ${info.meta.status}`);
+      if (info.meta.close_type) {
+        console.log(`Close:  ${info.meta.close_type}`);
+      }
+      if (info.meta.release_ref) {
+        console.log(`Release:${info.meta.release_ref}`);
+      }
+      if (info.meta.drop_reason) {
+        console.log(`Reason: ${info.meta.drop_reason}`);
+      }
       console.log(`Staged: ${info.staged.length} file(s)`);
       for (const f of info.staged) {
         console.log(`  - ${f}`);
@@ -364,26 +548,42 @@ async function runStatus(ctx, options) {
     return;
   }
 
-  // No specific ID: show summary of all active intents
-  const ids = listActiveIntentIds(ctx.contentRoot);
+  const records = listIntentRecords(ctx.contentRoot);
   if (json) {
+    const items = records.map((record) => {
+      const info = collectIntentStatusFromRecord(record);
+      return {
+        id: record.id,
+        slug: record.slug,
+        scope: record.scope,
+        lifecycle: info.meta.lifecycle,
+        status: info.meta.status,
+        mode: info.meta.mode,
+        staged_count: info.staged.length,
+        close_type: info.meta.close_type || null,
+        release_ref: info.meta.release_ref || null,
+        warnings: info.warnings.length,
+      };
+    });
     console.log(JSON.stringify({
       command: 'kb intent status',
-      active_count: ids.length,
-      active_intents: ids,
+      count: items.length,
+      intents: items,
     }, null, 2));
   } else {
-    if (ids.length === 0) {
-      console.log('No active intents. Use "kb intent create" to start one.');
+    if (records.length === 0) {
+      console.log('No intents found across backlog, active, closed, or archive state.');
     } else {
-      console.log(`Active intents (${ids.length}):`);
-      for (const id of ids) {
-        const info = collectIntentStatus(ctx, id);
+      console.log(`Intent status overview (${records.length}):`);
+      for (const record of records) {
+        const info = collectIntentStatusFromRecord(record);
         const warnMark = info.warnings.length > 0 ? ' [!]' : '';
-        console.log(`  ${id} (${info.meta.mode}, ${info.staged.length} staged)${warnMark}`);
+        console.log(
+          `  [${record.scope}] ${record.id} (${info.meta.lifecycle}, ${info.meta.mode}, ${info.staged.length} staged)${warnMark}`
+        );
       }
       console.log('');
-      console.log('Run "kb intent status <id>" for details on a specific intent.');
+      console.log('Run "kb intent status <id-or-slug>" for details on a specific intent.');
     }
   }
 }
@@ -421,59 +621,85 @@ async function printWithPager(lines) {
 // ---------------------------------------------------------------------------
 
 async function runList(ctx, options) {
-  const { json } = options;
-  const ids = listActiveIntentIds(ctx.contentRoot);
+  const { json, listScope } = options;
+  const records = listIntentRecords(ctx.contentRoot, getListScopeOptions(listScope));
+  const items = records.map((record) => {
+    const info = collectIntentStatusFromRecord(record);
+    return {
+      id: record.scope === 'archived' ? record.folderName : record.id,
+      intent_id: record.id,
+      slug: record.slug,
+      scope: record.scope,
+      lifecycle: info.meta.lifecycle,
+      status: info.meta.status,
+      mode: info.meta.mode,
+      staged_count: info.staged.length,
+      close_type: info.meta.close_type || null,
+      release_ref: info.meta.release_ref || null,
+      warnings: info.warnings.length,
+    };
+  });
 
   if (json) {
-    const items = ids.map((id) => {
-      const info = collectIntentStatus(ctx, id);
-      return {
-        id,
-        status: info.meta.status,
-        mode: info.meta.mode,
-        staged_count: info.staged.length,
-        warnings: info.warnings.length,
-      };
-    });
     console.log(JSON.stringify({
       command: 'kb intent list',
-      active_count: ids.length,
-      active_intents: items,
+      scope: listScope,
+      count: items.length,
+      intents: items,
     }, null, 2));
     return;
   }
 
-  if (ids.length === 0) {
-    console.log('No active intents.');
+  if (items.length === 0) {
+    console.log(`No ${listScope} intents.`);
     return;
   }
 
   const COL_ID = 42;
+  const COL_SCOPE = 9;
+  const COL_LIFECYCLE = 10;
   const COL_STATUS = 10;
   const COL_MODE = 7;
+  const COL_CLOSE = 8;
+  const COL_RELEASE = 10;
   const lines = [];
-  lines.push(`Active intents (${ids.length}):`);
+  lines.push(`Intent list (${listScope}, ${items.length}):`);
   lines.push('');
   lines.push(
-    '  ' + 'ID'.padEnd(COL_ID) + '  ' + 'STATUS'.padEnd(COL_STATUS) + '  ' + 'MODE'.padEnd(COL_MODE) + '  STAGED'
+    '  ' + 'ID'.padEnd(COL_ID) +
+    '  ' + 'SCOPE'.padEnd(COL_SCOPE) +
+    '  ' + 'LIFECYCLE'.padEnd(COL_LIFECYCLE) +
+    '  ' + 'STATUS'.padEnd(COL_STATUS) +
+    '  ' + 'MODE'.padEnd(COL_MODE) +
+    '  ' + 'CLOSE'.padEnd(COL_CLOSE) +
+    '  ' + 'RELEASE'.padEnd(COL_RELEASE) +
+    '  STAGED'
   );
   lines.push(
-    '  ' + '-'.repeat(COL_ID) + '  ' + '-'.repeat(COL_STATUS) + '  ' + '-'.repeat(COL_MODE) + '  ------'
+    '  ' + '-'.repeat(COL_ID) +
+    '  ' + '-'.repeat(COL_SCOPE) +
+    '  ' + '-'.repeat(COL_LIFECYCLE) +
+    '  ' + '-'.repeat(COL_STATUS) +
+    '  ' + '-'.repeat(COL_MODE) +
+    '  ' + '-'.repeat(COL_CLOSE) +
+    '  ' + '-'.repeat(COL_RELEASE) +
+    '  ------'
   );
-  for (const id of ids) {
-    const info = collectIntentStatus(ctx, id);
-    const warn = info.warnings.length > 0 ? ' [!]' : '';
-    const statusCell = String(info.meta?.status || info.meta?.lifecycle_state || 'unknown');
-    const modeCell = String(info.meta?.mode || ((info.hasPlan || info.hasImpact) ? 'full' : 'mini'));
+  for (const item of items) {
+    const warn = item.warnings > 0 ? ' [!]' : '';
     lines.push(
-      '  ' + id.padEnd(COL_ID) +
-      '  ' + statusCell.padEnd(COL_STATUS) +
-      '  ' + modeCell.padEnd(COL_MODE) +
-      '  ' + info.staged.length + warn
+      '  ' + String(item.id).padEnd(COL_ID) +
+      '  ' + String(item.scope).padEnd(COL_SCOPE) +
+      '  ' + String(item.lifecycle).padEnd(COL_LIFECYCLE) +
+      '  ' + String(item.status).padEnd(COL_STATUS) +
+      '  ' + String(item.mode).padEnd(COL_MODE) +
+      '  ' + String(item.close_type || '-').padEnd(COL_CLOSE) +
+      '  ' + String(item.release_ref || '-').padEnd(COL_RELEASE) +
+      '  ' + item.staged_count + warn
     );
   }
   lines.push('');
-  lines.push('Run "kb intent status <id>" for details.');
+  lines.push('Run "kb intent status <id-or-slug>" for details.');
 
   await printWithPager(lines);
 }
@@ -486,7 +712,7 @@ async function runCancel(ctx, options) {
   const { intentId, yes, json } = options;
 
   if (!yes && !json) {
-    const ok = await confirmPrompt(`Cancel and delete intent "${intentId}"? This cannot be undone.`);
+    const ok = await confirmPrompt(`Cancel intent "${intentId}"? This deprecated alias will close it as dropped.`);
     if (!ok) {
       if (json) {
         console.log(JSON.stringify({ command: 'kb intent cancel', intent_id: intentId, status: 'aborted' }, null, 2));
@@ -497,18 +723,82 @@ async function runCancel(ctx, options) {
     }
   }
 
-  const wsPath = cancelIntent(ctx.contentRoot, intentId);
+  const closedPath = cancelIntent(ctx.contentRoot, intentId);
 
   if (json) {
     console.log(JSON.stringify({
       command: 'kb intent cancel',
       intent_id: intentId,
-      status: 'cancelled',
-      removed_path: wsPath,
+      deprecated: true,
+      close_type: 'dropped',
+      drop_reason: 'cancelled via legacy command',
+      status: 'closed',
+      path: closedPath,
     }, null, 2));
   } else {
-    console.log(`Intent "${intentId}" cancelled and workspace removed.`);
+    console.log(`Intent "${intentId}" closed as dropped via deprecated cancel alias.`);
+    console.log(`Path: ${closedPath}`);
   }
+}
+
+async function runFocus(ctx, options) {
+  const metaPath = updateIntentFocus(ctx.contentRoot, options.intentId, {
+    current: options.current,
+    nextAction: options.nextAction,
+    lastUpdated: options.lastUpdated,
+  });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kb intent focus',
+      intent_id: options.intentId,
+      current: options.current,
+      next_action: options.nextAction,
+      last_updated: options.lastUpdated || new Date().toISOString().slice(0, 10),
+      path: metaPath,
+      status: 'updated',
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Updated focus for "${options.intentId}".`);
+  console.log(`Path: ${metaPath}`);
+}
+
+async function runArchive(ctx, options) {
+  const archivePath = archiveIntent(ctx.contentRoot, options.intentId, new Date().toISOString());
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kb intent archive',
+      intent_id: options.intentId,
+      archive_path: archivePath,
+      status: 'archived',
+    }, null, 2));
+    return;
+  }
+  console.log(`Intent "${options.intentId}" archived.`);
+  console.log(`Archive: ${archivePath}`);
+}
+
+async function runClose(ctx, options) {
+  const closeType = options.closeType;
+  const closedPath = closeIntent(ctx.contentRoot, options.intentId, {
+    closeType,
+    releaseRef: closeType === 'released' ? options.release : null,
+    dropReason: closeType === 'dropped' ? options.reason : null,
+  });
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kb intent close',
+      intent_id: options.intentId,
+      close_type: closeType,
+      path: closedPath,
+      status: 'closed',
+    }, null, 2));
+    return;
+  }
+  console.log(`Intent "${options.intentId}" closed as ${closeType}.`);
+  console.log(`Path: ${closedPath}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -596,12 +886,10 @@ async function runApply(ctx, options, cwd) {
   // 4. Build + write apply-record.json
   const appliedAt = new Date().toISOString();
   const record = buildApplyRecord({ meta, stagedFiles: staged, appliedAt });
-  writeApplyRecord(ctx.contentRoot, intentId, record);
+  const applyRecordPath = writeApplyRecord(ctx.contentRoot, intentId, record);
+  const wsPath = intentWorkspacePath(ctx.contentRoot, intentId);
 
-  // 5. Archive intent workspace (I3: timestamp suffix prevents collision)
-  const archivePath = archiveIntent(ctx.contentRoot, intentId, appliedAt);
-
-  // 5a. Write AI decision transparency record into archive (v2.0 Phase 3)
+  // 5. Write AI decision transparency record into the active workspace.
   if (conflictSummary) {
     const { suggestApplyOrder: _suggestApplyOrder } = require('../lib/intent-intelligence');
     const applyOrderDecision = _suggestApplyOrder(conflictSummary);
@@ -629,7 +917,7 @@ async function runApply(ctx, options, cwd) {
     };
     try {
       fs.writeFileSync(
-        path.join(archivePath, 'ai-decision-context.json'),
+        path.join(wsPath, 'ai-decision-context.json'),
         JSON.stringify(decisionRecord, null, 2),
         'utf8'
       );
@@ -644,14 +932,16 @@ async function runApply(ctx, options, cwd) {
       intent_id: intentId,
       applied_files: applyResults,
       apply_record: record,
+      apply_record_path: applyRecordPath,
+      workspace: wsPath,
       conflict_summary: conflictSummary,
-      archive_path: archivePath,
       status: 'applied',
     }, null, 2));
   } else {
     console.log(`Intent "${intentId}" applied.`);
     console.log(`  ${applyResults.filter((r) => r.op === 'new').length} new, ${applyResults.filter((r) => r.op === 'modified').length} modified.`);
-    console.log(`  Archived to: ${archivePath}`);
+    console.log(`  Apply record: ${applyRecordPath}`);
+    console.log('  Intent remains active until you explicitly close it.');
   }
 
   // 6. --release: trigger AFTER apply (I4)
@@ -844,12 +1134,22 @@ async function runIntent({ args, cwd }) {
 
   if (options.sub === 'create') {
     await runCreate(ctx, options, cwd);
+  } else if (options.sub === 'draft') {
+    await runDraft(ctx, options);
+  } else if (options.sub === 'activate') {
+    await runActivate(ctx, options);
   } else if (options.sub === 'status') {
     await runStatus(ctx, options);
   } else if (options.sub === 'list') {
     await runList(ctx, options);
+  } else if (options.sub === 'focus') {
+    await runFocus(ctx, options);
+  } else if (options.sub === 'close') {
+    await runClose(ctx, options);
   } else if (options.sub === 'cancel') {
     await runCancel(ctx, options);
+  } else if (options.sub === 'archive') {
+    await runArchive(ctx, options);
   } else if (options.sub === 'apply') {
     await runApply(ctx, options, cwd);
   } else if (options.sub === 'suggest-lessons') {
@@ -864,10 +1164,16 @@ function printHelp() {
   console.log('');
   console.log('Usage:');
   console.log('  kb intent create [<id>] [--mode=quick|full] [--change-type=<type>] [--yes] [--json]');
-  console.log('  kb intent status [<id>] [--json]');
-  console.log('  kb intent list [--json]');
+  console.log('  kb intent draft <slug> [--json]');
+  console.log('  kb intent activate <slug> --wave=vX.Y [--mode=quick|full] [--change-type=<type>] [--json]');
+  console.log('  kb intent status [<id-or-slug>] [--json]');
+  console.log('  kb intent list [--backlog|--closed|--archived|--all] [--json]');
+  console.log('  kb intent focus <id> [--current="..."] [--next="..."] [--date=YYYY-MM-DD] [--json]');
   console.log('  kb intent apply <id> [--release] [--yes] [--json]');
+  console.log('  kb intent close <id> --type=released --release=vX.Y.Z [--json]');
+  console.log('  kb intent close <id> --type=dropped --reason="..." [--json]');
   console.log('  kb intent cancel <id> [--yes] [--json]');
+  console.log('  kb intent archive <id> [--json]');
   console.log('  kb intent suggest-lessons [--json]');
   console.log('  kb intent extract <range> [--title="..."] [--type=<type>] [--json]');
   console.log('');
@@ -877,15 +1183,20 @@ function printHelp() {
   console.log('                  --mode=quick|full     quick (default): low ceremony, no plan.md/impact.md required.');
   console.log('                  --change-type=<type>  docs (default), feature, fix, refactor, governance.');
   console.log('                  --yes                 Accept suggested ID and skip confirmation prompt.');
-  console.log('  status          Show status of one or all active intents.');
-  console.log('                  With <id>: full detail including staged files and warnings.');
-  console.log('                  Without <id>: summary of all active intents.');
-  console.log('  list            List active intent IDs.');
+  console.log('  draft           Create a backlog intent markdown file in intents/_backlog/.');
+  console.log('  activate        Move a backlog intent into _active/ and assign a version-scoped intent ID.');
+  console.log('  status          Show status of one intent across backlog, active, closed, or archive state.');
+  console.log('                  Without <id>: overview across all states.');
+  console.log('  list            List intents by scope. Default scope is active only.');
+  console.log('                  Flags: --backlog, --closed, --archived, --all');
+  console.log('  focus           Update focus block fields on an active intent.');
   console.log('  apply           Write staged files from proposed-changes/ to the KB content root.');
-  console.log('                  Builds apply-record.json, archives workspace, then optionally runs release.');
+  console.log('                  Builds apply-record.json and keeps the intent active until explicit close.');
   console.log('                  --release  Trigger release pipeline after apply (apply must complete first).');
   console.log('                  --yes      Skip confirmation prompt.');
-  console.log('  cancel          Delete an active intent workspace (irreversible).');
+  console.log('  close           Move an active intent into _closed/released or _closed/dropped.');
+  console.log('  cancel          Deprecated alias for close --type=dropped. Keeps history instead of deleting.');
+  console.log('  archive         Move an active or closed intent workspace into _archive/.');
   console.log('  suggest-lessons Scan archived intents for recurring patterns and suggest lesson candidates.');
   console.log('                  Candidates are human-reviewable; none are written automatically.');
   console.log('                  --json  Output candidates as JSON.');

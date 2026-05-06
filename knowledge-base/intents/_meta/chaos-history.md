@@ -146,3 +146,21 @@ debtPressure: 15
 coverageGap: 2.9
 cognitiveLoad: 0
 instability: 0
+
+---
+score: 66
+level: unstable
+structural_reduction: 0
+coverage_reduction: 0
+testing_reduction: 15
+intent_reduction: 15
+release_reduction: 0
+cognitive_reduction: 4
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-06T10:39:53.302Z
+structural: 0
+debtPressure: 15
+coverageGap: 0
+cognitiveLoad: 15
+instability: 0
