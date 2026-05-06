@@ -283,7 +283,7 @@ async function runCreate(ctx, options, cwd) {
 // ---------------------------------------------------------------------------
 
 function collectIntentStatus(ctx, intentId) {
-  const meta = readIntentMeta(ctx.contentRoot, intentId);
+  const rawMeta = readIntentMeta(ctx.contentRoot, intentId);
   const staged = listStagedFiles(ctx.contentRoot, intentId);
   const pathIssues = validateStagedFilePaths(staged);
   const wsPath = intentWorkspacePath(ctx.contentRoot, intentId);
@@ -291,6 +291,13 @@ function collectIntentStatus(ctx, intentId) {
   const hasImpact = fs.existsSync(path.join(wsPath, 'impact.md'));
   const hasLesson = fs.existsSync(path.join(wsPath, 'lesson-candidate.md'));
   const hasApplyRecord = fs.existsSync(path.join(wsPath, 'apply-record.json'));
+
+  // Backward compatibility: older intents may not have explicit status/mode fields.
+  const meta = {
+    ...rawMeta,
+    status: String(rawMeta.status || rawMeta.lifecycle_state || 'unknown'),
+    mode: String(rawMeta.mode || ((hasPlan || hasImpact) ? 'full' : 'mini')),
+  };
 
   const warnings = [];
   if (!meta.decision_summary || meta.decision_summary === '') {
@@ -456,10 +463,12 @@ async function runList(ctx, options) {
   for (const id of ids) {
     const info = collectIntentStatus(ctx, id);
     const warn = info.warnings.length > 0 ? ' [!]' : '';
+    const statusCell = String(info.meta?.status || info.meta?.lifecycle_state || 'unknown');
+    const modeCell = String(info.meta?.mode || ((info.hasPlan || info.hasImpact) ? 'full' : 'mini'));
     lines.push(
       '  ' + id.padEnd(COL_ID) +
-      '  ' + info.meta.status.padEnd(COL_STATUS) +
-      '  ' + info.meta.mode.padEnd(COL_MODE) +
+      '  ' + statusCell.padEnd(COL_STATUS) +
+      '  ' + modeCell.padEnd(COL_MODE) +
       '  ' + info.staged.length + warn
     );
   }

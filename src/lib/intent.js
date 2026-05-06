@@ -252,11 +252,11 @@ function readIntentMeta(contentRoot, intentId) {
  * Supports only simple key: value and key: [] forms (no nested objects).
  */
 function parseIntentFrontmatter(text) {
-  const match = text.match(/^---\n([\s\S]*?)\n---/);
+  const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!match) return {};
   const block = match[1];
   const result = {};
-  for (const line of block.split('\n')) {
+  for (const line of block.split(/\r?\n/)) {
     if (!line || line.startsWith('#')) continue;
     const colonIdx = line.indexOf(':');
     if (colonIdx < 0) continue;
