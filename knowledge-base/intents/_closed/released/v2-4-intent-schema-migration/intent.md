@@ -1,7 +1,7 @@
 ---
 id: v2-4-intent-schema-migration
 mode: full
-lifecycle: active
+lifecycle: closed
 created_at: "2026-05-06T00:00:00.000Z"
 change_type: governance
 change_scope: []
@@ -13,7 +13,7 @@ focus:
   last_updated: 2026-05-07
   next_action: "Run acceptance on downstream clean workspace; promote to released"
 architecture_position:
-  wave: "v2.4.x"
+  wave: v2.4.x
 lesson_id: null
 promotion_ready: false
 linked_signals: []
@@ -22,6 +22,10 @@ schema_version: v2.4.0
 legacy_lifecycle_state: proposed
 legacy: true
 migration_note: "migrated active via active scope to v2.4.0"
+close_type: released
+closed_at: "2026-05-07T06:46:04.516Z"
+release_ref: v2.4.0-rc.1
+drop_reason: null
 ---
 
 # Intent: v2-4-intent-schema-migration

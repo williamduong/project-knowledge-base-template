@@ -12,17 +12,21 @@ focus:
   last_updated: 2026-05-06
   next_action: "Promote intent schema migration; publish v2.4.0 to npm"
 architecture_position:
-  wave: "v2.4.x"
+  wave: v2.4.x
 lesson_id: null
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
 schema_version: v2.4.0
-lifecycle: active
+lifecycle: closed
 legacy_status: open
 legacy_lifecycle_state: proposed
 legacy: true
 migration_note: "migrated active via active scope to v2.4.0"
+close_type: released
+closed_at: "2026-05-07T06:46:04.274Z"
+release_ref: v2.4.0-rc.1
+drop_reason: null
 ---
 
 # Intent: v2-4-intent-governance
