@@ -140,6 +140,7 @@ function buildIntentMeta({ intentId, mode, changeType }) {
       ].join('\n')
     : null;
 
+  const pkgVersion = require('../../package.json').version;
   const lines = [
     '---',
     `id: ${intentId}`,
@@ -155,6 +156,7 @@ function buildIntentMeta({ intentId, mode, changeType }) {
     `impact_signals: []`,
     `decision_summary: ""`,
     `review_after: null`,
+    `schema_version: ${pkgVersion}`,
   ];
   if (reserveFields) {
     lines.push('# v1.8+ reserve fields:');
@@ -188,6 +190,7 @@ function buildIntentMeta({ intentId, mode, changeType }) {
 
 function buildBacklogIntentMeta({ slug, title, description, wave }) {
   const now = new Date().toISOString();
+  const pkgVersion = require('../../package.json').version;
   const lines = [
     '---',
     `slug: ${slug}`,
@@ -204,6 +207,7 @@ function buildBacklogIntentMeta({ slug, title, description, wave }) {
     lines.push('architecture_position:');
     lines.push(`  wave: ${wave}`);
   }
+  lines.push(`schema_version: ${pkgVersion}`);
   lines.push('---');
   lines.push('');
   lines.push(`# Backlog Intent: ${slug}`);

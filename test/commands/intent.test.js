@@ -1055,3 +1055,51 @@ test('runIntent cleanup: --stale excludes aged closed findings', async () => {
   const agedFindings = parsed.findings.filter((f) => f.rule === 'closed-aged');
   assert.equal(agedFindings.length, 0, '--stale should exclude closed-aged findings');
 });
+
+// ---------------------------------------------------------------------------
+// Gap 1 Fix: schema_version in new intents (T-G1, T-G4)
+// ---------------------------------------------------------------------------
+
+test('buildIntentMeta: includes schema_version field', () => {
+  const meta = buildIntentMeta({ intentId: 'test-gap-1', mode: 'quick', changeType: 'docs' });
+  assert.ok(meta.includes('schema_version:'), 'schema_version field should be present');
+  const match = meta.match(/schema_version:\s*([^\n]+)/);
+  assert.ok(match, 'schema_version should have a value');
+  const version = match[1].trim();
+  assert.ok(/^[\d.]+/.test(version), `schema_version should be a version string, got: ${version}`);
+});
+
+test('buildBacklogIntentMeta: includes schema_version field', () => {
+  const meta = buildBacklogIntentMeta({ slug: 'backlog-gap', title: 'Test', description: '', wave: null });
+  assert.ok(meta.includes('schema_version:'), 'backlog intent should have schema_version');
+  const match = meta.match(/schema_version:\s*([^\n]+)/);
+  assert.ok(match, 'schema_version should have a value');
+  const version = match[1].trim();
+  assert.ok(/^[\d.]+/.test(version), `schema_version should be a version string, got: ${version}`);
+});
+
+test('T-G1: intent create populates schema_version (quick mode)', () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'new-intent-q', mode: 'quick', changeType: 'feature' });
+
+  const metaPath = path.join(contentRoot, 'intents', '_active', 'new-intent-q', 'intent.md');
+  assert.ok(fs.existsSync(metaPath), 'intent.md should exist');
+
+  const text = fs.readFileSync(metaPath, 'utf8');
+  const meta = parseIntentFrontmatter(text);
+  assert.ok(meta.schema_version, 'schema_version should be populated');
+  assert.ok(/^[\d.]+/.test(meta.schema_version), `schema_version should be valid, got: ${meta.schema_version}`);
+});
+
+test('T-G1: intent create populates schema_version (full mode)', () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'new-intent-f', mode: 'full', changeType: 'feature' });
+
+  const metaPath = path.join(contentRoot, 'intents', '_active', 'new-intent-f', 'intent.md');
+  const text = fs.readFileSync(metaPath, 'utf8');
+  const meta = parseIntentFrontmatter(text);
+  assert.ok(meta.schema_version, 'schema_version should be populated');
+  assert.ok(/^[\d.]+/.test(meta.schema_version), `schema_version should be valid, got: ${meta.schema_version}`);
+});
