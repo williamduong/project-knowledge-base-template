@@ -22,6 +22,26 @@ tags:
 
 Provide a single location for future coding agents to read KB conventions before editing or generating docs/code.
 
+## Design Philosophy: Opinionated Defaults
+
+KB Agent ships with opinionated defaults. Every default is chosen to work for the widest range of projects without configuration. Users can override defaults via `.kb/config.yml` (from v2.5), and overrides are logged to `.kb/governance/customizations.log` so `kb migrate` can preserve them during upgrades.
+
+**Current defaults (all configurable in v2.5):**
+
+| Default | Value | Purpose |
+|---|---|---|
+| Stale focus threshold | 14 days | Trigger cleanup prompt when intent focus goes stale |
+| Required fields (active) | `focus`, `change_scope` | Minimum viable intent metadata |
+| Required fields (full mode) | + `plan.md`, `impact.md`, `decision_summary` | Complete governance trail |
+| Intent ID naming | kebab-case, user choice | Naming convention is user's own cadence |
+| `wave` field | free string | Grouping label: `sprint-12`, `Q2-2026`, `v2.4` — user fills per project rhythm |
+| Branch prefix | `intent/<id>` | Git branch naming |
+| Release reference | free string | Version tag, PR link, milestone — user fills per project |
+
+The `wave` field is a **generic grouping label**. KB Agent does not interpret its value. Projects using sprint names, calendar quarters, or version numbers are all valid uses.
+
+This pattern mirrors ESLint/Prettier: strong defaults, user can opt out, changes are auditable.
+
 ## Minimal Agent Workflow
 
 **v2.0.1 Intent-First protocol replaces the legacy "plan then run" sequence.** The workflow below describes what the agent does internally; users do not manage these steps manually.
@@ -34,7 +54,7 @@ Provide a single location for future coding agents to read KB conventions before
 6. If the baseline differs, inspect git log and diff from the stored revision forward, detect drift, and route work through the maintenance loop before trusting current KB content.
 7. If the stored template version differs from the active template version, run the version-patch flow in the same pass.
 8. If `kb doctor` detects `legacy-schema-migration: WARN`, or if active intents show legacy schema fields (missing `schema_version`), run `kb migrate --to=<active-template-version> --dry-run` before mutating intent metadata. Refer to `12-ai-skills/intent-lifecycle-schema.md` for current intent frontmatter structure and validation rules.
-9. Before apply/close or release review, run `kb intent cleanup --json` so missing focus or wave fields are surfaced explicitly. All critical findings must be resolved before intent can transition to closed state.
+9. Before apply/close or release review, run `kb intent cleanup --json` so missing focus or wave fields are surfaced explicitly. The `wave` field accepts any string matching the project's release cadence (sprint name, quarter, version tag). All critical findings must be resolved before intent can transition to closed state.
 10. Stage files under `proposed-changes/` within the intent workspace. Do not write KB files directly outside an intent workspace unless the change meets the inline-record policy (see `00-start-here/glossary.md` §A6).
 11. Batch non-blocking tasks. Only pause for user input at destructive ops, approval gates, or genuine ambiguity.
 12. Apply with `kb intent apply <id>` when done. Archive evidence.

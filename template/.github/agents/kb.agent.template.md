@@ -120,7 +120,7 @@ If `state.json` does not contain a `userPersona` field, OR if `presence === 'fre
    - expected scope >= 10 files
    - cross-module/runtime changes combined with governance/docs changes
 2. If large, ask user whether to create a dedicated branch before implementation.
-3. If yes, propose `intent/vX-Y-<slug>` or `feat/vX-Y-<slug>` and wait for explicit confirmation.
+3. If yes, propose `intent/<id>` or `feat/<id>` and wait for explicit confirmation. The `<id>` format is user's choice — use the project's own cadence (e.g. `sprint-12-auth-fix`, `hotfix-crash-on-login`, `Q2-onboarding-redesign`).
 4. If no, continue only after logging an explicit override note in the intent context.
 
 ---

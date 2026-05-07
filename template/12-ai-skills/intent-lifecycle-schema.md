@@ -20,15 +20,19 @@ tags:
 
 ## Purpose
 
-Define the required frontmatter structure for intent metadata. This schema applies to all intent modes (quick, full) across both KBRoot maintainer workflows and downstream KB Agent orchestration.
+Define the required frontmatter structure for intent metadata. This schema ships with KB Agent as the **opinionated default** for all intent modes (quick, full). All defaults are chosen to work for the widest range of projects without configuration.
+
+**Design principle:** Opinionated default + user override. Every governance default below can be overridden via `.kb/config.yml` (see v2.5 config layer). User overrides are logged to `.kb/governance/customizations.log` so `kb migrate` can respect them during upgrades.
 
 ## Intent Frontmatter Structure
 
 ```yaml
 ---
 # ========== IDENTIFICATION ==========
-id: <string>                           # intent ID (e.g. v2-4-intent-governance, KB-012)
-                                       # Format: kebab-case, version-prefixed for major features
+id: <string>                           # intent ID — use kebab-case
+                                       # Generic examples: hotfix-auth-crash, user-onboarding-redesign, sprint-12-api
+                                       # Version-prefix format (e.g. v2-4-feature-name) is a KBRoot-specific choice;
+                                       # other projects can use any consistent naming convention.
 slug: <string>                         # optional; human-readable slug for backlog intents
 
 # ========== LIFECYCLE & MODE ==========
@@ -52,7 +56,8 @@ focus:
 
 # ========== GOVERNANCE & SIGNALS ==========
 change_scope: <array[string]>          # Files/modules affected (e.g. ["src/commands/*", "template/*"])
-impact_signals: <array[string]>        # Tags from D1-D56 decisions (e.g. ["large-intent-branch-confirmed"])
+impact_signals: <array[string]>        # Tags summarizing governance signals for this intent
+                                       # e.g. ["large-intent-branch-confirmed", "breaking-change", "cross-module"]
 decision_summary: <string>             # Rationale for this intent (1-2 sentences)
 review_after: <YYYY-MM-DD or null>     # Date after which this intent should be reviewed; null if no deferred review
 
@@ -105,25 +110,25 @@ focus:
 
 ```yaml
 ---
-id: hotfix-v2-4-0-release-blocker
+id: hotfix-auth-crash
 mode: quick
 lifecycle: active
 created_at: 2026-05-07T10:30:00.000Z
 change_type: bugfix
-change_scope: ["src/commands/intent.js"]
+change_scope: ["src/auth/session.js"]
 impact_signals: []
-decision_summary: "Fix parser regression blocking v2.4.0 release."
+decision_summary: "Fix session crash when token expires during long-running request."
 review_after: null
 focus:
-  current: "Apply parser regression fix"
+  current: "Apply session token fix and test affected flows"
   last_updated: 2026-05-07
-  next_action: "Test on clean workspace; release v2.4.0"
+  next_action: "Test on staging; merge to main"
 schema_version: v2.4.0
 ---
 ```
 
 **Rules:**
-- `id` required, version-prefixed if major feature
+- `id` required, kebab-case — naming convention is user's choice
 - `mode: quick` — no plan.md / impact.md
 - `focus` and `change_scope` required
 - `schema_version: v2.4.0` (or current version)
@@ -133,20 +138,20 @@ schema_version: v2.4.0
 
 ```yaml
 ---
-id: v2-5-cli-first-intent-orchestration
+id: user-onboarding-redesign
 mode: full
 lifecycle: active
 created_at: 2026-05-06T17:25:26.478Z
 focus:
-  current: "Define CLI-first project-context and intent-scoping command surface"
+  current: "Redesign onboarding flow to reduce time-to-first-value from 10 steps to 3"
   last_updated: 2026-05-06
-  next_action: "Draft command contract and orchestration-soft governance rules before implementation"
+  next_action: "Prototype step consolidation and validate with design team"
 change_type: feature
 change_scope:
-  - "src/commands/* (new multi-project context and scope commands)"
-  - "src/lib/* (context registry/state model support)"
-  - "template/.github/agents/kb.agent.template.md"
-decision_summary: "Soft-first governance: when deterministic CLI action exists, KB Agent should use it; when action does not exist yet, AI remains flexible but must keep outcomes aligned with governance rules."
+  - "src/onboarding/* (new wizard and step consolidation)"
+  - "src/components/welcome/* (updated welcome screen)"
+  - "docs/user-guide/onboarding.md"
+decision_summary: "Consolidate 10-step onboarding into 3 mandatory + 7 optional steps. Guided by user research showing >60% drop-off at step 4."
 review_after: null
 # v1.8+ reserve fields
 lesson_id: null
@@ -168,16 +173,16 @@ schema_version: v2.4.0
 
 ```yaml
 ---
-id: v2-4-intent-schema-migration
+id: user-onboarding-redesign
 mode: full
 lifecycle: closed
 created_at: 2026-05-06T00:00:00.000Z
-change_type: governance
+change_type: feature
 # ... (retained from active state)
 schema_version: v2.4.0
 close_type: released
 closed_at: 2026-05-07T15:30:00.000Z
-release_version: v2.4.0
+release_version: v1.3.0
 ---
 ```
 
@@ -192,14 +197,14 @@ release_version: v2.4.0
 
 ```yaml
 ---
-id: v2-3-5-stabilization
+id: user-onboarding-v1
 mode: full
 lifecycle: archived
 # ... (retained from closed state)
 schema_version: v2.4.0
 close_type: released
 archived_at: 2026-05-08T10:00:00.000Z
-archive_reason: "Superseded by v2-4 intents; kept for historical audit trail"
+archive_reason: "Superseded by user-onboarding-redesign; kept for historical audit trail"
 ---
 ```
 
@@ -262,6 +267,22 @@ After migration:
 - Original field values are logged in `migration_note`
 
 For downstream intent owners: see `template/15-governance/migrations/migrate-v2.3.5-to-v2.4.0.md` for step-by-step guidance.
+
+## Governance Defaults (Configurable)
+
+KB Agent ships with opinionated defaults for intent governance. All defaults can be overridden in `.kb/config.yml` (available from v2.5). User overrides are logged to `.kb/governance/customizations.log` so migrations can respect them.
+
+| Governance field | Default | Override key (v2.5) |
+|---|---|---|
+| Stale focus threshold | 14 days | `intent.stale_threshold_days` |
+| Required active fields | `focus`, `change_scope` | `intent.required_fields.active` |
+| Required full-mode fields | + `plan.md`, `impact.md`, `decision_summary` | `intent.required_fields.full` |
+| Intent ID naming | kebab-case, user choice | `intent.id_format` |
+| `wave` field value | free string (e.g. `sprint-12`, `v2.4`, `Q2-release`) | user fills per project cadence |
+| Branch prefix | `intent/<id>` | `intent.branch_prefix` |
+| Release reference field | free string (version tag, PR link, milestone) | `intent.release_ref_format` |
+
+> The `wave` field is a **generic grouping label** — projects use their own cadence naming. It is NOT tied to KB Agent's version numbering.
 
 ## Schema Versioning
 
