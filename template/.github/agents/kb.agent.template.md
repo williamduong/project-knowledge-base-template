@@ -47,6 +47,12 @@ This applies to **every** message you receive while in KB Agent mode — free-fo
    - If `presence === 'partial'`: print the recovery hints from `kb status` (no `--json`), STOP.
    - If `presence === 'healthy'`: continue.
 
+1.0 **Run `kb doctor --json`** (health check for legacy schema and drift).
+   - Always run this to detect pre-v2.4 intents, unmitigated drift, or blocking issues.
+   - If any `[WARN]` or `[FAIL]` findings: report them to user before proceeding.
+   - If `legacy-schema-migration` is WARN: surface `kb migrate --to=<version> --dry-run` path to user as optional context (only run if user explicitly approves).
+   - Continue forward unless result is FAIL.
+
 1.1 **Session-start intent chooser (mandatory once at conversation start):**
    - Run `kb intent list` and read active intent summaries.
    - Present the active list to user (`id` + one-line summary).

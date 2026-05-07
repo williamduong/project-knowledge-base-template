@@ -33,7 +33,7 @@ Provide a single location for future coding agents to read KB conventions before
 5. Read `00-start-here/repository-revision-state.md` and compare the stored brand-scoped git baseline with current `HEAD` when git is available.
 6. If the baseline differs, inspect git log and diff from the stored revision forward, detect drift, and route work through the maintenance loop before trusting current KB content.
 7. If the stored template version differs from the active template version, run the version-patch flow in the same pass.
-8. If active intents show legacy schema fields or runtime warns about missing `schema_version`, run `kb migrate --to=<active-template-version> --dry-run` before mutating intent metadata. Refer to `12-ai-skills/intent-lifecycle-schema.md` for current intent frontmatter structure and validation rules.
+8. If `kb doctor` detects `legacy-schema-migration: WARN`, or if active intents show legacy schema fields (missing `schema_version`), run `kb migrate --to=<active-template-version> --dry-run` before mutating intent metadata. Refer to `12-ai-skills/intent-lifecycle-schema.md` for current intent frontmatter structure and validation rules.
 9. Before apply/close or release review, run `kb intent cleanup --json` so missing focus or wave fields are surfaced explicitly. All critical findings must be resolved before intent can transition to closed state.
 10. Stage files under `proposed-changes/` within the intent workspace. Do not write KB files directly outside an intent workspace unless the change meets the inline-record policy (see `00-start-here/glossary.md` §A6).
 11. Batch non-blocking tasks. Only pause for user input at destructive ops, approval gates, or genuine ambiguity.
