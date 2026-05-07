@@ -29,5 +29,7 @@ Main risk is migration-preview semantics drifting from future write semantics, w
 ## Impact Signals
 
 - Positive: legacy assumptions move into a dedicated migration surface instead of leaking further into post-v2.4 runtime paths.
-- Positive: dry-run output provides auditability before any schema stamp is written.
-- Watch: actual write-path migration is still pending and must handle ambiguous cases conservatively.
+- Positive: dry-run output provides auditability before write.
+- Positive: write-path implemented with DELETE_SENTINEL — original legacy fields (`status`, `lifecycle_state`) are physically removed from frontmatter after rename.
+- Positive: `kb doctor` now surfaces migration need automatically on every workspace health check — users upgrading to v2.4.0 see the warning without running `kb intent cleanup` first.
+- Closed: write-path migration is implemented and tested.

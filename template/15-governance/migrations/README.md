@@ -25,6 +25,7 @@ Store migration notes for KBs that were created from older template versions.
 
 - migrate-v1.0.0-to-v1.1.0.md
 - migrate-v1.1.0-to-v2.0.0.md
+- migrate-v2.3.5-to-v2.4.0.md
 
 ## What A Migration Note Should Contain
 
@@ -37,6 +38,6 @@ Store migration notes for KBs that were created from older template versions.
 
 ## Current Baseline
 
-- Current baseline version: v1.1.0
-- Previous baseline version: v1.0.0
-- Current migration note: [migrate-v1.0.0-to-v1.1.0.md](migrate-v1.0.0-to-v1.1.0.md)
+- Current baseline version: v2.4.0
+- Previous baseline version: v2.3.5
+- Current migration note: [migrate-v2.3.5-to-v2.4.0.md](migrate-v2.3.5-to-v2.4.0.md)

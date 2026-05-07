@@ -9,6 +9,7 @@ const path = require('path');
 const {
   detectUnregisteredNewDocs,
   isNewDocStatus,
+  scanLegacySchemaIntents,
 } = require('../../src/commands/doctor');
 
 function makeWorkspace() {
@@ -82,4 +83,27 @@ test('detectUnregisteredNewDocs: accepts registration in folder INDEX by basenam
 
   assert.deepEqual(result.newDocs, ['06-api/endpoint.md']);
   assert.deepEqual(result.missingDocs, []);
+});
+
+test('scanLegacySchemaIntents: detects active intents missing schema_version', () => {
+  const contentRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-doctor-legacy-'));
+  const activeRoot = path.join(contentRoot, 'intents', '_active', 'old-intent');
+  fs.mkdirSync(activeRoot, { recursive: true });
+  // legacy frontmatter: has status but no schema_version
+  const legacyFm = '---\nstatus: open\nlifecycle: active\n---\n# Intent\n';
+  fs.writeFileSync(path.join(activeRoot, 'intent.md'), legacyFm, 'utf8');
+
+  const result = scanLegacySchemaIntents(contentRoot);
+  assert.deepEqual(result, ['old-intent']);
+});
+
+test('scanLegacySchemaIntents: returns empty when all intents have schema_version', () => {
+  const contentRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-doctor-modern-'));
+  const activeRoot = path.join(contentRoot, 'intents', '_active', 'new-intent');
+  fs.mkdirSync(activeRoot, { recursive: true });
+  const modernFm = '---\nlifecycle: active\nschema_version: v2.4.0\n---\n# Intent\n';
+  fs.writeFileSync(path.join(activeRoot, 'intent.md'), modernFm, 'utf8');
+
+  const result = scanLegacySchemaIntents(contentRoot);
+  assert.deepEqual(result, []);
 });
