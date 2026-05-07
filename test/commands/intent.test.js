@@ -1103,3 +1103,17 @@ test('T-G1: intent create populates schema_version (full mode)', () => {
   assert.ok(meta.schema_version, 'schema_version should be populated');
   assert.ok(/^[\d.]+/.test(meta.schema_version), `schema_version should be valid, got: ${meta.schema_version}`);
 });
+
+test('T-G3: backlog activate preserves schema_version', () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createBacklogIntent(contentRoot, { slug: 'test-backlog', title: 'Test Backlog', description: 'Test', wave: null });
+
+  activateBacklogIntent(contentRoot, { slug: 'test-backlog', intentId: 'activated-intent', mode: 'quick', changeType: 'feature', wave: null });
+
+  const metaPath = path.join(contentRoot, 'intents', '_active', 'activated-intent', 'intent.md');
+  const text = fs.readFileSync(metaPath, 'utf8');
+  const meta = parseIntentFrontmatter(text);
+  assert.ok(meta.schema_version, 'activated intent should have schema_version');
+  assert.ok(/^[\d.]+/.test(meta.schema_version), `schema_version should be valid, got: ${meta.schema_version}`);
+});
