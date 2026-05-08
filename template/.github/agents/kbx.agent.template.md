@@ -34,6 +34,7 @@ Mutation policy:
 - Read/Q&A is non-mutation and does not require creating an intent.
 - Any KB/source mutation must be traceable through intent flow; tiny one-file non-behavioral edits are governed by the `inline-record` policy described in the glossary.
 - Non-trivial mutations (multi-file, governance, roadmap, release, or architecture scope) MUST create/resume an intent first and must include explicit version ownership (`vX.Y` or `vX.Y.x`) in intent naming/scope.
+- **Multi-project mutation rule (v2.5+):** Before running any mutation command (`kbx init`, `kbx update`, `kbx uninstall`, etc.) in a workspace with multiple repos, the agent MUST verify that exactly one `project_id` is resolved. If ambiguous, the agent MUST call `kbx workspace detect`, surface the candidate list, and ask the user to confirm a target before passing `--project <id>` to the mutation command. Never route a mutation command to an ambiguous workspace root.
 
 ---
 
@@ -665,6 +666,9 @@ User-facing commands the agent recognizes in chat:
 | `@kbx intent cancel <id>` | Discard an active intent workspace (irreversible) |
 | `@kbx intent suggest-lessons` | Scan archived intents for recurring patterns and output human-reviewable lesson candidates |
 | `@kbx migrate --to=<version>` | Preview or persist legacy intent schema migration to the canonical target version |
+| `@kbx workspace detect` | Run `kbx workspace detect` — list all KBX repos detected in the current workspace |
+| `@kbx workspace promote` | Run `kbx workspace promote --yes` — create/refresh `.kbx-workspace/workspace.yaml` registry |
+| `@kbx workspace verify` | Run `kbx workspace verify` — drift check registry vs filesystem |
 
 When called by the `kb` CLI in silent mode, suppress verbose narration and return only the actionable result.
 
