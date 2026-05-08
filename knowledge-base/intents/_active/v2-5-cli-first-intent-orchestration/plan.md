@@ -99,21 +99,20 @@ Exit criteria — all met:
 - ✓ Each command has: input spec, output schema, exit code table, layer assignment.
 - ✓ No command straddles both layers.
 
-### Phase 2 — KB Agent Orchestration Contract Alignment
+### Phase 2 — KB Agent Orchestration Contract Alignment ✓ DONE
 
-Goals:
-- Update `template/.github/agents/kb.agent.template.md`: add Deterministic-First + Soft-First sections with explicit layer distinction.
-- Update `template/12-ai-skills/agent-operating-manual.md`: reinforce A1 separation in orchestration guidance.
-- Make it explicit: KB Agent calls KBRoot-side commands for gates; KB Agent calls Agent-side commands for execution. Agent never bypasses a Root gate.
+Completed tasks:
+- ✓ `template/.github/agents/kb.agent.template.md` — added "KBRoot Gate vs Agent Soft-First (A1 Separation)" section after existing Deterministic-First contract. Includes: hard-stop on exit 1, soft-first as Agent-only contract, fallback rules.
+- ✓ `template/12-ai-skills/agent-operating-manual.md` — added "KBRoot Gate vs Agent Soft-First — A1 Separation (v2.5+)" section with two-tier description, "why this separation matters", and Axiom 1 violation callout.
 
-Key wording to lock:
+Key wording locked in both shipped files:
 - "KB Agent is Executive. It does not own the rules — it executes them."
-- "When a deterministic KBRoot gate fires exit 1, the Agent stops. It does not retry, negotiate, or guess."
-- "Soft-first policy applies only to Agent-side actions where no CLI primitive exists yet."
+- "When a KBRoot gate returns exit 1, KB Agent MUST stop immediately. Do not retry. Do not negotiate."
+- "Soft-first is an Agent contract. It is NOT a KBRoot feature."
 
-Exit criteria:
-- KB Agent contract clearly separates Root-gate behavior from Agent-orchestration behavior.
-- No prompt text implies the Agent can override a KBRoot deterministic block.
+Exit criteria — all met:
+- ✓ KB Agent contract clearly separates Root-gate behavior from Agent-orchestration behavior.
+- ✓ No prompt text implies the Agent can override a KBRoot deterministic block.
 
 ### Phase 3 — Validation and Handoff
 

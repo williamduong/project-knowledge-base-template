@@ -321,6 +321,27 @@ Priority order:
 
 Do not rely on prompt-only AI generation as the source of truth for behavior that requires consistent and verifiable outcomes.
 
+## KBRoot Gate vs Agent Soft-First — A1 Separation (v2.5+)
+
+KB Agent is Executive. It does not own the rules — it executes them.
+
+Two tiers of execution that MUST NOT be merged:
+
+**KBRoot gate tier (deterministic block):**
+- KBRoot CLI commands are legislative checkpoints (`kb init`, `kb doctor`, `kb chaos`).
+- When a KBRoot command returns exit 1, the agent MUST stop. No retry, no negotiation, no LLM workaround.
+- The correct response to a KBRoot exit 1 is: surface the error to the user and wait. KBAgent does not auto-fix schema violations — it reports and defers.
+
+**Agent soft-first tier (orchestration):**
+- When a deterministic Agent-side CLI action exists → agent MUST call it (not reason as a substitute).
+- When no CLI action exists yet → agent may reason flexibly, but outcomes must align with governance rules.
+- Soft-first applies ONLY to Agent-tier actions. It is not a KBRoot property.
+
+**Why this separation matters:**
+- Merging the two tiers is the root cause of "KB Agent bypassing governance" failure modes.
+- If an agent treats a KBRoot exit 1 as advisory and proceeds anyway, it is an Axiom 1 violation.
+- This rule takes precedence over any other agent convenience behavior.
+
 ## Human-Gate Protocol (v2.3.3.1)
 
 When the agent encounters a task that requires a different actor — human, another AI, or an external system — it MUST write a gate record and continue. **Never ask in chat. Never block.**
