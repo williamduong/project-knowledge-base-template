@@ -19,7 +19,7 @@
 - Synced downstream-shipped agent contracts with the same branch + deterministic-first requirements.
 
 - **Three-layer separation refactor (Phase R0–R6 COMPLETE)**: Refactored KB model into 5-layer architecture: ship (A)/verify (B)/kb-root (C)/self-host (D)/scratch (E). Renamed `.local/kb-agent/` → `kb-root/`; updated all internal refs.
-- **kb-root promoted to Layer C**: `.github/agents/KBRoot.agent.md` now authoritative for maintainer operations; bootstrap + Self-Update workflow references kb-root/ instead of .local/.
+- **kb-root promoted to Layer C**: `.github/agents/SV Factory.agent.md` now authoritative for maintainer operations; bootstrap + Self-Update workflow references kb-root/ instead of .local/.
 - **`.gitignore` rewrite**: Removed `.local/`, `knowledge-base/`, `AGENTS.md`, `.github/agents/kb.agent.md`, `.github/prompts/`, `kb-orch-report-*.json`. Added `notes/*` allowlist anchor; restricted knowledge-base to noise subpaths only.
 - **Root cleanup**: 4 manual test docs → `test-plans/`; 24 `kb-orch-report-*.json` → `notes/orch-reports/`.
 - **Self-host init (Layer D)**: `kb init --mode tracked --yes` materialized; R6 smoke tests pass (both tracked + private-git modes initialized successfully).
@@ -32,7 +32,7 @@
 - **Learnings archived**: Added T8-T10 (intent pattern, validation parallelism, layer model documentation), R15-R18 (PowerShell safety, uninstall scoping, timestamp precision, version sync), D10-D14 (three-layer locked canonical, intent approved, npm version bare prohibition) to knowledge.md + focus.md for v2.4+ planning.
 - **Released**: @williamduong/kb@2.3.0 published to npm (208 files, 902.2 kB unpacked).
 - **Scope lock note**: Added policy that downstream KB Agent UX acceptance must run in clean downstream workspace (KB Agent only), while self-host workspace is maintainer/governance validation.
-- **Namespace hard split**: Disabled local downstream surfaces (`.github/agents/kb.agent.md`, `.github/prompts/kb-*`) and introduced KBRoot-only prompts (`/kbroot-plan`, `/kbroot-run`, `/kbroot-ask`). Template source files moved to `.template.md` suffix; `src/commands/init.js` now projects from template sources while keeping downstream destination names unchanged.
+- **Namespace hard split**: Disabled local downstream surfaces (`.github/agents/kb.agent.md`, `.github/prompts/kb-*`) and introduced SV Factory-only prompts (`/SV Factory-plan`, `/SV Factory-run`, `/SV Factory-ask`). Template source files moved to `.template.md` suffix; `src/commands/init.js` now projects from template sources while keeping downstream destination names unchanged.
 
 ## 2026-04-30
 
@@ -40,7 +40,7 @@
 - **Context source**: Session plan v1.3 → v3.0 + code review v1.2.11 codebase.
 - **Active focus locked**: v1.3.0 Phase 0 next.
 - **Add R10, R11** vào knowledge.md: lesson về Custom Agent format + `.npmignore` không override `files` whitelist.
-- **KBRoot Custom Agent created**: `.github/agents/KBRoot.agent.md` (gitignored, package.json files granular để không ship).
+- **SV Factory Custom Agent created**: `.github/agents/SV Factory.agent.md` (gitignored, package.json files granular để không ship).
 - **v1.3 Phase 0 dogfood DONE**: 8 doc × 22 file diff (`v1.2.1..HEAD`), 8/8 meaningful, verdict GO Phase 1.
 - **Add T7, R12, D9** vào knowledge.md: fixture pattern + KB self-edit filter + `kb bind suggest` seed heuristic.
 - **Update focus.md**: Phase 0 done, next action = Phase 1 build steps.

@@ -153,7 +153,7 @@ Agent có thể tự đề nghị evolve khi gặp:
   - **Not verified:** list (nếu có)
   - **Manual follow-up:** checklist user cần chạy tay cho các mục chưa verify được (nếu có)
   - **Next:** 1 dòng (nếu áp dụng)
-  - **Handoff:** bảng owner routing — HUMAN / CLI / @KBRoot / @kb (bỏ qua nếu task trivial)
+  - **Handoff:** bảng owner routing — HUMAN / CLI / @SV Factory / @kb (bỏ qua nếu task trivial)
     - `CLI`: ghi rõ lệnh trong cột Task
     - `Blocking? = Yes`: đặt lên đầu bảng hoặc highlight rõ
 

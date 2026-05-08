@@ -1,7 +1,7 @@
-# KBRoot — Project-Specific Overrides
+# SV Factory — Project-Specific Overrides
 
 > This file documents how this maintainer workspace overrides the generic KB Agent defaults.
-> It is the source of truth for what makes KBRoot's governance choices different from what ships to users.
+> It is the source of truth for what makes SV Factory's governance choices different from what ships to users.
 >
 > Layer: C (maintainer-only). NOT shipped via npm `files` whitelist.
 
@@ -10,27 +10,27 @@
 ## Intent ID Format (overrides generic default)
 
 **Generic default:** kebab-case, user-defined naming convention.  
-**KBRoot choice:** `vX-Y-Z-slug` version-prefixed format.
+**SV Factory choice:** `vX-Y-Z-slug` version-prefixed format.
 
 Examples: `v2-4-intent-governance`, `v2-5-cli-first-intent-orchestration`
 
-Rationale: KBRoot manages a versioned npm package. Tying intent IDs to version numbers makes it trivial to trace which intents shipped in which release without consulting git log.
+Rationale: SV Factory manages a versioned npm package. Tying intent IDs to version numbers makes it trivial to trace which intents shipped in which release without consulting git log.
 
 ---
 
 ## Wave Field (overrides generic default)
 
 **Generic default:** Free string. Projects use sprint names, quarters, version tags, or any grouping label.  
-**KBRoot choice:** Wave = target release version. Examples: `v2.4`, `v2.5`, `v3.0`.
+**SV Factory choice:** Wave = target release version. Examples: `v2.4`, `v2.5`, `v3.0`.
 
-Rationale: KBRoot roadmap is organized by semantic version. Using version-prefixed wave values aligns intent grouping with release milestones.
+Rationale: SV Factory roadmap is organized by semantic version. Using version-prefixed wave values aligns intent grouping with release milestones.
 
 ---
 
 ## Impact Signal Tag System (D1-D56)
 
 **Generic default:** Free tags in `impact_signals[]`. No centralized registry required.  
-**KBRoot choice:** Structured tag system based on KB-internal decision log entries D1-D56.
+**SV Factory choice:** Structured tag system based on KB-internal decision log entries D1-D56.
 
 - `D1`–`D19`: initial template decisions (up to v2.3)
 - `D20`+: v2.4+ schema migration decisions
@@ -43,7 +43,7 @@ These tags are internal governance signals. Downstream users should define their
 ## Architecture Model (6-Layer)
 
 **Generic default:** KB Agent does not prescribe a specific architecture tier model for users' projects.  
-**KBRoot choice:** 6-layer architecture applied to the KB template itself:
+**SV Factory choice:** 6-layer architecture applied to the KB template itself:
 
 - L1: Static content (Markdown docs)
 - L2: CLI / tooling layer (`src/commands/`, `bin/`)
@@ -59,21 +59,21 @@ This model is specific to maintaining a documentation template package. It does 
 ## Branch Naming
 
 **Generic default:** `intent/<id>`.  
-**KBRoot choice:** `intent/vX-Y-<slug>` matching the intent ID format.
+**SV Factory choice:** `intent/vX-Y-<slug>` matching the intent ID format.
 
 ---
 
 ## Release Reference
 
 **Generic default:** Any canonical release reference (version tag, PR link, milestone).  
-**KBRoot choice:** npm semver tag published to `@williamduong/kb` on npm.
+**SV Factory choice:** npm semver tag published to `@williamduong/sfact` on npm.
 
 ---
 
 ## Stale Threshold
 
 **Generic default:** 14 days.  
-**KBRoot choice:** 14 days (same — no override).
+**SV Factory choice:** 14 days (same — no override).
 
 ---
 
@@ -85,11 +85,11 @@ This model is specific to maintaining a documentation template package. It does 
 
 ---
 
-### KBRoot-side commands (deterministic)
+### SV Factory-side commands (deterministic)
 
 #### `kb init --project-id=<id>`
 
-**Layer:** KBRoot — Init/Compile checkpoint  
+**Layer:** SV Factory — Init/Compile checkpoint  
 **Status:** Specified (not yet implemented)
 
 | Field | Value |
@@ -99,13 +99,13 @@ This model is specific to maintaining a documentation template package. It does 
 | Exit 0 | `project_id` written successfully. JSON stdout: `{"ok":true,"project_id":"<id>"}` |
 | Exit 1 | `project_id` already set AND `--force` not provided. JSON stdout: `{"ok":false,"error":"project_id_already_set","current":"<id>"}` |
 | Exit 1 | Invalid `project_id` format. JSON stdout: `{"ok":false,"error":"invalid_project_id_format"}` |
-| No LLM | KBRoot does not guess or suggest a valid ID. Block and report only. |
+| No LLM | SV Factory does not guess or suggest a valid ID. Block and report only. |
 
 ---
 
 #### `kb doctor --context`
 
-**Layer:** KBRoot — Audit Request checkpoint  
+**Layer:** SV Factory — Audit Request checkpoint  
 **Status:** Specified (not yet implemented — extends existing `kb doctor`)
 
 | Field | Value |

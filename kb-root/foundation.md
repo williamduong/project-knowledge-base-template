@@ -152,19 +152,19 @@ Operator: resumes execution
 
 ## CLI Command Layer Classification (v2.5+)
 
-> Source of truth for which CLI commands belong to KBRoot (Legislative) vs KBAgent (Executive).
+> Source of truth for which CLI commands belong to SV Factory (Legislative) vs KBAgent (Executive).
 > Every new command MUST be assigned a layer here before specification begins.
 > Mixed-layer commands are an architectural violation per Constitutional Axiom 1.
 
 | Command | Layer | Checkpoint | Reasoning |
 |---|---|---|---|
-| `kb init --project-id=<id>` | **KBRoot** | Init/Compile | Compile-time primitive. Registers project identity into runtime state. |
-| `kb doctor --context` | **KBRoot** | Audit Request | Deterministic audit gate. Exits 0 (pass) or 1 (block). No advice output. |
-| `kb context show` | **KBAgent** | Runtime | Read-only query returning state compiled by KBRoot. Agent orchestration use. |
+| `kb init --project-id=<id>` | **SV Factory** | Init/Compile | Compile-time primitive. Registers project identity into runtime state. |
+| `kb doctor --context` | **SV Factory** | Audit Request | Deterministic audit gate. Exits 0 (pass) or 1 (block). No advice output. |
+| `kb context show` | **KBAgent** | Runtime | Read-only query returning state compiled by SV Factory. Agent orchestration use. |
 | `kb context list` | **KBAgent** | Runtime | Enumerates registered contexts. Not a gate — no exit 1 path. |
 | `kb context set <id>` | **KBAgent** | Runtime | Switches active context. Executive decision — agent layer only. |
 | `kb scope <intent-id> --project=<id>` | **KBAgent** | Runtime | Intent lifecycle scoping. Intent lifecycle = packages/kb-agent exclusively. |
-| `kb chaos` | **KBRoot** | Audit Request | Deterministic score report. Structured JSON stdout. No UI. |
+| `kb chaos` | **SV Factory** | Audit Request | Deterministic score report. Structured JSON stdout. No UI. |
 | `kb intent create/list/close` | **KBAgent** | Runtime | Intent lifecycle management. Full Executive surface. |
 
 **Rule:** If a command cannot be cleanly assigned to one row in this table, it is ambiguous by design — resolve the ambiguity before writing any code.

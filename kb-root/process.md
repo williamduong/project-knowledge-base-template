@@ -69,7 +69,7 @@
       2. Chạy `kb init` hoặc `kb update` trong downstream clean workspace
       3. Xác nhận các file thay đổi đã apply đúng vào `.github/agents/kb.agent.md` và các file liên quan
       4. Mở KB Agent (`@kb`) trong downstream workspace, hỏi câu hỏi liên quan đến thay đổi, verify response đúng hướng
-      5. Kiểm tra không có KBRoot content rớt xuống downstream (`kb-root/`, maintainer-only rules, `CONSTITUTION.md` references)
+      5. Kiểm tra không có SV Factory content rớt xuống downstream (`kb-root/`, maintainer-only rules, `CONSTITUTION.md` references)
     - Intent **KHÔNG được close** cho đến khi gate này pass hoặc có explicit defer với gate record rõ lý do.
     - Nếu chưa thể chạy downstream ngay: tạo gate record trong `gates.md` của intent (actor: `human`, blocking: true).
 11. **Nếu còn hạng mục chưa verify được bằng tool**: ghi checklist `Manual follow-up` (task + command + expected result) trong output cuối để user chạy tiếp

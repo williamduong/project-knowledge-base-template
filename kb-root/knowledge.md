@@ -127,7 +127,7 @@
 
 ### R11. `.npmignore` KHÔNG override `package.json.files` whitelist
 **Ngày:** 2026-04-30
-**Trigger:** Cố exclude `.github/agents/KBRoot.agent.md` bằng `.npmignore` khi `files` có `.github`
+**Trigger:** Cố exclude `.github/agents/SV Factory.agent.md` bằng `.npmignore` khi `files` có `.github`
 **Tác động:** File vẫn ship
 **Phòng:** Để exclude file trong dir đã whitelist → đổi `files` thành list granular (liệt kê từng file/dir con cụ thể), KHÔNG dùng `.npmignore`.
 
@@ -223,7 +223,7 @@
 
 ### D19. Intent schema gaps must be fixed at buildIntentMeta, not at apply
 **Ngày:** 2026-05-07
-**Lý do:** v2.4.0-beta.1 phát hiện 4 gaps giữa KBRoot intent model và KB Agent preflight. Gap 1 (Root cause): `buildIntentMeta` không set `schema_version` → tất cả intent mới legacy → doctor WARN on fresh install. Gap 2-4 từ KB Agent preflight không call `kb doctor`, trigger mơ hồ. Fix: (1) set schema_version ở creation time (`buildIntentMeta` + `buildBacklogIntentMeta` + activate path), (2) add `kb doctor --json` step 1.0 KB Agent preflight, (3) clarify AOM step 8 trigger "kb doctor detects legacy-schema-migration WARN".
+**Lý do:** v2.4.0-beta.1 phát hiện 4 gaps giữa SV Factory intent model và KB Agent preflight. Gap 1 (Root cause): `buildIntentMeta` không set `schema_version` → tất cả intent mới legacy → doctor WARN on fresh install. Gap 2-4 từ KB Agent preflight không call `kb doctor`, trigger mơ hồ. Fix: (1) set schema_version ở creation time (`buildIntentMeta` + `buildBacklogIntentMeta` + activate path), (2) add `kb doctor --json` step 1.0 KB Agent preflight, (3) clarify AOM step 8 trigger "kb doctor detects legacy-schema-migration WARN".
 **Evidence:** T-G1 (new intent has schema_version), T-G3 (backlog activate preserves it), all 548 tests pass, doctor PASS on fresh workspace. Commits: 7cc58a3, 0c5c672, d87ab01.
 **Impact:** Downstream KB Agent workflow auto-surfaces migration warning when needed (legacy intents from prior upgrade); new intents always schema_version=v2.4.0+.
 **Apply:** Gap fixes ship in v2.4.0-beta.2+. Maintain for v2.5+ intent schema version contract.
@@ -277,7 +277,7 @@
 
 ### R20. Self-host validation can misrepresent downstream user UX
 **Ngày:** 2026-05-04
-**Trigger:** Chạy `/kb-plan`, `/kb-run`, `/kb-ask` trong workspace maintainer có cả KBRoot context lẫn KB Agent artifacts
+**Trigger:** Chạy `/kb-plan`, `/kb-run`, `/kb-ask` trong workspace maintainer có cả SV Factory context lẫn KB Agent artifacts
 **Tác động:** Kết luận sai về "trải nghiệm user thật" do persona/prompt context collision
 **Phòng:** Split test matrix: downstream clean workspace (KB Agent-only) = user UX acceptance; self-host workspace = maintainer/governance smoke only.
 

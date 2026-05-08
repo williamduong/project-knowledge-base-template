@@ -9,7 +9,7 @@
 
 This document is subordinate to [`CONSTITUTION.md`](./CONSTITUTION.md).
 In any conflict between a principle here and an Axiom in `CONSTITUTION.md`, the Axiom wins.
-All architectural changes to KBRoot MUST be cross-checked against `CONSTITUTION.md` before any other principle is consulted. No exceptions.
+All architectural changes to SV Factory MUST be cross-checked against `CONSTITUTION.md` before any other principle is consulted. No exceptions.
 
 ---
 
@@ -139,7 +139,7 @@ Trước khi tạo intent mới hoặc version mới, bắt buộc:
 
 ## P19. Chaos estimate gate trước khi bắt đầu intent
 
-Khi bắt đầu bất kỳ intent mới nào (KBRoot hoặc KB Agent), agent phải:
+Khi bắt đầu bất kỳ intent mới nào (SV Factory hoặc KB Agent), agent phải:
 1. Chạy `kb chaos` (hoặc `kb chaos --json`) để lấy score hiện tại.
 2. Ước tính `chaos_delta` cho intent này: số điểm chaos dự kiến tăng/giảm sau khi apply.
 3. Báo cho user: score hiện tại, dự kiến sau, level sau.
@@ -163,7 +163,7 @@ Intent **không thể close** nếu còn gate `pending` — trừ khi explicit s
 ## P21. Downstream-first planning và acceptance
 
 Khi plan bất kỳ upgrade nào cho KB/agent/runtime:
-1. Downstream KB Agent là primary target; KBRoot chỉ là maintainer/control surface.
+1. Downstream KB Agent là primary target; SV Factory chỉ là maintainer/control surface.
 2. Mọi plan phải phân biệt rõ:
 	- Cái gì ship cho downstream (`package.json.files`, `template/`, `src/`, generated destinations)
 	- Cái gì chỉ phục vụ self-host (`kb-root/`, `knowledge-base/`, maintainer prompts, notes)
@@ -202,19 +202,19 @@ Thứ tự ưu tiên thực thi:
 
 Hai tier thực thi KHÔNG được merge với nhau:
 
-**KBRoot tier (deterministic — Constitutional Axiom 3):**
-- KBRoot gate fires → exit 0 hoặc exit 1. Không có gray area, không retry, không LLM guess.
-- KB Agent nhận exit 1 từ KBRoot → DỪNG ngay. Không negotiate, không bypass.
+**SV Factory tier (deterministic — Constitutional Axiom 3):**
+- SV Factory gate fires → exit 0 hoặc exit 1. Không có gray area, không retry, không LLM guess.
+- KB Agent nhận exit 1 từ SV Factory → DỪNG ngay. Không negotiate, không bypass.
 
 **KBAgent tier (soft-first — Constitutional Axiom 1):**
 - Nếu có deterministic Agent-side CLI action → KB Agent PHẢI gọi nó (không tự reason thay).
 - Nếu chưa có CLI action → Agent reason tự do, nhưng outcome phải align với governance rules.
-- Soft-first là contract của KBAgent. Đây KHÔNG phải feature của KBRoot.
+- Soft-first là contract của KBAgent. Đây KHÔNG phải feature của SV Factory.
 
 Fallback khi project context missing:
 - KBAgent: tiếp tục với warning (soft — agent tier).
-- KBRoot: nếu context required cho gate → block exit 1 (hard — root tier).
-- Không được dùng "soft fallback" để bypass KBRoot gate.
+- SV Factory: nếu context required cho gate → block exit 1 (hard — root tier).
+- Không được dùng "soft fallback" để bypass SV Factory gate.
 
 AI generation không được coi là source of truth cho hành vi nhất quán khi đã có rule engine/CLI tương ứng.
 
