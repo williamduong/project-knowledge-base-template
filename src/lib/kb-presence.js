@@ -6,7 +6,7 @@ const path = require('path');
  *
  * Returns an object with boolean flags for each artifact and a single
  * `classification` field that is one of:
- *   - 'fresh'   : no KB artifacts at all -> safe to `kb init`
+ *   - 'fresh'   : no KB artifacts at all -> safe to `kbx init`
  *   - 'healthy' : state file present (valid JSON with schemaVersion)
  *   - 'partial' : state file missing or invalid, but other KB artifacts
  *                 still exist -> do NOT auto-init; user must troubleshoot
@@ -18,9 +18,9 @@ function detectKbArtifacts(workspaceRoot) {
   const privateState = path.join(root, '.git', 'project-kb', 'state.json');
   const kbDir = path.join(root, 'knowledge-base');
   const privateKbDir = path.join(root, '.git', 'project-kb');
-  const agentFile = path.join(root, '.github', 'agents', 'kb.agent.md');
-  const planPrompt = path.join(root, '.github', 'prompts', 'kb-plan.prompt.md');
-  const runPrompt = path.join(root, '.github', 'prompts', 'kb-run.prompt.md');
+  const agentFile = path.join(root, '.github', 'agents', 'kbx.agent.md');
+  const planPrompt = path.join(root, '.github', 'prompts', 'kbx-plan.prompt.md');
+  const runPrompt = path.join(root, '.github', 'prompts', 'kbx-run.prompt.md');
   const agentsMd = path.join(root, 'AGENTS.md');
 
   let stateValid = false;

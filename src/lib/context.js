@@ -39,20 +39,20 @@ function resolveExistingState({ workspaceRoot }) {
   if (presence.classification === 'partial') {
     const leftovers = [
       presence.kbDir ? 'knowledge-base/' : null,
-      presence.agentFile ? '.github/agents/kb.agent.md' : null,
-      presence.promptFile ? '.github/prompts/kb-*.prompt.md' : null,
+      presence.agentFile ? '.github/agents/kbx.agent.md' : null,
+      presence.promptFile ? '.github/prompts/kbx-*.prompt.md' : null,
       presence.agentsMd ? 'AGENTS.md' : null,
     ].filter(Boolean).join(', ');
     throw new Error(
       `KB state appears partial or corrupted: state.json missing or invalid, but other artifacts exist (${leftovers}).\n` +
-      `Do NOT run "kb init" — it would overwrite existing KB content.\n` +
-      `Run "kb status" for recovery guidance, or restore state.json from git:\n` +
+      `Do NOT run "kbx init" — it would overwrite existing KB content.\n` +
+      `Run "kbx status" for recovery guidance, or restore state.json from git:\n` +
       `  git checkout HEAD -- knowledge-base/.kb/state.json`
     );
   }
 
   throw new Error(
-    `No KB state found in workspace. Run "kb init" first. Checked paths:\n- ${privateStatePath}\n- ${trackedStatePath}`
+    `No KB state found in workspace. Run "kbx init" first. Checked paths:\n- ${privateStatePath}\n- ${trackedStatePath}`
   );
 }
 

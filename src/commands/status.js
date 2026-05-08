@@ -336,23 +336,23 @@ function runStatus({ args, cwd, packageJson }) {
   }
 
   // Human-readable
-  console.log('kb status');
+  console.log('kbx status');
   console.log(`- workspace: ${workspaceRoot}`);
   console.log(`- presence : ${presence}`);
   console.log('- artifacts:');
   console.log(`    knowledge-base/                           : ${artifacts.kbDir ? 'yes' : 'no'}`);
-  console.log(`    .github/agents/kb.agent.md                : ${artifacts.agentFile ? 'yes' : 'no'}`);
-  console.log(`    .github/prompts/kb-plan|kb-run.prompt.md  : ${artifacts.promptFile ? 'yes' : 'no'}`);
+  console.log(`    .github/agents/kbx.agent.md               : ${artifacts.agentFile ? 'yes' : 'no'}`);
+  console.log(`    .github/prompts/kbx-plan|kbx-run.prompt.md: ${artifacts.promptFile ? 'yes' : 'no'}`);
   console.log(`    knowledge-base/.kb/state.json (or .git/project-kb): ${artifacts.stateFile ? 'yes' : 'no'}`);
 
   if (presence === 'partial') {
     console.log('');
     console.log('WARNING: KB state appears partial or corrupted.');
     console.log('Other KB artifacts exist but state.json is missing or invalid.');
-    console.log('Do NOT run "kb init" — it would overwrite existing KB content.');
+    console.log('Do NOT run "kbx init" — it would overwrite existing KB content.');
     console.log('Recover with one of:');
     console.log('  1. git checkout HEAD -- knowledge-base/.kb/state.json');
-    console.log('  2. kb uninstall --force   then   kb init --yes   (clean reinstall)');
+    console.log('  2. kbx uninstall --force   then   kbx init --yes   (clean reinstall)');
     console.log('');
     console.log(`verdict: ${verdict.label}${verdict.reasons.length ? ` (${verdict.reasons.join(', ')})` : ''}`);
     if (verdict.code !== 0) process.exit(verdict.code);
@@ -361,7 +361,7 @@ function runStatus({ args, cwd, packageJson }) {
 
   if (presence === 'fresh') {
     console.log('');
-    console.log('No KB detected in this workspace. Run: kb init');
+    console.log('No KB detected in this workspace. Run: kbx init');
     console.log('');
     console.log(`verdict: ${verdict.label}`);
     return;

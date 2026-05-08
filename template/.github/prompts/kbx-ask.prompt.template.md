@@ -3,26 +3,26 @@ name: KB Ask
 type: directive
 category: knowledge-management
 scope: project
-trigger: /kb-ask
+trigger: /kbx-ask
 version: 2.4.0-rc.2
 ---
 
-# /kb-ask — Ask a question about this project's knowledge base
+# /kbx-ask — Ask a question about this project's knowledge base
 
 Your task: answer the user's question using only what is documented in this project's KB. Do NOT modify any file. Do NOT run `kb maintain`, `kb init`, `kb update`, or any mutating command.
 
-You operate under the master KB agent contract at `.github/agents/kb.agent.md`.
+You operate under the master KB agent contract at `.github/agents/kbx.agent.md`.
 
 ## Usage
 
 ```
-/kb-ask <question>
+/kbx-ask <question>
 ```
 
 Examples:
-- `/kb-ask what is the current KB status?`
-- `/kb-ask where is the auth flow documented?`
-- `/kb-ask what pending items are left in the strategic backlog?`
+- `/kbx-ask what is the current KB status?`
+- `/kbx-ask where is the auth flow documented?`
+- `/kbx-ask what pending items are left in the strategic backlog?`
 
 ## Step 1 — Get KB context (silent, no narration)
 
@@ -69,7 +69,7 @@ Read only what is needed. Do not read the entire KB for a narrow question.
 - Answer directly and concisely, citing the source file(s) you read.
 - If the answer is not found in the KB, say so clearly — do not invent information.
 - If the question implies a KB gap (undocumented area), mention it as a suggestion: "This is not yet documented. You may want to add it to `<relevant file>`."
-- Do not suggest running `/kb-run` or `/kb-plan` unless the user explicitly asks about KB maintenance.
+- Do not suggest running `/kbx-run` or `/kbx-plan` unless the user explicitly asks about KB maintenance.
 
 ## Boundaries
 

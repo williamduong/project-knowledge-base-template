@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const KB_AGENT_REF_PATH = '.github/agents/kb.agent.md';
+const KB_AGENT_REF_PATH = '.github/agents/kbx.agent.md';
 
 const IDE_TARGETS = [
   {

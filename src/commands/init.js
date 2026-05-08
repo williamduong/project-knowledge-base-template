@@ -106,9 +106,9 @@ function installPreCommitHook({ workspaceRoot }) {
   }
 
   const hookContent = `#!/bin/sh
-# KB doc-gate: run kb doctor before every commit.
-# Installed by: kb init --install-hooks
-kb doctor --strict
+# KB doc-gate: run kbx doctor before every commit.
+# Installed by: kbx init --install-hooks
+kbx doctor --strict
 `;
 
   fs.mkdirSync(path.dirname(hookPath), { recursive: true });
@@ -122,16 +122,16 @@ function autoDetectMode({ workspaceRoot }) {
 }
 
 function createAgentAndPromptFiles({ workspaceRoot, repoRoot, overwrite = false }) {
-  const templateAgentPath = path.join(repoRoot, 'template', '.github', 'agents', 'kb.agent.template.md');
-  const templatePlanPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-plan.prompt.template.md');
-  const templateRunPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-run.prompt.template.md');
-  const templateAskPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kb-ask.prompt.template.md');
+  const templateAgentPath = path.join(repoRoot, 'template', '.github', 'agents', 'kbx.agent.template.md');
+  const templatePlanPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kbx-plan.prompt.template.md');
+  const templateRunPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kbx-run.prompt.template.md');
+  const templateAskPromptPath = path.join(repoRoot, 'template', '.github', 'prompts', 'kbx-ask.prompt.template.md');
   const templateHookPath = path.join(repoRoot, 'template', '.github', 'hooks', 'revision-state-guard.json');
 
-  const agentDestPath = path.join(workspaceRoot, '.github', 'agents', 'kb.agent.md');
-  const planPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-plan.prompt.md');
-  const runPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-run.prompt.md');
-  const askPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kb-ask.prompt.md');
+  const agentDestPath = path.join(workspaceRoot, '.github', 'agents', 'kbx.agent.md');
+  const planPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kbx-plan.prompt.md');
+  const runPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kbx-run.prompt.md');
+  const askPromptDestPath = path.join(workspaceRoot, '.github', 'prompts', 'kbx-ask.prompt.md');
   const hookDestPath = path.join(workspaceRoot, '.github', 'hooks', 'revision-state-guard.json');
 
   const created = [];
@@ -170,7 +170,7 @@ function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE }) {
   const adapterFile = detectedIDE === 'vscode' ? 'AGENTS.md' : (detectedIDE.charAt(0).toUpperCase() + detectedIDE.slice(1) + ' adapter');
   console.log('');
   console.log(`IDE: ${detectedIDE} (adapter: ${adapterFile})`);
-  console.log('Next: /kb-plan, /kb-run, /kb-ask <question>  |  Verify: kb status');
+  console.log('Next: /kbx-plan, /kbx-run, /kbx-ask <question>  |  Verify: kbx status');
 }
 
 async function runInit({ args, packageJson, cwd, repoRoot }) {
@@ -236,7 +236,7 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     state.contentRoot = storagePaths.contentRoot;
     state.visibleMountPath = storagePaths.visibleMountPath;
     state.brandScope = options.brand || state.brandScope || brandScope;
-    state.notes = 'Initialized by kb init refresh mode; existing KB content was preserved.';
+    state.notes = 'Initialized by kbx init refresh mode; existing KB content was preserved.';
   } else {
     state = createInitialState({
       packageVersion: packageJson.version,
@@ -258,7 +258,7 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
   console.log(`Initialized KB (${options.mode}) in ${storagePaths.contentRoot}`);
   console.log(`State: ${storagePaths.statePath}`);
   if (options.mode === 'private-git') {
-    console.log('Note: state.json lives under .git/ and is hidden from IDE file_search; use `kb status` to inspect.');
+    console.log('Note: state.json lives under .git/ and is hidden from IDE file_search; use `kbx status` to inspect.');
   }
 
   // Create agent and prompt template files

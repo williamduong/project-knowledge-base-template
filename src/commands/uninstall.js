@@ -78,7 +78,7 @@ function removeManagedPreCommitHook({ workspaceRoot, options, removed, warnings 
   }
 
   const content = fs.readFileSync(hookPath, 'utf8');
-  const isKbManagedHook = content.includes('Installed by: kb init --install-hooks') || content.includes('kb doctor --strict');
+  const isKbManagedHook = content.includes('Installed by: kbx init --install-hooks') || content.includes('kbx doctor --strict');
 
   if (!isKbManagedHook) {
     warnings.push('Skipped .git/hooks/pre-commit (not recognized as kb-managed hook).');
@@ -86,7 +86,7 @@ function removeManagedPreCommitHook({ workspaceRoot, options, removed, warnings 
   }
 
   if (!options.removeHook) {
-    warnings.push('Kept .git/hooks/pre-commit. Re-run with --remove-hook to delete the kb-managed hook.');
+    warnings.push('Kept .git/hooks/pre-commit. Re-run with --remove-hook to delete the kbx-managed hook.');
     return;
   }
 
@@ -100,11 +100,11 @@ function removeGeneratedAiFiles({ workspaceRoot, removed }) {
     path.join(workspaceRoot, 'CLAUDE.md'),
     path.join(workspaceRoot, '.windsurfrules'),
     path.join(workspaceRoot, '.clinerules'),
-    path.join(workspaceRoot, '.cursor', 'rules', 'kb.mdc'),
-    path.join(workspaceRoot, '.github', 'agents', 'kb.agent.md'),
-    path.join(workspaceRoot, '.github', 'prompts', 'kb-plan.prompt.md'),
-    path.join(workspaceRoot, '.github', 'prompts', 'kb-run.prompt.md'),
-    path.join(workspaceRoot, '.github', 'prompts', 'kb-ask.prompt.md'),
+    path.join(workspaceRoot, '.cursor', 'rules', 'kbx.mdc'),
+    path.join(workspaceRoot, '.github', 'agents', 'kbx.agent.md'),
+    path.join(workspaceRoot, '.github', 'prompts', 'kbx-plan.prompt.md'),
+    path.join(workspaceRoot, '.github', 'prompts', 'kbx-run.prompt.md'),
+    path.join(workspaceRoot, '.github', 'prompts', 'kbx-ask.prompt.md'),
     path.join(workspaceRoot, '.github', 'hooks', 'revision-state-guard.json'),
   ];
 

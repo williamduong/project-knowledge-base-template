@@ -3,17 +3,17 @@ name: KB Run
 type: directive
 category: knowledge-management
 scope: project
-trigger: /kb-run
+trigger: /kbx-run
 version: 2.4.0-rc.2
 ---
 
-# /kb-run — Execute KB plan steps (explicit/advanced mode)
+# /kbx-run — Execute KB plan steps (explicit/advanced mode)
 
-> **Note (v2.0.1):** For most KB work, invoke `@kb <request>` directly — the agent handles the full intent lifecycle without requiring `/kb-run`. Use `/kb-run` when you explicitly want to step through a persistent `runtime-plan.md` checklist, or when running in automated CI contexts (`--auto` flag).
+> **Note (v2.0.1):** For most KB work, invoke `@kbx <request>` directly — the agent handles the full intent lifecycle without requiring `/kbx-run`. Use `/kbx-run` when you explicitly want to step through a persistent `runtime-plan.md` checklist, or when running in automated CI contexts (`--auto` flag).
 
 Your task: execute steps from `knowledge-base/.kb/runtime-plan.md`, persisting progress so the user can resume after closing the chat or IDE.
 
-You operate under the master KB agent contract at `.github/agents/kb.agent.md`. Apply the persona-aware communication style from `state.json.userPersona.skillLevel` in all output.
+You operate under the master KB agent contract at `.github/agents/kbx.agent.md`. Apply the persona-aware communication style from `state.json.userPersona.skillLevel` in all output.
 
 ## Vocabulary Lock (D00)
 
@@ -49,13 +49,13 @@ Do not use bare `state` or bare `step` when the compound terms above apply.
 
 2. **First-run IDE integration.** If `state.ideIntegration.enabled` is `false`: run `kb ide enable`, print injected targets.
 
-3. **Check plan.** If `runtime-plan.md` does not exist: invoke `/kb-plan` logic, write plan, print summary, ask for confirmation before executing.
+3. **Check plan.** If `runtime-plan.md` does not exist: invoke `/kbx-plan` logic, write plan, print summary, ask for confirmation before executing.
 
 4. **If plan exists:** load it and identify `current_step` (the next `pending` step).
 
 ## Execution — Batch Non-Blocking Steps (v2.0.1)
 
-Execute multiple steps in sequence within one session unless a step requires user input. **Do not stop and ask the user to re-invoke `/kb-run` between routine non-blocking steps.**
+Execute multiple steps in sequence within one session unless a step requires user input. **Do not stop and ask the user to re-invoke `/kbx-run` between routine non-blocking steps.**
 
 **Blocking conditions (stop and wait for user before continuing):**
 - Destructive or irreversible operation (`uninstall`, `--force`)
@@ -96,14 +96,14 @@ Manual follow-up checklist: (if any)
   - why_manual: <reason>
 
 What to do next:
-  1. Run `/kb-run` to continue with step <m+1> (<action>).
-  2. Reply `/kb-plan <change>` to adjust remaining steps.
+  1. Run `/kbx-run` to continue with step <m+1> (<action>).
+  2. Reply `/kbx-plan <change>` to adjust remaining steps.
   3. Ask a question or type a task to pause and keep talking.
 ```
 
 If no `pending` steps remain:
 ```
-Plan complete. Reply `/kb-plan` to generate a new plan, or ask a question to continue using the KB.
+Plan complete. Reply `/kbx-plan` to generate a new plan, or ask a question to continue using the KB.
 ```
 
 ## Error Handling
@@ -120,14 +120,14 @@ If CLI exits non-zero, mark step `(status: blocked)` and stop. Parse output for 
 Mark `(status: skipped)` with reason `user-skip`. Move to next step.
 
 ## On `edit-plan`
-Hand off to `/kb-plan` refinement flow.
+Hand off to `/kbx-plan` refinement flow.
 
 ## Resumability
-Plan file is the single source of truth. `current_step` and `last_updated` are persisted after each batch. User can close and resume with `/kb-run` at any time.
+Plan file is the single source of truth. `current_step` and `last_updated` are persisted after each batch. User can close and resume with `/kbx-run` at any time.
 
 ## Boundaries
 - Do not modify KB content outside what the executed CLI command does, plus the plan file.
-- Never invent CLI flags. Unknown flags → stop and ask user to refine via `/kb-plan`.
+- Never invent CLI flags. Unknown flags → stop and ask user to refine via `/kbx-plan`.
 - Non-zero exit → `(status: blocked)`, stop.
 
 ## v2.0 Intent Intelligence Awareness
@@ -193,7 +193,7 @@ Do not auto-run — present as suggestion only.
     - If it reports no targets, print that integration was marked enabled with zero targets and continue.
 
 3. **Check plan.** If `knowledge-base/.kb/runtime-plan.md` does not exist:
-   - Invoke `/kb-plan` logic (read inputs, decide actions, write plan).
+   - Invoke `/kbx-plan` logic (read inputs, decide actions, write plan).
    - Print the plan summary.
    - **Stop and ask the user to confirm** before executing step 1. Do not proceed without confirmation.
 
@@ -206,7 +206,7 @@ Do not auto-run — present as suggestion only.
    Next step (<current_step>): <action> — <rationale>
    Proceed? (yes / skip / edit-plan)
    ```
-   Wait for the user response. If invoked as `/kb-run --auto`, skip the prompt and proceed.
+   Wait for the user response. If invoked as `/kbx-run --auto`, skip the prompt and proceed.
 
 2. On `yes`:
    - Map action to CLI invocation:
@@ -230,9 +230,9 @@ Do not auto-run — present as suggestion only.
    Step <n> done (exit=<code>). <one-line outcome>.
 
    What to do next (pick one):
-     1. Run `/kb-run` again to execute step <n+1> (<action>).
-     2. Reply `/kb-plan <change>` to adjust remaining steps before continuing.
-   3. Reply with a question or task (`/kb-ask ...` or plain chat) to pause execution and keep talking.
+     1. Run `/kbx-run` again to execute step <n+1> (<action>).
+     2. Reply `/kbx-plan <change>` to adjust remaining steps before continuing.
+   3. Reply with a question or task (`/kbx-ask ...` or plain chat) to pause execution and keep talking.
    ```
 
     If any required work remains manual (for example: user confirmation, external system check, command the agent cannot run, or unresolved verification), print this block immediately before `What to do next`:
@@ -250,7 +250,7 @@ Do not auto-run — present as suggestion only.
    If there is no `pending` step left, replace the menu with:
 
    ```
-   No pending steps. The plan is complete. Reply `/kb-plan` to generate a new one, or `/kb-ask <question>` to keep using the KB.
+   No pending steps. The plan is complete. Reply `/kbx-plan` to generate a new one, or `/kbx-ask <question>` to keep using the KB.
    ```
 
 5. Stop. Do not chain to the next step automatically (unless `--auto` was passed; then loop until next pending step requires user input or none remain).
@@ -276,11 +276,11 @@ If the failure requires user-only actions (credentials, privileged access, exter
 
 ## On `edit-plan`
 
-- Hand off to `/kb-plan` refinement flow.
+- Hand off to `/kbx-plan` refinement flow.
 
 ## Resumability
 
-- The plan file is the single source of truth. After every step, `current_step` and `last_updated` are persisted. The user can close everything and run `/kb-run` later to resume from the same point.
+- The plan file is the single source of truth. After every step, `current_step` and `last_updated` are persisted. The user can close everything and run `/kbx-run` later to resume from the same point.
 - If the user manually edits the plan file between runs, respect their edits. Re-derive `current_step` from the first `pending` step if frontmatter is stale.
 
 ## Toggles
@@ -290,9 +290,9 @@ If the failure requires user-only actions (credentials, privileged access, exter
 
 ## Boundaries
 
-- Do not run more than one step per `/kb-run` call (unless `--auto`).
+- Do not run more than one step per `/kbx-run` call (unless `--auto`).
 - Do not modify the KB outside what the executed CLI command does, plus the plan file and (during preflight) IDE rule files.
-- Never invent CLI flags. If a step requires an unknown flag, stop and ask the user to refine the plan via `/kb-plan`.
+- Never invent CLI flags. If a step requires an unknown flag, stop and ask the user to refine the plan via `/kbx-plan`.
 - If any CLI command exits non-zero, mark the step `(status: blocked)` with the exit code and stop. Do not bump `current_step`.
 
 ## v2.0 Intent Intelligence Awareness

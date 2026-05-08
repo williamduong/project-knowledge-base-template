@@ -431,14 +431,14 @@ function runDoctor({ args, cwd, packageJson }) {
     const missing = presence.stateFileRawExists ? 'state.json present but invalid (missing schemaVersion or unparseable)' : 'state.json missing';
     const leftovers = [
       presence.kbDir ? 'knowledge-base/' : null,
-      presence.agentFile ? '.github/agents/kb.agent.md' : null,
-      presence.promptFile ? '.github/prompts/kb-*.prompt.md' : null,
+      presence.agentFile ? '.github/agents/kbx.agent.md' : null,
+      presence.promptFile ? '.github/prompts/kbx-*.prompt.md' : null,
       presence.agentsMd ? 'AGENTS.md' : null,
     ].filter(Boolean);
     checks.push({
       name: 'KB install state',
       status: 'FAIL',
-      detail: `Partial / corrupted: ${missing}. Leftovers: ${leftovers.join(', ')}. Run "kb status" for recovery guidance; do NOT run "kb init" before troubleshooting.`,
+      detail: `Partial / corrupted: ${missing}. Leftovers: ${leftovers.join(', ')}. Run "kbx status" for recovery guidance; do NOT run "kbx init" before troubleshooting.`,
     });
   } else {
     checks.push({
@@ -452,7 +452,7 @@ function runDoctor({ args, cwd, packageJson }) {
   const hasWarning = checks.some((check) => check.status === 'WARN');
   const summary = hasFailure ? 'FAIL' : hasWarning ? 'WARN' : 'PASS';  if (options.json) {
     const report = {
-      command: 'kb doctor',
+      command: 'kbx doctor',
       mode: 'json',
       strict: options.strict,
       result: summary,
@@ -463,7 +463,7 @@ function runDoctor({ args, cwd, packageJson }) {
     };
     console.log(JSON.stringify(report, null, 2));
   } else {
-    console.log('kb doctor publish-readiness');
+    console.log('kbx doctor publish-readiness');
     for (const check of checks) {
       console.log(`- [${check.status}] ${check.name}: ${check.detail}`);
     }

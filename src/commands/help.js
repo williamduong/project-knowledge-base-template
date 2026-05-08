@@ -48,13 +48,13 @@ function runHelp({ packageJson, args }) {
     console.log('             If KB already exists, prompts for rerun confirmation.');
     console.log('             --yes             Skip rerun confirmation prompt.');
     console.log('             --skip-adapters   Skip generating AI IDE adapter files.');
-    console.log('             --install-hooks   Install a pre-commit hook that runs kb doctor.');
+    console.log('             --install-hooks   Install a pre-commit hook that runs kbx doctor.');
     console.log('             --skip-bootstrap  Skip initial placeholder filling after init.');
     console.log('             --skip-index      Skip initial KB index summary generation.');
     console.log('  update     Refresh KB state after sync and reconcile template version metadata.');
     console.log('             Use --accept-baseline to stamp current HEAD as the new baseline.');
-    console.log('             Use --refresh-prompts to overwrite .github/agents/kb.agent.md,');
-    console.log('             .github/prompts/kb-*.prompt.md and .github/hooks/revision-state-guard.json');
+    console.log('             Use --refresh-prompts to overwrite .github/agents/kbx.agent.md,');
+    console.log('             .github/prompts/kbx-*.prompt.md and .github/hooks/revision-state-guard.json');
     console.log('             with the latest template versions (does not touch state.json).');
     console.log('  maintain   One-command maintenance pipeline.');
     console.log('             Default: sync + doc:gate (if available) + test --all + doctor --strict.');
@@ -72,7 +72,7 @@ function runHelp({ packageJson, args }) {
     console.log('');
     console.log('Other commands are available for power users.');
     console.log('Run "kb help --advanced" to see all commands.');
-    console.log('Next step: Use /kb-ask with Copilot Chat to query your KB, or /kb-run to execute the plan');
+    console.log('Next step: Use /kbx-ask with Copilot Chat to query your KB, or /kbx-run to execute the plan');
     return;
   }
 
