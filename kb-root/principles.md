@@ -198,6 +198,24 @@ Thứ tự ưu tiên thực thi:
 2. Governance docs bám theo runtime behavior
 3. AI agent orchestration dùng rule có sẵn để quyết định flow
 
+## P24. KBAgent Soft-First Execution Policy (two-tier contract)
+
+Hai tier thực thi KHÔNG được merge với nhau:
+
+**KBRoot tier (deterministic — Constitutional Axiom 3):**
+- KBRoot gate fires → exit 0 hoặc exit 1. Không có gray area, không retry, không LLM guess.
+- KB Agent nhận exit 1 từ KBRoot → DỪNG ngay. Không negotiate, không bypass.
+
+**KBAgent tier (soft-first — Constitutional Axiom 1):**
+- Nếu có deterministic Agent-side CLI action → KB Agent PHẢI gọi nó (không tự reason thay).
+- Nếu chưa có CLI action → Agent reason tự do, nhưng outcome phải align với governance rules.
+- Soft-first là contract của KBAgent. Đây KHÔNG phải feature của KBRoot.
+
+Fallback khi project context missing:
+- KBAgent: tiếp tục với warning (soft — agent tier).
+- KBRoot: nếu context required cho gate → block exit 1 (hard — root tier).
+- Không được dùng "soft fallback" để bypass KBRoot gate.
+
 AI generation không được coi là source of truth cho hành vi nhất quán khi đã có rule engine/CLI tương ứng.
 
 ---

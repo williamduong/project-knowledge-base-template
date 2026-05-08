@@ -64,20 +64,25 @@ Before any Phase 1 design, every proposed command must be classified:
 
 ## Phases
 
-### Phase 0 — Axiom Alignment and Contract Lock
+### Phase 0 — Axiom Alignment and Contract Lock ✓ DONE
 
-Goals:
-- **[FIRST — blocker for all other Phase 0 tasks]** Canonicalize the 5 Axioms into `kb-root/CONSTITUTION.md` as the Supreme Law artefact. Wire enforcement into `principles.md` (P0), `.github/pull_request_template.md`, and `.github/copilot-instructions.md`. Until this is done, no command design work begins.
-- Validate full command taxonomy against all 5 axioms. Reject any command design that violates them.
-- Lock layer classification for each command candidate (table above).
-- Lock soft-first policy text as KBAgent-only contract.
-- Lock non-breaking fallback rules for missing/unregistered project context.
-- Document this as the architectural stake in the ground for the future monorepo split.
+Completed tasks:
+- ✓ `kb-root/CONSTITUTION.md` created — 5 Axioms, RFC 2119 Enforcement Rules, Architecture Mandate.
+- ✓ `kb-root/principles.md` P0 added — Supreme Law reference above all P-principles.
+- ✓ `.github/copilot-instructions.md` — CRITICAL read-first guard added.
+- ✓ `.github/pull_request_template.md` — 6-checkbox Constitutional Compliance section added.
+- ✓ `kb-root/foundation.md` — CLI Command Layer Classification table added (canonical layer assignments). "Two Core Axioms" renamed to "Design Tenets" to preserve Axiom token exclusivity.
+- ✓ `kb-root/principles.md` P24 added — KBAgent Soft-First Execution Policy (two-tier contract + fallback rules).
 
-Exit criteria:
-- Layer classification table finalized with no ambiguous entries.
-- Soft-first policy text explicitly scoped to KBAgent layer, not referenced in KBRoot surface.
-- KB Agent orchestration contract draft ready for Phase 2.
+Lock destinations (permanent, not artefact files):
+- Layer classification → `kb-root/foundation.md` § CLI Command Layer Classification
+- Soft-first policy + fallback rules → `kb-root/principles.md` P24
+- Constitutional Axioms → `kb-root/CONSTITUTION.md`
+
+Exit criteria — all met:
+- ✓ Layer classification table in foundation.md: no ambiguous entries.
+- ✓ Soft-first policy (P24) explicitly scoped to KBAgent tier; KBRoot tier = deterministic-only.
+- ✓ KB Agent orchestration contract draft ready for Phase 2.
 
 ### Phase 1 — CLI Command Specification (by layer)
 
