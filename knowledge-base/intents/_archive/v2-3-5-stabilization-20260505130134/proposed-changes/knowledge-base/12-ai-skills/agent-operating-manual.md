@@ -190,7 +190,7 @@ Resume:    Start a new chat with KB Agent and say:
 |---|------|-------|-----------|
 | 1 | <description> | HUMAN | Yes/No |
 | 2 | <description> | CLI | Yes/No |
-| 3 | <description> | @KBRoot | Yes/No |
+| 3 | <description> | @SVFactory | Yes/No |
 ```
 
 **Owner values:**
@@ -199,7 +199,7 @@ Resume:    Start a new chat with KB Agent and say:
 |-------|---------|
 | `HUMAN` | Requires manual human action (UI, approval, external system) |
 | `CLI` | Can be run as a terminal command without judgment |
-| `@KBRoot` | Delegate to KBRoot agent in the next session |
+| `@SVFactory` | Delegate to SV Factory agent in the next session |
 | `@kb` | Delegate to downstream KB Agent in the consumer workspace |
 
 Rules:

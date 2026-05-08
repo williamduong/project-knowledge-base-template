@@ -12,7 +12,7 @@ impact_signals:
   - notes-migration
   - intent-adoption
   - governance-cleanup
-decision_summary: "Close out remaining notes migration for release line 2.3.2 using a supporting KBRoot intent with version-embedded ID."
+decision_summary: "Close out remaining notes migration for release line 2.3.2 using a supporting SV Factory intent with version-embedded ID."
 review_after: 2026-05-18
 # v1.8-ready reserve fields (do not remove):
 lesson_id: null

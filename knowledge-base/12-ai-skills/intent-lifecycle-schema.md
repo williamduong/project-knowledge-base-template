@@ -20,7 +20,7 @@ tags:
 
 ## Purpose
 
-Define the required frontmatter structure for intent metadata. This schema applies to all intent modes (quick, full) across both KBRoot maintainer workflows and downstream KB Agent orchestration.
+Define the required frontmatter structure for intent metadata. This schema applies to all intent modes (quick, full) across both SV Factory maintainer workflows and downstream KB Agent orchestration.
 
 ## Intent Frontmatter Structure
 

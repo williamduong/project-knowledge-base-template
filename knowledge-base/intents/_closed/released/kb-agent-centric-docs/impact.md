@@ -9,7 +9,7 @@ type: intent-impact
 
 - `template/12-ai-skills/` — intent schema and agent operating manual docs
 - `template/.github/agents/` — KB Agent definition shipped to users
-- `kb-root/specifics.md` (new) — KBRoot-only overrides documented and isolated
+- `kb-root/specifics.md` (new) — SV Factory-only overrides documented and isolated
 
 ## Breaking Change
 

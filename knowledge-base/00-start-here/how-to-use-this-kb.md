@@ -40,7 +40,7 @@ tags:
 This template ecosystem has three separate layers:
 
 1. Template source layer: `template/` (what is shipped to downstream users)
-2. Local maintainer layer: `kb-root/` (internal KBRoot notes, committed in this repo but excluded from npm `files` whitelist)
+2. Local maintainer layer: `kb-root/` (internal SV Factory notes, committed in this repo but excluded from npm `files` whitelist)
 3. Installed runtime KB layer: `<contentRoot>/...` created by `kb init` in a target repository
 
 Where `<contentRoot>` resolves to:
@@ -55,7 +55,7 @@ Runtime commands must operate on `<contentRoot>`, not on `template/`.
 - Maintainer internal focus (authoring this template repo): `kb-root/focus.md` (committed, not shipped)
 - Project runtime focus (downstream repo execution): `<contentRoot>/.kb/runtime-plan.md` + `kb intent` workspaces
 
-If both exist, runtime focus is the source of truth for project execution status. Local KBRoot focus is only for maintainer coordination.
+If both exist, runtime focus is the source of truth for project execution status. Local SV Factory focus is only for maintainer coordination.
 
 ## Default Decisions Before Scanning
 

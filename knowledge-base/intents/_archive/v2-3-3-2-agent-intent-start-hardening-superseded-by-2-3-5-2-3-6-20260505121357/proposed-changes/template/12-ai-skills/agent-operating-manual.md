@@ -198,7 +198,7 @@ Resume:    Start a new chat with KB Agent and say:
 
 To avoid context collision between maintainer operations and shipped user behavior, apply this test scope contract:
 
-1. User-experience acceptance for shipped KB Agent behavior (`@kb`, `/kb-plan`, `/kb-run`, `/kb-ask`) must run in a downstream clean workspace with KB Agent active and KBRoot inactive.
+1. User-experience acceptance for shipped KB Agent behavior (`@kb`, `/kb-plan`, `/kb-run`, `/kb-ask`) must run in a downstream clean workspace with KB Agent active and SV Factory inactive.
 2. Self-host workspace validation is maintainer-mode only: governance, migration, packaging, and CLI smoke.
 3. CLI deterministic behavior (`kb status`, `kb intent`, `kb maintain`, `kb release`) can be validated in both environments, but prompt/persona behavior must be accepted only in the target persona environment.
 4. Do not remove shipped KB Agent files or prompt files from template/npm payload only to prevent local overlap; enforce separation through activation context and validation scope.
@@ -233,7 +233,7 @@ The KB Agent template marks three trigger points where grounding self-checks app
 
 ## Intent Start Gates (v2.3.4)
 
-Before creating any new intent or starting work on a new version, the agent MUST run two gates in order. These gates apply to both `@kb` (KB Agent) and `@KBRoot` (maintainer agent).
+Before creating any new intent or starting work on a new version, the agent MUST run two gates in order. These gates apply to both `@kb` (KB Agent) and `@SVFactory` (maintainer agent).
 
 ### Gate 1 — Active Intent Check
 

@@ -16,7 +16,7 @@ impact_signals:
 	- context-gap-on-foreign-source
 decision_summary: >
 	Patch-line governance hardening before new feature work. This intent codifies
-	startup behavior for both KBRoot and KB Agent: always show active intents and
+	startup behavior for both SV Factory and KB Agent: always show active intents and
 	ask user to choose resume/create-new on session start. It also records an
 	operator playbook for collecting reliable context from external repositories
 	(for example vipepix-generation) without destructive reset.
@@ -36,7 +36,7 @@ promote_decision_ref: null
 Fix validated contract gaps before v2.3.4 feature development:
 
 1. Record and prioritize startup-contract regressions inside one auditable intent.
-2. Enforce startup prompt behavior for both KBRoot and KB Agent:
+2. Enforce startup prompt behavior for both SV Factory and KB Agent:
 	list active intents and ask user to choose one to load or create a new intent.
 3. Add a deterministic context-capture playbook for external source onboarding
 	so fixes can be performed with evidence instead of reset-and-retry.

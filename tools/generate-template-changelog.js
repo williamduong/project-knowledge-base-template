@@ -57,7 +57,7 @@ function main() {
 
   printDeprecatedBanner();
 
-  const kbArgs = ['bin/kb.js', 'release', 'notes', args.version];
+  const kbArgs = ['bin/kbx.js', 'release', 'notes', args.version];
   if (args.from) {
     kbArgs.push(`--from=${args.from}`);
   }

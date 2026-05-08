@@ -30,4 +30,4 @@ Downstream projection names remain `.github/agents/kb.agent.md` and `.github/pro
 - `kb status --json` still reports `state.cliVersion` or `templateVersion` on `2.2.2`
 - active `v2-3-*` intents remain ambiguous after closeout planning
 - downstream clean smoke fails to produce `kb.agent.md` or `kb-*.prompt.md`
-- release notes omit the KBRoot/downstream namespace split
+- release notes omit the SV Factory/downstream namespace split

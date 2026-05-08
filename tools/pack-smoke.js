@@ -20,7 +20,7 @@ function main() {
 
   const included = new Set(artifact.files.map((entry) => entry.path));
   const required = [
-    'bin/kb.js',
+    'bin/kbx.js',
     'src/cli.js',
     'src/commands/doctor.js',
     'template/INDEX.md',

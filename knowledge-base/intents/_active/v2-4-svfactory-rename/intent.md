@@ -35,7 +35,7 @@ impact_signals:
   - breaking-change
   - cross-module
   - large-intent-branch-confirmed
-decision_summary: "Rename KBRoot concept → SV Factory (sfact). Rename KB Agent CLI binary + npm package: kb → kbx, @williamduong/kb → @williamduong/kbx. Downstream migration is a separate intent. No deprecated alias — hard cut."
+decision_summary: "Rename SV Factory concept → SV Factory (sfact). Rename KB Agent CLI binary + npm package: kb → kbx, @williamduong/kb → @williamduong/kbx. Downstream migration is a separate intent. No deprecated alias — hard cut."
 review_after: null
 schema_version: 2.4.0-rc.2
 # v1.8+ reserve fields:
@@ -51,10 +51,10 @@ promote_decision_ref: null
 
 Two parallel renames with zero overlap:
 
-1. **Concept rename:** "KBRoot" → "SV Factory" (sfact) — affects internal governance docs in `kb-root/` and self-host docs. NOT shipped to downstream users via npm.
+1. **Concept rename:** "SV Factory" → "SV Factory" (sfact) — affects internal governance docs in `kb-root/` and self-host docs. NOT shipped to downstream users via npm.
 2. **CLI + package rename:** `kb` → `kbx`, `@williamduong/kb` → `@williamduong/kbx` — affects all user-facing surfaces: binary, template agent file, prompt files, src hardcoded paths.
 
-Rationale: `kb` conflicts with an existing npm package. "KBRoot" causes confusion between the Legislative layer (KBRoot/SV Factory) and the Executive layer (KB Agent). Hard cut — no deprecated alias. Downstream migration is a separate intent.
+Rationale: `kb` conflicts with an existing npm package. "SV Factory" causes confusion between the Legislative layer (SV Factory/SV Factory) and the Executive layer (KB Agent). Hard cut — no deprecated alias. Downstream migration is a separate intent.
 
 ## Plan
 

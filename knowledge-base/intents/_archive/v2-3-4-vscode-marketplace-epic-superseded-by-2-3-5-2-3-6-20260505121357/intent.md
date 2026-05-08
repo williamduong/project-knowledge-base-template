@@ -51,7 +51,7 @@ This is the master planning intent for the `@williamduong/kb` project from v2.3.
 **Primary goal:** Publish a VS Code Marketplace extension that packages the KB Agent, CLI tools, and template provisioning into a first-class VS Code experience — installable via the Marketplace with zero CLI setup required.
 
 **Secondary goals:**
-1. Finalize the 2-gate intent protocol (Gate 1: active intent check, Gate 2: chaos estimate) across both KBRoot and KB Agent surfaces.
+1. Finalize the 2-gate intent protocol (Gate 1: active intent check, Gate 2: chaos estimate) across both SV Factory and KB Agent surfaces.
 2. Retire fragmented `notes/` planning in favor of intent-first governance.
 3. Establish a clean roadmap from v2.3.4 → v2.4.x → v2.5.x → v3.0.
 

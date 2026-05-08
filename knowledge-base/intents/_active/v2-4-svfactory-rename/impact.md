@@ -14,7 +14,7 @@ type: intent-impact
 | Downstream installed files | **Breaking** | `kb.agent.md` → `kbx.agent.md`, `kb-*.prompt.md` → `kbx-*.prompt.md`. Existing installs broken until migration intent runs. |
 | VS Code chat handles | **Breaking** | `@kb` → `@kbx`, `/kb-plan` → `/kbx-plan`, `/kb-run` → `/kbx-run`, `/kb-ask` → `/kbx-ask` |
 | src/ internal code | Non-breaking to external | Path string literals change. No public API surface. |
-| kb-root/ docs | Internal only | Concept name KBRoot → SV Factory. Not shipped. |
+| kb-root/ docs | Internal only | Concept name SV Factory → SV Factory. Not shipped. |
 | tests | Must pass | Test suite must pass after all phases complete. |
 
 ## Breaking Change

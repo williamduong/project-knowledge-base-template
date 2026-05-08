@@ -7,7 +7,7 @@ type: intent-plan
 
 ## Goal
 
-1. Replace all uses of "KBRoot" / "KB Root" concept name → "SV Factory" in maintainer-layer docs (`kb-root/`). The CLI binary and npm package are NOT affected by this rename — they belong to KB Agent.
+1. Replace all uses of "SV Factory" / "KB Root" concept name → "SV Factory" in maintainer-layer docs (`kb-root/`). The CLI binary and npm package are NOT affected by this rename — they belong to KB Agent.
 2. Rename the KB Agent CLI binary `kb` → `kbx` and npm package `@williamduong/kb` → `@williamduong/kbx`.
 3. Rename all downstream-installed agent/prompt files: `kb.agent.md` → `kbx.agent.md`, `kb-*.prompt.md` → `kbx-*.prompt.md`.
 4. Update all hardcoded paths in `src/` to match new filenames.
@@ -72,23 +72,23 @@ Hard cut — no deprecated `kb` alias. Downstream migration is a separate intent
 
 ---
 
-## Phase 4 — Concept rename: KBRoot → SV Factory (maintainer docs only)
+## Phase 4 — Concept rename: SV Factory → SV Factory (maintainer docs only)
 
 **Scope:** `kb-root/` files only. These are NOT shipped via npm.
 
 | File | What changes |
 |---|---|
-| `kb-root/agent.md` | "KBRoot" → "SV Factory", "KB Root" → "SV Factory" in persona/description |
-| `kb-root/principles.md` | All "KBRoot" concept refs → "SV Factory" |
-| `kb-root/process.md` | "KBRoot" → "SV Factory" |
-| `kb-root/foundation.md` | "KBRoot" → "SV Factory" |
-| `kb-root/knowledge.md` | "KBRoot" → "SV Factory" |
-| `kb-root/specifics.md` | "KBRoot" → "SV Factory" |
-| `CONSTITUTION.md` | "KBRoot" → "SV Factory" (it's root-layer, not shipped) |
+| `kb-root/agent.md` | "SV Factory" → "SV Factory", "KB Root" → "SV Factory" in persona/description |
+| `kb-root/principles.md` | All "SV Factory" concept refs → "SV Factory" |
+| `kb-root/process.md` | "SV Factory" → "SV Factory" |
+| `kb-root/foundation.md` | "SV Factory" → "SV Factory" |
+| `kb-root/knowledge.md` | "SV Factory" → "SV Factory" |
+| `kb-root/specifics.md` | "SV Factory" → "SV Factory" |
+| `CONSTITUTION.md` | "SV Factory" → "SV Factory" (it's root-layer, not shipped) |
 
 **Rule:** Rename concept only. Do NOT rename the `kb-root/` folder or any filenames — folder is internal, gitignored from npm, renaming it is a separate task.
 
-**Test after:** Grep `kb-root/` for "KBRoot" — zero results expected.
+**Test after:** Grep `kb-root/` for "SV Factory" — zero results expected.
 
 ---
 
@@ -133,6 +133,6 @@ Hard cut — no deprecated `kb` alias. Downstream migration is a separate intent
 2. `node ./bin/kbx.js init --yes` in a clean git folder produces `kbx.agent.md` and `kbx-*.prompt.md` — NOT `kb.agent.md`.
 3. `node --test "test/**/*.test.js"` — all tests pass.
 4. `grep -r "kb.agent.md" src/` — zero results (only `kbx.agent.md` allowed).
-5. `grep -r "KBRoot\|KB Root" kb-root/` — zero results (only "SV Factory" allowed).
+5. `grep -r "SV Factory\|KB Root" kb-root/` — zero results (only "SV Factory" allowed).
 6. `npm pack --dry-run` shows `bin/kbx.js` in package contents, NOT `bin/kb.js`.
 7. No file under `template/` or `src/` references `kb-plan.prompt`, `kb-run.prompt`, or `kb-ask.prompt`.

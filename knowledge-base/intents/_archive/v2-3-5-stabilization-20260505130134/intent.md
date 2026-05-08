@@ -20,7 +20,7 @@ decision_summary: >
   versioned intent line. (2) Enhance kb intent list to display status/mode/staged_count
   as a table and page long output through less/more (press q to exit).
   (3) Add mandatory Handoff table to agent output contract so pending tasks are
-  explicitly routed by owner (HUMAN / CLI / @KBRoot / @kb).
+  explicitly routed by owner (HUMAN / CLI / @SVFactory / @kb).
 review_after: 2026-05-19
 # v1.8-ready reserve fields (do not remove):
 lesson_id: null

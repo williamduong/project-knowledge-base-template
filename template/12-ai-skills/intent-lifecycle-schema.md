@@ -31,7 +31,7 @@ Define the required frontmatter structure for intent metadata. This schema ships
 # ========== IDENTIFICATION ==========
 id: <string>                           # intent ID — use kebab-case
                                        # Generic examples: hotfix-auth-crash, user-onboarding-redesign, sprint-12-api
-                                       # Version-prefix format (e.g. v2-4-feature-name) is a KBRoot-specific choice;
+                                       # Version-prefix format (e.g. v2-4-feature-name) is a SV Factory-specific choice;
                                        # other projects can use any consistent naming convention.
 slug: <string>                         # optional; human-readable slug for backlog intents
 

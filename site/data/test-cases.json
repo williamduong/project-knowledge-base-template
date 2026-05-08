@@ -50,7 +50,7 @@
       "context": "Starting a significant new piece of work (feature, refactor, epic)",
       "objective": "Run Intent Start Gates before creating intent — avoid P18/P19 violations.",
       "steps": [
-        "Ask @kb or @KBRoot to start a new intent",
+        "Ask @kb or @SVFactory to start a new intent",
         "Agent runs Gate 1: lists any in-progress intents, asks you to resolve each",
         "Agent runs Gate 2: reports current chaos score + projected delta",
         "Confirm or adjust scope if projected score > 80 (CHAOTIC threshold)",

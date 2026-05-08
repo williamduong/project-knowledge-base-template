@@ -13,11 +13,11 @@ The `notes/axioms.txt` document establishes 5 non-negotiable axioms for this pro
 
 | Axiom | Rule | Implication for this intent |
 |---|---|---|
-| A1 — Separation of Powers | KBRoot = Legislative (compile/validate). KBAgent = Executive (run intents, orchestrate). | Every new CLI command must be explicitly classified as Root-side or Agent-side before design. |
-| A2 — Domain Agnosticism | KBRoot has no concept of business logic. Only primitives: Intent, Gate, Evidence, Chaos_Score. | Context commands must be domain-agnostic primitives. No project-specific business logic in kb-root layer. |
-| A3 — Deterministic Block | KBRoot does NOT advise. It only Permits (exit 0) or Blocks (exit 1). No soft behavior. | Soft-first governance is exclusively a KBAgent contract. KBRoot commands are always deterministic. |
-| A4 — Checkpoint-Driven Audit | KBRoot only activates at 3 checkpoints: Init/Compile, Pre-commit/Pre-merge, Audit Request. | Context *registration* = KBRoot Init. Context *switching/reading during execution* = KBAgent. |
-| A5 — Invisibility | End-user never interacts with KBRoot directly. KBAgent renders KBRoot outputs. | User-facing CLI commands (`kb context show`, `kb scope`) are KBAgent surface. KBRoot lives inside npm or CI/CD. |
+| A1 — Separation of Powers | SV Factory = Legislative (compile/validate). KBAgent = Executive (run intents, orchestrate). | Every new CLI command must be explicitly classified as Root-side or Agent-side before design. |
+| A2 — Domain Agnosticism | SV Factory has no concept of business logic. Only primitives: Intent, Gate, Evidence, Chaos_Score. | Context commands must be domain-agnostic primitives. No project-specific business logic in kb-root layer. |
+| A3 — Deterministic Block | SV Factory does NOT advise. It only Permits (exit 0) or Blocks (exit 1). No soft behavior. | Soft-first governance is exclusively a KBAgent contract. SV Factory commands are always deterministic. |
+| A4 — Checkpoint-Driven Audit | SV Factory only activates at 3 checkpoints: Init/Compile, Pre-commit/Pre-merge, Audit Request. | Context *registration* = SV Factory Init. Context *switching/reading during execution* = KBAgent. |
+| A5 — Invisibility | End-user never interacts with SV Factory directly. KBAgent renders SV Factory outputs. | User-facing CLI commands (`kb context show`, `kb scope`) are KBAgent surface. SV Factory lives inside npm or CI/CD. |
 
 **Architectural target (long-term, gated by v3.0):**
 ```
@@ -36,9 +36,9 @@ Classify and specify CLI commands for project context switching and intent scopi
 
 Two distinct policies. They must NOT be merged:
 
-**KBRoot layer (deterministic, A3):**
-- If a KBRoot validation or init gate fires → deterministic exit code only (0 or 1). No suggestion, no retry logic.
-- Context registration at init time is KBRoot-side: it compiles project identity into runtime state.
+**SV Factory layer (deterministic, A3):**
+- If a SV Factory validation or init gate fires → deterministic exit code only (0 or 1). No suggestion, no retry logic.
+- Context registration at init time is SV Factory-side: it compiles project identity into runtime state.
 
 **KBAgent layer (soft-first, A1):**
 - If a deterministic Agent-side CLI action exists → KB Agent MUST call it.
@@ -53,12 +53,12 @@ Before any Phase 1 design, every proposed command must be classified:
 
 | Command candidate | Layer | Reasoning |
 |---|---|---|
-| `kb init --project-id=<id>` (register project context) | **KBRoot** | Compile-time primitive. Registers project identity into state. Fires at Init checkpoint. |
-| `kb context show` (read current context) | **KBAgent** | Runtime query for orchestration. Returns state compiled by KBRoot. Agent-side read. |
+| `kb init --project-id=<id>` (register project context) | **SV Factory** | Compile-time primitive. Registers project identity into state. Fires at Init checkpoint. |
+| `kb context show` (read current context) | **KBAgent** | Runtime query for orchestration. Returns state compiled by SV Factory. Agent-side read. |
 | `kb context list` (list registered contexts) | **KBAgent** | Read-only enumeration used during agent orchestration. Not a gate. |
 | `kb context set <id>` (switch active context) | **KBAgent** | Runtime execution action. Agent decides which context to activate. Executive function. |
 | `kb scope <intent-id> --project=<id>` (scope intent to project) | **KBAgent** | Intent lifecycle operation. Belongs fully to Agent layer (A1: intent lifecycle = packages/kb-agent). |
-| `kb doctor --context` (validate context integrity) | **KBRoot** | Deterministic audit checkpoint. Permits or blocks. No advice output. |
+| `kb doctor --context` (validate context integrity) | **SV Factory** | Deterministic audit checkpoint. Permits or blocks. No advice output. |
 
 ---
 
@@ -81,7 +81,7 @@ Lock destinations (permanent, not artefact files):
 
 Exit criteria — all met:
 - ✓ Layer classification table in foundation.md: no ambiguous entries.
-- ✓ Soft-first policy (P24) explicitly scoped to KBAgent tier; KBRoot tier = deterministic-only.
+- ✓ Soft-first policy (P24) explicitly scoped to KBAgent tier; SV Factory tier = deterministic-only.
 - ✓ KB Agent orchestration contract draft ready for Phase 2.
 
 ### Phase 1 — CLI Command Specification (by layer) ✓ DONE
@@ -102,17 +102,17 @@ Exit criteria — all met:
 ### Phase 2 — KB Agent Orchestration Contract Alignment ✓ DONE
 
 Completed tasks:
-- ✓ `template/.github/agents/kb.agent.template.md` — added "KBRoot Gate vs Agent Soft-First (A1 Separation)" section after existing Deterministic-First contract. Includes: hard-stop on exit 1, soft-first as Agent-only contract, fallback rules.
-- ✓ `template/12-ai-skills/agent-operating-manual.md` — added "KBRoot Gate vs Agent Soft-First — A1 Separation (v2.5+)" section with two-tier description, "why this separation matters", and Axiom 1 violation callout.
+- ✓ `template/.github/agents/kb.agent.template.md` — added "SV Factory Gate vs Agent Soft-First (A1 Separation)" section after existing Deterministic-First contract. Includes: hard-stop on exit 1, soft-first as Agent-only contract, fallback rules.
+- ✓ `template/12-ai-skills/agent-operating-manual.md` — added "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section with two-tier description, "why this separation matters", and Axiom 1 violation callout.
 
 Key wording locked in both shipped files:
 - "KB Agent is Executive. It does not own the rules — it executes them."
-- "When a KBRoot gate returns exit 1, KB Agent MUST stop immediately. Do not retry. Do not negotiate."
-- "Soft-first is an Agent contract. It is NOT a KBRoot feature."
+- "When a SV Factory gate returns exit 1, KB Agent MUST stop immediately. Do not retry. Do not negotiate."
+- "Soft-first is an Agent contract. It is NOT a SV Factory feature."
 
 Exit criteria — all met:
 - ✓ KB Agent contract clearly separates Root-gate behavior from Agent-orchestration behavior.
-- ✓ No prompt text implies the Agent can override a KBRoot deterministic block.
+- ✓ No prompt text implies the Agent can override a SV Factory deterministic block.
 
 ### Phase 3 — Validation and Handoff ✓ DONE
 
@@ -126,8 +126,8 @@ Completed tasks:
 
 | Command | Layer | Path type | Exit behavior | Axiom verified |
 |---|---|---|---|---|
-| `kb init --project-id` | KBRoot | Deterministic | 0 (written) / 1 (conflict or invalid) | A1 ✓ A2 ✓ A3 ✓ A4 ✓ |
-| `kb doctor --context` | KBRoot | Deterministic | 0 (valid) / 1 (missing or invalid) | A1 ✓ A3 ✓ A4 ✓ A5 ✓ |
+| `kb init --project-id` | SV Factory | Deterministic | 0 (written) / 1 (conflict or invalid) | A1 ✓ A2 ✓ A3 ✓ A4 ✓ |
+| `kb doctor --context` | SV Factory | Deterministic | 0 (valid) / 1 (missing or invalid) | A1 ✓ A3 ✓ A4 ✓ A5 ✓ |
 | `kb context show` | KBAgent | Soft (always exit 0) | 0 + warning if missing | A1 ✓ A5 ✓ |
 | `kb context list` | KBAgent | Soft (always exit 0) | 0 + empty array if none | A1 ✓ A5 ✓ |
 | `kb context set <id>` | KBAgent | Soft/Hard hybrid | 0 (switched) / 1 (id not found) | A1 ✓ A5 ✓ |
@@ -150,27 +150,27 @@ See `knowledge-base/00-start-here/strategic-backlog.md` entry KB-016 for full ch
 Goals:
 - Apply shipped template changes to a downstream clean workspace via `kb init` or `kb update`.
 - Verify KB Agent in downstream workspace reads and respects the new A1 separation contract.
-- Confirm no KBRoot content leaked into the downstream installed KB.
-- Manual smoke: ask KB Agent what happens on KBRoot exit 1 — verify it cites A1 contract and stops without retry.
+- Confirm no SV Factory content leaked into the downstream installed KB.
+- Manual smoke: ask KB Agent what happens on SV Factory exit 1 — verify it cites A1 contract and stops without retry.
 
 **Downstream Apply Checklist (manual gate — human actor required):**
 
 - [ ] Run `kb init` or `kb update` in a clean downstream workspace using packed artifact or `@beta` tag.
-- [ ] Verify `.github/agents/kb.agent.md` contains "KBRoot Gate vs Agent Soft-First (A1 Separation)" section.
-- [ ] Verify `12-ai-skills/agent-operating-manual.md` contains "KBRoot Gate vs Agent Soft-First — A1 Separation (v2.5+)" section.
-- [ ] Open KB Agent (`@kb`) in downstream workspace. Ask: "What happens when a KBRoot gate returns exit 1?" Expected: agent cites the A1 separation contract and states it stops without retry.
+- [ ] Verify `.github/agents/kb.agent.md` contains "SV Factory Gate vs Agent Soft-First (A1 Separation)" section.
+- [ ] Verify `12-ai-skills/agent-operating-manual.md` contains "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section.
+- [ ] Open KB Agent (`@kb`) in downstream workspace. Ask: "What happens when a SV Factory gate returns exit 1?" Expected: agent cites the A1 separation contract and states it stops without retry.
 - [ ] Confirm no `kb-root/`, `CONSTITUTION.md` references, or maintainer-only rules leaked into downstream installed KB.
 
 Exit criteria:
 - All 5 checklist items pass.
-- No KBRoot contamination found in downstream install.
+- No SV Factory contamination found in downstream install.
 
 ---
 
 ## Deferred Follow-Up Queue (Next Intents)
 
-1. **Deterministic multi-project model** — state model + registry semantics + cross-project intent routing. This is a KBRoot primitive (A2: domain-agnostic registry).
-2. **Downstream HTML documentation surface** — optional toggle (default OFF). This is a KBAgent feature (A5: KBRoot has no UI; rendering is Agent/MCP surface).
+1. **Deterministic multi-project model** — state model + registry semantics + cross-project intent routing. This is a SV Factory primitive (A2: domain-agnostic registry).
+2. **Downstream HTML documentation surface** — optional toggle (default OFF). This is a KBAgent feature (A5: SV Factory has no UI; rendering is Agent/MCP surface).
 3. **Monorepo split (packages/kb-root + packages/kb-agent)** — physical separation of Legislative and Executive code. Gated by v3.0. This intent's layer classification map is prep work for this.
 
 ---
@@ -188,9 +188,9 @@ Exit criteria:
 
 ## Acceptance Criteria
 
-1. Every proposed command has an explicit layer assignment (KBRoot or KBAgent). No ambiguous entries.
+1. Every proposed command has an explicit layer assignment (SV Factory or KBAgent). No ambiguous entries.
 2. Soft-first policy text is scoped exclusively to KBAgent layer in all shipped docs and agent contracts.
-3. KBRoot command specs define only deterministic exit behavior (no advice, no soft fallback, no AI-assisted retry).
+3. SV Factory command specs define only deterministic exit behavior (no advice, no soft fallback, no AI-assisted retry).
 4. KB Agent orchestration contract explicitly separates "defer to Root gate" from "Agent soft-first execution".
 5. Backlog entries exist for: deterministic multi-project model, downstream HTML surface toggle, and monorepo split.
 6. No push/publish action performed in this intent.

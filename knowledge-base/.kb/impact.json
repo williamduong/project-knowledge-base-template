@@ -720,14 +720,14 @@
     }
   ],
   "unbound_changes": [
-    ".github/agents/KBRoot.agent.md",
+    ".github/agents/SVFactory.agent.md",
     ".github/agents/kb.agent.md.downstream-disabled",
     ".github/prompts/kb-ask.prompt.md.downstream-disabled",
     ".github/prompts/kb-plan.prompt.md.downstream-disabled",
     ".github/prompts/kb-run.prompt.md.downstream-disabled",
-    ".github/prompts/kbroot-ask.prompt.md",
-    ".github/prompts/kbroot-plan.prompt.md",
-    ".github/prompts/kbroot-run.prompt.md",
+    ".github/prompts/svfactory-ask.prompt.md",
+    ".github/prompts/svfactory-plan.prompt.md",
+    ".github/prompts/svfactory-run.prompt.md",
     ".gitignore",
     "AGENTS.md",
     "COMPLETION_REPORT.md",

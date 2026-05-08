@@ -189,7 +189,7 @@ If a check is not executable in current runtime, mark DEFERRED (not FAIL).
 
 ## 7) Validation matrix lock (self-host vs downstream)
 
-Muc nay khoa cach validate de tranh nham lan context giua KBRoot va KB Agent ship.
+Muc nay khoa cach validate de tranh nham lan context giua SV Factory va KB Agent ship.
 
 Rule tong quat:
 
@@ -235,7 +235,7 @@ Prompt sequence (chat):
 
 Expected:
 
-- no KBRoot-specific language/policies in responses
+- no SV Factory-specific language/policies in responses
 - output follows shipped KB Agent contract only
 - runtime-plan/result files update under sandbox `knowledge-base/`
 
@@ -244,7 +244,7 @@ Expected:
 Fail criteria:
 
 - Danh gia UX user that tren self-host workspace maintainer
-- Hoac co evidence output bi tron context KBRoot ma van danh dau PASS
+- Hoac co evidence output bi tron context SV Factory ma van danh dau PASS
 
 If fail criteria triggered:
 

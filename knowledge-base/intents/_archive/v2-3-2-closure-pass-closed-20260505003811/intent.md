@@ -5,7 +5,7 @@ status: closed
 created_at: 2026-05-04T12:28:30.568Z
 change_type: release
 change_scope:
-  - .github/agents/KBRoot.agent.md
+  - .github/agents/SVFactory.agent.md
   - .github/prompts/
   - AGENTS.md
   - src/commands/init.js
@@ -41,7 +41,7 @@ Owner intent for closing the 2.3.x line after `v2.3.1`. All unreleased maintaine
 ## Workstreams
 
 1. **Namespace split release scope**
-  - include self-host KBRoot namespace hard split already committed on `main`
+  - include self-host SV Factory namespace hard split already committed on `main`
   - preserve downstream `kb init` projection behavior via renamed template source files + `src/commands/init.js`
 2. **Self-host state + governance alignment**
   - sync `knowledge-base/.kb/state.json` version line to `2.3.2`

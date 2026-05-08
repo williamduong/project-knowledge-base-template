@@ -4,7 +4,7 @@ mode: full
 lifecycle: closed
 created_at: "2026-05-06T17:25:26.478Z"
 focus:
-  current: "Classify and specify CLI commands for project context switching and intent scoping with explicit KBRoot vs KBAgent layer assignment (per axioms)"
+  current: "Classify and specify CLI commands for project context switching and intent scoping with explicit SV Factory vs KBAgent layer assignment (per axioms)"
   last_updated: 2026-05-08
   next_action: "Lock layer classification table and soft-first policy text as KBAgent-only contract (Phase 0)"
 change_type: feature
@@ -12,7 +12,7 @@ change_scope:
 - "src/commands/* (KBAgent-layer: "context show/list/set, scope commands)\""
 - "template/12-ai-skills/agent-operating-manual.md (A1 separation: "Root-gate vs Agent-execution)\""
 impact_signals:
-decision_summary: "Per axioms (A1-A5): KBRoot = Legislative/Deterministic/Checkpoint-only. KBAgent = Executive/Soft-first. Soft-first governance applies exclusively to KBAgent layer — KBAgent uses deterministic CLI when available, reasons freely only when no primitive exists. KBRoot commands are always deterministic-block (exit 0 or 1). Each new command must carry an explicit layer assignment before design."
+decision_summary: "Per axioms (A1-A5): SV Factory = Legislative/Deterministic/Checkpoint-only. KBAgent = Executive/Soft-first. Soft-first governance applies exclusively to KBAgent layer — KBAgent uses deterministic CLI when available, reasons freely only when no primitive exists. SV Factory commands are always deterministic-block (exit 0 or 1). Each new command must carry an explicit layer assignment before design."
 review_after: null
 lesson_id: null
 promotion_ready: false
@@ -28,12 +28,12 @@ drop_reason: null
 
 ## Summary
 
-This intent classifies and specifies CLI commands for project context switching and intent scoping, with an explicit layer assignment (KBRoot = Legislative vs KBAgent = Executive) for each command per the 5 architectural axioms in `notes/axioms.txt`.
+This intent classifies and specifies CLI commands for project context switching and intent scoping, with an explicit layer assignment (SV Factory = Legislative vs KBAgent = Executive) for each command per the 5 architectural axioms in `notes/axioms.txt`.
 
 Key architectural ruling locked by this intent:
-- Soft-first governance is a **KBAgent contract only**. KBRoot commands are always deterministic-block (exit 0 or exit 1). No mixing.
+- Soft-first governance is a **KBAgent contract only**. SV Factory commands are always deterministic-block (exit 0 or exit 1). No mixing.
 - `kb context show/list/set` and `kb scope` are **KBAgent-side** (Executive: orchestration primitives).
-- `kb init --project-id` and `kb doctor --context` are **KBRoot-side** (Legislative: compile-time primitive and deterministic audit gate).
+- `kb init --project-id` and `kb doctor --context` are **SV Factory-side** (Legislative: compile-time primitive and deterministic audit gate).
 - Each command spec carries an explicit layer assignment before any implementation work begins.
 
 This intent also acts as architectural prep for the future monorepo split: `packages/kb-root` (Legislative) + `packages/kb-agent` (Executive).

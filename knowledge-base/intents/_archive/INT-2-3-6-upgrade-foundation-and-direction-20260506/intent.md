@@ -7,7 +7,7 @@ status: closed
 mode: mini
 created_at: 2026-05-05T00:00:00Z
 updated_at: 2026-05-06T22:30:00Z
-owner: William Duong (KBRoot)
+owner: William Duong (SV Factory)
 chaos_estimate: 5
 chaos_delta: 0
 complexity: medium
@@ -74,7 +74,7 @@ This section defines the actionable B1 breakdown for v2.4 Phase 0 before impleme
 
 | Aspect | Detail |
 |---|---|
-| **Owner** | William Duong (KBRoot) |
+| **Owner** | William Duong (SV Factory) |
 | **Deliverable** | File: `knowledge-base/07-database/entity-model.md` |
 | **Scope** | Complete schema definition for Intent, Gate, Decision, Verification (from B1.1 skeleton above) |
 | **Output structure** | Frontmatter schema (fields table), invariants list, relationships diagram, backward-compat notes, migration path sketch |
@@ -86,7 +86,7 @@ This section defines the actionable B1 breakdown for v2.4 Phase 0 before impleme
 
 | Aspect | Detail |
 |---|---|
-| **Owner** | William Duong (KBRoot) |
+| **Owner** | William Duong (SV Factory) |
 | **Deliverable** | File: `knowledge-base/06-api/operator-protocol.md` |
 | **Scope** | 4 contract sections from B1.2 skeleton: registration / work-fetch / event-emit / result-commit |
 | **Output structure** | Actor model diagram, 4 contract blocks (with request/response pseudocode), error/retry policy, human-gate rules |
@@ -98,7 +98,7 @@ This section defines the actionable B1 breakdown for v2.4 Phase 0 before impleme
 
 | Aspect | Detail |
 |---|---|
-| **Owner** | William Duong (KBRoot) |
+| **Owner** | William Duong (SV Factory) |
 | **Deliverable** | File: `knowledge-base/07-database/backend-abstraction-layer.md` |
 | **Scope** | Read/write/query contract parity + acceptance test blueprint from B1.3 skeleton |
 | **Output structure** | Contract table, Markdown backend reference spec (Phase 0 only), test fixtures for contract validation |
@@ -110,7 +110,7 @@ This section defines the actionable B1 breakdown for v2.4 Phase 0 before impleme
 
 | Aspect | Detail |
 |---|---|
-| **Owner** | William Duong (KBRoot) |
+| **Owner** | William Duong (SV Factory) |
 | **Deliverable** | Intent.md B1 skeleton Q-series sections updated; each Q marked: answered / deferred / follow-up intent |
 | **Scope** | B1.1-B1.3 Q items (Q1, Q2, Q3 per spec above) |
 | **Verification evidence** | Each Q has documented decision + rationale or "defer to Phase 1" note |

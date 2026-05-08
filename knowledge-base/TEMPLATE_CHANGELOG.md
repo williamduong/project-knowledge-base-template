@@ -1,4 +1,4 @@
-﻿---
+---
 title: Template Changelog
 type: orientation
 status: active
@@ -86,7 +86,7 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 - `kb intent create` version monotonicity guard: rejects new versioned intent IDs that are not strictly greater than the highest existing active versioned intent.
 - `kb ingest` new command: registers a source file into the KB ingestion pipeline. Text files chunked immediately (status=ready); binary types produce a structured stub payload (status=requires-parser).
 - `kb extract --apply=<file>`: new flag to write the extraction prompt directly to a file (requires `--target-doc`).
-- Agent output contract: mandatory `Handoff` table routes pending tasks to explicit owners (HUMAN / CLI / @KBRoot / @kb).
+- Agent output contract: mandatory `Handoff` table routes pending tasks to explicit owners (HUMAN / CLI / @SVFactory / @kb).
 
 ### Change Type
 
@@ -123,7 +123,7 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ### Summary
 
-- Intent Start Gates: agent must run Gate 1 (active intent check) and Gate 2 (chaos estimate) before creating any new intent. Applies to both KB Agent (`@kb`) and KBRoot (`@KBRoot`).
+- Intent Start Gates: agent must run Gate 1 (active intent check) and Gate 2 (chaos estimate) before creating any new intent. Applies to both KB Agent (`@kb`) and SV Factory (`@SVFactory`).
 - Human-Gate Protocol: structured handoff mechanism inside intent workflow for tasks requiring human input, approval, or external action. Replaces ad-hoc inline questions.
 - One-active-intent rule (P18): only one intent may be `in-progress` at a time without explicit user approval.
 - Chaos estimate gate (P19): agent must report current chaos + projected delta before starting any new intent.

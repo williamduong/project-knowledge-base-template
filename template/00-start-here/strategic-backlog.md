@@ -54,7 +54,7 @@ Mandatory rules:
 This project operates with three distinct KB layers. Do not collapse them.
 
 1. Template source layer (ships to users): `template/`
-2. Local maintainer layer (committed in this repo, not shipped via npm `files` whitelist): `kb-root/` (KBRoot)
+2. Local maintainer layer (committed in this repo, not shipped via npm `files` whitelist): `kb-root/` (SV Factory)
 3. Installed runtime KB layer (per target repo after `kbx init`): `<contentRoot>/...`
 
 Rules:
@@ -83,12 +83,12 @@ Rules:
 | KB-005 | Document AI IDE compatibility matrix and tested agent workflows | knowledge-management | P1 | YYYY-MM-DD | partial | Added `12-ai-skills/ai-ide-compatibility-matrix.md`; empirical IDE validation notes can be expanded later. |
 | KB-006 | Phase 5 — Three-layer power surface (4 CLI + 2 prompts + 1 master agent) | knowledge-management | P0 | 2026-04-30 | done | Shipped in v1.2.0 (rewrite kbx.agent.md v2.0.0, /kbx-plan + /kbx-run prompts, code-qa-index, state schema v2 with metadataPolicy + ideIntegration, ide-detect/inject libs, uninstall KB-MANAGED block strip). v1.2.1 added npx Quick Start and the no-silent-re-init guard. |
 | KB-007 | Validate debt/entropy threshold quality after first full v1.7 release cycle | knowledge-management | P0 | 2026-05-31 | carry-forward | NV-03 from pre-dev closure pass. Requires warning usefulness review and threshold retune evidence from real v1.7 intent runtime artifacts. |
-| KB-008 | Enforce three-layer KB separation for self-hosting (template vs KBRoot local vs installed runtime KB) | knowledge-management | P0 | 2026-05-15 | todo | Add docs and command output wording to consistently reference `<contentRoot>` and prevent template/runtime path confusion in tracked vs private-git modes. |
-| KB-009 | Define focus ownership model (KBRoot local focus vs intent/runtime focus) | knowledge-management | P0 | 2026-05-15 | todo | Keep project execution focus in installed KB runtime artifacts (`.kb/runtime-plan.md`, intents), keep maintainer-only focus in `kb-root/focus.md`, and document non-shipping boundary clearly. |
+| KB-008 | Enforce three-layer KB separation for self-hosting (template vs SV Factory local vs installed runtime KB) | knowledge-management | P0 | 2026-05-15 | todo | Add docs and command output wording to consistently reference `<contentRoot>` and prevent template/runtime path confusion in tracked vs private-git modes. |
+| KB-009 | Define focus ownership model (SV Factory local focus vs intent/runtime focus) | knowledge-management | P0 | 2026-05-15 | todo | Keep project execution focus in installed KB runtime artifacts (`.kb/runtime-plan.md`, intents), keep maintainer-only focus in `kb-root/focus.md`, and document non-shipping boundary clearly. |
 | KB-010 | Introduce git-tracked self-host profile for this repository | knowledge-management | P0 | 2026-05-20 | todo | Make self-host KB artifacts explicitly trackable in git without mixing with template payload; keep downstream defaults unchanged. |
 | KB-011 | Enforce intent-first, version-scoped traceability from backlog -> intent -> plan -> task | knowledge-management | P0 | 2026-05-18 | in-progress | Governance intent `v2-4-intent-first-version-governance` defines mandatory chain and sequencing with notes migration. |
 | KB-012 | Enforce release gating: npm prepublish version guard + release-intent separation | knowledge-management | P0 | 2026-05-18 | in-progress | Add `prepublish:version-guard`, document no republish on same version, and separate governance vs release intents. |
-| KB-013 | Lock agent/prompt/CLI validation matrix (downstream-user vs self-host-maintainer) | knowledge-management | P0 | 2026-05-18 | in-progress | Prevent context collision between KB Agent and KBRoot when validating `/kbx-plan`, `/kbx-run`, `/kbx-ask`; define canonical test surfaces and acceptance criteria. |
+| KB-013 | Lock agent/prompt/CLI validation matrix (downstream-user vs self-host-maintainer) | knowledge-management | P0 | 2026-05-18 | in-progress | Prevent context collision between KB Agent and SV Factory when validating `/kbx-plan`, `/kbx-run`, `/kbx-ask`; define canonical test surfaces and acceptance criteria. |
 
 ## Refactor Program: Three-Layer Separation + Git-Tracked Self-Hosting
 
@@ -195,7 +195,7 @@ Layer model (locked):
 
 - Layer A — Ship to npm: `template/`, `src/`, `bin/`, `scripts/`, `tools/`, `package.json`, `package-lock.json`, `README.md`, `LICENSE`.
 - Layer B — Verify product (committed, not shipped): `test/`, `test-plans/`, `site/`, `.github/` (workflows + PR template + copilot-instructions only), `index.html`, `favicon.ico`.
-- Layer C — KBRoot maintainer (committed, moved out of dot-prefixed folder): rename `.local/kb-agent/` → `kb-root/` (top-level). Track in git. Acceptable since repo is open source.
+- Layer C — SV Factory maintainer (committed, moved out of dot-prefixed folder): rename `.local/kb-agent/` → `kb-root/` (top-level). Track in git. Acceptable since repo is open source.
 - Layer D — Self-host KB runtime (committed; required by kb v1.7+): use tracked mode under `knowledge-base/`. Must not collide with Layer A/B/C names.
 - Layer E — Sandbox/scratch (ignored): `sample_repo/`, `kb-test-sample/`, `notes/`, generated reports.
 
@@ -235,11 +235,11 @@ Release target (locked): patch `2.3.x`.
 
 Problem this lock resolves:
 
-- In a self-host workspace, KBRoot and KB Agent can both execute slash prompts, which can blur user-facing behavior validation.
+- In a self-host workspace, SV Factory and KB Agent can both execute slash prompts, which can blur user-facing behavior validation.
 
 Locked policy:
 
-1. User-experience acceptance for shipped KB Agent behavior (`@kbx`, `/kbx-plan`, `/kbx-run`, `/kbx-ask`) must be validated in a downstream clean workspace with KB Agent active and KBRoot inactive.
+1. User-experience acceptance for shipped KB Agent behavior (`@kbx`, `/kbx-plan`, `/kbx-run`, `/kbx-ask`) must be validated in a downstream clean workspace with KB Agent active and SV Factory inactive.
 2. Self-host repository validation is maintainer-mode validation only (governance, migration, packaging, safety), not final user-experience acceptance.
 3. CLI command correctness (`kbx status`, `kbx intent`, `kbx maintain`, `kbx release`) is shared and testable in both environments; prompt/persona behavior must be judged only in the environment matching the target persona.
 4. Do not remove shipped KB Agent or shipped prompt files from npm payload solely to avoid local overlap; separation is enforced by validation scope, naming clarity, and activation context.

@@ -25,9 +25,9 @@ Run the Phase 4 downstream acceptance checklist manually:
 
 1. `npm pack` in this workspace (or use `@beta` tag: `npx @williamduong/kb@beta`)
 2. In a **clean downstream workspace** (not this repo), run `kb init` or `kb update`
-3. Verify `.github/agents/kb.agent.md` contains the "KBRoot Gate vs Agent Soft-First (A1 Separation)" section
-4. Verify `12-ai-skills/agent-operating-manual.md` contains the "KBRoot Gate vs Agent Soft-First — A1 Separation (v2.5+)" section
-5. Open `@kb` in that downstream workspace. Ask: _"What happens when a KBRoot gate returns exit 1?"_
+3. Verify `.github/agents/kb.agent.md` contains the "SV Factory Gate vs Agent Soft-First (A1 Separation)" section
+4. Verify `12-ai-skills/agent-operating-manual.md` contains the "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section
+5. Open `@kb` in that downstream workspace. Ask: _"What happens when a SV Factory gate returns exit 1?"_
    - Expected: agent references A1 separation, states it stops without retry or negotiation
 6. Confirm no `kb-root/`, `CONSTITUTION.md` references, or maintainer-only rules appear in the downstream install
 
@@ -39,7 +39,7 @@ Run the Phase 4 downstream acceptance checklist manually:
 ### Expected Output
 
 - All 5 checklist items in Phase 4 checked off
-- No KBRoot contamination found
+- No SV Factory contamination found
 - KB Agent behavior in downstream workspace aligns with A1 separation contract
 
 ### Blocking Steps

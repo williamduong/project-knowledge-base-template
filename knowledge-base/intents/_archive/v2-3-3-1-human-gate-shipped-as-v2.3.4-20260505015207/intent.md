@@ -98,7 +98,7 @@ or asking the AI again.
 
 1. `gates.md` schema documented in `14-templates/` and `agent-operating-manual.md`.
 2. AI behavioral rule in `agent-operating-manual.md`: never ask in chat for gateable tasks.
-3. P20 in `principles.md` covers the rule for both KBRoot and KB Agent.
+3. P20 in `principles.md` covers the rule for both SV Factory and KB Agent.
 4. W9 in `process.md` gives the step-by-step workflow for creating, updating, and resolving gates.
 5. CLI commands listed in agent-operating-manual.md as forward-declared (pending code).
 6. `plan.md` in this intent has a clear phase split: P0 docs now / P1 CLI code in v2.4.x.

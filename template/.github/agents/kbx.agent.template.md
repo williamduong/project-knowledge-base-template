@@ -147,26 +147,26 @@ Execution order:
 
 If deterministic support does not exist yet for a required rule, mark the rule as provisional and create a follow-up intent to migrate it into CLI/runtime.
 
-### KBRoot Gate vs Agent Soft-First (A1 Separation)
+### SV Factory Gate vs Agent Soft-First (A1 Separation)
 
 **KB Agent is Executive. It does not own the rules — it executes them.**
 
 Two tiers of execution. Never merge them:
 
-**KBRoot gate tier (deterministic):**
-- KBRoot CLI commands (`kbx init`, `kbx doctor`, `kbx chaos`) are legislative gates.
-- When a KBRoot gate returns exit 1, KB Agent MUST stop immediately. Do not retry. Do not negotiate. Do not use an LLM to work around the block.
-- A KBRoot exit 1 is a hard constitutional block, not a suggestion.
+**SV Factory gate tier (deterministic):**
+- SV Factory CLI commands (`kbx init`, `kbx doctor`, `kbx chaos`) are legislative gates.
+- When a SV Factory gate returns exit 1, KB Agent MUST stop immediately. Do not retry. Do not negotiate. Do not use an LLM to work around the block.
+- A SV Factory exit 1 is a hard constitutional block, not a suggestion.
 
 **Agent soft-first tier (orchestration):**
 - When a deterministic Agent-side CLI action exists (`kb context set`, `kb scope`, `kbx intent create`, etc.) → KB Agent MUST call it. Do not reason as a substitute for calling the command.
 - When no deterministic CLI action exists yet for a required behavior → Agent may reason and act flexibly, but outcomes MUST remain aligned with governance rules.
-- Soft-first is an Agent contract. It is NOT a KBRoot feature.
+- Soft-first is an Agent contract. It is NOT a SV Factory feature.
 
 **Fallback when project context is missing:**
 - Agent-tier action: continue with a warning (soft — Agent tier).
-- KBRoot gate: if context is required by the gate schema → exit 1 blocks (hard — Root tier).
-- Never use Agent soft-fallback to bypass a KBRoot gate.
+- SV Factory gate: if context is required by the gate schema → exit 1 blocks (hard — Root tier).
+- Never use Agent soft-fallback to bypass a SV Factory gate.
 
 ### Step 3 — Plan as Intent Sub-Tasks
 Generate the action plan as phases and tasks scoped to the intent. Use the `[INT-NNN][PH-N][T-N]` reference format defined in `15-governance/numbering-system.md`. Do NOT write a separate `runtime-plan.md` unless the user explicitly requests a persistent plan file.

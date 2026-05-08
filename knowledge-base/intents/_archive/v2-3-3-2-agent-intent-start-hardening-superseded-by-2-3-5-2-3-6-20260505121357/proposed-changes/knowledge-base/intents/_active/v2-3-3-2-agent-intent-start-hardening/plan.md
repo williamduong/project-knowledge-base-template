@@ -13,7 +13,7 @@ Target outcomes:
 - Every new chat session starts with explicit intent selection.
 - Exactly one intent is locked for the whole session unless user explicitly requests a switch.
 - User can choose from active intents or request new intent creation.
-- KBRoot and KB Agent docs stay aligned on the same startup contract.
+- SV Factory and KB Agent docs stay aligned on the same startup contract.
 - External-source context collection is documented as non-destructive and evidence-first.
 
 ## Files Touched
@@ -28,7 +28,7 @@ Target outcomes:
 
 ## Acceptance Criteria
 
-1. KBRoot bootstrap explicitly requires listing active intents and asking user to pick resume/create-new before taking task.
+1. SV Factory bootstrap explicitly requires listing active intents and asking user to pick resume/create-new before taking task.
 2. KB Agent preflight explicitly requires session-start chooser with two paths: load existing intent or create new intent.
 3. Both agents enforce session intent lock: one selected intent per session, switch only with explicit user confirmation.
 4. Agent Operating Manual reflects the same rule so behavior is discoverable from governance docs.

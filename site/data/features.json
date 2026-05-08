@@ -79,7 +79,7 @@
       "name": "Intent Start Gates",
       "scope": "Governance",
       "status": "active",
-      "summary": "Two-gate protocol before any new intent: Gate 1 checks for existing in-progress intents and requires user resolution; Gate 2 reports current chaos score + projected delta before proceeding. Cannot be skipped. Applies to both KB Agent and KBRoot.",
+      "summary": "Two-gate protocol before any new intent: Gate 1 checks for existing in-progress intents and requires user resolution; Gate 2 reports current chaos score + projected delta before proceeding. Cannot be skipped. Applies to both KB Agent and SV Factory.",
       "references": ["template/.github/agents/kb.agent.template.md", "template/12-ai-skills/agent-operating-manual.md", "template/00-start-here/how-to-use-this-kb.md"]
     },
     {
@@ -119,7 +119,7 @@
       "name": "Agent Handoff Output Contract",
       "scope": "Governance",
       "status": "active",
-      "summary": "(v2.3.5) Agent output contract now requires a Handoff table at the end of substantial tasks, explicitly routing pending work to the correct owner: HUMAN, CLI, @KBRoot, or @kb.",
+      "summary": "(v2.3.5) Agent output contract now requires a Handoff table at the end of substantial tasks, explicitly routing pending work to the correct owner: HUMAN, CLI, @SVFactory, or @kb.",
       "references": ["template/12-ai-skills/agent-operating-manual.md", "template/.github/agents/kb.agent.template.md"]
     },
     {
