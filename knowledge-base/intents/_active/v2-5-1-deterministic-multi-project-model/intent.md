@@ -6,7 +6,7 @@ created_at: 2026-05-08T17:30:18.078Z
 focus:
   current: "Lock deterministic project resolution contract: every mutation must resolve exactly one project_id or run explicitly in workspace mode"
   last_updated: 2026-05-09
-  next_action: "Phase 2: integrate assertProjectResolved mutation guard into init/update/uninstall commands + --project/--workspace flag parsing"
+  next_action: "Phase 4: update shipped template docs for project namespace (agent-operating-manual.md, kbx.agent.template.md); consider kbx project resolve command"
 change_type: feature
 change_scope:
   - src/lib/project-resolver.js

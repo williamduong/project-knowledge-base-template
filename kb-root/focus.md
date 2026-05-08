@@ -15,17 +15,20 @@
 
 ## Current Phase
 
-**Phase:** v2.5.1 Phase 2 — mutation guard integration into commands
+**Phase:** v2.5.1 Phase 4 — docs sync + promotion-ready check
 
 **Done (session 2026-05-09):**
 - Phase 1: `src/lib/project-resolver.js` — deterministic fail-closed resolver, all error codes, 0 external deps.
 - Phase 1: `test/lib/project-resolver.test.js` — 19 tests, all 10 TC from plan pass.
 - Phase 3: `src/commands/workspace.js` — `kbx workspace detect/promote/verify`.
 - Phase 3: `test/commands/workspace.test.js` — 10 tests pass.
-- CLI wired + help text updated. 577/577 tests pass. Committed 3e2e903.
+- Phase 2: `init.js` — `--project <id>` flag + write `.kbx/project.yaml` after KB creation + sibling-project tip.
+- Phase 2: `update.js` — `--project <id>` + `resolveProject` guard (throws `ERR_PROJECT_AMBIGUOUS`).
+- Phase 2: `uninstall.js` — same guard pattern.
+- 577/577 tests pass. Committed 5ab5904.
 
 **Next action (theo priority backlog):**
-- **KB-012 Phase 2:** Add `assertProjectResolved` mutation guard to `init`, `update`, `uninstall`; parse `--project <id>` and `--workspace` flags in those commands.
+- **KB-012 Phase 4:** Update shipped template docs: `agent-operating-manual.md`, `kbx.agent.template.md` for project namespace rules. Check `promotion_ready` criteria in intent.
 - **KB-016:** 4/5 automated PASS. Manual check #4 (hỏi @kbx trong IDE downstream) pending.
 
 ## Active Blockers
