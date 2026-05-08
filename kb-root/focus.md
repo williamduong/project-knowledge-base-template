@@ -23,12 +23,12 @@
 - Git tag v2.4.0-rc.2 pushed. Smoke test from registry OK. focus.md updated.
 
 **Next action (theo priority backlog):**
-- **KB-016 (P0):** Downstream acceptance test dùng `@beta` trong clean workspace — kiểm tra A1 separation đã ship đúng. Cần machine khác / clean folder.
-- **KB-012 (P0):** Deterministic multi-project model (context registry, scope routing) — next major feature intent, có thể bắt đầu ngay trong workspace này.
+- **KB-012 (P0):** Deterministic multi-project model (context registry, scope routing) — next major feature intent. Sẵn sàng bắt đầu.
+- **KB-016:** Done — 4/5 automated PASS. Manual check #4 (hỏi @kb trong IDE downstream) còn pending khi cần.
 
 ## Active Blockers
 
-- KB-016 blocked by: cần clean downstream workspace (không thể test trên workspace này).
+- KB-016 closed (4/5 PASS automated). Manual check #4 pending khi có IDE downstream session.
 - Không có blocker cho KB-012.
 
 ## Recent Decisions (last 5)
