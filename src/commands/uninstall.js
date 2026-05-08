@@ -3,6 +3,7 @@ const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
 const { readStateFile } = require('../lib/state');
+const { resolveProject } = require('../lib/project-resolver');
 
 const KB_MANAGED_BLOCK_RE = /[\r\n]?<!--\s*KB-MANAGED:START\s*-->[\s\S]*?<!--\s*KB-MANAGED:END\s*-->[\r\n]?/g;
 
@@ -16,9 +17,11 @@ function parseArgs(args) {
     keepAiFiles: false,
     removeHook: false,
     force: false,
+    projectId: null,
   };
 
-  for (const current of args || []) {
+  for (let i = 0; i < (args || []).length; i++) {
+    const current = args[i];
     if (current === '--keep-ai-files') {
       options.keepAiFiles = true;
       continue;
@@ -34,7 +37,12 @@ function parseArgs(args) {
       continue;
     }
 
-    throw new Error('Unknown uninstall option "' + current + '". Supported: --keep-ai-files, --remove-hook, --force');
+    if (current === '--project' && args[i + 1]) {
+      options.projectId = args[++i];
+      continue;
+    }
+
+    throw new Error('Unknown uninstall option "' + current + '". Supported: --keep-ai-files, --remove-hook, --force, --project <id>');
   }
 
   return options;
@@ -183,7 +191,13 @@ function removeKbContent({ workspaceRoot, context, options, removed, warnings })
 
 function runUninstall({ args, cwd }) {
   const options = parseArgs(args);
-  const workspaceRoot = path.resolve(cwd);
+  let workspaceRoot = path.resolve(cwd);
+
+  // Mutation guard: throws ERR_PROJECT_AMBIGUOUS if multiple projects with no selector.
+  const resolution = resolveProject({ projectId: options.projectId, cwd: workspaceRoot, workspaceRoot });
+  if (resolution && resolution.type === 'project' && options.projectId) {
+    workspaceRoot = resolution.project.repo_root;
+  }
 
   const removed = [];
   const warnings = [];
