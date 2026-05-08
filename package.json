@@ -1,5 +1,5 @@
 {
-  "name": "@williamduong/kb",
+  "name": "@williamduong/kbx",
   "version": "2.4.0-rc.2",
   "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
   "keywords": [
@@ -33,7 +33,7 @@
     "url": "git+https://github.com/williamduong/project-knowledge-base-template.git"
   },
   "bin": {
-    "kb": "bin/kb.js"
+    "kbx": "bin/kbx.js"
   },
   "preferGlobal": true,
   "files": [
@@ -52,28 +52,28 @@
     "access": "public"
   },
   "scripts": {
-    "help": "node ./bin/kb.js help",
-    "start": "node ./bin/kb.js help",
+    "help": "node ./bin/kbx.js help",
+    "start": "node ./bin/kbx.js help",
     "docs:tree": "node ./tools/build-docs-tree.js",
-    "release:notes": "node ./bin/kb.js release notes",
+    "release:notes": "node ./bin/kbx.js release notes",
     "keywords:show": "node ./tools/npm-keywords.js",
     "keywords:apply": "node ./tools/npm-keywords.js --apply",
     "tag:latest": "node ./tools/npm-dist-tag.js latest",
     "tag:next": "node ./tools/npm-dist-tag.js next",
     "tag:beta": "node ./tools/npm-dist-tag.js beta",
     "tag:remove": "node ./tools/npm-dist-tag.js --remove",
-    "tag:list": "npm dist-tag ls @williamduong/kb",
+    "tag:list": "npm dist-tag ls @williamduong/kbx",
     "release:notes:legacy": "node ./tools/generate-template-changelog.js",
     "doc:gate": "node ./scripts/doc-gate.js",
     "prepublish:version-guard": "node ./tools/prepublish-version-guard.js",
     "version:sync": "node ./tools/sync-versions.js",
     "version:check": "node ./tools/sync-versions.js --check",
-    "doctor": "node ./bin/kb.js doctor",
-    "doctor:json": "node ./bin/kb.js doctor --json",
-    "test:all": "node ./bin/kb.js test --all",
+    "doctor": "node ./bin/kbx.js doctor",
+    "doctor:json": "node ./bin/kbx.js doctor --json",
+    "test:all": "node ./bin/kbx.js test --all",
     "test:unit": "node --test \"test/**/*.test.js\"",
-    "maintain": "node ./bin/kb.js maintain",
-    "maintain:fast": "node ./bin/kb.js maintain --fast",
+    "maintain": "node ./bin/kbx.js maintain",
+    "maintain:fast": "node ./bin/kbx.js maintain --fast",
     "orch:help": "node ./tools/kb-orch.js --help",
     "orch:run": "node ./tools/kb-orch.js run",
     "pack:smoke": "node ./tools/pack-smoke.js",

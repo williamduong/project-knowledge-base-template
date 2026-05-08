@@ -4,6 +4,6 @@ const { run } = require('../src/cli');
 
 run(process.argv.slice(2)).catch((error) => {
   const message = error && error.message ? error.message : String(error);
-  console.error(`kb: ${message}`);
+  console.error(`kbx: ${message}`);
   process.exitCode = 1;
 });
