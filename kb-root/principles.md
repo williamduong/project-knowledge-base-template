@@ -5,6 +5,14 @@
 
 ---
 
+## P0. THE CONSTITUTION (Supreme Law)
+
+This document is subordinate to [`CONSTITUTION.md`](./CONSTITUTION.md).
+In any conflict between a principle here and an Axiom in `CONSTITUTION.md`, the Axiom wins.
+All architectural changes to KBRoot MUST be cross-checked against `CONSTITUTION.md` before any other principle is consulted. No exceptions.
+
+---
+
 ## P1. Code over docs khi mâu thuẫn
 
 Khi plan/doc nói A, code nói B → tin code, update doc.

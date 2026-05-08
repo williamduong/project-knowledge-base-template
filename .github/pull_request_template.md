@@ -1,3 +1,17 @@
+## Constitutional Compliance (REQUIRED — Read Before Anything Else)
+
+> This section applies to ALL PRs, including automated agent-generated PRs.
+> An unchecked box below is grounds for immediate rejection without code review.
+
+- [ ] I (the Author/Agent) confirm I have read `kb-root/CONSTITUTION.md` in full for this PR.
+- [ ] This PR does not violate AXIOM 1 (Separation of Powers — no operational logic in KBRoot).
+- [ ] This PR does not violate AXIOM 2 (Domain Agnosticism — no business logic or hardcoded project names in KBRoot).
+- [ ] This PR does not violate AXIOM 3 (Deterministic Block — no LLM calls or auto-fix logic in KBRoot gates).
+- [ ] This PR does not violate AXIOM 4 (Checkpoint-Driven — no file-watching or daemon logic in KBRoot).
+- [ ] This PR does not violate AXIOM 5 (Invisibility — no UI or user-facing rendering in KBRoot).
+
+---
+
 ## Documentation Review Checklist
 
 - [ ] Claims are unlikely to be misread by non-authors (ambiguity reviewed).

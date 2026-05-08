@@ -1,5 +1,9 @@
 # Copilot Instructions For This Repository
-
+> **CRITICAL — READ THIS FIRST:**
+> Before suggesting ANY structural, workflow, logic, or architectural change to this repository,
+> you MUST read `kb-root/CONSTITUTION.md`.
+> If your proposed change violates any of the 5 Axioms, you MUST explicitly state which Axiom is violated
+> and refuse to generate the violating code. There are no exceptions and no negotiation on Axiom violations.
 This repository is a knowledge base template, not an application runtime codebase. Default to treating changes as documentation, governance, indexing, and template-maintenance work unless the task clearly adds supporting tooling.
 
 ## Read Order Before Editing
