@@ -41,6 +41,9 @@ function runHelp({ packageJson, args }) {
     console.log('  kbx extract <source-file> [--target-doc=<path>] [--apply=<output>] [--uncovered] [--model=<hint>] [--yes] [--json]');
     console.log('  kbx ingest <source-file> [--type=auto|text|pdf|image|docx|xlsx] [--json]');
     console.log('  kbx uninstall [--keep-ai-files] [--remove-hook] [--force]');
+    console.log('  kbx workspace detect                    Scan for KBX project repos');
+    console.log('  kbx workspace promote [--yes] [--json]  Create workspace registry from detected repos');
+    console.log('  kbx workspace verify  [--json]          Drift-check workspace registry vs filesystem');
     console.log('');
     console.log('Core workflow:');
     console.log('  init       Install the KB template into a target workspace and create state.');

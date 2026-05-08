@@ -510,7 +510,57 @@ Maintenance rule:
 - When changing agent doctrine or capability language in this manual, review `template/.github/agents/kbx.agent.md` in the same wave so init projections stay aligned.
 - When changing agent doctrine or capability language in this manual, review `template/.github/agents/kb.agent.template.md` in the same wave so init projections stay aligned.
 
-### Role & Activation
+## Multi-Project Workspace Rules (v2.5+)
+
+Applies when VS Code workspace contains more than one KBX project (multiple repos, each with `.kbx/project.yaml`).
+
+### Core Contract (KB-012)
+
+> No mutation command may write state unless exactly one `project_id` is resolved, or the command explicitly runs in workspace mode (`--workspace`).
+
+This is enforced by the CLI (deterministic). The agent must cooperate — never route a mutation command to a workspace root where the project context is ambiguous.
+
+### Project Identity
+
+- Every KBX repo has `.kbx/project.yaml` with a unique `project_id`.
+- `kbx init` creates this file automatically. The `project_id` defaults to `--project` flag → `--brand` → folder name.
+- Never edit `.kbx/project.yaml` directly unless changing project identity intentionally.
+
+### Agent Behavior in Multi-Project Workspaces
+
+1. **Before any mutation command**, check whether CWD contains `.kbx/project.yaml`:
+   - If yes → project context is resolved; proceed normally.
+   - If no (workspace root without a per-repo project) → call `kbx workspace detect` to see candidates.
+
+2. **When multiple projects exist** and no project is selected:
+   - Do NOT proceed with any mutation command.
+   - Run `kbx workspace detect` to enumerate `project_id` candidates.
+   - Ask the user to confirm which project to target, then pass `--project <id>` to the mutation command.
+   - Example: `kbx init --project my-app` or `kbx update --project my-app`.
+
+3. **When creating a workspace registry** (cross-project session):
+   - Run `kbx workspace promote --yes` from the workspace root.
+   - This creates `.kbx-workspace/workspace.yaml` with all discovered projects registered.
+   - Set `active_project_id` in the file to make one project the default for ambiguous commands.
+
+4. **Drift detection**: Run `kbx workspace verify` periodically to check that the registry matches the filesystem.
+
+### Error Code Reference
+
+| Error code | Meaning | Agent action |
+|---|---|---|
+| `ERR_PROJECT_AMBIGUOUS` | Multiple projects detected, no selector given | Ask user to pass `--project <id>` |
+| `ERR_PROJECT_UNKNOWN` | `--project <id>` not found | Run `kbx workspace detect` to show valid IDs |
+| `ERR_PROJECT_DUPLICATE_ID` | Two repos share the same `project_id` | Identify the duplicate and ask user to rename one |
+| `ERR_PROJECT_REQUIRED` | Mutation command ran without any resolvable project | Either `cd` into repo or pass `--project <id>` |
+| `ERR_WORKSPACE_NOT_FOUND` | `--workspace` used but no registry exists | Run `kbx workspace promote --yes` first |
+
+### Solo-Repo Path (Unchanged)
+
+For single-repo workspaces the agent behavior is identical to pre-v2.5:
+- `.kbx/project.yaml` is created by `kbx init` automatically.
+- No workspace registry is needed.
+- No `--project` flag is needed.
 
 **Name:** KB Agent  
 **Scope:** Project-scoped (not user-level or global)  

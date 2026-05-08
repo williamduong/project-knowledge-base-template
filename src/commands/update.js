@@ -31,7 +31,14 @@ function parseArgs(args) {
 
 function runUpdate({ args, cwd, repoRoot }) {
   const options = parseArgs(args);
-  const workspaceRoot = path.resolve(cwd);
+  let workspaceRoot = path.resolve(cwd);
+
+  // Mutation guard: throws ERR_PROJECT_AMBIGUOUS if multiple projects with no selector.
+  // Returns null for legacy single-repo KBs without .kbx/project.yaml (backward compat).
+  const resolution = resolveProject({ projectId: options.projectId, cwd: workspaceRoot, workspaceRoot });
+  if (resolution && resolution.type === 'project' && options.projectId) {
+    workspaceRoot = resolution.project.repo_root;
+  }
 
   if (options.refreshPrompts) {
     const refreshed = createAgentAndPromptFiles({ workspaceRoot, repoRoot, overwrite: true });

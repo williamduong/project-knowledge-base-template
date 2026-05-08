@@ -9,12 +9,14 @@ const { resolveStoragePaths, validateMode } = require('../lib/storage');
 const { generateAdapterFiles, detectIDE } = require('../lib/adapters');
 const { runBootstrap } = require('./bootstrap');
 const { runIndex } = require('./index');
+const { discoverProjects } = require('../lib/project-resolver');
 
 function parseArgs(args) {
   const options = {
     mode: null, // Will be auto-detected if not provided
     target: process.cwd(),
     brand: null,
+    projectId: null,
     skipAdapters: false,
     installHooks: false,
     skipBootstrap: false,
@@ -67,7 +69,11 @@ function parseArgs(args) {
       options.yes = true;
       continue;
     }
-
+    if (current === '--project') {
+      options.projectId = args[index + 1];
+      index += 1;
+      continue;
+    }
     throw new Error(`Unknown init option \"${current}\".`);
   }
 
@@ -254,6 +260,37 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     renderedRevisionStatePath: storagePaths.renderedRevisionStatePath,
     state,
   });
+
+  // Write .kbx/project.yaml if not already present (KB-012 deterministic resolution).
+  // project_id defaults to --project flag, then --brand, then folder name.
+  const projectId = (options.projectId || options.brand || path.basename(workspaceRoot))
+    .toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  const kbxDir = path.join(workspaceRoot, '.kbx');
+  const projectYamlPath = path.join(kbxDir, 'project.yaml');
+  if (!fs.existsSync(projectYamlPath)) {
+    fs.mkdirSync(kbxDir, { recursive: true });
+    const kbRootRel = path.relative(workspaceRoot, storagePaths.contentRoot).replace(/\\/g, '/');
+    fs.writeFileSync(projectYamlPath, [
+      `project_id: ${projectId}`,
+      `display_name: ${options.brand || path.basename(workspaceRoot)}`,
+      `kb_root: ${kbRootRel}`,
+    ].join('\n') + '\n', 'utf8');
+    console.log(`Project identity: .kbx/project.yaml (project_id: ${projectId})`);
+  }
+
+  // Check for workspace ambiguity: warn if other projects exist in parent dir without a workspace registry.
+  const parentDir = path.dirname(workspaceRoot);
+  if (parentDir !== workspaceRoot) {
+    try {
+      const siblings = discoverProjects(parentDir).filter(p => p.repo_root !== workspaceRoot);
+      if (siblings.length > 0) {
+        console.log(`Tip: ${siblings.length} other KBX project(s) detected in parent directory.`);
+        console.log(`     Run "kbx workspace promote" from ${parentDir} to create a workspace registry.`);
+      }
+    } catch (_) {
+      // non-fatal: discovery errors (e.g. duplicate ids) do not block init
+    }
+  }
 
   console.log(`Initialized KB (${options.mode}) in ${storagePaths.contentRoot}`);
   console.log(`State: ${storagePaths.statePath}`);

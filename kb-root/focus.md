@@ -8,26 +8,31 @@
 ## Active Version Target
 
 **Đang focus:** v2.5 — next intent (KB-012 deterministic multi-project model)
-**Intent active:** none (intents sạch)
-**Status:** v2.4.0 shipped npm latest + git tag. Sẵn sàng bắt đầu v2.5 intent.
+**Intent active:** v2-5-1-deterministic-multi-project-model
+**Status:** KB-012 started. Đang lock deterministic resolver contract + mutation guard fail-closed.
 **CLI target (working version):** v2.4.0
 **Last shipped:** v2.4.0 (2026-05-08) — kbx rename + KBRoot→SV Factory rename hoàn chỉnh. Published as latest.
 
 ## Current Phase
 
-**Phase:** v2.5 planning — next intent not yet started
+**Phase:** v2.5.1 — ALL PHASES COMPLETE, ready for merge + release
 
-**Done (session 2026-05-08):**
-- Full rename: kb→kbx, @williamduong/kb→@williamduong/kbx, KBRoot→SV Factory (namespace + filenames + content).
-- Self-host maintainer agent: SVFactory.agent.md + svfactory-*.prompt.md.
-- Release tooling fixed: pack-smoke.js + generate-template-changelog.js.
-- 548/548 unit tests pass. release:dry gate pass.
-- v2.4.0 published npm latest. Tag v2.4.0 pushed. Intent v2-4-svfactory-rename archived.
-- focus.md updated.
+**Done (session 2026-05-09):**
+- Phase 1: `src/lib/project-resolver.js` — deterministic fail-closed resolver, all error codes, 0 external deps.
+- Phase 1: `test/lib/project-resolver.test.js` — 19 tests, all 10 TC from plan pass.
+- Phase 3: `src/commands/workspace.js` — `kbx workspace detect/promote/verify`.
+- Phase 3: `test/commands/workspace.test.js` — 10 tests pass.
+- Phase 2: `init.js` — `--project <id>` flag + write `.kbx/project.yaml` + sibling tip.
+- Phase 2: `update.js`, `uninstall.js` — `resolveProject` guard, `--project <id>` flag.
+- Phase 4: `agent-operating-manual.md` — new section `Multi-Project Workspace Rules (v2.5+)`.
+- Phase 4: `kbx.agent.template.md` — mutation policy rule + workspace command surface.
+- 577/577 tests pass. All 7 acceptance criteria met.
 
-**Next action (theo priority backlog):**
-- **KB-012 (P0):** Deterministic multi-project model (context registry, scope routing) — next major feature intent.
-- **KB-016:** 4/5 automated PASS. Manual check #4 (hỏi @kbx trong IDE downstream) pending.
+**Next action:**
+- Merge `intent/v2-5-1-deterministic-multi-project-model` → `main`.
+- Run `kbx intent apply v2-5-1-deterministic-multi-project-model` or manual archive.
+- Bump version to v2.5.1, publish npm.
+- **KB-016:** Manual check #4 (hỏi @kbx trong IDE downstream) pending.
 
 ## Active Blockers
 
