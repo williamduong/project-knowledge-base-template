@@ -1,12 +1,15 @@
 ---
-id: v2-4-kbroot-to-svfactory-rename
+id: v2-4-svfactory-rename
 mode: full
-lifecycle: active
+lifecycle: closed
+close_type: released
+closed_at: 2026-05-08T00:00:00.000Z
+release_version: v2.4.0
 created_at: 2026-05-08T08:42:41.748Z
 focus:
-  current: "Phase 0 — plan locked, ready for implementation"
+  current: "DONE — rename complete, v2.4.0 shipped"
   last_updated: 2026-05-08
-  next_action: "Start Phase 1: package.json + bin rename"
+  next_action: null
 change_type: breaking
 change_scope:
   - package.json

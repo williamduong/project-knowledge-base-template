@@ -78,6 +78,51 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## v2.4.0 - 2026-05-08
+
+<!-- release-meta: from=v2.4.0-rc.2 to=v2.4.0 generated_at=2026-05-08T00:00:00.000Z -->
+
+### Summary
+
+- CLI binary and npm package renamed: `kb` → `kbx`, `@williamduong/kb` → `@williamduong/kbx`. Hard cut — no deprecated alias.
+- Maintainer agent namespace renamed: KBRoot → SV Factory. Self-host entrypoint is now `@SVFactory`, prompts `/svfactory-plan`, `/svfactory-run`, `/svfactory-ask`.
+- Agent definition files renamed: `KBRoot.agent.md` → `SVFactory.agent.md`; `kbroot-*.prompt.md` → `svfactory-*.prompt.md`.
+- Downstream KB Agent template unchanged — user-facing agent remains `@kbx`.
+- Release tooling fixes: `pack-smoke.js` and `generate-template-changelog.js` updated to reference `bin/kbx.js`.
+
+### Change Type
+
+- Major (breaking: binary + package rename requires downstream migration)
+
+### Impact On Existing KBs
+
+- High. Any downstream repo using `@williamduong/kb` or calling `kb` CLI must migrate to `@williamduong/kbx` / `kbx`.
+- Maintainer workspaces using `@KBRoot` must switch to `@SVFactory`.
+
+### Migration Required
+
+- Yes: uninstall `@williamduong/kb`, install `@williamduong/kbx`. Update any scripts invoking `kb` to `kbx`. See migration notes when published.
+
+### Agent Impact
+
+- `@SVFactory` replaces `@KBRoot` as maintainer agent entrypoint.
+- `@kbx` is the downstream KB Agent (unchanged from user perspective).
+- `AGENTS.md` updated: self-host boundary clarified; maintainer surface is `@SVFactory`.
+
+### Files Added / Changed
+
+- `package.json` — name=`@williamduong/kbx`, bin.kbx=`bin/kbx.js`
+- `bin/kbx.js` — renamed from `bin/kb.js`
+- `.github/agents/SVFactory.agent.md` — renamed from `KBRoot.agent.md`, content updated
+- `.github/prompts/svfactory-{plan,run,ask}.prompt.md` — renamed from `kbroot-*.prompt.md`
+- `AGENTS.md` — self-host boundary updated
+- `tools/pack-smoke.js` — fixed to check `bin/kbx.js`
+- `tools/generate-template-changelog.js` — fixed to invoke `bin/kbx.js`
+- `template/.github/agents/kbx.agent.template.md` — version bumped to 2.4.0
+- All `kb-root/*.md` and `knowledge-base/` docs — KBRoot→SV Factory namespace sweep
+
+---
+
 ## v2.3.5 - 2026-05-05
 
 ### Summary

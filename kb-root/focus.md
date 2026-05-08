@@ -7,29 +7,32 @@
 
 ## Active Version Target
 
-**Đang focus:** v2.4 — post-beta, chuẩn bị next intent
+**Đang focus:** v2.5 — next intent (KB-012 deterministic multi-project model)
 **Intent active:** none (intents sạch)
-**Status:** v2.4.0-rc.2 shipped npm beta + git tag. Sẵn sàng bắt đầu intent tiếp theo.
+**Status:** v2.4.0 shipped npm latest + git tag. Sẵn sàng bắt đầu v2.5 intent.
 **CLI target (working version):** v2.4.0
-**Last shipped:** v2.4.0-rc.2 (2026-05-08) — CONSTITUTION.md (5 axioms), A1 separation wired into KB Agent + agent-operating-manual.md
+**Last shipped:** v2.4.0 (2026-05-08) — kbx rename + KBRoot→SV Factory rename hoàn chỉnh. Published as latest.
 
 ## Current Phase
 
-**Phase:** v2.4 — beta released, picking next intent
+**Phase:** v2.5 planning — next intent not yet started
 
 **Done (session 2026-05-08):**
-- Shipped v2.4.0-rc.2 (beta): CONSTITUTION.md, layer classification canonical in foundation.md, soft-first policy P24 in principles.md, CLI specs in specifics.md, A1 separation in kb.agent.template.md + agent-operating-manual.md.
-- Intent `v2-5-cli-first-intent-orchestration` work done, archived manually (intent.md missing, CLI couldn't cancel).
-- Git tag v2.4.0-rc.2 pushed. Smoke test from registry OK. focus.md updated.
+- Full rename: kb→kbx, @williamduong/kb→@williamduong/kbx, KBRoot→SV Factory (namespace + filenames + content).
+- Self-host maintainer agent: SVFactory.agent.md + svfactory-*.prompt.md.
+- Release tooling fixed: pack-smoke.js + generate-template-changelog.js.
+- 548/548 unit tests pass. release:dry gate pass.
+- v2.4.0 published npm latest. Tag v2.4.0 pushed. Intent v2-4-svfactory-rename archived.
+- focus.md updated.
 
 **Next action (theo priority backlog):**
-- **KB-012 (P0):** Deterministic multi-project model (context registry, scope routing) — next major feature intent. Sẵn sàng bắt đầu.
-- **KB-016:** Done — 4/5 automated PASS. Manual check #4 (hỏi @kbx trong IDE downstream) còn pending khi cần.
+- **KB-012 (P0):** Deterministic multi-project model (context registry, scope routing) — next major feature intent.
+- **KB-016:** 4/5 automated PASS. Manual check #4 (hỏi @kbx trong IDE downstream) pending.
 
 ## Active Blockers
 
-- KB-016 closed (4/5 PASS automated). Manual check #4 pending khi có IDE downstream session.
-- Không có blocker cho KB-012.
+- Không có blocker hiện tại.
+- KB-016 manual check #4 pending khi có IDE downstream session.
 
 ## Recent Decisions (last 5)
 
@@ -44,26 +47,28 @@
 | Version | Status | Notes |
 |---|---|---|
 | v2.3.7 | Shipped 2026-05-06 | Hotfix: `intent list` fallback for missing `mode/status` in legacy intents |
-| v2.4.0-rc.2 | Shipped 2026-05-08 beta | CONSTITUTION + A1 separation. latest vẫn là 2.3.7 |
-| v2.4.0 | Planned (GA) | Promote latest sau downstream acceptance test KB-016 |
+| v2.4.0-rc.2 | Shipped 2026-05-08 beta | CONSTITUTION + A1 separation |
+| v2.4.0 | **Shipped 2026-05-08** (latest) | kbx rename + KBRoot→SV Factory rename |
 | v2.5.x | Planned | Deterministic multi-project model (KB-012) + downstream HTML surface (KB-013) |
 | v2.6.x | Planned | Marketplace publish |
 | v3.0 | Long-term | Monorepo split packages/kb-root + packages/kb-agent (KB-015) |
 
 ## Notes / Reminders cho session sau
 
-- `kb` không cài global — dùng `node ./bin/kb.js` trong workspace này hoặc `npx @williamduong/kb` cho downstream.
-- npm dist-tag: `beta → 2.4.0-rc.2`, `latest → 2.3.7`. Không promote latest cho đến khi KB-016 pass.
+- `kbx` không cài global — dùng `node ./bin/kbx.js` trong workspace này hoặc `npx @williamduong/kbx` cho downstream.
+- npm dist-tag: `beta → 2.4.0-rc.2`, `latest → 2.4.0`.
 - CONSTITUTION.md nằm ở gốc repo, maintainer-only, không ship qua npm.
 - focus.md phải được update cuối mỗi session trước khi kết thúc — đây là nguồn truth duy nhất cho bootstrap.
 
 ## Last Session Summary
 
 **Date:** 2026-05-08
-**Task:** Align v2-5 intent với axioms, tạo CONSTITUTION.md, ship v2.4.0-rc.2 beta
+**Task:** Full rename kb→kbx + KBRoot→SV Factory; release v2.4.0 stable
 **Output:**
-- CONSTITUTION.md created (5 axioms + RFC 2119 enforcement header).
-- A1 separation wired vào kb.agent.template.md và agent-operating-manual.md.
-- v2.4.0-rc.2 published npm (tag: beta), git tag pushed, smoke test passed.
-- intent v2-5-cli-first-intent-orchestration archived thủ công.
+- All KBRoot/kbroot tokens eliminated from full tracked repo (content + filenames).
+- Self-host agent surface: SVFactory.agent.md + svfactory-*.prompt.md created.
+- Release tooling fixed (pack-smoke.js, generate-template-changelog.js).
+- 548/548 unit tests pass, release:dry gate pass.
+- v2.4.0 published npm latest. Tag v2.4.0 pushed.
+- Intent v2-4-svfactory-rename archived to _closed/released/.
 - focus.md updated.
