@@ -114,18 +114,31 @@ Exit criteria — all met:
 - ✓ KB Agent contract clearly separates Root-gate behavior from Agent-orchestration behavior.
 - ✓ No prompt text implies the Agent can override a KBRoot deterministic block.
 
-### Phase 3 — Validation and Handoff
+### Phase 3 — Validation and Handoff ✓ DONE
 
-Goals:
-- Build acceptance matrix: Root-side deterministic paths, Agent-side soft-first paths, fallback paths.
-- Verify no command bleeds across layers.
-- Confirm branch-to-main merge readiness (no publish).
-- Create backlog entries for the next two scopes.
+Completed tasks:
+- ✓ Acceptance matrix built (see below).
+- ✓ Layer bleed verified: no command straddles both layers.
+- ✓ Backlog updated: KB-011 → done; KB-015 (monorepo split) added.
+- ✓ Working tree clean. Branch `intent/v2-5-cli-first-orchestration` ready for merge to main. No publish.
 
-Exit criteria:
-- Acceptance matrix covers all commands from Phase 1.
-- Axiom compliance verified for each entry.
-- No push/publish performed.
+**Acceptance Matrix:**
+
+| Command | Layer | Path type | Exit behavior | Axiom verified |
+|---|---|---|---|---|
+| `kb init --project-id` | KBRoot | Deterministic | 0 (written) / 1 (conflict or invalid) | A1 ✓ A2 ✓ A3 ✓ A4 ✓ |
+| `kb doctor --context` | KBRoot | Deterministic | 0 (valid) / 1 (missing or invalid) | A1 ✓ A3 ✓ A4 ✓ A5 ✓ |
+| `kb context show` | KBAgent | Soft (always exit 0) | 0 + warning if missing | A1 ✓ A5 ✓ |
+| `kb context list` | KBAgent | Soft (always exit 0) | 0 + empty array if none | A1 ✓ A5 ✓ |
+| `kb context set <id>` | KBAgent | Soft/Hard hybrid | 0 (switched) / 1 (id not found) | A1 ✓ A5 ✓ |
+| `kb scope <intent-id>` | KBAgent | Soft/Hard hybrid | 0 (scoped) / 1 (intent or project not found) | A1 ✓ A2 ✓ A5 ✓ |
+
+Layer bleed check: no command appears in both layers. All Root-side commands are checkpoint-triggered only (A4 ✓). All Agent-side commands have no LLM path in Root (A3 ✓).
+
+Exit criteria — all met:
+- ✓ Acceptance matrix covers all 6 commands from Phase 1.
+- ✓ Axiom compliance verified for each entry.
+- ✓ No push/publish performed.
 
 ---
 
