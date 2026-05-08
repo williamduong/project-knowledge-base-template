@@ -20,7 +20,7 @@ Target outcomes:
 
 - `kb-root/agent.md` (modified): update bootstrap ending to require active-intent list + load/create-new question.
 - `kb-root/process.md` (modified): Workflow 7 adds mandatory startup intent chooser step.
-- `template/.github/agents/kb.agent.template.md` (modified): MANDATORY Preflight includes session-start intent chooser.
+- `template/.github/agents/kbx.agent.template.md` (modified): MANDATORY Preflight includes session-start intent chooser.
 - `template/12-ai-skills/agent-operating-manual.md` (modified): Minimal Agent Workflow formalizes startup intent chooser.
 - `knowledge-base/intents/_active/v2-3-3-2-agent-intent-start-hardening/intent.md` (modified): scope, signals, decision summary.
 - `knowledge-base/intents/_active/v2-3-3-2-agent-intent-start-hardening/plan.md` (modified): executable plan.
@@ -34,3 +34,4 @@ Target outcomes:
 4. Agent Operating Manual reflects the same rule so behavior is discoverable from governance docs.
 5. Intent workspace documents the three validated issues and fix rationale.
 6. Guidance for onboarding external source context (vipepix-generation) is delivered as a non-destructive playbook.
+

@@ -50,8 +50,8 @@ Canonical shape (JSON-equivalent):
 	"version": "2.6.0",
 	"nodes": {
 		"Intent": {
-			"required": ["id", "title", "status"],
-			"optional": ["risk_level", "scope"]
+			"required": ["id", "title", "lifecycle"],
+			"optional": ["status", "risk_level", "scope"]
 		},
 		"Claim": {
 			"required": ["id", "statement", "confidence"],
@@ -88,11 +88,19 @@ Canonical shape (JSON-equivalent):
 - Inventory source docs with terminology/rules: governance, domain model, architecture, agent manuals
 - Extract candidate terms and normalize naming collisions
 - Classify each candidate: concept | relation | attribute | policy-constraint
+- Build a **Terminology Collision Register** for every ambiguous term with fields:
+	- `canonical_name`
+	- `aliases`
+	- `deprecated_aliases`
+- Add disambiguation guard for `Claim` and `Document` terms:
+	- Distinguish ontology node identifiers (`Claim`, `Document`) from generic prose usage of "claim"/"document"
+	- Mark unresolved cases as ambiguous and block promotion to canonical ontology terms until resolved
 
 ### Phase 1 — Governed glossary
 - Add glossary schema in `template/13-knowledge-graph/` (term_id, canonical_name, definition, aliases, source_refs)
 - Build deterministic glossary validator in CLI/lib layer
 - Reject duplicate canonical names and unresolved aliases
+- Reject ambiguous `Claim`/`Document` mappings when source context does not prove ontology-node intent
 
 ### Phase 2 — Typed ontology schema (no DB)
 - Define `ontology-schema.yaml` with exact objects: `OntologyVersion`, `NodeType`, `EdgeType`, `PropertySpec`
@@ -126,6 +134,7 @@ Validator must fail with exit code 1 for all core violations below:
 5. Unknown properties (not in required or optional)
 6. Ontology version mismatch
 7. Duplicate type names
+8. Ambiguous term mapping from the Terminology Collision Register (including `Claim`/`Document` collisions)
 
 No warning-only mode for foundational ontology integrity checks in v2.6.
 

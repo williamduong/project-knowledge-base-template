@@ -463,14 +463,14 @@ Current gates status:
 
 ## 8.1 Runtime Note (released in npm 2.3.7)
 
-- Issue: `npx @williamduong/kb@latest intent list` crashes with `Cannot read properties of undefined (reading 'padEnd')` on legacy intents lacking `mode/status`.
+- Issue: `npx @williamduong/kbx@latest intent list` crashes with `Cannot read properties of undefined (reading 'padEnd')` on legacy intents lacking `mode/status`.
 - Local fix applied in workspace source: fallback defaults for `status/mode` before table formatting.
 - Verification:
 	- `node ./bin/kb.js intent list` → pass
-	- `npx -y @williamduong/kb@latest intent list` → pass (post-release)
+	- `npx -y @williamduong/kbx@latest intent list` → pass (post-release)
 	- `npm view @williamduong/kb version` → `2.3.7`
-- Release result: patch published as `@williamduong/kb@2.3.7`.
-- Note on command collision: unscoped `npx kb` may resolve a different package outside this repo. Use `npx @williamduong/kb@latest ...` or `npx --package @williamduong/kb@latest kb ...`.
+- Release result: patch published as `@williamduong/kbx@2.3.7`.
+- Note on command collision: unscoped `npx kb` may resolve a different package outside this repo. Use `npx @williamduong/kbx@latest ...` or `npx --package @williamduong/kbx@latest kb ...`.
 
 ## 8.2 Release-mini Checklist (prepared only, not executing now)
 
@@ -495,7 +495,7 @@ Purpose: keep a ready-to-run patch release path for the `intent list` hotfix, wi
 - [x] `npm run test:all`
 - [x] `npm run pack:smoke`
 - [x] `node ./bin/kb.js intent list` (must pass)
-- [x] `npx @williamduong/kb@latest intent list` (expected fail before release)
+- [x] `npx @williamduong/kbx@latest intent list` (expected fail before release)
 
 ### Release execution (manual, when approved)
 - [x] Bump patch version (no auto git tag)
@@ -504,7 +504,7 @@ Purpose: keep a ready-to-run patch release path for the `intent list` hotfix, wi
 - [x] Create git tag after publish success
 
 ### Post-release verification
-- [x] `npx @williamduong/kb@latest intent list` (must pass)
+- [x] `npx @williamduong/kbx@latest intent list` (must pass)
 - [x] Confirm no `padEnd` crash on legacy intent metadata
 - [x] Update this intent runtime note to "released"
 - [x] Add release evidence to changelog/release notes
@@ -537,3 +537,4 @@ Purpose: keep a ready-to-run patch release path for the `intent list` hotfix, wi
 ---
 
 **Status:** `active` (2026-05-06 Gates G1+G2 both PASS) → ready for B1 implementation → B1 completion will trigger transition to `closed` and next intent creation
+

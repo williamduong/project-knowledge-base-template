@@ -164,11 +164,11 @@ An agent reading a `to_be` document must not assume the described feature exists
 
 ### The CLI Backbone
 
-The `kb` CLI provides commands that keep KB state aligned with the codebase:
+The `kbx` CLI provides commands that keep KB state aligned with the codebase:
 
 ```bash
 # Propagates changes from template source to a downstream project KB
-kb sync
+kbx sync
 
 # Updates KB version and patch revision
 kbx update
@@ -236,3 +236,4 @@ An agent must not:
 - Create new top-level folders outside the 16-tier taxonomy without explicit user approval.
 - Downgrade `verification` of another document as a shortcut to avoid cross-checking.
 - Remove documents without confirming no unresolved inbound links exist.
+

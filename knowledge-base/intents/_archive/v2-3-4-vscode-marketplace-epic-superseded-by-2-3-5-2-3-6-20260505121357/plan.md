@@ -38,7 +38,7 @@ type: intent-plan
 
 - [ ] `src/lib/gates.js` — `appendGate`, `listGates`, `markDone`, `markSkipped`, `hasPending`
 - [ ] `src/commands/gates.js` — `kb gates list | done | skip | add`
-- [ ] `kb intent apply` guard — block on pending gates, `--skip-gates` flag
+- [ ] `kbx intent apply` guard — block on pending gates, `--skip-gates` flag
 - [ ] Tests — `test/lib/gates.test.js`, `test/commands/gates.test.js`
 
 ## Phase P1 — Extension Scaffold (v2.4.x)
@@ -62,9 +62,9 @@ type: intent-plan
 
 **Deliverables:**
 
-- [ ] `kb.status` — runs `kb status` and shows output in output channel
-- [ ] `kb.chaos` — runs `kb chaos` and shows score + level in status bar item
-- [ ] `kb.init` — triggers `kb init` with workspace folder as contentRoot
+- [ ] `kb.status` — runs `kbx status` and shows output in output channel
+- [ ] `kb.chaos` — runs `kbx chaos` and shows score + level in status bar item
+- [ ] `kb.init` — triggers `kbx init` with workspace folder as contentRoot
 - [ ] Status bar item: chaos score shown persistently (refreshes on file save or manual trigger)
 - [ ] Extension settings: `kb.contentRoot`, `kb.autoRefreshOnSave`
 
@@ -76,10 +76,10 @@ type: intent-plan
 **Deliverables:**
 
 - [ ] Create new intent `v2-5-chat-participant`
-- [ ] Register `@kb` as VS Code chat participant
-- [ ] Route `@kb <free-form>` → KB Agent prompt pipeline
-- [ ] Route `/kb-plan`, `/kb-run`, `/kb-ask` slash commands
-- [ ] Context injection: pass workspace `contentRoot` + `kb status --json` to every message
+- [ ] Register `@kbx` as VS Code chat participant
+- [ ] Route `@kbx <free-form>` → KB Agent prompt pipeline
+- [ ] Route `/kbx-plan`, `/kbx-run`, `/kbx-ask` slash commands
+- [ ] Context injection: pass workspace `contentRoot` + `kbx status --json` to every message
 
 ## Phase P4 — Template Scaffolding (v2.5.x)
 
@@ -88,7 +88,7 @@ type: intent-plan
 
 **Deliverables:**
 
-- [ ] `kb.initWizard` — command palette wizard that replaces `kb init` CLI flow
+- [ ] `kb.initWizard` — command palette wizard that replaces `kbx init` CLI flow
 - [ ] Persona wizard via VS Code input boxes (replaces terminal prompts)
 - [ ] Progress indicator for template file installation
 
@@ -124,3 +124,4 @@ type: intent-plan
 | D3 | Bundling: call CLI vs share source | open | TBD |
 | D4 | Chat participant API min version | open | TBD |
 | D5 | Separate repo vs monorepo | open | TBD |
+

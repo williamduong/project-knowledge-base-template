@@ -42,7 +42,7 @@ Owner intent for closing the 2.3.x line after `v2.3.1`. All unreleased maintaine
 
 1. **Namespace split release scope**
   - include self-host SV Factory namespace hard split already committed on `main`
-  - preserve downstream `kb init` projection behavior via renamed template source files + `src/commands/init.js`
+  - preserve downstream `kbx init` projection behavior via renamed template source files + `src/commands/init.js`
 2. **Self-host state + governance alignment**
   - sync `knowledge-base/.kb/state.json` version line to `2.3.2`
   - update stale maintainer status docs such as `kb-root/focus.md`
@@ -68,17 +68,18 @@ Owner intent for closing the 2.3.x line after `v2.3.1`. All unreleased maintaine
 - every unreleased change after tag `v2.3.1` is classified as either `ship in 2.3.2` or `defer to >=2.4`
 - supporting notes migration intent `INT-2-3-2-notes-migration-closeout` is closed or explicitly deferred with evidence
 - self-host runtime state and maintainer status docs no longer report stale `2.2.2`
-- validation passes for `version:check`, `test:all`, `pack:smoke`, and downstream `kb init` projection smoke
+- validation passes for `version:check`, `test:all`, `pack:smoke`, and downstream `kbx init` projection smoke
 - `v2.3.2` release intent is ready to publish with no unresolved `v2-3-*` ambiguity
 
 ## Risks
 
 - state sync work may regenerate runtime artifacts under `knowledge-base/.kb/`; keep release commits focused and exclude noise where possible
-- `kb uninstall --force` deletes tracked `.github/hooks/revision-state-guard.json` (observed bug 2026-05-04); avoid uninstall during closeout validation
+- `kbx uninstall --force` deletes tracked `.github/hooks/revision-state-guard.json` (observed bug 2026-05-04); avoid uninstall during closeout validation
 - old `v2-3-1` release intent may create false-open signal until explicitly archived or superseded
 
 ## Staged Files
 
 - `plan.md` (owner closure plan for `2.3.2`)
 - `impact.md` (owner closure impact for `2.3.2`)
+
 

@@ -255,7 +255,7 @@ The KB Agent template marks three trigger points where grounding self-checks app
 
 ## Intent Start Gates (v2.3.4)
 
-Before creating any new intent or starting work on a new version, the agent MUST run two gates in order. These gates apply to both `@kbx` (KB Agent) and `@SVFactory` (maintainer agent).
+Before creating any new intent or starting work on a new version, the agent MUST run two gates in order. These gates apply to both `@kbx` (KB Agent) and `@sfact` (SVFactory maintainer agent).
 
 ### Gate 1 — Active Intent Check
 

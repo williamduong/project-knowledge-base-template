@@ -8,9 +8,9 @@ change_scope:
 	- package.json
 	- template/template.json
 	- template/.github/agents/kb.agent.md
-	- template/.github/prompts/kb-ask.prompt.md
-	- template/.github/prompts/kb-plan.prompt.md
-	- template/.github/prompts/kb-run.prompt.md
+	- template/.github/prompts/kbx-ask.prompt.md
+	- template/.github/prompts/kbx-plan.prompt.md
+	- template/.github/prompts/kbx-run.prompt.md
 impact_signals:
 	- release-readiness
 	- publish-version-guard
@@ -43,4 +43,5 @@ Publish patch release `2.3.1` that includes governance+tooling hardening after `
 
 > List files staged in `proposed-changes/` here as you add them.
 > Mirror path: `proposed-changes/<path-relative-to-kb-root>`
+
 

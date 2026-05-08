@@ -37,7 +37,7 @@ Term: intent
 - Traceable unit of work in KB lifecycle operations.
 - Any KB/source mutation must be associated with an intent trace.
 - Read-only operations are not mutations and do not require intent creation.
-- ID format: `INT-{seq}` per numbering policy.
+- ID format: lowercase kebab-case runtime IDs (commonly version-scoped, e.g. `v2-6-kb-ontology-foundation`).
 
 Term: intent-mode
 - Runtime values: `quick`, `full`.
@@ -213,11 +213,11 @@ Term: read / Q&A
 - Does not create mutation trace requirements.
 
 Term: slash-mode
-- Explicit prompt-driven mode via `/kb-plan`, `/kb-run`, `/kb-ask`.
+- Explicit prompt-driven mode via `/kbx-plan`, `/kbx-run`, `/kbx-ask`.
 - For mutation work, slash workflows still require intent-governed traceability.
 
 Term: at-kb-mode
-- Default conversational mode via `@kb` contract.
+- Default conversational mode via `@kbx` contract.
 - Mutation requests route through intent-first behavior.
 - Read requests route through Q&A pipeline.
 

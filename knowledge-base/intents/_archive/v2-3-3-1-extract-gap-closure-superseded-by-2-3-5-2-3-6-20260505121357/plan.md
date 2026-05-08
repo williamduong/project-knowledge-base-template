@@ -144,8 +144,8 @@ Planned modified files:
 - `src/commands/plugin.js` - plugin command group
 - `src/commands/doctor.js` - plugin health checks integration
 - `README.md` - plugin architecture, boundaries, extension point guide
-- `template/.github/agents/kb.agent.template.md` - prompt pattern for pluginability requests
-- `template/.github/prompts/kb-run.prompt.template.md` - run-flow alignment for plugin lifecycle
+- `template/.github/agents/kbx.agent.template.md` - prompt pattern for pluginability requests
+- `template/.github/prompts/kbx-run.prompt.template.md` - run-flow alignment for plugin lifecycle
 - `template/12-ai-skills/agent-operating-manual.md` - plugin governance and safety notes
 - `package.json` - no new parser dependencies added
 
@@ -197,3 +197,5 @@ Intent done when all criteria below are true:
 	Mitigation: confidence threshold + dry-run/JSON explanation.
 - Risk: scope creep toward roadmap work.
 	Mitigation: hard boundary in plan and acceptance criteria.
+
+

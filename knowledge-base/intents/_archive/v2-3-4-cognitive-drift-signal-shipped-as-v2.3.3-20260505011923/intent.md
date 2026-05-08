@@ -7,12 +7,12 @@ change_type: feature
 change_scope:
   - src/commands/chaos.js
   - template/12-ai-skills/agent-operating-manual.md
-  - template/.github/agents/kb.agent.template.md
+  - template/.github/agents/kbx.agent.template.md
 impact_signals:
   - chaos-formula-bump
   - agent-behavior
   - additive
-decision_summary: "Add cognitive drift dimension to kb chaos command — measures agreement pressure across intent history, not just technical debt."
+decision_summary: "Add cognitive drift dimension to kbx chaos command — measures agreement pressure across intent history, not just technical debt."
 review_after: 2026-05-31
 lesson_id: null
 lifecycle_state: closed
@@ -29,7 +29,7 @@ absorbs: v2-3-3-reflective-pulse-protocol
 
 ## Summary
 
-Extend `kb chaos` with a cognitive drift section measuring how much the agent has been following unverified direction across recent intents. Three new signals: `drift-pressure`, `agreement-density`, `grounding-gap`. These feed into total chaos score with low weight. Formula string bumped from `subtractive-v1` to `subtractive-v2`.
+Extend `kbx chaos` with a cognitive drift section measuring how much the agent has been following unverified direction across recent intents. Three new signals: `drift-pressure`, `agreement-density`, `grounding-gap`. These feed into total chaos score with low weight. Formula string bumped from `subtractive-v1` to `subtractive-v2`.
 
 Absorbs v2.3.3 (Reflective Pulse Protocol): agent trigger points T1/T2/T3 are folded into this intent as a doc-only workstream. `pulse-log.jsonl` remains a future enrichment path; all three signals have graceful degrade paths that work without it.
 
@@ -60,3 +60,4 @@ See `plan.md`.
 ## Impact
 
 See `impact.md`.
+

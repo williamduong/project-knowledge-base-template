@@ -7,7 +7,7 @@ change_type: governance
 change_scope:
 	- kb-root/agent.md
 	- kb-root/process.md
-	- template/.github/agents/kb.agent.template.md
+	- template/.github/agents/kbx.agent.template.md
 	- template/12-ai-skills/agent-operating-manual.md
 	- knowledge-base/intents/_active/v2-3-3-2-agent-intent-start-hardening/
 impact_signals:
@@ -53,6 +53,7 @@ Fix validated contract gaps before v2.3.4 feature development:
 
 - `kb-root/agent.md` (modified) — bootstrapping now requires startup intent chooser.
 - `kb-root/process.md` (modified) — Workflow 7 adds mandatory resume/create-new choice.
-- `template/.github/agents/kb.agent.template.md` (modified) — preflight adds session-start intent chooser.
+- `template/.github/agents/kbx.agent.template.md` (modified) — preflight adds session-start intent chooser.
 - `template/12-ai-skills/agent-operating-manual.md` (modified) — manual formalizes startup chooser contract.
+
 

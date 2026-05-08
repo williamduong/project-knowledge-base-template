@@ -8,7 +8,7 @@ change_scope:
   - kb-root/principles.md
   - kb-root/process.md
   - template/12-ai-skills/agent-operating-manual.md
-  - template/.github/agents/kb.agent.template.md
+  - template/.github/agents/kbx.agent.template.md
   - knowledge-base/14-templates/
   - src/commands/gates.js
   - src/lib/gates.js
@@ -77,7 +77,7 @@ or asking the AI again.
 | D2 | Gate ID: `HG-NNN` (sequential per intent) |
 | D3 | Format: Markdown blocks, `## HG-NNN · <status>` as section header |
 | D4 | CLI surface: `kb gates list`, `kb gates done`, `kb gates skip` (code in v2.4.x) |
-| D5 | `kb intent apply` blocks if any gate is `pending`; override via `--skip-gates` + reason |
+| D5 | `kbx intent apply` blocks if any gate is `pending`; override via `--skip-gates` + reason |
 | D6 | AI creates gates via `kb gates add` command or by directly appending to `gates.md` |
 
 ## Scope
@@ -87,12 +87,12 @@ or asking the AI again.
 - `kb-root/process.md`: W9 human-gate workflow
 - `template/12-ai-skills/agent-operating-manual.md`: Human-Gate Protocol section
 - `knowledge-base/14-templates/gates.md.template`: canonical gate schema
-- Update `template/.github/agents/kb.agent.template.md`: reference gate behavior
+- Update `template/.github/agents/kbx.agent.template.md`: reference gate behavior
 
 **CLI code (v2.4.x):**
 - `src/lib/gates.js`: `appendGate()`, `listGates()`, `markGateDone()`, `markGateSkipped()`, `hasPendingGates()`
 - `src/commands/gates.js`: `kb gates list | done | skip | add`
-- Integration with `kb intent apply`: block on pending gates
+- Integration with `kbx intent apply`: block on pending gates
 
 ## Acceptance Criteria
 
@@ -102,3 +102,4 @@ or asking the AI again.
 4. W9 in `process.md` gives the step-by-step workflow for creating, updating, and resolving gates.
 5. CLI commands listed in agent-operating-manual.md as forward-declared (pending code).
 6. `plan.md` in this intent has a clear phase split: P0 docs now / P1 CLI code in v2.4.x.
+

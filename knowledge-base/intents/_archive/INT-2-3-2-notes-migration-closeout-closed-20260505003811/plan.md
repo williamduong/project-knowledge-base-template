@@ -66,5 +66,7 @@ Policy source intent: `v2-4-intent-first-version-governance`.
 1. Every file currently under `notes/` is classified into exactly one of: historical, forward intent, scratch, or utility-script.
 2. Four forward intents (`v2.4`, `v2.5`, `v2.6`, `v3.0`) exist under `_active` with initial `intent.md` summaries.
 3. `notes/` no longer contains forward roadmap files for v2.4+ and v3.0.
-4. `kb intent status` returns clean metadata for new intents (no malformed frontmatter).
+4. `kbx intent status` returns clean metadata for new intents (no malformed frontmatter).
 5. This intent does not own the version bump; any release action is tracked only under `v2-3-2-closure-pass`.
+
+

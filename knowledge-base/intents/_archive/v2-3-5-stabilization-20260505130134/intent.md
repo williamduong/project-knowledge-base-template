@@ -15,12 +15,12 @@ impact_signals:
   - intent-list-ux
   - agent-handoff-routing
 decision_summary: >
-  (1) Add a strict version progression guard to kb intent create so new versioned
+  (1) Add a strict version progression guard to kbx intent create so new versioned
   intent IDs cannot regress or stay equal to the highest currently active
-  versioned intent line. (2) Enhance kb intent list to display status/mode/staged_count
+  versioned intent line. (2) Enhance kbx intent list to display status/mode/staged_count
   as a table and page long output through less/more (press q to exit).
   (3) Add mandatory Handoff table to agent output contract so pending tasks are
-  explicitly routed by owner (HUMAN / CLI / @SVFactory / @kb).
+  explicitly routed by owner (HUMAN / CLI / @sfact / @kbx).
 review_after: 2026-05-19
 # v1.8-ready reserve fields (do not remove):
 lesson_id: null
@@ -36,7 +36,7 @@ promote_decision_ref: null
 
 Stabilization bucket for already-coded work that should ship in the 2.3.5 line.
 
-This slice adds a version monotonicity guard to `kb intent create`:
+This slice adds a version monotonicity guard to `kbx intent create`:
 - Parse version prefix from intent IDs in form `v<major>-<minor>-...`.
 - Compare against active versioned intents.
 - Reject create when requested version is not strictly greater.
@@ -55,4 +55,5 @@ This slice adds a version monotonicity guard to `kb intent create`:
 - `test/commands/intent.test.js` (modified) — unit tests for parser/comparator/guard behavior.
 - `knowledge-base/12-ai-skills/agent-operating-manual.md` (modified) — add Handoff table to Output Contract.
 - `kb-root/agent.md` (modified) — add Handoff rule to output style section (section 7).
+
 

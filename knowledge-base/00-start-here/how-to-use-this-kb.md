@@ -41,7 +41,7 @@ This template ecosystem has three separate layers:
 
 1. Template source layer: `template/` (what is shipped to downstream users)
 2. Local maintainer layer: `kb-root/` (internal SV Factory notes, committed in this repo but excluded from npm `files` whitelist)
-3. Installed runtime KB layer: `<contentRoot>/...` created by `kb init` in a target repository
+3. Installed runtime KB layer: `<contentRoot>/...` created by `kbx init` in a target repository
 
 Where `<contentRoot>` resolves to:
 
@@ -53,7 +53,7 @@ Runtime commands must operate on `<contentRoot>`, not on `template/`.
 ## Focus Ownership Model
 
 - Maintainer internal focus (authoring this template repo): `kb-root/focus.md` (committed, not shipped)
-- Project runtime focus (downstream repo execution): `<contentRoot>/.kb/runtime-plan.md` + `kb intent` workspaces
+- Project runtime focus (downstream repo execution): `<contentRoot>/.kb/runtime-plan.md` + `kbx intent` workspaces
 
 If both exist, runtime focus is the source of truth for project execution status. Local SV Factory focus is only for maintainer coordination.
 
@@ -111,141 +111,141 @@ For canonical terminology and examples, read [terminology-guard.md](terminology-
 
 Default user workflow is centered on four commands:
 
-- `kb init`
-- `kb update`
-- `kb maintain`
-- `kb uninstall`
+- `kbx init`
+- `kbx update`
+- `kbx maintain`
+- `kbx uninstall`
 
-Power-user commands are still available via `kb help --advanced`.
+Power-user commands are still available via `kbx help --advanced`.
 
 **Step 1: Initialize KB in your workspace**
 
-> **Two-step bootstrap.** The `@kb` agent and the `/kb-plan` + `/kb-run` chat prompts are **per-project files**. They are written into your repo only by `kb init`. Until then, your IDE chat does not know about `@kb`. Order is always: install (or `npx`) the CLI → `kb init` inside the target repo → chat with `@kb` / `/kb-run`.
+> **Two-step bootstrap.** The `@kbx` agent and the `/kbx-plan` + `/kbx-run` chat prompts are **per-project files**. They are written into your repo only by `kbx init`. Until then, your IDE chat does not know about `@kbx`. Order is always: install (or `npx`) the CLI → `kbx init` inside the target repo → chat with `@kbx` / `/kbx-run`.
 
 ```bash
 # Fastest path: one-liner with npx, no global install
 cd <your-repo>
-npx @williamduong/kb@latest init --yes
+npx @williamduong/kbx@latest init --yes
 
 # OR — global install if you'll use `kb` often
-npm install -g @williamduong/kb@latest
+npm install -g @williamduong/kbx@latest
 cd <your-repo>
-kb init
+kbx init
 # Mode is auto-detected: private-git (if .git exists) or tracked.
-# If no git repo exists, kb init falls back to tracked mode with a warning.
+# If no git repo exists, kbx init falls back to tracked mode with a warning.
 ```
 
-After `kb init` completes, you'll see:
+After `kbx init` completes, you'll see:
 - KB template copied to your repo (in `.git/project-kb/` or `knowledge-base/`)
-- `.github/agents/kb.agent.md` — master KB agent (Q&A oracle, structural guardian)
-- `.github/prompts/kb-plan.prompt.md` — `/kb-plan` analyzer
-- `.github/prompts/kb-run.prompt.md` — `/kb-run` step executor (auto-inits if needed)
+- `.github/agents/kbx.agent.md` — master KB agent (Q&A oracle, structural guardian)
+- `.github/prompts/kbx-plan.prompt.md` — `/kbx-plan` analyzer
+- `.github/prompts/kbx-run.prompt.md` — `/kbx-run` step executor (auto-inits if needed)
 - Handoff summary printed to terminal
 
-**Step 2: Drive the KB from chat (`/kb-run`)**
+**Step 2: Drive the KB from chat (`/kbx-run`)**
 
 Open Copilot Chat (VS Code, Cursor, Claude, or any agent that resolves `AGENTS.md`) and run:
 
 ```
-/kb-plan      Analyze the workspace and write a runtime plan
-/kb-run       Execute the next pending step (auto-inits if state is missing)
+/kbx-plan      Analyze the workspace and write a runtime plan
+/kbx-run       Execute the next pending step (auto-inits if state is missing)
 ```
 
-`/kb-run` is resumable — close the IDE, come back later, run again to continue from `current_step`.
+`/kbx-run` is resumable — close the IDE, come back later, run again to continue from `current_step`.
 
 You can also ask the master agent directly:
 
 ```
-@kb What database does this project use?
-@kb What are the main components?
-@kb How do I add an extension/plugin?
-@kb audit metadata
-@kb status
+@kbx What database does this project use?
+@kbx What are the main components?
+@kbx How do I add an extension/plugin?
+@kbx audit metadata
+@kbx status
 ```
 
-The `@kb` master agent uses the routing table at [code-qa-index.md](code-qa-index.md) to load only the relevant docs before answering, then falls back to bounded source-code search if KB evidence is incomplete.
+The `@kbx` master agent uses the routing table at [code-qa-index.md](code-qa-index.md) to load only the relevant docs before answering, then falls back to bounded source-code search if KB evidence is incomplete.
 
-Reference: [.github/agents/kb.agent.md](.github/agents/kb.agent.md) for the full agent contract (3 roles, governance, output format).
+Reference: [.github/agents/kbx.agent.md](.github/agents/kbx.agent.md) for the full agent contract (3 roles, governance, output format).
 
 **Step 3: Review and continue**
 
 After each step:
 - Review the plan file at `.kb/runtime-plan.md`
 - Fill in high-priority items (marked P0 in [strategic-backlog.md](strategic-backlog.md))
-- Run `/kb-run` again to continue, or `kb maintain` from CLI for the same pipeline
+- Run `/kbx-run` again to continue, or `kbx maintain` from CLI for the same pipeline
 
 ### Maintenance: Keep KB in Sync Over Time
 
 Either:
 
 ```bash
-kb maintain          # full pipeline (sync + doc:gate + test --all + doctor --strict)
-kb maintain --fast   # quick mode (sample test, non-strict doctor)
+kbx maintain          # full pipeline (sync + doc:gate + test --all + doctor --strict)
+kbx maintain --fast   # quick mode (sample test, non-strict doctor)
 ```
 
 or chat-driven:
 
 ```
-/kb-run              # next step in the plan; if drift detected, plan adds a maintain step
+/kbx-run              # next step in the plan; if drift detected, plan adds a maintain step
 ```
 
 ### Troubleshooting: partial or corrupted KB state
 
-If `knowledge-base/.kb/state.json` is missing or invalid but other KB artifacts (`knowledge-base/`, `.github/agents/kb.agent.md`, `.github/prompts/kb-*.prompt.md`) still exist, `/kb-run` and `@kb` will **HALT and refuse to auto-run `kb init`**. This is intentional — re-running `init` would overwrite your existing KB content.
+If `knowledge-base/.kb/state.json` is missing or invalid but other KB artifacts (`knowledge-base/`, `.github/agents/kbx.agent.md`, `.github/prompts/kbx-*.prompt.md`) still exist, `/kbx-run` and `@kbx` will **HALT and refuse to auto-run `kbx init`**. This is intentional — re-running `init` would overwrite your existing KB content.
 
 Recover in this order:
 
-1. `kb doctor` — diagnose environment.
-2. `kb status` — see what state can still be read.
+1. `kbx doctor` — diagnose environment.
+2. `kbx status` — see what state can still be read.
 3. Restore from git if the state file was deleted by accident:
    ```bash
    git checkout HEAD -- knowledge-base/.kb/state.json
    ```
 4. Only if you intentionally want a clean reinstall:
    ```bash
-   kb uninstall --force
-   kb init --yes
+   kbx uninstall --force
+   kbx init --yes
    ```
 
-After the state is healthy, re-run `/kb-run`.
+After the state is healthy, re-run `/kbx-run`.
 
 ### Advanced: CLI Commands for Custom Workflows
 
 If you prefer CLI-driven workflows:
 
 ```bash
-kb help                    # show basic commands
-kb help --advanced         # show all advanced commands
-kb maintain                # full maintenance pipeline
-kb maintain --fast         # quicker checks for large projects
-kb bootstrap              # scan code, generate stubs
-kb index                  # build KB summary report
-kb questions --batch 5    # generate intake Q&A
-kb normalize-state        # assign kb_state to unset docs
-kb doctor                 # publish-readiness checks
-kb sync                   # detect KB drift from source
-kb update                 # refresh KB version state
+kbx help                    # show basic commands
+kbx help --advanced         # show all advanced commands
+kbx maintain                # full maintenance pipeline
+kbx maintain --fast         # quicker checks for large projects
+kbx bootstrap              # scan code, generate stubs
+kbx index                  # build KB summary report
+kbx questions --batch 5    # generate intake Q&A
+kbx normalize-state        # assign kb_state to unset docs
+kbx doctor                 # publish-readiness checks
+kbx sync                   # detect KB drift from source
+kbx update                 # refresh KB version state
 ```
 
 ### Release Pipeline: Declarative Release Automation (v1.6)
 
-Use `kb release` to manage structured, auditable release workflows defined as YAML pipelines.
+Use `kbx release` to manage structured, auditable release workflows defined as YAML pipelines.
 
 **Quick workflow:**
 
 ```bash
 # Step 1: Initialize your pipeline (once per project)
-kb release init-pipeline --template=npm-package
+kbx release init-pipeline --template=npm-package
 # Options: npm-package | docs-only | custom
 
 # Step 2: Preview what the pipeline will do
-kb release plan --from=v1.5.0 --bump=patch
+kbx release plan --from=v1.5.0 --bump=patch
 
-# Step 3: Execute (requires clean kb status)
-kb release run --from=v1.5.0 --bump=patch
+# Step 3: Execute (requires clean kbx status)
+kbx release run --from=v1.5.0 --bump=patch
 
 # Dry-run mode (no destructive side-effects)
-kb release run --from=v1.5.0 --bump=patch --dry-run
+kbx release run --from=v1.5.0 --bump=patch --dry-run
 ```
 
 Pipeline YAML lives at `.kb/release-pipeline.yaml` inside your KB content root.
@@ -261,30 +261,30 @@ For governance rules (storage path, security scope, hook behavior), see [`../15-
 
 ### Intent Workflow: Structured KB Changes (v1.7)
 
-Use `kb intent` to manage KB changes as structured, traceable workspaces. Every meaningful change gets an intent workspace that captures origin, staged files, apply record, and archived evidence for future learning loops.
+Use `kbx intent` to manage KB changes as structured, traceable workspaces. Every meaningful change gets an intent workspace that captures origin, staged files, apply record, and archived evidence for future learning loops.
 
 **Quick workflow:**
 
 ```bash
 # Create an intent workspace (ID suggested from git branch)
-kb intent create --mode=quick --change-type=docs
+kbx intent create --mode=quick --change-type=docs
 # Full mode (adds plan.md + impact.md)
-kb intent create --mode=full --change-type=feature
+kbx intent create --mode=full --change-type=feature
 
 # Check status of a specific intent or all active intents
-kb intent status <id>
-kb intent status
+kbx intent status <id>
+kbx intent status
 
 # List all active intent IDs
-kb intent list
+kbx intent list
 
 # Apply: write staged files to KB core, archive workspace
-kb intent apply <id> --yes
+kbx intent apply <id> --yes
 # Apply then run release pipeline in one command
-kb intent apply <id> --release --yes
+kbx intent apply <id> --release --yes
 
 # Discard intent (irreversible)
-kb intent cancel <id>
+kbx intent cancel <id>
 ```
 
 **Staged files live at:** `<contentRoot>/intents/_active/<id>/proposed-changes/<relative-from-kb-root>`
@@ -301,7 +301,7 @@ Mode examples:
 - Staged files are written to the KB content root.
 - An `apply-record.json` is written with evidence fields (change_scope, impact_signals, decision_summary).
 - The intent workspace is moved to `knowledge-base/intents/_archive/<id>-<timestamp>/`.
-- Applied intents are recorded in the release ledger entry (`intents_applied[]`) when `kb release tag` is run.
+- Applied intents are recorded in the release ledger entry (`intents_applied[]`) when `kbx release tag` is run.
 
 For Recorder role responsibilities and doctrine, see [`../15-governance/self-evolution-doctrine.md`](../15-governance/self-evolution-doctrine.md).
 
@@ -317,3 +317,4 @@ For Recorder role responsibilities and doctrine, see [`../15-governance/self-evo
 - Evidence section updated
 - Related links and index references updated
 - No project-specific secrets or credentials
+

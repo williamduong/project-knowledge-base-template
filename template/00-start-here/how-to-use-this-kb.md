@@ -239,7 +239,7 @@ or chat-driven:
 
 ### Troubleshooting: partial or corrupted KB state
 
-If `knowledge-base/.kb/state.json` is missing or invalid but other KB artifacts (`knowledge-base/`, `.github/agents/kbx.agent.md`, `.github/prompts/kb-*.prompt.md`) still exist, `/kbx-run` and `@kbx` will **HALT and refuse to auto-run `kbx init`**. This is intentional — re-running `init` would overwrite your existing KB content.
+If `knowledge-base/.kb/state.json` is missing or invalid but other KB artifacts (`knowledge-base/`, `.github/agents/kbx.agent.md`, `.github/prompts/kbx-*.prompt.md`) still exist, `/kbx-run` and `@kbx` will **HALT and refuse to auto-run `kbx init`**. This is intentional — re-running `init` would overwrite your existing KB content.
 
 Recover in this order:
 
@@ -271,7 +271,7 @@ kbx index                  # build KB summary report
 kbx questions --batch 5    # generate intake Q&A
 kbx normalize-state        # assign kb_state to unset docs
 kbx doctor                 # publish-readiness checks
-kb sync                   # detect KB drift from source
+kbx sync                   # detect KB drift from source
 kbx update                 # refresh KB version state
 ```
 
@@ -365,3 +365,4 @@ For Recorder role responsibilities and doctrine, see [`../15-governance/self-evo
 - Evidence section updated
 - Related links and index references updated
 - No project-specific secrets or credentials
+

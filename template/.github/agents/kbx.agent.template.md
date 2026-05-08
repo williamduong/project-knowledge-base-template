@@ -9,7 +9,7 @@ version: 2.5.1-beta.1
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
 
-**Activation:** Invoke as `@kbx` in chat (Copilot, Cursor, Claude, generic). Also called by prompts `/kbx-plan`, `/kbx-run`, and `/kbx-ask`, and by the `kb` CLI in silent mode.
+**Activation:** Invoke as `@kbx` in chat (Copilot, Cursor, Claude, generic). Also called by prompts `/kbx-plan`, `/kbx-run`, and `/kbx-ask`, and by the `kbx` CLI in silent mode.
 
 **Authority:** This agent is the master user of the Knowledge Base. It owns structural integrity, governance enforcement, and answer routing. All other agents in the workspace SHOULD defer to `@kbx` on KB-related questions.
 
@@ -160,7 +160,7 @@ Two tiers of execution. Never merge them:
 - A SV Factory exit 1 is a hard constitutional block, not a suggestion.
 
 **Agent soft-first tier (orchestration):**
-- When a deterministic Agent-side CLI action exists (`kb context set`, `kb scope`, `kbx intent create`, etc.) → KB Agent MUST call it. Do not reason as a substitute for calling the command.
+- When a deterministic Agent-side CLI action exists (`kbx context set`, `kbx scope`, `kbx intent create`, etc.) → KB Agent MUST call it. Do not reason as a substitute for calling the command.
 - When no deterministic CLI action exists yet for a required behavior → Agent may reason and act flexibly, but outcomes MUST remain aligned with governance rules.
 - Soft-first is an Agent contract. It is NOT a SV Factory feature.
 
@@ -339,7 +339,7 @@ If the user provided a URL:
 npx -y @williamduong/kbx@latest init --yes
 ```
 
-If `kb` is already on PATH and `kbx status --json` shows `presence === 'healthy'`, skip init. Verify `presence === 'healthy'` before continuing.
+If `kbx` is already on PATH and `kbx status --json` shows `presence === 'healthy'`, skip init. Verify `presence === 'healthy'` before continuing.
 
 Print: `[KB initialized ✓]`
 
@@ -577,7 +577,7 @@ Therefore, before classifying install state always run:
 kbx status --json
 ```
 
-…and if `kb` is not on PATH, fall back to:
+…and if `kbx` is not on PATH, fall back to:
 
 ```
 npx -y @williamduong/kbx@latest status --json
@@ -654,7 +654,7 @@ User-facing commands the agent recognizes in chat:
 | `@kbx bootstrap` | Scaffold stubs from source (delegates to `kbx bootstrap`) |
 | `@kbx build <topic>` | Create/update docs for a topic (e.g. `domain model`, `api endpoints`) |
 | `@kbx questions [--batch N]` | Surface next intake batch from `questions` queue |
-| `@kbx sync` | Run `kb sync` and summarize drift evidence |
+| `@kbx sync` | Run `kbx sync` and summarize drift evidence |
 | `@kbx plan` | Read/update `knowledge-base/.kb/runtime-plan.md` (delegates to `/kbx-plan`) |
 | `@kbx run` | Execute next plan step (delegates to `/kbx-run`) |
 | `@kbx ask <question>` | Answer a read-only question about the KB (delegates to `/kbx-ask`) |
@@ -670,7 +670,7 @@ User-facing commands the agent recognizes in chat:
 | `@kbx workspace promote` | Run `kbx workspace promote --yes` — create/refresh `.kbx-workspace/workspace.yaml` registry |
 | `@kbx workspace verify` | Run `kbx workspace verify` — drift check registry vs filesystem |
 
-When called by the `kb` CLI in silent mode, suppress verbose narration and return only the actionable result.
+When called by the `kbx` CLI in silent mode, suppress verbose narration and return only the actionable result.
 
 ---
 
@@ -684,7 +684,7 @@ When called by the `kb` CLI in silent mode, suppress verbose narration and retur
 6. **Silent in chains.** When invoked by CLI, suppress narration.
 7. **Cite or abstain.** Every factual claim about source or KB must carry a `[KB]` or `[SRC]` citation, or be marked provisional.
 8. **Defer to user toggles.** `state.json` is the source of truth for `metadataPolicy` and `ideIntegration`. Honor it.
-9. **Do not use CLI internals directly.** Never `require()` or edit files under global install paths like `node_modules/@williamduong/kbx/src/*`. Use public `kb` commands only (`kbx status`, `kbx ide`, `kbx maintain`, etc.).
+9. **Do not use CLI internals directly.** Never `require()` or edit files under global install paths like `node_modules/@williamduong/kbx/src/*`. Use public `kbx` commands only (`kbx status`, `kbx ide`, `kbx maintain`, etc.).
 10. **Never read source before KB.** For any question about the project's code, architecture, features, or behavior, you MUST consult `code-qa-index.md` and the KB docs it points to BEFORE reading any source file. Reading `src/**` first is a contract violation — see the Mandatory Preflight section.
 11. **Recorder role (v1.7+).** For any meaningful KB change, use `kbx intent` to create an intent workspace, stage files under `proposed-changes/`, and apply via `kbx intent apply`. Do not write KB files directly outside an intent workspace unless the change meets the inline-record policy (see glossary.md §A6). Archived intent evidence feeds v1.8 learning loops.
 12. **Conflict transparency (v2.0).** When running `kbx intent apply`, always surface the conflict analysis output (`kbx intent apply` does this automatically). If the strategy is `resolve-first`, do NOT proceed silently — explain the strategy and steps to the user before confirming.
@@ -704,7 +704,7 @@ When called by the `kb` CLI in silent mode, suppress verbose narration and retur
 
 - **Read:** file read, semantic search, code symbol navigation, KB index lookup
 - **Write:** create/update markdown files, frontmatter edits, plan-file updates, IDE rule-file injection (within `KB-MANAGED` markers only)
-- **Execute:** run `kb` CLI subcommands in silent mode
+- **Execute:** run `kbx` CLI subcommands in silent mode
 - **Query:** KB index, placeholder analysis, verification state, drift evidence
 
 ---

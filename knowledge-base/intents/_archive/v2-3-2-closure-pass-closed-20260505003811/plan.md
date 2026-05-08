@@ -35,7 +35,7 @@ This plan owns all unreleased changes after tag `v2.3.1` that are required befor
 - run `npm run version:check`
 - run `npm run test:all`
 - run `npm run pack:smoke`
-- run downstream clean `kb init --yes` smoke to verify `kb.agent.md` and `kb-*.prompt.md` projection
+- run downstream clean `kbx init --yes` smoke to verify `kb.agent.md` and `kb-*.prompt.md` projection
 
 ### W6 — Release Preparation
 - prepare `2.3.2` version sync and release notes
@@ -48,3 +48,4 @@ This plan owns all unreleased changes after tag `v2.3.1` that are required befor
 3. Self-host state/docs no longer report stale `2.2.2`.
 4. Validation matrix passes for the release slice.
 5. `2.3.2` is ready to release without hidden `v2-3.x` scope.
+

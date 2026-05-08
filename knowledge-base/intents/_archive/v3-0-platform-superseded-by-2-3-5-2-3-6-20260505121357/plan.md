@@ -27,3 +27,4 @@ Merge fragmented v3.0 planning notes into one intent-owned workspace to reduce r
 1. v3.0 platform and ecosystem scopes are represented in this intent.
 2. Future roadmap edits happen in this workspace, not notes.
 3. Migration intent records this workspace as the canonical v3.0 owner.
+

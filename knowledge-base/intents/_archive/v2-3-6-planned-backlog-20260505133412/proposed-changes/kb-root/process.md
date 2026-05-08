@@ -111,7 +111,7 @@ npm publish --access public
 **Post-release:**
 
 - Update `focus.md`: ghi version vừa ship + clear active blocker
-- Smoke test downstream: `npx @williamduong/kb@latest init` trên temp dir
+- Smoke test downstream: `npx @williamduong/kbx@latest init` trên temp dir
 
 ## Workflow 5: Bug Fix Patch
 
@@ -161,7 +161,7 @@ npm publish --access public
    - Active blocker (nếu có)
    - Next action recommended
 4. **Startup intent chooser (bắt buộc)**:
-   - Chạy `kb intent list` + đọc summary từng intent active
+   - Chạy `kbx intent list` + đọc summary từng intent active
    - In danh sách intent để user chọn: resume intent nào hoặc tạo intent mới
 5. **Session intent lock (bắt buộc)**:
    - Gán `session_intent_id` theo intent user đã chọn ở step 4
@@ -197,7 +197,7 @@ npm publish --access public
 
 ### Gate 2 — Chaos Estimate (P19)
 
-1. Chạy `kb chaos --json`, đọc `score` + `level` hiện tại.
+1. Chạy `kbx chaos --json`, đọc `score` + `level` hiện tại.
 2. Ước tính `chaos_delta` cho intent sắp tạo (xem heuristic bên dưới).
 3. Báo user:
    ```
@@ -230,7 +230,7 @@ Tiếp tục Workflow 1 (New Feature Plan) để draft intent và plan.
 
 ### Khi AI tạo gate
 
-1. Xác định `intent_id` hiện tại (từ context hoặc `kb intent list --active`).
+1. Xác định `intent_id` hiện tại (từ context hoặc `kbx intent list --active`).
 2. Xác định actor type: `human` / `human:<role>` / `ai:<name>` / `external:<system>`.
 3. Append gate block vào `knowledge-base/intents/_active/<id>/gates.md` (tạo file nếu chưa có).
 4. Đặt `status: pending`.
@@ -283,7 +283,7 @@ kb gates done HG-001 --intent <id> --output "<output value>"
 
 ### Close condition
 
-`kb intent apply <id>` kiểm tra `gates.md`:
+`kbx intent apply <id>` kiểm tra `gates.md`:
 - Nếu có gate `pending` → báo lỗi, list gates, đề nghị `kb gates skip` hoặc giải quyết.
 - Override: `--skip-gates` + `--reason "..."` (ghi lại trong intent.md).
 
@@ -309,3 +309,4 @@ kb gates done HG-001 --intent <id> --output "<output value>"
 | 2026-04-30 | W7 step 2 added (git cross-check) | Session 3 found focus.md stale by one full phase; git log was the only reliable signal |
 | 2026-05-05 | W8 | User yêu cầu 2-gate enforcement: active intent check + chaos estimate trước khi tạo intent/version mới |
 | 2026-05-05 | W9 | Human-gate workflow: AI không block chat — ghi task vào gates.md, tiếp tục làm, print summary cuối session |
+

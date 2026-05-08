@@ -14,8 +14,8 @@ type: intent-impact
 	- plugin registry/cache state
 	- plugin diagnostics and health state
 - Agent/prompt surface:
-	- `@kb` behavioral guidance
-	- `/kb-run` pluginability expansion pattern
+	- `@kbx` behavioral guidance
+	- `/kbx-run` pluginability expansion pattern
 - Documentation contract:
 	- plugin architecture in README
 	- extension-point design recipe in agent docs
@@ -62,3 +62,4 @@ Anticipated post-fix signals to monitor:
 Parser/extract plugins (docx/xlsx/pdf/image) are intentionally deferred to a
 separate follow-up intent. This intent only establishes the plugin kernel and
 extension architecture required to implement those safely.
+

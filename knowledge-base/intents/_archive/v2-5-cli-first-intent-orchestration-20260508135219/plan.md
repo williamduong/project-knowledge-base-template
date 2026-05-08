@@ -17,7 +17,7 @@ The `notes/axioms.txt` document establishes 5 non-negotiable axioms for this pro
 | A2 — Domain Agnosticism | SV Factory has no concept of business logic. Only primitives: Intent, Gate, Evidence, Chaos_Score. | Context commands must be domain-agnostic primitives. No project-specific business logic in kb-root layer. |
 | A3 — Deterministic Block | SV Factory does NOT advise. It only Permits (exit 0) or Blocks (exit 1). No soft behavior. | Soft-first governance is exclusively a KBAgent contract. SV Factory commands are always deterministic. |
 | A4 — Checkpoint-Driven Audit | SV Factory only activates at 3 checkpoints: Init/Compile, Pre-commit/Pre-merge, Audit Request. | Context *registration* = SV Factory Init. Context *switching/reading during execution* = KBAgent. |
-| A5 — Invisibility | End-user never interacts with SV Factory directly. KBAgent renders SV Factory outputs. | User-facing CLI commands (`kb context show`, `kb scope`) are KBAgent surface. SV Factory lives inside npm or CI/CD. |
+| A5 — Invisibility | End-user never interacts with SV Factory directly. KBAgent renders SV Factory outputs. | User-facing CLI commands (`kb context show`, `kbx scope`) are KBAgent surface. SV Factory lives inside npm or CI/CD. |
 
 **Architectural target (long-term, gated by v3.0):**
 ```
@@ -53,12 +53,12 @@ Before any Phase 1 design, every proposed command must be classified:
 
 | Command candidate | Layer | Reasoning |
 |---|---|---|
-| `kb init --project-id=<id>` (register project context) | **SV Factory** | Compile-time primitive. Registers project identity into state. Fires at Init checkpoint. |
+| `kbx init --project-id=<id>` (register project context) | **SV Factory** | Compile-time primitive. Registers project identity into state. Fires at Init checkpoint. |
 | `kb context show` (read current context) | **KBAgent** | Runtime query for orchestration. Returns state compiled by SV Factory. Agent-side read. |
 | `kb context list` (list registered contexts) | **KBAgent** | Read-only enumeration used during agent orchestration. Not a gate. |
 | `kb context set <id>` (switch active context) | **KBAgent** | Runtime execution action. Agent decides which context to activate. Executive function. |
-| `kb scope <intent-id> --project=<id>` (scope intent to project) | **KBAgent** | Intent lifecycle operation. Belongs fully to Agent layer (A1: intent lifecycle = packages/kb-agent). |
-| `kb doctor --context` (validate context integrity) | **SV Factory** | Deterministic audit checkpoint. Permits or blocks. No advice output. |
+| `kbx scope <intent-id> --project=<id>` (scope intent to project) | **KBAgent** | Intent lifecycle operation. Belongs fully to Agent layer (A1: intent lifecycle = packages/kb-agent). |
+| `kbx doctor --context` (validate context integrity) | **SV Factory** | Deterministic audit checkpoint. Permits or blocks. No advice output. |
 
 ---
 
@@ -87,10 +87,10 @@ Exit criteria — all met:
 ### Phase 1 — CLI Command Specification (by layer) ✓ DONE
 
 Completed tasks:
-- ✓ `kb init --project-id` — input, side effect, exit 0/1, no-LLM rule specified.
-- ✓ `kb doctor --context` — validation rules, exit 0/1, no-LLM rule specified.
+- ✓ `kbx init --project-id` — input, side effect, exit 0/1, no-LLM rule specified.
+- ✓ `kbx doctor --context` — validation rules, exit 0/1, no-LLM rule specified.
 - ✓ `kb context show/list/set` — input, output schema, exit codes, soft-fallback documented.
-- ✓ `kb scope <intent-id> --project=<id>` — input, side effect, exit codes, fallback to active context documented.
+- ✓ `kbx scope <intent-id> --project=<id>` — input, side effect, exit codes, fallback to active context documented.
 - ✓ Common output rules: JSON-only stdout, snake_case error codes, no stderr except unhandled exceptions.
 
 Spec destination (permanent): `kb-root/specifics.md § CLI Command Specifications (v2.5+)`
@@ -102,7 +102,7 @@ Exit criteria — all met:
 ### Phase 2 — KB Agent Orchestration Contract Alignment ✓ DONE
 
 Completed tasks:
-- ✓ `template/.github/agents/kb.agent.template.md` — added "SV Factory Gate vs Agent Soft-First (A1 Separation)" section after existing Deterministic-First contract. Includes: hard-stop on exit 1, soft-first as Agent-only contract, fallback rules.
+- ✓ `template/.github/agents/kbx.agent.template.md` — added "SV Factory Gate vs Agent Soft-First (A1 Separation)" section after existing Deterministic-First contract. Includes: hard-stop on exit 1, soft-first as Agent-only contract, fallback rules.
 - ✓ `template/12-ai-skills/agent-operating-manual.md` — added "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section with two-tier description, "why this separation matters", and Axiom 1 violation callout.
 
 Key wording locked in both shipped files:
@@ -126,12 +126,12 @@ Completed tasks:
 
 | Command | Layer | Path type | Exit behavior | Axiom verified |
 |---|---|---|---|---|
-| `kb init --project-id` | SV Factory | Deterministic | 0 (written) / 1 (conflict or invalid) | A1 ✓ A2 ✓ A3 ✓ A4 ✓ |
-| `kb doctor --context` | SV Factory | Deterministic | 0 (valid) / 1 (missing or invalid) | A1 ✓ A3 ✓ A4 ✓ A5 ✓ |
+| `kbx init --project-id` | SV Factory | Deterministic | 0 (written) / 1 (conflict or invalid) | A1 ✓ A2 ✓ A3 ✓ A4 ✓ |
+| `kbx doctor --context` | SV Factory | Deterministic | 0 (valid) / 1 (missing or invalid) | A1 ✓ A3 ✓ A4 ✓ A5 ✓ |
 | `kb context show` | KBAgent | Soft (always exit 0) | 0 + warning if missing | A1 ✓ A5 ✓ |
 | `kb context list` | KBAgent | Soft (always exit 0) | 0 + empty array if none | A1 ✓ A5 ✓ |
 | `kb context set <id>` | KBAgent | Soft/Hard hybrid | 0 (switched) / 1 (id not found) | A1 ✓ A5 ✓ |
-| `kb scope <intent-id>` | KBAgent | Soft/Hard hybrid | 0 (scoped) / 1 (intent or project not found) | A1 ✓ A2 ✓ A5 ✓ |
+| `kbx scope <intent-id>` | KBAgent | Soft/Hard hybrid | 0 (scoped) / 1 (intent or project not found) | A1 ✓ A2 ✓ A5 ✓ |
 
 Layer bleed check: no command appears in both layers. All Root-side commands are checkpoint-triggered only (A4 ✓). All Agent-side commands have no LLM path in Root (A3 ✓).
 
@@ -148,17 +148,17 @@ Gate record updated in `gates.md` — no longer blocking intent close.
 See `knowledge-base/00-start-here/strategic-backlog.md` entry KB-016 for full checklist.
 
 Goals:
-- Apply shipped template changes to a downstream clean workspace via `kb init` or `kb update`.
+- Apply shipped template changes to a downstream clean workspace via `kbx init` or `kbx update`.
 - Verify KB Agent in downstream workspace reads and respects the new A1 separation contract.
 - Confirm no SV Factory content leaked into the downstream installed KB.
 - Manual smoke: ask KB Agent what happens on SV Factory exit 1 — verify it cites A1 contract and stops without retry.
 
 **Downstream Apply Checklist (manual gate — human actor required):**
 
-- [ ] Run `kb init` or `kb update` in a clean downstream workspace using packed artifact or `@beta` tag.
+- [ ] Run `kbx init` or `kbx update` in a clean downstream workspace using packed artifact or `@beta` tag.
 - [ ] Verify `.github/agents/kb.agent.md` contains "SV Factory Gate vs Agent Soft-First (A1 Separation)" section.
 - [ ] Verify `12-ai-skills/agent-operating-manual.md` contains "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section.
-- [ ] Open KB Agent (`@kb`) in downstream workspace. Ask: "What happens when a SV Factory gate returns exit 1?" Expected: agent cites the A1 separation contract and states it stops without retry.
+- [ ] Open KB Agent (`@kbx`) in downstream workspace. Ask: "What happens when a SV Factory gate returns exit 1?" Expected: agent cites the A1 separation contract and states it stops without retry.
 - [ ] Confirm no `kb-root/`, `CONSTITUTION.md` references, or maintainer-only rules leaked into downstream installed KB.
 
 Exit criteria:
@@ -181,7 +181,7 @@ Exit criteria:
 - `knowledge-base/intents/_active/v2-5-cli-first-intent-orchestration/plan.md` (modified — this file)
 - `knowledge-base/intents/_active/v2-5-cli-first-intent-orchestration/impact.md` (modified)
 - `knowledge-base/00-start-here/strategic-backlog.md` (modified)
-- `template/.github/agents/kb.agent.template.md` (modified — Phase 2)
+- `template/.github/agents/kbx.agent.template.md` (modified — Phase 2)
 - `template/12-ai-skills/agent-operating-manual.md` (modified — Phase 2)
 
 ---
@@ -195,3 +195,5 @@ Exit criteria:
 5. Backlog entries exist for: deterministic multi-project model, downstream HTML surface toggle, and monorepo split.
 6. No push/publish action performed in this intent.
 7. All acceptance criteria individually verifiable against at least one axiom from `notes/axioms.txt`.
+
+

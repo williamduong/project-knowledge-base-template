@@ -7,7 +7,7 @@ type: intent-impact
 
 ## Affected Areas
 
-- CLI behavior for `kb intent create`
+- CLI behavior for `kbx intent create`
 - Intent governance discipline for version planning
 - Intent command unit tests
 
@@ -28,3 +28,4 @@ now rejects versioned IDs that do not move forward relative to active lines.
 
 - Reduced version-line drift in active intents.
 - Fewer manual corrections/renames for mis-versioned intents.
+

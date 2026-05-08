@@ -9,7 +9,7 @@ change_scope:
   - kb-root/principles.md
   - kb-root/focus.md
   - template/12-ai-skills/agent-operating-manual.md
-  - template/.github/agents/kb.agent.template.md
+  - template/.github/agents/kbx.agent.template.md
   - knowledge-base/intents/_active/
   - src/
   - template/
@@ -60,13 +60,13 @@ This is the master planning intent for the `@williamduong/kb` project from v2.3.
 Current state:
 - `@williamduong/kb` is an npm CLI package + template file set — no IDE-native UX.
 - Users must install via `npx` or global `npm install`, then configure manually.
-- The KB Agent exists as a `.github/agents/kb.agent.template.md` that is shipped but not surfaced as a proper extension.
+- The KB Agent exists as a `.github/agents/kbx.agent.template.md` that is shipped but not surfaced as a proper extension.
 - Planning lives in scattered `notes/upgrade-*.md` files instead of governed intents.
 - No formal pre-flight check before creating new versions or intents.
 
 Target state:
 - A published VS Code extension on the Marketplace.
-- Extension wraps the CLI, provides commands, status bar, chat participant (`@kb`), and template scaffolding.
+- Extension wraps the CLI, provides commands, status bar, chat participant (`@kbx`), and template scaffolding.
 - All future planning governed through intents with 2-gate start protocol.
 - Intent namespace is clean: one version code per active intent, no stubs.
 
@@ -78,9 +78,9 @@ This epic is too large for a single version. It is split into phases:
 |---|---|---|
 | P0 | v2.3.4 | Workflow docs + intent governance cleanup (this session — already partially done) |
 | P1 | v2.4.x | Extension scaffold: project setup, packaging, manifest, hello-world command |
-| P2 | v2.4.x | Core commands: `kb status`, `kb init`, `kb chaos` surfaced as VS Code commands |
-| P3 | v2.5.x | Chat participant: `@kb` as VS Code chat participant (uses extension host API) |
-| P4 | v2.5.x | Template scaffolding via extension: `kb init` from command palette |
+| P2 | v2.4.x | Core commands: `kbx status`, `kbx init`, `kbx chaos` surfaced as VS Code commands |
+| P3 | v2.5.x | Chat participant: `@kbx` as VS Code chat participant (uses extension host API) |
+| P4 | v2.5.x | Template scaffolding via extension: `kbx init` from command palette |
 | P5 | v2.6.x | Marketplace publish: review guidelines, icon, README, changelog, publisher setup |
 | P6 | v3.0 | Full agent surface: KB Agent operates natively in VS Code with context access |
 
@@ -97,7 +97,7 @@ This epic is too large for a single version. It is split into phases:
 1. All cleanup done: intent namespace clean, no duplicate version codes in `_active/`.
 2. P18 + P19 rules documented in `kb-root/principles.md` and `template/12-ai-skills/agent-operating-manual.md`.
 3. Workflow 8 (Intent Start Gate) in `kb-root/process.md`.
-4. kb.agent.template.md updated with 2-gate T1/T2/T3 markers (already done in v2.3.3).
+4. kbx.agent.template.md updated with 2-gate T1/T2/T3 markers (already done in v2.3.3).
 5. This epic intent (`v2-3-4-vscode-marketplace-epic`) is the single active planning intent for the roadmap.
 6. `focus.md` updated to reflect last shipped = v2.3.3, focus = v2.3.4 P0 (in progress).
 
@@ -110,3 +110,4 @@ This epic is too large for a single version. It is split into phases:
 - v2-3-3 was skipped as standalone; its work was absorbed into v2.3.3 (npm tag).
 - v2-3-4 (this intent) ships as npm v2.3.4.
 - This is the first intent created under the P18/P19 2-gate protocol.
+

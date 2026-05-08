@@ -190,7 +190,7 @@ Resume:    Start a new chat with KB Agent and say:
 |---|------|-------|-----------|
 | 1 | <description> | HUMAN | Yes/No |
 | 2 | <description> | CLI | Yes/No |
-| 3 | <description> | @SVFactory | Yes/No |
+| 3 | <description> | @sfact | Yes/No |
 ```
 
 **Owner values:**
@@ -199,8 +199,8 @@ Resume:    Start a new chat with KB Agent and say:
 |-------|---------|
 | `HUMAN` | Requires manual human action (UI, approval, external system) |
 | `CLI` | Can be run as a terminal command without judgment |
-| `@SVFactory` | Delegate to SV Factory agent in the next session |
-| `@kb` | Delegate to downstream KB Agent in the consumer workspace |
+| `@sfact` | Delegate to SV Factory agent in the next session |
+| `@kbx` | Delegate to downstream KB Agent in the consumer workspace |
 
 Rules:
 - Omit the table only when the task is trivial (single file read, single clarification answer).
@@ -313,7 +313,7 @@ Maintenance rule:
 **Initial Build (One-Time)**
 
 ```
-@kb Build Knowledge Base from Source
+@kbx Build Knowledge Base from Source
 
 (Agent scans code, generates stubs, creates intake questions)
 ```
@@ -321,7 +321,7 @@ Maintenance rule:
 **Periodic Maintenance (Every Sprint/Release)**
 
 ```
-@kb Maintain Knowledge Base
+@kbx Maintain Knowledge Base
 
 (Agent detects drift, updates docs, shows review checklist)
 ```
@@ -351,3 +351,4 @@ Maintenance rule:
 - `.github/copilot-instructions.md` — Global repo instructions (if any)
 - `template/INDEX.md` — KB scope and navigation map
 - `template/00-start-here/knowledge-base-architecture.md` — KB trust model and conventions
+

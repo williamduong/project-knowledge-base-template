@@ -8,7 +8,7 @@ type: intent-impact
 ## Affected Areas
 
 - Maintainer agent protocol (`kb-root/agent.md`, `kb-root/process.md`)
-- Shipped KB Agent contract (`template/.github/agents/kb.agent.template.md`)
+- Shipped KB Agent contract (`template/.github/agents/kbx.agent.template.md`)
 - Governance discoverability (`template/12-ai-skills/agent-operating-manual.md`)
 - Intent governance consistency for upgrade-test flows
 
@@ -28,3 +28,4 @@ This is an additive process hardening change. Existing commands remain unchanged
 - Reduced startup ambiguity for multi-intent repositories.
 - Lower chance of agent auto-creating wrong intent.
 - Better traceability when user asks to patch old version line before current focus version.
+

@@ -35,11 +35,11 @@ This project operates with three distinct KB layers. Do not collapse them.
 
 1. Template source layer (ships to users): `template/`
 2. Local maintainer layer (committed in this repo, not shipped via npm `files` whitelist): `kb-root/` (SV Factory)
-3. Installed runtime KB layer (per target repo after `kb init`): `<contentRoot>/...`
+3. Installed runtime KB layer (per target repo after `kbx init`): `<contentRoot>/...`
 
 Rules:
 
-- Runtime commands (`kb intent`, `kb status`, `kb maintain`, `kb release`) must read/write only under `<contentRoot>` resolved from state.
+- Runtime commands (`kbx intent`, `kbx status`, `kbx maintain`, `kbx release`) must read/write only under `<contentRoot>` resolved from state.
 - Never treat `template/` as runtime KB state.
 - `kb-root/` is committed for transparency but never published to npm; keep it out of `package.json#files`.
 - Documentation examples must avoid hardcoding `knowledge-base/` when behavior is mode-dependent.
@@ -61,7 +61,7 @@ Rules:
 | KB-003 | Review all code-verified claims for source_of_truth | owners by folder | P1 | YYYY-MM-DD | todo | |
 | KB-004 | Prune truly unused template files after first release | knowledge-management | P2 | YYYY-MM-DD | todo | |
 | KB-005 | Document AI IDE compatibility matrix and tested agent workflows | knowledge-management | P1 | YYYY-MM-DD | partial | Added `12-ai-skills/ai-ide-compatibility-matrix.md`; empirical IDE validation notes can be expanded later. |
-| KB-006 | Phase 5 — Three-layer power surface (4 CLI + 2 prompts + 1 master agent) | knowledge-management | P0 | 2026-04-30 | done | Shipped in v1.2.0 (rewrite kb.agent.md v2.0.0, /kb-plan + /kb-run prompts, code-qa-index, state schema v2 with metadataPolicy + ideIntegration, ide-detect/inject libs, uninstall KB-MANAGED block strip). v1.2.1 added npx Quick Start and the no-silent-re-init guard. |
+| KB-006 | Phase 5 — Three-layer power surface (4 CLI + 2 prompts + 1 master agent) | knowledge-management | P0 | 2026-04-30 | done | Shipped in v1.2.0 (rewrite kbx.agent.md v2.0.0, /kbx-plan + /kbx-run prompts, code-qa-index, state schema v2 with metadataPolicy + ideIntegration, ide-detect/inject libs, uninstall KB-MANAGED block strip). v1.2.1 added npx Quick Start and the no-silent-re-init guard. |
 | KB-007 | Validate debt/entropy threshold quality after first full v1.7 release cycle | knowledge-management | P0 | 2026-05-31 | carry-forward | NV-03 from pre-dev closure pass. Requires warning usefulness review and threshold retune evidence from real v1.7 intent runtime artifacts. |
 | KB-008 | Enforce three-layer KB separation for self-hosting (template vs SV Factory local vs installed runtime KB) | knowledge-management | P0 | 2026-05-15 | todo | Add docs and command output wording to consistently reference `<contentRoot>` and prevent template/runtime path confusion in tracked vs private-git modes. |
 | KB-009 | Define focus ownership model (SV Factory local focus vs intent/runtime focus) | knowledge-management | P0 | 2026-05-15 | todo | Keep project execution focus in installed KB runtime artifacts (`.kb/runtime-plan.md`, intents), keep maintainer-only focus in `kb-root/focus.md`, and document non-shipping boundary clearly. |
@@ -71,7 +71,7 @@ Rules:
 | KB-013 | Backlog intent: optional downstream HTML KB view (default OFF, safe redaction + developer-friendly digest) | knowledge-management | P1 | 2026-05-28 | todo | Add toggleable HTML surface for downstream docs, hide sensitive KB details, and keep template default OFF. Detailed UX scope will be provided by owner later. |
 | KB-014 | SV Factory → KBAgent sync audit: inventory all features and rules in SV Factory (principles, workflows, decisions, knowledge), identify which need to ship to KB Agent downstream, list gaps, and triage undecided items with owner | knowledge-management | P1 | 2026-06-04 | todo | Audit surface: kb-root/principles.md (P1-P23), kb-root/process.md (WF1-WF10), kb-root/knowledge.md (decisions/tricks/risks), kb-root/agent.md persona rules. Output: (a) already-synced list, (b) missing in template/12-ai-skills/ or kb.agent.template.md, (c) undecided list for owner review. |
 | KB-015 | Monorepo split: packages/kb-root (Legislative) + packages/kb-agent (Executive) | architecture | P2 | 2026-Q4 | todo |
-| KB-016 | Downstream acceptance test for v2.5 template changes (A1 separation contract) | testing | P0 | 2026-05-08 | done | Tested in `kb-test-sample/kb-016-acceptance-test` using `@williamduong/kb@2.4.0-rc.2` (beta). Results: (1) PASS: `kb init --yes` completes in clean private-git workspace; (2) PASS: `.github/agents/kb.agent.md` line 150 has "SV Factory Gate vs Agent Soft-First (A1 Separation)" section; (3) PASS: `agent-operating-manual.md` line 324 has "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section; (4) MANUAL-PENDING: ask `@kb` about SV Factory exit 1 behavior in downstream IDE session; (5) PASS: no SV Factory files (CONSTITUTION.md, principles.md, focus.md, foundation.md, etc.) found in tracked downstream area. Overall: PASS (4/5 automated, 1 pending manual IDE verification). |
+| KB-016 | Downstream acceptance test for v2.5 template changes (A1 separation contract) | testing | P0 | 2026-05-08 | done | Tested in `kb-test-sample/kb-016-acceptance-test` using `@williamduong/kbx@2.4.0-rc.2` (beta). Results: (1) PASS: `kb init --yes` completes in clean private-git workspace; (2) PASS: `.github/agents/kbx.agent.md` line 150 has "SV Factory Gate vs Agent Soft-First (A1 Separation)" section; (3) PASS: `agent-operating-manual.md` line 324 has "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section; (4) MANUAL-PENDING: ask `@kbx` about SV Factory exit 1 behavior in downstream IDE session; (5) PASS: no SV Factory files (CONSTITUTION.md, principles.md, focus.md, foundation.md, etc.) found in tracked downstream area. Overall: PASS (4/5 automated, 1 pending manual IDE verification). |
 
 ## Refactor Program: Three-Layer Separation + Git-Tracked Self-Hosting
 
@@ -121,7 +121,7 @@ Exit criteria:
 
 Exit criteria:
 
-- `kb help`, `kb status`, `kb intent` output no longer implies a single hardcoded runtime path.
+- `kbx help`, `kbx status`, `kbx intent` output no longer implies a single hardcoded runtime path.
 - Manual checks cover both modes.
 
 #### Phase 2 — Git-Tracked Self-Host Profile
@@ -201,7 +201,7 @@ Notes migration policy (locked):
 Generated reports policy (locked):
 
 - Move root-level ephemeral reports into `notes/` (ignored) until intent migration.
-- After self-host install, evidence is captured via `kb intent` archives instead of root JSON dumps.
+- After self-host install, evidence is captured via `kbx intent` archives instead of root JSON dumps.
 
 Web/root policy (locked):
 
@@ -230,12 +230,12 @@ Release target (locked): patch `2.3.x`.
 | `test-plans/` | B | Keep; receive `MANUAL_TEST_PLAN_*.md`, `MANUAL_TEST_REPORT_TEMPLATE_*.md`, `AGENT_TEST_PACK_*.md` from root | Tracked |
 | `site/` | B | Keep | Tracked |
 | `.github/workflows/`, `.github/hooks/`, `.github/pull_request_template.md`, `.github/copilot-instructions.md` | B | Keep | Tracked |
-| `.github/agents/`, `.github/prompts/`, `AGENTS.md` | D | Generated by self-host kb; track when produced by `kb init` on this repo | Tracked under self-host profile |
+| `.github/agents/`, `.github/prompts/`, `AGENTS.md` | D | Generated by self-host kbx; track when produced by `kbx init` on this repo | Tracked under self-host profile |
 | `index.html` | B | Keep at root | Tracked |
 | `favicon.ico` | B | Keep at root | Tracked |
 | `.local/` | C | Rename to `kb-root/` at top level; remove `.local/` from ignore | Tracked |
 | `.vscode/` | C | Keep ignored (per-developer settings) | Ignored |
-| `knowledge-base/` | D | Created by `kb init` in tracked mode; remove from ignore for self-host profile; keep `knowledge-base/.kb/_cacache/`, `knowledge-base/.kb/_logs/` ignored | Tracked content, ignored cache |
+| `knowledge-base/` | D | Created by `kbx init` in tracked mode; remove from ignore for self-host profile; keep `knowledge-base/.kb/_cacache/`, `knowledge-base/.kb/_logs/` ignored | Tracked content, ignored cache |
 | `.kb/` | D | If used as runtime state outside `knowledge-base/`, consolidate into `knowledge-base/.kb/` after self-host install | Decision deferred to Phase R3 |
 | `sample_repo/` | E | Keep at root | Ignored |
 | `kb-test-sample/` | E | Keep at root | Ignored |
@@ -252,14 +252,14 @@ Release target (locked): patch `2.3.x`.
 2. Phase R1 — Move root-level files: manual test docs to `test-plans/`; ephemeral reports to `notes/orch-reports/`.
 3. Phase R2 — Rename `.local/kb-agent/` → `kb-root/`; update internal references; update `.gitignore` (remove `.local/`, add `notes/orch-reports/` if needed).
 4. Phase R3 — Enable self-host profile: adjust `.gitignore` to track `knowledge-base/` and self-host generated `.github/agents/`, `.github/prompts/`, `AGENTS.md` while ignoring runtime cache subpaths.
-5. Phase R4 — Run `kb init` (tracked mode) on this repo to materialize Layer D; verify no collisions with Layer A/B/C.
+5. Phase R4 — Run `kbx init` (tracked mode) on this repo to materialize Layer D; verify no collisions with Layer A/B/C.
 6. Phase R5 — Migrate planning content from `notes/` and `kb-root/` decisions into intent workspaces (`knowledge-base/intents/_active/...`).
 7. Phase R6 — Validate via test matrix; bump patch `2.3.x` and release.
 
 ### Acceptance Criteria
 
 - No path collisions between Layer A/B/C/D.
-- `git status` after `kb init` on this repo is predictable and free of cache noise.
+- `git status` after `kbx init` on this repo is predictable and free of cache noise.
 - Long-term planning lives as KB intents; `notes/` only holds true scratch.
 - Downstream user defaults remain unchanged.
 
@@ -344,3 +344,4 @@ Use this checklist before starting implementation work for v1.7 Phase 0.
 | KB-DRIFT-005 | Re-verify 09-operations/configuration-deployment.md | engineering | P1 | 2026-05-05 | todo | source drift e157d9c61caf325f5816cff25d4987a27b294909..5575ab448af419e9b457c187485c29d094191e76, matched files: 1 |
 
 <!-- KB_SYNC_AUTO_QUEUE_END -->
+

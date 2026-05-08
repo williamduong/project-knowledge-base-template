@@ -21,7 +21,8 @@ mixed version lines and accidental version rollback in planning flow.
 
 ## Acceptance Criteria
 
-1. `kb intent create v2-3-4-*` is blocked when highest active version line is `v2-3-6-*`.
-2. `kb intent create v2-3-7-*` succeeds under the same context.
+1. `kbx intent create v2-3-4-*` is blocked when highest active version line is `v2-3-6-*`.
+2. `kbx intent create v2-3-7-*` succeeds under the same context.
 3. Non-versioned IDs remain allowed for backward compatibility.
 4. Existing intent unit tests stay green.
+

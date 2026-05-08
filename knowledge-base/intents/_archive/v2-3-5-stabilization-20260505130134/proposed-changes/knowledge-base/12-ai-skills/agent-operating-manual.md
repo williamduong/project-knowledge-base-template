@@ -27,7 +27,7 @@ Provide a single location for future coding agents to read KB conventions before
 **v2.0.1 Intent-First protocol replaces the legacy "plan then run" sequence.** The workflow below describes what the agent does internally; users do not manage these steps manually.
 
 1. On activation: check `state.json` for `userPersona`. If absent, run Persona Wizard (see `kb.agent.md`).
-2. For any KB change request: create or resume an intent (`kb intent create/list`).
+2. For any KB change request: create or resume an intent (`kbx intent create/list`).
 3. Assign a numbered ID (`[INT-NNN]` per `15-governance/numbering-system.md`).
 4. Read INDEX and intent-index; read governance metadata and bi-temporal rules.
 5. Read `00-start-here/repository-revision-state.md` and compare the stored brand-scoped git baseline with current `HEAD` when git is available.
@@ -35,7 +35,7 @@ Provide a single location for future coding agents to read KB conventions before
 7. If the stored template version differs from the active template version, run the version-patch flow in the same pass.
 8. Stage files under `proposed-changes/` within the intent workspace. Do not write KB files directly outside an intent workspace unless the change meets the inline-record policy (see `00-start-here/glossary.md` §A6).
 9. Batch non-blocking tasks. Only pause for user input at destructive ops, approval gates, or genuine ambiguity.
-10. Apply with `kb intent apply <id>` when done. Archive evidence.
+10. Apply with `kbx intent apply <id>` when done. Archive evidence.
 11. Output a concise completion report with numbered references and suggested next intent.
 
 ## Register-First Rule For File Creation
@@ -115,16 +115,16 @@ Field order: `[<intent-id> | <phase-ref> | <task-ref> | <status>]`
 Status values: `▶ running` | `⏸ paused` | `✓ done` | `⚠ blocked` | `◷ pending` | `— idle`
 
 When no active intent: `[no active intent | kb healthy]`  
-When KB not initialized: `[KB not initialized — run: npx @williamduong/kb@latest init --yes]`
+When KB not initialized: `[KB not initialized — run: npx @williamduong/kbx@latest init --yes]`
 
 This line is a non-negotiable formatting contract — no greeting, no answer text may appear before it.
 
 ## Zero-to-Intent Onboarding Flow (v2.0.2)
 
-When a user sets up KB for the first time (fresh install or explicit "setup KB" request), the agent runs a fully autonomous onboarding sequence. Users never run `kb init` manually.
+When a user sets up KB for the first time (fresh install or explicit "setup KB" request), the agent runs a fully autonomous onboarding sequence. Users never run `kbx init` manually.
 
 **Trigger conditions:**
-- `kb status --json` → `presence: fresh`
+- `kbx status --json` → `presence: fresh`
 - User says "setup KB", "install KB", "init this project", or similar
 - User provides a public URL (docs/landing page) + setup intent
 
@@ -133,20 +133,20 @@ When a user sets up KB for the first time (fresh install or explicit "setup KB" 
 | Step | Action | Output |
 |---|---|---|
 | 0 | Register URL if provided; fetch page title for project context | `projectUrl` stored in session context |
-| 1 | `npx -y @williamduong/kb@latest init --yes` | `[KB initialized ✓]` |
+| 1 | `npx -y @williamduong/kbx@latest init --yes` | `[KB initialized ✓]` |
 | 2 | Persona Wizard (4 questions in one message) | `userPersona` written to `state.json` |
-| 3 | Scan: `kb status --json` + `kb bootstrap --dry-run` + file counts | Scan summary (1 paragraph) |
+| 3 | Scan: `kbx status --json` + `kbx bootstrap --dry-run` + file counts | Scan summary (1 paragraph) |
 | 4 | Discovery questions (max 5, all in one message) | `onboardingContext` stored in intent workspace |
-| 5 | `kb intent create --mode=full --id=onboarding-setup` as `INT-001` | Plan printed as `[INT-001][PH-N][T-N]` hierarchy |
+| 5 | `kbx intent create --mode=full --id=onboarding-setup` as `INT-001` | Plan printed as `[INT-001][PH-N][T-N]` hierarchy |
 | 6 | Execute phases (batch, per involvement level) | Status header on each task |
-| 7 | `kb intent apply INT-001` | Completion report with fill rate delta |
-| 8 | `kb intent create --mode=quick --id=maintenance-ongoing` as `INT-002` | Transition message + next steps |
+| 7 | `kbx intent apply INT-001` | Completion report with fill rate delta |
+| 8 | `kbx intent create --mode=quick --id=maintenance-ongoing` as `INT-002` | Transition message + next steps |
 
 **Phase auto-generation from bootstrap gap:**
 - PH-1: Core structure (INDEX, architecture, product summary, start-here) — always
 - PH-2: Domain model (entities, relationships, business rules) — if models/schemas found
 - PH-3: Feature & API docs (endpoints, components, integrations) — if API/component dirs found
-- PH-4: Q&A intake flush (`kb questions --batch 1`) — always
+- PH-4: Q&A intake flush (`kbx questions --batch 1`) — always
 
 ## Session Continuity (v2.0.2)
 
@@ -170,7 +170,7 @@ Resume:    Start a new chat with KB Agent and say:
 ──────────────────────────────────────────────────
 ```
 
-**Handling incoming resume:** verify intent still exists via `kb intent list`, print 3-line context summary, then continue from the named task without re-running prior phases.
+**Handling incoming resume:** verify intent still exists via `kbx intent list`, print 3-line context summary, then continue from the named task without re-running prior phases.
 
 ## Output Contract
 
@@ -190,7 +190,7 @@ Resume:    Start a new chat with KB Agent and say:
 |---|------|-------|-----------|
 | 1 | <description> | HUMAN | Yes/No |
 | 2 | <description> | CLI | Yes/No |
-| 3 | <description> | @SVFactory | Yes/No |
+| 3 | <description> | @sfact | Yes/No |
 ```
 
 **Owner values:**
@@ -199,8 +199,8 @@ Resume:    Start a new chat with KB Agent and say:
 |-------|---------|
 | `HUMAN` | Requires manual human action (UI, approval, external system) |
 | `CLI` | Can be run as a terminal command without judgment |
-| `@SVFactory` | Delegate to SV Factory agent in the next session |
-| `@kb` | Delegate to downstream KB Agent in the consumer workspace |
+| `@sfact` | Delegate to SV Factory agent in the next session |
+| `@kbx` | Delegate to downstream KB Agent in the consumer workspace |
 
 Rules:
 - Omit the table only when the task is trivial (single file read, single clarification answer).
@@ -245,14 +245,14 @@ Rule:
 
 Agents operating at v2.0 capability level follow this reasoning protocol:
 
-**Conflict detection (on every `kb intent apply`):**
+**Conflict detection (on every `kbx intent apply`):**
 1. `analyzeIntentConflicts` runs automatically and returns a conflict report.
 2. `suggestApplyOrder` derives a strategy: `proceed` | `proceed-with-caution` | `review-order` | `resolve-first`.
 3. Surface the strategy with its evidence (overlapping files, dirs, domains, graph neighbors).
 4. For `resolve-first`: pause and require user confirmation before proceeding.
 5. Emit transparency output: `[CONFLICT EVIDENCE] intent_id, risk, signals, strategy`.
 
-**Lesson candidate generation (on `kb intent suggest-lessons`):**
+**Lesson candidate generation (on `kbx intent suggest-lessons`):**
 1. `generateLessonCandidates` scans `_archive` for recurring patterns.
 2. Present each candidate with its evidence: pattern type, supporting intent IDs, domain, rule.
 3. Never auto-promote candidates to `lessons-index.md`. Human approval required.
@@ -272,23 +272,23 @@ This format appears in agent chat output when a v2.0 reasoning step is executed.
 
 ## Project-Scoped KB Agent
 
-### Auto-Created by `kb init`
+### Auto-Created by `kbx init`
 
-When you run `kb init`, a project-scoped KB Agent is created at `.github/agents/kb.agent.md`.
+When you run `kbx init`, a project-scoped KB Agent is created at `.github/agents/kb.agent.md`.
 
 This agent is **not** the global Copilot agent — it is specific to this project and is automatically loaded by IDE adapters (AGENTS.md, .cursor/rules/kb.mdc, .clinerules, etc.) when you open the workspace in VS Code, Cursor, or Claude.
 
 ### Init Projection Path (verified)
 
-`kb init` creates project-scoped agent and prompts from template files via `src/commands/init.js`:
+`kbx init` creates project-scoped agent and prompts from template files via `src/commands/init.js`:
 
 - Source template: `template/.github/agents/kb.agent.md`
 - Destination: `.github/agents/kb.agent.md`
 - Copy function: `createAgentAndPromptFiles(...)` in `src/commands/init.js`
 - Related prompt sources:
-  - `template/.github/prompts/kb-plan.prompt.md`
-  - `template/.github/prompts/kb-run.prompt.md`
-  - `template/.github/prompts/kb-ask.prompt.md`
+  - `template/.github/prompts/kbx-plan.prompt.md`
+  - `template/.github/prompts/kbx-run.prompt.md`
+  - `template/.github/prompts/kbx-ask.prompt.md`
 
 Maintenance rule:
 - When changing agent doctrine or capability language in this manual, review `template/.github/agents/kb.agent.md` in the same wave so init projections stay aligned.
@@ -313,7 +313,7 @@ Maintenance rule:
 **Initial Build (One-Time)**
 
 ```
-@kb Build Knowledge Base from Source
+@kbx Build Knowledge Base from Source
 
 (Agent scans code, generates stubs, creates intake questions)
 ```
@@ -321,7 +321,7 @@ Maintenance rule:
 **Periodic Maintenance (Every Sprint/Release)**
 
 ```
-@kb Maintain Knowledge Base
+@kbx Maintain Knowledge Base
 
 (Agent detects drift, updates docs, shows review checklist)
 ```
@@ -329,9 +329,9 @@ Maintenance rule:
 **Quick Bootstrap**
 
 ```
-/kb bootstrap
+/kbx bootstrap
 
-(Agent runs `kb bootstrap` command silently)
+(Agent runs `kbx bootstrap` command silently)
 ```
 
 ### Behavioral Contract
@@ -349,5 +349,7 @@ Maintenance rule:
 - `.github/prompts/kb-build.prompt.md` — "Build KB from Source" prompt
 - `.github/prompts/kb-maintain.prompt.md` — "Maintain KB" prompt
 - `.github/copilot-instructions.md` — Global repo instructions (if any)
-- `template/INDEX.md` — KB scope and navigation map
+- `template/INDEX.md` — kbx scope and navigation map
 - `template/00-start-here/knowledge-base-architecture.md` — KB trust model and conventions
+
+

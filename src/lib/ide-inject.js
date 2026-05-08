@@ -8,7 +8,7 @@ const BLOCK_RE = /[\r\n]?<!--\s*KB-MANAGED:START\s*-->[\s\S]*?<!--\s*KB-MANAGED:
 function buildBlock({ refPath }) {
   return [
     BLOCK_START,
-    `> KB integration: this workspace defers to the @kb agent. See [${refPath}](${refPath}) for the full master agent contract (read order, governance, Q&A pipeline).`,
+    `> KB integration: this workspace defers to the @kbx agent. See [${refPath}](${refPath}) for the full master agent contract (read order, governance, Q&A pipeline).`,
     BLOCK_END,
   ].join('\n');
 }

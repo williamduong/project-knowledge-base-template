@@ -17,18 +17,18 @@ Implement Reflective Pulse Protocol in the downstream KB Agent — a lightweight
 - Document in `15-governance/` or as a section in `agent-operating-manual.md`
 
 ### W2 — Instrument Agent Trigger Points
-Modify `template/.github/agents/kb.agent.template.md` to auto-invoke pulse at:
+Modify `template/.github/agents/kbx.agent.template.md` to auto-invoke pulse at:
 
 | Trigger ID | Mapped workflow point | Condition |
 |---|---|---|
 | T1 | Step 3 (Plan) | User provides ≥2 consecutive assertions about scope/feasibility/architecture without evidence or test plan |
 | T2 | Role 4 Reasoner | Before outputting conflict resolution recommendation |
-| T3 | `kb intent suggest-lessons` | Before surfacing lesson candidates |
+| T3 | `kbx intent suggest-lessons` | Before surfacing lesson candidates |
 
 Remove "Z1 Analyze + Spec" (not a system term) — replace with T1 description above.
 
 ### W3 — Explicit Invoke Command
-- Add explicit pulse invoke: either a new prompt file `kb-pulse.prompt.template.md` or a new subcommand `kb intent pulse [<intent-id>]`
+- Add explicit pulse invoke: either a new prompt file `kb-pulse.prompt.template.md` or a new subcommand `kbx intent pulse [<intent-id>]`
 - Recommend: prompt file first (lower cost, additive), CLI subcommand later if needed
 - Update `help.js` if CLI path chosen
 
@@ -50,3 +50,4 @@ Remove "Z1 Analyze + Spec" (not a system term) — replace with T1 description a
 4. No existing KB Agent workflow broken.
 5. `agreement_drift` and `grounding` thresholds documented with rationale.
 6. "Z1 Analyze + Spec" term replaced with system-native T1 description in all docs.
+

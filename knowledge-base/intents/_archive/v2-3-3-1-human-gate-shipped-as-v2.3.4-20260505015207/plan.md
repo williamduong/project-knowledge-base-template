@@ -15,7 +15,7 @@ type: intent-plan
 | W9 workflow | `kb-root/process.md` | pending |
 | Human-Gate Protocol section | `template/12-ai-skills/agent-operating-manual.md` | pending |
 | gates.md schema template | `knowledge-base/14-templates/gates.md.template` | pending |
-| KB Agent behavior update | `template/.github/agents/kb.agent.template.md` | pending |
+| KB Agent behavior update | `template/.github/agents/kbx.agent.template.md` | pending |
 
 ## Phase P1 — CLI Code (v2.4.x)
 
@@ -26,7 +26,7 @@ type: intent-plan
 |---|---|---|
 | `src/lib/gates.js` | appendGate, listGates, markDone, markSkipped, hasPending | not-started |
 | `src/commands/gates.js` | `kb gates list/done/skip/add` | not-started |
-| `kb intent apply` guard | Block on pending gates, `--skip-gates` flag | not-started |
+| `kbx intent apply` guard | Block on pending gates, `--skip-gates` flag | not-started |
 | Tests | `test/lib/gates.test.js`, `test/commands/gates.test.js` | not-started |
 
 ---
@@ -71,6 +71,7 @@ Every `gates.md` entry uses this structure:
 2. `kb gates list` shows all pending gates across active intents.
 3. `kb gates done HG-001 --intent <id> --output "..."` marks done + records output.
 4. `kb gates skip HG-001 --intent <id> --reason "..."` marks skipped.
-5. `kb intent apply` refuses to close if pending gates exist (unless `--skip-gates`).
+5. `kbx intent apply` refuses to close if pending gates exist (unless `--skip-gates`).
 6. Each gate is self-contained — actor can pick up cold without AI or chat context.
 7. Session end: AI always prints pending gates summary if any exist.
+

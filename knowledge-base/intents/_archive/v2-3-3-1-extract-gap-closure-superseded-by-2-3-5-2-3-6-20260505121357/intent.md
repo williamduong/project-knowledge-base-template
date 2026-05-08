@@ -9,8 +9,8 @@ change_scope:
 	- src/commands/plugin.js
 	- src/cli.js
 	- src/commands/doctor.js
-	- template/.github/agents/kb.agent.template.md
-	- template/.github/prompts/kb-run.prompt.template.md
+	- template/.github/agents/kbx.agent.template.md
+	- template/.github/prompts/kbx-run.prompt.template.md
 	- template/12-ai-skills/agent-operating-manual.md
 	- README.md
 	- package.json
@@ -76,4 +76,5 @@ Scope split for this intent:
 - `src/lib/plugin-kernel/` (planned new) — microkernel, hook bus, policy enforcement.
 - `src/commands/plugin.js` (planned new) — plugin lifecycle and scaffold commands.
 - `README.md` (modified) — plugin architecture and extension-point design pattern updates.
+
 
