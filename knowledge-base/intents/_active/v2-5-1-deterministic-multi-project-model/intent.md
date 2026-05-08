@@ -6,7 +6,7 @@ created_at: 2026-05-08T17:30:18.078Z
 focus:
   current: "Lock deterministic project resolution contract: every mutation must resolve exactly one project_id or run explicitly in workspace mode"
   last_updated: 2026-05-09
-  next_action: "Phase 4: update shipped template docs for project namespace (agent-operating-manual.md, kbx.agent.template.md); consider kbx project resolve command"
+  next_action: "All phases complete. Review acceptance criteria, bump promotion_ready, merge to main, plan v2.5.1 release."
 change_type: feature
 change_scope:
   - src/lib/project-resolver.js
@@ -23,7 +23,7 @@ review_after: null
 schema_version: 2.4.0
 # v1.8+ reserve fields:
 lesson_id: null
-promotion_ready: false
+promotion_ready: true
 linked_signals: []
 promote_decision_ref: null
 ---

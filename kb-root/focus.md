@@ -15,21 +15,24 @@
 
 ## Current Phase
 
-**Phase:** v2.5.1 Phase 4 — docs sync + promotion-ready check
+**Phase:** v2.5.1 — ALL PHASES COMPLETE, ready for merge + release
 
 **Done (session 2026-05-09):**
 - Phase 1: `src/lib/project-resolver.js` — deterministic fail-closed resolver, all error codes, 0 external deps.
 - Phase 1: `test/lib/project-resolver.test.js` — 19 tests, all 10 TC from plan pass.
 - Phase 3: `src/commands/workspace.js` — `kbx workspace detect/promote/verify`.
 - Phase 3: `test/commands/workspace.test.js` — 10 tests pass.
-- Phase 2: `init.js` — `--project <id>` flag + write `.kbx/project.yaml` after KB creation + sibling-project tip.
-- Phase 2: `update.js` — `--project <id>` + `resolveProject` guard (throws `ERR_PROJECT_AMBIGUOUS`).
-- Phase 2: `uninstall.js` — same guard pattern.
-- 577/577 tests pass. Committed 5ab5904.
+- Phase 2: `init.js` — `--project <id>` flag + write `.kbx/project.yaml` + sibling tip.
+- Phase 2: `update.js`, `uninstall.js` — `resolveProject` guard, `--project <id>` flag.
+- Phase 4: `agent-operating-manual.md` — new section `Multi-Project Workspace Rules (v2.5+)`.
+- Phase 4: `kbx.agent.template.md` — mutation policy rule + workspace command surface.
+- 577/577 tests pass. All 7 acceptance criteria met.
 
-**Next action (theo priority backlog):**
-- **KB-012 Phase 4:** Update shipped template docs: `agent-operating-manual.md`, `kbx.agent.template.md` for project namespace rules. Check `promotion_ready` criteria in intent.
-- **KB-016:** 4/5 automated PASS. Manual check #4 (hỏi @kbx trong IDE downstream) pending.
+**Next action:**
+- Merge `intent/v2-5-1-deterministic-multi-project-model` → `main`.
+- Run `kbx intent apply v2-5-1-deterministic-multi-project-model` or manual archive.
+- Bump version to v2.5.1, publish npm.
+- **KB-016:** Manual check #4 (hỏi @kbx trong IDE downstream) pending.
 
 ## Active Blockers
 
