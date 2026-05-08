@@ -7,71 +7,63 @@
 
 ## Active Version Target
 
-**Đang focus:** v2.4 Phase 0 intent governance implementation planning (S0-S8 composed)
-**Intent active:** v2-4-intent-governance (full mode, created 2026-05-06)
-**Status:** Core governance plan locked (D17-D56). Ready to move into implementation sequencing.
+**Đang focus:** v2.4 — post-beta, chuẩn bị next intent
+**Intent active:** none (intents sạch)
+**Status:** v2.4.0-rc.2 shipped npm beta + git tag. Sẵn sàng bắt đầu intent tiếp theo.
 **CLI target (working version):** v2.4.0
-**Last shipped:** v2.3.7 (2026-05-06) — hotfix `intent list` legacy metadata compatibility (`padEnd` crash)
+**Last shipped:** v2.4.0-rc.2 (2026-05-08) — CONSTITUTION.md (5 axioms), A1 separation wired into KB Agent + agent-operating-manual.md
 
 ## Current Phase
 
-**Phase:** v2.4 Phase 0 — intent governance plan complete, pre-implementation handoff
+**Phase:** v2.4 — beta released, picking next intent
 
-**Done (sessions gần nhất — 2026-05-05):**
-- Shipped v2.3.4: VSCode Marketplace Epic governance cleanup, human-gate protocol.
-- Shipped v2.3.5: `kb intent list` table+pager, version monotonicity guard, `kb ingest`, `kb extract --apply`, agent Handoff table contract.
-- Shipped v2.3.6: hotfix `archiveFolderName` trailing dot EPERM trên Windows (`slice(0,14)` + strip `.` trong regex).
-- Archived intent `v2-3-5-stabilization` → `_archive/v2-3-5-stabilization-20260505130134`.
-- Global `kb` uninstalled khỏi máy maintainer.
-- Bug fix: `src/lib/intent.js` — `archiveFolderName` regex thiếu `.` → Windows EPERM khi archive.
+**Done (session 2026-05-08):**
+- Shipped v2.4.0-rc.2 (beta): CONSTITUTION.md, layer classification canonical in foundation.md, soft-first policy P24 in principles.md, CLI specs in specifics.md, A1 separation in kb.agent.template.md + agent-operating-manual.md.
+- Intent `v2-5-cli-first-intent-orchestration` work done, archived manually (intent.md missing, CLI couldn't cancel).
+- Git tag v2.4.0-rc.2 pushed. Smoke test from registry OK. focus.md updated.
 
-**Next action:**
-- **Immediate:** Start implementation breakdown from `notes/upgrade-v2.4-intent-governance-plan.md` (owner intent: `v2-4-intent-governance`)
-- **Migration track:** Keep `INT-2-4-intent-schema-migration` separate; activate only after core checkpoint
-- **B2-B4 pending:** Deferred until B1 complete
+**Next action (theo priority backlog):**
+- **KB-016 (P0):** Downstream acceptance test dùng `@beta` trong clean workspace — kiểm tra A1 separation đã ship đúng. Cần machine khác / clean folder.
+- **KB-012 (P0):** Deterministic multi-project model (context registry, scope routing) — next major feature intent, có thể bắt đầu ngay trong workspace này.
 
 ## Active Blockers
 
-- Không có blocker cứng.
-- `INT-2-3-6-upgrade-foundation-and-direction` open, không release scope → tự free.
-- Bug noted (backlog): `kb uninstall --force` removes tracked `.github/hooks/revision-state-guard.json`.
+- KB-016 blocked by: cần clean downstream workspace (không thể test trên workspace này).
+- Không có blocker cho KB-012.
 
 ## Recent Decisions (last 5)
 
-1. Hotfix policy: lỗi ảnh hưởng Windows users → publish patch version ngay thay vì chờ.
-2. `archiveFolderName` fix: thêm `.` vào regex replace + `slice(0,14)` để tránh trailing dot trên Windows.
-3. Global kb uninstall → dùng local devDependency hoặc `npx` cho downstream projects.
-4. Intent apply EPERM workaround: nếu CLI lỗi, dùng PowerShell `Move-Item` thủ công rồi commit.
-5. Release rule giữ nguyên: tag AFTER publish, không push trước khi npm publish thành công.
+1. Release rule: tag AFTER publish, không push trước khi npm publish thành công.
+2. Intent archive thủ công nếu `intent.md` bị mất (CLI cancel không chạy được).
+3. RC/beta không promote `latest` — chờ GA stable mới promote.
+4. CONSTITUTION.md = Supreme Law, không ship qua npm (kb-root/ only, không trong package.json#files).
+5. v2-5 intent closed bằng cách archive thủ công; work đã commit vào main trực tiếp.
 
 ## Roadmap Status
 
 | Version | Status | Notes |
 |---|---|---|
-| v2.3.2 | Shipped 2026-05-04 | Namespace split + notes migration |
-| v2.3.3 | Shipped 2026-05-05 | Cognitive drift signals + subtractive-v2 |
-| v2.3.4 | Shipped 2026-05-05 | VSCode Marketplace Epic governance cleanup |
-| v2.3.5 | Shipped 2026-05-05 | intent list table, ingest, extract --apply, handoff contract |
-| v2.3.6 | Shipped 2026-05-05 | Hotfix: archive folder trailing dot on Windows |
 | v2.3.7 | Shipped 2026-05-06 | Hotfix: `intent list` fallback for missing `mode/status` in legacy intents |
-| v2.4.x | Planned | VSCode extension scaffold + core commands |
-| v2.5.x | Planned | Chat participant + template scaffolding via extension |
+| v2.4.0-rc.2 | Shipped 2026-05-08 beta | CONSTITUTION + A1 separation. latest vẫn là 2.3.7 |
+| v2.4.0 | Planned (GA) | Promote latest sau downstream acceptance test KB-016 |
+| v2.5.x | Planned | Deterministic multi-project model (KB-012) + downstream HTML surface (KB-013) |
 | v2.6.x | Planned | Marketplace publish |
-| v3.0 | Long-term | Full agent surface in VS Code |
+| v3.0 | Long-term | Monorepo split packages/kb-root + packages/kb-agent (KB-015) |
 
 ## Notes / Reminders cho session sau
 
 - `kb` không cài global — dùng `node ./bin/kb.js` trong workspace này hoặc `npx @williamduong/kb` cho downstream.
-- Tránh `npx kb` ở ngoài repo này vì có thể resolve package khác tên `kb`; dùng `npx @williamduong/kb@latest <cmd>` hoặc `npx --package @williamduong/kb@latest kb <cmd>`.
-- Khi `kb intent apply` gặp EPERM (trailing dot đã fix ở v2.3.6), kiểm tra lại version CLI đang dùng.
+- npm dist-tag: `beta → 2.4.0-rc.2`, `latest → 2.3.7`. Không promote latest cho đến khi KB-016 pass.
+- CONSTITUTION.md nằm ở gốc repo, maintainer-only, không ship qua npm.
 - focus.md phải được update cuối mỗi session trước khi kết thúc — đây là nguồn truth duy nhất cho bootstrap.
 
 ## Last Session Summary
 
-**Date:** 2026-05-05
-**Task:** Full release v2.3.5 + v2.3.6 hotfix
+**Date:** 2026-05-08
+**Task:** Align v2-5 intent với axioms, tạo CONSTITUTION.md, ship v2.4.0-rc.2 beta
 **Output:**
-- v2.3.5: intent list table+pager, version guard, kb ingest, kb extract --apply, agent handoff contract. Published npm, tagged, GitHub release.
-- v2.3.6: hotfix archiveFolderName EPERM Windows. Published npm, tagged, GitHub release.
-- Intent v2-3-5-stabilization closed (archived thủ công do EPERM bug chưa fix khi apply).
-- Bug fix committed và shipped ngay trong v2.3.6.
+- CONSTITUTION.md created (5 axioms + RFC 2119 enforcement header).
+- A1 separation wired vào kb.agent.template.md và agent-operating-manual.md.
+- v2.4.0-rc.2 published npm (tag: beta), git tag pushed, smoke test passed.
+- intent v2-5-cli-first-intent-orchestration archived thủ công.
+- focus.md updated.
