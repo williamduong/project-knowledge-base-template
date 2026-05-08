@@ -8,14 +8,14 @@
 ## Active Version Target
 
 **Đang focus:** v2.5 — next intent (KB-012 deterministic multi-project model)
-**Intent active:** none (intents sạch)
-**Status:** v2.4.0 shipped npm latest + git tag. Sẵn sàng bắt đầu v2.5 intent.
+**Intent active:** v2-5-1-deterministic-multi-project-model
+**Status:** KB-012 started. Đang lock deterministic resolver contract + mutation guard fail-closed.
 **CLI target (working version):** v2.4.0
 **Last shipped:** v2.4.0 (2026-05-08) — kbx rename + KBRoot→SV Factory rename hoàn chỉnh. Published as latest.
 
 ## Current Phase
 
-**Phase:** v2.5 planning — next intent not yet started
+**Phase:** v2.5.1 Phase 0 — deterministic multi-project contract lock
 
 **Done (session 2026-05-08):**
 - Full rename: kb→kbx, @williamduong/kb→@williamduong/kbx, KBRoot→SV Factory (namespace + filenames + content).
@@ -26,7 +26,7 @@
 - focus.md updated.
 
 **Next action (theo priority backlog):**
-- **KB-012 (P0):** Deterministic multi-project model (context registry, scope routing) — next major feature intent.
+- **KB-012 (P0):** Implement resolver lib + command mutation guard (`exactly one project_id` or `--workspace`).
 - **KB-016:** 4/5 automated PASS. Manual check #4 (hỏi @kbx trong IDE downstream) pending.
 
 ## Active Blockers
