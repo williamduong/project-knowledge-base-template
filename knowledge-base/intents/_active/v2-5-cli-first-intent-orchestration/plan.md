@@ -140,9 +140,12 @@ Exit criteria — all met:
 - ✓ Axiom compliance verified for each entry.
 - ✓ No push/publish performed.
 
-### Phase 4 — Downstream Apply and KB Agent Acceptance
+### Phase 4 — Downstream Apply and KB Agent Acceptance ⚑ DEFERRED
 
-**This phase is the gate before `kb intent close`.** Intent MUST NOT be closed until Phase 4 passes or is explicitly deferred with a named gate record.
+Deferred to backlog intent KB-016. Owner's downstream machine not ready (2026-05-08).
+Gate record updated in `gates.md` — no longer blocking intent close.
+
+See `knowledge-base/00-start-here/strategic-backlog.md` entry KB-016 for full checklist.
 
 Goals:
 - Apply shipped template changes to a downstream clean workspace via `kb init` or `kb update`.

@@ -9,10 +9,15 @@ type: intent-gates
 
 | Field | Value |
 |---|---|
-| **Status** | pending |
+| **Status** | deferred — moved to backlog intent |
 | **Actor** | human |
-| **Blocking** | true — intent cannot close until this gate passes or is explicitly skipped with reason |
-| **Created** | 2026-05-08 |
+| **Blocking** | false (explicitly deferred by owner 2026-05-08 — downstream machine not ready) |
+| **Deferred to** | KB-016 backlog intent: downstream acceptance test for v2.5 template changes |
+
+### Deferral Reason
+
+Owner's downstream machine setup not complete. Acceptance test cannot run now.
+This gate is converted to a standalone backlog intent (KB-016) and is no longer blocking intent close.
 
 ### Action Required
 
