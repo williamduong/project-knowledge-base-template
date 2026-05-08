@@ -140,6 +140,28 @@ Exit criteria — all met:
 - ✓ Axiom compliance verified for each entry.
 - ✓ No push/publish performed.
 
+### Phase 4 — Downstream Apply and KB Agent Acceptance
+
+**This phase is the gate before `kb intent close`.** Intent MUST NOT be closed until Phase 4 passes or is explicitly deferred with a named gate record.
+
+Goals:
+- Apply shipped template changes to a downstream clean workspace via `kb init` or `kb update`.
+- Verify KB Agent in downstream workspace reads and respects the new A1 separation contract.
+- Confirm no KBRoot content leaked into the downstream installed KB.
+- Manual smoke: ask KB Agent what happens on KBRoot exit 1 — verify it cites A1 contract and stops without retry.
+
+**Downstream Apply Checklist (manual gate — human actor required):**
+
+- [ ] Run `kb init` or `kb update` in a clean downstream workspace using packed artifact or `@beta` tag.
+- [ ] Verify `.github/agents/kb.agent.md` contains "KBRoot Gate vs Agent Soft-First (A1 Separation)" section.
+- [ ] Verify `12-ai-skills/agent-operating-manual.md` contains "KBRoot Gate vs Agent Soft-First — A1 Separation (v2.5+)" section.
+- [ ] Open KB Agent (`@kb`) in downstream workspace. Ask: "What happens when a KBRoot gate returns exit 1?" Expected: agent cites the A1 separation contract and states it stops without retry.
+- [ ] Confirm no `kb-root/`, `CONSTITUTION.md` references, or maintainer-only rules leaked into downstream installed KB.
+
+Exit criteria:
+- All 5 checklist items pass.
+- No KBRoot contamination found in downstream install.
+
 ---
 
 ## Deferred Follow-Up Queue (Next Intents)

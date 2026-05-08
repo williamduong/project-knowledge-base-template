@@ -63,8 +63,17 @@
    - Multiple edits: `multi_replace_string_in_file` parallel
 8. **Sau mỗi file**: `get_errors` validate
 9. **Sau vX.Y.Z Phase**: chạy smoke test theo verification matrix, ưu tiên downstream acceptance trước khi self-host sync
-10. **Nếu còn hạng mục chưa verify được bằng tool**: ghi checklist `Manual follow-up` (task + command + expected result) trong output cuối để user chạy tiếp
-11. **Update CHANGELOG.md** của agent: ghi 1 dòng "v1.3 Phase N: <summary>"
+10. **Downstream Acceptance Gate** (bắt buộc khi `change_scope` chứa `template/`):
+    - Nếu intent chạm bất kỳ file nào trong `template/` (ship surface), phải thực hiện:
+      1. Pack artifact hoặc dùng `@beta` tag: `npm pack` hoặc `npx @williamduong/kb@beta`
+      2. Chạy `kb init` hoặc `kb update` trong downstream clean workspace
+      3. Xác nhận các file thay đổi đã apply đúng vào `.github/agents/kb.agent.md` và các file liên quan
+      4. Mở KB Agent (`@kb`) trong downstream workspace, hỏi câu hỏi liên quan đến thay đổi, verify response đúng hướng
+      5. Kiểm tra không có KBRoot content rớt xuống downstream (`kb-root/`, maintainer-only rules, `CONSTITUTION.md` references)
+    - Intent **KHÔNG được close** cho đến khi gate này pass hoặc có explicit defer với gate record rõ lý do.
+    - Nếu chưa thể chạy downstream ngay: tạo gate record trong `gates.md` của intent (actor: `human`, blocking: true).
+11. **Nếu còn hạng mục chưa verify được bằng tool**: ghi checklist `Manual follow-up` (task + command + expected result) trong output cuối để user chạy tiếp
+12. **Update CHANGELOG.md** của agent: ghi 1 dòng "v1.3 Phase N: <summary>"
 
 ## Workflow 3: Code Review trước Build
 
