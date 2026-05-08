@@ -4,9 +4,9 @@ mode: full
 lifecycle: active
 created_at: 2026-05-08T18:21:16.294Z
 focus:
-  current: "Phase 0 — design ontology schema and entity taxonomy"
+  current: "Phase 0 — convert natural-language knowledge into governed glossary"
   last_updated: 2026-05-09
-  next_action: "Define node types, edge types, and property schema for KB ontology"
+  next_action: "Audit terminology sources, define glossary schema, and map glossary entries into ontology seed"
 change_type: feature
 change_scope:
   - template/02-domain-model/
@@ -14,10 +14,10 @@ change_scope:
   - src/lib/
   - src/commands/
 impact_signals:
-  - adds: ontology node/edge schema to KB template
-  - adds: CLI commands to build/query ontology from KB content
-  - modifies: graph.js or new src/lib/ontology.js
-decision_summary: "KB currently has a placeholder knowledge-graph folder (13-knowledge-graph/README.md only). Need a real ontology layer: typed nodes, typed edges, property constraints — so the graph commands can reason over KB content rather than free text."
+  - adds: governed glossary schema and ontology seed artifacts to KB template
+  - adds: ontology lifecycle CLI surface for glossary-to-ontology validation
+  - avoids: GraphDB/DDL generation in v2.6 (deferred)
+decision_summary: "KB currently has a placeholder knowledge-graph folder (13-knowledge-graph/README.md only). v2.6 focuses on deterministic ontology foundation only: natural language -> glossary -> ontology. Physical graph database build/deploy is explicitly deferred to a later intent after ontology lifecycle is stable."
 review_after: null
 schema_version: 2.5.1-beta.1
 # v1.8+ reserve fields:
@@ -31,9 +31,9 @@ promote_decision_ref: null
 
 ## Summary
 
-Build the ontology foundation layer for KB: define typed node and edge schemas, property constraints, and CLI tooling to build/validate/query the ontology from KB content.
+Build the ontology foundation layer for KB in three deterministic steps: natural-language capture, governed glossary, and ontology schema.
 
-Currently `template/13-knowledge-graph/` is a stub with only a README. This intent makes it real: a machine-readable ontology schema that agents and the CLI can use to reason about KB structure — entities, relationships, domain events, and their interconnections.
+Currently `template/13-knowledge-graph/` is a stub with only a README. This intent turns it into a living schema module for ontology lifecycle management. Graph database provisioning (KuzuDB/FalkorDB/Cypher DDL) is out of scope for v2.6 and will be handled in a later intent.
 
 ## Plan
 

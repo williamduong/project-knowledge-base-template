@@ -7,32 +7,28 @@
 
 ## Active Version Target
 
-**Đang focus:** v2.5 — next intent (KB-012 deterministic multi-project model)
-**Intent active:** v2-5-1-deterministic-multi-project-model
-**Status:** KB-012 started. Đang lock deterministic resolver contract + mutation guard fail-closed.
-**CLI target (working version):** v2.4.0
-**Last shipped:** v2.4.0 (2026-05-08) — kbx rename + KBRoot→SV Factory rename hoàn chỉnh. Published as latest.
+**Đang focus:** v2.6 + v2.7 intent wave
+**Intent active:** v2-6-kb-ontology-foundation; v2-7-nl-rules-to-cli-logic
+**Status:** KB-012 đã complete + merged. Bản beta `2.5.1-beta.1` đã publish ở dist-tag `beta`.
+**CLI target (working version):** v2.5.1-beta.1
+**Last shipped:** v2.4.0 (2026-05-08) vẫn là `latest`; beta channel: `2.5.1-beta.1`.
 
 ## Current Phase
 
-**Phase:** v2.5.1 — ALL PHASES COMPLETE, ready for merge + release
+**Phase:** v2.6 Phase 0 — Natural language -> glossary -> ontology planning and source audit
 
 **Done (session 2026-05-09):**
-- Phase 1: `src/lib/project-resolver.js` — deterministic fail-closed resolver, all error codes, 0 external deps.
-- Phase 1: `test/lib/project-resolver.test.js` — 19 tests, all 10 TC from plan pass.
-- Phase 3: `src/commands/workspace.js` — `kbx workspace detect/promote/verify`.
-- Phase 3: `test/commands/workspace.test.js` — 10 tests pass.
-- Phase 2: `init.js` — `--project <id>` flag + write `.kbx/project.yaml` + sibling tip.
-- Phase 2: `update.js`, `uninstall.js` — `resolveProject` guard, `--project <id>` flag.
-- Phase 4: `agent-operating-manual.md` — new section `Multi-Project Workspace Rules (v2.5+)`.
-- Phase 4: `kbx.agent.template.md` — mutation policy rule + workspace command surface.
-- 577/577 tests pass. All 7 acceptance criteria met.
+- KB-012 complete: deterministic project resolver + workspace commands + mutation guard + template docs.
+- Full test suite pass: 577/577.
+- v2.5.1-beta.1 published to npm tag `beta`.
+- Intent `v2-5-1-deterministic-multi-project-model` moved to `_closed/released`.
+- Opened new intents: `v2-6-kb-ontology-foundation`, `v2-7-nl-rules-to-cli-logic`.
 
 **Next action:**
-- Merge `intent/v2-5-1-deterministic-multi-project-model` → `main`.
-- Run `kbx intent apply v2-5-1-deterministic-multi-project-model` or manual archive.
-- Bump version to v2.5.1, publish npm.
-- **KB-016:** Manual check #4 (hỏi @kbx trong IDE downstream) pending.
+- v2.6 Phase 0: audit terminology/rules sources and produce glossary schema draft.
+- v2.6 Phase 1: implement ontology lifecycle artifacts (no GraphDB in scope).
+- v2.7 Phase 0: classify governance rules by enforceability and lock initial rule catalog.
+- **KB-016:** Manual check #4 (downstream IDE `@kbx`) vẫn pending.
 
 ## Active Blockers
 
@@ -54,8 +50,9 @@
 | v2.3.7 | Shipped 2026-05-06 | Hotfix: `intent list` fallback for missing `mode/status` in legacy intents |
 | v2.4.0-rc.2 | Shipped 2026-05-08 beta | CONSTITUTION + A1 separation |
 | v2.4.0 | **Shipped 2026-05-08** (latest) | kbx rename + KBRoot→SV Factory rename |
-| v2.5.x | Planned | Deterministic multi-project model (KB-012) + downstream HTML surface (KB-013) |
-| v2.6.x | Planned | Marketplace publish |
+| v2.5.1 | Beta published 2026-05-09 | KB-012 deterministic multi-project model complete; dist-tag `beta` |
+| v2.6.x | Active | Ontology foundation: NL -> glossary -> ontology lifecycle (no GraphDB) |
+| v2.7.x | Planned/Started | NL governance rules -> deterministic CLI rule engine |
 | v3.0 | Long-term | Monorepo split packages/kb-root + packages/kb-agent (KB-015) |
 
 ## Notes / Reminders cho session sau
