@@ -15,18 +15,17 @@
 
 ## Current Phase
 
-**Phase:** v2.5.1 Phase 0 — deterministic multi-project contract lock
+**Phase:** v2.5.1 Phase 2 — mutation guard integration into commands
 
-**Done (session 2026-05-08):**
-- Full rename: kb→kbx, @williamduong/kb→@williamduong/kbx, KBRoot→SV Factory (namespace + filenames + content).
-- Self-host maintainer agent: SVFactory.agent.md + svfactory-*.prompt.md.
-- Release tooling fixed: pack-smoke.js + generate-template-changelog.js.
-- 548/548 unit tests pass. release:dry gate pass.
-- v2.4.0 published npm latest. Tag v2.4.0 pushed. Intent v2-4-svfactory-rename archived.
-- focus.md updated.
+**Done (session 2026-05-09):**
+- Phase 1: `src/lib/project-resolver.js` — deterministic fail-closed resolver, all error codes, 0 external deps.
+- Phase 1: `test/lib/project-resolver.test.js` — 19 tests, all 10 TC from plan pass.
+- Phase 3: `src/commands/workspace.js` — `kbx workspace detect/promote/verify`.
+- Phase 3: `test/commands/workspace.test.js` — 10 tests pass.
+- CLI wired + help text updated. 577/577 tests pass. Committed 3e2e903.
 
 **Next action (theo priority backlog):**
-- **KB-012 (P0):** Implement resolver lib + command mutation guard (`exactly one project_id` or `--workspace`).
+- **KB-012 Phase 2:** Add `assertProjectResolved` mutation guard to `init`, `update`, `uninstall`; parse `--project <id>` and `--workspace` flags in those commands.
 - **KB-016:** 4/5 automated PASS. Manual check #4 (hỏi @kbx trong IDE downstream) pending.
 
 ## Active Blockers
