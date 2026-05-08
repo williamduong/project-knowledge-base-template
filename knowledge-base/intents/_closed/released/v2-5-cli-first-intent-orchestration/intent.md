@@ -1,29 +1,27 @@
 ---
 id: v2-5-cli-first-intent-orchestration
 mode: full
-lifecycle: active
-created_at: 2026-05-06T17:25:26.478Z
+lifecycle: closed
+created_at: "2026-05-06T17:25:26.478Z"
 focus:
   current: "Classify and specify CLI commands for project context switching and intent scoping with explicit KBRoot vs KBAgent layer assignment (per axioms)"
   last_updated: 2026-05-08
   next_action: "Lock layer classification table and soft-first policy text as KBAgent-only contract (Phase 0)"
 change_type: feature
 change_scope:
-  - "src/commands/* (KBAgent-layer: context show/list/set, scope commands)"
-  - "src/lib/* (context registry/state model — KBRoot compile-time primitive)"
-  - "template/.github/agents/kb.agent.template.md (soft-first policy as Agent-only contract)"
-  - "template/12-ai-skills/agent-operating-manual.md (A1 separation: Root-gate vs Agent-execution)"
+- "src/commands/* (KBAgent-layer: "context show/list/set, scope commands)\""
+- "template/12-ai-skills/agent-operating-manual.md (A1 separation: "Root-gate vs Agent-execution)\""
 impact_signals:
-  - "large-intent-branch-confirmed"
-  - "axiom-aligned-layer-classification"
-  - "soft-governance-agent-layer-only"
 decision_summary: "Per axioms (A1-A5): KBRoot = Legislative/Deterministic/Checkpoint-only. KBAgent = Executive/Soft-first. Soft-first governance applies exclusively to KBAgent layer — KBAgent uses deterministic CLI when available, reasons freely only when no primitive exists. KBRoot commands are always deterministic-block (exit 0 or 1). Each new command must carry an explicit layer assignment before design."
 review_after: null
-# v1.8+ reserve fields:
 lesson_id: null
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
+close_type: released
+closed_at: "2026-05-08T06:08:10.981Z"
+release_ref: v2.5.0
+drop_reason: null
 ---
 
 # Intent: v2-5-cli-first-intent-orchestration
