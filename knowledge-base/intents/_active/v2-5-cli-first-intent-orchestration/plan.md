@@ -84,22 +84,20 @@ Exit criteria — all met:
 - ✓ Soft-first policy (P24) explicitly scoped to KBAgent tier; KBRoot tier = deterministic-only.
 - ✓ KB Agent orchestration contract draft ready for Phase 2.
 
-### Phase 1 — CLI Command Specification (by layer)
+### Phase 1 — CLI Command Specification (by layer) ✓ DONE
 
-**KBRoot-side (deterministic):**
-- Specify `kb init --project-id` extension: what gets compiled into state, what exit codes mean.
-- Specify `kb doctor --context` gate: exactly what constitutes a pass (exit 0) vs block (exit 1). No gray area.
-- Define deterministic JSON output schema for Root-side commands.
+Completed tasks:
+- ✓ `kb init --project-id` — input, side effect, exit 0/1, no-LLM rule specified.
+- ✓ `kb doctor --context` — validation rules, exit 0/1, no-LLM rule specified.
+- ✓ `kb context show/list/set` — input, output schema, exit codes, soft-fallback documented.
+- ✓ `kb scope <intent-id> --project=<id>` — input, side effect, exit codes, fallback to active context documented.
+- ✓ Common output rules: JSON-only stdout, snake_case error codes, no stderr except unhandled exceptions.
 
-**KBAgent-side (orchestration primitives):**
-- Specify `kb context show/list/set` command interface: input, output schema, error behavior.
-- Specify `kb scope` command interface: how intent gets linked to project context.
-- Define deterministic output schema for Agent-side commands (consistent with Root-side JSON schema pattern).
-- Document fallback behavior when project context is missing (soft: Agent continues with warning, not Root: block).
+Spec destination (permanent): `kb-root/specifics.md § CLI Command Specifications (v2.5+)`
 
-Exit criteria:
-- Each command has: input spec, output schema, exit code table, layer assignment.
-- No command straddles both layers (mixed commands = architectural violation per A1).
+Exit criteria — all met:
+- ✓ Each command has: input spec, output schema, exit code table, layer assignment.
+- ✓ No command straddles both layers.
 
 ### Phase 2 — KB Agent Orchestration Contract Alignment
 

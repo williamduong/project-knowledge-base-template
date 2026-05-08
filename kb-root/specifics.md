@@ -74,3 +74,115 @@ This model is specific to maintaining a documentation template package. It does 
 
 **Generic default:** 14 days.  
 **KBRoot choice:** 14 days (same — no override).
+
+---
+
+## CLI Command Specifications (v2.5+)
+
+> Technical specs for commands introduced in v2.5.
+> Layer assignment for each command is canonical in `foundation.md § CLI Command Layer Classification`.
+> These specs are the contract for Phase 2 implementation.
+
+---
+
+### KBRoot-side commands (deterministic)
+
+#### `kb init --project-id=<id>`
+
+**Layer:** KBRoot — Init/Compile checkpoint  
+**Status:** Specified (not yet implemented)
+
+| Field | Value |
+|---|---|
+| Input | `--project-id=<string>` (required). Alphanumeric + hyphen only. Max 64 chars. |
+| Side effect | Writes `project_id` field into `.kb/state.json` at `context.contentRoot`. |
+| Exit 0 | `project_id` written successfully. JSON stdout: `{"ok":true,"project_id":"<id>"}` |
+| Exit 1 | `project_id` already set AND `--force` not provided. JSON stdout: `{"ok":false,"error":"project_id_already_set","current":"<id>"}` |
+| Exit 1 | Invalid `project_id` format. JSON stdout: `{"ok":false,"error":"invalid_project_id_format"}` |
+| No LLM | KBRoot does not guess or suggest a valid ID. Block and report only. |
+
+---
+
+#### `kb doctor --context`
+
+**Layer:** KBRoot — Audit Request checkpoint  
+**Status:** Specified (not yet implemented — extends existing `kb doctor`)
+
+| Field | Value |
+|---|---|
+| Input | `--context` flag on existing `kb doctor` command. |
+| Validates | `project_id` present in `.kb/state.json`; value matches `[a-zA-Z0-9-]{1,64}`. |
+| Exit 0 | Context valid. JSON stdout: `{"ok":true,"check":"context","project_id":"<id>"}` |
+| Exit 1 | `project_id` missing. JSON stdout: `{"ok":false,"check":"context","error":"project_id_missing"}` |
+| Exit 1 | `project_id` format invalid. JSON stdout: `{"ok":false,"check":"context","error":"project_id_invalid","value":"<bad_value>"}` |
+| No LLM | No suggestion, no auto-fix. Exit code only. |
+
+---
+
+### KBAgent-side commands (orchestration primitives)
+
+#### `kb context show`
+
+**Layer:** KBAgent — Runtime  
+**Status:** Specified (not yet implemented)
+
+| Field | Value |
+|---|---|
+| Input | No arguments. Reads from `.kb/state.json`. |
+| Output (found) | JSON stdout: `{"project_id":"<id>","source":".kb/state.json"}` |
+| Output (not found) | JSON stdout: `{"project_id":null,"warning":"no_project_context_registered"}` |
+| Exit code | Always 0. Missing context = warning, not block (Agent tier — soft). |
+
+---
+
+#### `kb context list`
+
+**Layer:** KBAgent — Runtime  
+**Status:** Specified (not yet implemented)
+
+| Field | Value |
+|---|---|
+| Input | No arguments. |
+| Output | JSON stdout: `{"contexts":[{"project_id":"<id>","active":true|false}, ...]}` |
+| Output (none) | JSON stdout: `{"contexts":[],"warning":"no_contexts_registered"}` |
+| Exit code | Always 0. |
+
+---
+
+#### `kb context set <id>`
+
+**Layer:** KBAgent — Runtime  
+**Status:** Specified (not yet implemented)
+
+| Field | Value |
+|---|---|
+| Input | Positional `<id>` (required). Must match a registered `project_id`. |
+| Side effect | Updates `active_project_id` in `.kb/state.json`. |
+| Exit 0 | Switch successful. JSON stdout: `{"ok":true,"active_project_id":"<id>"}` |
+| Exit 1 | `<id>` not found in registered contexts. JSON stdout: `{"ok":false,"error":"project_id_not_found","requested":"<id>"}` |
+| Fallback | If no contexts registered at all: exit 1 with `{"ok":false,"error":"no_contexts_registered"}`. |
+
+---
+
+#### `kb scope <intent-id> --project=<id>`
+
+**Layer:** KBAgent — Runtime  
+**Status:** Specified (not yet implemented)
+
+| Field | Value |
+|---|---|
+| Input | Positional `<intent-id>` (required) + `--project=<id>` (required). |
+| Side effect | Writes `project_id` linkage into intent's `intent.md` frontmatter (`project_scope` field). |
+| Exit 0 | Scope written. JSON stdout: `{"ok":true,"intent_id":"<id>","project_scope":"<project_id>"}` |
+| Exit 1 | Intent not found in `_active/`. JSON stdout: `{"ok":false,"error":"intent_not_found","intent_id":"<id>"}` |
+| Exit 1 | `project_id` not registered. JSON stdout: `{"ok":false,"error":"project_id_not_found","project":"<id>"}` |
+| Fallback | If `--project` omitted: use `active_project_id` from state if set; else exit 1 with `{"ok":false,"error":"no_active_project_context"}`. |
+
+---
+
+### Common Output Rules (all commands above)
+
+- All output is JSON to stdout. Human-readable rendering is KBAgent/MCP responsibility (Constitutional Axiom 5).
+- All errors include an `error` field with a machine-readable snake_case code.
+- No command writes to stderr except for unexpected runtime exceptions (Node.js unhandled errors).
+- Exit codes: `0` = success or soft warning (Agent-side), `1` = hard block (Root-side) or unrecoverable error (Agent-side).
