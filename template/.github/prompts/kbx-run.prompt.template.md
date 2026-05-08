@@ -18,7 +18,7 @@ You operate under the master KB agent contract at `.github/agents/kbx.agent.md`.
 ## Vocabulary Lock (D00)
 
 Follow `template/00-start-here/glossary.md` vocabulary:
-- `install-presence` = `fresh | healthy | partial` from `kb status --json`.
+- `install-presence` = `fresh | healthy | partial` from `kbx status --json`.
 - `install-state` = `state.json` fields (schemaVersion, storageMode, metadataPolicy, ideIntegration, etc.).
 - `runtime-step` = one checklist action in `runtime-plan.md`.
 - `step-status` = `pending | done | skipped | blocked` on each runtime-step.
@@ -31,23 +31,23 @@ Do not use bare `state` or bare `step` when the compound terms above apply.
 
    Run:
    ```
-   kb status --json
+   kbx status --json
    ```
 
    | `presence` | Action |
    |---|---|
    | `fresh` | Auto-init silently (see below). |
    | `healthy` | Continue to step 2. |
-   | `partial` | **HALT. Do NOT auto-init.** Print recovery guidance from `kb status` (without `--json`). Stop. |
+   | `partial` | **HALT. Do NOT auto-init.** Print recovery guidance from `kbx status` (without `--json`). Stop. |
 
-   If `kb` is not on PATH: `npx -y @williamduong/kb@latest status --json`
+   If `kb` is not on PATH: `npx -y @williamduong/kbx@latest status --json`
 
    **Auto-init (fresh only):**
    - `projectName` ← `package.json` `name` field, else workspace folder name.
    - `mode` ← `private-git` if `.git` exists, else `tracked`.
-   - Run `kb init --yes`. Report detection.
+   - Run `kbx init --yes`. Report detection.
 
-2. **First-run IDE integration.** If `state.ideIntegration.enabled` is `false`: run `kb ide enable`, print injected targets.
+2. **First-run IDE integration.** If `state.ideIntegration.enabled` is `false`: run `kbx ide enable`, print injected targets.
 
 3. **Check plan.** If `runtime-plan.md` does not exist: invoke `/kbx-plan` logic, write plan, print summary, ask for confirmation before executing.
 
@@ -61,7 +61,7 @@ Execute multiple steps in sequence within one session unless a step requires use
 - Destructive or irreversible operation (`uninstall`, `--force`)
 - Step is `custom:*` with ambiguous intent
 - CLI exits non-zero (see error handling below)
-- `kb intent apply` returns strategy `resolve-first`
+- `kbx intent apply` returns strategy `resolve-first`
 - User's `involvement` preference is `hands-on` (per `userPersona`) — in this mode, confirm before each step
 
 **Non-blocking (execute silently, report after all complete):**
@@ -70,10 +70,10 @@ Execute multiple steps in sequence within one session unless a step requires use
 
 For each step executed:
 1. Map action to CLI:
-   - `init` → `kb init --yes`
-   - `update` → `kb update`
-   - `maintain` → `kb maintain` (use `--fast` if step rationale mentions large workspace)
-   - `uninstall` → confirm twice, then `kb uninstall`
+   - `init` → `kbx init --yes`
+   - `update` → `kbx update`
+   - `maintain` → `kbx maintain` (use `--fast` if step rationale mentions large workspace)
+   - `uninstall` → confirm twice, then `kbx uninstall`
    - `custom:*` → follow the textual rationale; do not invoke unknown CLI verbs.
 2. Run via terminal tool. Capture result.
 3. Mark step `(status: done)`, append log line: `<ISO timestamp> — exit=<code> — <one-line outcome>`.
@@ -113,8 +113,8 @@ If CLI exits non-zero, mark step `(status: blocked)` and stop. Parse output for 
 | Cause | Suggested fix (ask user `yes` first) |
 |---|---|
 | `working tree has N uncommitted change(s)` | `git add -A && git commit -m "chore: kb housekeeping"`, re-run step |
-| `Hook file missing at .github/hooks/revision-state-guard.json` | `kb update --refresh-prompts`, re-run step |
-| Doctor `WARN` only (no FAIL) | Re-run with `kb maintain --fast` |
+| `Hook file missing at .github/hooks/revision-state-guard.json` | `kbx update --refresh-prompts`, re-run step |
+| Doctor `WARN` only (no FAIL) | Re-run with `kbx maintain --fast` |
 
 ## On `skip`
 Mark `(status: skipped)` with reason `user-skip`. Move to next step.
@@ -132,14 +132,14 @@ Plan file is the single source of truth. `current_step` and `last_updated` are p
 
 ## v2.0 Intent Intelligence Awareness
 
-When a step includes `kb intent apply`:
+When a step includes `kbx intent apply`:
 1. CLI outputs conflict strategy automatically.
 2. `resolve-first` → **pause, explain steps, ask confirmation before continuing.**
 3. `review-order` / `proceed-with-caution` → surface output, continue.
 
 After 3+ intents applied in a session:
 ```
-3+ intents applied. Run `kb intent suggest-lessons` to surface lesson candidates.
+3+ intents applied. Run `kbx intent suggest-lessons` to surface lesson candidates.
 ```
 Do not auto-run — present as suggestion only.
 
@@ -151,7 +151,7 @@ Do not auto-run — present as suggestion only.
    Run:
 
    ```
-   kb status --json
+   kbx status --json
    ```
 
    Parse the JSON. The `presence` field is one of `fresh | healthy | partial`:
@@ -160,12 +160,12 @@ Do not auto-run — present as suggestion only.
    |---|---|
    | `fresh` | Auto-init silently (see below). |
    | `healthy` | Continue to step 2. |
-   | `partial` | **HALT. Do NOT auto-init.** Print the recovery guidance from `kb status` (without `--json`). Stop. |
+   | `partial` | **HALT. Do NOT auto-init.** Print the recovery guidance from `kbx status` (without `--json`). Stop. |
 
    If the `kb` CLI is not installed in PATH, fall back to:
 
    ```
-   npx -y @williamduong/kb@latest status --json
+   npx -y @williamduong/kbx@latest status --json
    ```
 
    Only if BOTH commands fail (network/install error), fall back to filesystem probes — and in that fallback **also** check `.git/project-kb/state.json` in addition to `knowledge-base/.kb/state.json` so private-git installs are not misclassified.
@@ -174,21 +174,21 @@ Do not auto-run — present as suggestion only.
    - `projectName` ← `package.json` `name` field, else workspace folder name.
    - `mode` ← `private-git` if `.git` directory exists, else `tracked`.
    - `contentRoot` ← `knowledge-base/` (default).
-   - Run `kb init --yes`. Capture stdout. Report what was detected.
+   - Run `kbx init --yes`. Capture stdout. Report what was detected.
 
-   **HALT (Partial / corrupted case):** Re-print the human-readable output of `kb status` so the user sees the same recovery hints (`kb doctor`, `git checkout HEAD -- knowledge-base/.kb/state.json`, or `kb uninstall --force` + `kb init --yes`). Stop. Do not proceed to step 2.
+   **HALT (Partial / corrupted case):** Re-print the human-readable output of `kbx status` so the user sees the same recovery hints (`kbx doctor`, `git checkout HEAD -- knowledge-base/.kb/state.json`, or `kbx uninstall --force` + `kbx init --yes`). Stop. Do not proceed to step 2.
 
 2. **First-run IDE integration.** If `state.ideIntegration.enabled` is `false` (or field missing):
-    - Run `kb ide enable` and use its output as-is.
-    - If `kb` is not on PATH, use `npx -y @williamduong/kb@latest ide enable`.
-    - Do NOT import or execute internal files from global installs (for example under `node_modules/@williamduong/kb/src/*`).
+    - Run `kbx ide enable` and use its output as-is.
+    - If `kb` is not on PATH, use `npx -y @williamduong/kbx@latest ide enable`.
+    - Do NOT import or execute internal files from global installs (for example under `node_modules/@williamduong/kbx/src/*`).
     - This command owns target detection, block injection, and `state.ideIntegration` updates.
     - If the command reports injected targets, print:
      ```
      KB integration enabled. Reference block injected into:
        - <file 1>
        - <file 2>
-   To disable later: run `kb ide disable`.
+   To disable later: run `kbx ide disable`.
      ```
     - If it reports no targets, print that integration was marked enabled with zero targets and continue.
 
@@ -210,10 +210,10 @@ Do not auto-run — present as suggestion only.
 
 2. On `yes`:
    - Map action to CLI invocation:
-     - `init` → `kb init --yes`
-     - `update` → `kb update`
-     - `maintain` → `kb maintain` (use `kb maintain --fast` if step rationale mentions large workspace)
-     - `uninstall` → confirm twice with the user, then `kb uninstall`
+     - `init` → `kbx init --yes`
+     - `update` → `kbx update`
+     - `maintain` → `kbx maintain` (use `kbx maintain --fast` if step rationale mentions large workspace)
+     - `uninstall` → confirm twice with the user, then `kbx uninstall`
      - `custom:*` → follow the textual rationale; do not invoke unknown CLI verbs.
    - Run the command via the chat agent's terminal tool.
    - Capture the result.
@@ -261,9 +261,9 @@ If the CLI exits non-zero, mark the step `(status: blocked)` with the exit code 
 
 | Cause (in stderr / stdout) | Suggested fix (ask user `yes` first) |
 |---|---|
-| `working tree has N uncommitted change(s)` from `kb maintain --strict` | Suggest `git add -A && git commit -m "chore: kb housekeeping"`, then re-run the same step. |
-| `Hook file missing at .github/hooks/revision-state-guard.json` (WARN) | Suggest `kb update --refresh-prompts` (re-copies template files including the hook), then re-run. |
-| Doctor `WARN` items only (no FAIL) | Suggest re-running with `kb maintain --fast` (skips strict mode). |
+| `working tree has N uncommitted change(s)` from `kbx maintain --strict` | Suggest `git add -A && git commit -m "chore: kb housekeeping"`, then re-run the same step. |
+| `Hook file missing at .github/hooks/revision-state-guard.json` (WARN) | Suggest `kbx update --refresh-prompts` (re-copies template files including the hook), then re-run. |
+| Doctor `WARN` items only (no FAIL) | Suggest re-running with `kbx maintain --fast` (skips strict mode). |
 
 For any other non-zero exit, just print the captured output and the menu — do not invent fixes.
 
@@ -285,8 +285,8 @@ If the failure requires user-only actions (credentials, privileged access, exter
 
 ## Toggles
 
-- `kb ide disable` disables IDE integration.
-- `kb ide enable` enables IDE integration.
+- `kbx ide disable` disables IDE integration.
+- `kbx ide enable` enables IDE integration.
 
 ## Boundaries
 
@@ -297,7 +297,7 @@ If the failure requires user-only actions (credentials, privileged access, exter
 
 ## v2.0 Intent Intelligence Awareness
 
-When executing a step that includes `kb intent apply`:
+When executing a step that includes `kbx intent apply`:
 
 1. The CLI automatically runs conflict analysis and outputs a strategy (`proceed` / `review-order` / `resolve-first`).
 2. If the strategy is `resolve-first`: **pause, surface the strategy and its steps to the user, and ask for confirmation before continuing**. Do not auto-proceed through a `resolve-first` warning.
@@ -306,7 +306,7 @@ When executing a step that includes `kb intent apply`:
 After applying 3 or more intents in a session, proactively suggest:
 
 ```
-You have applied 3+ intents. Run `kb intent suggest-lessons` to surface lesson candidates from the pattern evidence.
+You have applied 3+ intents. Run `kbx intent suggest-lessons` to surface lesson candidates from the pattern evidence.
 ```
 
 Do not auto-run `suggest-lessons` — present it as a suggestion only.

@@ -27,7 +27,7 @@ This policy governs KB release metadata stored in .kb/catalog.json, release note
 
 ## Release Workflow Modes
 
-- Default mode is pipeline-first using `.kb/release-pipeline.yaml` with `kb release init-pipeline`, `kb release plan`, and `kb release run`.
+- Default mode is pipeline-first using `.kb/release-pipeline.yaml` with `kbx release init-pipeline`, `kbx release plan`, and `kbx release run`.
 - Manual mode is supported as fallback when pipeline YAML is not configured or project requirements are outside the supported DSL.
 - Both modes must produce the same release artifacts: git tag, npm publish result, release notes, catalog update, and verification evidence.
 
@@ -53,12 +53,12 @@ This policy governs KB release metadata stored in .kb/catalog.json, release note
 - Git tag is the source of truth for release identity.
 - released_at uses tagger date when available.
 - If the tag is lightweight and has no tagger date, fallback to commit date.
-- kb release tag does not create git tags; users keep full control over tagging and pushing.
+- kbx release tag does not create git tags; users keep full control over tagging and pushing.
 
 ## Pre-release Handling
 
 - Pre-release tags are detected by semantic suffixes (for example: -alpha, -beta, -rc).
-- Default behavior for kb release init is to ignore pre-release tags.
+- Default behavior for kbx release init is to ignore pre-release tags.
 - Override behavior:
   - --ignore-prerelease forces skipping pre-release tags.
   - --include-prerelease includes them.
@@ -92,11 +92,11 @@ released_in: v1.5.0
 
 ## Operational Rules
 
-- Initialize catalog tracking with `kb release init` once per workspace.
-- If pipeline mode is used, initialize `.kb/release-pipeline.yaml` once with `kb release init-pipeline --template=<name>`.
-- Before real execution, run `kb release plan` (or `kb release run --dry-run`) to validate pipeline wiring.
-- Use `kb release run` as the preferred orchestrator for release steps.
+- Initialize catalog tracking with `kbx release init` once per workspace.
+- If pipeline mode is used, initialize `.kb/release-pipeline.yaml` once with `kbx release init-pipeline --template=<name>`.
+- Before real execution, run `kbx release plan` (or `kbx release run --dry-run`) to validate pipeline wiring.
+- Use `kbx release run` as the preferred orchestrator for release steps.
 - If manual fallback is used, follow the end-to-end checklist in `notes/npm-release-checklist.md`.
 - Ensure each shipped version has a git tag (`vX.Y.Z`) and a matching catalog entry.
 - Keep release notes generation deterministic from git history and review before publishing.
-- If catalog drifts, rebuild from tags using `kb release init`.
+- If catalog drifts, rebuild from tags using `kbx release init`.

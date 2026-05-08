@@ -19,16 +19,16 @@ This repository now includes a preview CLI scaffold (`kb`) for local initializat
 
 ```bash
 cd <your-repo>
-npx @williamduong/kb@latest init --yes
-kb bootstrap --dry-run
-kb bootstrap
-kb index
-kb next
+npx @williamduong/kbx@latest init --yes
+kbx bootstrap --dry-run
+kbx bootstrap
+kbx index
+kbx next
 ```
 
-The first command installs the KB template, the `@kb` master agent, and the `/kb-plan` + `/kb-run` chat prompts into your repo. Then run the follow-up commands to scaffold docs, build index, and get the next best action from `kb next`.
+The first command installs the KB template, the `@kbx` master agent, and the `/kbx-plan` + `/kbx-run` chat prompts into your repo. Then run the follow-up commands to scaffold docs, build index, and get the next best action from `kbx next`.
 
-> **Two-step bootstrap (important).** The `@kb` agent and `/kb-*` prompts are **per-project files** that live in your repo's `.github/`. They do not exist until `kb init` writes them. Order is always: **(1) install or `npx` the CLI → (2) `kb init` inside the target repo → (3) chat with `@kb` / `/kb-run`**.
+> **Two-step bootstrap (important).** The `@kbx` agent and `/kb-*` prompts are **per-project files** that live in your repo's `.github/`. They do not exist until `kbx init` writes them. Order is always: **(1) install or `npx` the CLI → (2) `kbx init` inside the target repo → (3) chat with `@kbx` / `/kbx-run`**.
 
 ### Other usage modes
 
@@ -41,14 +41,14 @@ node ./bin/kb.js help
 Global install mode (after publish):
 
 ```bash
-npm install -g @williamduong/kb@latest
-kb help
+npm install -g @williamduong/kbx@latest
+kbx help
 ```
 
 One-off usage with npx:
 
 ```bash
-npx @williamduong/kb help
+npx @williamduong/kbx help
 ```
 
 Core lifecycle commands (default user path):
@@ -63,10 +63,10 @@ Core lifecycle commands (default user path):
 
 No git repository detected?
 
-- `kb init` automatically falls back to `tracked` mode and prints a warning.
+- `kbx init` automatically falls back to `tracked` mode and prints a warning.
 - Run `git init` first if you want `private-git` mode.
 
-Advanced commands remain available via `kb help --advanced`.
+Advanced commands remain available via `kbx help --advanced`.
 
 ## Three-Layer Power Surface
 
@@ -74,25 +74,25 @@ KB ships three complementary layers; pick whichever matches your workflow.
 
 | Layer | Surface | When to use |
 |---|---|---|
-| **CLI (35+ commands)** | `kb init` / `kb update` / `kb maintain` / `kb intent *` / `kb graph *` / `kb chaos` / `kb release *` / ... | Power user, CI, scripting. Deterministic. |
-| **Prompts (2)** | `/kb-plan` and `/kb-run` in any agent chat (Copilot, Cursor, Claude) | Step-by-step, resumable. `/kb-run` auto-inits if needed and executes one step per call. |
-| **Master agent** | `@kb` in chat | Code Q&A oracle, structural guardian (bi-temporal, metadata schema), governance, intent conflict resolution (v2.0 Role 4 Reasoner). Backed by `.github/agents/kb.agent.md`. |
+| **CLI (35+ commands)** | `kbx init` / `kbx update` / `kbx maintain` / `kbx intent *` / `kbx graph *` / `kbx chaos` / `kbx release *` / ... | Power user, CI, scripting. Deterministic. |
+| **Prompts (2)** | `/kbx-plan` and `/kbx-run` in any agent chat (Copilot, Cursor, Claude) | Step-by-step, resumable. `/kbx-run` auto-inits if needed and executes one step per call. |
+| **Master agent** | `@kbx` in chat | Code Q&A oracle, structural guardian (bi-temporal, metadata schema), governance, intent conflict resolution (v2.0 Role 4 Reasoner). Backed by `.github/agents/kbx.agent.md`. |
 
 Examples:
 
 ```text
-@kb What database does this project use and how does it connect?
-@kb What are the main components?
-@kb How do I add an extension/plugin?
-@kb audit metadata
-@kb status
+@kbx What database does this project use and how does it connect?
+@kbx What are the main components?
+@kbx How do I add an extension/plugin?
+@kbx audit metadata
+@kbx status
 ```
 
 Plan + run pipeline (no CLI typing required after install):
 
 ```text
-/kb-plan         # writes knowledge-base/.kb/runtime-plan.md
-/kb-run          # executes the next pending step (resumable)
+/kbx-plan         # writes knowledge-base/.kb/runtime-plan.md
+/kbx-run          # executes the next pending step (resumable)
 ```
 
 Currently implemented commands:
@@ -166,7 +166,7 @@ Currently implemented commands:
 
 **AI IDE Adapter Files**
 
-`kb init` automatically generates the relevant adapter file for the active AI IDE and also creates project-scoped Copilot prompt files:
+`kbx init` automatically generates the relevant adapter file for the active AI IDE and also creates project-scoped Copilot prompt files:
 
 | File | IDE |
 |------|-----|
@@ -178,22 +178,22 @@ Currently implemented commands:
 
 It also creates:
 
-- `.github/agents/kb.agent.md` — master KB agent (Q&A oracle, structural guardian)
-- `.github/prompts/kb-plan.prompt.md` — `/kb-plan` analyzer
-- `.github/prompts/kb-run.prompt.md` — `/kb-run` step executor (auto-inits if needed)
+- `.github/agents/kbx.agent.md` — master KB agent (Q&A oracle, structural guardian)
+- `.github/prompts/kbx-plan.prompt.md` — `/kbx-plan` analyzer
+- `.github/prompts/kbx-run.prompt.md` — `/kbx-run` step executor (auto-inits if needed)
 
 Skip adapter generation with `--skip-adapters` if not needed.
 
 Recommended first-run flow after global install:
 
 ```bash
-kb help
-kb init
-kb maintain
+kbx help
+kbx init
+kbx maintain
 
 # Or, fully agent-driven (no CLI typing after install):
 # Open Copilot Chat in your workspace and run:
-#   /kb-run
+#   /kbx-run
 ```
 
 Pre-publish artifact simulation:
@@ -222,31 +222,31 @@ Legacy path `tools/generate-template-changelog.js` is deprecated and retained on
 
 ### Release Pipeline (v1.6)
 
-Declare your release workflow as YAML and execute it with `kb release run`. Steps run sequentially, outputs are captured, and dangerous commands are rejected before execution.
+Declare your release workflow as YAML and execute it with `kbx release run`. Steps run sequentially, outputs are captured, and dangerous commands are rejected before execution.
 
 Release execution modes:
 
-- Path A (recommended): pipeline-first with `kb release init-pipeline` + `kb release plan` + `kb release run`.
+- Path A (recommended): pipeline-first with `kbx release init-pipeline` + `kbx release plan` + `kbx release run`.
 - Path B (fallback): manual command flow in [`notes/npm-release-checklist.md`](notes/npm-release-checklist.md).
 
 ```bash
 # Initialize a pipeline in your KB (once per project)
-kb release init-pipeline --template=npm-package
+kbx release init-pipeline --template=npm-package
 # Available templates: npm-package | docs-only | custom
 
 # Preview what the pipeline will do without executing
-kb release plan --from=v1.5.0 --bump=patch
+kbx release plan --from=v1.5.0 --bump=patch
 
-# Execute the pipeline (requires clean kb status)
-kb release run --from=v1.5.0 --bump=patch
+# Execute the pipeline (requires clean kbx status)
+kbx release run --from=v1.5.0 --bump=patch
 
 # Dry-run: execute all steps except destructive shell commands
-kb release run --from=v1.5.0 --bump=patch --dry-run
+kbx release run --from=v1.5.0 --bump=patch --dry-run
 ```
 
 The pipeline file lives at `.kb/release-pipeline.yaml` inside your KB content root. Pipeline execution:
 
-1. Pre-checks `kb status` — fails fast if workspace is `attention` or `blocked`.
+1. Pre-checks `kbx status` — fails fast if workspace is `attention` or `blocked`.
 2. Runs steps sequentially; each step can `run` a shell command, capture `outputs`, and `confirm` before proceeding.
 3. On success, auto-updates the catalog with the new release entry.
 4. Rejects dangerous commands (`rm -rf /`, `curl | bash`, `git push --force`, etc.) before shell execution.
@@ -261,33 +261,33 @@ Structure multi-file KB changes as versioned intent workspaces. Each intent accu
 
 ```bash
 # Create an intent workspace (suggests ID from current git branch)
-kb intent create --mode=full --change-type=feature
+kbx intent create --mode=full --change-type=feature
 
 # Check status (staged files, warnings)
-kb intent status
+kbx intent status
 
 # Apply: writes to KB core, archives workspace, optionally triggers release
-kb intent apply my-intent --release
+kbx intent apply my-intent --release
 
 # After multiple applies: surface lesson candidates for KB improvement
-kb intent suggest-lessons
+kbx intent suggest-lessons
 
 # Audit active intents for missing focus/wave metadata before release
-kb intent cleanup --json
+kbx intent cleanup --json
 
 # Inspect legacy intent schema changes before writing
-kb migrate --to=v2.4.0 --dry-run --json
+kbx migrate --to=v2.4.0 --dry-run --json
 ```
 
-Conflict resolution: when two intents modify the same file, `kb intent apply` detects the conflict and shows a concrete resolution strategy (`resolve-first`, `merge`, etc.) before proceeding.
+Conflict resolution: when two intents modify the same file, `kbx intent apply` detects the conflict and shows a concrete resolution strategy (`resolve-first`, `merge`, etc.) before proceeding.
 
 After each apply, `ai-decision-context.json` is written to the intent archive — records the conflict analysis and decision context for future review.
 
 For KBs created before v2.4, the CLI now distinguishes between advisory cleanup and schema migration:
 
-- `kb intent cleanup` reports missing `focus.current`, `focus.next_action`, `focus.last_updated`, and `architecture_position.wave` so maintainers can fix owner-visible planning gaps.
-- `kb migrate --to=v2.4.0` rewrites legacy intent frontmatter into the canonical schema (`schema_version`, `legacy_status`, `legacy_lifecycle_state`, migration note), removes renamed original fields (`status`, `lifecycle_state`) on full-write intents, and preserves archive folders as marker-only.
-- When runtime detects legacy intent metadata without `schema_version`, it warns and points maintainers to `kb migrate --to=v2.4.0` before claiming the KB is fully current.
+- `kbx intent cleanup` reports missing `focus.current`, `focus.next_action`, `focus.last_updated`, and `architecture_position.wave` so maintainers can fix owner-visible planning gaps.
+- `kbx migrate --to=v2.4.0` rewrites legacy intent frontmatter into the canonical schema (`schema_version`, `legacy_status`, `legacy_lifecycle_state`, migration note), removes renamed original fields (`status`, `lifecycle_state`) on full-write intents, and preserves archive folders as marker-only.
+- When runtime detects legacy intent metadata without `schema_version`, it warns and points maintainers to `kbx migrate --to=v2.4.0` before claiming the KB is fully current.
 - Full-write path applies to active/closed intents. Archive intents stay read-only marker records during migration.
 
 ## What This Repository Contains

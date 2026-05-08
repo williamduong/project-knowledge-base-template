@@ -24,7 +24,7 @@
 
 **Next action (theo priority backlog):**
 - **KB-012 (P0):** Deterministic multi-project model (context registry, scope routing) — next major feature intent. Sẵn sàng bắt đầu.
-- **KB-016:** Done — 4/5 automated PASS. Manual check #4 (hỏi @kb trong IDE downstream) còn pending khi cần.
+- **KB-016:** Done — 4/5 automated PASS. Manual check #4 (hỏi @kbx trong IDE downstream) còn pending khi cần.
 
 ## Active Blockers
 

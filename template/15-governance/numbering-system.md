@@ -20,7 +20,7 @@ tags:
 
 Defines how every intent, plan, intent-phase, and intent-task is identified across a knowledge-base project. Consistent numbering enables traceability, cross-session resumability, and unambiguous references in agent output.
 
-Vocabulary note (D00): `runtime-step` belongs to `/kb-plan` and `/kb-run` execution of `runtime-plan.md`; it is intentionally outside this numbering contract.
+Vocabulary note (D00): `runtime-step` belongs to `/kbx-plan` and `/kbx-run` execution of `runtime-plan.md`; it is intentionally outside this numbering contract.
 
 ---
 
@@ -183,7 +183,7 @@ Example:
 ```
 [INT-006][PL-001] Init realworld-express project knowledge base
   [PH-1] Discovery
-    [T-1] Run kb status
+    [T-1] Run kbx status
     [T-2] Detect project type and stack
     [T-3] Scaffold tier structure
   [PH-2] Core Documentation

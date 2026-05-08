@@ -30,9 +30,9 @@ The KB tracks impact in two layers:
 | Layer | Source | Stored in | Edge kind |
 |---|---|---|---|
 | **Direct** | git diff vs `sourceRepositoryGitBaseline` matched against `binds_to` paths | `impacted[]` in `.kb/impact.json` | `binds_to` |
-| **Recursive (transitive)** | BFS from each direct-impacted doc via `related_strong` only | `transitive_impacted[]` (when `kb scan --recursive` is run) | `related_strong` |
+| **Recursive (transitive)** | BFS from each direct-impacted doc via `related_strong` only | `transitive_impacted[]` (when `kbx scan --recursive` is run) | `related_strong` |
 
-`related_weak` and legacy `related:` are **never** traversed. They surface as `Mentions` in `kb impact` output for human discovery only.
+`related_weak` and legacy `related:` are **never** traversed. They surface as `Mentions` in `kbx impact` output for human discovery only.
 
 Rationale: Phase 0 prototype on this template repo measured 59% false-positive rate when BFS depth 2 traversed unfiltered `related:` edges. Splitting into strong (dependency) vs weak (mention) eliminates the explosion. See [notes/upgrade-v1.4-phase0-validation.md](../../notes/upgrade-v1.4-phase0-validation.md) for evidence.
 
@@ -45,7 +45,7 @@ Rationale: Phase 0 prototype on this template repo measured 59% false-positive r
 | `impact.defaultDepth` | 2 | [src/lib/config.js](../../src/lib/config.js) `DEFAULTS` | `.kb/config.json` → `{ "impact": { "defaultDepth": N } }` |
 | `impact.maxDepth` | 5 | same | same key `maxDepth` |
 
-`kb impact <target> --depth=N` and `kb scan --recursive --depth=N` both clamp to `impact.maxDepth` and emit a stderr warning if requested depth exceeds the cap.
+`kbx impact <target> --depth=N` and `kbx scan --recursive --depth=N` both clamp to `impact.maxDepth` and emit a stderr warning if requested depth exceeds the cap.
 
 **When to raise depth:** rarely. Depth 2 covers most "if I change X, what reviewers should re-read" cases. Depths beyond 3 historically reintroduce hub-doc explosion; if a depth-3 result feels useful, prefer promoting more `related_strong` links instead.
 
@@ -59,7 +59,7 @@ Promote a link from `related_weak` (or legacy `related:`) to `related_strong` wh
 2. **Bounded fan-out**: the target is not a hub (`INDEX.md`, `*-index.md`, `agent-operating-manual.md`) — promoting a hub re-creates the FP explosion.
 3. **Stable**: the relationship is structural, not topical. Topical co-mentions stay weak.
 
-If unsure, leave it weak. `kb impact` displays weak neighbors as Mentions so reviewers can still discover them; weak just prevents transitive blowup.
+If unsure, leave it weak. `kbx impact` displays weak neighbors as Mentions so reviewers can still discover them; weak just prevents transitive blowup.
 
 ---
 
@@ -68,7 +68,7 @@ If unsure, leave it weak. `kb impact` displays weak neighbors as Mentions so rev
 Cycles in the `related_strong` subgraph are **legal but discouraged**:
 
 - BFS in `findRecursiveImpact` visits each node at its shortest depth, so cycles do not cause infinite traversal.
-- `kb doctor` raises `[WARN] related-strong-cycle` listing up to 3 sample cycles.
+- `kbx doctor` raises `[WARN] related-strong-cycle` listing up to 3 sample cycles.
 - A cycle indicates either (a) genuinely co-equal docs (acceptable; ignore the warning) or (b) one of the edges should be downgraded to `related_weak`.
 
 There is no auto-fix. Resolution is a human decision recorded in the doc's frontmatter.
@@ -100,7 +100,7 @@ Schema (additive — readers MUST ignore unknown fields per [template-versioning
   "unbound_changes": ["src/orphan.ts", ...],
   "skipped_reason": "not-a-git-repo|no-baseline|null",
 
-  // Added by `kb scan --recursive` (v1.4):
+  // Added by `kbx scan --recursive` (v1.4):
   "transitive_impacted": [
     { "doc": "path/to/other.md", "depth": 1, "from": ["path/to/doc.md"] }
   ],
@@ -108,7 +108,7 @@ Schema (additive — readers MUST ignore unknown fields per [template-versioning
 }
 ```
 
-`transitive_impacted` is **opt-in**: omitted unless `--recursive` was passed. `kb status` computes it on the fly without writing to disk.
+`transitive_impacted` is **opt-in**: omitted unless `--recursive` was passed. `kbx status` computes it on the fly without writing to disk.
 
 ---
 
@@ -117,11 +117,11 @@ Schema (additive — readers MUST ignore unknown fields per [template-versioning
 When a doc appears in `impacted[]`:
 
 1. **Reviewer reads** the matched code changes + the doc.
-2. If still accurate: run `kb verify <doc>`. This bumps `last_verified` to today and stamps `last_verified_commit` with current `HEAD`. The doc's entry is removed from `impact.json` on success.
-3. If stale: edit the doc in the same commit that addresses the code change. The next `kb scan` will recompute against the new baseline.
-4. `kb verify --all` is atomic — if any doc fails to update, no impact entries are cleared.
+2. If still accurate: run `kbx verify <doc>`. This bumps `last_verified` to today and stamps `last_verified_commit` with current `HEAD`. The doc's entry is removed from `impact.json` on success.
+3. If stale: edit the doc in the same commit that addresses the code change. The next `kbx scan` will recompute against the new baseline.
+4. `kbx verify --all` is atomic — if any doc fails to update, no impact entries are cleared.
 
-`last_verified_commit` lets future `kb scan` runs prove (or refute) that a doc has been reviewed against a specific commit, independent of the global baseline. The `[WARN] last-verified-commit-missing` doctor rule flags docs with `last_verified` set but no commit SHA — typically pre-v1.4 docs.
+`last_verified_commit` lets future `kbx scan` runs prove (or refute) that a doc has been reviewed against a specific commit, independent of the global baseline. The `[WARN] last-verified-commit-missing` doctor rule flags docs with `last_verified` set but no commit SHA — typically pre-v1.4 docs.
 
 ---
 
@@ -140,7 +140,7 @@ When a doc appears in `impacted[]`:
 ## 8. Out of Scope (Deferred)
 
 - **Intent-aware filtering** (only surface impacted docs whose `intent` overlaps the change kind) — v2.0.
-- **Co-occurrence heuristic** (`kb impact suggest related`) — v1.5+.
+- **Co-occurrence heuristic** (`kbx impact suggest related`) — v1.5+.
 - **Cross-repo impact** (changes in dependency repos surfacing here) — not planned.
 
 ---
@@ -149,20 +149,20 @@ When a doc appears in `impacted[]`:
 
 ```bash
 # Direct impact only (default)
-kb scan
+kbx scan
 
 # Direct + recursive (depth from impact.defaultDepth, default 2)
-kb scan --recursive
+kbx scan --recursive
 
 # Direct + recursive at custom depth
-kb scan --recursive --depth=3
+kbx scan --recursive --depth=3
 
 # Adhoc query (does not write impact.json)
-kb impact path/to/doc.md --depth=2
+kbx impact path/to/doc.md --depth=2
 
 # Mark one doc verified against current HEAD
-kb verify path/to/doc.md
+kbx verify path/to/doc.md
 
 # Mark all currently-impacted docs verified (atomic)
-kb verify --all
+kbx verify --all
 ```

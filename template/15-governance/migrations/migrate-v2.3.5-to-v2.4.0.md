@@ -24,8 +24,8 @@ tags:
 v2.4.0 introduces canonical intent schema maintenance for downstream KBs.
 This migration separates advisory intent cleanup from schema rewrite:
 
-- `kb intent cleanup` reports missing owner-facing fields such as `focus.current`, `focus.next_action`, `focus.last_updated`, and `architecture_position.wave`.
-- `kb migrate --to=v2.4.0` previews or persists legacy intent frontmatter into canonical v2.4 fields such as `schema_version`, `legacy_status`, and `legacy_lifecycle_state`.
+- `kbx intent cleanup` reports missing owner-facing fields such as `focus.current`, `focus.next_action`, `focus.last_updated`, and `architecture_position.wave`.
+- `kbx migrate --to=v2.4.0` previews or persists legacy intent frontmatter into canonical v2.4 fields such as `schema_version`, `legacy_status`, and `legacy_lifecycle_state`.
 
 ## Why This Migration Exists
 
@@ -39,18 +39,18 @@ Without this migration, downstream teams may think their KB is current while int
 
 ## Files To Update
 
-- Update the CLI/runtime by adopting `@williamduong/kb@2.4.0`
+- Update the CLI/runtime by adopting `@williamduong/kbx@2.4.0`
 - Review active intent files under `<contentRoot>/intents/_active/*/intent.md`
 - Review closed intent files under `<contentRoot>/intents/_closed/**/intent.md`
 - Review local agent surfaces that mention intent commands:
-  - `.github/agents/kb.agent.md`
-  - `.github/prompts/kb-run.prompt.md`
-  - `.github/prompts/kb-plan.prompt.md`
+  - `.github/agents/kbx.agent.md`
+  - `.github/prompts/kbx-run.prompt.md`
+  - `.github/prompts/kbx-plan.prompt.md`
 
 ## Behavioral Changes For Agents
 
 - Agents should no longer treat missing `schema_version` on active intents as harmless silence; they should surface a migration hint.
-- Agents should use `kb intent cleanup --json` before release review or closure claims so owner-facing focus and wave gaps are explicit.
+- Agents should use `kbx intent cleanup --json` before release review or closure claims so owner-facing focus and wave gaps are explicit.
 - Agents should treat archive intent folders as marker-only during migration. Active and closed intents are the write path.
 
 ## Prompt Patch To Use
@@ -62,16 +62,16 @@ Use the version-patch prompts in `../../12-ai-skills/version-patch-prompts.md` w
 1. Upgrade the CLI/package to v2.4.0.
 2. Preview schema rewrite:
    ```bash
-   kb migrate --to=v2.4.0 --dry-run --json
+   kbx migrate --to=v2.4.0 --dry-run --json
    ```
 3. Review advisory cleanup findings:
    ```bash
-   kb intent cleanup --json
+   kbx intent cleanup --json
    ```
 4. Fix any owner-facing focus or wave gaps reported by cleanup.
 5. Persist the schema migration once dry-run output looks correct:
    ```bash
-   kb migrate --to=v2.4.0 --json
+   kbx migrate --to=v2.4.0 --json
    ```
 6. Re-run cleanup and verify no critical findings remain for active intents.
 
@@ -81,10 +81,10 @@ Use the version-patch prompts in `../../12-ai-skills/version-patch-prompts.md` w
 - legacy values are preserved under `legacy_status` / `legacy_lifecycle_state` when applicable
 - original legacy fields that were renamed are no longer duplicated beside canonical migration output
 - active intents have `focus.current`, `focus.next_action`, `focus.last_updated`, and `architecture_position.wave` when required
-- downstream agent docs mention `kb intent cleanup` and `kb migrate`
+- downstream agent docs mention `kbx intent cleanup` and `kbx migrate`
 
 ## Rollback Notes
 
 - Use git to revert intent metadata files if the write-path result is not acceptable.
-- Re-run `kb migrate --to=v2.4.0 --dry-run --json` before trying again.
+- Re-run `kbx migrate --to=v2.4.0 --dry-run --json` before trying again.
 - If only advisory cleanup changed the result, revert the specific focus/wave edits rather than the whole migration pass.

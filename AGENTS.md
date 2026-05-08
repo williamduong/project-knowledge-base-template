@@ -7,7 +7,7 @@ architectural context, domain model, and governance rules.
 
 - This repository is a self-host maintainer workspace.
 - Maintainer agent surface: `@KBRoot` and `/kbroot-*` prompts.
-- Downstream-user surface (`@kb`, `/kb-plan`, `/kb-run`, `/kb-ask`) is disabled locally and must be validated in a downstream clean workspace.
+- Downstream-user surface (`@kbx`, `/kbx-plan`, `/kbx-run`, `/kbx-ask`) is disabled locally and must be validated in a downstream clean workspace.
 - Do not use self-host prompt output as final user-experience acceptance evidence for shipped KB Agent behavior.
 
 ## Mandatory read-order before any multi-file task

@@ -22,7 +22,7 @@ tags:
 
 Define the required frontmatter structure for intent metadata. This schema ships with KB Agent as the **opinionated default** for all intent modes (quick, full). All defaults are chosen to work for the widest range of projects without configuration.
 
-**Design principle:** Opinionated default + user override. Every governance default below can be overridden via `.kb/config.yml` (see v2.5 config layer). User overrides are logged to `.kb/governance/customizations.log` so `kb migrate` can respect them during upgrades.
+**Design principle:** Opinionated default + user override. Every governance default below can be overridden via `.kb/config.yml` (see v2.5 config layer). User overrides are logged to `.kb/governance/customizations.log` so `kbx migrate` can respect them during upgrades.
 
 ## Intent Frontmatter Structure
 
@@ -69,15 +69,15 @@ promote_decision_ref: <string or null> # Ref to decision record if promotion is 
 
 # ========== v2.4+ SCHEMA VERSIONING ==========
 schema_version: <vX.Y.Z or null>       # Intent metadata schema version (e.g. v2.4.0)
-                                       # null or missing = legacy pre-v2.4 intent (migrate with kb migrate)
+                                       # null or missing = legacy pre-v2.4 intent (migrate with kbx migrate)
 
 # ========== LEGACY FIELDS (pre-v2.4, migrated to canonical) ==========
-# These fields are removed after migration via kb migrate --to=v2.4.0
+# These fields are removed after migration via kbx migrate --to=v2.4.0
 # Do not add them to new intents; use canonical fields above.
 legacy_status: <string>                # migrated to lifecycle
 legacy_lifecycle_state: <string>       # migrated to lifecycle
 legacy: <boolean>                      # marker: this intent was migrated from pre-v2.4 schema
-migration_note: <string>               # audit trail note from kb migrate operation
+migration_note: <string>               # audit trail note from kbx migrate operation
 ---
 ```
 
@@ -167,7 +167,7 @@ schema_version: v2.4.0
 - `focus`, `change_scope`, `decision_summary` required and detailed
 - All v1.8+ reserve fields present (even if null)
 - `schema_version: v2.4.0` required
-- **Must pass** `kb intent cleanup` with no critical findings before apply
+- **Must pass** `kbx intent cleanup` with no critical findings before apply
 
 ### Closed Intent (Released)
 
@@ -225,7 +225,7 @@ archive_reason: "Superseded by user-onboarding-redesign; kept for historical aud
 - [ ] `change_type` is one of: governance, feature, docs, refactor, bugfix
 - [ ] `focus.last_updated` is YYYY-MM-DD
 - [ ] `schema_version` present and valid (v2.4.0+)
-- [ ] No legacy fields present: `legacy_status`, `legacy_lifecycle_state` (migrate with `kb migrate`)
+- [ ] No legacy fields present: `legacy_status`, `legacy_lifecycle_state` (migrate with `kbx migrate`)
 
 ### Active Intents (Quick Mode)
 
@@ -241,8 +241,8 @@ archive_reason: "Superseded by user-onboarding-redesign; kept for historical aud
 - [ ] impact.md exists and is non-empty
 - [ ] `focus`, `change_scope`, `decision_summary` all detailed
 - [ ] All v1.8+ reserve fields present: `lesson_id`, `promotion_ready`, `linked_signals`, `promote_decision_ref`
-- [ ] Pass `kb intent cleanup --json` with 0 critical findings
-- [ ] Intent applies with `kb intent apply <id>` before move to closed
+- [ ] Pass `kbx intent cleanup --json` with 0 critical findings
+- [ ] Intent applies with `kbx intent apply <id>` before move to closed
 
 ### Closed & Archived Intents
 
@@ -258,7 +258,7 @@ Pre-v2.4 intents use legacy fields:
 - `lifecycle_state` → `lifecycle`
 - No `schema_version` field
 
-Run `kb migrate --to=v2.4.0 --dry-run` to preview required changes.
+Run `kbx migrate --to=v2.4.0 --dry-run` to preview required changes.
 
 After migration:
 - Legacy fields (`status`, `lifecycle_state`) are removed via DELETE_SENTINEL
@@ -297,20 +297,20 @@ At intent creation or resume (step 8 of `agent-operating-manual.md`):
 
 ```
 if (intent.schema_version is missing or outdated)
-  run: kb migrate --to=<current-template-version> --dry-run
+  run: kbx migrate --to=<current-template-version> --dry-run
   show: proposed migration changes to user
-  (user approves → run: kb migrate --to=<version>)
+  (user approves → run: kbx migrate --to=<version>)
 ```
 
 At intent apply or close (step 9 of `agent-operating-manual.md`):
 
 ```
-run: kb intent cleanup --json
+run: kbx intent cleanup --json
 if (critical findings found)
   surface: findings to user
   block: apply/close until critical resolved
 else
-  proceed: to kb intent apply / close
+  proceed: to kbx intent apply / close
 ```
 
 ## See Also

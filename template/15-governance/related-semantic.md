@@ -23,7 +23,7 @@ tags:
 
 Phase 0 of the v1.4 impact engine measured ~59% false-positive rate when BFS expanded the legacy single `related:` field to depth 2. The cause: `related:` mixed two distinct semantics — true dependency vs. mere mention. Hub docs (indexes, agent manuals) explode the graph at hop 2.
 
-To make `kb impact` usable as a deterministic gate, the schema separates the two:
+To make `kbx impact` usable as a deterministic gate, the schema separates the two:
 
 - `related_strong:` — **dependencies the impact engine traverses**.
 - `related_weak:` — **mentions/references**, displayed under "Mentions" but never traversed.
@@ -47,7 +47,7 @@ Use `related_weak:` for everything else:
 
 If you cannot decide, prefer `related_weak:`. Promotion is cheap; demotion is suspicious.
 
-## Effect on `kb impact`
+## Effect on `kbx impact`
 
 | Edge | BFS traverses | Shown in output |
 |---|---|---|
@@ -55,11 +55,11 @@ If you cannot decide, prefer `related_weak:`. Promotion is cheap; demotion is su
 | `related_weak` (incl. legacy `related:`) | no | yes (under "Mentions") |
 | `binds_to` (from `bindings.json`) | yes (depth-1 only) | yes |
 
-If a target document has zero `related_strong` neighbours, `kb impact` prints a hint to consider promoting selected `related_weak:` entries.
+If a target document has zero `related_strong` neighbours, `kbx impact` prints a hint to consider promoting selected `related_weak:` entries.
 
 ## Migration policy (v1.4)
 
-`kb update` does **not** rewrite frontmatter on upgrade. Doctor surfaces an info-level message when a doc still uses the legacy `related:` field. Promotion is per-doc, manual, and explicit.
+`kbx update` does **not** rewrite frontmatter on upgrade. Doctor surfaces an info-level message when a doc still uses the legacy `related:` field. Promotion is per-doc, manual, and explicit.
 
 The template repo dogfoods this policy in a separate PR after v1.4 ships.
 
@@ -68,4 +68,4 @@ The template repo dogfoods this policy in a separate PR after v1.4 ships.
 If the same path appears in both `related_strong:` and `related_weak:` of one doc:
 
 - The strong edge wins for traversal.
-- `kb doctor` warns about the conflict so the author can drop the weak duplicate.
+- `kbx doctor` warns about the conflict so the author can drop the weak duplicate.

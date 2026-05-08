@@ -71,7 +71,7 @@ For any AI-enabled IDE, the minimum repo assets are:
 7. Run maintenance checks after the agent finishes.
 
 ```bash
-kb doctor
+kbx doctor
 ```
 
 ## Prompt Portability Guidance

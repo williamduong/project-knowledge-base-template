@@ -66,7 +66,7 @@ State/status disambiguation:
 
 Execution disambiguation:
 - Use `intent-phase` and `intent-task` for intent hierarchy references.
-- Use `runtime-step` for `/kb-plan` and `/kb-run` checklist actions.
+- Use `runtime-step` for `/kbx-plan` and `/kbx-run` checklist actions.
 
 Rule: avoid bare `state`, `status`, `phase`, `task`, or `step` in governance prose when a compound term exists.
 

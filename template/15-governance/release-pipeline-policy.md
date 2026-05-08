@@ -46,20 +46,20 @@ Do not treat release pipeline YAML as a general CI system. Features such as matr
 ## Storage Rule
 
 - The active runtime pipeline lives at `.kb/release-pipeline.yaml` under the resolved content root.
-- The command `kb release init-pipeline` copies one starter template into that location.
+- The command `kbx release init-pipeline` copies one starter template into that location.
 - Repository logic must resolve the content root dynamically; do not hardcode `knowledge-base/.kb/`.
 
 ## Execution Rule
 
-- `kb release plan` validates and previews a pipeline without executing commands.
-- `kb release run` executes steps sequentially.
+- `kbx release plan` validates and previews a pipeline without executing commands.
+- `kbx release run` executes steps sequentially.
 - `confirm: true` means a step must be explicitly approved unless `--yes` is used.
 - `fail_on_nonzero` defaults to true.
 - Pipeline outputs are available only after the producing step completes.
 
 ## Pre And Post Hooks
 
-- `kb release run` must execute `kb status --quiet` before any pipeline step runs.
+- `kbx release run` must execute `kbx status --quiet` before any pipeline step runs.
 - If status returns `attention` or `blocked`, release execution must halt immediately.
 - After a successful pipeline run, catalog metadata should be updated from the resolved release version and matching git tag.
 - Catalog auto-update must remain idempotent: if a release version already exists, do not append a duplicate entry.
@@ -92,7 +92,7 @@ Do not treat release pipeline YAML as a general CI system. Features such as matr
 
 ## Operational Guidance
 
-- Use `kb release init` before relying on catalog automation.
-- Use `kb release plan` after editing pipeline YAML and before running a real release.
+- Use `kbx release init` before relying on catalog automation.
+- Use `kbx release plan` after editing pipeline YAML and before running a real release.
 - Keep pipeline comments explicit when a step assumes external tooling such as `gh` or `npm` authentication.
 - If a project requires dangerous operations outside the allowed policy, keep them outside the KB release pipeline system.

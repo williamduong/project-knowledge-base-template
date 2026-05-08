@@ -31,7 +31,7 @@ These examples demonstrate how to adapt the small release pipeline DSL for commo
 ## Usage
 
 1. Copy one example into `.kb/release-pipeline.yaml` and adjust commands for your repository.
-2. Run `kb release plan -f <example-file> --bump=patch` to validate interpolation and step order.
+2. Run `kbx release plan -f <example-file> --bump=patch` to validate interpolation and step order.
 3. Convert any project-specific complexity into scripts, then call those scripts from `run:`.
 
 ## Guardrails

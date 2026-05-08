@@ -27,7 +27,7 @@ Before planning, follow `template/00-start-here/glossary.md` naming rules:
 
 Before writing a plan, check for active intents:
 ```
-kb intent list
+kbx intent list
 ```
 If an active intent exists, the plan steps should be scoped to that intent and reference its ID (e.g. `[INT-001]`). Include the intent ID in the plan frontmatter as `intent_id: INT-001`. This links the runtime-plan to the intent evidence trail.
 
@@ -38,12 +38,12 @@ If no intent exists and the plan includes KB change steps (not just read-only wo
 
 Always read (silent, no narration):
 
-0. **CLI status** — run `kb status --json` (or fall back to `npx -y @williamduong/kb@latest status --json` if `kb` is not on PATH). The CLI is the single source of truth for `presence` (`fresh` / `healthy` / `partial`) and for the resolved `state.json` path. Do NOT use file_search or filesystem probes alone — most IDEs exclude `.git/` from search by default and will misclassify `private-git` installs as `partial`.
-1. `state.json` — the CLI's `--json` output already includes the parsed state object (`schemaVersion`, `cliVersion`, `templateVersion`, `metadataPolicy`, `ideIntegration`, `storageMode`, etc.). If `presence === 'fresh'`, treat as `not-initialized`. If `presence === 'partial'`, abstain and ask the user to follow the recovery steps printed by `kb status`.
+0. **CLI status** — run `kbx status --json` (or fall back to `npx -y @williamduong/kbx@latest status --json` if `kb` is not on PATH). The CLI is the single source of truth for `presence` (`fresh` / `healthy` / `partial`) and for the resolved `state.json` path. Do NOT use file_search or filesystem probes alone — most IDEs exclude `.git/` from search by default and will misclassify `private-git` installs as `partial`.
+1. `state.json` — the CLI's `--json` output already includes the parsed state object (`schemaVersion`, `cliVersion`, `templateVersion`, `metadataPolicy`, `ideIntegration`, `storageMode`, etc.). If `presence === 'fresh'`, treat as `not-initialized`. If `presence === 'partial'`, abstain and ask the user to follow the recovery steps printed by `kbx status`.
 2. `knowledge-base/00-start-here/repository-revision-state.md` (if present) — drift baseline. In `private-git` mode this is at `.git/project-kb/content/00-start-here/repository-revision-state.md`; consult `state.contentRoot` from CLI output.
 3. `knowledge-base/00-start-here/strategic-backlog.md` (if present) — outstanding strategic backlog items.
 4. Workspace `package.json` (if present) — for `projectName` detection.
-5. Latest published CLI version via `npm view @williamduong/kb version` (only if `state.cliVersion` looks behind; otherwise skip to save tokens).
+5. Latest published CLI version via `npm view @williamduong/kbx version` (only if `state.cliVersion` looks behind; otherwise skip to save tokens).
 6. Existing plan file at `knowledge-base/.kb/runtime-plan.md` (if present). In `private-git` mode the plan still lives under the visible `knowledge-base/` mount (which is a junction/symlink to `.git/project-kb/content/`).
 
 ## Decision rules
@@ -139,4 +139,4 @@ If the user sends `/kbx-plan <extra text>`:
 
 - Do not call CLI commands. /kbx-run does that.
 - Do not write outside `knowledge-base/.kb/runtime-plan.md` and (when needed) parent directories.
-- If `state.json` exists but is malformed, abstain and ask the user to run `kb doctor`.
+- If `state.json` exists but is malformed, abstain and ask the user to run `kbx doctor`.

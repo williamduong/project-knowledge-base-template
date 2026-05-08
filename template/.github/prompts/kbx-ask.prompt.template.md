@@ -9,7 +9,7 @@ version: 2.4.0-rc.2
 
 # /kbx-ask — Ask a question about this project's knowledge base
 
-Your task: answer the user's question using only what is documented in this project's KB. Do NOT modify any file. Do NOT run `kb maintain`, `kb init`, `kb update`, or any mutating command.
+Your task: answer the user's question using only what is documented in this project's KB. Do NOT modify any file. Do NOT run `kbx maintain`, `kbx init`, `kbx update`, or any mutating command.
 
 You operate under the master KB agent contract at `.github/agents/kbx.agent.md`.
 
@@ -29,10 +29,10 @@ Examples:
 Run:
 
 ```
-kb status --json
+kbx status --json
 ```
 
-(Fallback: `npx -y @williamduong/kb@latest status --json` if `kb` not on PATH.)
+(Fallback: `npx -y @williamduong/kbx@latest status --json` if `kb` not on PATH.)
 
 Parse JSON. Extract:
 - `presence` — if `fresh`, tell the user KB is not initialized and stop.
@@ -47,7 +47,7 @@ Based on the user's question, read only the files that are relevant. Common star
 
 | Topic | File(s) |
 |---|---|
-| KB health / status | `kb status` output (already parsed) |
+| KB health / status | `kbx status` output (already parsed) |
 | Pending work | `00-start-here/strategic-backlog.md` |
 | Drift / revision | `00-start-here/repository-revision-state.md` |
 | Architecture | `03-architecture/system-overview.md`, `03-architecture/components.md` |
@@ -74,5 +74,5 @@ Read only what is needed. Do not read the entire KB for a narrow question.
 ## Boundaries
 
 - Read-only. No file writes, no CLI mutations.
-- Do not reveal internal implementation details of the `@williamduong/kb` CLI unless the user explicitly asks.
+- Do not reveal internal implementation details of the `@williamduong/kbx` CLI unless the user explicitly asks.
 - If the question is outside the KB scope (e.g. a general coding question unrelated to this project's docs), answer from general knowledge but note it is not KB-sourced.

@@ -10,7 +10,7 @@ last_verified: 2026-04-30
 related:
   - intent-index.md
   - knowledge-base-architecture.md
-  - ../.github/agents/kb.agent.md
+  - ../.github/agents/kbx.agent.md
 tags:
   - index
   - q-and-a
@@ -19,7 +19,7 @@ tags:
 
 # Code Q&A Index
 
-Routing table used by `@kb` (Role 3 — Code Q&A Oracle) to map a user question to the smallest set of KB docs that should be loaded before answering. The agent loads only the listed docs (typically 1–3), then falls back to `semantic_search` on source code if KB evidence is insufficient.
+Routing table used by `@kbx` (Role 3 — Code Q&A Oracle) to map a user question to the smallest set of KB docs that should be loaded before answering. The agent loads only the listed docs (typically 1–3), then falls back to `semantic_search` on source code if KB evidence is insufficient.
 
 ## How the agent uses this index
 
@@ -27,7 +27,7 @@ Routing table used by `@kb` (Role 3 — Code Q&A Oracle) to map a user question 
 2. Load `Primary Docs` first; consult `Secondary Docs` only if Primary is incomplete.
 3. If `Primary Docs` are `verification: code-verified` → answer from KB and cite `[KB] <path>`.
 4. If `Primary Docs` are `unverified` / contain placeholders → run bounded `semantic_search` (max 3 hits in `Source Hints`) and cite `[SRC] <file>:<line>`.
-5. If neither answers confidently, abstain and suggest `/kb-run` to fill the gap.
+5. If neither answers confidently, abstain and suggest `/kbx-run` to fill the gap.
 
 ## Intent → Docs map
 

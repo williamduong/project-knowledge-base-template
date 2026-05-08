@@ -8,7 +8,7 @@
 
 ## Mục đích
 
-Agent dành riêng cho **người maintain template này** (solo dev). Không phải agent ship qua `@kb` cho user downstream.
+Agent dành riêng cho **người maintain template này** (solo dev). Không phải agent ship qua `@kbx` cho user downstream.
 
 Vai trò:
 

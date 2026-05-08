@@ -171,10 +171,10 @@ The `kb` CLI provides commands that keep KB state aligned with the codebase:
 kb sync
 
 # Updates KB version and patch revision
-kb update
+kbx update
 
 # Validates frontmatter, checks required fields, reports broken links
-kb doctor
+kbx doctor
 ```
 
 These commands are not optional in a healthy workflow. Running them on a schedule (or as a pre-commit hook) is the primary mechanism for preventing drift.

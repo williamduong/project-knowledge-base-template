@@ -48,7 +48,7 @@ tags:
 
 - source_of_truth is mandatory when verification is code-verified.
 - last_verified only changes when claims are re-checked against source.
-- last_verified_commit (v1.4+) records the git SHA at which the doc was last verified; `kb verify` populates both fields together. Doctor warns if `last_verified` is set but `last_verified_commit` is missing.
+- last_verified_commit (v1.4+) records the git SHA at which the doc was last verified; `kbx verify` populates both fields together. Doctor warns if `last_verified` is set but `last_verified_commit` is missing.
 - related_strong vs related_weak: see `15-governance/related-semantic.md`. The impact engine traverses ONLY related_strong. The legacy `related:` field is read as an alias of `related_weak:` to preserve backward compatibility; v1.4 does not rewrite frontmatter on upgrade.
 - A path appearing in both related_strong and related_weak is a conflict; doctor warns and the strong edge wins for traversal.
 - released_in (v1.5+) is optional and advisory; use it when a document is first released in a specific catalog version.
@@ -65,4 +65,4 @@ tags:
 - if last_verified present, last_verified_commit also present (v1.4+ doctor rule)
 - no path appears in both related_strong and related_weak (v1.4+ doctor rule)
 - if released_in is present, value follows release version format (for example v1.5.0)
-- extraction_sources (v2.2+) is optional; set when a doc is generated or updated from source code via `kb extract`. Each entry has `path` (relative to workspace root), `hash` (sha1 first 12 chars), and `extracted_at` (YYYY-MM-DD). Doctor warns if hash differs from current file hash (stale signal).
+- extraction_sources (v2.2+) is optional; set when a doc is generated or updated from source code via `kbx extract`. Each entry has `path` (relative to workspace root), `hash` (sha1 first 12 chars), and `extracted_at` (YYYY-MM-DD). Doctor warns if hash differs from current file hash (stale signal).

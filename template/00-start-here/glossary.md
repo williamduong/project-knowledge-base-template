@@ -213,11 +213,11 @@ Term: read / Q&A
 - Does not create mutation trace requirements.
 
 Term: slash-mode
-- Explicit prompt-driven mode via `/kb-plan`, `/kb-run`, `/kb-ask`.
+- Explicit prompt-driven mode via `/kbx-plan`, `/kbx-run`, `/kbx-ask`.
 - For mutation work, slash workflows still require intent-governed traceability.
 
 Term: at-kb-mode
-- Default conversational mode via `@kb` contract.
+- Default conversational mode via `@kbx` contract.
 - Mutation requests route through intent-first behavior.
 - Read requests route through Q&A pipeline.
 

@@ -22,7 +22,7 @@ tags:
 
 # Git Binding Policy
 
-Governs how knowledge-base documents bind to source code paths so that git-driven impact analysis (`kb scan`, `kb status`, `kb doctor`) can detect when docs need re-verification.
+Governs how knowledge-base documents bind to source code paths so that git-driven impact analysis (`kbx scan`, `kbx status`, `kbx doctor`) can detect when docs need re-verification.
 
 ## Purpose
 
@@ -81,7 +81,7 @@ When a doc has both frontmatter `binds_to` and a `bindings.json` entry:
 
 1. Frontmatter wins (treated as source of truth for that doc).
 2. `bindings.json` entries for the same doc are ignored.
-3. `kb scan` records `binding_source: "frontmatter" | "index"` per impacted doc so reviewers can trace which path matched.
+3. `kbx scan` records `binding_source: "frontmatter" | "index"` per impacted doc so reviewers can trace which path matched.
 
 ## Glob Best Practices
 
@@ -90,7 +90,7 @@ When a doc has both frontmatter `binds_to` and a `bindings.json` entry:
 - **Use `**` to traverse directories**, `*` for single-segment matches.
 - **Forward slashes only.** The matcher normalizes `\` to `/`, but writing forward slashes keeps the source readable on all platforms.
 - **Avoid binding to generated files** (build output, lockfiles) — they create false-positive impact.
-- **Test new bindings with `kb scan`** before committing; review the `impacted` list to confirm the patterns capture intent.
+- **Test new bindings with `kbx scan`** before committing; review the `impacted` list to confirm the patterns capture intent.
 
 ## KB Self-Edit Filter
 
@@ -104,7 +104,7 @@ This filter is enforced unconditionally so that editing docs never triggers impa
 
 ## Verdict Semantics
 
-`kb status` (which auto-runs `kb scan` unless `--no-scan`) emits one of three verdicts:
+`kbx status` (which auto-runs `kbx scan` unless `--no-scan`) emits one of three verdicts:
 
 | Verdict     | Trigger                                                                        | Required action                                                |
 |-------------|--------------------------------------------------------------------------------|----------------------------------------------------------------|
@@ -112,25 +112,25 @@ This filter is enforced unconditionally so that editing docs never triggers impa
 | `attention` | Impacted docs, unbound changes, or uncommitted edits inside `<contentRoot>/`.  | Review impacted docs; bind unbound paths or document the gap.  |
 | `blocked`   | Workspace is not a git repo, baseline missing, or KB state corrupt.            | Resolve the blocker before relying on impact data.             |
 
-`kb status --quiet` prints only the verdict label and exits with code `0` (clean), `1` (attention), or `2` (blocked) — suitable for CI gating.
+`kbx status --quiet` prints only the verdict label and exits with code `0` (clean), `1` (attention), or `2` (blocked) — suitable for CI gating.
 
-`kb doctor` adds a read-only `git-impact-pending` rule that surfaces stale `impact.json` entries; under `--strict`, any pending impact fails the doctor check.
+`kbx doctor` adds a read-only `git-impact-pending` rule that surfaces stale `impact.json` entries; under `--strict`, any pending impact fails the doctor check.
 
 ## Workflow
 
-1. After significant code changes land, run `kb status`. The CLI auto-refreshes `impact.json`.
+1. After significant code changes land, run `kbx status`. The CLI auto-refreshes `impact.json`.
 2. For each entry under `impacted`, open the doc, verify against the linked source, then bump `last_verified` (and `last_verified_commit`).
 3. For each `unbound_changes` path that *should* affect a doc, add a binding via `kb bind` or update frontmatter.
 4. For paths that intentionally have no doc coverage, document the rationale (e.g., `09-operations/coverage-exceptions.md`) so future audits see the decision.
-5. Re-run `kb status` to confirm `clean` (or an explained `attention`).
+5. Re-run `kbx status` to confirm `clean` (or an explained `attention`).
 
 ## Baseline Coupling
 
 Impact analysis compares `<baseline>..HEAD`. The baseline lives in `<contentRoot>/.kb/state.json` under `sourceRepositoryGitBaseline` (per [`repository-revision-state.md`](../00-start-here/repository-revision-state.md)).
 
-- Updating the baseline (currently a manual `state.json` edit; `kb baseline` command planned for a later release) advances the comparison window. Do this only after the impacted-doc backlog is reconciled — otherwise you lose audit trail.
+- Updating the baseline (currently a manual `state.json` edit; `kbx baseline` command planned for a later release) advances the comparison window. Do this only after the impacted-doc backlog is reconciled — otherwise you lose audit trail.
 - Legacy tool `tools/generate-template-changelog.js` used to advance an internal release anchor; this path is deprecated in v1.5 Phase 2.
-- Current `kb release notes` only generates notes from an explicit range (or inferred previous tag) and does not mutate baseline/state.
+- Current `kbx release notes` only generates notes from an explicit range (or inferred previous tag) and does not mutate baseline/state.
 
 ## Evidence
 
@@ -143,5 +143,5 @@ Impact analysis compares `<baseline>..HEAD`. The baseline lives in `<contentRoot
 ## Open Questions
 
 - Should `kb bind suggest` heuristics ship in a follow-up minor release (planned for v1.4)?
-- Should `kb maintain` auto-run `kb scan` as part of its pipeline, or stay opt-in?
+- Should `kbx maintain` auto-run `kbx scan` as part of its pipeline, or stay opt-in?
 - How should impact records age out — purely on next scan, or via a TTL field?
