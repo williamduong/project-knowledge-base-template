@@ -78,6 +78,76 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ## Current Entries
 
+## v2.7.0-beta.1 - 2026-05-10
+
+<!-- release-meta: from=v2.6.0 to=v2.7.0-beta.1 generated_at=2026-05-10T00:00:00.000Z -->
+
+### Summary
+
+- **BETA RELEASE**: Testing KB governance rule engine integration.
+- New deterministic rule system: `kbx rules lint|check|list` CLI commands for machine-checkable KB governance.
+- 9 rules total (4 metadata + 2 verification + 2 intent + 1 git-binding).
+- Rules integrated into `kbx doctor` health check output.
+- Nested YAML parser for intent metadata fields.
+- Rule IDs documented in template governance files.
+
+### Change Type
+
+- Minor (additive: new CLI commands, no breaking changes to existing commands)
+
+### Impact On Existing KBs
+
+- Low. Existing KBs can run `kbx doctor` to see new rules-lint output. No migration required.
+- Rule violations may appear; these are existing KB state violations, now surfaced deterministically.
+
+### Migration Required
+
+- No. Beta release for testing. Upgrade optional.
+
+### New CLI Commands
+
+- `kbx rules lint [--json]` — Run all rules against KB, exit 1 if errors found
+- `kbx rules check <rule-id> [--json]` — Run a single rule by ID
+- `kbx rules list [--json]` — List all 9 registered rules with metadata
+- `kbx rules help` — Show rules command usage
+
+### Testing & Feedback
+
+1. Install beta: `npm install @williamduong/kbx@beta`
+2. Run in your KB: `kbx rules list` to see all rules
+3. Lint your KB: `kbx rules lint --json` to detect violations
+4. Check `kbx doctor` output: new "rules-lint" section added
+5. Report issues with rule behavior or false positives
+
+### Files Added / Changed
+
+- `src/lib/rule-engine.js` — Core rule runner
+- `src/lib/rules/registry.js` — Rule contract + validation
+- `src/lib/rules/metadata.js` — 4 metadata rules (KBX-M001..M004)
+- `src/lib/rules/verification.js` — 2 verification rules (KBX-V001..V002)
+- `src/lib/rules/intent.js` — 2 intent rules (KBX-I001..I002) + nested YAML parser
+- `src/lib/rules/git-binding.js` — 1 git-binding rule (KBX-GB001)
+- `src/commands/rules.js` — lint|check|list|help commands
+- `src/commands/doctor.js` — integrated rules-lint output
+- `template/15-governance/metadata-schema.md` — added rule ID references
+- `template/15-governance/verification-policy.md` — added rule ID references
+- `template/12-ai-skills/agent-operating-manual.md` — added "Governance Rules" section
+- `test/lib/rule-engine.test.js` — 30 new test cases for Phase 2 rules
+
+### Test Coverage
+
+- 710/710 unit tests passing
+- All 9 rules have deterministic test coverage
+- Boundary/taxonomy contract tests passing
+
+### Known Issues / Beta Notes
+
+- Rule violations in template files are expected (existing state, now surfaced)
+- This is a deterministic rule engine (CLI-only, no AI generation)
+- v2.8 will focus on downstream KB Agent behavior and ontology schema hardening
+
+---
+
 ## v2.4.0 - 2026-05-08
 
 <!-- release-meta: from=v2.4.0-rc.2 to=v2.4.0 generated_at=2026-05-08T00:00:00.000Z -->
