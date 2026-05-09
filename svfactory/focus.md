@@ -7,23 +7,27 @@
 
 ## Active Version Target
 
+v2.7 — NL Rules → CLI Hard Logic (rule engine)
 
 ## Current Phase
 
-**Phase:** v2.6 Phase 0 — Natural language -> glossary -> ontology planning and source audit
+**Phase:** v2.7 Phase 1.0 — Rule Engine Scaffold (no behavioral change)
 
-**Done (session 2026-05-09):**
+**Done (session 2026-05-10):**
+- v2.6 all 7 phases complete (650/650 tests)
+- Intent v2-6-kb-ontology-foundation closed as released v2.6.0
+- v2.7 Phase 0 (boundary/taxonomy lock + tests) confirmed complete
 
-**Next action:**
+**Next action:** Implement `src/lib/rule-engine.js` skeleton + metadata rules + `kbx rules lint|check|list` commands + wire into CLI + doctor integration
 
 ## Active Blockers
 
-
-**Đang focus:** v2.6 (Phase 1 complete) + v2.7 (planning)
-**Intent active:** v2-6-kb-ontology-foundation (Phase 1 CLOSED); v2-7-nl-rules-to-cli-logic (Phase 0)
-**Status:** v2.6 Phase 1 complete (commit 1946464): ontology lifecycle validator with Zod schemas, 5-state machine, CLI commands (show/validate/build), comprehensive test coverage (629 tests). Ready for Phase 2.
+None. Post-v2.6 gate unlocked.
+**Đang focus:** v2.7 (Phase 1 — rule engine scaffold)
+**Intent active:** v2-7-nl-rules-to-cli-logic (Phase 0 complete, Phase 1 starting)
+**Status:** v2.6 fully closed (intent closed released v2.6.0, 650/650 tests). v2.7 post-v2.6 gate unlocked.
 **CLI target (working version):** v2.5.1-beta.1
-**Last shipped:** v2.4.0 (2026-05-08) = `latest`; beta channel: `2.5.1-beta.1`. v2.6.0 phase releases not yet shipped.
+**Last shipped:** v2.4.0 (npm latest). v2.6.0 commits staged; not yet npm-published.
 ## Recent Decisions (last 5)
 
 1. Release rule: tag AFTER publish, không push trước khi npm publish thành công.

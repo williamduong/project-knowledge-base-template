@@ -448,6 +448,39 @@ function runDoctor({ args, cwd, packageJson }) {
     });
   }
 
+  // Rules lint summary
+  try {
+    const { runRules: runRuleEngine } = require('../lib/rule-engine');
+    const { violations, rulesRun } = runRuleEngine(workspaceRoot);
+    const ruleErrors = violations.filter(v => v.severity === 'error');
+    const ruleWarns = violations.filter(v => v.severity === 'warn');
+    if (ruleErrors.length > 0) {
+      checks.push({
+        name: 'rules-lint',
+        status: 'FAIL',
+        detail: `${rulesRun} rules checked. ${ruleErrors.length} error(s), ${ruleWarns.length} warn(s). Run "kbx rules lint" for details.`,
+      });
+    } else if (ruleWarns.length > 0) {
+      checks.push({
+        name: 'rules-lint',
+        status: 'WARN',
+        detail: `${rulesRun} rules checked. 0 errors, ${ruleWarns.length} warn(s). Run "kbx rules lint" for details.`,
+      });
+    } else {
+      checks.push({
+        name: 'rules-lint',
+        status: 'PASS',
+        detail: `${rulesRun} rules checked. No violations.`,
+      });
+    }
+  } catch (err) {
+    checks.push({
+      name: 'rules-lint',
+      status: 'WARN',
+      detail: `Rules engine failed to run: ${err.message}`,
+    });
+  }
+
   const hasFailure = checks.some((check) => check.status === 'FAIL');
   const hasWarning = checks.some((check) => check.status === 'WARN');
   const summary = hasFailure ? 'FAIL' : hasWarning ? 'WARN' : 'PASS';  if (options.json) {

@@ -35,6 +35,7 @@ const { runNext } = require('./commands/next');
 const { runMigrate } = require('./commands/migrate');
 const { runWorkspace } = require('./commands/workspace');
 const runOntology = require('./commands/ontology');
+const { runRules } = require('./commands/rules');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -209,6 +210,11 @@ async function run(argv) {
     if (result.exitCode && result.exitCode !== 0) {
       process.exit(result.exitCode);
     }
+    return;
+  }
+
+  if (command === 'rules') {
+    await runRules({ args: rest, cwd: process.cwd() });
     return;
   }
 

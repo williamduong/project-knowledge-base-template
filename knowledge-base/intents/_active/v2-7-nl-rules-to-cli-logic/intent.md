@@ -2,31 +2,19 @@
 id: v2-7-nl-rules-to-cli-logic
 mode: full
 lifecycle: active
-created_at: 2026-05-08T18:21:21.154Z
+created_at: "2026-05-08T18:21:21.154Z"
 focus:
-  current: "Phase 0 — audit existing NL rule text and design enforcement contract"
+  current: "Phase 0 complete (boundary/taxonomy tests pass). Phase 1.0 in progress: rule engine scaffold."
   last_updated: 2026-05-09
-  next_action: "After v2.6 implementation scope completes, run Phase 1.0 scaffold-first (no behavior change), then rules commands and doctor integration; apply SVFactory-first then KBAgent enforcement split"
+  next_action: "Implement src/lib/rule-engine.js + metadata rules + kbx rules lint|check|list commands + wire CLI + doctor integration"
 change_type: feature
 change_scope:
-  - src/lib/
-  - src/commands/
-  - svfactory/
-  - AGENTS.md
-  - README.md
-  - knowledge-base/00-start-here/
-  - knowledge-base/12-ai-skills/
-  - knowledge-base/15-governance/
-  - template/15-governance/
-  - template/12-ai-skills/
 impact_signals:
-  - adds: rule-engine layer that enforces KB governance rules via CLI
-  - adds: kbx rules lint / kbx rules check commands
-  - modifies: existing verify/doctor commands to consume rule engine output
+- adds: "kbx rules lint / kbx rules check commands"
+- modifies: "existing verify/doctor commands to consume rule engine output"
 decision_summary: "Many KB governance rules (metadata schema, verification policy, review cadence, impact policy, etc.) exist only as natural language in markdown. Agents and maintainers must read prose to know if they’re compliant. This intent codifies those rules into a machine-checkable rule set so the CLI can enforce them automatically."
 review_after: null
 schema_version: 2.5.1-beta.1
-# v1.8+ reserve fields:
 lesson_id: null
 promotion_ready: false
 linked_signals: []
