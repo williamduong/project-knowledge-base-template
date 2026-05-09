@@ -11,22 +11,24 @@ v2.7 — NL Rules → CLI Hard Logic (rule engine)
 
 ## Current Phase
 
-**Phase:** v2.7 COMPLETE ✅ (All 4 phases: boundaries, rule engine, CLI commands, template docs)
+**Phase:** v2.8 Phase 0 — Planning (3 workstreams: KB Agent behavior, Ontology hardening, Backend abstraction)
 
 **Done (session 2026-05-10):**
-- v2.6 all 7 phases complete (650/650 tests)
-- Intent v2-6-kb-ontology-foundation closed as released v2.6.0
-- v2.7 Phase 0 (boundary/taxonomy lock + tests) confirmed complete
-- v2.7 Phase 1.0 (rule engine scaffold + metadata rules) complete, 690/690 tests
-- v2.7 Phase 2 (registry + verification/intent/git-binding rules) complete, 710/710 tests
-- v2.7 Phase 3 (CLI commands lint|check|list|help + doctor wire) verified working
-- v2.7 Phase 4 (template docs with rule IDs) complete, 710/710 tests
+- v2.7 COMPLETE: All 4 phases shipped, 710/710 tests passing
+- v2.7.0-beta.1 released: npm --tag beta (requires 2FA auth for GA)
+- v2.8 planning intent created: v2-8-downstream-agent-and-ontology
+- 3 workstreams scoped: WS1 (KB Agent), WS2 (Ontology), WS3 (Backend protocol)
+- Phase 0 boundary lock complete: phases defined, exit criteria gated, risks identified
 
-**Next action:** Release v2.7.0 or create post-release intent for v2.8 planning
+**Active intents:**
+- v2-7-nl-rules-to-cli-logic (v2.7 COMPLETE, ready to close)
+- v2-8-downstream-agent-and-ontology (v2.8 Phase 0 active)
+
+**Next action:** Release v2.7.0 GA or continue to Phase 1 workstreams (WS1 KB Agent prompts)
 
 ## Active Blockers
 
-None. Post-v2.6 gate unlocked. Phase 3 verified working, Phase 4 in scope.
+None. v2.7 shipped (beta). v2.8 Phase 0 planning complete. Next: decide v2.7 GA vs continue to Phase 1 build.
 **Đang focus:** v2.7 (Phase 1 — rule engine scaffold)
 **Intent active:** v2-7-nl-rules-to-cli-logic (Phase 0 complete, Phase 1 starting)
 **Status:** v2.6 fully closed (intent closed released v2.6.0, 650/650 tests). v2.7 post-v2.6 gate unlocked.
