@@ -278,6 +278,35 @@ These belong to a later intent after ontology lifecycle is stable.
 7. **[NEW] Intent State Machine transition table enforced** (DRAFT→PROPOSED→VERIFIED→EXECUTED→COMMITTED)
 8. **[NEW] Action Guard middleware (<0.1ms) blocks mutations without valid evidence path** (Intent → Document → TargetNode)
 9. **[NEW] Cross-repo mutations denied unless CROSS_REPO_GRANT edge exists**
+
+## Phase Execution Status
+
+### Phase 0 — DNA Alignment ✅ COMPLETE
+**Completed:** 2026-05-09  
+**Commit:** `8044140`  
+**Summary:** TerminologyRegistry expanded to 10 SaaS Core Entities with zero polysemy; Semantic Debt Analysis complete; seed-dna.cypher bootstrap DDL + Cypher templates ready for Phase 1-2.
+
+**Deliverables:**
+- [x] TerminologyRegistry_spec (10 entities, 48 aliases, 4 Bounded Contexts)
+- [x] Semantic Debt Analysis (zero polysemy, Bounded Context isolation)
+- [x] seed-dna.cypher (DDL, indexes, 5 parameterized templates, 4 constraint queries)
+- [x] phase-0-report.md (detailed completion report with constraints summary)
+
+**Constraints Established:** 12+ rules documented and enforceable
+- Terminology: No polysemy, Bounded Contexts, Alias density limits
+- Schema: repo_origin NOT NULL, lifecycle ENUM, sensitivity (1-5), evidence paths
+- Mutation: Same-repo guardrails, CROSS_REPO_GRANT requirement, governance thresholds
+- Query: <0.1ms SLA for lookups, batch operation limits, audit trail mandatory
+
+**Next Phase:** Phase 1 — Intent State Machine (ready to proceed)
+
+### Phase 1 — Intent State Machine ⏳ PENDING
+**Expected Start:** 2026-05-10  
+**Pre-requisites:** ✅ Phase 0 complete
+
+### Phase 2 — Action Guard Middleware ⏳ PENDING
+**Expected Start:** 2026-05-12  
+**Pre-requisites:** ✅ Phase 0 complete, Phase 1 in progress
 10. `kbx ontology build` emits `.kb/build/ontology.json` deterministically **with dnaRegistry section**
 11. `template/13-knowledge-graph/README.md` is generated/updated from ontology source (living schema)
 12. Core validator has no runtime GraphDB/LLM/MCP dependency; Cypher templates are parameterized query definitions stored in `src/lib/ontology.js` (no execution until Phase 2 runtime integration with actual GraphDB)
