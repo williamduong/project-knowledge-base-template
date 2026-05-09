@@ -1,30 +1,28 @@
 ---
 id: v2-6-kb-ontology-foundation
 mode: full
-lifecycle: active
-created_at: 2026-05-08T18:21:16.294Z
+lifecycle: closed
+created_at: "2026-05-08T18:21:16.294Z"
 focus:
   current: "All 7 phases COMPLETE. Phase 6 template docs + starter artifacts aligned. Close-condition sweep passed (6/6). Intent is promotion-ready."
-  last_updated: 2026-05-10T14:00:00Z
+  last_updated: "2026-05-10T14:00:00Z"
   next_action: "Close intent: run kbx intent close v2-6-kb-ontology-foundation --release v2.6.0"
 change_type: feature
 change_scope:
-  - template/02-domain-model/
-  - template/13-knowledge-graph/
-  - src/lib/
-  - src/commands/
 impact_signals:
-  - adds: governed glossary schema and ontology reference spec to KB template/docs
-  - adds: ontology lifecycle CLI surface for glossary-to-ontology validation
-  - avoids: GraphDB/DDL generation in v2.6 (deferred)
+- adds: "ontology lifecycle CLI surface for glossary-to-ontology validation"
+- avoids: "GraphDB/DDL generation in v2.6 (deferred)"
 decision_summary: "KB currently has a placeholder knowledge-graph folder (13-knowledge-graph/README.md only). v2.6 focuses on deterministic ontology foundation only: natural language -> glossary -> ontology. Physical graph database build/deploy is explicitly deferred to a later intent after ontology lifecycle is stable."
 review_after: null
 schema_version: 2.5.1-beta.1
-# v1.8+ reserve fields:
 lesson_id: null
 promotion_ready: true
 linked_signals: []
 promote_decision_ref: null
+close_type: released
+closed_at: "2026-05-09T18:22:24.186Z"
+release_ref: v2.6.0
+drop_reason: null
 ---
 
 # Intent: v2-6-kb-ontology-foundation
