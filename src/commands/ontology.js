@@ -13,6 +13,8 @@ const {
   CypherTemplates,
   validateGlossary,
   auditNaturalLanguageTerms,
+  validateOntologyContract,
+  evaluateUnknownPropertyRejectionMatrix,
 } = require('../lib/ontology');
 
 /**
@@ -25,6 +27,8 @@ function parseArgs(args = []) {
     output: null,
     graphState: null,
     glossary: null,
+    type: 'auto',
+    errors: [],
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -39,6 +43,15 @@ function parseArgs(args = []) {
       options.graphState = args[++i];
     } else if (arg === '--glossary' && args[i + 1]) {
       options.glossary = args[++i];
+    } else if (arg === '--type' && args[i + 1]) {
+      const candidateType = args[++i];
+      if (!['auto', 'intent', 'contract'].includes(candidateType)) {
+        options.errors.push(`Invalid --type value: ${candidateType} (expected auto|intent|contract)`);
+      } else {
+        options.type = candidateType;
+      }
+    } else if (arg.startsWith('--')) {
+      options.errors.push(`Unknown option: ${arg}`);
     }
   }
 
@@ -112,6 +125,11 @@ function showOntology(options = {}) {
   sections.push('- Glossary validation: duplicate canonical_name + unresolved alias hard-fail');
   sections.push('- NL audit: maps text candidates into canonical terms + flags ambiguous claim/document prose');
 
+  sections.push('\n\n## Typed Contract Hardening (Phase 4)\n');
+  sections.push('- Strict schemas: PropertySpec, NodeTypeContract, EdgeTypeContract, OntologyContract');
+  sections.push('- Unknown top-level/object keys are rejected (strict object contracts)');
+  sections.push('- Edge endpoints must reference existing node types or Entity wildcard');
+
   sections.push('\n\n## Cypher Templates\n');
   sections.push(`- evidence_path_check: ${CypherTemplates.evidence_path_check}`);
   sections.push(`- cross_repo_grant_check: ${CypherTemplates.cross_repo_grant_check}`);
@@ -149,7 +167,7 @@ function validateOntology(args = [], options = {}) {
         JSON.stringify({ success: false, error: 'Missing --input <file>' }, null, 2)
       );
     } else {
-      console.error('Usage: kbx ontology validate --input <file> [--json]');
+      console.error('Usage: kbx ontology validate --input <file> [--type auto|intent|contract] [--json]');
     }
     return { exitCode: 1 };
   }
@@ -184,8 +202,8 @@ function validateOntology(args = [], options = {}) {
     return { exitCode: 1 };
   }
 
-  // Validate as Intent
-  const validation = validateIntent(inputData);
+  const inferredType = inputData && inputData.nodes && inputData.edges ? 'contract' : 'intent';
+  const effectiveType = options.type === 'auto' ? inferredType : options.type;
 
   const embeddedGlossary = Array.isArray(inputData.glossary) ? inputData.glossary : null;
   const effectiveGlossary = governedGlossary || embeddedGlossary;
@@ -206,6 +224,46 @@ function validateOntology(args = [], options = {}) {
       return { exitCode: 1 };
     }
   }
+
+  if (effectiveType === 'contract') {
+    const contractValidation = validateOntologyContract(inputData);
+    if (!contractValidation.valid) {
+      const result = {
+        success: false,
+        type: 'contract',
+        errors: contractValidation.errors,
+      };
+      if (options.json) {
+        console.error(JSON.stringify(result, null, 2));
+      } else {
+        console.error('Ontology contract validation failed:');
+        contractValidation.errors.forEach(err => console.error(`  - ${err}`));
+      }
+      return { exitCode: 1 };
+    }
+
+    const matrix = evaluateUnknownPropertyRejectionMatrix();
+    const result = {
+      success: true,
+      type: 'contract',
+      message: 'Ontology contract validation passed',
+      nodes: Object.keys(contractValidation.data.nodes).length,
+      edges: Object.keys(contractValidation.data.edges).length,
+      unknownPropertyRejectionMatrix: matrix,
+    };
+    if (options.json) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(result.message);
+      console.log(`  Nodes: ${result.nodes}`);
+      console.log(`  Edges: ${result.edges}`);
+      console.log(`  Unknown-key checks: ${matrix.filter(row => row.unknownPropertyRejected).length}/${matrix.length} strict`);
+    }
+    return { exitCode: 0 };
+  }
+
+  // Validate as Intent
+  const validation = validateIntent(inputData);
 
   if (validation.valid) {
     // Additional checks
@@ -408,6 +466,11 @@ function buildOntology(options = {}) {
       middleware: 'ToolCallInterceptor',
       cypherTemplates: CypherTemplates,
     },
+    contract: {
+      strictMode: true,
+      supportedTypes: ['intent', 'contract'],
+      unknownPropertyRejectionMatrix: evaluateUnknownPropertyRejectionMatrix(),
+    },
   };
 
   const output = JSON.stringify(artifact, null, 2);
@@ -463,6 +526,19 @@ function runOntology({ packageJson, args = [] }) {
   const subargs = args.slice(1);
   const options = parseArgs(subargs);
 
+  if (options.errors.length > 0) {
+    const payload = {
+      success: false,
+      errors: options.errors,
+    };
+    if (options.json) {
+      console.error(JSON.stringify(payload, null, 2));
+    } else {
+      options.errors.forEach(error => console.error(error));
+    }
+    return { exitCode: 1 };
+  }
+
   switch (subcommand) {
     case 'show':
       return showOntology(options);
@@ -480,7 +556,7 @@ function runOntology({ packageJson, args = [] }) {
     default:
       console.log('Usage:');
       console.log('  kbx ontology show [--json]');
-      console.log('  kbx ontology validate --input <file> [--json]');
+      console.log('  kbx ontology validate --input <file> [--type auto|intent|contract] [--json]');
       console.log('                       [--graph-state <graph-state.json>]');
       console.log('                       [--glossary <glossary.json>]');
       console.log('  kbx ontology audit --input <file> [--glossary <glossary.json>] [--json]');
@@ -488,7 +564,7 @@ function runOntology({ packageJson, args = [] }) {
       console.log('');
       console.log('Commands:');
       console.log('  show     Display ontology schema (terminology registry + state machine)');
-      console.log('  validate Validate intent JSON fixture against schema + state guards');
+      console.log('  validate Validate intent or ontology contract JSON with strict schema checks');
       console.log('  audit    Audit natural-language payload against governed glossary');
       console.log('  build    Compile ontology runtime artifact (Terminology Registry + guards)');
       return { exitCode: subcommand === 'help' ? 0 : 1 };

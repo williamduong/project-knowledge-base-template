@@ -38,6 +38,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kbx chaos [--json] [--no-save] [--quiet] [--scan-src <dir>]');
     console.log('  kbx graph export [--output=<path>] [--json]');
     console.log('  kbx graph check  [--json]');
+    console.log('  kbx ontology <show|validate|audit|build> [options]');
     console.log('  kbx extract <source-file> [--target-doc=<path>] [--apply=<output>] [--uncovered] [--model=<hint>] [--yes] [--json]');
     console.log('  kbx ingest <source-file> [--type=auto|text|pdf|image|docx|xlsx] [--json]');
     console.log('  kbx uninstall [--keep-ai-files] [--remove-hook] [--force]');
@@ -127,6 +128,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kbx intent suggest-lessons [--json]');
   console.log('  kbx extract <source-file> [--target-doc=<path>] [--apply=<output>] [--uncovered] [--model=<hint>] [--yes] [--json]');
   console.log('  kbx ingest <source-file> [--type=auto|text|pdf|image|docx|xlsx] [--json]');
+  console.log('  kbx ontology <show|validate|audit|build> [--type auto|intent|contract] [--json]');
   console.log('  kbx version');
   console.log('');
   console.log('Implemented commands:');
@@ -267,6 +269,11 @@ function runHelp({ packageJson, args }) {
   console.log('             check             Run basic consistency checks:');
   console.log('                               missing-node-reference, invalid-relation-type, duplicate-entity-id.');
   console.log('             --json            Machine-readable JSON output.');
+  console.log('  ontology   Validate and inspect ontology lifecycle contracts.');
+  console.log('             show              Print schema + lifecycle + guard contract.');
+  console.log('             validate          Validate intent or ontology contract fixtures.');
+  console.log('             audit             Audit natural-language payload against governed glossary.');
+  console.log('             build             Compile deterministic ontology artifact.');
   console.log('  uninstall  Remove KB installation from the workspace.');
   console.log('             --keep-ai-files  Keep AGENTS/prompt files at repo root.');
   console.log('             --remove-hook    Remove kbx-managed .git/hooks/pre-commit.');

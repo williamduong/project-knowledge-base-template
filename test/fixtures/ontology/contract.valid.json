@@ -1,0 +1,61 @@
+{
+  "version": "2.6.0",
+  "dnaRegistry": {
+    "Tenant": {"canonical_name":"Tenant","aliases":["Account"],"repo_origin":"billing","microsoft_cdm_mapping":"Account"},
+    "Subscription": {"canonical_name":"Subscription","aliases":["License"],"repo_origin":"billing","microsoft_cdm_mapping":"Subscription"},
+    "ServicePrincipal": {"canonical_name":"ServicePrincipal","aliases":["agent"],"repo_origin":"auth","microsoft_cdm_mapping":"ServicePrincipal"},
+    "Project": {"canonical_name":"Project","aliases":["Repo"],"repo_origin":"infrastructure","microsoft_cdm_mapping":"Project"},
+    "Module": {"canonical_name":"Module","aliases":["Component"],"repo_origin":"infrastructure","microsoft_cdm_mapping":"Module"},
+    "Config": {"canonical_name":"Config","aliases":["Setting"],"repo_origin":"infrastructure","microsoft_cdm_mapping":"Configuration"},
+    "Intent": {"canonical_name":"Intent","aliases":["Task"],"repo_origin":"auth","microsoft_cdm_mapping":"WorkflowIntent"},
+    "Policy": {"canonical_name":"Policy","aliases":["Rule"],"repo_origin":"infrastructure","microsoft_cdm_mapping":"ResourcePolicy"},
+    "CLICommand": {"canonical_name":"CLICommand","aliases":["Command"],"repo_origin":"infrastructure","microsoft_cdm_mapping":"ExecutableCommand"},
+    "Evidence": {"canonical_name":"Evidence","aliases":["Document"],"repo_origin":"auth","microsoft_cdm_mapping":"Evidence"}
+  },
+  "nodes": {
+    "Intent": {
+      "required": ["id", "repo_origin", "canonical_name", "lifecycle", "title", "riskLevel"],
+      "optional": ["evidenceLinks", "commitAllowed", "reasoningTrace"],
+      "properties": {
+        "id": {"type": "uuid", "required": true},
+        "repo_origin": {"type": "enum", "required": true, "enumValues": ["billing", "auth", "gateway", "infrastructure"]},
+        "canonical_name": {"type": "string", "required": true},
+        "lifecycle": {"type": "enum", "required": true, "enumValues": ["DRAFT", "PROPOSED", "VERIFIED", "EXECUTED", "COMMITTED"]},
+        "title": {"type": "string", "required": true},
+        "riskLevel": {"type": "enum", "required": true, "enumValues": ["Low", "Medium", "High", "Critical"]},
+        "evidenceLinks": {"type": "string[]", "required": false},
+        "commitAllowed": {"type": "boolean", "required": false},
+        "reasoningTrace": {"type": "string", "required": false}
+      }
+    },
+    "Document": {
+      "required": ["id", "path"],
+      "optional": ["title"],
+      "properties": {
+        "id": {"type": "uuid", "required": true},
+        "path": {"type": "string", "required": true},
+        "title": {"type": "string", "required": false}
+      }
+    }
+  },
+  "edges": {
+    "SUPPORTS": {
+      "from": ["Intent"],
+      "to": ["Document"],
+      "required": ["source_ref"],
+      "optional": [],
+      "properties": {
+        "source_ref": {"type": "string", "required": true}
+      }
+    },
+    "CROSS_REPO_GRANT": {
+      "from": ["Entity"],
+      "to": ["Entity"],
+      "required": ["grant_level"],
+      "optional": [],
+      "properties": {
+        "grant_level": {"type": "enum", "required": true, "enumValues": ["read", "write", "admin"]}
+      }
+    }
+  }
+}

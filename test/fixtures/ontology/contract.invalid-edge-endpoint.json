@@ -1,0 +1,33 @@
+{
+  "version": "2.6.0",
+  "dnaRegistry": {
+    "Tenant": {"canonical_name":"Tenant","aliases":["Account"],"repo_origin":"billing"},
+    "Subscription": {"canonical_name":"Subscription","aliases":["License"],"repo_origin":"billing"},
+    "ServicePrincipal": {"canonical_name":"ServicePrincipal","aliases":["agent"],"repo_origin":"auth"},
+    "Project": {"canonical_name":"Project","aliases":["Repo"],"repo_origin":"infrastructure"},
+    "Module": {"canonical_name":"Module","aliases":["Component"],"repo_origin":"infrastructure"},
+    "Config": {"canonical_name":"Config","aliases":["Setting"],"repo_origin":"infrastructure"},
+    "Intent": {"canonical_name":"Intent","aliases":["Task"],"repo_origin":"auth"},
+    "Policy": {"canonical_name":"Policy","aliases":["Rule"],"repo_origin":"infrastructure"},
+    "CLICommand": {"canonical_name":"CLICommand","aliases":["Command"],"repo_origin":"infrastructure"},
+    "Evidence": {"canonical_name":"Evidence","aliases":["Document"],"repo_origin":"auth"}
+  },
+  "nodes": {
+    "Intent": {
+      "required": ["id"],
+      "optional": [],
+      "properties": {
+        "id": {"type": "uuid", "required": true}
+      }
+    }
+  },
+  "edges": {
+    "BROKEN": {
+      "from": ["GhostNode"],
+      "to": ["Intent"],
+      "required": [],
+      "optional": [],
+      "properties": {}
+    }
+  }
+}

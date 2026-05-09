@@ -225,6 +225,47 @@ test('command: ontology validate - invalid governed glossary hard-fail', () => {
   assert.strictEqual(result.exitCode, 1, 'Invalid governed glossary should fail validation');
 });
 
+test('command: ontology validate --type contract - valid contract fixture passes', () => {
+  const contractPath = createTempFile(loadFixture('contract.valid.json'));
+
+  const result = runOntology({
+    packageJson: { name: 'test' },
+    args: ['validate', '--type', 'contract', '--input', contractPath],
+  });
+
+  assert.strictEqual(result.exitCode, 0, 'Valid ontology contract should pass in contract mode');
+});
+
+test('command: ontology validate --type contract - unknown keys fail', () => {
+  const contractPath = createTempFile(loadFixture('contract.invalid-unknown-node-key.json'));
+
+  const result = runOntology({
+    packageJson: { name: 'test' },
+    args: ['validate', '--type', 'contract', '--input', contractPath],
+  });
+
+  assert.strictEqual(result.exitCode, 1, 'Strict contract should reject unknown keys');
+});
+
+test('command: ontology validate - unknown option rejected', () => {
+  const fixture = {
+    id: '550e8400-e29b-41d4-a716-446655440000',
+    repo_origin: 'billing',
+    canonical_name: 'Intent',
+    lifecycle: 'DRAFT',
+    title: 'Create Tenant',
+    riskLevel: 'Low',
+  };
+
+  const filePath = createTempFile(JSON.stringify(fixture));
+  const result = runOntology({
+    packageJson: { name: 'test' },
+    args: ['validate', '--input', filePath, '--unknown-flag'],
+  });
+
+  assert.strictEqual(result.exitCode, 1, 'Unknown flags should fail fast');
+});
+
 // ===================================================================
 // Command Tests: kbx ontology build
 // ===================================================================
@@ -419,6 +460,7 @@ test('command: ontology help - shows usage', () => {
 
   assert.strictEqual(result.exitCode, 0, 'Should exit with 0');
   assert.ok(output.includes('Usage'), 'Should show usage');
+  assert.ok(output.includes('--type auto|intent|contract'), 'Should expose contract mode in help');
 });
 
 test('command: ontology unknown-command - shows usage', () => {

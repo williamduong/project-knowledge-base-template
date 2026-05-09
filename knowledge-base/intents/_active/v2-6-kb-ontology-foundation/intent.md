@@ -4,9 +4,9 @@ mode: full
 lifecycle: active
 created_at: 2026-05-08T18:21:16.294Z
 focus:
-  current: "Phase 1, Phase 2, and Phase 3 ✅ COMPLETE. v2.6 now includes deterministic lifecycle validator, Action Guard middleware contract, and NL audit + governed glossary integration while DB/Web UI remains deferred to v2.9."
-  last_updated: 2026-05-10T11:10:00Z
-  next_action: "Start Phase 4 typed ontology schema hardening and align template knowledge-graph starter artifacts."
+  current: "Phase 1 through Phase 5 ✅ COMPLETE. v2.6 now includes strict typed ontology contract validation, unknown-key rejection matrix, polished ontology command surface, and help integration while DB/Web UI remains deferred to v2.9."
+  last_updated: 2026-05-10T13:00:00Z
+  next_action: "Start Phase 6 template docs + starter artifacts alignment, then run intent close-condition sweep."
 change_type: feature
 change_scope:
   - template/02-domain-model/
@@ -56,11 +56,11 @@ Close `v2-6-kb-ontology-foundation` only when ontology foundation is determinist
 | Phase 1 - Intent state machine enforcement | COMPLETE | Implemented in `src/lib/ontology.js` + `src/commands/ontology.js`; tested in `test/lib/ontology.test.js`. |
 | Phase 2 - Action guard middleware contract | COMPLETE | `verifyMutation` + `ToolCallInterceptor` + Cypher templates + `--graph-state` command validation path implemented with command + unit tests. |
 | Phase 3 - NL audit and governed glossary integration | COMPLETE | Implemented `validateGlossary` + `auditNaturalLanguageTerms`, added `kbx ontology audit` and governed glossary validation path with fixtures/tests. |
-| Phase 4 - Typed ontology schema (no DB runtime) | NOT STARTED | Planned, no implementation evidence yet. |
-| Phase 5 - CLI ontology lifecycle commands | NOT STARTED | Planned, no implementation evidence yet. |
-| Phase 6 - Template docs + starter files | NOT STARTED | Planned, no implementation evidence yet. |
+| Phase 4 - Typed ontology schema (no DB runtime) | COMPLETE | Added strict schema contracts (`PropertySpec`, `NodeTypeContract`, `EdgeTypeContract`, `OntologyContract`) + endpoint compatibility validation + unknown-key rejection matrix. |
+| Phase 5 - CLI ontology lifecycle commands | COMPLETE | `kbx ontology validate` now supports `--type auto|intent|contract`; unknown option fail-fast; command/help surface polished and tested. |
+| Phase 6 - Template docs + starter files | NOT STARTED | Planned final alignment before intent closure. |
 
-Overall progress baseline: 4/7 work items complete; close path is now explicitly bounded by the six conditions above.
+Overall progress baseline: 6/7 work items complete; close path is now explicitly bounded by the six conditions above.
 
 ## Intent NodeType Contract (v2.6)
 

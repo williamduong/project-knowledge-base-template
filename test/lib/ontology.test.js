@@ -20,6 +20,8 @@ const {
   createOntologyValidator,
   validateGlossary,
   auditNaturalLanguageTerms,
+  validateOntologyContract,
+  evaluateUnknownPropertyRejectionMatrix,
 } = require('../../src/lib/ontology');
 
 function loadFixture(name) {
@@ -606,4 +608,32 @@ test('NL audit - unresolved candidate term hard-fail', () => {
 
   assert.strictEqual(result.valid, false, 'Unresolved candidate terms should fail audit');
   assert.ok(result.unresolvedTerms.includes('GhostEntity'), 'Should report unresolved candidate');
+});
+
+test('Ontology contract - valid fixture passes strict validation', () => {
+  const contract = loadFixture('contract.valid.json');
+  const result = validateOntologyContract(contract);
+  assert.strictEqual(result.valid, true, 'Valid ontology contract should pass');
+});
+
+test('Ontology contract - unknown node key rejected', () => {
+  const contract = loadFixture('contract.invalid-unknown-node-key.json');
+  const result = validateOntologyContract(contract);
+  assert.strictEqual(result.valid, false, 'Unknown node key should fail strict schema');
+  assert.ok(result.errors.some(err => err.includes('Unrecognized key')), 'Should report unrecognized key');
+});
+
+test('Ontology contract - invalid edge endpoint rejected', () => {
+  const contract = loadFixture('contract.invalid-edge-endpoint.json');
+  const result = validateOntologyContract(contract);
+  assert.strictEqual(result.valid, false, 'Unknown edge endpoint should fail');
+  assert.ok(result.errors.some(err => err.includes('invalid from endpoint GhostNode')), 'Should include endpoint validation message');
+});
+
+test('Unknown property rejection matrix - all schemas enforce strict mode', () => {
+  const matrix = evaluateUnknownPropertyRejectionMatrix();
+  assert.ok(Array.isArray(matrix) && matrix.length >= 3, 'Matrix should include strict-check rows');
+  matrix.forEach(row => {
+    assert.strictEqual(row.unknownPropertyRejected, true, `Schema must reject unknown properties: ${row.schema}`);
+  });
 });
