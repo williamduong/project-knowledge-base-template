@@ -166,7 +166,7 @@ Khi plan bất kỳ upgrade nào cho KB/agent/runtime:
 1. Downstream KB Agent là primary target; SV Factory chỉ là maintainer/control surface.
 2. Mọi plan phải phân biệt rõ:
 	- Cái gì ship cho downstream (`package.json.files`, `template/`, `src/`, generated destinations)
-	- Cái gì chỉ phục vụ self-host (`kb-root/`, `knowledge-base/`, maintainer prompts, notes)
+	- Cái gì chỉ phục vụ self-host (`svfactory/`, `knowledge-base/`, maintainer prompts, notes)
 3. Không được coi thay đổi trong self-host docs/intents là bằng chứng downstream đã được update.
 4. Mọi phase phải có ít nhất một acceptance check ở downstream surface tương ứng hoặc chỉ rõ vì sao chưa thể chạy.
 5. Nếu self-host và downstream lệch nhau, ưu tiên fix downstream trước; self-host sync theo sau.

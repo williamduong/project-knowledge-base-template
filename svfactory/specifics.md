@@ -50,7 +50,7 @@ These tags are internal governance signals. Downstream users should define their
 - L3: Template governance layer (`template/`)
 - L4: Agent orchestration layer (`template/.github/agents/`, prompts)
 - L5: Validation/CI layer (tests, doctor, release scripts)
-- L6: Agent self-knowledge layer (`kb-root/`)
+- L6: Agent self-knowledge layer (`svfactory/`)
 
 This model is specific to maintaining a documentation template package. It does NOT ship as a user-facing concept.
 

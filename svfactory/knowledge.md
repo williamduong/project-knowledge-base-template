@@ -248,11 +248,11 @@
 **Ngày:** 2026-05-04
 **Context:** Clarify layer separation: ship (A)/verify (B)/maintainer (C)/self-host (D)/scratch (E) giúp template user hiểu cái nào merge vào their repo
 **Tại sao work:** Destroy confusion between "KB runtime files" vs "maintainer planning"
-**Apply:** Đưa layer model vào template/00-start-here/how-to-use-this-kb.md + focus ownership (execution focus ≠ kb-root/focus.md)
+**Apply:** Đưa layer model vào template/00-start-here/how-to-use-this-kb.md + focus ownership (execution focus ≠ svfactory/focus.md)
 
 ### R15. PowerShell destructive chain không short-circuit
 **Ngày:** 2026-05-04
-**Trigger:** `git mv .local/kb-agent kb-root; if (Test-Path .local) { Remove-Item .local -Recurse -Force }` → git mv fail nhưng Remove-Item chạy, mất 7 files
+**Trigger:** `git mv .local/kb-agent svfactory; if (Test-Path .local) { Remove-Item .local -Recurse -Force }` → git mv fail nhưng Remove-Item chạy, mất 7 files
 **Tác động:** Dữ liệu mất, phải recover từ local history
 **Phòng:** LUÔN explicit `if ($LASTEXITCODE -eq 0)` sau move/rename trước destructive cleanup. Hoặc dùng `&&` (pwsh 7.0+). Document an toàn rule vào /memories/safety.md.
 
@@ -287,8 +287,8 @@
 
 ### D10. Three-layer KB model canonical v2.3.x+
 **Ngày:** 2026-05-04
-**Lý do:** Refactor v2.3 validate rõ (R0-R5 work): ship (A) /verify (B) /kb-root (C) /self-host (D) /scratch (E). Loại bỏ confuse "local vs repo". Governance ổn định.
-**Rationale:** Layer A → user ship. Layer B → verify product (test/, site/). Layer C → maintainer only (kb-root/, không ship npm files). Layer D → self-host runtime (tracked mode). Layer E → scratch noise (notes/, generated reports).
+**Lý do:** Refactor v2.3 validate rõ (R0-R5 work): ship (A) /verify (B) /svfactory (C) /self-host (D) /scratch (E). Loại bỏ confuse "local vs repo". Governance ổn định.
+**Rationale:** Layer A → user ship. Layer B → verify product (test/, site/). Layer C → maintainer only (svfactory/, không ship npm files). Layer D → self-host runtime (tracked mode). Layer E → scratch noise (notes/, generated reports).
 **Status:** LOCKED. Mọi future version maintain layer separation.
 
 ### D11. Intent archive + active pattern approved
@@ -296,10 +296,10 @@
 **Lý do:** v2.3 refactor tracking (archive R0-R4 + active R5-R6) work smooth. Clear snapshot boundaries.
 **Apply:** Major refactor ≥ 5 phases dùng pattern này.
 
-### D12. kb-root is Layer C (never ship)
+### D12. svfactory is Layer C (never ship)
 **Ngày:** 2026-05-04
-**Lý do:** .github/hooks/hooks.json ensures kb-root không thêm vào package.json files; git commit nhưng npm publish exclude.
-**Implication:** kb.agent.md, kb.prompts/ shipment is template/ files, not kb-root/.
+**Lý do:** .github/hooks/hooks.json ensures svfactory không thêm vào package.json files; git commit nhưng npm publish exclude.
+**Implication:** kb.agent.md, kb.prompts/ shipment is template/ files, not svfactory/.
 
 ### D13. Self-host profile (tracked mode) active by default downstream
 **Ngày:** 2026-05-04

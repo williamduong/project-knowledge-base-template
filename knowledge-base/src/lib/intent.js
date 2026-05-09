@@ -183,7 +183,7 @@ function buildIntentMeta({ intentId, mode, changeType }) {
   lines.push('## Staged Files');
   lines.push('');
   lines.push('> List files staged in `proposed-changes/` here as you add them.');
-  lines.push('> Mirror path: `proposed-changes/<path-relative-to-kb-root>`');
+  lines.push('> Mirror path: `proposed-changes/<path-relative-to-svfactory>`');
   lines.push('');
   return lines.join('\n') + '\n';
 }
@@ -642,8 +642,8 @@ function deriveIntentStatus(recordOrLifecycle) {
 }
 
 /**
- * Collect staged file paths (relative to KB root) for a given intent.
- * Walks proposed-changes/ recursively and returns relative paths from KB root.
+ * Collect staged file paths (relative to SV Factory root) for a given intent.
+ * Walks proposed-changes/ recursively and returns relative paths from SV Factory root.
  */
 function listStagedFiles(contentRoot, intentId) {
   const pcDir = proposedChangesPath(contentRoot, intentId);
@@ -655,7 +655,7 @@ function listStagedFiles(contentRoot, intentId) {
       if (entry.isDirectory()) {
         walk(full);
       } else {
-        // Return relative to contentRoot (which is the KB root)
+        // Return relative to contentRoot (which is the SV Factory root)
         const rel = path.relative(path.join(contentRoot, 'intents', '_active', intentId, 'proposed-changes'), full);
         results.push(rel.replace(/\\/g, '/'));
       }
@@ -678,7 +678,7 @@ function validateStagedFilePaths(stagedFiles) {
     if (parts.length < 2) {
       issues.push({
         file: f,
-        issue: 'File placed directly in proposed-changes/ root. Mirror path must be proposed-changes/<relative-from-kb-root>/<file>.',
+        issue: 'File placed directly in proposed-changes/ root. Mirror path must be proposed-changes/<relative-from-svfactory>/<file>.',,
       });
     }
   }

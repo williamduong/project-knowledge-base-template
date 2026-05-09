@@ -60,7 +60,7 @@ function parseMinimalYaml(text) {
 /**
  * Read project metadata from a repo root.
  * Returns null if not present.
- * Returns { project_id, display_name, kb_root, ...extras } on success.
+ * Returns { project_id, display_name, svfactory_root, ...extras } on success.
  * Throws if file exists but project_id is missing/empty.
  */
 function readProjectYaml(repoRoot) {
@@ -77,7 +77,7 @@ function readProjectYaml(repoRoot) {
   return {
     project_id: parsed.project_id.trim(),
     display_name: parsed.display_name || parsed.project_id.trim(),
-    kb_root: parsed.kb_root || 'knowledge-base',
+    svfactory_root: parsed.svfactory_root || 'knowledge-base',
     repo_root: repoRoot,
   };
 }
@@ -473,3 +473,4 @@ module.exports = {
   buildWorkspaceYaml,
   verifyWorkspace,
 };
+

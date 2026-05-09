@@ -40,7 +40,7 @@
 1. Release rule: tag AFTER publish, không push trước khi npm publish thành công.
 2. Intent archive thủ công nếu `intent.md` bị mất (CLI cancel không chạy được).
 3. RC/beta không promote `latest` — chờ GA stable mới promote.
-4. CONSTITUTION.md = Supreme Law, không ship qua npm (kb-root/ only, không trong package.json#files).
+4. CONSTITUTION.md = Supreme Law, không ship qua npm (svfactory/ only, không trong package.json#files).
 5. v2-5 intent closed bằng cách archive thủ công; work đã commit vào main trực tiếp.
 
 ## Roadmap Status
@@ -53,7 +53,7 @@
 | v2.5.1 | Beta published 2026-05-09 | KB-012 deterministic multi-project model complete; dist-tag `beta` |
 | v2.6.x | Active | Ontology foundation: NL -> glossary -> ontology lifecycle (no GraphDB) |
 | v2.7.x | Planned/Started | NL governance rules -> deterministic CLI rule engine |
-| v3.0 | Long-term | Monorepo split packages/kb-root + packages/kb-agent (KB-015) |
+| v3.0 | Long-term | Monorepo split packages/svfactory + packages/kb-agent (KB-015) |
 
 ## Notes / Reminders cho session sau
 

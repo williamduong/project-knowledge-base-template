@@ -265,7 +265,7 @@ These belong to a later intent after ontology lifecycle is stable.
 | `template/13-knowledge-graph/ontology-schema.yaml` | New — starter template with dnaRegistry section |
 | `template/13-knowledge-graph/dna-registry.yaml` | New — DNA master data with canonical_name, aliases, repo_origin |
 | `template/12-ai-skills/agent-operating-manual.md` | Modified — ontology contract workflow, State Machine lifecycle, Action Guard boundary notes |
-| `kb-root/principles.md` | Modified — add P16: DNA Positioning (repo_origin is mandatory for multi-tenant governance) |
+| `svfactory/principles.md` | Modified — add P16: DNA Positioning (repo_origin is mandatory for multi-tenant governance) |
 
 ## Acceptance Criteria
 

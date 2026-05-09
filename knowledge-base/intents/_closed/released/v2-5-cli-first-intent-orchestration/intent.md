@@ -36,7 +36,7 @@ Key architectural ruling locked by this intent:
 - `kb init --project-id` and `kb doctor --context` are **SV Factory-side** (Legislative: compile-time primitive and deterministic audit gate).
 - Each command spec carries an explicit layer assignment before any implementation work begins.
 
-This intent also acts as architectural prep for the future monorepo split: `packages/kb-root` (Legislative) + `packages/kb-agent` (Executive).
+This intent also acts as architectural prep for the future monorepo split: `packages/svfactory` (Legislative) + `packages/kb-agent` (Executive).
 
 Branch decision: dedicated branch created (`intent/v2-5-cli-first-orchestration`) because this is a large intent.
 
@@ -55,5 +55,6 @@ Parallel intent note:
 ## Staged Files
 
 > List files staged in `proposed-changes/` here as you add them.
-> Mirror path: `proposed-changes/<path-relative-to-kb-root>`
+> Mirror path: `proposed-changes/<path-relative-to-svfactory>`
+
 

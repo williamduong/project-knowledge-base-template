@@ -9,7 +9,7 @@ type: intent-impact
 
 - `template/12-ai-skills/` — intent schema and agent operating manual docs
 - `template/.github/agents/` — KB Agent definition shipped to users
-- `kb-root/specifics.md` (new) — SV Factory-only overrides documented and isolated
+- `svfactory/specifics.md` (new) — SV Factory-only overrides documented and isolated
 
 ## Breaking Change
 
@@ -25,3 +25,4 @@ Low. Downstream users reading intent-lifecycle-schema.md will see better-framed 
 - kb-agent-first-design
 
 > List observed or anticipated impact signals (e.g. drift, rework, user confusion).
+

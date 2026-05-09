@@ -49,5 +49,6 @@ Design direction:
 ## Staged Files
 
 > List files staged in `proposed-changes/` here as you add them.
-> Mirror path: `proposed-changes/<path-relative-to-kb-root>`
+> Mirror path: `proposed-changes/<path-relative-to-svfactory>`
+
 

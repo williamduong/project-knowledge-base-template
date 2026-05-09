@@ -27,7 +27,7 @@ Enumerate all governance/policy documents and extract enforceable rules:
 | `15-governance/impact-policy.md` | impact_signals required for feature-type intents |
 | `15-governance/review-cadence.md` | review_after field currency rules |
 | `12-ai-skills/agent-operating-manual.md` | Agent behavior contracts (KB-012, etc.) |
-| `kb-root/principles.md` | P1-P15 principle enforceability classification |
+| `svfactory/principles.md` | P1-P15 principle enforceability classification |
 
 Classify each rule: `auto-enforceable` | `semi-enforceable` | `human-only`.
 Scope this intent to `auto-enforceable` rules only.
@@ -92,3 +92,4 @@ One file per rule domain:
 6. `kbx doctor` output includes rules lint summary
 7. All new tests pass; full suite 0 failures
 8. No rule check makes network calls or external process calls
+

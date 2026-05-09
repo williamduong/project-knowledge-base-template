@@ -18,10 +18,10 @@ function tmpRoot() {
 }
 
 function initTrackedWorkspace(root) {
-  const kbRoot = path.join(root, 'knowledge-base');
-  fs.mkdirSync(path.join(kbRoot, '.kb'), { recursive: true });
-  fs.writeFileSync(path.join(kbRoot, '.kb', 'state.json'), '{}\n', 'utf8');
-  return kbRoot;
+  const svFactoryRoot = path.join(root, 'knowledge-base');
+  fs.mkdirSync(path.join(svFactoryRoot, '.kb'), { recursive: true });
+  fs.writeFileSync(path.join(svFactoryRoot, '.kb', 'state.json'), '{}\n', 'utf8');
+  return svFactoryRoot;
 }
 
 function writeLegacyIntent(filePath, frontmatterLines) {

@@ -54,10 +54,10 @@ function tmpRoot() {
 }
 
 function initTrackedWorkspace(root) {
-  const kbRoot = path.join(root, 'knowledge-base');
-  fs.mkdirSync(path.join(kbRoot, '.kb'), { recursive: true });
-  fs.writeFileSync(path.join(kbRoot, '.kb', 'state.json'), '{}\n', 'utf8');
-  return kbRoot;
+  const svFactoryRoot = path.join(root, 'knowledge-base');
+  fs.mkdirSync(path.join(svFactoryRoot, '.kb'), { recursive: true });
+  fs.writeFileSync(path.join(svFactoryRoot, '.kb', 'state.json'), '{}\n', 'utf8');
+  return svFactoryRoot;
 }
 
 async function captureConsole(fn) {
@@ -517,7 +517,7 @@ test('validateStagedFilePaths: no issues for valid paths', () => {
 test('validateStagedFilePaths: flags files in proposed-changes root', () => {
   const issues = validateStagedFilePaths(['flat-file.md']);
   assert.equal(issues.length, 1);
-  assert.ok(issues[0].issue.includes('proposed-changes/<relative-from-kb-root>'));
+  assert.ok(issues[0].issue.includes('proposed-changes/<relative-from-svfactory>'));
 });
 
 test('validateStagedFilePaths: accepts nested paths without issues', () => {
@@ -1117,3 +1117,4 @@ test('T-G3: backlog activate preserves schema_version', () => {
   assert.ok(meta.schema_version, 'activated intent should have schema_version');
   assert.ok(/^[\d.]+/.test(meta.schema_version), `schema_version should be valid, got: ${meta.schema_version}`);
 });
+

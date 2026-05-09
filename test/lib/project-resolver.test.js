@@ -34,7 +34,7 @@ function writeProjectYaml(repoRoot, fields = {}) {
   const content = [
     `project_id: ${fields.project_id || 'test-project'}`,
     fields.display_name ? `display_name: ${fields.display_name}` : null,
-    fields.kb_root ? `kb_root: ${fields.kb_root}` : null,
+    fields.svfactory_root ? `svfactory_root: ${fields.svfactory_root}` : null,
   ].filter(Boolean).join('\n') + '\n';
   fs.writeFileSync(path.join(dir, 'project.yaml'), content);
 }
@@ -362,3 +362,4 @@ test('workspace verify: throws ERR_WORKSPACE_NOT_FOUND when no workspace.yaml', 
     }
   );
 });
+

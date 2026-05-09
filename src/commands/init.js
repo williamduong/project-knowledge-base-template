@@ -269,11 +269,11 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
   const projectYamlPath = path.join(kbxDir, 'project.yaml');
   if (!fs.existsSync(projectYamlPath)) {
     fs.mkdirSync(kbxDir, { recursive: true });
-    const kbRootRel = path.relative(workspaceRoot, storagePaths.contentRoot).replace(/\\/g, '/');
+    const svFactoryRootRel = path.relative(workspaceRoot, storagePaths.contentRoot).replace(/\\/g, '/');
     fs.writeFileSync(projectYamlPath, [
       `project_id: ${projectId}`,
       `display_name: ${options.brand || path.basename(workspaceRoot)}`,
-      `kb_root: ${kbRootRel}`,
+      `svfactory_root: ${svFactoryRootRel}`,
     ].join('\n') + '\n', 'utf8');
     console.log(`Project identity: .kbx/project.yaml (project_id: ${projectId})`);
   }

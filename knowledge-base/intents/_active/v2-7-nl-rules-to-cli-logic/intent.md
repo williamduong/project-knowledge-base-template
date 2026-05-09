@@ -31,7 +31,7 @@ promote_decision_ref: null
 
 ## Summary
 
-Convert KB governance rules currently expressed as natural language prose (in `template/15-governance/`, `template/12-ai-skills/`, and `kb-root/principles.md`) into machine-checkable CLI rules.
+Convert KB governance rules currently expressed as natural language prose (in `template/15-governance/`, `template/12-ai-skills/`, and `svfactory/principles.md`) into machine-checkable CLI rules.
 
 Goal: `kbx rules lint` runs in CI and catches violations that agents and maintainers currently can only detect by reading markdown. Rules become the single source of truth; prose docs become human-readable descriptions of the same rules.
 
@@ -46,5 +46,6 @@ See `impact.md` for full details.
 ## Staged Files
 
 > List files staged in `proposed-changes/` here as you add them.
-> Mirror path: `proposed-changes/<path-relative-to-kb-root>`
+> Mirror path: `proposed-changes/<path-relative-to-svfactory>`
+
 

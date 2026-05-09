@@ -183,7 +183,7 @@ function buildIntentMeta({ intentId, mode, changeType }) {
   lines.push('## Staged Files');
   lines.push('');
   lines.push('> List files staged in `proposed-changes/` here as you add them.');
-  lines.push('> Mirror path: `proposed-changes/<path-relative-to-kb-root>`');
+  lines.push('> Mirror path: `proposed-changes/<path-relative-to-svfactory>`');
   lines.push('');
   return lines.join('\n') + '\n';
 }
@@ -678,7 +678,7 @@ function validateStagedFilePaths(stagedFiles) {
     if (parts.length < 2) {
       issues.push({
         file: f,
-        issue: 'File placed directly in proposed-changes/ root. Mirror path must be proposed-changes/<relative-from-kb-root>/<file>.',
+        issue: 'File placed directly in proposed-changes/ root. Mirror path must be proposed-changes/<relative-from-svfactory>/<file>.',
       });
     }
   }
@@ -992,3 +992,4 @@ module.exports = {
   // Constants
   VALID_MODES,
 };
+

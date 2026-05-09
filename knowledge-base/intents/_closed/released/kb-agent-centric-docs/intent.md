@@ -10,7 +10,7 @@ focus:
 change_type: docs
 change_scope:
 impact_signals: "[\"doc-clarity\", \"kb-agent-first-design\"]"
-decision_summary: "Shipped template docs must express generic opinionated defaults without leaking SV Factory-internal naming conventions (vX-Y-Z ID format, D1-D56 tags, wave-as-version, 6-layer arch). SV Factory-specific choices move to kb-root/specifics.md."
+decision_summary: "Shipped template docs must express generic opinionated defaults without leaking SV Factory-internal naming conventions (vX-Y-Z ID format, D1-D56 tags, wave-as-version, 6-layer arch). SV Factory-specific choices move to svfactory/specifics.md."
 review_after: null
 schema_version: 2.4.0-beta.2
 lesson_id: null
@@ -40,5 +40,6 @@ drop_reason: null
 ## Staged Files
 
 > List files staged in `proposed-changes/` here as you add them.
-> Mirror path: `proposed-changes/<path-relative-to-kb-root>`
+> Mirror path: `proposed-changes/<path-relative-to-svfactory>`
+
 

@@ -180,7 +180,7 @@ Operator: resumes execution
 - Define relationships: intent→gates, intent→decisions
 - Define invariants: "one active intent per version", "gate must reference actor"
 
-**Entry point:** `kb-root/foundation.md` (this file) + expanded `knowledge-base/07-database/entity-model.md`
+**Entry point:** `svfactory/foundation.md` (this file) + expanded `knowledge-base/07-database/entity-model.md`
 
 ### Phase 2: Operator Contract (v2.5 scope)
 

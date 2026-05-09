@@ -1,5 +1,5 @@
 ---
-intent_id: v2-4-kbroot-to-svfactory-rename
+intent_id: v2-4-svfactory-to-svfactory-rename
 type: intent-impact
 ---
 
@@ -14,7 +14,7 @@ type: intent-impact
 | Downstream installed files | **Breaking** | `kb.agent.md` → `kbx.agent.md`, `kb-*.prompt.md` → `kbx-*.prompt.md`. Existing installs broken until migration intent runs. |
 | VS Code chat handles | **Breaking** | `@kb` → `@kbx`, `/kb-plan` → `/kbx-plan`, `/kb-run` → `/kbx-run`, `/kb-ask` → `/kbx-ask` |
 | src/ internal code | Non-breaking to external | Path string literals change. No public API surface. |
-| kb-root/ docs | Internal only | Concept name SV Factory → SV Factory. Not shipped. |
+| svfactory/ docs | Internal only | Concept name SV Factory → SV Factory. Not shipped. |
 | tests | Must pass | Test suite must pass after all phases complete. |
 
 ## Breaking Change
@@ -43,3 +43,4 @@ type: intent-impact
 ## Impact Signals
 
 > List observed or anticipated impact signals (e.g. drift, rework, user confusion).
+

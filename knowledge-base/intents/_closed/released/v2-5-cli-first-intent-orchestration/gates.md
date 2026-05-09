@@ -29,7 +29,7 @@ Run the Phase 4 downstream acceptance checklist manually:
 4. Verify `12-ai-skills/agent-operating-manual.md` contains the "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section
 5. Open `@kb` in that downstream workspace. Ask: _"What happens when a SV Factory gate returns exit 1?"_
    - Expected: agent references A1 separation, states it stops without retry or negotiation
-6. Confirm no `kb-root/`, `CONSTITUTION.md` references, or maintainer-only rules appear in the downstream install
+6. Confirm no `svfactory/`, `CONSTITUTION.md` references, or maintainer-only rules appear in the downstream install
 
 ### Inputs
 
@@ -45,3 +45,4 @@ Run the Phase 4 downstream acceptance checklist manually:
 ### Blocking Steps
 
 - `kb intent close v2-5-cli-first-intent-orchestration` — blocked until this gate passes
+

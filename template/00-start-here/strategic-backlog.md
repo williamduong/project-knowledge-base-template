@@ -54,14 +54,14 @@ Mandatory rules:
 This project operates with three distinct KB layers. Do not collapse them.
 
 1. Template source layer (ships to users): `template/`
-2. Local maintainer layer (committed in this repo, not shipped via npm `files` whitelist): `kb-root/` (SV Factory)
+2. Local maintainer layer (committed in this repo, not shipped via npm `files` whitelist): `svfactory/` (SV Factory)
 3. Installed runtime KB layer (per target repo after `kbx init`): `<contentRoot>/...`
 
 Rules:
 
 - Runtime commands (`kbx intent`, `kbx status`, `kbx maintain`, `kbx release`) must read/write only under `<contentRoot>` resolved from state.
 - Never treat `template/` as runtime KB state.
-- `kb-root/` is committed for transparency but never published to npm; keep it out of `package.json#files`.
+- `svfactory/` is committed for transparency but never published to npm; keep it out of `package.json#files`.
 - Documentation examples must avoid hardcoding `knowledge-base/` when behavior is mode-dependent.
 
 ## Workstreams
@@ -84,7 +84,7 @@ Rules:
 | KB-006 | Phase 5 — Three-layer power surface (4 CLI + 2 prompts + 1 master agent) | knowledge-management | P0 | 2026-04-30 | done | Shipped in v1.2.0 (rewrite kbx.agent.md v2.0.0, /kbx-plan + /kbx-run prompts, code-qa-index, state schema v2 with metadataPolicy + ideIntegration, ide-detect/inject libs, uninstall KB-MANAGED block strip). v1.2.1 added npx Quick Start and the no-silent-re-init guard. |
 | KB-007 | Validate debt/entropy threshold quality after first full v1.7 release cycle | knowledge-management | P0 | 2026-05-31 | carry-forward | NV-03 from pre-dev closure pass. Requires warning usefulness review and threshold retune evidence from real v1.7 intent runtime artifacts. |
 | KB-008 | Enforce three-layer KB separation for self-hosting (template vs SV Factory local vs installed runtime KB) | knowledge-management | P0 | 2026-05-15 | todo | Add docs and command output wording to consistently reference `<contentRoot>` and prevent template/runtime path confusion in tracked vs private-git modes. |
-| KB-009 | Define focus ownership model (SV Factory local focus vs intent/runtime focus) | knowledge-management | P0 | 2026-05-15 | todo | Keep project execution focus in installed KB runtime artifacts (`.kb/runtime-plan.md`, intents), keep maintainer-only focus in `kb-root/focus.md`, and document non-shipping boundary clearly. |
+| KB-009 | Define focus ownership model (SV Factory local focus vs intent/runtime focus) | knowledge-management | P0 | 2026-05-15 | todo | Keep project execution focus in installed KB runtime artifacts (`.kb/runtime-plan.md`, intents), keep maintainer-only focus in `svfactory/focus.md`, and document non-shipping boundary clearly. |
 | KB-010 | Introduce git-tracked self-host profile for this repository | knowledge-management | P0 | 2026-05-20 | todo | Make self-host KB artifacts explicitly trackable in git without mixing with template payload; keep downstream defaults unchanged. |
 | KB-011 | Enforce intent-first, version-scoped traceability from backlog -> intent -> plan -> task | knowledge-management | P0 | 2026-05-18 | in-progress | Governance intent `v2-4-intent-first-version-governance` defines mandatory chain and sequencing with notes migration. |
 | KB-012 | Enforce release gating: npm prepublish version guard + release-intent separation | knowledge-management | P0 | 2026-05-18 | in-progress | Add `prepublish:version-guard`, document no republish on same version, and separate governance vs release intents. |
@@ -104,17 +104,17 @@ This program implements `KB-008`, `KB-009`, and `KB-010` together.
 
 1. Three layers stay explicit and non-overlapping:
 	- Template source: `template/`
-	- Maintainer local (committed, not shipped): `kb-root/`
+	- Maintainer local (committed, not shipped): `svfactory/`
 	- Installed runtime KB: `<contentRoot>/...`
 2. This repository has an explicit self-host profile where runtime KB artifacts can be committed and reviewed in git.
 3. Focus authority is deterministic:
 	- Execution focus: runtime artifacts (`.kb/runtime-plan.md`, intent workspaces, `kbx next` queue)
-	- Maintainer focus: `kb-root/focus.md`
+	- Maintainer focus: `svfactory/focus.md`
 
 ### Scope Guard
 
 - Keep downstream project defaults backward-compatible.
-- Do not include `kb-root/` in `package.json#files` (commit-only, no npm ship).
+- Do not include `svfactory/` in `package.json#files` (commit-only, no npm ship).
 - Do not break existing tracked/private-git mode behavior.
 
 ### Phase Plan
@@ -155,7 +155,7 @@ Exit criteria:
 #### Phase 3 — Focus via Intent/Runtime Source of Truth
 
 - Define operational focus derivation from runtime artifacts (`kbx next`, active intents, runtime plan state).
-- Keep `kb-root/focus.md` as maintainer coordination only.
+- Keep `svfactory/focus.md` as maintainer coordination only.
 - Add operator runbook for resolving focus mismatch.
 
 Exit criteria:
@@ -195,20 +195,20 @@ Layer model (locked):
 
 - Layer A — Ship to npm: `template/`, `src/`, `bin/`, `scripts/`, `tools/`, `package.json`, `package-lock.json`, `README.md`, `LICENSE`.
 - Layer B — Verify product (committed, not shipped): `test/`, `test-plans/`, `site/`, `.github/` (workflows + PR template + copilot-instructions only), `index.html`, `favicon.ico`.
-- Layer C — SV Factory maintainer (committed, moved out of dot-prefixed folder): rename `.local/kb-agent/` → `kb-root/` (top-level). Track in git. Acceptable since repo is open source.
+- Layer C — SV Factory maintainer (committed, moved out of dot-prefixed folder): rename `.local/kb-agent/` → `svfactory/` (top-level). Track in git. Acceptable since repo is open source.
 - Layer D — Self-host KB runtime (committed; required by kb v1.7+): use tracked mode under `knowledge-base/`. Must not collide with Layer A/B/C names.
 - Layer E — Sandbox/scratch (ignored): `sample_repo/`, `kb-test-sample/`, `notes/`, generated reports.
 
 KB-maintenance separation (locked):
 
 - `test/` and `test-plans/` are for product verification per version only.
-- KB-maintenance materials for this repository belong to Layer C (`kb-root/`), not to `test/`.
+- KB-maintenance materials for this repository belong to Layer C (`svfactory/`), not to `test/`.
 
 Self-host policy (locked):
 
 - Tracked mode for this repository (since kb v1.7+ requires git).
 - Commit `knowledge-base/` runtime KB content; exclude cache/log noise.
-- Layer D path must never overlap with `template/` or `kb-root/`.
+- Layer D path must never overlap with `template/` or `svfactory/`.
 
 Notes migration policy (locked):
 
@@ -265,7 +265,7 @@ Locked policy:
 | `.github/agents/`, `.github/prompts/`, `AGENTS.md` | D | Generated by self-host kb; track when produced by `kbx init` on this repo | Tracked under self-host profile |
 | `index.html` | B | Keep at root | Tracked |
 | `favicon.ico` | B | Keep at root | Tracked |
-| `.local/` | C | Rename to `kb-root/` at top level; remove `.local/` from ignore | Tracked |
+| `.local/` | C | Rename to `svfactory/` at top level; remove `.local/` from ignore | Tracked |
 | `.vscode/` | C | Keep ignored (per-developer settings) | Ignored |
 | `knowledge-base/` | D | Created by `kbx init` in tracked mode; remove from ignore for self-host profile; keep `knowledge-base/.kb/_cacache/`, `knowledge-base/.kb/_logs/` ignored | Tracked content, ignored cache |
 | `.kb/` | D | If used as runtime state outside `knowledge-base/`, consolidate into `knowledge-base/.kb/` after self-host install | Decision deferred to Phase R3 |
@@ -280,12 +280,12 @@ Locked policy:
 
 ### Execution Order (Phases)
 
-1. Phase R0 — Confirm rename target for Layer C (`kb-root/`); search code for any reference to `.local/kb-agent/` before move.
+1. Phase R0 — Confirm rename target for Layer C (`svfactory/`); search code for any reference to `.local/kb-agent/` before move.
 2. Phase R1 — Move root-level files: manual test docs to `test-plans/`; ephemeral reports to `notes/orch-reports/`.
-3. Phase R2 — Rename `.local/kb-agent/` → `kb-root/`; update internal references; update `.gitignore` (remove `.local/`, add `notes/orch-reports/` if needed).
+3. Phase R2 — Rename `.local/kb-agent/` → `svfactory/`; update internal references; update `.gitignore` (remove `.local/`, add `notes/orch-reports/` if needed).
 4. Phase R3 — Enable self-host profile: adjust `.gitignore` to track `knowledge-base/` and self-host generated `.github/agents/`, `.github/prompts/`, `AGENTS.md` while ignoring runtime cache subpaths.
 5. Phase R4 — Run `kbx init` (tracked mode) on this repo to materialize Layer D; verify no collisions with Layer A/B/C.
-6. Phase R5 — Migrate planning content from `notes/` and `kb-root/` decisions into intent workspaces (`knowledge-base/intents/_active/...`).
+6. Phase R5 — Migrate planning content from `notes/` and `svfactory/` decisions into intent workspaces (`knowledge-base/intents/_active/...`).
 7. Phase R6 — Validate via test matrix; bump patch `2.3.x` and release.
 
 ### Acceptance Criteria
@@ -362,3 +362,4 @@ Use this checklist before starting implementation work for v1.7 Phase 0.
 - [ ] At least one end-to-end dry run confirms evidence trail from intent creation to archive readiness.
 - [ ] No new version-boundary conflicts are introduced in plan or governance docs.
 - [ ] Carry-forward `KB-007` remains tracked for post-cycle threshold validation.
+

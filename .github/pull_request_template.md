@@ -3,7 +3,7 @@
 > This section applies to ALL PRs, including automated agent-generated PRs.
 > An unchecked box below is grounds for immediate rejection without code review.
 
-- [ ] I (the Author/Agent) confirm I have read `kb-root/CONSTITUTION.md` in full for this PR.
+- [ ] I (the Author/Agent) confirm I have read `svfactory/CONSTITUTION.md` in full for this PR.
 - [ ] This PR does not violate AXIOM 1 (Separation of Powers — no operational logic in SV Factory).
 - [ ] This PR does not violate AXIOM 2 (Domain Agnosticism — no business logic or hardcoded project names in SV Factory).
 - [ ] This PR does not violate AXIOM 3 (Deterministic Block — no LLM calls or auto-fix logic in SV Factory gates).

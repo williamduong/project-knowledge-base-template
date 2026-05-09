@@ -85,8 +85,8 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 ### Summary
 
 - CLI binary and npm package renamed: `kb` → `kbx`, `@williamduong/kb` → `@williamduong/kbx`. Hard cut — no deprecated alias.
-- Maintainer agent namespace renamed: KBRoot → SV Factory. Self-host entrypoint is now `@SVFactory`, prompts `/svfactory-plan`, `/svfactory-run`, `/svfactory-ask`.
-- Agent definition files renamed: `KBRoot.agent.md` → `SVFactory.agent.md`; `kbroot-*.prompt.md` → `svfactory-*.prompt.md`.
+- Maintainer agent namespace renamed: SVFactory → SV Factory. Self-host entrypoint is now `@SVFactory`, prompts `/svfactory-plan`, `/svfactory-run`, `/svfactory-ask`.
+- Agent definition files renamed: `SVFactory.agent.md` → `SVFactory.agent.md`; `svfactory-*.prompt.md` → `svfactory-*.prompt.md`.
 - Downstream KB Agent template unchanged — user-facing agent remains `@kbx`.
 - Release tooling fixes: `pack-smoke.js` and `generate-template-changelog.js` updated to reference `bin/kbx.js`.
 
@@ -97,7 +97,7 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 ### Impact On Existing KBs
 
 - High. Any downstream repo using `@williamduong/kb` or calling `kb` CLI must migrate to `@williamduong/kbx` / `kbx`.
-- Maintainer workspaces using `@KBRoot` must switch to `@SVFactory`.
+- Maintainer workspaces using `@SVFactory` must switch to `@SVFactory`.
 
 ### Migration Required
 
@@ -105,7 +105,7 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 ### Agent Impact
 
-- `@SVFactory` replaces `@KBRoot` as maintainer agent entrypoint.
+- `@SVFactory` replaces `@SVFactory` as maintainer agent entrypoint.
 - `@kbx` is the downstream KB Agent (unchanged from user perspective).
 - `AGENTS.md` updated: self-host boundary clarified; maintainer surface is `@SVFactory`.
 
@@ -113,13 +113,13 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 
 - `package.json` — name=`@williamduong/kbx`, bin.kbx=`bin/kbx.js`
 - `bin/kbx.js` — renamed from `bin/kb.js`
-- `.github/agents/SVFactory.agent.md` — renamed from `KBRoot.agent.md`, content updated
-- `.github/prompts/svfactory-{plan,run,ask}.prompt.md` — renamed from `kbroot-*.prompt.md`
+- `.github/agents/SVFactory.agent.md` — renamed from `SVFactory.agent.md`, content updated
+- `.github/prompts/svfactory-{plan,run,ask}.prompt.md` — renamed from `svfactory-*.prompt.md`
 - `AGENTS.md` — self-host boundary updated
 - `tools/pack-smoke.js` — fixed to check `bin/kbx.js`
 - `tools/generate-template-changelog.js` — fixed to invoke `bin/kbx.js`
 - `template/.github/agents/kbx.agent.template.md` — version bumped to 2.4.0
-- All `kb-root/*.md` and `knowledge-base/` docs — KBRoot→SV Factory namespace sweep
+- All `svfactory/*.md` and `knowledge-base/` docs — SVFactory→SV Factory namespace sweep
 
 ---
 
@@ -148,7 +148,7 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 ### Agent Impact
 
 - `agent-operating-manual.md`: Output Contract now includes mandatory Handoff table format.
-- `kb-root/agent.md`: output style section 7 updated with Handoff rule.
+- `svfactory/agent.md`: output style section 7 updated with Handoff rule.
 
 ### Files Added / Changed
 
@@ -158,7 +158,7 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 - `src/cli.js` — wire `kb ingest`
 - `src/commands/help.js` — add `kb extract` and `kb ingest`; update `intent list` description
 - `knowledge-base/12-ai-skills/agent-operating-manual.md` — Handoff table in Output Contract
-- `kb-root/agent.md` — Handoff rule in output style
+- `svfactory/agent.md` — Handoff rule in output style
 - `template/12-ai-skills/agent-operating-manual.md` — Handoff table synced from KB source
 
 ---
@@ -196,8 +196,8 @@ Legacy script `tools/generate-template-changelog.js` is deprecated and kept as c
 - `template/.github/agents/kb.agent.template.md` — Gate 1 + Gate 2 blocks in Step 2; T1/T2/T3 pulse-points
 - `template/12-ai-skills/agent-operating-manual.md` — Intent Start Gates + Human-Gate Protocol sections
 - `knowledge-base/14-templates/gates.md.template` — **NEW** — canonical gate schema template
-- `kb-root/principles.md` — P18, P19, P20
-- `kb-root/process.md` — W8 (Intent Start Gate), W9 (Human-Gate Workflow)
+- `svfactory/principles.md` — P18, P19, P20
+- `svfactory/process.md` — W8 (Intent Start Gate), W9 (Human-Gate Workflow)
 
 ---
 
@@ -1278,3 +1278,4 @@ Three-layer power surface: 4 CLI commands + 2 prompts + 1 master `@kb` agent. Ad
 - 00-start-here/*
 - 12-ai-skills/*
 - 15-governance/*
+

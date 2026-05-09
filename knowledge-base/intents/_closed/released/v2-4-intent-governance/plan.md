@@ -31,7 +31,7 @@ This slice focuses on foundational primitives:
 - `template/.github/prompts/kb-run.prompt.template.md` — normalize prompt version to `2.4.0`
 - `template/.github/prompts/kb-ask.prompt.template.md` — normalize prompt version to `2.4.0`
 - `notes/upgrade-v2.4-intent-governance-plan.md` — lock S7/S8 and normalize source-doc label to v2.4
-- `kb-root/focus.md` — update active focus and CLI target marker
+- `svfactory/focus.md` — update active focus and CLI target marker
 
 ## Acceptance Criteria
 
@@ -40,3 +40,4 @@ This slice focuses on foundational primitives:
 - nested frontmatter support works for `focus` and `architecture_position.wave`
 - version labels are normalized to v2.4.0 across the active CLI/template surfaces
 - next implementation slice can realign `apply`, `status`, and `list` semantics with the new closed/archive model instead of introducing duplicate state logic
+

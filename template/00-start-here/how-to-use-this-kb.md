@@ -49,7 +49,7 @@ They are complementary, not duplicates. Agents can execute without this file, bu
 This template ecosystem has three separate layers:
 
 1. Template source layer: `template/` (what is shipped to downstream users)
-2. Local maintainer layer: `kb-root/` (internal SV Factory notes, committed in this repo but excluded from npm `files` whitelist)
+2. Local maintainer layer: `svfactory/` (internal SV Factory notes, committed in this repo but excluded from npm `files` whitelist)
 3. Installed runtime KB layer: `<contentRoot>/...` created by `kbx init` in a target repository
 
 Where `<contentRoot>` resolves to:
@@ -61,7 +61,7 @@ Runtime commands must operate on `<contentRoot>`, not on `template/`.
 
 ## Focus Ownership Model
 
-- Maintainer internal focus (authoring this template repo): `kb-root/focus.md` (committed, not shipped)
+- Maintainer internal focus (authoring this template repo): `svfactory/focus.md` (committed, not shipped)
 - Project runtime focus (downstream repo execution): `<contentRoot>/.kb/runtime-plan.md` + `kbx intent` workspaces
 
 If both exist, runtime focus is the source of truth for project execution status. Local SV Factory focus is only for maintainer coordination.
@@ -335,7 +335,7 @@ kbx intent apply <id> --release --yes
 kbx intent cancel <id>
 ```
 
-**Staged files live at:** `<contentRoot>/intents/_active/<id>/proposed-changes/<relative-from-kb-root>`
+**Staged files live at:** `<contentRoot>/intents/_active/<id>/proposed-changes/<relative-from-svfactory>`
 
 Example: to update `template/15-governance/review-cadence.md`, stage the file at  
 `proposed-changes/template/15-governance/review-cadence.md` inside the intent workspace.
@@ -365,4 +365,5 @@ For Recorder role responsibilities and doctrine, see [`../15-governance/self-evo
 - Evidence section updated
 - Related links and index references updated
 - No project-specific secrets or credentials
+
 

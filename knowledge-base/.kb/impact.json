@@ -732,13 +732,13 @@
     "AGENTS.md",
     "COMPLETION_REPORT.md",
     "UPGRADE_SUMMARY.md",
-    "kb-root/CHANGELOG.md",
-    "kb-root/README.md",
-    "kb-root/agent.md",
-    "kb-root/focus.md",
-    "kb-root/knowledge.md",
-    "kb-root/principles.md",
-    "kb-root/process.md",
+    "svfactory/CHANGELOG.md",
+    "svfactory/README.md",
+    "svfactory/agent.md",
+    "svfactory/focus.md",
+    "svfactory/knowledge.md",
+    "svfactory/principles.md",
+    "svfactory/process.md",
     "notes/npm-release-checklist.md",
     "package-lock.json",
     "package.json",
@@ -776,3 +776,4 @@
   ],
   "skipped_reason": null
 }
+

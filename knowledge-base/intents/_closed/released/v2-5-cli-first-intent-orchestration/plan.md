@@ -14,14 +14,14 @@ The `notes/axioms.txt` document establishes 5 non-negotiable axioms for this pro
 | Axiom | Rule | Implication for this intent |
 |---|---|---|
 | A1 — Separation of Powers | SV Factory = Legislative (compile/validate). KBAgent = Executive (run intents, orchestrate). | Every new CLI command must be explicitly classified as Root-side or Agent-side before design. |
-| A2 — Domain Agnosticism | SV Factory has no concept of business logic. Only primitives: Intent, Gate, Evidence, Chaos_Score. | Context commands must be domain-agnostic primitives. No project-specific business logic in kb-root layer. |
+| A2 — Domain Agnosticism | SV Factory has no concept of business logic. Only primitives: Intent, Gate, Evidence, Chaos_Score. | Context commands must be domain-agnostic primitives. No project-specific business logic in svfactory layer. |
 | A3 — Deterministic Block | SV Factory does NOT advise. It only Permits (exit 0) or Blocks (exit 1). No soft behavior. | Soft-first governance is exclusively a KBAgent contract. SV Factory commands are always deterministic. |
 | A4 — Checkpoint-Driven Audit | SV Factory only activates at 3 checkpoints: Init/Compile, Pre-commit/Pre-merge, Audit Request. | Context *registration* = SV Factory Init. Context *switching/reading during execution* = KBAgent. |
 | A5 — Invisibility | End-user never interacts with SV Factory directly. KBAgent renders SV Factory outputs. | User-facing CLI commands (`kb context show`, `kb scope`) are KBAgent surface. SV Factory lives inside npm or CI/CD. |
 
 **Architectural target (long-term, gated by v3.0):**
 ```
-packages/kb-root   — Schema Validation, System Prompt Generator, CLI init (Legislative)
+packages/svfactory   — Schema Validation, System Prompt Generator, CLI init (Legislative)
 packages/kb-agent  — Intent Lifecycle, Impact Analysis, MCP Server, orchestration (Executive)
 ```
 This intent must design commands with this split in mind even before the physical monorepo split occurs.
@@ -67,17 +67,17 @@ Before any Phase 1 design, every proposed command must be classified:
 ### Phase 0 — Axiom Alignment and Contract Lock ✓ DONE
 
 Completed tasks:
-- ✓ `kb-root/CONSTITUTION.md` created — 5 Axioms, RFC 2119 Enforcement Rules, Architecture Mandate.
-- ✓ `kb-root/principles.md` P0 added — Supreme Law reference above all P-principles.
+- ✓ `svfactory/CONSTITUTION.md` created — 5 Axioms, RFC 2119 Enforcement Rules, Architecture Mandate.
+- ✓ `svfactory/principles.md` P0 added — Supreme Law reference above all P-principles.
 - ✓ `.github/copilot-instructions.md` — CRITICAL read-first guard added.
 - ✓ `.github/pull_request_template.md` — 6-checkbox Constitutional Compliance section added.
-- ✓ `kb-root/foundation.md` — CLI Command Layer Classification table added (canonical layer assignments). "Two Core Axioms" renamed to "Design Tenets" to preserve Axiom token exclusivity.
-- ✓ `kb-root/principles.md` P24 added — KBAgent Soft-First Execution Policy (two-tier contract + fallback rules).
+- ✓ `svfactory/foundation.md` — CLI Command Layer Classification table added (canonical layer assignments). "Two Core Axioms" renamed to "Design Tenets" to preserve Axiom token exclusivity.
+- ✓ `svfactory/principles.md` P24 added — KBAgent Soft-First Execution Policy (two-tier contract + fallback rules).
 
 Lock destinations (permanent, not artefact files):
-- Layer classification → `kb-root/foundation.md` § CLI Command Layer Classification
-- Soft-first policy + fallback rules → `kb-root/principles.md` P24
-- Constitutional Axioms → `kb-root/CONSTITUTION.md`
+- Layer classification → `svfactory/foundation.md` § CLI Command Layer Classification
+- Soft-first policy + fallback rules → `svfactory/principles.md` P24
+- Constitutional Axioms → `svfactory/CONSTITUTION.md`
 
 Exit criteria — all met:
 - ✓ Layer classification table in foundation.md: no ambiguous entries.
@@ -93,7 +93,7 @@ Completed tasks:
 - ✓ `kb scope <intent-id> --project=<id>` — input, side effect, exit codes, fallback to active context documented.
 - ✓ Common output rules: JSON-only stdout, snake_case error codes, no stderr except unhandled exceptions.
 
-Spec destination (permanent): `kb-root/specifics.md § CLI Command Specifications (v2.5+)`
+Spec destination (permanent): `svfactory/specifics.md § CLI Command Specifications (v2.5+)`
 
 Exit criteria — all met:
 - ✓ Each command has: input spec, output schema, exit code table, layer assignment.
@@ -159,7 +159,7 @@ Goals:
 - [ ] Verify `.github/agents/kb.agent.md` contains "SV Factory Gate vs Agent Soft-First (A1 Separation)" section.
 - [ ] Verify `12-ai-skills/agent-operating-manual.md` contains "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section.
 - [ ] Open KB Agent (`@kb`) in downstream workspace. Ask: "What happens when a SV Factory gate returns exit 1?" Expected: agent cites the A1 separation contract and states it stops without retry.
-- [ ] Confirm no `kb-root/`, `CONSTITUTION.md` references, or maintainer-only rules leaked into downstream installed KB.
+- [ ] Confirm no `svfactory/`, `CONSTITUTION.md` references, or maintainer-only rules leaked into downstream installed KB.
 
 Exit criteria:
 - All 5 checklist items pass.
@@ -171,7 +171,7 @@ Exit criteria:
 
 1. **Deterministic multi-project model** — state model + registry semantics + cross-project intent routing. This is a SV Factory primitive (A2: domain-agnostic registry).
 2. **Downstream HTML documentation surface** — optional toggle (default OFF). This is a KBAgent feature (A5: SV Factory has no UI; rendering is Agent/MCP surface).
-3. **Monorepo split (packages/kb-root + packages/kb-agent)** — physical separation of Legislative and Executive code. Gated by v3.0. This intent's layer classification map is prep work for this.
+3. **Monorepo split (packages/svfactory + packages/kb-agent)** — physical separation of Legislative and Executive code. Gated by v3.0. This intent's layer classification map is prep work for this.
 
 ---
 
@@ -195,3 +195,4 @@ Exit criteria:
 5. Backlog entries exist for: deterministic multi-project model, downstream HTML surface toggle, and monorepo split.
 6. No push/publish action performed in this intent.
 7. All acceptance criteria individually verifiable against at least one axiom from `notes/axioms.txt`.
+

@@ -16,7 +16,7 @@ Separate SV Factory-internal naming conventions from the generic defaults shippe
 | `template/12-ai-skills/intent-lifecycle-schema.md` | modified | Rewrote Purpose section; replaced SV Factory ID examples with generic; removed D1-D56 tag reference; replaced SV Factory-specific YAML examples; added Governance Defaults table; clarified `wave` as generic grouping label |
 | `template/12-ai-skills/agent-operating-manual.md` | modified | Added Design Philosophy section explaining opinionated-defaults pattern; clarified `wave` field in step 9 |
 | `template/.github/agents/kb.agent.template.md` | modified | Fixed branch naming to use generic `<id>` instead of `vX-Y-<slug>` |
-| `kb-root/specifics.md` | new | Documents SV Factory-specific choices that override generic defaults: P18 ID format, D1-D56 tag system, wave=version |
+| `svfactory/specifics.md` | new | Documents SV Factory-specific choices that override generic defaults: P18 ID format, D1-D56 tag system, wave=version |
 
 ## Acceptance Criteria
 
@@ -26,7 +26,8 @@ Separate SV Factory-internal naming conventions from the generic defaults shippe
 - [ ] Governance Defaults table present with configurable flag and `wave` note
 - [ ] `agent-operating-manual.md` Design Philosophy section present
 - [ ] `kb.agent.template.md` branch suggestion uses generic `<id>` not `vX-Y-<slug>`
-- [ ] `kb-root/specifics.md` created with SV Factory overrides documented
+- [ ] `svfactory/specifics.md` created with SV Factory overrides documented
 - [ ] v2.5 backlog entry created for user-customization-framework
 - [ ] All tests still pass
 - [ ] `kb doctor` still PASS
+

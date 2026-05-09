@@ -10,11 +10,11 @@ const { parseArgs, runNext } = require('../../src/commands/next');
 
 function makeWorkspace() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-next-'));
-  const kbRoot = path.join(root, 'knowledge-base');
-  fs.mkdirSync(path.join(kbRoot, '.kb'), { recursive: true });
-  fs.mkdirSync(path.join(kbRoot, '05-backend'), { recursive: true });
-  fs.writeFileSync(path.join(kbRoot, '.kb', 'state.json'), JSON.stringify({ schemaVersion: 2 }, null, 2), 'utf8');
-  return { root, kbRoot };
+  const svFactoryRoot = path.join(root, 'knowledge-base');
+  fs.mkdirSync(path.join(svFactoryRoot, '.kb'), { recursive: true });
+  fs.mkdirSync(path.join(svFactoryRoot, '05-backend'), { recursive: true });
+  fs.writeFileSync(path.join(svFactoryRoot, '.kb', 'state.json'), JSON.stringify({ schemaVersion: 2 }, null, 2), 'utf8');
+  return { root, svFactoryRoot };
 }
 
 test('next parseArgs: --json', () => {
@@ -27,8 +27,8 @@ test('next parseArgs: unknown throws', () => {
 });
 
 test('runNext: prints clean message when no actions exist', () => {
-  const { root, kbRoot } = makeWorkspace();
-  fs.writeFileSync(path.join(kbRoot, '05-backend', 'auth.md'), '---\ntitle: Auth\nkb_state: verified\n---\nbody\n', 'utf8');
+  const { root, svFactoryRoot } = makeWorkspace();
+  fs.writeFileSync(path.join(svFactoryRoot, '05-backend', 'auth.md'), '---\ntitle: Auth\nkb_state: verified\n---\nbody\n', 'utf8');
 
   const logs = [];
   const orig = console.log;
@@ -43,9 +43,9 @@ test('runNext: prints clean message when no actions exist', () => {
 });
 
 test('runNext: prints prioritized sections when actions exist', () => {
-  const { root, kbRoot } = makeWorkspace();
-  fs.writeFileSync(path.join(kbRoot, '05-backend', 'auth.md'), '---\ntitle: Auth\nkb_state: needs-review\nlast_updated: 2026-04-01\n---\nbody\n', 'utf8');
-  fs.writeFileSync(path.join(kbRoot, '.kb', 'impact.json'), JSON.stringify({ impacted: [{ doc: '05-backend/auth.md', matched_changes: ['src/auth.js'] }], unbound_changes: [] }, null, 2), 'utf8');
+  const { root, svFactoryRoot } = makeWorkspace();
+  fs.writeFileSync(path.join(svFactoryRoot, '05-backend', 'auth.md'), '---\ntitle: Auth\nkb_state: needs-review\nlast_updated: 2026-04-01\n---\nbody\n', 'utf8');
+  fs.writeFileSync(path.join(svFactoryRoot, '.kb', 'impact.json'), JSON.stringify({ impacted: [{ doc: '05-backend/auth.md', matched_changes: ['src/auth.js'] }], unbound_changes: [] }, null, 2), 'utf8');
 
   const logs = [];
   const orig = console.log;

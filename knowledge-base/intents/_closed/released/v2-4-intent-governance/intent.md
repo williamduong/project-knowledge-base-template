@@ -56,5 +56,6 @@ This intent defines how new schema/lifecycle/CLI behavior should work, while kee
 - template/.github/prompts/kb-run.prompt.template.md
 - template/.github/prompts/kb-ask.prompt.template.md
 - notes/upgrade-v2.4-intent-governance-plan.md
-- kb-root/focus.md
+- svfactory/focus.md
+
 

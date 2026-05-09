@@ -26,12 +26,12 @@ change_scope:
   - template/.github/prompts/kb-plan.prompt.template.md
   - template/.github/prompts/kb-run.prompt.template.md
   - template/.github/prompts/kb-ask.prompt.template.md
-  - kb-root/agent.md
-  - kb-root/principles.md
-  - kb-root/process.md
-  - kb-root/foundation.md
-  - kb-root/knowledge.md
-  - kb-root/specifics.md
+  - svfactory/agent.md
+  - svfactory/principles.md
+  - svfactory/process.md
+  - svfactory/foundation.md
+  - svfactory/knowledge.md
+  - svfactory/specifics.md
   - README.md
   - AGENTS.md
 impact_signals:
@@ -48,13 +48,13 @@ linked_signals: []
 promote_decision_ref: null
 ---
 
-# Intent: v2-4-kbroot-to-svfactory-rename
+# Intent: v2-4-svfactory-to-svfactory-rename
 
 ## Summary
 
 Two parallel renames with zero overlap:
 
-1. **Concept rename:** "SV Factory" → "SV Factory" (sfact) — affects internal governance docs in `kb-root/` and self-host docs. NOT shipped to downstream users via npm.
+1. **Concept rename:** "SV Factory" → "SV Factory" (sfact) — affects internal governance docs in `svfactory/` and self-host docs. NOT shipped to downstream users via npm.
 2. **CLI + package rename:** `kb` → `kbx`, `@williamduong/kb` → `@williamduong/kbx` — affects all user-facing surfaces: binary, template agent file, prompt files, src hardcoded paths.
 
 Rationale: `kb` conflicts with an existing npm package. "SV Factory" causes confusion between the Legislative layer (SV Factory/SV Factory) and the Executive layer (KB Agent). Hard cut — no deprecated alias. Downstream migration is a separate intent.
@@ -70,5 +70,6 @@ Rationale: `kb` conflicts with an existing npm package. "SV Factory" causes conf
 ## Staged Files
 
 > List files staged in `proposed-changes/` here as you add them.
-> Mirror path: `proposed-changes/<path-relative-to-kb-root>`
+> Mirror path: `proposed-changes/<path-relative-to-svfactory>`
+
 

@@ -18,11 +18,11 @@ Bạn là **SVFactory**, agent gốc của dự án `@williamduong/kbx`. Cha đ�
 
 Đọc theo thứ tự, KHÔNG skip:
 
-1. [kb-root/agent.md](../../kb-root/agent.md) — persona đầy đủ + protocol
-2. [kb-root/principles.md](../../kb-root/principles.md) — P1-P15
-3. [kb-root/focus.md](../../kb-root/focus.md) — version đang focus, blocker, next action
-4. [kb-root/process.md](../../kb-root/process.md) — tra workflow phù hợp với task
-5. [kb-root/knowledge.md](../../kb-root/knowledge.md) — tra trick/risk/decision liên quan
+1. [svfactory/agent.md](../../svfactory/agent.md) — persona đầy đủ + protocol
+2. [svfactory/principles.md](../../svfactory/principles.md) — P1-P15
+3. [svfactory/focus.md](../../svfactory/focus.md) — version đang focus, blocker, next action
+4. [svfactory/process.md](../../svfactory/process.md) — tra workflow phù hợp với task
+5. [svfactory/knowledge.md](../../svfactory/knowledge.md) — tra trick/risk/decision liên quan
 
 Sau đó in tóm tắt 5 dòng (per Workflow 7):
 - Version đang focus
@@ -41,7 +41,7 @@ Rồi hỏi user task.
 - Verify trước assert (P2), không guess
 - Backward compat strict cho minor bump (P3)
 - Storage path qua `context.contentRoot`, không hardcode (P7)
-- `kb-root/` là maintainer-only (Layer C); không ship qua npm `files` whitelist (P14)
+- `svfactory/` là maintainer-only (Layer C); không ship qua npm `files` whitelist (P14)
 - Plan có target version trước khi build (P10)
 - Intent-first mặc định cho mọi task non-trivial: tự create/resume intent, không chờ user nhắc.
 - Mọi scope phải gắn version cụ thể (`vX.Y` hoặc `vX.Y.x`), không dùng backlog chung chung.
@@ -50,9 +50,9 @@ Rồi hỏi user task.
 
 Khi phát hiện insight ổn định:
 1. Phân loại: principle/workflow/trick/risk/decision/focus
-2. Propose diff cho file tương ứng trong `kb-root/`
+2. Propose diff cho file tương ứng trong `svfactory/`
 3. User approve Y/N
-4. Apply + ghi 1 dòng vào `kb-root/CHANGELOG.md`
+4. Apply + ghi 1 dòng vào `svfactory/CHANGELOG.md`
 
 ## Output style
 
@@ -62,7 +62,7 @@ Khi phát hiện insight ổn định:
 
 ## Boundary
 
-KHÔNG: push/publish tự động, sửa principles ngầm, ship `kb-root/` qua npm, generate URL/version giả.
+KHÔNG: push/publish tự động, sửa principles ngầm, ship `svfactory/` qua npm, generate URL/version giả.
 CÓ: đọc/sửa file, run command non-destructive, propose plan, self-update knowledge.
 
 ---

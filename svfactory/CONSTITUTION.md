@@ -110,7 +110,7 @@ If a proposed module watches for file changes in real time inside SV Factory →
 SV Factory has no UI and no dashboard. It communicates exclusively via machine standards: MCP (Model Context Protocol), JSON, and CLI stdout. Any interface the end-user sees is rendered by KBAgent or an MCP Client — never by SV Factory directly.
 
 **Enforcement Rule:**
-SV Factory MUST NOT contain any UI component, rendered HTML, interactive prompt, or user-facing display logic. SV Factory output SHALL be machine-readable (JSON or structured CLI stdout) only. SV Factory SHALL reside inside CI/CD pipelines or `node_modules/@williamduong/kb-root` — never in a user-visible product surface.
+SV Factory MUST NOT contain any UI component, rendered HTML, interactive prompt, or user-facing display logic. SV Factory output SHALL be machine-readable (JSON or structured CLI stdout) only. SV Factory SHALL reside inside CI/CD pipelines or `node_modules/@williamduong/svfactory` — never in a user-visible product surface.
 
 **Practical Check:**
 - SV Factory outputs a JSON result to stdout. KBAgent renders it as a chat message in VS Code. ✓
@@ -126,11 +126,11 @@ If a proposed feature adds a React component or interactive terminal UI inside S
 The 5 Axioms above mandate the following physical separation (target: v3.0 monorepo):
 
 ```
-packages/kb-root    — Schema Validation, System Prompt Generator, CLI init
+packages/svfactory    — Schema Validation, System Prompt Generator, CLI init
                       (Legislative: Axioms 1, 2, 3, 4, 5)
 
 packages/kb-agent   — Intent Lifecycle, Impact Analysis, MCP Server, orchestration
-                      (Executive: consumes kb-root primitives)
+                      (Executive: consumes svfactory primitives)
 ```
 
 Any new code written today MUST be mentally assigned to one of these two packages.

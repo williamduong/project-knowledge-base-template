@@ -1,13 +1,13 @@
 # CHANGELOG — KB Project Agent Evolution
 
-> Append-only. 1 dòng mỗi entry. Ghi mọi thay đổi của các file trong `kb-root/`.
+> Append-only. 1 dòng mỗi entry. Ghi mọi thay đổi của các file trong `svfactory/`.
 
 ---
 
 ## 2026-05-05
 
-- **Intent `INT-2-3-6-upgrade-foundation-and-direction` created**: Conceptual foundation.md added to kb-root (v2.4+ model without scope lock). KB layers (Core/Operators/Backends) defined abstract; operator/backend examples marked as "e.g." not constraints. Entity model & axioms locked; implementations vary. D16 (foundation scope policy) appended to knowledge.md.
-- **foundation.md (kb-root)**: 3-layer model (KB Core = governance, Operators = execution, Backends = storage) with entity model contract. Axiom 1: KB governs not executes. Axiom 2: KB chooses entity model not storage. Next steps: formalize entity model, operator protocol, multi-backend abstraction.
+- **Intent `INT-2-3-6-upgrade-foundation-and-direction` created**: Conceptual foundation.md added to svfactory (v2.4+ model without scope lock). KB layers (Core/Operators/Backends) defined abstract; operator/backend examples marked as "e.g." not constraints. Entity model & axioms locked; implementations vary. D16 (foundation scope policy) appended to knowledge.md.
+- **foundation.md (svfactory)**: 3-layer model (KB Core = governance, Operators = execution, Backends = storage) with entity model contract. Axiom 1: KB governs not executes. Axiom 2: KB chooses entity model not storage. Next steps: formalize entity model, operator protocol, multi-backend abstraction.
 
 ## 2026-05-06
 
@@ -18,8 +18,8 @@
 - Added deterministic-first rule placement policy for intent and KB Agent logic (P23 / Workflow 10).
 - Synced downstream-shipped agent contracts with the same branch + deterministic-first requirements.
 
-- **Three-layer separation refactor (Phase R0–R6 COMPLETE)**: Refactored KB model into 5-layer architecture: ship (A)/verify (B)/kb-root (C)/self-host (D)/scratch (E). Renamed `.local/kb-agent/` → `kb-root/`; updated all internal refs.
-- **kb-root promoted to Layer C**: `.github/agents/SV Factory.agent.md` now authoritative for maintainer operations; bootstrap + Self-Update workflow references kb-root/ instead of .local/.
+- **Three-layer separation refactor (Phase R0–R6 COMPLETE)**: Refactored KB model into 5-layer architecture: ship (A)/verify (B)/svfactory (C)/self-host (D)/scratch (E). Renamed `.local/kb-agent/` → `svfactory/`; updated all internal refs.
+- **svfactory promoted to Layer C**: `.github/agents/SV Factory.agent.md` now authoritative for maintainer operations; bootstrap + Self-Update workflow references svfactory/ instead of .local/.
 - **`.gitignore` rewrite**: Removed `.local/`, `knowledge-base/`, `AGENTS.md`, `.github/agents/kb.agent.md`, `.github/prompts/`, `kb-orch-report-*.json`. Added `notes/*` allowlist anchor; restricted knowledge-base to noise subpaths only.
 - **Root cleanup**: 4 manual test docs → `test-plans/`; 24 `kb-orch-report-*.json` → `notes/orch-reports/`.
 - **Self-host init (Layer D)**: `kb init --mode tracked --yes` materialized; R6 smoke tests pass (both tracked + private-git modes initialized successfully).

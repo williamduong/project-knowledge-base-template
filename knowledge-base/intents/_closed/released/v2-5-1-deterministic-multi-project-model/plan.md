@@ -37,7 +37,7 @@ Primary contract:
 ### Per-repo artifacts (required)
 
 - `.kbx/project.yaml`
-  - Canonical repo identity: `project_id`, `display_name`, `kb_root`, optional aliases.
+  - Canonical repo identity: `project_id`, `display_name`, `svfactory_root`, optional aliases.
   - Must be unique inside one workspace registry.
 - `AGENTS.md`
   - Agent contract includes explicit project namespace reference.
@@ -164,7 +164,7 @@ Exit criteria:
 - `knowledge-base/intents/_active/v2-5-1-deterministic-multi-project-model/plan.md` (modified)
 - `knowledge-base/intents/_active/v2-5-1-deterministic-multi-project-model/impact.md` (modified)
 - `knowledge-base/00-start-here/strategic-backlog.md` (modified)
-- `kb-root/focus.md` (modified)
+- `svfactory/focus.md` (modified)
 
 Implementation-phase targets (next step):
 - `src/lib/project-resolver.js` (new)
@@ -180,3 +180,4 @@ Implementation-phase targets (next step):
 5. `kbx workspace promote` creates workspace registry only on explicit invocation.
 6. `kbx workspace verify` reports registry drift deterministically.
 7. All 10 required tests pass.
+
