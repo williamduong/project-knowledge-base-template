@@ -7,55 +7,34 @@
 
 ## Active Version Target
 
-**Đang focus:** v2.6 + v2.7 intent wave
-**Intent active:** v2-6-kb-ontology-foundation; v2-7-nl-rules-to-cli-logic
-**Status:** KB-012 đã complete + merged. Bản beta `2.5.1-beta.1` đã publish ở dist-tag `beta`.
-**CLI target (working version):** v2.5.1-beta.1
-**Last shipped:** v2.4.0 (2026-05-08) vẫn là `latest`; beta channel: `2.5.1-beta.1`.
 
 ## Current Phase
 
 **Phase:** v2.6 Phase 0 — Natural language -> glossary -> ontology planning and source audit
 
 **Done (session 2026-05-09):**
-- KB-012 complete: deterministic project resolver + workspace commands + mutation guard + template docs.
-- Full test suite pass: 577/577.
-- v2.5.1-beta.1 published to npm tag `beta`.
-- Intent `v2-5-1-deterministic-multi-project-model` moved to `_closed/released`.
-- Opened new intents: `v2-6-kb-ontology-foundation`, `v2-7-nl-rules-to-cli-logic`.
 
 **Next action:**
-- v2.6 Phase 0: audit terminology/rules sources and produce glossary schema draft.
-- v2.6 Phase 1: implement ontology lifecycle artifacts (no GraphDB in scope).
-- v2.7 Phase 0: classify governance rules by enforceability and lock initial rule catalog.
-- **KB-016:** Manual check #4 (downstream IDE `@kbx`) vẫn pending.
 
 ## Active Blockers
 
-- Không có blocker hiện tại.
-- KB-016 manual check #4 pending khi có IDE downstream session.
 
+**Đang focus:** v2.6 (Phase 1 complete) + v2.7 (planning)
+**Intent active:** v2-6-kb-ontology-foundation (Phase 1 CLOSED); v2-7-nl-rules-to-cli-logic (Phase 0)
+**Status:** v2.6 Phase 1 complete (commit 1946464): ontology lifecycle validator with Zod schemas, 5-state machine, CLI commands (show/validate/build), comprehensive test coverage (629 tests). Ready for Phase 2.
+**CLI target (working version):** v2.5.1-beta.1
+**Last shipped:** v2.4.0 (2026-05-08) = `latest`; beta channel: `2.5.1-beta.1`. v2.6.0 phase releases not yet shipped.
 ## Recent Decisions (last 5)
 
 1. Release rule: tag AFTER publish, không push trước khi npm publish thành công.
 2. Intent archive thủ công nếu `intent.md` bị mất (CLI cancel không chạy được).
 3. RC/beta không promote `latest` — chờ GA stable mới promote.
 4. CONSTITUTION.md = Supreme Law, không ship qua npm (svfactory/ only, không trong package.json#files).
-5. v2-5 intent closed bằng cách archive thủ công; work đã commit vào main trực tiếp.
-
-## Roadmap Status
-
-| Version | Status | Notes |
 |---|---|---|
 | v2.3.7 | Shipped 2026-05-06 | Hotfix: `intent list` fallback for missing `mode/status` in legacy intents |
-| v2.4.0-rc.2 | Shipped 2026-05-08 beta | CONSTITUTION + A1 separation |
-| v2.4.0 | **Shipped 2026-05-08** (latest) | kbx rename + KBRoot→SV Factory rename |
-| v2.5.1 | Beta published 2026-05-09 | KB-012 deterministic multi-project model complete; dist-tag `beta` |
 | v2.6.x | Active | Ontology foundation: NL -> glossary -> ontology lifecycle (no GraphDB) |
 | v2.7.x | Planned/Started | NL governance rules -> deterministic CLI rule engine |
 | v3.0 | Long-term | Monorepo split packages/svfactory + packages/kb-agent (KB-015) |
-
-## Notes / Reminders cho session sau
 
 - `kbx` không cài global — dùng `node ./bin/kbx.js` trong workspace này hoặc `npx @williamduong/kbx` cho downstream.
 - npm dist-tag: `beta → 2.4.0-rc.2`, `latest → 2.4.0`.
