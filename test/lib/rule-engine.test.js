@@ -31,13 +31,13 @@ describe('loadRules', () => {
   it('returns an array of rule definitions', () => {
     const rules = loadRules();
     assert.ok(Array.isArray(rules));
-    assert.ok(rules.length >= 4, `Expected at least 4 rules, got ${rules.length}`);
+    assert.ok(rules.length >= 9, `Expected at least 9 rules (Phase 1.0 + Phase 2), got ${rules.length}`);
   });
 
   it('each rule has id, severity, description, check function', () => {
     for (const rule of loadRules()) {
       assert.ok(typeof rule.id === 'string' && rule.id.length > 0, `rule.id missing: ${JSON.stringify(rule)}`);
-      assert.ok(['error', 'warn'].includes(rule.severity), `Invalid severity on ${rule.id}: ${rule.severity}`);
+      assert.ok(['error', 'warn', 'info'].includes(rule.severity), `Invalid severity on ${rule.id}: ${rule.severity}`);
       assert.ok(typeof rule.description === 'string', `rule.description missing: ${rule.id}`);
       assert.ok(typeof rule.check === 'function', `rule.check missing: ${rule.id}`);
     }
@@ -56,6 +56,25 @@ describe('loadRules', () => {
     for (const expected of ['KBX-M001', 'KBX-M002', 'KBX-M003', 'KBX-M004']) {
       assert.ok(ids.includes(expected), `Missing built-in rule: ${expected}`);
     }
+  });
+
+  it('Phase 2 verification rules are present: KBX-V001, KBX-V002', () => {
+    const ids = loadRules().map(r => r.id);
+    for (const expected of ['KBX-V001', 'KBX-V002']) {
+      assert.ok(ids.includes(expected), `Missing Phase 2 rule: ${expected}`);
+    }
+  });
+
+  it('Phase 2 intent rules are present: KBX-I001, KBX-I002', () => {
+    const ids = loadRules().map(r => r.id);
+    for (const expected of ['KBX-I001', 'KBX-I002']) {
+      assert.ok(ids.includes(expected), `Missing Phase 2 rule: ${expected}`);
+    }
+  });
+
+  it('Phase 2 git-binding rule is present: KBX-GB001', () => {
+    const ids = loadRules().map(r => r.id);
+    assert.ok(ids.includes('KBX-GB001'), `Missing Phase 2 rule: KBX-GB001`);
   });
 });
 
@@ -329,5 +348,298 @@ describe('runRules with ruleIds filter', () => {
   it('returns 0 rulesRun for empty ruleIds list', () => {
     const { rulesRun } = runRules(tmpDir, []);
     assert.equal(rulesRun, 0);
+  });
+});
+
+// ─── KBX-V001 — time_state required when code-verified ──────────────────────
+
+describe('KBX-V001: time_state required when code-verified', () => {
+  let tmpDir;
+  after(() => cleanup(tmpDir));
+
+  it('no violation when code-verified + time_state present', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/01-product/doc.md': [
+        '---', 'title: T', 'type: doc', 'status: active', 'owner: me',
+        'verification: code-verified', 'time_state: current', '---', '# T',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-V001']);
+    const v = violations.filter(x => x.rule_id === 'KBX-V001');
+    assert.equal(v.length, 0);
+  });
+
+  it('violation when code-verified + time_state missing', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/01-product/doc.md': [
+        '---', 'title: T', 'type: doc', 'status: active', 'owner: me',
+        'verification: code-verified', '---', '# T',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-V001']);
+    const v = violations.filter(x => x.rule_id === 'KBX-V001');
+    assert.equal(v.length, 1);
+    assert.ok(v[0].message.includes('time_state'));
+  });
+
+  it('no violation when verification != code-verified (time_state optional)', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/01-product/doc.md': [
+        '---', 'title: T', 'type: doc', 'status: active', 'owner: me',
+        'verification: design-only', '---', '# T',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-V001']);
+    const v = violations.filter(x => x.rule_id === 'KBX-V001');
+    assert.equal(v.length, 0);
+  });
+});
+
+// ─── KBX-V002 — time_state allowed values ─────────────────────────────────
+
+describe('KBX-V002: time_state allowed values', () => {
+  let tmpDir;
+  after(() => cleanup(tmpDir));
+
+  it('no violation if time_state absent', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/01-product/doc.md': [
+        '---', 'title: T', 'type: doc', 'status: active', 'owner: me', '---', '# T',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-V002']);
+    const v = violations.filter(x => x.rule_id === 'KBX-V002');
+    assert.equal(v.length, 0);
+  });
+
+  it('no violation for valid time_state values', async () => {
+    for (const val of ['current', 'point-in-time', 'evergreen', 'historical', '2026-current', 'future']) {
+      const dir = makeTmpKb({
+        'knowledge-base/01-product/doc.md': [
+          '---', 'title: T', 'type: doc', 'status: active', 'owner: me', `time_state: ${val}`, '---', '# T',
+        ].join('\n'),
+      });
+      const { violations } = runRules(dir, ['KBX-V002']);
+      const v = violations.filter(x => x.rule_id === 'KBX-V002');
+      assert.equal(v.length, 0, `time_state "${val}" should be valid`);
+      cleanup(dir);
+    }
+  });
+
+  it('error violation for invalid time_state', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/01-product/doc.md': [
+        '---', 'title: T', 'type: doc', 'status: active', 'owner: me', 'time_state: sometimes', '---', '# T',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-V002']);
+    const v = violations.filter(x => x.rule_id === 'KBX-V002');
+    assert.equal(v.length, 1);
+    assert.equal(v[0].severity, 'error');
+    assert.ok(v[0].message.includes('sometimes'));
+  });
+});
+
+// ─── KBX-I001 — active intents must have next_action ───────────────────────
+
+describe('KBX-I001: active intents must have next_action', () => {
+  let tmpDir;
+  after(() => cleanup(tmpDir));
+
+  it('no violation for active intent with next_action', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_active/v2-7-test/intent.md': [
+        '---',
+        'id: v2-7-test',
+        'lifecycle: active',
+        'focus:',
+        '  next_action: "Build rule engine"',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-I001']);
+    const v = violations.filter(x => x.rule_id === 'KBX-I001');
+    assert.equal(v.length, 0);
+  });
+
+  it('violation for active intent with empty next_action', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_active/v2-7-test/intent.md': [
+        '---',
+        'id: v2-7-test',
+        'lifecycle: active',
+        'focus:',
+        '  next_action: ""',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-I001']);
+    const v = violations.filter(x => x.rule_id === 'KBX-I001');
+    assert.equal(v.length, 1);
+    assert.ok(v[0].message.includes('next_action'));
+  });
+
+  it('no violation for closed intent without next_action', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_closed/released/v2-6-test/intent.md': [
+        '---',
+        'id: v2-6-test',
+        'lifecycle: closed',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-I001']);
+    const v = violations.filter(x => x.rule_id === 'KBX-I001');
+    assert.equal(v.length, 0, 'closed intents should not be flagged');
+  });
+});
+
+// ─── KBX-I002 — feature intents must have change_scope ──────────────────────
+
+describe('KBX-I002: feature intents must have change_scope', () => {
+  let tmpDir;
+  after(() => cleanup(tmpDir));
+
+  it('no violation for feature intent with change_scope', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_active/v2-7-test/intent.md': [
+        '---',
+        'id: v2-7-test',
+        'lifecycle: active',
+        'change_type: feature',
+        'change_scope: src/ + template/',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-I002']);
+    const v = violations.filter(x => x.rule_id === 'KBX-I002');
+    assert.equal(v.length, 0);
+  });
+
+  it('violation for feature intent with missing change_scope field', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_active/v2-7-test/intent.md': [
+        '---',
+        'id: v2-7-test',
+        'lifecycle: active',
+        'change_type: feature',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-I002']);
+    const v = violations.filter(x => x.rule_id === 'KBX-I002');
+    assert.equal(v.length, 1);
+    assert.ok(v[0].message.includes('change_scope'));
+  });
+
+  it('no violation for breaking intent with change_scope', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_active/v2-0-breaking/intent.md': [
+        '---',
+        'id: v2-0-breaking',
+        'lifecycle: active',
+        'change_type: breaking',
+        'change_scope: CLI API + KB schema',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-I002']);
+    const v = violations.filter(x => x.rule_id === 'KBX-I002');
+    assert.equal(v.length, 0);
+  });
+
+  it('no violation for bugfix intent (change_scope optional)', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_active/v2-7-bugfix/intent.md': [
+        '---',
+        'id: v2-7-bugfix',
+        'lifecycle: active',
+        'change_type: bugfix',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-I002']);
+    const v = violations.filter(x => x.rule_id === 'KBX-I002');
+    assert.equal(v.length, 0, 'bugfix intents should not require change_scope');
+  });
+});
+
+// ─── KBX-GB001 — intent ID format (vX-Y-slug) ────────────────────────────────
+
+describe('KBX-GB001: intent ID format', () => {
+  let tmpDir;
+  after(() => cleanup(tmpDir));
+
+  it('no violation for valid vX-Y-slug format', async () => {
+    for (const id of ['v2-7-nl-rules-to-cli', 'v1-3-git-binding', 'v3-0-monorepo-split', 'v2-5-rule-01']) {
+      const dir = makeTmpKb({
+        [`knowledge-base/intents/_active/${id}/intent.md`]: [
+          '---',
+          `id: ${id}`,
+          'lifecycle: active',
+          '---',
+          '# Intent',
+        ].join('\n'),
+      });
+      const { violations } = runRules(dir, ['KBX-GB001']);
+      const v = violations.filter(x => x.rule_id === 'KBX-GB001');
+      assert.equal(v.length, 0, `ID "${id}" should match vX-Y-slug`);
+      cleanup(dir);
+    }
+  });
+
+  it('violation for missing v prefix', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_active/2-7-rules/intent.md': [
+        '---',
+        'id: 2-7-rules',
+        'lifecycle: active',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-GB001']);
+    const v = violations.filter(x => x.rule_id === 'KBX-GB001');
+    assert.equal(v.length, 1);
+    assert.ok(v[0].message.includes('2-7-rules'));
+  });
+
+  it('violation for underscore in slug', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_active/v2_7_rules/intent.md': [
+        '---',
+        'id: v2_7_rules',
+        'lifecycle: active',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-GB001']);
+    const v = violations.filter(x => x.rule_id === 'KBX-GB001');
+    assert.equal(v.length, 1);
+    assert.ok(v[0].message.includes('v2_7_rules'));
+  });
+
+  it('violation for missing slug', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/intents/_active/v2-7/intent.md': [
+        '---',
+        'id: v2-7',
+        'lifecycle: active',
+        '---',
+        '# Intent',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-GB001']);
+    const v = violations.filter(x => x.rule_id === 'KBX-GB001');
+    assert.equal(v.length, 1);
+    assert.ok(v[0].message.includes('v2-7'));
   });
 });

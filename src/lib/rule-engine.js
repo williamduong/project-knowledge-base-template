@@ -87,5 +87,8 @@ function runRule(kbPath, ruleId) {
 
 module.exports = { registerRules, loadRules, runRules, runRule };
 
-// Auto-load built-in rule modules
+// Auto-load built-in rule modules (v2.7 Phase 2: all rule domains)
 require('./rules/metadata');
+require('./rules/verification');
+require('./rules/intent');
+require('./rules/git-binding');
