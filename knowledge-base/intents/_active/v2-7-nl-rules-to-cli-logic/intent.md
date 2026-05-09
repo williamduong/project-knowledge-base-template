@@ -6,11 +6,17 @@ created_at: 2026-05-08T18:21:21.154Z
 focus:
   current: "Phase 0 — audit existing NL rule text and design enforcement contract"
   last_updated: 2026-05-09
-  next_action: "Enumerate all governance/policy docs with natural-language rules; classify by enforceability"
+  next_action: "After v2.6 implementation scope completes, run Phase 1.0 scaffold-first (no behavior change), then rules commands and doctor integration; apply SVFactory-first then KBAgent enforcement split"
 change_type: feature
 change_scope:
   - src/lib/
   - src/commands/
+  - svfactory/
+  - AGENTS.md
+  - README.md
+  - knowledge-base/00-start-here/
+  - knowledge-base/12-ai-skills/
+  - knowledge-base/15-governance/
   - template/15-governance/
   - template/12-ai-skills/
 impact_signals:

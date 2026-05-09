@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: unverified
-last_updated: 2026-05-02
+last_updated: 2026-05-09
 last_verified: 2026-05-01
 related:
   - ../INDEX.md
@@ -27,6 +27,16 @@ tags:
 - QA: 00 -> 10 -> 08 -> 09
 - Operations/SRE: 00 -> 09 -> 08 -> 07
 - AI agent: 00 -> 15 -> task-specific folders
+
+## Boundary and Naming Contract
+
+Use the canonical contract in:
+- [../12-ai-skills/agent-operating-manual.md](../12-ai-skills/agent-operating-manual.md)
+
+Quick boundary:
+- SVFactory defines governance contracts and deterministic gates.
+- KBAgent executes downstream agent workflows.
+- kbx CLI is the deterministic bridge between them.
 
 ## Working Mode
 

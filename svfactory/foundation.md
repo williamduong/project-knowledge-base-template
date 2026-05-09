@@ -9,6 +9,23 @@
 
 ## The Model
 
+### Boundary Statement (canonical)
+
+- SVFactory is the meta-factory that defines governance contracts, templates, workflows, schemas, prompts, and deterministic gates.
+- KBAgent is a downstream agent family instantiated from that contract to help users operate and evolve a reference-accurate knowledge base.
+- kbx CLI is the deterministic enforcement bridge between SVFactory and KBAgent.
+
+Claim scope guard:
+- Default claim is "governed KB/agent software instances".
+- Do not generalize to "all software instances" without explicit non-KB evidence.
+
+### Naming Taxonomy (canonical)
+
+- `kbx CLI`: deterministic command/runtime surface.
+- `KBAgent`: agent prompt/runtime role.
+- `KBX`: ecosystem/package/template.
+- `SVFactory` / `sfact`: meta-factory/governance layer.
+
 ### Layer 1: KB Core — Governance + State
 
 **What KB is:**

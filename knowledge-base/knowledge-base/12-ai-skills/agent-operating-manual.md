@@ -280,12 +280,12 @@ This agent is **not** the global Copilot agent — it is specific to this projec
 
 ### Init Projection Path (verified)
 
-`kb init` creates project-scoped agent and prompts from template files via `src/commands/init.js`:
+`kb init` creates the project-scoped agent and prompts from source artifacts via `src/commands/init.js`:
 
-- Source template: `template/.github/agents/kb.agent.md`
+- Source artifact: `template/.github/agents/kb.agent.md`
 - Destination: `.github/agents/kb.agent.md`
 - Copy function: `createAgentAndPromptFiles(...)` in `src/commands/init.js`
-- Related prompt sources:
+- Related prompt artifacts:
   - `template/.github/prompts/kb-plan.prompt.md`
   - `template/.github/prompts/kb-run.prompt.md`
   - `template/.github/prompts/kb-ask.prompt.md`

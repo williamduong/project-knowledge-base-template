@@ -10,6 +10,12 @@ version_scope: v2.6
 
 Build v2.6 as an executable type system for KB, not a graph runtime engine.
 
+## Re-Baseline (aligned with sequencing v2.6 -> v2.9)
+
+- v2.6 close scope is ontology foundation only: deterministic terminology, typed schema, lifecycle validator, and ontology CLI contract.
+- v2.8 remains design/spike wave for store and DB schema decisions.
+- DB implementation + web UI ship together in `v2-9-db-and-intent-web-ui` and are not closure requirements for v2.6.
+
 Lifecycle in scope:
 1. Natural-language terminology/rules inventory
 2. Governed glossary normalization
@@ -183,7 +189,7 @@ Canonical shape (JSON-equivalent):
 ### Phase 3 — Natural-language audit + Governed glossary
 
 **Original Phase 0-1 (shifted):**
-- Add glossary schema in `template/13-knowledge-graph/` (term_id, canonical_name, definition, aliases, source_refs)
+- Define glossary schema in the CLI/docs reference layer (term_id, canonical_name, definition, aliases, source_refs)
 - Build deterministic glossary validator in CLI/lib layer
 - Reject duplicate canonical names and unresolved aliases
 - Reject ambiguous `Claim`/`Document` mappings when source context does not prove ontology-node intent
@@ -191,7 +197,7 @@ Canonical shape (JSON-equivalent):
 ### Phase 4 — Typed ontology schema (no DB)
 
 **Original Phase 2 (shifted):**
-- Define `ontology-schema.yaml` with exact objects: `OntologyVersion`, `NodeType`, `EdgeType`, `PropertySpec`, `SaaSNodeDNA`
+- Define the ontology schema in source/doc references with exact objects: `OntologyVersion`, `NodeType`, `EdgeType`, `PropertySpec`, `SaaSNodeDNA`
 - Define allowed edge direction via `from[]` and `to[]` (include `CROSS_REPO_GRANT`)
 - Define required/optional properties for each node/edge type (include DNA properties: `repo_origin`, `canonical_name`, `aliases`)
 - Enforce duplicate type-name rejection
@@ -208,9 +214,8 @@ Canonical shape (JSON-equivalent):
 ### Phase 6 — Template docs
 
 **Original Phase 4 (shifted):**
-- Update `template/13-knowledge-graph/README.md` as living schema docs generated from ontology source
-- Add `template/13-knowledge-graph/glossary-schema.yaml` (starter template)
-- Add `template/13-knowledge-graph/ontology-schema.yaml` (starter template with dnaRegistry)
+- Update the knowledge-graph reference docs as living schema docs generated from ontology source
+- Keep the generic template as a reference spec in `notes/generic-template.md` and CLI prompt/docs, not as generated starter files
 - Include generated examples:
   - valid graph records with proper repo_origin
   - invalid graph records (missing repo_origin, unresolved aliases, orphaned claims)
@@ -279,6 +284,17 @@ These belong to a later intent after ontology lifecycle is stable.
 8. **[NEW] Action Guard middleware (<0.1ms) blocks mutations without valid evidence path** (Intent → Document → TargetNode)
 9. **[NEW] Cross-repo mutations denied unless CROSS_REPO_GRANT edge exists**
 
+## Intent Close Conditions (re-confirmed)
+
+This intent can be closed only if all items below are met with implementation evidence:
+
+1. Phase 0 evidence is published and reproducible (TerminologyRegistry >= 10 entities, deterministic alias mapping).
+2. Phase 1 lifecycle guard is implemented in CLI validator with tests for allowed/blocked transitions.
+3. Ontology command surface (`kbx ontology validate|show|build`) is implemented and covered by command tests.
+4. Template ontology starter artifacts and docs are updated in `template/13-knowledge-graph/`.
+5. Explicit non-scope confirmation: DB runtime implementation and Web UI remain deferred to `v2-9-db-and-intent-web-ui`.
+6. Regression verification confirms no behavior break in existing non-ontology commands.
+
 ## Phase Execution Status
 
 ### Phase 0 — DNA Alignment ✅ COMPLETE
@@ -308,10 +324,10 @@ These belong to a later intent after ontology lifecycle is stable.
 **Expected Start:** 2026-05-12  
 **Pre-requisites:** ✅ Phase 0 complete, Phase 1 in progress
 10. `kbx ontology build` emits `.kb/build/ontology.json` deterministically **with dnaRegistry section**
-11. `template/13-knowledge-graph/README.md` is generated/updated from ontology source (living schema)
+11. Knowledge-graph reference docs are generated/updated from ontology source (living schema)
 12. Core validator has no runtime GraphDB/LLM/MCP dependency; Cypher templates are parameterized query definitions stored in `src/lib/ontology.js` (no execution until Phase 2 runtime integration with actual GraphDB)
 13. **[Phase 0-2: Stub]** Zod schemas in `src/lib/ontology.js` exist as type specifications (non-enforcing, documentation only); Phase 0-2 validation uses manual checks via `createOntologyValidator()` factory
 14. **[Phase 4: Full Enforcement]** Zod schemas hardened for property-level type-safety + PII protection; topological checks from Phase 0-2 + type checks from Phase 4
 15. All new tests pass; full suite 0 failures
-16. `template/13-knowledge-graph/glossary-schema.yaml`, `template/13-knowledge-graph/ontology-schema.yaml`, `template/13-knowledge-graph/dna-registry.yaml` exist and are valid YAML
+16. Generic template reference spec is documented in `notes/generic-template.md` and CLI docs; no generated starter YAML files are required for closure
 17. TerminologyRegistry populated with 10 SaaS core entities (Tenant, Subscription, ServicePrincipal, Project, Module, Config, Intent, Policy, CLICommand, Evidence) in `src/lib/ontology.js`

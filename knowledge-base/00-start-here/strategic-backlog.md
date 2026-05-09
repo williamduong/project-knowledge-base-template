@@ -68,10 +68,41 @@ Rules:
 | KB-010 | Introduce git-tracked self-host profile for this repository | knowledge-management | P0 | 2026-05-20 | todo | Make self-host KB artifacts explicitly trackable in git without mixing with template payload; keep downstream defaults unchanged. |
 | KB-011 | v2.5 intent: CLI-first project context switching + intent scoping with soft-first orchestration policy | knowledge-management | P0 | 2026-05-14 | done | Intent `v2-5-cli-first-intent-orchestration` completed. CONSTITUTION.md created (5 axioms + RFC 2119 enforcement). Layer classification canonical in `foundation.md`. Soft-first policy locked in `principles.md` P24. CLI specs in `specifics.md`. A1 separation wired into `kb.agent.template.md` and `agent-operating-manual.md`. Pending: downstream clean-workspace acceptance + Phase 1 CLI implementation in src/. |
 | KB-012 | Backlog intent: define deterministic multi-project model (registry, active project pointer, scoped intent routing) | knowledge-management | P0 | 2026-05-21 | in-progress | Active intent `v2-5-1-deterministic-multi-project-model` opened. Locked rule: no mutation without exactly one resolved `project_id` or explicit workspace mode. |
-| KB-013 | Backlog intent: optional downstream HTML KB view (default OFF, safe redaction + developer-friendly digest) | knowledge-management | P1 | 2026-05-28 | todo | Add toggleable HTML surface for downstream docs, hide sensitive KB details, and keep template default OFF. Detailed UX scope will be provided by owner later. |
+| KB-013 | Backlog intent: optional downstream HTML KB view (default OFF, safe redaction + developer-friendly digest) | knowledge-management | P1 | 2026-05-28 | absorbed | Scope absorbed into KB-020 (`v2-9-db-and-intent-web-ui`): `kbx export --html` covers redacted offline snapshot; `kbx serve` covers live view. KB-013 closed as separate item. |
 | KB-014 | SV Factory → KBAgent sync audit: inventory all features and rules in SV Factory (principles, workflows, decisions, knowledge), identify which need to ship to KB Agent downstream, list gaps, and triage undecided items with owner | knowledge-management | P1 | 2026-06-04 | todo | Audit surface: svfactory/principles.md (P1-P23), svfactory/process.md (WF1-WF10), svfactory/knowledge.md (decisions/tricks/risks), svfactory/agent.md persona rules. Output: (a) already-synced list, (b) missing in template/12-ai-skills/ or kb.agent.template.md, (c) undecided list for owner review. |
 | KB-015 | Monorepo split: packages/svfactory (Legislative) + packages/kb-agent (Executive) | architecture | P2 | 2026-Q4 | todo |
 | KB-016 | Downstream acceptance test for v2.5 template changes (A1 separation contract) | testing | P0 | 2026-05-08 | done | Tested in `kb-test-sample/kb-016-acceptance-test` using `@williamduong/kbx@2.4.0-rc.2` (beta). Results: (1) PASS: `kb init --yes` completes in clean private-git workspace; (2) PASS: `.github/agents/kbx.agent.md` line 150 has "SV Factory Gate vs Agent Soft-First (A1 Separation)" section; (3) PASS: `agent-operating-manual.md` line 324 has "SV Factory Gate vs Agent Soft-First — A1 Separation (v2.5+)" section; (4) MANUAL-PENDING: ask `@kbx` about SV Factory exit 1 behavior in downstream IDE session; (5) PASS: no SV Factory files (CONSTITUTION.md, principles.md, focus.md, foundation.md, etc.) found in tracked downstream area. Overall: PASS (4/5 automated, 1 pending manual IDE verification). |
+| KB-017 | Define SVFactory deterministic rule catalog contract (v2.8) | knowledge-management | P0 | 2026-05-20 | todo | Backlog intent: `knowledge-base/intents/_backlog/v2-8-svfactory-rule-catalog-hardening.md`. Lock rule ID namespace, registry metadata, ownership, enforceability classification, and deterministic validation tests. |
+| KB-018 | Run KBAgent structured-store spike (derived query layer, non-breaking) | knowledge-management | P0 | 2026-05-24 | todo | Backlog intent: `knowledge-base/intents/_backlog/v2-8-kbagent-structured-store-spike.md`. Validate feature-flagged derived store and query surface with files as canonical source of truth. |
+| KB-019 | Propose minimal KBAgent DB schema (intents/documents/rule_results/audit_events) | architecture | P1 | 2026-05-28 | todo | Backlog intent: `knowledge-base/intents/_backlog/v2-8-kbagent-minimal-db-schema.md`. Produce backend decision matrix (SQLite-first vs GraphDB-later) and non-breaking adoption plan. |
+| KB-020 | Implement KBAgent DB layer + ship Intent Web UI as inseparable bundle (v2.9) | knowledge-management | P1 | 2026-Q3 | todo | Backlog intent: `knowledge-base/intents/_backlog/v2-9-db-and-intent-web-ui.md`. SQLite adapter + `kbx serve` (downstream user) + SVFactory governance view (Layer C). Bundle constraint: neither ships without the other. Absorbs KB-013 scope. |
+| KB-021 | Research-driven KB intelligence: autonomous repo analysis + GraphDB persistence (v2.10) | knowledge-management | P1 | 2026-Q3 | todo | Backlog intent: `knowledge-base/intents/_backlog/v2-10-research-driven-kb-intelligence.md`. AI autonomously researches repo, infers KB architecture, persists findings to GraphDB (no template files). Generic template stored as reference spec, not files. Depends on v2-9 DB. |
+
+## Intent Sequencing (v2.6 -> v2.10+)
+
+Execution order to minimize regression risk:
+
+1. `v2-6-kb-ontology-foundation` (active) — finish ontology lifecycle foundation.
+2. `v2-7-nl-rules-to-cli-logic` (active) — complete rule-engine scaffold and runtime wiring baseline.
+3. `v2-8-svfactory-rule-catalog-hardening` (backlog) — lock deterministic rule catalog contract; stabilize rule IDs.
+4. `v2-8-kbagent-structured-store-spike` (backlog) — validate derived structured store architecture under feature flag.
+5. `v2-8-kbagent-minimal-db-schema` (backlog) — finalize schema design and accepted backend decision (closes design phase).
+6. `v2-9-db-and-intent-web-ui` (backlog) — implement SQLite DB + ship `kbx serve` web UI as inseparable bundle.
+7. `v2-10-research-driven-kb-intelligence` (backlog) — autonomous KB research: scan repos, infer architecture, persist findings to GraphDB.
+
+Ordering rationale:
+- Stable rule IDs must exist before persisting rule results in DB.
+- Store spike proves architecture viability before committing to full implementation.
+- Schema design phase (v2.8) must be closed and accepted before implementation (v2.9) begins.
+- DB and Web UI are bundled at v2.9: neither ships without the other (bundle constraint — see KB-020 intent).
+- SVFactory governance view (Layer C) ships in same bundle under Axiom 5 amendment (2026-05-09).
+- Research engine (v2.10) requires v2-9 DB + `kbx serve` to be shipped; research findings are queried by web UI.
+
+Version gate note:
+- v2.8.x: DB is design + spike only — no shipped implementation. No web UI. Ontology/graph semantic-only.
+- v2.9.x: SQLite DB implementation (feature-flagged) + `kbx serve` web UI ship together as inseparable bundle. GraphDB remains deferred.
+- v2.10.x: Research-driven KB intelligence — autonomous repo scanning, findings persisted to GraphDB, queryable by web UI.
+- v3.0+: GraphDB pluggable backend candidate with evidence gate. Monorepo split (packages/svfactory + packages/kb-agent). Advanced research features (network doc indexing, multi-layer architectures, auto-update policies).
 
 ## Refactor Program: Three-Layer Separation + Git-Tracked Self-Hosting
 

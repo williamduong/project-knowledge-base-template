@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-05-01
+last_updated: 2026-05-09
 last_verified: 2026-05-01
 tags:
   - governance
@@ -13,6 +13,21 @@ tags:
 ---
 
 # Metadata Schema
+
+## Boundary and Naming Reference
+
+Use one canonical boundary and naming vocabulary across governance docs. Operational anchor:
+- `../12-ai-skills/agent-operating-manual.md` (section: Boundary and Naming Contract)
+
+Required term usage in governance text:
+- `kbx CLI` = deterministic command/runtime surface
+- `KBAgent` = agent prompt/runtime role
+- `KBX` = ecosystem/package/template
+- `SVFactory` / `sfact` = meta-factory/governance layer
+
+Scope guard:
+- Prefer the claim "governed KB/agent software instances".
+- Do not generalize to "all software instances" without explicit non-KB evidence.
 
 ## Required Frontmatter
 

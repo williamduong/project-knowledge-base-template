@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-05-04
+last_updated: 2026-05-09
 last_verified: 2026-05-04
 related:
   - current-state.md
@@ -21,6 +21,21 @@ tags:
 ---
 
 # Terminology Guard
+
+## Boundary and Naming Anchor
+
+Execution-layer terminology must follow one anchor:
+- `../12-ai-skills/agent-operating-manual.md` (Boundary and Naming Contract)
+
+Canonical mapping:
+- `kbx CLI` = deterministic command/runtime surface
+- `KBAgent` = agent prompt/runtime role
+- `KBX` = ecosystem/package/template
+- `SVFactory` / `sfact` = meta-factory/governance layer
+
+Scope guard:
+- Prefer "governed KB/agent software instances".
+- Do not generalize to "all software instances" without explicit non-KB evidence.
 
 Use this guard to avoid documentation claims that are technically true but operationally misleading.
 

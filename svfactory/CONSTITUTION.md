@@ -102,22 +102,29 @@ If a proposed module watches for file changes in real time inside SV Factory →
 
 ---
 
-## AXIOM 5 — Invisibility
+## AXIOM 5 — End-User Invisibility
 
-**Statement:** "The end-user (CEO, Partners, Clients) never sees SV Factory."
+**Statement:** "The end-user (CEO, Partners, Clients) never sees SV Factory. KBAgent's downstream user UI must not live inside SV Factory."
 
 **Definition:**
-SV Factory has no UI and no dashboard. It communicates exclusively via machine standards: MCP (Model Context Protocol), JSON, and CLI stdout. Any interface the end-user sees is rendered by KBAgent or an MCP Client — never by SV Factory directly.
+SV Factory does not ship a downstream user-facing UI or dashboard. It communicates with KBAgent exclusively via machine standards: MCP (Model Context Protocol), JSON, and CLI stdout. Any interface a downstream end-user (CEO, Partner, Client) sees is rendered by KBAgent or an MCP Client — never embedded in SV Factory code and never shipped via npm.
+
+SV Factory MAY have a maintainer-only governance web view (Layer C). This view lives in `svfactory/tools/` or `svfactory/ui/`, reads SV Factory JSON/file artifacts directly, and is excluded from npm `files` whitelist. It is for the repository owner only and must never be presented to downstream users.
 
 **Enforcement Rule:**
-SV Factory MUST NOT contain any UI component, rendered HTML, interactive prompt, or user-facing display logic. SV Factory output SHALL be machine-readable (JSON or structured CLI stdout) only. SV Factory SHALL reside inside CI/CD pipelines or `node_modules/@williamduong/svfactory` — never in a user-visible product surface.
+SV Factory MUST NOT contain any UI component intended for downstream end-users (CEO, Partners, Clients). KBAgent downstream user UI (intent manager, KB viewer, chaos dashboard) MUST NOT be placed inside SV Factory code. SV Factory output to external consumers SHALL be machine-readable (JSON or structured CLI stdout) only. Any maintainer-only governance view MUST NOT be shipped via npm `package.json#files`.
 
 **Practical Check:**
 - SV Factory outputs a JSON result to stdout. KBAgent renders it as a chat message in VS Code. ✓
-- SV Factory contains a React component for displaying a Chaos Dashboard. ✗ (wrong layer entirely)
+- `svfactory/tools/governance-view/` is a local-only HTML dashboard for the maintainer, excluded from npm. ✓ (Layer C, maintainer-only)
+- SV Factory ships a React component for KBAgent user UI to downstream npm consumers. ✗ (wrong layer — move to kb-agent package)
+- SV Factory contains a dashboard page shown to CEO clients. ✗ (end-user invisibility violation)
 
 **Reflection:**
-If a proposed feature adds a React component or interactive terminal UI inside SV Factory → Wrong repository. Redirect to KBAgent's MCP rendering surface.
+If a proposed feature is a downstream user-facing UI inside SV Factory → Wrong layer. Move to KBAgent rendering surface.
+If a proposed feature is a maintainer governance tool reading SV Factory artifacts → Allowed, but must stay Layer C (not shipped via npm).
+
+**Amendment record:** Amended 2026-05-09 by owner (William). Original Axiom 5 over-prohibited all UI in SVFactory; corrected scope is downstream user UI prohibition only. Maintainer-only Layer C governance views are permitted.
 
 ---
 
@@ -138,4 +145,4 @@ If it cannot be cleanly assigned — it is an architectural violation by ambigui
 
 ---
 
-*Last amended: 2026-05-08. Amendment requires explicit owner approval on record.*
+*Last amended: 2026-05-09 (Axiom 5 — owner William approved). Amendment requires explicit owner approval on record.*

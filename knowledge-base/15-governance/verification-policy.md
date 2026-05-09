@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-04-28
+last_updated: 2026-05-09
 last_verified: 2026-04-28
 related:
 	- metadata-schema.md
@@ -20,6 +20,17 @@ tags:
 ---
 
 # Verification Policy
+
+## Boundary and Naming Reference
+
+When this policy references execution layers, use canonical terms from:
+- `../12-ai-skills/agent-operating-manual.md` (Boundary and Naming Contract)
+
+Quick map:
+- `kbx CLI`: deterministic command/runtime surface
+- `KBAgent`: agent prompt/runtime role
+- `KBX`: ecosystem/package/template
+- `SVFactory` / `sfact`: meta-factory/governance layer
 
 Defines how documents move between verification states and how maintenance is triggered automatically during normal work.
 

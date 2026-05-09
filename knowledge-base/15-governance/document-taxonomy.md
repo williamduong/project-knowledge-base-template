@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-04-28
+last_updated: 2026-05-09
 last_verified: 2026-04-28
 tags:
   - governance
@@ -13,6 +13,17 @@ tags:
 ---
 
 # Document Taxonomy
+
+## Boundary and Naming Lock
+
+This file governs document types, not runtime layer execution. For layer boundaries and naming terms, use:
+- `../12-ai-skills/agent-operating-manual.md` (Boundary and Naming Contract)
+
+Do not redefine these terms here:
+- `kbx CLI`
+- `KBAgent`
+- `KBX`
+- `SVFactory` / `sfact`
 
 ## Allowed Types
 

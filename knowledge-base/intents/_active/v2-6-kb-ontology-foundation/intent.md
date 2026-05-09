@@ -4,9 +4,9 @@ mode: full
 lifecycle: active
 created_at: 2026-05-08T18:21:16.294Z
 focus:
-  current: "Phase 0 ✅ COMPLETE: TerminologyRegistry (10 entities, 48 aliases, zero polysemy) + seed-dna.cypher (DDL, Cypher templates). Phase 1 ready: Intent State Machine"
-  last_updated: 2026-05-09T15:45:00Z
-  next_action: "Phase 1: Implement Intent State Machine (5-state lifecycle with governance properties). Deliverable: DRAFT→PROPOSED→VERIFIED→EXECUTED→COMMITTED enforcement in CLI validator."
+  current: "Phase 0 ✅ COMPLETE. v2.6 close scope is now strictly ontology foundation contract + deterministic lifecycle validator; DB/Web UI implementation is deferred to v2.9 bundle intent."
+  last_updated: 2026-05-09T16:50:00Z
+  next_action: "Start Phase 1 implementation: hardcode 5-state Intent lifecycle enforcement in CLI validator and commit test evidence for transition guards."
 change_type: feature
 change_scope:
   - template/02-domain-model/
@@ -14,7 +14,7 @@ change_scope:
   - src/lib/
   - src/commands/
 impact_signals:
-  - adds: governed glossary schema and ontology seed artifacts to KB template
+  - adds: governed glossary schema and ontology reference spec to KB template/docs
   - adds: ontology lifecycle CLI surface for glossary-to-ontology validation
   - avoids: GraphDB/DDL generation in v2.6 (deferred)
 decision_summary: "KB currently has a placeholder knowledge-graph folder (13-knowledge-graph/README.md only). v2.6 focuses on deterministic ontology foundation only: natural language -> glossary -> ontology. Physical graph database build/deploy is explicitly deferred to a later intent after ontology lifecycle is stable."
@@ -33,7 +33,34 @@ promote_decision_ref: null
 
 Build the ontology foundation layer for KB in three deterministic steps: natural-language capture, governed glossary, and ontology schema.
 
-Currently `template/13-knowledge-graph/` is a stub with only a README. This intent turns it into a living schema module for ontology lifecycle management. Graph database provisioning (KuzuDB/FalkorDB/Cypher DDL) is out of scope for v2.6 and will be handled in a later intent.
+Currently `template/13-knowledge-graph/` is a stub with only a README. This intent turns the ontology model into a living schema module for lifecycle management, while keeping the generic template as a reference spec in docs and CLI prompts. Graph database provisioning (KuzuDB/FalkorDB/Cypher DDL) is out of scope for v2.6 and will be handled in a later intent.
+
+## Re-Baselined Goal (after sequencing update)
+
+Close `v2-6-kb-ontology-foundation` only when ontology foundation is deterministic, test-backed, and consumable by later waves (`v2.7` rules runtime, `v2.8` store/schema design), without shipping DB runtime or web UI.
+
+## Close Conditions (all must pass)
+
+1. Terminology foundation stays deterministic: `TerminologyRegistry` has at least 10 canonical entities with one-way alias resolution and no polysemy regressions.
+2. Intent lifecycle validator is implemented and enforced for `DRAFT -> PROPOSED -> VERIFIED -> EXECUTED -> COMMITTED` with hard-fail guard checks.
+3. `kbx ontology validate|show|build` command surface exists and passes contract fixtures; invalid fixtures hard-fail with exit code 1.
+4. Ontology reference artifacts are present and documented in the knowledge-base docs and CLI prompt layer for downstream adoption.
+5. Scope boundary is explicit in plan/evidence: DB implementation and visual web UI are not part of v2.6 completion and are deferred to `v2-9-db-and-intent-web-ui`.
+6. Regression check confirms existing non-ontology commands keep backward-compatible behavior.
+
+## Task Status (as of 2026-05-09)
+
+| Work Item | Status | Notes |
+|---|---|---|
+| Phase 0 - DNA alignment and terminology collision register | COMPLETE | Reported in `phase-0-report.md`; 10 entities, 48 aliases, zero polysemy. |
+| Phase 1 - Intent state machine enforcement | READY | Next build target for closure path. |
+| Phase 2 - Action guard middleware contract | READY | Defined in plan, pending implementation evidence. |
+| Phase 3 - NL audit and governed glossary integration | NOT STARTED | Planned, no implementation evidence yet. |
+| Phase 4 - Typed ontology schema (no DB runtime) | NOT STARTED | Planned, no implementation evidence yet. |
+| Phase 5 - CLI ontology lifecycle commands | NOT STARTED | Planned, no implementation evidence yet. |
+| Phase 6 - Template docs + starter files | NOT STARTED | Planned, no implementation evidence yet. |
+
+Overall progress baseline: 1/7 work items complete; close path is now explicitly bounded by the six conditions above.
 
 ## Intent NodeType Contract (v2.6)
 

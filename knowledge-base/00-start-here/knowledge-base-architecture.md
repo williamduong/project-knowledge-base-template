@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-04-29
+last_updated: 2026-05-09
 last_verified: 2026-04-29
 related:
   - ../INDEX.md
@@ -23,6 +23,16 @@ tags:
 ---
 
 # Knowledge Base Architecture
+
+## Boundary and Naming Lock
+
+For execution-layer terms, use the canonical contract from:
+- `../12-ai-skills/agent-operating-manual.md` (Boundary and Naming Contract)
+
+Boundary statement used across this KB:
+- SVFactory defines governance contracts, templates, workflows, schemas, prompts, and deterministic gates.
+- KBAgent is a downstream agent family instantiated from that contract to help users operate and evolve a reference-accurate knowledge base.
+- kbx CLI is the deterministic enforcement bridge between SVFactory and KBAgent.
 
 This is the **meta-document** of the KB. It does not describe what the project does — it describes how the KB itself is built, why it is structured the way it is, and how both humans and AI agents should navigate and trust its content.
 

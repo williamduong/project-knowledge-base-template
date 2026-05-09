@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-05-01
+last_updated: 2026-05-09
 last_verified: 2026-05-01
 tags:
   - governance
@@ -14,6 +14,17 @@ tags:
 ---
 
 # Link and Ownership Policy
+
+## Boundary and Naming Reference
+
+To prevent terminology drift in governance docs, use one operational anchor:
+- `../12-ai-skills/agent-operating-manual.md` (Boundary and Naming Contract)
+
+Do not redefine execution-layer terms in this file. Reuse:
+- `kbx CLI`
+- `KBAgent`
+- `KBX`
+- `SVFactory` / `sfact`
 
 ## Owner Assignment
 

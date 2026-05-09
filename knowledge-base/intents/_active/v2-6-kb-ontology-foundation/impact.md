@@ -7,7 +7,7 @@ type: intent-impact
 
 ## Affected Areas
 
-- KB docs: `template/13-knowledge-graph/` transitions from placeholder to ontology contract artifacts.
+- KB docs: ontology reference spec transitions from placeholder to living contract artifacts in docs/CLI guidance.
 - CLI core: adds ontology contract commands and validation surface in SVFactory layer.
 - Agent guidance: `template/12-ai-skills/agent-operating-manual.md` receives ontology contract usage guidance.
 - Tests: new validator and command tests in `test/lib/` and `test/commands/`.

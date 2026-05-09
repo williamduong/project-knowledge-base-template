@@ -10,6 +10,19 @@ architectural context, domain model, and governance rules.
 - Downstream-user surface (`@kbx`, `/kbx-plan`, `/kbx-run`, `/kbx-ask`) is disabled locally and must be validated in a downstream clean workspace.
 - Do not use self-host prompt output as final user-experience acceptance evidence for shipped KB Agent behavior.
 
+## Canonical Boundary Statement
+
+- SVFactory is the meta-factory that defines governance contracts, templates, workflows, schemas, prompts, and deterministic gates.
+- KBAgent is a downstream agent family instantiated from that contract to help users operate and evolve a reference-accurate knowledge base.
+- kbx CLI is the deterministic enforcement bridge between SVFactory and KBAgent.
+
+## Naming Taxonomy
+
+- `kbx CLI`: deterministic command/runtime surface.
+- `KBAgent`: agent prompt/runtime role.
+- `KBX`: ecosystem/package/template.
+- `SVFactory` / `sfact`: meta-factory/governance layer.
+
 ## Mandatory read-order before any multi-file task
 
 1. `knowledge-base/INDEX.md` — full KB scope map

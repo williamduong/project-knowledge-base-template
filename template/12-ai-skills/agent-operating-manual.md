@@ -22,6 +22,25 @@ tags:
 
 Provide a single location for future coding agents to read KB conventions before editing or generating docs/code.
 
+## Boundary and Naming Contract
+
+Use this boundary statement consistently across maintainer and downstream surfaces:
+
+- SVFactory defines governance contracts, templates, workflows, schemas, prompts, and deterministic gates.
+- KBAgent is a downstream agent family instantiated from that contract to help users operate and evolve a reference-accurate knowledge base.
+- kbx CLI is the deterministic enforcement bridge between SVFactory and KBAgent.
+
+Use this naming taxonomy to avoid scope confusion:
+
+- `kbx CLI`: deterministic command/runtime surface.
+- `KBAgent`: agent prompt/runtime role.
+- `KBX`: ecosystem/package/template.
+- `SVFactory` / `sfact`: meta-factory/governance layer.
+
+Claim scope guard:
+- Default claim is "governed KB/agent software instances".
+- Do not claim "all software instances" without explicit non-KB evidence.
+
 ## Design Philosophy: Opinionated Defaults
 
 KB Agent ships with opinionated defaults. Every default is chosen to work for the widest range of projects without configuration. Users can override defaults via `.kb/config.yml` (from v2.5), and overrides are logged to `.kb/governance/customizations.log` so `kbx migrate` can preserve them during upgrades.
@@ -495,13 +514,13 @@ This agent is **not** the global Copilot agent — it is specific to this projec
 
 ### Init Projection Path (verified)
 
-`kbx init` creates project-scoped agent and prompts from template files via `src/commands/init.js`:
+`kbx init` creates the project-scoped agent and prompts from source artifacts via `src/commands/init.js`:
 
-- Source template: `template/.github/agents/kbx.agent.md`
-- Source template: `template/.github/agents/kb.agent.template.md`
+- Source artifact: `template/.github/agents/kbx.agent.md`
+- Source artifact: `template/.github/agents/kb.agent.template.md`
 - Destination: `.github/agents/kbx.agent.md`
 - Copy function: `createAgentAndPromptFiles(...)` in `src/commands/init.js`
-- Related prompt sources:
+- Related prompt artifacts:
   - `template/.github/prompts/kbx-plan.prompt.template.md`
   - `template/.github/prompts/kbx-run.prompt.template.md`
   - `template/.github/prompts/kbx-ask.prompt.template.md`

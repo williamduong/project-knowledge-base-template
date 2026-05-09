@@ -78,6 +78,21 @@ KB ships three complementary layers; pick whichever matches your workflow.
 | **Prompts (2)** | `/kbx-plan` and `/kbx-run` in any agent chat (Copilot, Cursor, Claude) | Step-by-step, resumable. `/kbx-run` auto-inits if needed and executes one step per call. |
 | **Master agent** | `@kbx` in chat | Code Q&A oracle, structural guardian (bi-temporal, metadata schema), governance, intent conflict resolution (v2.0 Role 4 Reasoner). Backed by `.github/agents/kbx.agent.md`. |
 
+## Naming Taxonomy (Scope Lock)
+
+Use these terms consistently:
+
+- `kbx CLI`: deterministic command/runtime surface.
+- `KBAgent`: agent prompt/runtime role.
+- `KBX`: ecosystem/package/template.
+- `SVFactory` / `sfact`: meta-factory/governance layer.
+
+Canonical boundary statement:
+
+- SVFactory defines governance contracts, templates, workflows, schemas, prompts, and deterministic gates.
+- KBAgent is a downstream agent family instantiated from that contract to help users operate and evolve a reference-accurate knowledge base.
+- kbx CLI is the deterministic enforcement bridge between SVFactory and KBAgent.
+
 Examples:
 
 ```text
@@ -306,7 +321,7 @@ This repository includes a standalone website bundle in `site/` for GitHub Pages
 - Docs portal: `site/docs.html`
 - Shared assets: `site/css/`, `site/js/`, `site/data/`
 
-The docs portal renders markdown directly from the `main` branch via `raw.githubusercontent.com`, so docs stay up to date without duplicating template files.
+The docs portal renders markdown directly from the `main` branch via `raw.githubusercontent.com`, so docs stay up to date without duplicating source docs.
 
 ### Enable GitHub Pages
 
