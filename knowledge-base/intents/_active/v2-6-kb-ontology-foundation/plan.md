@@ -156,23 +156,29 @@ Canonical shape (JSON-equivalent):
 
 **Goal:** Intercept mutations at runtime; block unless evidence path exists in graph.
 
+**Architecture:**
+- **Cypher Templates in ontology.js**: Store parameterized Cypher queries for graph validation (e.g., `MATCH (i:Intent)-[:SUPPORTS]->(d:Document)-[:REFERENCES]->(t:TargetNode) RETURN COUNT(*) > 0 AS path_exists`)
+- **JS Middleware**: Inject intent/entity IDs into templates, execute against GraphDB engine (KuzuDB/FalkorDB), receive Boolean result
+- **No Native JS Traversal**: Leverage pushed-down Cypher execution for sub-millisecond performance
+- **Placement**: Between CLI Command layer and Executor layer
+
 **Activities:**
 - Implement `ToolCallInterceptor` middleware pattern (Microsoft Security Graph):
-  - Pre-execution check: `if (!exists_path(Intent → Evidence/Document → TargetNode)) { deny_mutation(); }`
-  - Runtime: <0.1ms validation using static Cypher on GraphDB (no LLM calls)
-  - Placement: Between CLI Command layer and Executor layer
-- Design Guard rules for `Claim` and `Document` mutations:
-  - Document mutation requires Evidence path to source repo (`repo_origin` check)
-  - Claim mutation blocked if confidence < governanceThreshold or no SUPPORTS edge from Document
-  - CROSS_REPO_GRANT edge required for cross-origin mutations
-- Implement guard as middleware in `src/lib/ontology.js`
+  - Pre-execution check: Parameterized Cypher validates `exists_path(Intent → Evidence/Document → TargetNode)`
+  - Runtime: <0.1ms validation (Cypher engine native execution on GraphDB)
+  - Result: Boolean (allow) or deny reason string
+- Design Guard rules for mutation validation:
+  - Document mutation: Cypher confirms Evidence path to source repo (`repo_origin` must match)
+  - Claim mutation: Cypher validates confidence >= governanceThreshold AND SUPPORTS edge exists from Document
+  - Cross-origin mutation: Cypher verifies CROSS_REPO_GRANT edge exists between Intent.repo_origin and TargetNode.repo_origin
+- Implement guard middleware in `src/lib/ontology.js` with Cypher template definitions
 
 **Acceptance:**
-- `ToolCallInterceptor` defined as Zod schema
-- Guard logic returns deny/allow synchronously
-- Performance: <100µs per check (0.1ms budget)
-- All denied mutations logged with reason
-- No LLM calls in guard layer
+- `ToolCallInterceptor` defined as JS middleware spec + Cypher template library
+- Guard logic returns {allowed: boolean, reason?: string} synchronously
+- Performance: <100µs per check (0.1ms budget, enabled by Cypher pushed-down execution)
+- All denied mutations logged with Cypher query + parameters for audit
+- No LLM calls in guard layer; no native graph traversal (Cypher only)
 
 ### Phase 3 — Natural-language audit + Governed glossary
 
@@ -195,8 +201,8 @@ Canonical shape (JSON-equivalent):
 
 **Original Phase 3 (shifted):**
 - `kbx ontology show` — human-readable schema view (nodes with repo_origin, edges, allowed connections, required/optional props)
-- `kbx ontology validate` — validate ontology file + sample fixtures; hard-fail on basic contract violations + DNA Registry mapping
-- `kbx ontology build` — compile ontology runtime artifact at `.kb/build/ontology.json` (includes dnaRegistry)
+- `kbx ontology validate` — validate ontology file + sample fixtures; hard-fail on basic contract violations + DNA Registry mapping + Cypher template syntax check
+- `kbx ontology build` — compile ontology runtime artifact at `.kb/build/ontology.json` (includes dnaRegistry + Cypher template definitions)
 - Wire into `src/cli.js`, `src/commands/help.js`
 
 ### Phase 6 — Template docs
@@ -224,8 +230,9 @@ Validator must fail with exit code 1 for all core violations below:
 9. **[NEW] Missing `repo_origin` on Intent or Entity nodes** — hard-fail if not present
 10. **[NEW] Entity alias not resolvable to `canonical_name` in dnaRegistry** — hard-fail if alias not found
 11. **[NEW] Unresolved `repo_origin` value** — hard-fail if repo_origin not in approved list (billing, auth, gateway, infrastructure)
-12. **[NEW] Missing Evidence path before VERIFIED state transition** — hard-fail if `evidenceLinks` empty when transitioning PROPOSED→VERIFIED
-13. **[NEW] Cross-origin mutation without CROSS_REPO_GRANT edge** — hard-fail if Intent from Repo A targets Entity in Repo B without grant
+12. **[NEW] TerminologyRegistry must contain >= 10 seed entities** (Identity, Infrastructure, Governance, Evidence groups)
+13. **[NEW] Missing Evidence path before VERIFIED state transition** — hard-fail if `evidenceLinks` empty when transitioning PROPOSED→VERIFIED; Phase 2 checks via Cypher template
+14. **[NEW] Cross-origin mutation without CROSS_REPO_GRANT edge** — hard-fail if Intent from Repo A targets Entity in Repo B without grant; validated via Cypher template
 
 No warning-only mode for foundational ontology integrity checks in v2.6.
 
@@ -273,7 +280,9 @@ These belong to a later intent after ontology lifecycle is stable.
 9. **[NEW] Cross-repo mutations denied unless CROSS_REPO_GRANT edge exists**
 10. `kbx ontology build` emits `.kb/build/ontology.json` deterministically **with dnaRegistry section**
 11. `template/13-knowledge-graph/README.md` is generated/updated from ontology source (living schema)
-12. Core validator has no GraphDB/LLM/MCP dependency (guard layer uses static Cypher only)
-13. Zod schemas in `src/lib/ontology.js` enforce type-safety for all Intent + DNA operations
-14. All new tests pass; full suite 0 failures
-15. `template/13-knowledge-graph/glossary-schema.yaml`, `template/13-knowledge-graph/ontology-schema.yaml`, `template/13-knowledge-graph/dna-registry.yaml` exist and are valid YAML
+12. Core validator has no runtime GraphDB/LLM/MCP dependency; Cypher templates are parameterized query definitions stored in `src/lib/ontology.js` (no execution until Phase 2 runtime integration with actual GraphDB)
+13. **[Phase 0-2: Stub]** Zod schemas in `src/lib/ontology.js` exist as type specifications (non-enforcing, documentation only); Phase 0-2 validation uses manual checks via `createOntologyValidator()` factory
+14. **[Phase 4: Full Enforcement]** Zod schemas hardened for property-level type-safety + PII protection; topological checks from Phase 0-2 + type checks from Phase 4
+15. All new tests pass; full suite 0 failures
+16. `template/13-knowledge-graph/glossary-schema.yaml`, `template/13-knowledge-graph/ontology-schema.yaml`, `template/13-knowledge-graph/dna-registry.yaml` exist and are valid YAML
+17. TerminologyRegistry populated with 10 SaaS core entities (Tenant, Subscription, ServicePrincipal, Project, Module, Config, Intent, Policy, CLICommand, Evidence) in `src/lib/ontology.js`
