@@ -34,6 +34,7 @@ const { runIngest } = require('./commands/ingest');
 const { runNext } = require('./commands/next');
 const { runMigrate } = require('./commands/migrate');
 const { runWorkspace } = require('./commands/workspace');
+const runOntology = require('./commands/ontology');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -200,6 +201,14 @@ async function run(argv) {
 
   if (command === 'uninstall') {
     await runUninstall({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'ontology') {
+    const result = runOntology({ packageJson, args: rest });
+    if (result.exitCode && result.exitCode !== 0) {
+      process.exit(result.exitCode);
+    }
     return;
   }
 

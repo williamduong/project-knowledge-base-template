@@ -1,0 +1,188 @@
+{
+  "version": "2.6.0",
+  "timestamp": "2026-05-09T16:54:02.991Z",
+  "terminologyRegistry": {
+    "Tenant": {
+      "canonical_name": "Tenant",
+      "aliases": [
+        "Client",
+        "Customer",
+        "Account",
+        "Organization"
+      ],
+      "repo_origin": "billing",
+      "microsoft_cdm_mapping": "Account"
+    },
+    "Subscription": {
+      "canonical_name": "Subscription",
+      "aliases": [
+        "Billing Plan",
+        "License",
+        "Tier"
+      ],
+      "repo_origin": "billing",
+      "microsoft_cdm_mapping": "Subscription"
+    },
+    "ServicePrincipal": {
+      "canonical_name": "ServicePrincipal",
+      "aliases": [
+        "AgentIdentity",
+        "AppIdentity",
+        "SP",
+        "Machine",
+        "Bot",
+        "agent"
+      ],
+      "repo_origin": "auth",
+      "microsoft_cdm_mapping": "ServicePrincipal"
+    },
+    "Project": {
+      "canonical_name": "Project",
+      "aliases": [
+        "Repo",
+        "Repository",
+        "Workspace",
+        "Team",
+        "project",
+        "project_id"
+      ],
+      "repo_origin": "infrastructure",
+      "microsoft_cdm_mapping": "Project"
+    },
+    "Module": {
+      "canonical_name": "Module",
+      "aliases": [
+        "Component",
+        "Package",
+        "Library",
+        "Feature",
+        "module"
+      ],
+      "repo_origin": "infrastructure",
+      "microsoft_cdm_mapping": "Module"
+    },
+    "Config": {
+      "canonical_name": "Config",
+      "aliases": [
+        "Configuration",
+        "Setting",
+        "Parameter",
+        "Environment",
+        "config",
+        "kbx.agent.md"
+      ],
+      "repo_origin": "infrastructure",
+      "microsoft_cdm_mapping": "Configuration"
+    },
+    "Intent": {
+      "canonical_name": "Intent",
+      "aliases": [
+        "Task",
+        "Request",
+        "Proposal",
+        "Change",
+        "intent",
+        "intent_id",
+        "workflow"
+      ],
+      "repo_origin": "auth",
+      "microsoft_cdm_mapping": "WorkflowIntent"
+    },
+    "Policy": {
+      "canonical_name": "Policy",
+      "aliases": [
+        "Rule",
+        "Governance Rule",
+        "AccessPolicy",
+        "Gate",
+        "policy",
+        "directive"
+      ],
+      "repo_origin": "infrastructure",
+      "microsoft_cdm_mapping": "ResourcePolicy"
+    },
+    "CLICommand": {
+      "canonical_name": "CLICommand",
+      "aliases": [
+        "Command",
+        "Script",
+        "Action",
+        "Operation",
+        "command",
+        "kbx",
+        "subcommand"
+      ],
+      "repo_origin": "infrastructure",
+      "microsoft_cdm_mapping": "ExecutableCommand"
+    },
+    "Evidence": {
+      "canonical_name": "Evidence",
+      "aliases": [
+        "Document",
+        "Claim",
+        "Proof",
+        "Record",
+        "Artifact",
+        "evidence",
+        "evidenceLinks",
+        "reasoning_trace"
+      ],
+      "repo_origin": "auth",
+      "microsoft_cdm_mapping": "Evidence"
+    }
+  },
+  "stateTransitionGuards": {
+    "DRAFT": {
+      "allowedTo": [
+        "PROPOSED"
+      ]
+    },
+    "PROPOSED": {
+      "allowedTo": [
+        "VERIFIED"
+      ]
+    },
+    "VERIFIED": {
+      "allowedTo": [
+        "EXECUTED"
+      ]
+    },
+    "EXECUTED": {
+      "allowedTo": [
+        "COMMITTED"
+      ]
+    },
+    "COMMITTED": {
+      "allowedTo": []
+    }
+  },
+  "validations": {
+    "requiredFields": [
+      "id",
+      "repo_origin",
+      "canonical_name",
+      "lifecycle",
+      "title",
+      "riskLevel"
+    ],
+    "repoOrigins": [
+      "billing",
+      "auth",
+      "gateway",
+      "infrastructure"
+    ],
+    "lifecycleStates": [
+      "DRAFT",
+      "PROPOSED",
+      "VERIFIED",
+      "EXECUTED",
+      "COMMITTED"
+    ],
+    "riskLevels": [
+      "Low",
+      "Medium",
+      "High",
+      "Critical"
+    ]
+  }
+}

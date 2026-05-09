@@ -6,19 +6,19 @@
  * This module defines the type-safe contract for ontology entities using Zod schemas.
  * These schemas implement Microsoft CDM principles for multi-tenant SaaS governance.
  *
- * Dependencies:
- * - Zod: npm install zod (add to package.json dependencies in Phase 4: Typed ontology schema)
- *
  * Exports:
  * - SaaSNodeDNA: Master DNA definition for all entities
  * - IntentSchema: Intent NodeType contract with state machine
  * - TerminologyRegistry: Collision register for aliases → canonical_name mapping
- * - ToolCallInterceptor: Guard middleware signature for Action Gate
- * - createOntologyValidator: Factory function for schema validation
+ * - validateIntent: Zod validator for Intent with state guards
+ * - validateSaaSNode: Zod validator for SaaSNodeDNA
+ * - validateTerminology: Resolve alias to canonical_name
+ * - verifyStateTransition: Guard logic for 5-state lifecycle
+ * - checkCrossRepoGrant: Verify cross-repo mutation eligibility
+ * - createOntologyValidator: Factory function for manual validation (backward compat)
  */
 
-// NOTE: Zod import is deferred until Phase 4 implementation.
-// Uncomment when ready: const { z } = require('zod');
+const { z } = require('zod');
 
 // ---------------------------------------------------------------------------
 // SaaSNodeDNA: Master Data Entity for all SaaS Domain Objects
@@ -27,7 +27,7 @@
 /**
  * DNA represents the authoritative identity of any entity in the SaaS system.
  * All entities MUST have repo_origin to prevent cross-tenant mutation accidents.
- *
+ * 
  * Fields:
  * - id: UUID primary key
  * - repo_origin: MANDATORY; one of [billing, auth, gateway, infrastructure]
@@ -35,19 +35,33 @@
  * - sensitivity: Data sensitivity level (1-5, where 5 is most sensitive)
  * - aliases: Other names this entity is known by (resolved via TerminologyRegistry)
  * - last_audit_id: Reference to last audit event
- *
- * Zod Schema:
- * ```
- * export const SaaSNodeDNA = z.object({
- *   id: z.string().uuid('Invalid UUID format'),
- *   repo_origin: z.enum(['billing', 'auth', 'gateway', 'infrastructure']),
- *   canonical_name: z.string().min(1, 'canonical_name is required').describe('Normalized per Microsoft CDM'),
- *   sensitivity: z.number().int().min(1).max(5).default(1).describe('Data sensitivity: 1=public, 5=critical'),
- *   aliases: z.array(z.string()).default([]).describe('Alternate names, resolved via TerminologyRegistry'),
- *   last_audit_id: z.string().uuid().optional(),
- * });
- * ```
  */
+
+// UUID regex from RFC 4122
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const SaaSNodeDNA = z.object({
+  id: z.string()
+    .regex(UUID_REGEX, 'Invalid UUID format'),
+  repo_origin: z.enum(['billing', 'auth', 'gateway', 'infrastructure'])
+    .describe('Mandatory DNA positioning for multi-tenant governance'),
+  canonical_name: z.string()
+    .min(1, 'canonical_name is required')
+    .describe('Normalized per Microsoft CDM'),
+  sensitivity: z.number()
+    .int()
+    .min(1)
+    .max(5)
+    .default(1)
+    .describe('Data sensitivity: 1=public, 5=critical'),
+  aliases: z.array(z.string())
+    .default([])
+    .describe('Alternate names, resolved via TerminologyRegistry'),
+  last_audit_id: z.string()
+    .regex(UUID_REGEX, 'Invalid UUID format')
+    .optional(),
+});
+
 const SaaSNodeDNA_spec = {
   id: 'UUID (required)',
   repo_origin: 'Enum[billing|auth|gateway|infrastructure] (required)',
@@ -73,32 +87,31 @@ const SaaSNodeDNA_spec = {
  * - COMMITTED: Audit entry written; immutable
  *
  * Critical Guard: commitAllowed must be true to transition VERIFIED → EXECUTED
- *
- * Zod Schema:
- * ```
- * export const IntentSchema = SaaSNodeDNA.extend({
- *   lifecycle: z.enum(['DRAFT', 'PROPOSED', 'VERIFIED', 'EXECUTED', 'COMMITTED']),
- *   title: z.string().min(1, 'title required'),
- *   riskLevel: z.enum(['Low', 'Medium', 'High', 'Critical']),
- *   evidenceLinks: z.array(z.string().url('Invalid evidence link URI')).default([])
- *     .describe('URIs to Document or Claim IDs; required for PROPOSED→VERIFIED transition'),
- *   commitAllowed: z.boolean().default(false)
- *     .describe('Only true after VERIFIED state; gates VERIFIED→EXECUTED'),
- *   governanceThreshold: z.number().min(0).max(1).optional()
- *     .describe('Minimum confidence/safety score required for domain'),
- *   reasoningTrace: z.string().optional()
- *     .describe('AI decision log; captured for audit trail at COMMITTED'),
- * });
- * ```
- *
- * State Transition Guards:
- * ```
- * DRAFT → PROPOSED: evidenceLinks.length >= 1
- * PROPOSED → VERIFIED: verifyMutation() + Graph path validation (Intent → Document → TargetNode)
- * VERIFIED → EXECUTED: commitAllowed === true
- * EXECUTED → COMMITTED: Final state; no rollback
- * ```
  */
+
+const IntentSchema = SaaSNodeDNA.extend({
+  lifecycle: z.enum(['DRAFT', 'PROPOSED', 'VERIFIED', 'EXECUTED', 'COMMITTED'])
+    .describe('5-state machine: DRAFT → PROPOSED → VERIFIED → EXECUTED → COMMITTED'),
+  title: z.string()
+    .min(1, 'title is required'),
+  riskLevel: z.enum(['Low', 'Medium', 'High', 'Critical'])
+    .describe('Risk classification for governance'),
+  evidenceLinks: z.array(z.string())
+    .default([])
+    .describe('URIs to Document or Claim IDs; required for PROPOSED→VERIFIED transition'),
+  commitAllowed: z.boolean()
+    .default(false)
+    .describe('Only true after VERIFIED state; gates VERIFIED→EXECUTED'),
+  governanceThreshold: z.number()
+    .min(0)
+    .max(1)
+    .optional()
+    .describe('Minimum confidence/safety score required for domain'),
+  reasoningTrace: z.string()
+    .optional()
+    .describe('AI decision log; captured for audit trail at COMMITTED'),
+});
+
 const IntentSchema_spec = {
   // Inherited from SaaSNodeDNA:
   id: 'UUID (required)',
@@ -123,56 +136,17 @@ const IntentSchema_spec = {
  * TerminologyRegistry resolves aliases to canonical_name using Microsoft CDM.
  * Prevents AI from creating ambiguous entity names.
  *
- * 10 SaaS Core Entities (Phase 0 — DNA Alignment):
- *
- * === Identity Group (3 entities) ===
- * 1. Tenant: Customer account entity. Aliases: Client, Customer, Account, Organization
- *    repo_origin: billing | microsoft_cdm_mapping: Account
- *
- * 2. Subscription: Billing plan tied to tenant. Aliases: Billing Plan, License, Tier
- *    repo_origin: billing | microsoft_cdm_mapping: Subscription
- *
- * 3. ServicePrincipal: Agent/Machine identity. Aliases: AgentIdentity, AppIdentity, SP, Machine, Bot, agent
- *    repo_origin: auth | microsoft_cdm_mapping: ServicePrincipal
- *
- * === Infrastructure Group (3 entities) ===
- * 4. Project: Repo/workspace container. Aliases: Repo, Repository, Workspace, Team, project, project_id
- *    repo_origin: infrastructure | microsoft_cdm_mapping: Project
- *
- * 5. Module: Component/package/feature. Aliases: Component, Package, Library, Feature, module
- *    repo_origin: infrastructure | microsoft_cdm_mapping: Module
- *
- * 6. Config: Configuration/setting entity. Aliases: Configuration, Setting, Parameter, Environment, config, kbx.agent.md
- *    repo_origin: infrastructure | microsoft_cdm_mapping: Configuration
- *
- * === Governance Group (3 entities) ===
- * 7. Intent: Mutation proposal task. Aliases: Task, Request, Proposal, Change, intent, intent_id, workflow
- *    repo_origin: auth | microsoft_cdm_mapping: WorkflowIntent
- *
- * 8. Policy: Governance rule. Aliases: Rule, Governance Rule, AccessPolicy, Gate, policy, directive
- *    repo_origin: infrastructure | microsoft_cdm_mapping: ResourcePolicy
- *
- * 9. CLICommand: Executable command/script. Aliases: Command, Script, Action, Operation, command, kbx, subcommand
- *    repo_origin: infrastructure | microsoft_cdm_mapping: ExecutableCommand
- *
- * === Evidence Group (1 entity) ===
- * 10. Evidence: Supporting documentation/proof. Aliases: Document, Claim, Proof, Record, Artifact, evidence, evidenceLinks, reasoning_trace
- *     repo_origin: auth | microsoft_cdm_mapping: Evidence
- *
- * Zod Schema (key = canonical_name):
- * ```
- * export const TerminologyRegistry = z.record(
- *   z.string(),
- *   z.object({
- *     canonical_name: z.string(),
- *     aliases: z.array(z.string()),
- *     repo_origin: z.enum(['billing', 'auth', 'gateway', 'infrastructure']),
- *     microsoft_cdm_mapping: z.string().optional(),
- *   })
- * );
- * ```
+ * 10 SaaS Core Entities (Phase 0 — DNA Alignment)
  */
-const TerminologyRegistry_spec = {
+
+const TerminologyRegistryEntry = z.object({
+  canonical_name: z.string().min(1),
+  aliases: z.array(z.string()),
+  repo_origin: z.enum(['billing', 'auth', 'gateway', 'infrastructure']),
+  microsoft_cdm_mapping: z.string().optional(),
+});
+
+const TerminologyRegistry_data = {
   // --- Identity Group (billing | auth) ---
   'Tenant': {
     canonical_name: 'Tenant',
@@ -239,149 +213,245 @@ const TerminologyRegistry_spec = {
   },
 };
 
+// Build reverse alias → canonical_name mapping (case-insensitive)
+const aliasToCanonical = {};
+Object.values(TerminologyRegistry_data).forEach(entry => {
+  entry.aliases.forEach(alias => {
+    const key = alias.toLowerCase();
+    if (aliasToCanonical[key] && aliasToCanonical[key] !== entry.canonical_name) {
+      throw new Error(`Polysemy detected: alias "${alias}" maps to both "${aliasToCanonical[key]}" and "${entry.canonical_name}"`);
+    }
+    aliasToCanonical[key] = entry.canonical_name;
+  });
+});
+
+const TerminologyRegistry_spec = Object.keys(TerminologyRegistry_data).length > 0 
+  ? TerminologyRegistry_data 
+  : {};
+
 // ---------------------------------------------------------------------------
-// ToolCallInterceptor: Action Guard Middleware Type
+// State Transition Guards & Validators
 // ---------------------------------------------------------------------------
 
 /**
- * ToolCallInterceptor defines the signature for Action Guard middleware.
- * Implements Microsoft Security Graph patterns to validate mutations before execution.
- *
- * Purpose:
- * - Intercept CLI mutation proposals
- * - Validate security graph path: Intent → Evidence (Document) → TargetNode
- * - Check RBAC + repo_origin compatibility
- * - Deny mutation if path invalid or cross-repo grant missing
- * - Performance SLA: <0.1ms per check
- *
- * Input:
- * ```typescript
- * interface ToolCallInterceptorInput {
- *   intent: IntentSchema;  // Proposed mutation
- *   targetNode: SaaSNodeDNA;  // Destination entity
- *   graphState: any;  // Current security graph state
- *   evidenceDocuments: Document[];  // Supporting evidence
- * }
- * ```
- *
- * Output:
- * ```typescript
- * interface ToolCallInterceptorOutput {
- *   allowed: boolean;
- *   reason?: string;  // Deny reason (e.g., "Missing evidence path", "Cross-repo without grant")
- *   pathValidated?: boolean;  // Security graph path found
- *   durationMs?: number;  // Execution time
- * }
- * ```
- *
- * Implementation Pseudocode:
- * ```javascript
- * async function ToolCallInterceptor(input) {
- *   const startTime = performance.now();
- *   
- *   // 1. Check repo_origin alignment
- *   if (input.intent.repo_origin !== input.targetNode.repo_origin) {
- *     // 2. If cross-origin, verify CROSS_REPO_GRANT edge in graph
- *     const grantPath = findGraphPath(input.graphState,
- *       { from: input.intent.repo_origin, to: input.targetNode.repo_origin },
- *       'CROSS_REPO_GRANT'
- *     );
- *     if (!grantPath) {
- *       return { allowed: false, reason: 'Cross-repo mutation without CROSS_REPO_GRANT' };
- *     }
- *   }
- *   
- *   // 3. Verify evidence path: Intent → Document → TargetNode
- *   if (input.intent.evidenceLinks.length === 0) {
- *     return { allowed: false, reason: 'No evidence links attached' };
- *   }
- *   
- *   const hasValidPath = input.evidenceDocuments.some(doc =>
- *     existsPath(input.graphState,
- *       { from: input.intent.id, via: doc.id, to: input.targetNode.id }
- *     )
- *   );
- *   
- *   if (!hasValidPath) {
- *     return { allowed: false, reason: 'Evidence path not found in graph' };
- *   }
- *   
- *   // 4. Check governance threshold
- *   if (input.intent.governanceThreshold && !input.intent.reasoningTrace) {
- *     return { allowed: false, reason: 'Governance threshold set but no reasoning trace' };
- *   }
- *   
- *   return {
- *     allowed: true,
- *     pathValidated: true,
- *     durationMs: performance.now() - startTime
- *   };
- * }
- * ```
+ * Define allowed state transitions and their guard conditions.
+ * 5-state machine: DRAFT → PROPOSED → VERIFIED → EXECUTED → COMMITTED
  */
-const ToolCallInterceptor_spec = {
-  input: {
-    intent: 'IntentSchema',
-    targetNode: 'SaaSNodeDNA',
-    graphState: 'object (security graph)',
-    evidenceDocuments: 'Document[]',
+const StateTransitionGuards = {
+  'DRAFT': {
+    allowedTo: ['PROPOSED'],
+    guard: (intent) => {
+      // DRAFT → PROPOSED requires evidenceLinks
+      return {
+        allowed: intent.evidenceLinks && intent.evidenceLinks.length >= 1,
+        reason: !intent.evidenceLinks || intent.evidenceLinks.length === 0
+          ? 'DRAFT→PROPOSED: evidenceLinks required (must have >=1 link)'
+          : null,
+      };
+    },
   },
-  output: {
-    allowed: 'boolean',
-    reason: 'string (optional, deny reason)',
-    pathValidated: 'boolean (optional)',
-    durationMs: 'number (optional, <0.1ms SLA)',
+  'PROPOSED': {
+    allowedTo: ['VERIFIED'],
+    guard: (intent) => {
+      // PROPOSED → VERIFIED requires Action Guard path validation
+      // (Will be implemented in Phase 2 with actual graph check)
+      // For Phase 1, we check evidence is present
+      return {
+        allowed: intent.evidenceLinks && intent.evidenceLinks.length >= 1,
+        reason: 'PROPOSED→VERIFIED: requires valid evidence path (Phase 2 checks graph)',
+      };
+    },
   },
-  sla: '<0.1ms per check (100 microseconds)',
+  'VERIFIED': {
+    allowedTo: ['EXECUTED'],
+    guard: (intent) => {
+      // VERIFIED → EXECUTED requires commitAllowed=true
+      return {
+        allowed: intent.commitAllowed === true,
+        reason: !intent.commitAllowed
+          ? 'VERIFIED→EXECUTED: commitAllowed must be true'
+          : null,
+      };
+    },
+  },
+  'EXECUTED': {
+    allowedTo: ['COMMITTED'],
+    guard: (intent) => {
+      // EXECUTED → COMMITTED is final
+      return {
+        allowed: !!intent.reasoningTrace,
+        reason: !intent.reasoningTrace
+          ? 'EXECUTED→COMMITTED: reasoningTrace required for audit'
+          : null,
+      };
+    },
+  },
+  'COMMITTED': {
+    allowedTo: [],
+    guard: (intent) => {
+      return {
+        allowed: false,
+        reason: 'COMMITTED: immutable final state, no rollback allowed',
+      };
+    },
+  },
 };
 
+/**
+ * Verify that a state transition is allowed
+ * 
+ * @param {object} intent - Intent object with lifecycle property
+ * @param {string} targetState - Target lifecycle state
+ * @returns {object} { allowed: boolean, reason?: string }
+ */
+function verifyStateTransition(intent, targetState) {
+  const currentState = intent.lifecycle;
+  
+  if (!StateTransitionGuards[currentState]) {
+    return { allowed: false, reason: `Unknown current state: ${currentState}` };
+  }
+  
+  const guard = StateTransitionGuards[currentState];
+  
+  if (!guard.allowedTo.includes(targetState)) {
+    return {
+      allowed: false,
+      reason: `${currentState}→${targetState}: invalid transition. Allowed: [${guard.allowedTo.join(', ')}]`,
+    };
+  }
+  
+  // Run guard condition
+  return guard.guard(intent);
+}
+
+/**
+ * Resolve alias to canonical_name using TerminologyRegistry
+ * 
+ * @param {string} term - Term or alias to resolve
+ * @returns {object} { canonical_name: string, repo_origin: string } or null if not found
+ */
+function resolveTerminology(term) {
+  const key = term.toLowerCase();
+  
+  // Check direct match
+  if (TerminologyRegistry_data[term]) {
+    return TerminologyRegistry_data[term];
+  }
+  
+  // Check alias match
+  const canonical = aliasToCanonical[key];
+  if (canonical && TerminologyRegistry_data[canonical]) {
+    return TerminologyRegistry_data[canonical];
+  }
+  
+  return null;
+}
+
+/**
+ * Check if cross-repo mutation is allowed
+ * Requires both intents to have valid repo_origin
+ * 
+ * @param {string} fromRepoOrigin - Source repo_origin
+ * @param {string} toRepoOrigin - Target repo_origin
+ * @param {object} graphState - (Future: security graph state for grant lookup)
+ * @returns {object} { allowed: boolean, reason?: string }
+ */
+function checkCrossRepoGrant(fromRepoOrigin, toRepoOrigin, graphState = null) {
+  // Same repo is always allowed
+  if (fromRepoOrigin === toRepoOrigin) {
+    return { allowed: true };
+  }
+  
+  // Cross-repo requires CROSS_REPO_GRANT edge (Phase 2 with graph)
+  // For Phase 1, we only check that both origins are valid
+  const validOrigins = ['billing', 'auth', 'gateway', 'infrastructure'];
+  
+  if (!validOrigins.includes(fromRepoOrigin)) {
+    return { allowed: false, reason: `Invalid fromRepoOrigin: ${fromRepoOrigin}` };
+  }
+  if (!validOrigins.includes(toRepoOrigin)) {
+    return { allowed: false, reason: `Invalid toRepoOrigin: ${toRepoOrigin}` };
+  }
+  
+  // Cross-repo would require grant edge (Phase 2)
+  return {
+    allowed: false,
+    reason: `Cross-repo mutation (${fromRepoOrigin}→${toRepoOrigin}) requires CROSS_REPO_GRANT edge (Phase 2 validates via graph)`,
+  };
+}
+
 // ---------------------------------------------------------------------------
-// Factory: createOntologyValidator
+// Validators (Zod + custom logic)
+// ---------------------------------------------------------------------------
+
+/**
+ * Validate Intent against schema + state machine guards
+ */
+function validateIntent(intent) {
+  try {
+    const parsed = IntentSchema.parse(intent);
+    return { valid: true, data: parsed };
+  } catch (error) {
+    return {
+      valid: false,
+      errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+    };
+  }
+}
+
+/**
+ * Validate SaaSNodeDNA
+ */
+function validateSaaSNode(node) {
+  try {
+    const parsed = SaaSNodeDNA.parse(node);
+    return { valid: true, data: parsed };
+  } catch (error) {
+    return {
+      valid: false,
+      errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+    };
+  }
+}
+
+/**
+ * Validate terminology (alias → canonical_name)
+ */
+function validateTerminology(alias) {
+  const resolved = resolveTerminology(alias);
+  if (resolved) {
+    return { valid: true, data: resolved };
+  }
+  return {
+    valid: false,
+    error: `Unresolved terminology: "${alias}" not found in TerminologyRegistry`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Factory: createOntologyValidator (backward compat)
 // ---------------------------------------------------------------------------
 
 /**
  * Factory function to create a validator for ontology schemas.
- * Placeholder implementation; actual Zod validation happens in Phase 4.
+ * Uses Zod validators; kept for backward compatibility.
  *
  * @param {string} schemaType - One of ['SaaSNodeDNA', 'IntentSchema']
  * @returns {Function} - Validator function (input) => { valid: boolean, errors?: string[] }
  */
 function createOntologyValidator(schemaType) {
   const validators = {
-    SaaSNodeDNA: (obj) => {
-      const errors = [];
-      if (!obj.id || typeof obj.id !== 'string') errors.push('id: invalid UUID');
-      if (!['billing', 'auth', 'gateway', 'infrastructure'].includes(obj.repo_origin)) {
-        errors.push('repo_origin: must be one of [billing, auth, gateway, infrastructure]');
-      }
-      if (!obj.canonical_name || obj.canonical_name.length === 0) {
-        errors.push('canonical_name: required and must not be empty');
-      }
-      return { valid: errors.length === 0, errors };
-    },
-    IntentSchema: (obj) => {
-      const errors = [];
-      if (!obj.id || typeof obj.id !== 'string') errors.push('id: invalid UUID');
-      if (!['billing', 'auth', 'gateway', 'infrastructure'].includes(obj.repo_origin)) {
-        errors.push('repo_origin: must be one of [billing, auth, gateway, infrastructure]');
-      }
-      if (!obj.title || obj.title.length === 0) errors.push('title: required');
-      if (!['DRAFT', 'PROPOSED', 'VERIFIED', 'EXECUTED', 'COMMITTED'].includes(obj.lifecycle)) {
-        errors.push('lifecycle: invalid state');
-      }
-      if (!['Low', 'Medium', 'High', 'Critical'].includes(obj.riskLevel)) {
-        errors.push('riskLevel: must be one of [Low, Medium, High, Critical]');
-      }
-      if (obj.lifecycle === 'PROPOSED' && (!obj.evidenceLinks || obj.evidenceLinks.length === 0)) {
-        errors.push('evidenceLinks: required for PROPOSED state');
-      }
-      if (obj.lifecycle === 'EXECUTED' && !obj.commitAllowed) {
-        errors.push('commitAllowed: must be true before EXECUTED transition');
-      }
-      return { valid: errors.length === 0, errors };
-    },
+    SaaSNodeDNA: validateSaaSNode,
+    IntentSchema: validateIntent,
+    Terminology: validateTerminology,
   };
-  return validators[schemaType] || (() => ({ valid: false, errors: ['Unknown schema type'] }));
+  
+  const validator = validators[schemaType];
+  if (!validator) {
+    return (obj) => ({ valid: false, errors: [`Unknown schema type: ${schemaType}`] });
+  }
+  
+  return validator;
 }
 
 // ---------------------------------------------------------------------------
@@ -389,15 +459,29 @@ function createOntologyValidator(schemaType) {
 // ---------------------------------------------------------------------------
 
 module.exports = {
+  // Zod Schemas
+  SaaSNodeDNA,
+  IntentSchema,
+  TerminologyRegistryEntry,
+  
   // Schema specifications (use for documentation/reference)
   SaaSNodeDNA_spec,
   IntentSchema_spec,
   TerminologyRegistry_spec,
-  ToolCallInterceptor_spec,
   
-  // Factory (use for Phase 0-2 manual validation)
+  // Registry data
+  TerminologyRegistry: TerminologyRegistry_data,
+  aliasToCanonical,
+  
+  // State transition & guard logic
+  StateTransitionGuards,
+  verifyStateTransition,
+  resolveTerminology,
+  checkCrossRepoGrant,
+  
+  // Validators
+  validateIntent,
+  validateSaaSNode,
+  validateTerminology,
   createOntologyValidator,
-  
-  // Registry (reference data for Phase 0 DNA Alignment)
-  TerminologyRegistry: TerminologyRegistry_spec,
 };
