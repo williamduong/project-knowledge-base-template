@@ -79,6 +79,24 @@ This pattern mirrors ESLint/Prettier: strong defaults, user can opt out, changes
 12. Apply with `kbx intent apply <id>` when done. Archive evidence.
 13. Output a concise completion report with numbered references and suggested next intent.
 
+## Ontology Validation (v2.6)
+
+When working in projects that use the Knowledge Graph tier (`13-knowledge-graph/`), the agent must:
+
+- **Before generating or mutating entities:** run `kbx ontology show` to confirm canonical entity names.
+- **Before validating an intent:** run `kbx ontology validate --input <intent.json>` with optional `--glossary` or `--graph-state` flags.
+- **When a new entity type is introduced:** validate the updated ontology contract: `kbx ontology validate --input ontology-contract.json --type contract`.
+- **When NL terms are added to the KB:** run `kbx ontology audit --input <nl-terms.json>` to verify zero polysemy.
+- **At release build time:** run `kbx ontology build --output ontology-artifact.json` to produce the runtime artifact.
+
+Hard-fail rules (exit code 1, block proceeding):
+- Unknown key in ontology contract (strict schema)
+- Unresolved alias / polysemy detected in glossary
+- Intent fails state-transition guard (`verifyMutation`)
+- Cross-repo mutation without CROSS_REPO_GRANT edge
+
+For starter templates, see `13-knowledge-graph/terminology-registry.md` and `13-knowledge-graph/ontology-contract.md`.
+
 ## Session-Start Intent Chooser (v2.3.3.2)
 
 At the beginning of each conversation, before handling user work, the agent must:

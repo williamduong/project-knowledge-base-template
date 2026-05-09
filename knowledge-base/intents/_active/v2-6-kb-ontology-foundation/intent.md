@@ -4,9 +4,9 @@ mode: full
 lifecycle: active
 created_at: 2026-05-08T18:21:16.294Z
 focus:
-  current: "Phase 1 through Phase 5 ✅ COMPLETE. v2.6 now includes strict typed ontology contract validation, unknown-key rejection matrix, polished ontology command surface, and help integration while DB/Web UI remains deferred to v2.9."
-  last_updated: 2026-05-10T13:00:00Z
-  next_action: "Start Phase 6 template docs + starter artifacts alignment, then run intent close-condition sweep."
+  current: "All 7 phases COMPLETE. Phase 6 template docs + starter artifacts aligned. Close-condition sweep passed (6/6). Intent is promotion-ready."
+  last_updated: 2026-05-10T14:00:00Z
+  next_action: "Close intent: run kbx intent close v2-6-kb-ontology-foundation --release v2.6.0"
 change_type: feature
 change_scope:
   - template/02-domain-model/
@@ -22,7 +22,7 @@ review_after: null
 schema_version: 2.5.1-beta.1
 # v1.8+ reserve fields:
 lesson_id: null
-promotion_ready: false
+promotion_ready: true
 linked_signals: []
 promote_decision_ref: null
 ---
@@ -58,9 +58,9 @@ Close `v2-6-kb-ontology-foundation` only when ontology foundation is determinist
 | Phase 3 - NL audit and governed glossary integration | COMPLETE | Implemented `validateGlossary` + `auditNaturalLanguageTerms`, added `kbx ontology audit` and governed glossary validation path with fixtures/tests. |
 | Phase 4 - Typed ontology schema (no DB runtime) | COMPLETE | Added strict schema contracts (`PropertySpec`, `NodeTypeContract`, `EdgeTypeContract`, `OntologyContract`) + endpoint compatibility validation + unknown-key rejection matrix. |
 | Phase 5 - CLI ontology lifecycle commands | COMPLETE | `kbx ontology validate` now supports `--type auto|intent|contract`; unknown option fail-fast; command/help surface polished and tested. |
-| Phase 6 - Template docs + starter files | NOT STARTED | Planned final alignment before intent closure. |
+| Phase 6 - Template docs + starter files | COMPLETE | `template/13-knowledge-graph/` expanded: `README.md` full guide + `terminology-registry.md` + `ontology-contract.md` starters; `template/02-domain-model/ontology.md` filled; `template/12-ai-skills/agent-operating-manual.md` updated with `kbx ontology` workflow section. |
 
-Overall progress baseline: 6/7 work items complete; close path is now explicitly bounded by the six conditions above.
+Overall progress baseline: 7/7 work items complete. Close-condition sweep: 6/6 PASS (2026-05-10). Intent is promotion-ready.
 
 ## Intent NodeType Contract (v2.6)
 
