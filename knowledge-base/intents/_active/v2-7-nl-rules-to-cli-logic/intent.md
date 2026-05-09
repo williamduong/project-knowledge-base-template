@@ -4,9 +4,9 @@ mode: full
 lifecycle: active
 created_at: "2026-05-08T18:21:21.154Z"
 focus:
-  current: "Phase 2 complete (9 rules: 4 metadata + 2 verification + 2 intent + 1 git-binding). Nested YAML parser implemented. 710/710 tests pass."
+  current: "Phase 3 complete (CLI: lint|check|list|help all working, doctor integration verified, 9 rules accessible to CLI)"
   last_updated: 2026-05-10
-  next_action: "Phase 3: Implement CLI commands (kbx rules lint|check|list) + integrate into kbx doctor output"
+  next_action: "Phase 4: Update template/15-governance docs + agent-operating-manual with rule IDs + finalize for release"
 change_type: feature
 change_scope:
 impact_signals:
