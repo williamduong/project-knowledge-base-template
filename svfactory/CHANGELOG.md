@@ -4,6 +4,13 @@
 
 ---
 
+## 2026-05-10
+
+- **v2.7 Phase 4 Complete**: Template docs updated with rule IDs (KBX-M001..M004, KBX-V001..V002). Comprehensive "Governance Rules" section added to agent-operating-manual.md with all 9 rule IDs, CLI commands, and usage patterns. v2.7 fully complete across all 4 phases. 710/710 tests passing.
+- **v2.7 Phase 3 Verified**: CLI commands (kbx rules lint|check|list|help) all working, doctor integration confirmed, 9 rules accessible via CLI.
+- **v2.7 Phase 2 Complete**: Registry contract, verification/intent/git-binding rules, nested YAML parser. 710/710 tests passing.
+- **v2.7 Phase 1.0 Complete**: Rule engine scaffold, metadata rules, kbx rules command integrated into CLI. 690/690 tests passing.
+
 ## 2026-05-05
 
 - **Intent `INT-2-3-6-upgrade-foundation-and-direction` created**: Conceptual foundation.md added to svfactory (v2.4+ model without scope lock). KB layers (Core/Operators/Backends) defined abstract; operator/backend examples marked as "e.g." not constraints. Entity model & axioms locked; implementations vary. D16 (foundation scope policy) appended to knowledge.md.

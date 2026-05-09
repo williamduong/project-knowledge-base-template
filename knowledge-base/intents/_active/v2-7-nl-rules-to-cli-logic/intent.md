@@ -4,9 +4,9 @@ mode: full
 lifecycle: active
 created_at: "2026-05-08T18:21:21.154Z"
 focus:
-  current: "Phase 3 complete (CLI: lint|check|list|help all working, doctor integration verified, 9 rules accessible to CLI)"
+  current: "Phase 4 complete (all template docs updated with rule IDs, 710/710 tests pass). v2.7 ready for release."
   last_updated: 2026-05-10
-  next_action: "Phase 4: Update template/15-governance docs + agent-operating-manual with rule IDs + finalize for release"
+  next_action: "Close intent as complete. Release v2.7.0 or create v2.8 planning intent."
 change_type: feature
 change_scope:
 impact_signals:
