@@ -1,0 +1,16 @@
+[
+  {
+    "term_id": "tenant-core-a",
+    "canonical_name": "Tenant",
+    "definition": "First definition",
+    "aliases": ["Account"],
+    "source_refs": ["template/02-domain-model/README.md"]
+  },
+  {
+    "term_id": "tenant-core-b",
+    "canonical_name": "Tenant",
+    "definition": "Duplicate canonical name should fail",
+    "aliases": ["Customer"],
+    "source_refs": ["template/01-product/README.md"]
+  }
+]

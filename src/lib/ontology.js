@@ -130,6 +130,16 @@ const IntentSchema_spec = {
   reasoningTrace: 'String (optional; audit trail)',
 };
 
+const GlossaryEntrySchema = z.object({
+  term_id: z.string().min(1, 'term_id is required'),
+  canonical_name: z.string().min(1, 'canonical_name is required'),
+  definition: z.string().min(1, 'definition is required'),
+  aliases: z.array(z.string()).default([]),
+  source_refs: z.array(z.string()).min(1, 'source_refs must contain at least one source'),
+});
+
+const GlossarySchema = z.array(GlossaryEntrySchema).min(1, 'glossary must contain at least one entry');
+
 // ---------------------------------------------------------------------------
 // TerminologyRegistry: Collision Resolution via CDM Mapping
 // ---------------------------------------------------------------------------
@@ -362,6 +372,173 @@ function ToolCallInterceptor({ intent, targetEntity = null, graphState = null })
   return verifyMutation(intent, targetEntity, graphState);
 }
 
+function buildGlossaryLookup(glossaryEntries = []) {
+  const canonicalMap = {};
+  const aliasMap = {};
+
+  glossaryEntries.forEach(entry => {
+    const canonicalKey = entry.canonical_name.toLowerCase();
+    canonicalMap[canonicalKey] = entry;
+    aliasMap[canonicalKey] = entry;
+
+    (entry.aliases || []).forEach(alias => {
+      aliasMap[alias.toLowerCase()] = entry;
+    });
+  });
+
+  return { canonicalMap, aliasMap };
+}
+
+function resolveAgainstGovernedGlossary(term, glossaryEntries = []) {
+  if (!term || typeof term !== 'string') {
+    return null;
+  }
+
+  const lookup = buildGlossaryLookup(glossaryEntries);
+  const entry = lookup.aliasMap[term.toLowerCase()];
+
+  if (entry) {
+    return {
+      canonical_name: entry.canonical_name,
+      repo_origin: resolveTerminology(entry.canonical_name)?.repo_origin || null,
+      source: 'governed_glossary',
+    };
+  }
+
+  const registryResolved = resolveTerminology(term);
+  if (registryResolved) {
+    return {
+      canonical_name: registryResolved.canonical_name,
+      repo_origin: registryResolved.repo_origin,
+      source: 'terminology_registry',
+    };
+  }
+
+  return null;
+}
+
+function validateGlossary(glossaryEntries) {
+  let parsed;
+  try {
+    parsed = GlossarySchema.parse(glossaryEntries);
+  } catch (error) {
+    return {
+      valid: false,
+      errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+    };
+  }
+
+  const errors = [];
+  const canonicalSet = new Set();
+
+  parsed.forEach(entry => {
+    const canonicalKey = entry.canonical_name.toLowerCase();
+    if (canonicalSet.has(canonicalKey)) {
+      errors.push(`Duplicate canonical_name in glossary: ${entry.canonical_name}`);
+    }
+    canonicalSet.add(canonicalKey);
+
+    const registryEntry = resolveTerminology(entry.canonical_name);
+    if (!registryEntry || registryEntry.canonical_name !== entry.canonical_name) {
+      errors.push(`canonical_name must resolve in TerminologyRegistry: ${entry.canonical_name}`);
+    }
+
+    (entry.aliases || []).forEach(alias => {
+      const resolved = resolveTerminology(alias);
+      if (!resolved) {
+        errors.push(`Unresolved glossary alias: ${alias} (entry: ${entry.canonical_name})`);
+        return;
+      }
+      if (resolved.canonical_name !== entry.canonical_name) {
+        errors.push(
+          `Alias maps to different canonical_name: ${alias} -> ${resolved.canonical_name} (expected: ${entry.canonical_name})`
+        );
+      }
+    });
+  });
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    data: parsed,
+    summary: {
+      entries: parsed.length,
+      canonicalCount: canonicalSet.size,
+    },
+  };
+}
+
+function auditNaturalLanguageTerms(payload = {}, options = {}) {
+  const text = typeof payload === 'string' ? payload : (payload.text || '');
+  const glossaryEntries = options.glossaryEntries || payload.glossary || [];
+  const candidateTerms = Array.isArray(payload.candidate_terms) ? payload.candidate_terms : [];
+
+  const mappedMap = new Map();
+  const unresolvedSet = new Set();
+
+  const registryCandidates = new Set();
+  Object.values(TerminologyRegistry_data).forEach(entry => {
+    registryCandidates.add(entry.canonical_name);
+    entry.aliases.forEach(alias => registryCandidates.add(alias));
+  });
+
+  registryCandidates.forEach(term => {
+    const rx = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}\\b`, 'gi');
+    if (rx.test(text)) {
+      const resolved = resolveAgainstGovernedGlossary(term, glossaryEntries);
+      if (resolved) {
+        mappedMap.set(term.toLowerCase(), {
+          term,
+          canonical_name: resolved.canonical_name,
+          repo_origin: resolved.repo_origin,
+          source: resolved.source,
+        });
+      }
+    }
+  });
+
+  candidateTerms.forEach(term => {
+    const resolved = resolveAgainstGovernedGlossary(term, glossaryEntries);
+    if (resolved) {
+      mappedMap.set(term.toLowerCase(), {
+        term,
+        canonical_name: resolved.canonical_name,
+        repo_origin: resolved.repo_origin,
+        source: resolved.source,
+      });
+    } else {
+      unresolvedSet.add(term);
+    }
+  });
+
+  const ambiguousUsage = [];
+  const ambiguousPatterns = [
+    /\b(this|that|a|an|our|their)\s+document\b/gi,
+    /\b(this|that|a|an|our|their)\s+claim\b/gi,
+  ];
+  ambiguousPatterns.forEach(pattern => {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      ambiguousUsage.push({
+        fragment: match[0],
+        rule: 'claim_document_generic_prose',
+      });
+    }
+  });
+
+  return {
+    valid: unresolvedSet.size === 0 && ambiguousUsage.length === 0,
+    mappedTerms: Array.from(mappedMap.values()),
+    unresolvedTerms: Array.from(unresolvedSet.values()),
+    ambiguousUsage,
+    summary: {
+      mapped: mappedMap.size,
+      unresolved: unresolvedSet.size,
+      ambiguous: ambiguousUsage.length,
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // State Transition Guards & Validators
 // ---------------------------------------------------------------------------
@@ -587,6 +764,7 @@ function createOntologyValidator(schemaType) {
     SaaSNodeDNA: validateSaaSNode,
     IntentSchema: validateIntent,
     Terminology: validateTerminology,
+    Glossary: validateGlossary,
   };
   
   const validator = validators[schemaType];
@@ -605,6 +783,8 @@ module.exports = {
   // Zod Schemas
   SaaSNodeDNA,
   IntentSchema,
+  GlossaryEntrySchema,
+  GlossarySchema,
   TerminologyRegistryEntry,
   
   // Schema specifications (use for documentation/reference)
@@ -624,6 +804,9 @@ module.exports = {
   verifyMutation,
   ToolCallInterceptor,
   CypherTemplates,
+  validateGlossary,
+  auditNaturalLanguageTerms,
+  resolveAgainstGovernedGlossary,
   
   // Validators
   validateIntent,

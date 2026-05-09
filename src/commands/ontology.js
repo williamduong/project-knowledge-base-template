@@ -11,6 +11,8 @@ const {
   checkCrossRepoGrant,
   verifyMutation,
   CypherTemplates,
+  validateGlossary,
+  auditNaturalLanguageTerms,
 } = require('../lib/ontology');
 
 /**
@@ -22,6 +24,7 @@ function parseArgs(args = []) {
     input: null,
     output: null,
     graphState: null,
+    glossary: null,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -34,6 +37,8 @@ function parseArgs(args = []) {
       options.output = args[++i];
     } else if (arg === '--graph-state' && args[i + 1]) {
       options.graphState = args[++i];
+    } else if (arg === '--glossary' && args[i + 1]) {
+      options.glossary = args[++i];
     }
   }
 
@@ -102,6 +107,11 @@ function showOntology(options = {}) {
   sections.push('- Guard 2: Cross-repo mutation requires CROSS_REPO_GRANT edge');
   sections.push('- Deterministic behavior: allow (exit 0) or deny (exit 1) only');
 
+  sections.push('\n\n## Governed Glossary + NL Audit (Phase 3 Contract)\n');
+  sections.push('- Glossary schema: term_id, canonical_name, definition, aliases, source_refs');
+  sections.push('- Glossary validation: duplicate canonical_name + unresolved alias hard-fail');
+  sections.push('- NL audit: maps text candidates into canonical terms + flags ambiguous claim/document prose');
+
   sections.push('\n\n## Cypher Templates\n');
   sections.push(`- evidence_path_check: ${CypherTemplates.evidence_path_check}`);
   sections.push(`- cross_repo_grant_check: ${CypherTemplates.cross_repo_grant_check}`);
@@ -146,6 +156,7 @@ function validateOntology(args = [], options = {}) {
 
   let inputData;
   let graphState = null;
+  let governedGlossary = null;
   try {
     const fs = require('fs');
     const content = fs.readFileSync(options.input, 'utf8');
@@ -154,6 +165,11 @@ function validateOntology(args = [], options = {}) {
     if (options.graphState) {
       const graphStateContent = fs.readFileSync(options.graphState, 'utf8');
       graphState = JSON.parse(graphStateContent);
+    }
+
+    if (options.glossary) {
+      const glossaryContent = fs.readFileSync(options.glossary, 'utf8');
+      governedGlossary = JSON.parse(glossaryContent);
     }
   } catch (err) {
     const result = {
@@ -170,6 +186,26 @@ function validateOntology(args = [], options = {}) {
 
   // Validate as Intent
   const validation = validateIntent(inputData);
+
+  const embeddedGlossary = Array.isArray(inputData.glossary) ? inputData.glossary : null;
+  const effectiveGlossary = governedGlossary || embeddedGlossary;
+  if (effectiveGlossary) {
+    const glossaryValidation = validateGlossary(effectiveGlossary);
+    if (!glossaryValidation.valid) {
+      const result = {
+        success: false,
+        error: 'Governed glossary validation failed',
+        errors: glossaryValidation.errors,
+      };
+      if (options.json) {
+        console.error(JSON.stringify(result, null, 2));
+      } else {
+        console.error(result.error);
+        glossaryValidation.errors.forEach(err => console.error(`  - ${err}`));
+      }
+      return { exitCode: 1 };
+    }
+  }
 
   if (validation.valid) {
     // Additional checks
@@ -239,6 +275,12 @@ function validateOntology(args = [], options = {}) {
         repo_origin: data.repo_origin,
         title: data.title,
       },
+      glossary: effectiveGlossary
+        ? {
+            validated: true,
+            entries: effectiveGlossary.length,
+          }
+        : null,
     };
     if (options.json) {
       console.log(JSON.stringify(result, null, 2));
@@ -262,6 +304,83 @@ function validateOntology(args = [], options = {}) {
     }
     return { exitCode: 1 };
   }
+}
+
+function auditOntology(args = [], options = {}) {
+  if (!options.input) {
+    if (options.json) {
+      console.error(JSON.stringify({ success: false, error: 'Missing --input <file>' }, null, 2));
+    } else {
+      console.error('Usage: kbx ontology audit --input <file> [--glossary <file>] [--json]');
+    }
+    return { exitCode: 1 };
+  }
+
+  const fs = require('fs');
+  let payload;
+  let glossaryEntries = null;
+  try {
+    const content = fs.readFileSync(options.input, 'utf8');
+    try {
+      payload = JSON.parse(content);
+    } catch {
+      payload = { text: content };
+    }
+
+    if (options.glossary) {
+      glossaryEntries = JSON.parse(fs.readFileSync(options.glossary, 'utf8'));
+      const glossaryValidation = validateGlossary(glossaryEntries);
+      if (!glossaryValidation.valid) {
+        const result = {
+          success: false,
+          error: 'Governed glossary validation failed',
+          errors: glossaryValidation.errors,
+        };
+        if (options.json) {
+          console.error(JSON.stringify(result, null, 2));
+        } else {
+          console.error(result.error);
+          glossaryValidation.errors.forEach(err => console.error(`  - ${err}`));
+        }
+        return { exitCode: 1 };
+      }
+    }
+  } catch (err) {
+    const result = {
+      success: false,
+      error: `Failed to read audit input: ${err.message}`,
+    };
+    if (options.json) {
+      console.error(JSON.stringify(result, null, 2));
+    } else {
+      console.error(result.error);
+    }
+    return { exitCode: 1 };
+  }
+
+  const auditResult = auditNaturalLanguageTerms(payload, {
+    glossaryEntries: glossaryEntries || payload.glossary || [],
+  });
+
+  const response = {
+    success: auditResult.valid,
+    audit: auditResult,
+  };
+
+  if (options.json) {
+    (auditResult.valid ? console.log : console.error)(JSON.stringify(response, null, 2));
+  } else {
+    if (auditResult.valid) {
+      console.log('NL audit passed');
+    } else {
+      console.error('NL audit failed');
+    }
+    console.log(`  mapped: ${auditResult.summary.mapped}`);
+    console.log(`  unresolved: ${auditResult.summary.unresolved}`);
+    console.log(`  ambiguous: ${auditResult.summary.ambiguous}`);
+  }
+
+  return { exitCode: auditResult.valid ? 0 : 1 };
 }
 
 /**
@@ -354,17 +473,23 @@ function runOntology({ packageJson, args = [] }) {
     case 'build':
       return buildOntology(options);
 
+    case 'audit':
+      return auditOntology(subargs, options);
+
     case 'help':
     default:
       console.log('Usage:');
       console.log('  kbx ontology show [--json]');
       console.log('  kbx ontology validate --input <file> [--json]');
       console.log('                       [--graph-state <graph-state.json>]');
+      console.log('                       [--glossary <glossary.json>]');
+      console.log('  kbx ontology audit --input <file> [--glossary <glossary.json>] [--json]');
       console.log('  kbx ontology build [--output <path>] [--json]');
       console.log('');
       console.log('Commands:');
       console.log('  show     Display ontology schema (terminology registry + state machine)');
       console.log('  validate Validate intent JSON fixture against schema + state guards');
+      console.log('  audit    Audit natural-language payload against governed glossary');
       console.log('  build    Compile ontology runtime artifact (Terminology Registry + guards)');
       return { exitCode: subcommand === 'help' ? 0 : 1 };
   }

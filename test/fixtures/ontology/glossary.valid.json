@@ -1,0 +1,23 @@
+[
+  {
+    "term_id": "tenant-core",
+    "canonical_name": "Tenant",
+    "definition": "Tenant boundary for multi-tenant billing domain.",
+    "aliases": ["Account", "Organization"],
+    "source_refs": ["template/02-domain-model/README.md"]
+  },
+  {
+    "term_id": "service-principal-core",
+    "canonical_name": "ServicePrincipal",
+    "definition": "Machine identity used for agent and API authentication.",
+    "aliases": ["agent", "AppIdentity"],
+    "source_refs": ["template/08-security/README.md"]
+  },
+  {
+    "term_id": "intent-core",
+    "canonical_name": "Intent",
+    "definition": "Governed change request with lifecycle transitions.",
+    "aliases": ["Task", "Proposal"],
+    "source_refs": ["knowledge-base/intents/_active/v2-6-kb-ontology-foundation/intent.md"]
+  }
+]

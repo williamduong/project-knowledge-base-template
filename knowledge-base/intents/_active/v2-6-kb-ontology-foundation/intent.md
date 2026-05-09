@@ -4,9 +4,9 @@ mode: full
 lifecycle: active
 created_at: 2026-05-08T18:21:16.294Z
 focus:
-  current: "Phase 1 and Phase 2 ✅ COMPLETE. v2.6 now includes deterministic lifecycle validator plus Action Guard middleware contract (evidence path + cross-repo grant checks), while DB/Web UI remains deferred to v2.9."
-  last_updated: 2026-05-10T09:30:00Z
-  next_action: "Start Phase 3 NL audit + governed glossary integration and align template knowledge-graph starters with implemented guard contract."
+  current: "Phase 1, Phase 2, and Phase 3 ✅ COMPLETE. v2.6 now includes deterministic lifecycle validator, Action Guard middleware contract, and NL audit + governed glossary integration while DB/Web UI remains deferred to v2.9."
+  last_updated: 2026-05-10T11:10:00Z
+  next_action: "Start Phase 4 typed ontology schema hardening and align template knowledge-graph starter artifacts."
 change_type: feature
 change_scope:
   - template/02-domain-model/
@@ -55,12 +55,12 @@ Close `v2-6-kb-ontology-foundation` only when ontology foundation is determinist
 | Phase 0 - DNA alignment and terminology collision register | COMPLETE | Reported in `phase-0-report.md`; 10 entities, 48 aliases, zero polysemy. |
 | Phase 1 - Intent state machine enforcement | COMPLETE | Implemented in `src/lib/ontology.js` + `src/commands/ontology.js`; tested in `test/lib/ontology.test.js`. |
 | Phase 2 - Action guard middleware contract | COMPLETE | `verifyMutation` + `ToolCallInterceptor` + Cypher templates + `--graph-state` command validation path implemented with command + unit tests. |
-| Phase 3 - NL audit and governed glossary integration | NOT STARTED | Planned, no implementation evidence yet. |
+| Phase 3 - NL audit and governed glossary integration | COMPLETE | Implemented `validateGlossary` + `auditNaturalLanguageTerms`, added `kbx ontology audit` and governed glossary validation path with fixtures/tests. |
 | Phase 4 - Typed ontology schema (no DB runtime) | NOT STARTED | Planned, no implementation evidence yet. |
 | Phase 5 - CLI ontology lifecycle commands | NOT STARTED | Planned, no implementation evidence yet. |
 | Phase 6 - Template docs + starter files | NOT STARTED | Planned, no implementation evidence yet. |
 
-Overall progress baseline: 3/7 work items complete; close path is now explicitly bounded by the six conditions above.
+Overall progress baseline: 4/7 work items complete; close path is now explicitly bounded by the six conditions above.
 
 ## Intent NodeType Contract (v2.6)
 

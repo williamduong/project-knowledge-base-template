@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const {
   SaaSNodeDNA,
@@ -16,7 +18,14 @@ const {
   validateSaaSNode,
   validateTerminology,
   createOntologyValidator,
+  validateGlossary,
+  auditNaturalLanguageTerms,
 } = require('../../src/lib/ontology');
+
+function loadFixture(name) {
+  const fixturePath = path.join(__dirname, '..', 'fixtures', 'ontology', name);
+  return JSON.parse(fs.readFileSync(fixturePath, 'utf8'));
+}
 
 // ===================================================================
 // Schemas & Validators
@@ -566,4 +575,35 @@ test('Action guard - ToolCallInterceptor returns deterministic block payload', (
 
   assert.strictEqual(result.allowed, false, 'Interceptor should block cross repo without grant');
   assert.strictEqual(result.query, CypherTemplates.cross_repo_grant_check, 'Should include deterministic query template');
+});
+
+test('Governed glossary - valid glossary fixture passes', () => {
+  const glossary = loadFixture('glossary.valid.json');
+  const result = validateGlossary(glossary);
+  assert.strictEqual(result.valid, true, 'Valid governed glossary should pass');
+});
+
+test('Governed glossary - duplicate canonical names hard-fail', () => {
+  const glossary = loadFixture('glossary.invalid-duplicate.json');
+  const result = validateGlossary(glossary);
+  assert.strictEqual(result.valid, false, 'Duplicate canonical names should fail');
+  assert.ok(result.errors.some(err => err.includes('Duplicate canonical_name')), 'Should report duplicate canonical_name');
+});
+
+test('NL audit - valid fixture resolves candidates', () => {
+  const payload = loadFixture('nl-audit.valid.json');
+  const glossary = loadFixture('glossary.valid.json');
+  const result = auditNaturalLanguageTerms(payload, { glossaryEntries: glossary });
+
+  assert.strictEqual(result.valid, true, 'Valid NL payload should pass audit');
+  assert.ok(result.summary.mapped >= 2, 'Should map known terms to canonical glossary');
+});
+
+test('NL audit - unresolved candidate term hard-fail', () => {
+  const payload = loadFixture('nl-audit.unresolved.json');
+  const glossary = loadFixture('glossary.valid.json');
+  const result = auditNaturalLanguageTerms(payload, { glossaryEntries: glossary });
+
+  assert.strictEqual(result.valid, false, 'Unresolved candidate terms should fail audit');
+  assert.ok(result.unresolvedTerms.includes('GhostEntity'), 'Should report unresolved candidate');
 });

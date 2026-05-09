@@ -17,6 +17,11 @@ function createTempFile(content) {
   return filePath;
 }
 
+function loadFixture(name) {
+  const fixturePath = path.join(__dirname, '..', 'fixtures', 'ontology', name);
+  return fs.readFileSync(fixturePath, 'utf8');
+}
+
 // ===================================================================
 // Command Tests: kbx ontology show
 // ===================================================================
@@ -199,6 +204,27 @@ test('command: ontology validate --json - outputs JSON error', () => {
   assert.strictEqual(json.success, false, 'Should have success=false');
 });
 
+test('command: ontology validate - invalid governed glossary hard-fail', () => {
+  const fixture = {
+    id: '550e8400-e29b-41d4-a716-446655441111',
+    repo_origin: 'billing',
+    canonical_name: 'Intent',
+    lifecycle: 'DRAFT',
+    title: 'Validate glossary',
+    riskLevel: 'Low',
+  };
+
+  const inputPath = createTempFile(JSON.stringify(fixture));
+  const glossaryPath = createTempFile(loadFixture('glossary.invalid-duplicate.json'));
+
+  const result = runOntology({
+    packageJson: { name: 'test' },
+    args: ['validate', '--input', inputPath, '--glossary', glossaryPath],
+  });
+
+  assert.strictEqual(result.exitCode, 1, 'Invalid governed glossary should fail validation');
+});
+
 // ===================================================================
 // Command Tests: kbx ontology build
 // ===================================================================
@@ -270,6 +296,30 @@ test('command: ontology build --json - outputs JSON', () => {
   const json = JSON.parse(output);
   assert.ok(json.success, 'Should have success=true');
   assert.ok(json.message, 'Should include message');
+});
+
+test('command: ontology audit - valid payload passes', () => {
+  const payloadPath = createTempFile(loadFixture('nl-audit.valid.json'));
+  const glossaryPath = createTempFile(loadFixture('glossary.valid.json'));
+
+  const result = runOntology({
+    packageJson: { name: 'test' },
+    args: ['audit', '--input', payloadPath, '--glossary', glossaryPath],
+  });
+
+  assert.strictEqual(result.exitCode, 0, 'Valid NL audit should pass');
+});
+
+test('command: ontology audit - unresolved payload fails', () => {
+  const payloadPath = createTempFile(loadFixture('nl-audit.unresolved.json'));
+  const glossaryPath = createTempFile(loadFixture('glossary.valid.json'));
+
+  const result = runOntology({
+    packageJson: { name: 'test' },
+    args: ['audit', '--input', payloadPath, '--glossary', glossaryPath],
+  });
+
+  assert.strictEqual(result.exitCode, 1, 'Unresolved NL audit should fail');
 });
 
 // ===================================================================
