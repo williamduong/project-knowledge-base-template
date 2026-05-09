@@ -46,6 +46,10 @@ tags:
 
 ## Field Rules
 
+- **Required frontmatter fields** [`KBX-M001`]: Documents must include `title`, `type`, `status`, and `owner` fields.
+- **Valid status values** [`KBX-M002`]: The `status` field must be one of `active`, `draft`, `deprecated`, or `archived`.
+- **Valid verification values** [`KBX-M003`]: When the `verification` field is present, it must be one of `code-verified`, `design-only`, `unverified`, or `self-referential`.
+- **Valid time_state values** [`KBX-M004`]: When the `time_state` field is present, it must be one of `current`, `point-in-time`, `evergreen`, `historical`, `2026-current`, or `future`.
 - source_of_truth is mandatory when verification is code-verified.
 - last_verified only changes when claims are re-checked against source.
 - last_verified_commit (v1.4+) records the git SHA at which the doc was last verified; `kbx verify` populates both fields together. Doctor warns if `last_verified` is set but `last_verified_commit` is missing.

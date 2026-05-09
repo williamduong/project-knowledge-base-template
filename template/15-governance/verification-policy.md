@@ -38,11 +38,13 @@ Defines how documents move between verification states and how maintenance is tr
 
 ## Mandatory Rules
 
-1. Any doc with verification code-verified must include source_of_truth.
-2. If source changes and doc is not rechecked immediately, downgrade to unverified.
-3. last_verified changes only after real evidence-based recheck.
-4. last_updated changes whenever body content changes.
-5. Current State sections must not contain planned behavior.
+1. **time_state required with code-verified** [`KBX-V001`]: Any doc with verification `code-verified` must include the `time_state` field.
+2. **Valid time_state values** [`KBX-V002`]: The `time_state` field, when present, must be one of `current`, `point-in-time`, `evergreen`, `historical`, `2026-current`, or `future`.
+3. Any doc with verification code-verified must include source_of_truth.
+4. If source changes and doc is not rechecked immediately, downgrade to unverified.
+5. last_verified changes only after real evidence-based recheck.
+6. last_updated changes whenever body content changes.
+7. Current State sections must not contain planned behavior.
 
 ## CI Doc Gate Rules
 

@@ -655,3 +655,91 @@ For single-repo workspaces the agent behavior is identical to pre-v2.5:
 - `.github/copilot-instructions.md` — Global repo instructions (if any)
 - `template/INDEX.md` — KB scope and navigation map
 - `template/00-start-here/knowledge-base-architecture.md` — KB trust model and conventions
+
+## Governance Rules
+
+The KB enforces a set of machine-checkable rules to maintain consistency, prevent schema drift, and catch violations early. These rules are executed deterministically by the CLI and in CI.
+
+### Rule Categories
+
+| Category | Rules | Enforced by |
+|---|---|---|
+| **Metadata** | Required frontmatter fields, valid status/verification/time_state values | `kbx doctor`, `kbx rules lint` |
+| **Verification** | time_state requirements for code-verified docs | `kbx doctor`, `kbx rules lint` |
+| **Intent** | Active intents must have next_action, feature/breaking intents must have change_scope | `kbx doctor`, `kbx rules lint` |
+| **Git Binding** | Intent IDs must match vX-Y-slug pattern | `kbx doctor`, `kbx rules lint` |
+
+### Running Rule Checks
+
+**List all rules:**
+```bash
+kbx rules list
+```
+
+**Lint entire KB:**
+```bash
+kbx rules lint                    # Text output
+kbx rules lint --json             # Machine output
+```
+
+**Check a single rule:**
+```bash
+kbx rules check <rule-id>
+```
+
+**Integrated in doctor:**
+```bash
+kbx doctor                         # Includes rules-lint result
+```
+
+### Rule Reference
+
+Rules are identified by a code in the format `KBX-<DOMAIN><###>`:
+
+#### Metadata Rules (KBX-M)
+
+- **KBX-M001**: Required frontmatter fields must be present: `title`, `type`, `status`, `owner`
+- **KBX-M002**: The `status` field must be one of: `active`, `draft`, `deprecated`, `archived`
+- **KBX-M003**: The `verification` field, when present, must be one of: `code-verified`, `design-only`, `unverified`, `self-referential`
+- **KBX-M004**: The `time_state` field, when present, must be one of: `current`, `point-in-time`, `evergreen`, `historical`, `2026-current`, `future`
+
+See `15-governance/metadata-schema.md` for full details.
+
+#### Verification Rules (KBX-V)
+
+- **KBX-V001**: The `time_state` field must be present when `verification = code-verified`
+- **KBX-V002**: The `time_state` field must be one of the allowed values: `current`, `point-in-time`, `evergreen`, `historical`, `2026-current`, `future`
+
+See `15-governance/verification-policy.md` for full details.
+
+#### Intent Rules (KBX-I)
+
+- **KBX-I001**: Active intents must have a non-empty `focus.next_action` field
+- **KBX-I002**: Feature and breaking-change intents must have a non-empty `change_scope` field
+
+See `12-ai-skills/intent-lifecycle-schema.md` for full details on intent structure.
+
+#### Git Binding Rules (KBX-GB)
+
+- **KBX-GB001**: Intent IDs must follow the pattern `vX-Y-slug` (e.g., `v2-7-nl-rules-to-cli-logic`), where X and Y are digits and slug is lowercase alphanumeric with optional hyphens
+
+See `15-governance/git-binding-policy.md` for full details.
+
+### Rule Severity
+
+Rules are classified by severity:
+
+- **error** — Violations fail the lint check (exit code 1). Fix before proceeding.
+- **warn** — Violations are reported but do not fail the lint check. Address during the next review cycle.
+- **info** — Informational; for monitoring trends or optional improvements.
+
+### When Rules Block Your Work
+
+If `kbx doctor` or `kbx rules lint` reports errors, they must be resolved before:
+- Running `kbx intent apply` to apply/close an intent
+- Pushing to CI/CD
+- Creating a release
+
+### Custom Rules
+
+To add new rules, see the rule engine documentation in `src/lib/rules/README.md` (developer guide). Rules are defined in deterministic CLI code, not in markdown prose.
