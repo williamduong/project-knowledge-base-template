@@ -11,14 +11,16 @@ v2.7 — NL Rules → CLI Hard Logic (rule engine)
 
 ## Current Phase
 
-**Phase:** v2.7 Phase 1.0 — Rule Engine Scaffold (no behavioral change)
+**Phase:** v2.7 Phase 2 — Rule Definitions (verification, intent, git-binding)
 
 **Done (session 2026-05-10):**
 - v2.6 all 7 phases complete (650/650 tests)
 - Intent v2-6-kb-ontology-foundation closed as released v2.6.0
 - v2.7 Phase 0 (boundary/taxonomy lock + tests) confirmed complete
+- v2.7 Phase 1.0 (rule engine scaffold + metadata rules + kbx rules command) complete, 690/690 tests
+- v2.7 Phase 2 (registry contract + verification/intent/git-binding rules + nested YAML parser) complete, 710/710 tests
 
-**Next action:** Implement `src/lib/rule-engine.js` skeleton + metadata rules + `kbx rules lint|check|list` commands + wire into CLI + doctor integration
+**Next action:** Phase 3 — CLI commands (lint|check|list) + doctor wire + Phase 4 template docs
 
 ## Active Blockers
 
