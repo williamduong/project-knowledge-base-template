@@ -20,6 +20,8 @@
 
 const { z } = require('zod');
 
+const VALID_REPO_ORIGINS = ['billing', 'auth', 'gateway', 'infrastructure'];
+
 // ---------------------------------------------------------------------------
 // SaaSNodeDNA: Master Data Entity for all SaaS Domain Objects
 // ---------------------------------------------------------------------------
@@ -230,6 +232,137 @@ const TerminologyRegistry_spec = Object.keys(TerminologyRegistry_data).length > 
   : {};
 
 // ---------------------------------------------------------------------------
+// Phase 2: Action Guard Middleware Contract (Cypher templates + guard checks)
+// ---------------------------------------------------------------------------
+
+const CypherTemplates = {
+  evidence_path_check: `
+MATCH (i:Intent {id: $intentId})-[:SUPPORTS]->(d:Document)
+WHERE d.id IN $evidenceLinks
+MATCH (d)-[:REFERENCES]->(t:Entity {canonical_name: $targetCanonicalName, repo_origin: $targetRepoOrigin})
+RETURN COUNT(t) > 0 AS path_exists
+`.trim(),
+  cross_repo_grant_check: `
+MATCH (src:RepoOrigin {name: $fromRepoOrigin})-[g:CROSS_REPO_GRANT]->(dst:RepoOrigin {name: $toRepoOrigin})
+RETURN COUNT(g) > 0 AS grant_exists
+`.trim(),
+  claim_threshold_check: `
+MATCH (i:Intent {id: $intentId})-[:SUPPORTS]->(c:Claim)
+WHERE c.confidence >= $governanceThreshold
+RETURN COUNT(c) > 0 AS threshold_pass
+`.trim(),
+};
+
+function normalizeGrantEdge(edge = {}) {
+  const from = (edge.from || edge.fromRepoOrigin || '').toString().toLowerCase();
+  const to = (edge.to || edge.toRepoOrigin || '').toString().toLowerCase();
+  return { from, to };
+}
+
+function hasEvidencePath(intent, targetEntity, graphState = null) {
+  const evidenceLinks = Array.isArray(intent.evidenceLinks) ? intent.evidenceLinks : [];
+  if (evidenceLinks.length === 0) {
+    return {
+      allowed: false,
+      reason: 'PROPOSED→VERIFIED: requires non-empty evidenceLinks',
+      query: CypherTemplates.evidence_path_check,
+      params: {
+        intentId: intent.id,
+        evidenceLinks: [],
+        targetCanonicalName: targetEntity?.canonical_name || null,
+        targetRepoOrigin: targetEntity?.repo_origin || null,
+      },
+    };
+  }
+
+  if (!targetEntity || !targetEntity.canonical_name || !targetEntity.repo_origin) {
+    return {
+      allowed: true,
+      reason: null,
+      query: CypherTemplates.evidence_path_check,
+      params: {
+        intentId: intent.id,
+        evidenceLinks,
+        targetCanonicalName: null,
+        targetRepoOrigin: null,
+      },
+    };
+  }
+
+  if (!graphState || !Array.isArray(graphState.evidencePaths)) {
+    return {
+      allowed: false,
+      reason: 'Missing graph evidence path state for target mutation validation',
+      query: CypherTemplates.evidence_path_check,
+      params: {
+        intentId: intent.id,
+        evidenceLinks,
+        targetCanonicalName: targetEntity.canonical_name,
+        targetRepoOrigin: targetEntity.repo_origin,
+      },
+    };
+  }
+
+  const pathExists = graphState.evidencePaths.some(path => {
+    if (!path || typeof path !== 'object') {
+      return false;
+    }
+    const sameIntent = path.intentId === intent.id;
+    const sameTargetName = path.targetCanonicalName === targetEntity.canonical_name;
+    const sameTargetRepo = path.targetRepoOrigin === targetEntity.repo_origin;
+    const linkedEvidence = evidenceLinks.includes(path.evidenceLink);
+    return sameIntent && sameTargetName && sameTargetRepo && linkedEvidence;
+  });
+
+  return {
+    allowed: pathExists,
+    reason: pathExists
+      ? null
+      : `No evidence path found: Intent(${intent.id}) -> Document -> Target(${targetEntity.canonical_name})`,
+    query: CypherTemplates.evidence_path_check,
+    params: {
+      intentId: intent.id,
+      evidenceLinks,
+      targetCanonicalName: targetEntity.canonical_name,
+      targetRepoOrigin: targetEntity.repo_origin,
+    },
+  };
+}
+
+function verifyMutation(intent, targetEntity, graphState = null) {
+  const evidenceResult = hasEvidencePath(intent, targetEntity, graphState);
+  if (!evidenceResult.allowed) {
+    return evidenceResult;
+  }
+
+  if (targetEntity && targetEntity.repo_origin) {
+    const crossRepoResult = checkCrossRepoGrant(intent.repo_origin, targetEntity.repo_origin, graphState);
+    if (!crossRepoResult.allowed) {
+      return {
+        allowed: false,
+        reason: crossRepoResult.reason,
+        query: CypherTemplates.cross_repo_grant_check,
+        params: {
+          fromRepoOrigin: intent.repo_origin,
+          toRepoOrigin: targetEntity.repo_origin,
+        },
+      };
+    }
+  }
+
+  return {
+    allowed: true,
+    reason: null,
+    query: evidenceResult.query,
+    params: evidenceResult.params,
+  };
+}
+
+function ToolCallInterceptor({ intent, targetEntity = null, graphState = null }) {
+  return verifyMutation(intent, targetEntity, graphState);
+}
+
+// ---------------------------------------------------------------------------
 // State Transition Guards & Validators
 // ---------------------------------------------------------------------------
 
@@ -252,14 +385,8 @@ const StateTransitionGuards = {
   },
   'PROPOSED': {
     allowedTo: ['VERIFIED'],
-    guard: (intent) => {
-      // PROPOSED → VERIFIED requires Action Guard path validation
-      // (Will be implemented in Phase 2 with actual graph check)
-      // For Phase 1, we check evidence is present
-      return {
-        allowed: intent.evidenceLinks && intent.evidenceLinks.length >= 1,
-        reason: 'PROPOSED→VERIFIED: requires valid evidence path (Phase 2 checks graph)',
-      };
+    guard: (intent, context = {}) => {
+      return verifyMutation(intent, context.targetEntity || null, context.graphState || null);
     },
   },
   'VERIFIED': {
@@ -304,7 +431,7 @@ const StateTransitionGuards = {
  * @param {string} targetState - Target lifecycle state
  * @returns {object} { allowed: boolean, reason?: string }
  */
-function verifyStateTransition(intent, targetState) {
+function verifyStateTransition(intent, targetState, context = {}) {
   const currentState = intent.lifecycle;
   
   if (!StateTransitionGuards[currentState]) {
@@ -321,7 +448,7 @@ function verifyStateTransition(intent, targetState) {
   }
   
   // Run guard condition
-  return guard.guard(intent);
+  return guard.guard(intent, context);
 }
 
 /**
@@ -364,13 +491,21 @@ function checkCrossRepoGrant(fromRepoOrigin, toRepoOrigin, graphState = null) {
   
   // Cross-repo requires CROSS_REPO_GRANT edge (Phase 2 with graph)
   // For Phase 1, we only check that both origins are valid
-  const validOrigins = ['billing', 'auth', 'gateway', 'infrastructure'];
-  
-  if (!validOrigins.includes(fromRepoOrigin)) {
+  if (!VALID_REPO_ORIGINS.includes(fromRepoOrigin)) {
     return { allowed: false, reason: `Invalid fromRepoOrigin: ${fromRepoOrigin}` };
   }
-  if (!validOrigins.includes(toRepoOrigin)) {
+  if (!VALID_REPO_ORIGINS.includes(toRepoOrigin)) {
     return { allowed: false, reason: `Invalid toRepoOrigin: ${toRepoOrigin}` };
+  }
+
+  if (graphState && Array.isArray(graphState.crossRepoGrants)) {
+    const grantExists = graphState.crossRepoGrants
+      .map(normalizeGrantEdge)
+      .some(edge => edge.from === fromRepoOrigin && edge.to === toRepoOrigin);
+
+    if (grantExists) {
+      return { allowed: true };
+    }
   }
   
   // Cross-repo would require grant edge (Phase 2)
@@ -390,6 +525,14 @@ function checkCrossRepoGrant(fromRepoOrigin, toRepoOrigin, graphState = null) {
 function validateIntent(intent) {
   try {
     const parsed = IntentSchema.parse(intent);
+
+    if (parsed.lifecycle !== 'DRAFT' && (!parsed.evidenceLinks || parsed.evidenceLinks.length === 0)) {
+      return {
+        valid: false,
+        errors: ['evidenceLinks: required for lifecycle states beyond DRAFT'],
+      };
+    }
+
     return { valid: true, data: parsed };
   } catch (error) {
     return {
@@ -478,6 +621,9 @@ module.exports = {
   verifyStateTransition,
   resolveTerminology,
   checkCrossRepoGrant,
+  verifyMutation,
+  ToolCallInterceptor,
+  CypherTemplates,
   
   // Validators
   validateIntent,

@@ -9,6 +9,8 @@ const {
   validateSaaSNode,
   resolveTerminology,
   checkCrossRepoGrant,
+  verifyMutation,
+  CypherTemplates,
 } = require('../lib/ontology');
 
 /**
@@ -19,6 +21,7 @@ function parseArgs(args = []) {
     json: false,
     input: null,
     output: null,
+    graphState: null,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -29,6 +32,8 @@ function parseArgs(args = []) {
       options.input = args[++i];
     } else if (arg === '--output' && args[i + 1]) {
       options.output = args[++i];
+    } else if (arg === '--graph-state' && args[i + 1]) {
+      options.graphState = args[++i];
     }
   }
 
@@ -89,6 +94,18 @@ function showOntology(options = {}) {
   sections.push('4. VERIFIED→EXECUTED with commitAllowed≠true → exit code 1');
   sections.push('5. Cross-repo mutation without CROSS_REPO_GRANT → exit code 1');
   sections.push('6. Unresolved terminology alias → exit code 1');
+  sections.push('7. Cross-repo target mutation without grant/evidence path → exit code 1');
+
+  sections.push('\n\n## Action Guard Middleware (Phase 2 Contract)\n');
+  sections.push('- Middleware: ToolCallInterceptor(intent, targetEntity, graphState)');
+  sections.push('- Guard 1: Evidence path must exist for target mutation');
+  sections.push('- Guard 2: Cross-repo mutation requires CROSS_REPO_GRANT edge');
+  sections.push('- Deterministic behavior: allow (exit 0) or deny (exit 1) only');
+
+  sections.push('\n\n## Cypher Templates\n');
+  sections.push(`- evidence_path_check: ${CypherTemplates.evidence_path_check}`);
+  sections.push(`- cross_repo_grant_check: ${CypherTemplates.cross_repo_grant_check}`);
+  sections.push(`- claim_threshold_check: ${CypherTemplates.claim_threshold_check}`);
 
   const output = sections.join('\n');
 
@@ -128,10 +145,16 @@ function validateOntology(args = [], options = {}) {
   }
 
   let inputData;
+  let graphState = null;
   try {
     const fs = require('fs');
     const content = fs.readFileSync(options.input, 'utf8');
     inputData = JSON.parse(content);
+
+    if (options.graphState) {
+      const graphStateContent = fs.readFileSync(options.graphState, 'utf8');
+      graphState = JSON.parse(graphStateContent);
+    }
   } catch (err) {
     const result = {
       success: false,
@@ -180,6 +203,28 @@ function validateOntology(args = [], options = {}) {
         } else {
           console.error(result.error);
           console.error(result.suggestion);
+        }
+        return { exitCode: 1 };
+      }
+    }
+
+    const targetEntity = inputData.targetEntity || null;
+    if (targetEntity) {
+      const mutationGuard = verifyMutation(data, targetEntity, graphState);
+      if (!mutationGuard.allowed) {
+        const result = {
+          success: false,
+          error: mutationGuard.reason || 'Mutation blocked by action guard',
+          query: mutationGuard.query,
+          params: mutationGuard.params,
+        };
+        if (options.json) {
+          console.error(JSON.stringify(result, null, 2));
+        } else {
+          console.error(result.error);
+          if (result.query) {
+            console.error(`Guard query: ${result.query}`);
+          }
         }
         return { exitCode: 1 };
       }
@@ -239,6 +284,10 @@ function buildOntology(options = {}) {
       repoOrigins: ['billing', 'auth', 'gateway', 'infrastructure'],
       lifecycleStates: ['DRAFT', 'PROPOSED', 'VERIFIED', 'EXECUTED', 'COMMITTED'],
       riskLevels: ['Low', 'Medium', 'High', 'Critical'],
+    },
+    actionGuard: {
+      middleware: 'ToolCallInterceptor',
+      cypherTemplates: CypherTemplates,
     },
   };
 
@@ -310,6 +359,7 @@ function runOntology({ packageJson, args = [] }) {
       console.log('Usage:');
       console.log('  kbx ontology show [--json]');
       console.log('  kbx ontology validate --input <file> [--json]');
+      console.log('                       [--graph-state <graph-state.json>]');
       console.log('  kbx ontology build [--output <path>] [--json]');
       console.log('');
       console.log('Commands:');

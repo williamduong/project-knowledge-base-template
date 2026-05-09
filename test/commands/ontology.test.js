@@ -284,6 +284,7 @@ test('command: ontology validate - cross-repo intent denied', () => {
     lifecycle: 'DRAFT',
     title: 'Modify Auth Service',
     riskLevel: 'High',
+    evidenceLinks: ['doc://evidence-1'],
     targetEntity: { canonical_name: 'ServicePrincipal', repo_origin: 'auth' },
   };
   const filePath = createTempFile(JSON.stringify(fixture));
@@ -301,9 +302,51 @@ test('command: ontology validate - cross-repo intent denied', () => {
 
   console.log = originalLog;
 
-  // Note: Phase 1 allows cross-repo intents; Phase 2 will add CROSS_REPO_GRANT validation
-  // For now, if canonical_name is valid, validation passes
-  assert.strictEqual(result.exitCode, 0, 'Should pass Phase 1 (cross-repo grant checked in Phase 2)');
+  assert.strictEqual(result.exitCode, 1, 'Should deny cross-repo mutation without graph grant evidence');
+});
+
+test('command: ontology validate - cross-repo intent allowed with graph-state grant', () => {
+  const fixture = {
+    id: '550e8400-e29b-41d4-a716-446655440101',
+    repo_origin: 'billing',
+    canonical_name: 'Intent',
+    lifecycle: 'DRAFT',
+    title: 'Modify Auth Service',
+    riskLevel: 'High',
+    evidenceLinks: ['doc://evidence-allowed'],
+    targetEntity: { canonical_name: 'ServicePrincipal', repo_origin: 'auth' },
+  };
+
+  const graphState = {
+    crossRepoGrants: [{ from: 'billing', to: 'auth' }],
+    evidencePaths: [
+      {
+        intentId: '550e8400-e29b-41d4-a716-446655440101',
+        targetCanonicalName: 'ServicePrincipal',
+        targetRepoOrigin: 'auth',
+        evidenceLink: 'doc://evidence-allowed',
+      },
+    ],
+  };
+
+  const fixturePath = createTempFile(JSON.stringify(fixture));
+  const graphStatePath = createTempFile(JSON.stringify(graphState));
+
+  let output = '';
+  const originalLog = console.log;
+  console.log = (...args) => {
+    output += args.join('\n') + '\n';
+  };
+
+  const result = runOntology({
+    packageJson: { name: 'test' },
+    args: ['validate', '--input', fixturePath, '--graph-state', graphStatePath],
+  });
+
+  console.log = originalLog;
+
+  assert.strictEqual(result.exitCode, 0, 'Should allow cross-repo mutation with grant + evidence path');
+  assert.ok(output.includes('Validation passed'), 'Should confirm validation passed');
 });
 
 // ===================================================================

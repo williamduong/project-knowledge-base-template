@@ -4,9 +4,9 @@ mode: full
 lifecycle: active
 created_at: 2026-05-08T18:21:16.294Z
 focus:
-  current: "Phase 0 ✅ COMPLETE. v2.6 close scope is now strictly ontology foundation contract + deterministic lifecycle validator; DB/Web UI implementation is deferred to v2.9 bundle intent."
-  last_updated: 2026-05-09T16:50:00Z
-  next_action: "Start Phase 1 implementation: hardcode 5-state Intent lifecycle enforcement in CLI validator and commit test evidence for transition guards."
+  current: "Phase 1 and Phase 2 ✅ COMPLETE. v2.6 now includes deterministic lifecycle validator plus Action Guard middleware contract (evidence path + cross-repo grant checks), while DB/Web UI remains deferred to v2.9."
+  last_updated: 2026-05-10T09:30:00Z
+  next_action: "Start Phase 3 NL audit + governed glossary integration and align template knowledge-graph starters with implemented guard contract."
 change_type: feature
 change_scope:
   - template/02-domain-model/
@@ -48,19 +48,19 @@ Close `v2-6-kb-ontology-foundation` only when ontology foundation is determinist
 5. Scope boundary is explicit in plan/evidence: DB implementation and visual web UI are not part of v2.6 completion and are deferred to `v2-9-db-and-intent-web-ui`.
 6. Regression check confirms existing non-ontology commands keep backward-compatible behavior.
 
-## Task Status (as of 2026-05-09)
+## Task Status (as of 2026-05-10)
 
 | Work Item | Status | Notes |
 |---|---|---|
 | Phase 0 - DNA alignment and terminology collision register | COMPLETE | Reported in `phase-0-report.md`; 10 entities, 48 aliases, zero polysemy. |
-| Phase 1 - Intent state machine enforcement | READY | Next build target for closure path. |
-| Phase 2 - Action guard middleware contract | READY | Defined in plan, pending implementation evidence. |
+| Phase 1 - Intent state machine enforcement | COMPLETE | Implemented in `src/lib/ontology.js` + `src/commands/ontology.js`; tested in `test/lib/ontology.test.js`. |
+| Phase 2 - Action guard middleware contract | COMPLETE | `verifyMutation` + `ToolCallInterceptor` + Cypher templates + `--graph-state` command validation path implemented with command + unit tests. |
 | Phase 3 - NL audit and governed glossary integration | NOT STARTED | Planned, no implementation evidence yet. |
 | Phase 4 - Typed ontology schema (no DB runtime) | NOT STARTED | Planned, no implementation evidence yet. |
 | Phase 5 - CLI ontology lifecycle commands | NOT STARTED | Planned, no implementation evidence yet. |
 | Phase 6 - Template docs + starter files | NOT STARTED | Planned, no implementation evidence yet. |
 
-Overall progress baseline: 1/7 work items complete; close path is now explicitly bounded by the six conditions above.
+Overall progress baseline: 3/7 work items complete; close path is now explicitly bounded by the six conditions above.
 
 ## Intent NodeType Contract (v2.6)
 

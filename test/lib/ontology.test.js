@@ -9,6 +9,9 @@ const {
   verifyStateTransition,
   resolveTerminology,
   checkCrossRepoGrant,
+  verifyMutation,
+  ToolCallInterceptor,
+  CypherTemplates,
   validateIntent,
   validateSaaSNode,
   validateTerminology,
@@ -298,6 +301,16 @@ test('Cross-repo grants - all valid origin pairs', () => {
   });
 });
 
+test('Cross-repo grants - different origin allowed when grant edge exists', () => {
+  const graphState = {
+    crossRepoGrants: [
+      { from: 'billing', to: 'auth' },
+    ],
+  };
+  const result = checkCrossRepoGrant('billing', 'auth', graphState);
+  assert.strictEqual(result.allowed, true, 'Cross-repo mutation with grant should be allowed');
+});
+
 test('Cross-repo grants - invalid origin rejected', () => {
   const result = checkCrossRepoGrant('invalid', 'billing');
   assert.strictEqual(result.allowed, false, 'Invalid origin should be rejected');
@@ -464,4 +477,93 @@ test('Integration - cross-repo intent workflow', () => {
   // Intent is in billing repo but tries to modify auth entity
   const grant = checkCrossRepoGrant(intent.repo_origin, 'auth');
   assert.strictEqual(grant.allowed, false, 'Cross-repo mutation should require CROSS_REPO_GRANT');
+});
+
+test('Action guard - verifyMutation denies target mutation without graph evidence state', () => {
+  const intent = {
+    id: '550e8400-e29b-41d4-a716-446655440011',
+    repo_origin: 'billing',
+    canonical_name: 'Intent',
+    lifecycle: 'PROPOSED',
+    title: 'Modify Service Principal',
+    riskLevel: 'High',
+    evidenceLinks: ['doc://evidence-1'],
+  };
+
+  const targetEntity = {
+    canonical_name: 'ServicePrincipal',
+    repo_origin: 'auth',
+  };
+
+  const result = verifyMutation(intent, targetEntity, null);
+  assert.strictEqual(result.allowed, false, 'Should deny target mutation when graph state is missing');
+  assert.ok(result.reason.includes('Missing graph evidence path state'), 'Should include guard reason');
+});
+
+test('Action guard - verifyMutation allows target mutation with evidence path + grant', () => {
+  const intent = {
+    id: '550e8400-e29b-41d4-a716-446655440012',
+    repo_origin: 'billing',
+    canonical_name: 'Intent',
+    lifecycle: 'PROPOSED',
+    title: 'Modify Service Principal',
+    riskLevel: 'High',
+    evidenceLinks: ['doc://evidence-2'],
+  };
+
+  const targetEntity = {
+    canonical_name: 'ServicePrincipal',
+    repo_origin: 'auth',
+  };
+
+  const graphState = {
+    crossRepoGrants: [{ from: 'billing', to: 'auth' }],
+    evidencePaths: [
+      {
+        intentId: intent.id,
+        targetCanonicalName: 'ServicePrincipal',
+        targetRepoOrigin: 'auth',
+        evidenceLink: 'doc://evidence-2',
+      },
+    ],
+  };
+
+  const result = verifyMutation(intent, targetEntity, graphState);
+  assert.strictEqual(result.allowed, true, 'Should allow when evidence path + grant exist');
+});
+
+test('Action guard - ToolCallInterceptor returns deterministic block payload', () => {
+  const intent = {
+    id: '550e8400-e29b-41d4-a716-446655440013',
+    repo_origin: 'billing',
+    canonical_name: 'Intent',
+    lifecycle: 'PROPOSED',
+    title: 'Cross origin update',
+    riskLevel: 'High',
+    evidenceLinks: ['doc://evidence-3'],
+  };
+
+  const targetEntity = {
+    canonical_name: 'ServicePrincipal',
+    repo_origin: 'auth',
+  };
+
+  const result = ToolCallInterceptor({
+    intent,
+    targetEntity,
+    graphState: {
+      evidencePaths: [
+        {
+          intentId: intent.id,
+          targetCanonicalName: 'ServicePrincipal',
+          targetRepoOrigin: 'auth',
+          evidenceLink: 'doc://evidence-3',
+        },
+      ],
+      crossRepoGrants: [],
+    },
+  });
+
+  assert.strictEqual(result.allowed, false, 'Interceptor should block cross repo without grant');
+  assert.strictEqual(result.query, CypherTemplates.cross_repo_grant_check, 'Should include deterministic query template');
 });
