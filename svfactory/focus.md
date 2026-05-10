@@ -13,7 +13,7 @@ v2.7 — NL Rules → CLI Hard Logic (rule engine)
 
 **Version:** v2.8 Phase 0 — Boundary Lock & Testing Strategy
 
-**Session State (2026-05-10, Checkpoint 3):**
+**Session State (2026-05-10, Checkpoint 5):**
 - v2.7 SHIPPED: 4 phases complete, 710/710 tests passing ✅
 - v2.7.0-beta.1 on npm: `npm install @williamduong/kbx@beta` ready 🎉
 - v2.8 Phase 0 COMPLETE: 3 workstreams scoped + phases gated + risks assessed
@@ -25,15 +25,18 @@ v2.7 — NL Rules → CLI Hard Logic (rule engine)
   - Metadata rules (8 tests) — Required fields, enum values ✓
   - CLI commands (3 tests) — list, help, error handling ✓
 - **NO BUGS FOUND** — All edge cases pass, chaos input handled gracefully
-- Checkpoint: Phase 1 test results delivered, ready for Phase 2 (integration + doctor)
+- **New intent created:** `v2-8-kbx-beta-bug-hunt` for failure-oriented kbx beta testing
+- **Phase 2 beta plan drafted:** failure-oriented pack for token burn, loops, hallucination drift, and multi-project ambiguity
+- Checkpoint: Phase 1 test results delivered, ready for deeper beta bug-hunt planning and Phase 2 (integration + doctor)
 
 **Active intents:**
 - v2-7-nl-rules-to-cli-logic (READY TO CLOSE — manual tests complete)
 - v2-8-downstream-agent-and-ontology (Phase 0 locked, awaiting Phase 1 kickoff)
+- v2-8-kbx-beta-bug-hunt (active — kbx-only deep failure-mode testing)
 
 **Next action:** 
-  1. Phase 2 manual tests (integration + doctor + CI/CD) — 20-30 more tests
-  2. Decide: Release v2.7.0 GA OR continue build with WS1/WS2/WS3
+  1. Execute Phase 2 failure-oriented beta tests for kbx only
+  2. Decide: Release v2.7.0 GA OR continue build with WS1/WS2/WS3 or collect more beta feedback
 
 ## Active Blockers
 

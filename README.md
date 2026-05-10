@@ -11,6 +11,19 @@ It is designed for teams that want a consistent documentation baseline across di
 - License: GNU AGPL v3 with separate commercial licensing available
 - Baseline state file for downstream projects: [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md)
 
+## Beta Test Pack
+
+For the latest kbx beta, use the beta-specific test entry point instead of this general template README.
+
+- Beta install: `npm install @williamduong/kbx@beta`
+- Beta guide: [test/manual-test-v2.7/BETA-README.md](test/manual-test-v2.7/BETA-README.md)
+- Phase 1 deep test plan: [test/manual-test-v2.7/PHASE-1-PLAN.md](test/manual-test-v2.7/PHASE-1-PLAN.md)
+- Phase 1 findings: [test/manual-test-v2.7/PHASE-1-RESULTS.md](test/manual-test-v2.7/PHASE-1-RESULTS.md)
+- HTML summary: [test/manual-test-v2.7/test-report-v2.7-phase1.html](test/manual-test-v2.7/test-report-v2.7-phase1.html)
+- Beta changelog: [knowledge-base/TEMPLATE_CHANGELOG.md](knowledge-base/TEMPLATE_CHANGELOG.md)
+
+Beta focus: kbx only. Do not use these docs for SVFactory or sfact testing.
+
 ## CLI Preview
 
 This repository now includes a preview CLI scaffold (`kb`) for local initialization and maintenance workflow bootstrapping.
