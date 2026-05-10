@@ -79,3 +79,5 @@ None remaining for v2.7 ship. Decision blocker: v2.7 GA timeline (extended beta 
 - 2026-05-10T13:34:54.845Z | event=intent.status | branch=intent/v2-8-customization-lifecycle-and-safe-uninstall | intent=v2-8-v2-8-svfactory-rule-catalog-hardening | note=Intent status inspected
 
 - 2026-05-10T13:35:03.418Z | event=intent.status | branch=intent/v2-8-customization-lifecycle-and-safe-uninstall | intent=v2-9-v2-9-natural-rules-foundation-file-architecture | note=Intent status inspected
+
+- 2026-05-10T13:35:24.879Z | event=intent.status.overview | branch=intent/v2-8-customization-lifecycle-and-safe-uninstall | note=Intent status overview inspected
