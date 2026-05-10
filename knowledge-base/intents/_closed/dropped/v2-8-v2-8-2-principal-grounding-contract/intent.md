@@ -1,7 +1,7 @@
 ---
 id: v2-8-v2-8-2-principal-grounding-contract
 mode: full
-lifecycle: active
+lifecycle: closed
 created_at: "2026-05-10T13:37:54.334Z"
 focus:
   current: "Deferred design contract. No runtime wiring in this intent."
@@ -26,6 +26,10 @@ description: "Define deterministic principle grounding checkpoints and P-to-rule
 activated_at: "2026-05-10T13:37:54.338Z"
 architecture_position:
   wave: v2.8
+close_type: dropped
+closed_at: "2026-05-10T13:49:32.093Z"
+drop_reason: "Component 3 terminology review pass completed; superseded by v2-8-3 pipeline-end-verification-contract"
+release_ref: null
 ---
 
 # Intent: v2-8-v2-8-2-principal-grounding-contract
@@ -52,6 +56,12 @@ Remaining gaps:
 
 Next recommended intent:
 `v2-8-3-pipeline-end-verification-contract`
+
+Compatibility note (terminology pass):
+1. Confirmed aligned terminology: tuple fields (`intent_type`, `intent_state`, `ontology_entity`, `target_scope`, `mutation_class`, `risk_level`, `evidence_state`, `actor_mode`), escalation token (`HumanGateRequired`), and output token (`fallback_or_escalation`) remain consistent with dispatch/action/rule-selector/human-gate contracts.
+2. Renamed concepts: none.
+3. Unresolved aliases: `KBX-PG-*` remain design-only aliases in principal grounding and are not runtime rule IDs.
+4. Future migration risk: low to medium. Risk is limited to potential confusion if `KBX-PG-*` aliases are later promoted to runtime IDs without explicit namespace migration guidance.
 
 ## Plan
 
