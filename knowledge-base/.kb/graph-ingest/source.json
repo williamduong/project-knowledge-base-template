@@ -1,0 +1,3520 @@
+{
+  "format": "graph-ingest-v1",
+  "lane": "source",
+  "exported_at": "2026-05-10T15:37:34.768Z",
+  "nodes": [
+    {
+      "id": "00-start-here/code-qa-index.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/code-qa-index.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:00:58.096Z"
+      }
+    },
+    {
+      "id": "00-start-here/current-state.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/current-state.md",
+        "status": "active",
+        "updated_at": "2026-05-04T11:16:38.047Z"
+      }
+    },
+    {
+      "id": "00-start-here/current-verified-index.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/current-verified-index.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:19:53.732Z"
+      }
+    },
+    {
+      "id": "00-start-here/glossary.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/glossary.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:00:58.093Z"
+      }
+    },
+    {
+      "id": "00-start-here/how-to-use-this-kb.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/how-to-use-this-kb.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "id": "00-start-here/intent-index.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/intent-index.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:19:14.040Z"
+      }
+    },
+    {
+      "id": "00-start-here/knowledge-base-architecture.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/knowledge-base-architecture.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:23:51.927Z"
+      }
+    },
+    {
+      "id": "00-start-here/product-summary.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/product-summary.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.639Z"
+      }
+    },
+    {
+      "id": "00-start-here/project-scope-matrix.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/project-scope-matrix.md",
+        "status": "active",
+        "updated_at": "2026-04-28T07:45:33.381Z"
+      }
+    },
+    {
+      "id": "00-start-here/repository-revision-state.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/repository-revision-state.md",
+        "status": "active",
+        "updated_at": "2026-05-05T04:01:16.502Z"
+      }
+    },
+    {
+      "id": "00-start-here/strategic-backlog.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/strategic-backlog.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:14:01.032Z"
+      }
+    },
+    {
+      "id": "00-start-here/system-map.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/system-map.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.642Z"
+      }
+    },
+    {
+      "id": "00-start-here/target-state-index.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/target-state-index.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:20:01.259Z"
+      }
+    },
+    {
+      "id": "00-start-here/terminology-guard.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/terminology-guard.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:23:51.924Z"
+      }
+    },
+    {
+      "id": "00-start-here/what-this-repo-is-not.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "00-start-here/what-this-repo-is-not.md",
+        "status": "active",
+        "updated_at": "2026-04-28T10:39:54.229Z"
+      }
+    },
+    {
+      "id": "01-product/business-rules/image-export-rules.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/business-rules/image-export-rules.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.648Z"
+      }
+    },
+    {
+      "id": "01-product/business-rules/randomization-rules.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/business-rules/randomization-rules.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.650Z"
+      }
+    },
+    {
+      "id": "01-product/business-rules/storage-rules.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/business-rules/storage-rules.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.651Z"
+      }
+    },
+    {
+      "id": "01-product/features/ai-content-generation.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/features/ai-content-generation.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.656Z"
+      }
+    },
+    {
+      "id": "01-product/features/api-key-management.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/features/api-key-management.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.657Z"
+      }
+    },
+    {
+      "id": "01-product/features/gallery.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/features/gallery.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.660Z"
+      }
+    },
+    {
+      "id": "01-product/features/randomization.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/features/randomization.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.661Z"
+      }
+    },
+    {
+      "id": "01-product/features/visual-builder.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/features/visual-builder.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.663Z"
+      }
+    },
+    {
+      "id": "01-product/problem-statement.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/problem-statement.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.645Z"
+      }
+    },
+    {
+      "id": "01-product/product-decisions.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/product-decisions.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.646Z"
+      }
+    },
+    {
+      "id": "01-product/user-journeys/create-composition-browser.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/user-journeys/create-composition-browser.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.664Z"
+      }
+    },
+    {
+      "id": "01-product/user-journeys/extend-via-vscode.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/user-journeys/extend-via-vscode.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.666Z"
+      }
+    },
+    {
+      "id": "01-product/user-journeys/generate-via-api.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/user-journeys/generate-via-api.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.668Z"
+      }
+    },
+    {
+      "id": "01-product/user-personas.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "01-product/user-personas.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.647Z"
+      }
+    },
+    {
+      "id": "02-domain-model/domain-events.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "02-domain-model/domain-events.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.669Z"
+      }
+    },
+    {
+      "id": "02-domain-model/entities.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "02-domain-model/entities.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.670Z"
+      }
+    },
+    {
+      "id": "02-domain-model/ontology.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "02-domain-model/ontology.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.671Z"
+      }
+    },
+    {
+      "id": "02-domain-model/relationships.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "02-domain-model/relationships.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.674Z"
+      }
+    },
+    {
+      "id": "02-domain-model/states-and-lifecycles.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "02-domain-model/states-and-lifecycles.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.677Z"
+      }
+    },
+    {
+      "id": "03-architecture/adr/adr-001-json-composition-format.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "03-architecture/adr/adr-001-json-composition-format.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.684Z"
+      }
+    },
+    {
+      "id": "03-architecture/adr/adr-002-server-side-rendering.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "03-architecture/adr/adr-002-server-side-rendering.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.686Z"
+      }
+    },
+    {
+      "id": "03-architecture/adr/adr-003-postgresql-drizzle.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "03-architecture/adr/adr-003-postgresql-drizzle.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.687Z"
+      }
+    },
+    {
+      "id": "03-architecture/adr/adr-004-gcs-storage.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "03-architecture/adr/adr-004-gcs-storage.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.689Z"
+      }
+    },
+    {
+      "id": "03-architecture/adr/adr-005-monorepo-pnpm.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "03-architecture/adr/adr-005-monorepo-pnpm.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.691Z"
+      }
+    },
+    {
+      "id": "03-architecture/adr/adr-006-multi-ai-provider.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "03-architecture/adr/adr-006-multi-ai-provider.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.693Z"
+      }
+    },
+    {
+      "id": "03-architecture/components.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "03-architecture/components.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.678Z"
+      }
+    },
+    {
+      "id": "03-architecture/containers.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "03-architecture/containers.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.680Z"
+      }
+    },
+    {
+      "id": "03-architecture/system-overview.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "03-architecture/system-overview.md",
+        "status": "active",
+        "updated_at": "2026-05-04T11:16:38.047Z"
+      }
+    },
+    {
+      "id": "04-frontend/app-structure.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "04-frontend/app-structure.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.695Z"
+      }
+    },
+    {
+      "id": "04-frontend/authentication-local.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "04-frontend/authentication-local.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.698Z"
+      }
+    },
+    {
+      "id": "04-frontend/build-and-vite.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "04-frontend/build-and-vite.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.701Z"
+      }
+    },
+    {
+      "id": "04-frontend/components-overview.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "04-frontend/components-overview.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.710Z"
+      }
+    },
+    {
+      "id": "04-frontend/hooks-and-state.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "04-frontend/hooks-and-state.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.710Z"
+      }
+    },
+    {
+      "id": "04-frontend/pages-and-features.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "04-frontend/pages-and-features.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.717Z"
+      }
+    },
+    {
+      "id": "04-frontend/styling-system.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "04-frontend/styling-system.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.719Z"
+      }
+    },
+    {
+      "id": "05-backend/configuration-deployment.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "05-backend/configuration-deployment.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.722Z"
+      }
+    },
+    {
+      "id": "05-backend/database-operations.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "05-backend/database-operations.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.726Z"
+      }
+    },
+    {
+      "id": "05-backend/error-handling.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "05-backend/error-handling.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.730Z"
+      }
+    },
+    {
+      "id": "05-backend/middleware-and-auth.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "05-backend/middleware-and-auth.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.733Z"
+      }
+    },
+    {
+      "id": "05-backend/rendering-engine.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "05-backend/rendering-engine.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.733Z"
+      }
+    },
+    {
+      "id": "05-backend/routes-and-handlers.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "05-backend/routes-and-handlers.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.733Z"
+      }
+    },
+    {
+      "id": "05-backend/services-overview.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "05-backend/services-overview.md",
+        "status": "active",
+        "updated_at": "2026-05-04T11:16:38.051Z"
+      }
+    },
+    {
+      "id": "05-backend/storage-service.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "05-backend/storage-service.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.743Z"
+      }
+    },
+    {
+      "id": "06-api/api-overview.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/api-overview.md",
+        "status": "active",
+        "updated_at": "2026-05-04T11:16:38.053Z"
+      }
+    },
+    {
+      "id": "06-api/authentication.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/authentication.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.748Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/delete-api-key.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/delete-api-key.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.748Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/delete-composition.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/delete-composition.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.748Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/get-api-keys.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/get-api-keys.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.748Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/get-composition.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/get-composition.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.748Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/get-compositions.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/get-compositions.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.748Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/get-profile-me.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/get-profile-me.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.765Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/patch-profile-me.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/patch-profile-me.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.765Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/post-api-keys.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/post-api-keys.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.765Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/post-composition.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/post-composition.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.765Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/post-generate.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/post-generate.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.778Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/post-random-state.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/post-random-state.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.778Z"
+      }
+    },
+    {
+      "id": "06-api/endpoints/post-random.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "06-api/endpoints/post-random.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.780Z"
+      }
+    },
+    {
+      "id": "07-database/erd.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "07-database/erd.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.786Z"
+      }
+    },
+    {
+      "id": "07-database/indexing-strategy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "07-database/indexing-strategy.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.786Z"
+      }
+    },
+    {
+      "id": "07-database/schema-overview.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "07-database/schema-overview.md",
+        "status": "active",
+        "updated_at": "2026-05-04T11:16:38.055Z"
+      }
+    },
+    {
+      "id": "07-database/tables/api-images.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "07-database/tables/api-images.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.795Z"
+      }
+    },
+    {
+      "id": "07-database/tables/api-keys.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "07-database/tables/api-keys.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.798Z"
+      }
+    },
+    {
+      "id": "07-database/tables/compositions.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "07-database/tables/compositions.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.801Z"
+      }
+    },
+    {
+      "id": "07-database/tables/user-profiles.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "07-database/tables/user-profiles.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.803Z"
+      }
+    },
+    {
+      "id": "08-security/authentication-details.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "08-security/authentication-details.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.805Z"
+      }
+    },
+    {
+      "id": "08-security/authz-matrix.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "08-security/authz-matrix.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.808Z"
+      }
+    },
+    {
+      "id": "08-security/encryption.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "08-security/encryption.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.810Z"
+      }
+    },
+    {
+      "id": "08-security/security-checklist.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "08-security/security-checklist.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.811Z"
+      }
+    },
+    {
+      "id": "08-security/threat-model.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "08-security/threat-model.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.811Z"
+      }
+    },
+    {
+      "id": "09-operations/configuration-deployment.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "09-operations/configuration-deployment.md",
+        "status": "active",
+        "updated_at": "2026-05-04T11:16:38.057Z"
+      }
+    },
+    {
+      "id": "09-operations/deployment.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "09-operations/deployment.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.811Z"
+      }
+    },
+    {
+      "id": "09-operations/incident-runbook.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "09-operations/incident-runbook.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.811Z"
+      }
+    },
+    {
+      "id": "09-operations/monitoring.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "09-operations/monitoring.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.811Z"
+      }
+    },
+    {
+      "id": "09-operations/troubleshooting.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "09-operations/troubleshooting.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.811Z"
+      }
+    },
+    {
+      "id": "10-testing/e2e-tests.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "10-testing/e2e-tests.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.829Z"
+      }
+    },
+    {
+      "id": "10-testing/integration-tests.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "10-testing/integration-tests.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.830Z"
+      }
+    },
+    {
+      "id": "10-testing/release-checklist.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "10-testing/release-checklist.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.833Z"
+      }
+    },
+    {
+      "id": "10-testing/test-strategy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "10-testing/test-strategy.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.836Z"
+      }
+    },
+    {
+      "id": "10-testing/unit-tests.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "10-testing/unit-tests.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:14:44.838Z"
+      }
+    },
+    {
+      "id": "11-user-docs/README.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "11-user-docs/README.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:19:14.168Z"
+      }
+    },
+    {
+      "id": "12-ai-skills/agent-operating-manual-appendix.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "12-ai-skills/agent-operating-manual-appendix.md",
+        "status": "active",
+        "updated_at": "2026-05-10T10:20:05.139Z"
+      }
+    },
+    {
+      "id": "12-ai-skills/agent-operating-manual-core.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "12-ai-skills/agent-operating-manual-core.md",
+        "status": "active",
+        "updated_at": "2026-05-10T14:34:42.152Z"
+      }
+    },
+    {
+      "id": "12-ai-skills/agent-operating-manual.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "12-ai-skills/agent-operating-manual.md",
+        "status": "active",
+        "updated_at": "2026-05-10T10:24:09.086Z"
+      }
+    },
+    {
+      "id": "12-ai-skills/ai-ide-compatibility-matrix.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "12-ai-skills/ai-ide-compatibility-matrix.md",
+        "status": "active",
+        "updated_at": "2026-05-04T09:47:36.287Z"
+      }
+    },
+    {
+      "id": "12-ai-skills/intent-lifecycle-schema.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "12-ai-skills/intent-lifecycle-schema.md",
+        "status": "active",
+        "updated_at": "2026-05-08T09:09:44.519Z"
+      }
+    },
+    {
+      "id": "12-ai-skills/prompt-pack.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "12-ai-skills/prompt-pack.md",
+        "status": "active",
+        "updated_at": "2026-05-04T09:56:46.857Z"
+      }
+    },
+    {
+      "id": "12-ai-skills/prompting-guide.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "12-ai-skills/prompting-guide.md",
+        "status": "active",
+        "updated_at": "2026-05-04T09:56:46.857Z"
+      }
+    },
+    {
+      "id": "12-ai-skills/prompts/source-extraction.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "12-ai-skills/prompts/source-extraction.md",
+        "status": "active",
+        "updated_at": "2026-05-10T07:20:49.516Z"
+      }
+    },
+    {
+      "id": "12-ai-skills/version-patch-prompts.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "12-ai-skills/version-patch-prompts.md",
+        "status": "active",
+        "updated_at": "2026-05-04T09:56:46.857Z"
+      }
+    },
+    {
+      "id": "13-knowledge-graph/README.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "13-knowledge-graph/README.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:19:14.185Z"
+      }
+    },
+    {
+      "id": "13-knowledge-graph/v2.6-glossary.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "13-knowledge-graph/v2.6-glossary.md",
+        "status": "active",
+        "updated_at": "2026-05-10T07:20:49.516Z"
+      }
+    },
+    {
+      "id": "13-knowledge-graph/v2.6-ontology.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "13-knowledge-graph/v2.6-ontology.md",
+        "status": "active",
+        "updated_at": "2026-05-10T07:20:49.516Z"
+      }
+    },
+    {
+      "id": "14-templates/README.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "14-templates/README.md",
+        "status": "active",
+        "updated_at": "2026-04-28T07:48:08.929Z"
+      }
+    },
+    {
+      "id": "14-templates/doc-template.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "14-templates/doc-template.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:19:14.222Z"
+      }
+    },
+    {
+      "id": "14-templates/extension-mechanism.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "14-templates/extension-mechanism.md",
+        "status": "active",
+        "updated_at": "2026-05-10T07:20:49.516Z"
+      }
+    },
+    {
+      "id": "15-governance/bi-temporal-writing-rules.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/bi-temporal-writing-rules.md",
+        "status": "active",
+        "updated_at": "2026-04-28T04:19:14.120Z"
+      }
+    },
+    {
+      "id": "15-governance/document-taxonomy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/document-taxonomy.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:15:07.280Z"
+      }
+    },
+    {
+      "id": "15-governance/git-binding-policy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/git-binding-policy.md",
+        "status": "active",
+        "updated_at": "2026-05-10T14:25:33.173Z"
+      }
+    },
+    {
+      "id": "15-governance/impact-policy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/impact-policy.md",
+        "status": "active",
+        "updated_at": "2026-05-10T07:20:49.516Z"
+      }
+    },
+    {
+      "id": "15-governance/link-and-ownership-policy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/link-and-ownership-policy.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:23:51.944Z"
+      }
+    },
+    {
+      "id": "15-governance/metadata-schema.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/metadata-schema.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:14:42.345Z"
+      }
+    },
+    {
+      "id": "15-governance/migrations/README.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/migrations/README.md",
+        "status": "active",
+        "updated_at": "2026-04-28T09:00:21.737Z"
+      }
+    },
+    {
+      "id": "15-governance/migrations/migrate-v1.0.0-to-v1.1.0.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/migrations/migrate-v1.0.0-to-v1.1.0.md",
+        "status": "active",
+        "updated_at": "2026-04-28T09:00:21.740Z"
+      }
+    },
+    {
+      "id": "15-governance/migrations/migration-template.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/migrations/migration-template.md",
+        "status": "active",
+        "updated_at": "2026-04-28T07:48:08.929Z"
+      }
+    },
+    {
+      "id": "15-governance/numbering-system.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/numbering-system.md",
+        "status": "active",
+        "updated_at": "2026-05-04T09:21:39.633Z"
+      }
+    },
+    {
+      "id": "15-governance/related-semantic.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/related-semantic.md",
+        "status": "active",
+        "updated_at": "2026-04-30T19:20:24.691Z"
+      }
+    },
+    {
+      "id": "15-governance/release-pipeline-policy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/release-pipeline-policy.md",
+        "status": "active",
+        "updated_at": "2026-05-01T14:43:58.951Z"
+      }
+    },
+    {
+      "id": "15-governance/release-policy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/release-policy.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:30:00.876Z"
+      }
+    },
+    {
+      "id": "15-governance/review-cadence.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/review-cadence.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:30:00.876Z"
+      }
+    },
+    {
+      "id": "15-governance/rule-catalog-contract.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/rule-catalog-contract.md",
+        "status": "active",
+        "updated_at": "2026-05-10T14:34:42.173Z"
+      }
+    },
+    {
+      "id": "15-governance/self-evolution-doctrine.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/self-evolution-doctrine.md",
+        "status": "active",
+        "updated_at": "2026-05-02T16:09:51.710Z"
+      }
+    },
+    {
+      "id": "15-governance/template-versioning-policy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/template-versioning-policy.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:30:00.876Z"
+      }
+    },
+    {
+      "id": "15-governance/verification-policy.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "15-governance/verification-policy.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:32:45.222Z"
+      }
+    },
+    {
+      "id": "16-release-pipelines/examples/README.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "16-release-pipelines/examples/README.md",
+        "status": "active",
+        "updated_at": "2026-05-01T14:43:58.951Z"
+      }
+    },
+    {
+      "id": "INDEX.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "INDEX.md",
+        "status": "active",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "id": "TEMPLATE_CHANGELOG.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "TEMPLATE_CHANGELOG.md",
+        "status": "active",
+        "updated_at": "2026-05-09T19:20:49.661Z"
+      }
+    },
+    {
+      "id": "intent:v2-3-5-stabilization-20260505130134",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "intent",
+        "source_path": "intents/_archive/v2-3-5-stabilization-20260505130134/apply-record.json",
+        "status": "archived",
+        "updated_at": "2026-05-05T06:00:46.155Z"
+      }
+    },
+    {
+      "id": "intent:v2-3-6-planned-backlog-20260505133412",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "intent",
+        "source_path": "intents/_archive/v2-3-6-planned-backlog-20260505133412/apply-record.json",
+        "status": "archived",
+        "updated_at": "2026-05-05T06:33:56.701Z"
+      }
+    },
+    {
+      "id": "intents/_active/v2-9-graph-ingest-reconstruction/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_active/v2-9-graph-ingest-reconstruction/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-10T15:37:23.358Z"
+      }
+    },
+    {
+      "id": "intents/_active/v2-9-graph-ingest-reconstruction/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_active/v2-9-graph-ingest-reconstruction/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T15:37:02.798Z"
+      }
+    },
+    {
+      "id": "intents/_active/v2-9-graph-ingest-reconstruction/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_active/v2-9-graph-ingest-reconstruction/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-10T15:37:14.955Z"
+      }
+    },
+    {
+      "id": "intents/_archive/INT-2-3-2-notes-migration-closeout-closed-20260505003811/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/INT-2-3-2-notes-migration-closeout-closed-20260505003811/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-04T17:02:04.467Z"
+      }
+    },
+    {
+      "id": "intents/_archive/INT-2-3-2-notes-migration-closeout-closed-20260505003811/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/INT-2-3-2-notes-migration-closeout-closed-20260505003811/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T09:09:44.557Z"
+      }
+    },
+    {
+      "id": "intents/_archive/INT-2-3-2-notes-migration-closeout-closed-20260505003811/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/INT-2-3-2-notes-migration-closeout-closed-20260505003811/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:08.664Z"
+      }
+    },
+    {
+      "id": "intents/_archive/INT-2-3-6-upgrade-foundation-and-direction-20260506/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/INT-2-3-6-upgrade-foundation-and-direction-20260506/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.447Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-1-release-publish-shipped-20260505002736/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-1-release-publish-shipped-20260505002736/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.102Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-1-release-publish-shipped-20260505002736/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-1-release-publish-shipped-20260505002736/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.453Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-1-release-publish-shipped-20260505002736/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-1-release-publish-shipped-20260505002736/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.454Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-2-closure-pass-closed-20260505003811/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-2-closure-pass-closed-20260505003811/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:08.675Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-2-closure-pass-closed-20260505003811/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-2-closure-pass-closed-20260505003811/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.464Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-2-closure-pass-closed-20260505003811/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-2-closure-pass-closed-20260505003811/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.473Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-1-extract-gap-closure-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-1-extract-gap-closure-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.481Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-1-extract-gap-closure-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-1-extract-gap-closure-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.486Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-1-extract-gap-closure-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-1-extract-gap-closure-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:08.684Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-1-human-gate-shipped-as-v2.3.4-20260505015207/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-1-human-gate-shipped-as-v2.3.4-20260505015207/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.495Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-1-human-gate-shipped-as-v2.3.4-20260505015207/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-1-human-gate-shipped-as-v2.3.4-20260505015207/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.498Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.554Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.556Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.558Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/proposed-changes/kb-root/agent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/proposed-changes/kb-root/agent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.508Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/proposed-changes/kb-root/process.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/proposed-changes/kb-root/process.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.510Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/proposed-changes/knowledge-base/intents/_active/v2-3-3-2-agent-intent-start-hardening/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/proposed-changes/knowledge-base/intents/_active/v2-3-3-2-agent-intent-start-hardening/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.524Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/proposed-changes/template/12-ai-skills/agent-operating-manual.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-2-agent-intent-start-hardening-superseded-by-2-3-5-2-3-6-20260505121357/proposed-changes/template/12-ai-skills/agent-operating-manual.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:08.714Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-reflective-pulse-protocol-superseded-by-v2-3-4-20260505005254/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-reflective-pulse-protocol-superseded-by-v2-3-4-20260505005254/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.564Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-reflective-pulse-protocol-superseded-by-v2-3-4-20260505005254/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-reflective-pulse-protocol-superseded-by-v2-3-4-20260505005254/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.566Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-3-reflective-pulse-protocol-superseded-by-v2-3-4-20260505005254/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-3-reflective-pulse-protocol-superseded-by-v2-3-4-20260505005254/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.572Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-4-cognitive-drift-signal-shipped-as-v2.3.3-20260505011923/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-4-cognitive-drift-signal-shipped-as-v2.3.3-20260505011923/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-04T17:24:22.554Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-4-cognitive-drift-signal-shipped-as-v2.3.3-20260505011923/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-4-cognitive-drift-signal-shipped-as-v2.3.3-20260505011923/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.577Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-4-cognitive-drift-signal-shipped-as-v2.3.3-20260505011923/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-4-cognitive-drift-signal-shipped-as-v2.3.3-20260505011923/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.581Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-4-vscode-marketplace-epic-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-4-vscode-marketplace-epic-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.604Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-4-vscode-marketplace-epic-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-4-vscode-marketplace-epic-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.605Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-5-stabilization-20260505130134/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-5-stabilization-20260505130134/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.637Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-5-stabilization-20260505130134/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-5-stabilization-20260505130134/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.640Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-5-stabilization-20260505130134/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-5-stabilization-20260505130134/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.642Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-5-stabilization-20260505130134/proposed-changes/kb-root/agent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-5-stabilization-20260505130134/proposed-changes/kb-root/agent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.614Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-5-stabilization-20260505130134/proposed-changes/knowledge-base/12-ai-skills/agent-operating-manual.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-5-stabilization-20260505130134/proposed-changes/knowledge-base/12-ai-skills/agent-operating-manual.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:08.736Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-6-planned-backlog-20260505133412/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-6-planned-backlog-20260505133412/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-05T05:13:32.283Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-6-planned-backlog-20260505133412/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-6-planned-backlog-20260505133412/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-05T06:19:05.451Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-6-planned-backlog-20260505133412/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-6-planned-backlog-20260505133412/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-05T05:13:32.283Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-6-planned-backlog-20260505133412/proposed-changes/kb-root/process.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-6-planned-backlog-20260505133412/proposed-changes/kb-root/process.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:01.651Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-x-three-layer-separation-refactor-r0-r4-20260504123042/changelog.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-x-three-layer-separation-refactor-r0-r4-20260504123042/changelog.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:08.761Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-3-x-three-layer-separation-refactor-r0-r4-20260504123042/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-3-x-three-layer-separation-refactor-r0-r4-20260504123042/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-04T12:30:42.862Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-4-intent-first-version-governance/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-4-intent-first-version-governance/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.102Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-4-intent-first-version-governance/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-4-intent-first-version-governance/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-05T06:46:03.102Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-4-intent-first-version-governance/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-4-intent-first-version-governance/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.102Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-4-team-gates-superseded-by-v2-3-4-epic-20260505011957/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-4-team-gates-superseded-by-v2-3-4-epic-20260505011957/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.095Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-4-team-gates-superseded-by-v2-3-4-epic-20260505011957/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-4-team-gates-superseded-by-v2-3-4-epic-20260505011957/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-04T18:29:48.672Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-4-team-gates-superseded-by-v2-3-4-epic-20260505011957/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-4-team-gates-superseded-by-v2-3-4-epic-20260505011957/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.102Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-5-cli-first-intent-orchestration-20260508135219/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-5-cli-first-intent-orchestration-20260508135219/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:08.773Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-5-cross-project-foundation-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-5-cross-project-foundation-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.095Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-5-cross-project-foundation-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-5-cross-project-foundation-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.095Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-5-cross-project-foundation-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-5-cross-project-foundation-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.095Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-6-controlled-multi-agent-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-6-controlled-multi-agent-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.102Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-6-controlled-multi-agent-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-6-controlled-multi-agent-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.095Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v2-6-controlled-multi-agent-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v2-6-controlled-multi-agent-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.095Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v3-0-platform-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v3-0-platform-superseded-by-2-3-5-2-3-6-20260505121357/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-04T14:58:04.102Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v3-0-platform-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v3-0-platform-superseded-by-2-3-5-2-3-6-20260505121357/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:08.781Z"
+      }
+    },
+    {
+      "id": "intents/_archive/v3-0-platform-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_archive/v3-0-platform-superseded-by-2-3-5-2-3-6-20260505121357/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:23:08.788Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-10-research-driven-kb-intelligence.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-10-research-driven-kb-intelligence.md",
+        "status": "active",
+        "updated_at": "2026-05-09T16:17:26.388Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-5-user-customization-framework.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-5-user-customization-framework.md",
+        "status": "active",
+        "updated_at": "2026-05-10T08:53:05.310Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-8-1-dispatch-fixtures-expansion-to-30.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-8-1-dispatch-fixtures-expansion-to-30.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:08:20.124Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-8-6-intent-operational-scorecard-template.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-8-6-intent-operational-scorecard-template.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:14:01.032Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-8-kbagent-minimal-db-schema.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-8-kbagent-minimal-db-schema.md",
+        "status": "active",
+        "updated_at": "2026-05-09T16:17:26.378Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-8-kbagent-structured-store-spike.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-8-kbagent-structured-store-spike.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:56:31.039Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-8-svfactory-rule-catalog-hardening.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-8-svfactory-rule-catalog-hardening.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:36:53.913Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-9-0-dispatch-runtime-test-harness.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-9-0-dispatch-runtime-test-harness.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:08:20.126Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-9-1-action-dispatch-runtime-phase-2.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-9-1-action-dispatch-runtime-phase-2.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:08:20.125Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-9-1-rules-graph-lane-foundation.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-9-1-rules-graph-lane-foundation.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:57:03.528Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-9-2-intent-realtime-graph-lane.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-9-2-intent-realtime-graph-lane.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:57:03.528Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-9-3-source-gitnexus-graph-lane.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-9-3-source-gitnexus-graph-lane.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:57:03.528Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-9-customization-lifecycle-and-safe-uninstall.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-9-customization-lifecycle-and-safe-uninstall.md",
+        "status": "active",
+        "updated_at": "2026-05-10T08:53:05.310Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-9-db-and-intent-web-ui.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-9-db-and-intent-web-ui.md",
+        "status": "active",
+        "updated_at": "2026-05-09T16:17:26.378Z"
+      }
+    },
+    {
+      "id": "intents/_backlog/v2-9-rules-lifecycle-graphdb-multi-lane.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_backlog/v2-9-rules-lifecycle-graphdb-multi-lane.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:46:43.398Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-downstream-agent-and-ontology/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-downstream-agent-and-ontology/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-09T19:24:44.914Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-downstream-agent-and-ontology/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-downstream-agent-and-ontology/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:37:43.938Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-downstream-agent-and-ontology/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-downstream-agent-and-ontology/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-10T08:53:05.310Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-kbx-beta-bug-hunt/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-kbx-beta-bug-hunt/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-10T08:32:09.209Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-kbx-beta-bug-hunt/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-kbx-beta-bug-hunt/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:37:45.239Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-kbx-beta-bug-hunt/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-kbx-beta-bug-hunt/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-10T08:32:09.207Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-2-principal-grounding-contract/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-2-principal-grounding-contract/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:48:55.727Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-2-principal-grounding-contract/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-2-principal-grounding-contract/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:49:32.095Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-2-principal-grounding-contract/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-2-principal-grounding-contract/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:48:55.672Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-3-pipeline-end-verification-contract/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-3-pipeline-end-verification-contract/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:52:34.362Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-3-pipeline-end-verification-contract/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-3-pipeline-end-verification-contract/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:52:45.167Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-3-pipeline-end-verification-contract/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-3-pipeline-end-verification-contract/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:52:28.599Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-4-generative-loop-contract/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-4-generative-loop-contract/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:53:16.049Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-4-generative-loop-contract/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-4-generative-loop-contract/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:53:24.817Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-4-generative-loop-contract/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-4-generative-loop-contract/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:53:07.903Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-5-dispatch-integration-test-plan/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-5-dispatch-integration-test-plan/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:54:08.361Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-5-dispatch-integration-test-plan/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-5-dispatch-integration-test-plan/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:54:20.326Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-5-dispatch-integration-test-plan/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-5-dispatch-integration-test-plan/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:54:01.114Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-svfactory-rule-catalog-hardening/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-svfactory-rule-catalog-hardening/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:43:13.138Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-svfactory-rule-catalog-hardening/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-svfactory-rule-catalog-hardening/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:37:51.768Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-8-v2-8-svfactory-rule-catalog-hardening/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-8-v2-8-svfactory-rule-catalog-hardening/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:46:43.396Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-9-v2-9-natural-rules-foundation-file-architecture/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-9-v2-9-natural-rules-foundation-file-architecture/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:57:03.535Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-9-v2-9-natural-rules-foundation-file-architecture/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-9-v2-9-natural-rules-foundation-file-architecture/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T13:37:53.054Z"
+      }
+    },
+    {
+      "id": "intents/_closed/dropped/v2-9-v2-9-natural-rules-foundation-file-architecture/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/dropped/v2-9-v2-9-natural-rules-foundation-file-architecture/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:57:03.528Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/kb-agent-centric-docs/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/kb-agent-centric-docs/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.364Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/kb-agent-centric-docs/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/kb-agent-centric-docs/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.368Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/kb-agent-centric-docs/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/kb-agent-centric-docs/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.372Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-4-intent-governance/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-4-intent-governance/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-06T11:11:38.437Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-4-intent-governance/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-4-intent-governance/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.379Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-4-intent-governance/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-4-intent-governance/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.387Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-4-intent-schema-migration/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-4-intent-schema-migration/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-07T04:38:54.346Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-4-intent-schema-migration/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-4-intent-schema-migration/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-07T06:46:04.518Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-4-intent-schema-migration/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-4-intent-schema-migration/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-07T04:38:54.358Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-4-svfactory-rename/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-4-svfactory-rename/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.391Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-4-svfactory-rename/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-4-svfactory-rename/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.396Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-4-svfactory-rename/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-4-svfactory-rename/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.405Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-5-1-deterministic-multi-project-model/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-5-1-deterministic-multi-project-model/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-08T18:20:34.452Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-5-1-deterministic-multi-project-model/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-5-1-deterministic-multi-project-model/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.412Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-5-1-deterministic-multi-project-model/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-5-1-deterministic-multi-project-model/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.421Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-5-cli-first-intent-orchestration/gates.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-5-cli-first-intent-orchestration/gates.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.422Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-5-cli-first-intent-orchestration/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-5-cli-first-intent-orchestration/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-07T04:38:54.358Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-5-cli-first-intent-orchestration/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-5-cli-first-intent-orchestration/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.437Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-5-cli-first-intent-orchestration/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-5-cli-first-intent-orchestration/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-09T08:42:18.455Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md",
+        "status": "active",
+        "updated_at": "2026-05-09T04:55:19.412Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-6-kb-ontology-foundation/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-6-kb-ontology-foundation/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-09T16:17:26.378Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-6-kb-ontology-foundation/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-6-kb-ontology-foundation/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-09T18:22:24.186Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-6-kb-ontology-foundation/phase-0-report.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-6-kb-ontology-foundation/phase-0-report.md",
+        "status": "active",
+        "updated_at": "2026-05-09T04:55:19.412Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-6-kb-ontology-foundation/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-6-kb-ontology-foundation/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-09T16:17:26.378Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-7-nl-rules-to-cli-logic/impact.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-7-nl-rules-to-cli-logic/impact.md",
+        "status": "active",
+        "updated_at": "2026-05-08T18:21:21.155Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-7-nl-rules-to-cli-logic/intent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-7-nl-rules-to-cli-logic/intent.md",
+        "status": "active",
+        "updated_at": "2026-05-10T09:59:56.844Z"
+      }
+    },
+    {
+      "id": "intents/_closed/released/v2-7-nl-rules-to-cli-logic/plan.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_closed/released/v2-7-nl-rules-to-cli-logic/plan.md",
+        "status": "active",
+        "updated_at": "2026-05-09T12:56:31.037Z"
+      }
+    },
+    {
+      "id": "intents/_meta/chaos-history.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_meta/chaos-history.md",
+        "status": "active",
+        "updated_at": "2026-05-10T14:08:03.982Z"
+      }
+    },
+    {
+      "id": "intents/_meta/debt-index.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_meta/debt-index.md",
+        "status": "active",
+        "updated_at": "2026-05-02T10:23:43.823Z"
+      }
+    },
+    {
+      "id": "intents/_meta/entropy-index.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_meta/entropy-index.md",
+        "status": "active",
+        "updated_at": "2026-05-02T10:23:43.823Z"
+      }
+    },
+    {
+      "id": "intents/_meta/gates-report.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_meta/gates-report.md",
+        "status": "active",
+        "updated_at": "2026-05-02T10:23:43.824Z"
+      }
+    },
+    {
+      "id": "intents/_meta/graph-ingest-data-loss-2026-05-10.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_meta/graph-ingest-data-loss-2026-05-10.md",
+        "status": "active",
+        "updated_at": "2026-05-10T15:35:10.943Z"
+      }
+    },
+    {
+      "id": "intents/_meta/lessons-index.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "intents/_meta/lessons-index.md",
+        "status": "active",
+        "updated_at": "2026-05-02T10:23:43.824Z"
+      }
+    },
+    {
+      "id": "knowledge-base/12-ai-skills/agent-operating-manual.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "knowledge-base/12-ai-skills/agent-operating-manual.md",
+        "status": "active",
+        "updated_at": "2026-05-09T16:37:07.493Z"
+      }
+    },
+    {
+      "id": "svfactory/agent.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "svfactory/agent.md",
+        "status": "active",
+        "updated_at": "2026-05-08T19:17:30.569Z"
+      }
+    },
+    {
+      "id": "svfactory/process.md",
+      "type": "SourceEntity",
+      "properties": {
+        "kind": "doc",
+        "source_path": "svfactory/process.md",
+        "status": "active",
+        "updated_at": "2026-05-08T08:54:40.718Z"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "00-start-here/code-qa-index.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:00-start-here/code-qa-index.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "00-start-here/intent-index.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:00-start-here/intent-index.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "00-start-here/project-scope-matrix.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:00-start-here/project-scope-matrix.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "00-start-here/repository-revision-state.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:00-start-here/repository-revision-state.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "00-start-here/strategic-backlog.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:00-start-here/strategic-backlog.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "00-start-here/strategic-backlog.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:00-start-here/strategic-backlog.md#2",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "00-start-here/terminology-guard.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:00-start-here/terminology-guard.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "12-ai-skills/agent-operating-manual.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:12-ai-skills/agent-operating-manual.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "12-ai-skills/prompt-pack.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:12-ai-skills/prompt-pack.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "12-ai-skills/prompting-guide.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:12-ai-skills/prompting-guide.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "15-governance/metadata-schema.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:15-governance/metadata-schema.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "15-governance/release-pipeline-policy.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:15-governance/release-pipeline-policy.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/how-to-use-this-kb.md",
+      "to": "15-governance/self-evolution-doctrine.md",
+      "properties": {
+        "relation_id": "00-start-here/how-to-use-this-kb.md:links:15-governance/self-evolution-doctrine.md",
+        "direction": "outbound",
+        "source": "00-start-here/how-to-use-this-kb.md",
+        "updated_at": "2026-05-09T12:23:51.937Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "00-start-here/knowledge-base-architecture.md",
+      "to": "15-governance/metadata-schema.md",
+      "properties": {
+        "relation_id": "00-start-here/knowledge-base-architecture.md:links:15-governance/metadata-schema.md",
+        "direction": "outbound",
+        "source": "00-start-here/knowledge-base-architecture.md",
+        "updated_at": "2026-05-09T12:23:51.927Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual-appendix.md",
+      "to": "12-ai-skills/agent-operating-manual-core.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual-appendix.md:links:12-ai-skills/agent-operating-manual-core.md",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual-appendix.md",
+        "updated_at": "2026-05-10T10:20:05.139Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual-core.md",
+      "to": "12-ai-skills/agent-operating-manual-appendix.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual-core.md:links:12-ai-skills/agent-operating-manual-appendix.md",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual-core.md",
+        "updated_at": "2026-05-10T14:34:42.152Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual-core.md",
+      "to": "12-ai-skills/agent-operating-manual-appendix.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual-core.md:links:12-ai-skills/agent-operating-manual-appendix.md#2",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual-core.md",
+        "updated_at": "2026-05-10T14:34:42.152Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual.md",
+      "to": "12-ai-skills/agent-operating-manual-appendix.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual.md:links:12-ai-skills/agent-operating-manual-appendix.md",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual.md",
+        "updated_at": "2026-05-10T10:24:09.086Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual.md",
+      "to": "12-ai-skills/agent-operating-manual-appendix.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual.md:links:12-ai-skills/agent-operating-manual-appendix.md#2",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual.md",
+        "updated_at": "2026-05-10T10:24:09.086Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual.md",
+      "to": "12-ai-skills/agent-operating-manual-appendix.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual.md:links:12-ai-skills/agent-operating-manual-appendix.md#3",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual.md",
+        "updated_at": "2026-05-10T10:24:09.086Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual.md",
+      "to": "12-ai-skills/agent-operating-manual-core.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual.md:links:12-ai-skills/agent-operating-manual-core.md",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual.md",
+        "updated_at": "2026-05-10T10:24:09.086Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual.md",
+      "to": "12-ai-skills/agent-operating-manual-core.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual.md:links:12-ai-skills/agent-operating-manual-core.md#2",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual.md",
+        "updated_at": "2026-05-10T10:24:09.086Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual.md",
+      "to": "12-ai-skills/agent-operating-manual-core.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual.md:links:12-ai-skills/agent-operating-manual-core.md#3",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual.md",
+        "updated_at": "2026-05-10T10:24:09.086Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/agent-operating-manual.md",
+      "to": "12-ai-skills/agent-operating-manual-core.md",
+      "properties": {
+        "relation_id": "12-ai-skills/agent-operating-manual.md:links:12-ai-skills/agent-operating-manual-core.md#4",
+        "direction": "outbound",
+        "source": "12-ai-skills/agent-operating-manual.md",
+        "updated_at": "2026-05-10T10:24:09.086Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/prompting-guide.md",
+      "to": "12-ai-skills/version-patch-prompts.md",
+      "properties": {
+        "relation_id": "12-ai-skills/prompting-guide.md:links:12-ai-skills/version-patch-prompts.md",
+        "direction": "outbound",
+        "source": "12-ai-skills/prompting-guide.md",
+        "updated_at": "2026-05-04T09:56:46.857Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "12-ai-skills/prompting-guide.md",
+      "to": "TEMPLATE_CHANGELOG.md",
+      "properties": {
+        "relation_id": "12-ai-skills/prompting-guide.md:links:TEMPLATE_CHANGELOG.md",
+        "direction": "outbound",
+        "source": "12-ai-skills/prompting-guide.md",
+        "updated_at": "2026-05-04T09:56:46.857Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "13-knowledge-graph/v2.6-glossary.md",
+      "to": "13-knowledge-graph/v2.6-ontology.md",
+      "properties": {
+        "relation_id": "13-knowledge-graph/v2.6-glossary.md:links:13-knowledge-graph/v2.6-ontology.md",
+        "direction": "outbound",
+        "source": "13-knowledge-graph/v2.6-glossary.md",
+        "updated_at": "2026-05-10T07:20:49.516Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "14-templates/README.md",
+      "to": "15-governance/migrations/README.md",
+      "properties": {
+        "relation_id": "14-templates/README.md:links:15-governance/migrations/README.md",
+        "direction": "outbound",
+        "source": "14-templates/README.md",
+        "updated_at": "2026-04-28T07:48:08.929Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "15-governance/git-binding-policy.md",
+      "to": "00-start-here/repository-revision-state.md",
+      "properties": {
+        "relation_id": "15-governance/git-binding-policy.md:links:00-start-here/repository-revision-state.md",
+        "direction": "outbound",
+        "source": "15-governance/git-binding-policy.md",
+        "updated_at": "2026-05-10T14:25:33.173Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "15-governance/impact-policy.md",
+      "to": "15-governance/git-binding-policy.md",
+      "properties": {
+        "relation_id": "15-governance/impact-policy.md:links:15-governance/git-binding-policy.md",
+        "direction": "outbound",
+        "source": "15-governance/impact-policy.md",
+        "updated_at": "2026-05-10T07:20:49.516Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "15-governance/impact-policy.md",
+      "to": "15-governance/related-semantic.md",
+      "properties": {
+        "relation_id": "15-governance/impact-policy.md:links:15-governance/related-semantic.md",
+        "direction": "outbound",
+        "source": "15-governance/impact-policy.md",
+        "updated_at": "2026-05-10T07:20:49.516Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "15-governance/impact-policy.md",
+      "to": "15-governance/template-versioning-policy.md",
+      "properties": {
+        "relation_id": "15-governance/impact-policy.md:links:15-governance/template-versioning-policy.md",
+        "direction": "outbound",
+        "source": "15-governance/impact-policy.md",
+        "updated_at": "2026-05-10T07:20:49.516Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "15-governance/migrations/README.md",
+      "to": "15-governance/migrations/migrate-v1.0.0-to-v1.1.0.md",
+      "properties": {
+        "relation_id": "15-governance/migrations/README.md:links:15-governance/migrations/migrate-v1.0.0-to-v1.1.0.md",
+        "direction": "outbound",
+        "source": "15-governance/migrations/README.md",
+        "updated_at": "2026-04-28T09:00:21.737Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/code-qa-index.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/code-qa-index.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/how-to-use-this-kb.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/how-to-use-this-kb.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/how-to-use-this-kb.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/how-to-use-this-kb.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/intent-index.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/intent-index.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/project-scope-matrix.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/project-scope-matrix.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/project-scope-matrix.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/project-scope-matrix.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/project-scope-matrix.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/project-scope-matrix.md#3",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/repository-revision-state.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/repository-revision-state.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/repository-revision-state.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/repository-revision-state.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/strategic-backlog.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/strategic-backlog.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/strategic-backlog.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/strategic-backlog.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/terminology-guard.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/terminology-guard.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/terminology-guard.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/terminology-guard.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/what-this-repo-is-not.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/what-this-repo-is-not.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "00-start-here/what-this-repo-is-not.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:00-start-here/what-this-repo-is-not.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/agent-operating-manual-appendix.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/agent-operating-manual-appendix.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/agent-operating-manual-core.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/agent-operating-manual-core.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/agent-operating-manual.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/agent-operating-manual.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/ai-ide-compatibility-matrix.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/ai-ide-compatibility-matrix.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/ai-ide-compatibility-matrix.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/ai-ide-compatibility-matrix.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/prompt-pack.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/prompt-pack.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/prompt-pack.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/prompt-pack.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/prompting-guide.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/prompting-guide.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/prompting-guide.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/prompting-guide.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/version-patch-prompts.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/version-patch-prompts.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/version-patch-prompts.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/version-patch-prompts.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "12-ai-skills/version-patch-prompts.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:12-ai-skills/version-patch-prompts.md#3",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "15-governance/migrations/README.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:15-governance/migrations/README.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "15-governance/release-pipeline-policy.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:15-governance/release-pipeline-policy.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "15-governance/release-policy.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:15-governance/release-policy.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "15-governance/self-evolution-doctrine.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:15-governance/self-evolution-doctrine.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "15-governance/template-versioning-policy.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:15-governance/template-versioning-policy.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "15-governance/template-versioning-policy.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:15-governance/template-versioning-policy.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "15-governance/verification-policy.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:15-governance/verification-policy.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "16-release-pipelines/examples/README.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:16-release-pipelines/examples/README.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "TEMPLATE_CHANGELOG.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:TEMPLATE_CHANGELOG.md",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "TEMPLATE_CHANGELOG.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:TEMPLATE_CHANGELOG.md#2",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "INDEX.md",
+      "to": "TEMPLATE_CHANGELOG.md",
+      "properties": {
+        "relation_id": "INDEX.md:links:TEMPLATE_CHANGELOG.md#3",
+        "direction": "outbound",
+        "source": "INDEX.md",
+        "updated_at": "2026-05-10T11:36:29.573Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md",
+      "to": "intents/_closed/released/v2-6-kb-ontology-foundation/intent.md",
+      "properties": {
+        "relation_id": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md:links:intents/_closed/released/v2-6-kb-ontology-foundation/intent.md",
+        "direction": "outbound",
+        "source": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md",
+        "updated_at": "2026-05-09T04:55:19.412Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md",
+      "to": "intents/_closed/released/v2-6-kb-ontology-foundation/phase-0-report.md",
+      "properties": {
+        "relation_id": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md:links:intents/_closed/released/v2-6-kb-ontology-foundation/phase-0-report.md",
+        "direction": "outbound",
+        "source": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md",
+        "updated_at": "2026-05-09T04:55:19.412Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md",
+      "to": "intents/_closed/released/v2-6-kb-ontology-foundation/plan.md",
+      "properties": {
+        "relation_id": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md:links:intents/_closed/released/v2-6-kb-ontology-foundation/plan.md",
+        "direction": "outbound",
+        "source": "intents/_closed/released/v2-6-kb-ontology-foundation/constraints-summary-for-review.md",
+        "updated_at": "2026-05-09T04:55:19.412Z"
+      }
+    },
+    {
+      "type": "links",
+      "from": "intents/_closed/released/v2-6-kb-ontology-foundation/phase-0-report.md",
+      "to": "intents/_closed/released/v2-6-kb-ontology-foundation/phase-0-report.md",
+      "properties": {
+        "relation_id": "intents/_closed/released/v2-6-kb-ontology-foundation/phase-0-report.md:links:intents/_closed/released/v2-6-kb-ontology-foundation/phase-0-report.md",
+        "direction": "outbound",
+        "source": "intents/_closed/released/v2-6-kb-ontology-foundation/phase-0-report.md",
+        "updated_at": "2026-05-09T04:55:19.412Z"
+      }
+    }
+  ],
+  "stats": {
+    "entity_count": 268,
+    "relation_count": 75,
+    "node_count": 268,
+    "edge_count": 75
+  }
+}
