@@ -41,6 +41,10 @@ Claim scope guard:
 - Default claim is "governed KB/agent software instances".
 - Do not claim "all software instances" without explicit non-KB evidence.
 
+Deterministic gate tier marker:
+- SV Factory gate tier (deterministic)
+- MUST stop immediately when deterministic gate checks fail.
+
 ## Design Philosophy: Opinionated Defaults
 
 KB Agent ships with opinionated defaults. Every default is chosen to work for the widest range of projects without configuration. Users can override defaults via `.kb/config.yml` (from v2.5), and overrides are logged to `.kb/governance/customizations.log` so `kbx migrate` can preserve them during upgrades.
@@ -81,6 +85,8 @@ This pattern mirrors ESLint/Prettier: strong defaults, user can opt out, changes
 
 ### NL Intent Trigger Mapping (Deterministic)
 
+Deterministic NL intent-trigger mapping
+
 When users speak in natural language (not CLI syntax), KBAgent must map intent-lifecycle phrases into deterministic `kbx intent` commands before answering.
 
 Required mappings:
@@ -117,6 +123,8 @@ Hard-fail rules (exit code 1, block proceeding):
 For starter templates, see `13-knowledge-graph/terminology-registry.md` and `13-knowledge-graph/ontology-contract.md`.
 
 ## Session-Start Intent Chooser (v2.3.3.2)
+
+Session-start intent chooser
 
 At the beginning of each conversation, before handling user work, the agent must:
 
