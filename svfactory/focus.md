@@ -11,20 +11,29 @@ v2.7 — NL Rules → CLI Hard Logic (rule engine)
 
 ## Current Phase
 
-**Phase:** v2.8 Phase 0 — Planning (3 workstreams: KB Agent behavior, Ontology hardening, Backend abstraction)
+**Version:** v2.8 Phase 0 — Boundary Lock & Testing Strategy
 
-**Done (session 2026-05-10):**
-- v2.7 COMPLETE: All 4 phases shipped, 710/710 tests passing
-- v2.7.0-beta.1 released: npm --tag beta (requires 2FA auth for GA)
-- v2.8 planning intent created: v2-8-downstream-agent-and-ontology
-- 3 workstreams scoped: WS1 (KB Agent), WS2 (Ontology), WS3 (Backend protocol)
-- Phase 0 boundary lock complete: phases defined, exit criteria gated, risks identified
+**Session State (2026-05-10, Checkpoint 3):**
+- v2.7 SHIPPED: 4 phases complete, 710/710 tests passing ✅
+- v2.7.0-beta.1 on npm: `npm install @williamduong/kbx@beta` ready 🎉
+- v2.8 Phase 0 COMPLETE: 3 workstreams scoped + phases gated + risks assessed
+- **Phase 1 Manual Tests COMPLETE:** 50 deep tests, 100% pass rate, HTML report ready 🧪
+  - YAML parsing (6 tests) — Unicode, CRLF, nested structures ✓
+  - Regex validation (14 tests) — Intent ID patterns vX-Y-slug ✓
+  - Verification rules (16 tests) — time_state, code-verified ✓
+  - Intent rules (3 tests) — next_action enforcement ✓
+  - Metadata rules (8 tests) — Required fields, enum values ✓
+  - CLI commands (3 tests) — list, help, error handling ✓
+- **NO BUGS FOUND** — All edge cases pass, chaos input handled gracefully
+- Checkpoint: Phase 1 test results delivered, ready for Phase 2 (integration + doctor)
 
 **Active intents:**
-- v2-7-nl-rules-to-cli-logic (v2.7 COMPLETE, ready to close)
-- v2-8-downstream-agent-and-ontology (v2.8 Phase 0 active)
+- v2-7-nl-rules-to-cli-logic (READY TO CLOSE — manual tests complete)
+- v2-8-downstream-agent-and-ontology (Phase 0 locked, awaiting Phase 1 kickoff)
 
-**Next action:** Release v2.7.0 GA or continue to Phase 1 workstreams (WS1 KB Agent prompts)
+**Next action:** 
+  1. Phase 2 manual tests (integration + doctor + CI/CD) — 20-30 more tests
+  2. Decide: Release v2.7.0 GA OR continue build with WS1/WS2/WS3
 
 ## Active Blockers
 
