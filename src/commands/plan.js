@@ -2,8 +2,203 @@ const fs = require('fs');
 const path = require('path');
 
 const { resolveExistingState } = require('../lib/context');
+const { resolveOutput, selectApplicableRules, resolveSelectorPolicy } = require('./dispatch');
+
+function parsePreviewArgs(args) {
+  const options = {
+    subcommand: 'preview',
+    request: null,
+    dryRun: false,
+    json: false,
+  };
+
+  const positional = [];
+  for (let i = 0; i < (args || []).length; i += 1) {
+    const arg = args[i];
+    if (arg === '--dry-run') {
+      options.dryRun = true;
+      continue;
+    }
+    if (arg === '--json') {
+      options.json = true;
+      continue;
+    }
+    if (arg.startsWith('--request=')) {
+      options.request = arg.slice('--request='.length).trim();
+      continue;
+    }
+    if (arg === '--request') {
+      const next = (args || [])[i + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error('kbx plan: --request requires a text value');
+      }
+      options.request = String(next).trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown plan option "${arg}" for preview mode.`);
+    }
+    positional.push(arg);
+  }
+
+  if (positional.length > 0) {
+    throw new Error('kbx plan preview does not accept positional arguments. Use --request "..." --dry-run [--json].');
+  }
+
+  if (!options.request) {
+    throw new Error('kbx plan preview requires --request "...".');
+  }
+
+  if (!options.dryRun) {
+    throw new Error('kbx plan preview currently supports dry-run only. Pass --dry-run.');
+  }
+
+  return options;
+}
+
+function detectIntentType(request) {
+  const text = String(request || '').toLowerCase();
+  if (/\brelease\b|\bpublish\b|\bversion\b/.test(text)) return 'release';
+  if (/\brecover\b|\brollback\b|\brestore\b/.test(text)) return 'recover';
+  if (/\bverify\b|\bvalidate\b|\bcheck\b|\btest\b/.test(text)) return 'verify';
+  if (/\bcreate\b|\bnew\b|\badd\b|\bintroduce\b/.test(text)) return 'create';
+  if (/\bimplement\b|\bfix\b|\bupdate\b|\bchange\b/.test(text)) return 'update';
+  if (/\brefactor\b|\brename\b|\brestructure\b/.test(text)) return 'refactor';
+  if (/\bexplain\b|\banalyze\b|\binspect\b/.test(text)) return 'explain';
+  return 'update';
+}
+
+function detectTargetScope(request) {
+  const text = String(request || '').toLowerCase();
+
+  if (/\bgraph\b|\bingest\b|\blane\b/.test(text)) return 'graph';
+  if (/\brule\b|\bpolicy\b|\bprinciple\b|\bcontract\b|\bgate\b/.test(text)) return 'rules';
+  if (/\brelease\b|\btag\b|\bnotes\b/.test(text)) return 'release';
+  if (/\bpackage\.json\b|\bdependency\b|\bdeps\b|\blockfile\b/.test(text)) return 'package';
+  if (/\btemplate\b|\bprompt\b|\bagent\.md\b|\bcopilot-instructions\b/.test(text)) return 'template';
+  if (/\bsrc\b|\bcli\b|\bcommand\b|\bruntime\b|\bcode\b|\bimplement\b|\bbug\b|\bfix\b/.test(text)) return 'source';
+  return 'docs';
+}
+
+function detectMutationClass(scope, request) {
+  const text = String(request || '').toLowerCase();
+  if (scope === 'release') return 'release-changing';
+  if (scope === 'source' || scope === 'package') return 'source-changing';
+  if (scope === 'rules' || scope === 'template') return 'contract-changing';
+  if (/read-only|analy[sz]e|inspect|explain/.test(text)) return 'read-only';
+  return 'docs-only';
+}
+
+function inferOntologyEntity(scope) {
+  if (scope === 'rules') return 'Rule';
+  if (scope === 'release') return 'Release';
+  if (scope === 'source' || scope === 'package') return 'Module';
+  return 'Artifact';
+}
+
+function inferRiskLevel(mutationClass) {
+  if (mutationClass === 'release-changing' || mutationClass === 'source-changing') return 'high';
+  if (mutationClass === 'contract-changing') return 'medium';
+  return 'low';
+}
+
+function inferEvidenceState(mutationClass) {
+  if (mutationClass === 'read-only') return 'sufficient';
+  if (mutationClass === 'docs-only') return 'sufficient';
+  return 'partial';
+}
+
+function previewPathsForScope(scope) {
+  if (scope === 'source') return ['src/**', 'test/**', 'bin/**'];
+  if (scope === 'rules') return ['src/lib/rules/**', 'template/15-governance/**', 'test/lib/**'];
+  if (scope === 'template') return ['template/**', '.github/**'];
+  if (scope === 'release') return ['knowledge-base/16-release-pipelines/**', 'CHANGELOG.md', '.kb/catalog.json'];
+  if (scope === 'package') return ['package.json', 'pnpm-lock.yaml', 'package-lock.json'];
+  if (scope === 'graph') return ['knowledge-base/.kb/graph-ingest/**', 'src/commands/graph.js'];
+  return ['knowledge-base/**', 'template/**'];
+}
+
+function previewChecksForScope(scope) {
+  if (scope === 'source' || scope === 'rules') {
+    return [
+      'node --test test/commands/dispatch.test.js',
+      'node --test test/commands/inspect.test.js',
+    ];
+  }
+  if (scope === 'release') {
+    return [
+      'node ./bin/kbx.js release plan --json',
+      'node ./bin/kbx.js doctor --json',
+    ];
+  }
+  return [
+    'node ./bin/kbx.js verify --all --json',
+    'node ./bin/kbx.js status --json',
+  ];
+}
+
+function buildPreviewPlan(request) {
+  const intentType = detectIntentType(request);
+  const targetScope = detectTargetScope(request);
+  const mutationClass = detectMutationClass(targetScope, request);
+
+  const tuple = {
+    intent_type: intentType,
+    intent_state: 'active',
+    ontology_entity: inferOntologyEntity(targetScope),
+    target_scope: targetScope,
+    mutation_class: mutationClass,
+    risk_level: inferRiskLevel(mutationClass),
+    evidence_state: inferEvidenceState(mutationClass),
+    actor_mode: 'agent-assisted',
+  };
+
+  const selected = selectApplicableRules(tuple);
+  const dispatch = resolveOutput(tuple);
+
+  return {
+    mode: 'preview',
+    dry_run: true,
+    write_intent: false,
+    request,
+    classification: {
+      intent_type: intentType,
+      target_scope: targetScope,
+      mutation_class: mutationClass,
+    },
+    suggestion: {
+      dispatch_tuple: tuple,
+      selector_policy: resolveSelectorPolicy('execution'),
+      primary_pipe: dispatch.primary_pipe,
+      applicable_rules: selected.applicable_rules,
+      required_gates: dispatch.required_gates,
+      allowed_actions: dispatch.allowed_actions,
+      verification_requirements: dispatch.verification_requirements,
+      fallback_or_escalation: dispatch.fallback_or_escalation,
+      explainability: {
+        tuple_to_rule_basis: selected.tuple_to_rule_basis,
+        skipped_rule_families: selected.skipped_rule_families,
+      },
+    },
+    proposed_patch_plan: {
+      target_paths: previewPathsForScope(targetScope),
+      planned_steps: [
+        'Capture current state and constraints from request.',
+        'Prepare minimal patch set scoped to classified target paths.',
+        'Run focused verification commands and collect deterministic output.',
+      ],
+      verification_commands: previewChecksForScope(targetScope),
+      write_operations: [],
+    },
+  };
+}
 
 function parseArgs(args) {
+  if ((args || []).some((arg) => arg === '--request' || String(arg).startsWith('--request='))) {
+    return parsePreviewArgs(args);
+  }
+
   const [subcommand = 'list', ...rest] = args;
 
   if (subcommand === 'add') {
@@ -116,6 +311,30 @@ function listPlanItems({ planPath }) {
 async function runPlan({ args, cwd }) {
   const options = parseArgs(args);
 
+  if (options.subcommand === 'preview') {
+    const payload = {
+      command: 'kbx plan',
+      ...buildPreviewPlan(options.request),
+    };
+
+    if (options.json) {
+      console.log(JSON.stringify(payload, null, 2));
+    } else {
+      console.log('kbx plan preview (dry-run)');
+      console.log(`  request: ${payload.request}`);
+      console.log(`  target_scope: ${payload.classification.target_scope}`);
+      console.log(`  mutation_class: ${payload.classification.mutation_class}`);
+      console.log(`  primary_pipe: ${payload.suggestion.primary_pipe || 'null'}`);
+      console.log(`  fallback_or_escalation: ${payload.suggestion.fallback_or_escalation || 'none'}`);
+      console.log(`  target_paths: ${payload.proposed_patch_plan.target_paths.join(', ')}`);
+    }
+
+    if (payload.suggestion.fallback_or_escalation === 'HumanGateRequired') {
+      process.exitCode = 1;
+    }
+    return;
+  }
+
   if (options.subcommand === 'add') {
     const planPath = resolvePlanPath(cwd);
     const id = addPlanItem({ planPath, text: options.text, owner: options.owner, priority: options.priority });
@@ -149,5 +368,8 @@ async function runPlan({ args, cwd }) {
 }
 
 module.exports = {
+  parseArgs,
+  parsePreviewArgs,
+  buildPreviewPlan,
   runPlan,
 };

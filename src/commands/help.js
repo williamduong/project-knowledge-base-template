@@ -29,6 +29,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kbx release run [--bump=patch|minor|major] [--target=npm|gh|all] [--from=<tag>] [--yes] [-f|--file <path>] [--json]');
     console.log('  kbx release plan [--bump=patch|minor|major] [--target=npm|gh|all] [--from=<tag>] [-f|--file <path>] [--json]');
     console.log('  kbx release init-pipeline [--template=npm-package|docs-only|custom] [--yes] [--json]');
+    console.log('  kbx plan --request "..." --dry-run [--json]');
     console.log('  kbx intent create [<id>] [--mode=quick|full] [--change-type=<type>] [--yes] [--json]');
     console.log('  kbx intent status [<id>] [--json]');
     console.log('  kbx intent list [--json]');
@@ -105,6 +106,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kbx bootstrap-api [--dry-run]');
   console.log('  kbx plan list');
   console.log('  kbx plan add "<description>" [--owner <name>] [--priority P0|P1|P2]');
+  console.log('  kbx plan --request "..." --dry-run [--json]');
   console.log('  kbx show [--backup-existing]');
   console.log('  kbx hide [--restore-backup]');
   console.log('  kbx test [--sample <count>] [--all]');
