@@ -41,3 +41,4 @@ Mark each row as `PASS` or `FAIL`.
 
 - Session 1 is approved only if all criteria are `PASS`.
 - If any criterion is `FAIL`, record correction and rerun review before expanding to 30 fixtures.
+- This checklist is a Session 1 snapshot gate (15-fixture baseline) and remains immutable after expansion.

@@ -1,0 +1,29 @@
+case_id: dispatch-020-human-gate-policy-high-risk
+scenario: High-risk policy refactor with contract mutation
+mode: execution
+dispatch_tuple:
+  intent_type: refactor
+  intent_state: active
+  ontology_entity: Policy
+  target_scope: rules
+  mutation_class: contract-changing
+  risk_level: high
+  evidence_state: sufficient
+  actor_mode: agent-assisted
+expected_output:
+  primary_pipe: null
+  applicable_rules: [KBX-M001, KBX-M002, KBX-M003, KBX-V001, KBX-I001, KBX-WF011]
+  required_gates: [P2, P10, P20]
+  allowed_actions: [request-human-gate]
+  verification_requirements: [high-risk-approval]
+  fallback_or_escalation: HumanGateRequired
+explainability:
+  tuple_to_pipe_basis: [risk_level=high]
+  tuple_to_rule_basis: [ontology_entity=Policy, mutation_class=contract-changing]
+determinism_checks:
+  repeated_resolution_same_output: true
+  no_random_branching: true
+acceptance:
+  resolves_to_single_pipe_or_human_gate: true
+  conditional_rules_tuple_based: true
+  no_state_mutation: true

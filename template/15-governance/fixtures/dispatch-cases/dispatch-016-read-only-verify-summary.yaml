@@ -1,0 +1,29 @@
+case_id: dispatch-016-read-only-verify-summary
+scenario: Read-only verification summary for existing policy set
+mode: diagnostic
+dispatch_tuple:
+  intent_type: verify
+  intent_state: active
+  ontology_entity: Policy
+  target_scope: docs
+  mutation_class: read-only
+  risk_level: low
+  evidence_state: sufficient
+  actor_mode: human-led
+expected_output:
+  primary_pipe: PipeReadOnly
+  applicable_rules: [KBX-M001, KBX-M002, KBX-M003, KBX-V001, KBX-AX003]
+  required_gates: [P2]
+  allowed_actions: [summarize, inspect]
+  verification_requirements: [traceable-source]
+  fallback_or_escalation: null
+explainability:
+  tuple_to_pipe_basis: [mutation_class=read-only]
+  tuple_to_rule_basis: [intent_type=verify]
+determinism_checks:
+  repeated_resolution_same_output: true
+  no_random_branching: true
+acceptance:
+  resolves_to_single_pipe_or_human_gate: true
+  conditional_rules_tuple_based: true
+  no_state_mutation: true

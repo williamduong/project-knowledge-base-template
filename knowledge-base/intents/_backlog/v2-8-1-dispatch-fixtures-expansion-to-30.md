@@ -5,9 +5,9 @@ description: "Increase fixture coverage only after schema + seed fixture review 
 lifecycle: backlog
 created_at: 2026-05-10T18:35:00.000Z
 focus:
-  current: "Deferred until Session 1 checklist is fully PASS."
+  current: "Expansion completed: fixture set is now 30 with deterministic checks passing."
   last_updated: 2026-05-10
-  next_action: "Use review-checklist-session-1.md; expand only after all criteria pass."
+  next_action: "Maintain schema stability and use this set as baseline for component-level contracts."
 schema_version: 2.7.0-beta.2
 ---
 
@@ -43,3 +43,9 @@ Fixture expansion to 30+ must happen only after explicit review approval.
 3. Rule selection is explainable from tuple fields.
 4. Conditional behavior remains deterministic.
 5. No runtime code introduced.
+
+## Completion Snapshot
+
+- Total fixtures: 30
+- Deterministic scan: pass (mode/outcome/explainability/determinism)
+- Replay pair check: pass (`dispatch-029` and `dispatch-030`)
