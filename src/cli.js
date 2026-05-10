@@ -38,6 +38,7 @@ const runOntology = require('./commands/ontology');
 const { runRules } = require('./commands/rules');
 const { runDispatch } = require('./commands/dispatch');
 const { runInspect } = require('./commands/inspect');
+const { runApply } = require('./commands/apply');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -227,6 +228,11 @@ async function run(argv) {
 
   if (command === 'inspect') {
     await runInspect({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'apply') {
+    await runApply({ args: rest, cwd: process.cwd() });
     return;
   }
 
