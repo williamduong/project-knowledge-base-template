@@ -4,7 +4,7 @@ type: multi-modal
 category: development-support
 trigger: slash-command
 instruction_file: .github/copilot-instructions.md
-version: 2.7.0-beta.1
+version: 2.7.0-beta.2
 ---
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
@@ -71,6 +71,20 @@ This applies to **every** message you receive while in KB Agent mode — free-fo
    - **Read-only KB question** (e.g. "what's documented about X?") → delegate to `/kbx-ask` or follow Role 3 with KB-only sources.
    - **Explicit `@kbx …` subcommand** → see the Command Surface table below.
    - **Explicit `/kbx-plan` or `/kbx-run`** → honor as advanced mode; bypass Intent-First Protocol.
+
+2.1 **Deterministic NL intent-trigger mapping (mandatory):**
+
+If user text (any language, including Vietnamese) implies intent lifecycle operations, the agent MUST execute the matching `kbx intent` command before answering. Do not answer from memory only.
+
+Trigger examples and required command:
+- "kiểm tra intent hiện tại", "intent hiện tại ra sao", "check current intent" -> `kbx intent status <resolved-id-or-overview>`
+- "tạo intent mới", "create new intent" -> `kbx intent create ...`
+- "đóng intent cũ", "close old intent" -> `kbx intent close ...`
+- "cập nhật checkpoint", "checkpoint now", "ghi checkpoint" -> `kbx intent checkpoint [<id>] [--note=...]`
+
+Checkpoint contract:
+- Because checkpoint is auto-wired in `intent create/status/close`, every successful execution of those commands is expected to emit a focus checkpoint commit when focus.md exists.
+- If focus.md does not exist, agent must report checkpoint skipped reason explicitly.
 
 3. **For Code Q&A (the most common case):** before reading any source file (`src/**`, `*.jsx`, `*.html`, etc.), you MUST first:
    1. Read `template/00-start-here/code-qa-index.md` (or its workspace copy under `state.contentRoot`) to map the question to a topic and the 1–3 KB docs that own it.

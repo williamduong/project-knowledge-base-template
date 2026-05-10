@@ -79,6 +79,25 @@ This pattern mirrors ESLint/Prettier: strong defaults, user can opt out, changes
 12. Apply with `kbx intent apply <id>` when done. Archive evidence.
 13. Output a concise completion report with numbered references and suggested next intent.
 
+### NL Intent Trigger Mapping (Deterministic)
+
+When users speak in natural language (not CLI syntax), KBAgent must map intent-lifecycle phrases into deterministic `kbx intent` commands before answering.
+
+Required mappings:
+- Intent inspection phrases (for example: "kiểm tra intent hiện tại", "check current intent") -> `kbx intent status ...`
+- Intent creation phrases (for example: "tạo intent mới", "create new intent") -> `kbx intent create ...`
+- Intent closure phrases (for example: "đóng intent cũ", "close old intent") -> `kbx intent close ...`
+- Explicit checkpoint phrases (for example: "cập nhật checkpoint", "checkpoint now") -> `kbx intent checkpoint ...`
+
+Checkpoint behavior contract:
+- `kbx intent create`, `kbx intent status`, and `kbx intent close` are checkpoint-trigger events.
+- On each trigger, CLI writes a checkpoint line to `focus.md` and commits immediately on the active branch.
+- If no supported `focus.md` exists, CLI must report checkpoint skipped with reason.
+
+AI boundary:
+- AI may propose checkpoint `note` text.
+- Event detection, file mutation, and commit are deterministic CLI responsibilities.
+
 ## Session-Start Intent Chooser (v2.3.3.2)
 
 At the beginning of each conversation, before handling user work, the agent must:
