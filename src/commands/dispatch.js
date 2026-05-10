@@ -263,6 +263,125 @@ function parseGroundArgs(args) {
   return options;
 }
 
+function parseVerifyEndArgs(args) {
+  const options = {
+    fixture: null,
+    json: false,
+    projectedChaos: null,
+    evidenceArtifacts: 1,
+    evidenceChecks: 1,
+    tupleRuleConsistent: true,
+    traceLinks: true,
+    ruleBasisListed: true,
+    rationaleExplicit: true,
+    remainingGaps: 0,
+    gapsOwned: true,
+    repeatFailCount: 0,
+    deferOwner: false,
+    deferReason: false,
+    deferFollowup: false,
+  };
+
+  const rest = [];
+  for (let i = 0; i < (args || []).length; i += 1) {
+    const arg = args[i];
+    if (arg === '--json') {
+      options.json = true;
+      continue;
+    }
+    if (arg.startsWith('--fixture=')) {
+      options.fixture = arg.slice('--fixture='.length).trim();
+      continue;
+    }
+    if (arg === '--fixture') {
+      const next = (args || [])[i + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error('kbx dispatch verify-end: --fixture requires a path value');
+      }
+      options.fixture = String(next).trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--projected-chaos=')) {
+      options.projectedChaos = Number(arg.slice('--projected-chaos='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--evidence-artifacts=')) {
+      options.evidenceArtifacts = Number(arg.slice('--evidence-artifacts='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--evidence-checks=')) {
+      options.evidenceChecks = Number(arg.slice('--evidence-checks='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--remaining-gaps=')) {
+      options.remainingGaps = Number(arg.slice('--remaining-gaps='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--repeat-fail-count=')) {
+      options.repeatFailCount = Number(arg.slice('--repeat-fail-count='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--tuple-rule-consistent=')) {
+      options.tupleRuleConsistent = arg.slice('--tuple-rule-consistent='.length).trim() !== 'false';
+      continue;
+    }
+    if (arg.startsWith('--trace-links=')) {
+      options.traceLinks = arg.slice('--trace-links='.length).trim() !== 'false';
+      continue;
+    }
+    if (arg.startsWith('--rule-basis-listed=')) {
+      options.ruleBasisListed = arg.slice('--rule-basis-listed='.length).trim() !== 'false';
+      continue;
+    }
+    if (arg.startsWith('--rationale-explicit=')) {
+      options.rationaleExplicit = arg.slice('--rationale-explicit='.length).trim() !== 'false';
+      continue;
+    }
+    if (arg.startsWith('--gaps-owned=')) {
+      options.gapsOwned = arg.slice('--gaps-owned='.length).trim() !== 'false';
+      continue;
+    }
+    if (arg.startsWith('--defer-owner=')) {
+      options.deferOwner = arg.slice('--defer-owner='.length).trim() !== 'false';
+      continue;
+    }
+    if (arg.startsWith('--defer-reason=')) {
+      options.deferReason = arg.slice('--defer-reason='.length).trim() !== 'false';
+      continue;
+    }
+    if (arg.startsWith('--defer-followup=')) {
+      options.deferFollowup = arg.slice('--defer-followup='.length).trim() !== 'false';
+      continue;
+    }
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown dispatch verify-end option "${arg}".`);
+    }
+    rest.push(arg);
+  }
+
+  if (rest.length > 0) {
+    throw new Error('kbx dispatch verify-end does not accept positional arguments.');
+  }
+
+  if (!options.fixture) {
+    throw new Error('kbx dispatch verify-end requires --fixture <path>.');
+  }
+
+  if (options.projectedChaos !== null && !Number.isFinite(options.projectedChaos)) {
+    throw new Error('kbx dispatch verify-end: --projected-chaos must be a finite number.');
+  }
+
+  const integerFields = ['evidenceArtifacts', 'evidenceChecks', 'remainingGaps', 'repeatFailCount'];
+  for (const field of integerFields) {
+    if (!Number.isInteger(options[field]) || options[field] < 0) {
+      throw new Error(`kbx dispatch verify-end: --${field.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())} must be an integer >= 0.`);
+    }
+  }
+
+  return options;
+}
+
 function normalizeList(list) {
   if (!Array.isArray(list)) return [];
   return Array.from(new Set(list.map((item) => String(item)))).sort();
@@ -491,6 +610,92 @@ function evaluatePrincipalGrounding(tuple, context) {
       info_count: infoCount,
       final_severity: maxSeverity,
       escalation: hardFailCount > 0 ? 'HumanGateRequired' : 'none',
+    },
+  };
+}
+
+function evaluatePipelineEndVerification(fixture, context) {
+  const tuple = fixture.dispatch_tuple;
+  const expected = sortOutput(fixture.expected_output);
+
+  const mutationFlow = ['create', 'update', 'refactor', 'release', 'recover'].includes(tuple.intent_type)
+    || ['contract-changing', 'source-changing', 'release-changing'].includes(tuple.mutation_class);
+
+  const completenessFail = (
+    context.evidenceArtifacts <= 0
+    || context.evidenceChecks <= 0
+    || !context.ruleBasisListed
+    || !context.rationaleExplicit
+    || (context.remainingGaps > 0 && !context.gapsOwned)
+  );
+
+  const consistencyFail = !context.tupleRuleConsistent;
+
+  let chaosGate = 'pass';
+  if (mutationFlow && context.projectedChaos === null) {
+    chaosGate = 'fail';
+  } else if (context.projectedChaos !== null) {
+    if (context.projectedChaos > 80) chaosGate = 'fail';
+    else if (context.projectedChaos >= 76) chaosGate = 'warn';
+  }
+
+  const traceFail = !context.traceLinks;
+
+  const preOutcomeFail = completenessFail || consistencyFail || chaosGate === 'fail' || traceFail;
+  const preOutcomeWarn = !preOutcomeFail && chaosGate === 'warn';
+  const provisionalClose = preOutcomeFail ? 'blocked' : (preOutcomeWarn ? 'deferred' : 'ready');
+
+  const deferRequired = provisionalClose === 'deferred';
+  const deferGateFail = deferRequired && (!context.deferOwner || !context.deferReason || !context.deferFollowup);
+
+  const gateResults = {
+    completeness_gate: completenessFail ? 'fail' : 'pass',
+    consistency_gate: consistencyFail ? 'fail' : (preOutcomeWarn ? 'warn' : 'pass'),
+    chaos_gate: chaosGate,
+    trace_gate: traceFail ? 'fail' : 'pass',
+    defer_record_gate: deferGateFail ? 'fail' : (deferRequired ? 'pass' : 'pass'),
+  };
+
+  const failedGates = Object.entries(gateResults).filter(([, status]) => status === 'fail').map(([k]) => k);
+  const warnedGates = Object.entries(gateResults).filter(([, status]) => status === 'warn').map(([k]) => k);
+
+  const unresolvedItems = [];
+  for (const g of failedGates) unresolvedItems.push(`fail:${g}`);
+  for (const g of warnedGates) unresolvedItems.push(`warn:${g}`);
+  if (context.remainingGaps > 0) unresolvedItems.push(`gap:remaining=${context.remainingGaps}`);
+
+  const finalFail = failedGates.length > 0;
+  const finalWarn = !finalFail && warnedGates.length > 0;
+  const verificationOutcome = finalFail ? 'fail' : (finalWarn ? 'warn' : 'pass');
+
+  let escalation = null;
+  if (consistencyFail) escalation = 'BlockedByRule';
+  if (completenessFail || chaosGate === 'fail' || traceFail || context.repeatFailCount >= 2) escalation = 'HumanGateRequired';
+
+  const closeReadiness = finalFail ? 'blocked' : (finalWarn ? 'deferred' : 'ready');
+
+  return {
+    snapshot_before: {
+      intent_id: fixture.case_id || null,
+      lifecycle_state: 'active',
+      tuple,
+      candidate_outputs: {
+        primary_pipe: expected.primary_pipe,
+        applicable_rules: expected.applicable_rules,
+        required_gates: expected.required_gates,
+      },
+      evidence_index: {
+        artifacts: Array.from({ length: context.evidenceArtifacts }, (_, i) => `artifact-${i + 1}`),
+        checks: Array.from({ length: context.evidenceChecks }, (_, i) => `check-${i + 1}`),
+      },
+    },
+    snapshot_after: {
+      intent_id: fixture.case_id || null,
+      verification_outcome: verificationOutcome,
+      gate_results: gateResults,
+      unresolved_items: unresolvedItems,
+      escalation,
+      close_readiness: closeReadiness,
     },
   };
 }
@@ -956,6 +1161,76 @@ function runGroundDispatch({ args, cwd }) {
   }
 }
 
+function runVerifyEndDispatch({ args, cwd }) {
+  let options;
+  try {
+    options = parseVerifyEndArgs(args);
+  } catch (error) {
+    printJson({
+      command: 'kbx dispatch verify-end',
+      ok: false,
+      error: error.message,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const fixturePath = path.resolve(cwd, options.fixture);
+  if (!fs.existsSync(fixturePath)) {
+    printJson({
+      command: 'kbx dispatch verify-end',
+      ok: false,
+      error: `Fixture file not found: ${fixturePath}`,
+      fixture: fixturePath,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  let fixture;
+  try {
+    fixture = parseFixtureYaml(fixturePath);
+  } catch (error) {
+    printJson({
+      command: 'kbx dispatch verify-end',
+      ok: false,
+      error: `Invalid fixture YAML: ${error.message}`,
+      fixture: fixturePath,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const context = {
+    projectedChaos: options.projectedChaos,
+    evidenceArtifacts: options.evidenceArtifacts,
+    evidenceChecks: options.evidenceChecks,
+    tupleRuleConsistent: options.tupleRuleConsistent,
+    traceLinks: options.traceLinks,
+    ruleBasisListed: options.ruleBasisListed,
+    rationaleExplicit: options.rationaleExplicit,
+    remainingGaps: options.remainingGaps,
+    gapsOwned: options.gapsOwned,
+    repeatFailCount: options.repeatFailCount,
+    deferOwner: options.deferOwner,
+    deferReason: options.deferReason,
+    deferFollowup: options.deferFollowup,
+  };
+
+  const verification = evaluatePipelineEndVerification(fixture, context);
+  const payload = {
+    command: 'kbx dispatch verify-end',
+    fixture: fixturePath,
+    context,
+    ...verification,
+  };
+
+  printJson(payload);
+  if (verification.snapshot_after.verification_outcome !== 'pass') {
+    process.exitCode = 1;
+  }
+}
+
 function runDispatch({ args, cwd }) {
   const [subcommand, ...rest] = args || [];
   if (subcommand === 'test') {
@@ -973,6 +1248,11 @@ function runDispatch({ args, cwd }) {
     return;
   }
 
+  if (subcommand === 'verify-end') {
+    runVerifyEndDispatch({ args: rest, cwd });
+    return;
+  }
+
   runSingleDispatch({ args, cwd });
 }
 
@@ -982,11 +1262,14 @@ module.exports = {
   parseSingleArgs,
   parseSelectArgs,
   parseGroundArgs,
+  parseVerifyEndArgs,
   parseBatchArgs,
   evaluateFixture,
+  evaluatePipelineEndVerification,
   runBatchDispatch,
   runSelectDispatch,
   runGroundDispatch,
+  runVerifyEndDispatch,
   selectApplicableRules,
   resolveSelectorPolicy,
   evaluatePrincipalGrounding,

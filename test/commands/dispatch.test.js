@@ -11,6 +11,7 @@ const {
   parseGroundArgs,
   parseSelectArgs,
   parseSingleArgs,
+  parseVerifyEndArgs,
   runBatchDispatch,
   runDispatch,
 } = require('../../src/commands/dispatch');
@@ -70,6 +71,14 @@ describe('kbx dispatch', () => {
     assert.equal(parsed.fixture, 'a.yaml');
     assert.equal(parsed.projectedChaos, 81);
     assert.equal(parsed.activeIntents, 2);
+    assert.equal(parsed.json, true);
+  });
+
+  it('parses verify-end args', () => {
+    const parsed = parseVerifyEndArgs(['--fixture', 'a.yaml', '--projected-chaos=77', '--evidence-artifacts=2', '--json']);
+    assert.equal(parsed.fixture, 'a.yaml');
+    assert.equal(parsed.projectedChaos, 77);
+    assert.equal(parsed.evidenceArtifacts, 2);
     assert.equal(parsed.json, true);
   });
 
@@ -264,5 +273,64 @@ describe('kbx dispatch', () => {
     assert.equal(payload.command, 'kbx dispatch ground');
     assert.equal(payload.grounding.summary.escalation, 'HumanGateRequired');
     assert.ok(payload.grounding.summary.hard_fail_count > 0);
+  });
+
+  it('passes verify-end for low-risk docs-only flow', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: [
+        'verify-end',
+        '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-001-read-only-explain.yaml',
+        '--json',
+      ],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 0);
+    assert.equal(payload.command, 'kbx dispatch verify-end');
+    assert.equal(payload.snapshot_after.verification_outcome, 'pass');
+    assert.equal(payload.snapshot_after.close_readiness, 'ready');
+  });
+
+  it('warns verify-end on chaos 76-80 and requires defer record', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: [
+        'verify-end',
+        '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-003-standard-contract-update.yaml',
+        '--projected-chaos=77',
+        '--defer-owner=true',
+        '--defer-reason=true',
+        '--defer-followup=true',
+        '--json',
+      ],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 1);
+    assert.equal(payload.snapshot_after.verification_outcome, 'warn');
+    assert.equal(payload.snapshot_after.close_readiness, 'deferred');
+    assert.equal(payload.snapshot_after.gate_results.defer_record_gate, 'pass');
+  });
+
+  it('fails verify-end and escalates for mutation flow missing chaos estimate', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: [
+        'verify-end',
+        '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-003-standard-contract-update.yaml',
+        '--json',
+      ],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 1);
+    assert.equal(payload.snapshot_after.verification_outcome, 'fail');
+    assert.equal(payload.snapshot_after.gate_results.chaos_gate, 'fail');
+    assert.equal(payload.snapshot_after.escalation, 'HumanGateRequired');
+    assert.equal(payload.snapshot_after.close_readiness, 'blocked');
   });
 });
