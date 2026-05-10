@@ -83,7 +83,7 @@ Trigger examples and required command:
 - "cập nhật checkpoint", "checkpoint now", "ghi checkpoint" -> `kbx intent checkpoint [<id>] [--note=...]`
 
 Checkpoint contract:
-- Because checkpoint is auto-wired in `intent create/status/close`, every successful execution of those commands is expected to emit a focus checkpoint commit when focus.md exists.
+- Because checkpoint is auto-wired in `intent create/list/status/close`, every successful execution of those commands is expected to emit a focus checkpoint commit when focus.md exists.
 - If focus.md does not exist, agent must report checkpoint skipped reason explicitly.
 
 3. **For Code Q&A (the most common case):** before reading any source file (`src/**`, `*.jsx`, `*.html`, etc.), you MUST first:
@@ -161,6 +161,19 @@ Execution order:
 3. Use AI to orchestrate decisions and command sequencing, not to replace invariant rule enforcement.
 
 If deterministic support does not exist yet for a required rule, mark the rule as provisional and create a follow-up intent to migrate it into CLI/runtime.
+
+### Deterministic Rule Authoring Contract
+
+When the task is to add or harden a deterministic rule entry, KBAgent must use CLI authoring helpers before editing runtime rule modules.
+
+Required flow:
+1. Run `kbx rules next-id <domain>`.
+2. Run `kbx rules scaffold <domain> --title="..." --description="..." --source-doc=path --since-version=vX.Y.Z`.
+3. Use `--append` when one-shot authoring is desired and the canonical module shape is supported.
+4. Otherwise insert the generated snippet into the canonical module path returned by the CLI.
+4. Validate with `kbx rules list`, `kbx rules check <rule-id>`, or `kbx rules lint`.
+
+Do not handcraft a new rule ID when the CLI authoring surface is available.
 
 ### Three-Layer Vibe Execution Contract (Mandatory)
 

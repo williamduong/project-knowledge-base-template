@@ -59,6 +59,17 @@ const RUNTIME_STATUS = Object.freeze({
 
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
 
+const RULE_DOMAIN_CONFIG = Object.freeze({
+  M: Object.freeze({ label: 'Metadata', module_path: 'src/lib/rules/metadata.js' }),
+  V: Object.freeze({ label: 'Verification', module_path: 'src/lib/rules/verification.js' }),
+  I: Object.freeze({ label: 'Intent', module_path: 'src/lib/rules/intent.js' }),
+  GB: Object.freeze({ label: 'Git Binding', module_path: 'src/lib/rules/git-binding.js' }),
+  AX: Object.freeze({ label: 'Axiom Alignment', module_path: 'src/lib/rules/contract-alignment.js' }),
+  PR: Object.freeze({ label: 'Principle Alignment', module_path: 'src/lib/rules/contract-alignment.js' }),
+  WF: Object.freeze({ label: 'Workflow Alignment', module_path: 'src/lib/rules/contract-alignment.js' }),
+  KA: Object.freeze({ label: 'Knowledge Alignment', module_path: 'src/lib/rules/contract-alignment.js' }),
+});
+
 // ─── Rule Definition Contract ───────────────────────────────────────────────
 
 /**
@@ -88,7 +99,71 @@ const RULE_DOMAINS = {
   V: 'Verification',
   I: 'Intent',
   GB: 'Git Binding',
+  AX: 'Axiom Alignment',
+  PR: 'Principle Alignment',
+  WF: 'Workflow Alignment',
+  KA: 'Knowledge Alignment',
 };
+
+function parseRuleId(ruleId) {
+  const match = /^KBX-([A-Z]+)(\d{3})$/.exec(String(ruleId || '').trim());
+  if (!match) return null;
+  return {
+    domain: match[1],
+    number: Number(match[2]),
+  };
+}
+
+function getRuleDomainConfig(domain) {
+  return RULE_DOMAIN_CONFIG[String(domain || '').trim().toUpperCase()] || null;
+}
+
+function suggestNextRuleId(rules, domain) {
+  const normalizedDomain = String(domain || '').trim().toUpperCase();
+  if (!getRuleDomainConfig(normalizedDomain)) {
+    throw new Error(`Unknown rule domain: ${domain}`);
+  }
+
+  let maxNumber = 0;
+  for (const rule of rules || []) {
+    const parsed = parseRuleId(rule && rule.id);
+    if (parsed && parsed.domain === normalizedDomain) {
+      maxNumber = Math.max(maxNumber, parsed.number);
+    }
+  }
+
+  return `KBX-${normalizedDomain}${String(maxNumber + 1).padStart(3, '0')}`;
+}
+
+function buildRuleScaffold({
+  ruleId,
+  title,
+  description,
+  severity,
+  ownerLayer,
+  enforceability,
+  runtimeStatus,
+  sinceVersion,
+  sourceDoc,
+}) {
+  return [
+    '{',
+    `  id: '${ruleId}',`,
+    `  title: '${title.replace(/'/g, "\\'")}',`,
+    `  description: '${description.replace(/'/g, "\\'")}',`,
+    `  severity: SEVERITY.${String(severity || '').toUpperCase()},`,
+    `  owner_layer: OWNER_LAYER.${String(ownerLayer || '').toUpperCase()},`,
+    `  enforceability: ENFORCEABILITY.${String(enforceability || '').toUpperCase()},`,
+    `  runtime_status: RUNTIME_STATUS.${String(runtimeStatus || '').toUpperCase()},`,
+    `  since_version: '${sinceVersion.replace(/'/g, "\\'")}',`,
+    `  source_doc: '${sourceDoc.replace(/'/g, "\\'")}',`,
+    '  check(context) {',
+    '    void context;',
+    '    return [];',
+    '  },',
+    '}',
+  ].join('\n');
+}
 
 // ─── Validation ─────────────────────────────────────────────────────────────
 
@@ -182,6 +257,11 @@ module.exports = {
   ENFORCEABILITY,
   RUNTIME_STATUS,
   RULE_DOMAINS,
+  RULE_DOMAIN_CONFIG,
+  parseRuleId,
+  getRuleDomainConfig,
+  suggestNextRuleId,
+  buildRuleScaffold,
   validateRuleDefinition,
   findDuplicateRuleIds,
 };

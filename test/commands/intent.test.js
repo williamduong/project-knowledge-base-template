@@ -2,6 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { spawnSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -58,6 +59,34 @@ function initTrackedWorkspace(root) {
   fs.mkdirSync(path.join(svFactoryRoot, '.kb'), { recursive: true });
   fs.writeFileSync(path.join(svFactoryRoot, '.kb', 'state.json'), '{}\n', 'utf8');
   return svFactoryRoot;
+}
+
+function runGit(cwd, args) {
+  return spawnSync('git', args, {
+    cwd,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+  });
+}
+
+function initTrackedWorkspaceWithFocus(root) {
+  const contentRoot = initTrackedWorkspace(root);
+  fs.mkdirSync(path.join(root, 'svfactory'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'svfactory', 'focus.md'), '# Focus\n\n## Intent Checkpoints\n', 'utf8');
+
+  let result = runGit(root, ['init']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  result = runGit(root, ['config', 'user.email', 'test@example.com']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  result = runGit(root, ['config', 'user.name', 'Test User']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  result = runGit(root, ['add', '.']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  result = runGit(root, ['commit', '-m', 'init']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  return contentRoot;
 }
 
 async function captureConsole(fn) {
@@ -996,6 +1025,26 @@ test('runIntent list: respects v2.4 scope flags', async () => {
   parsed = JSON.parse(captured.stdout);
   assert.equal(parsed.scope, 'all');
   assert.equal(parsed.count, 4);
+});
+
+test('runIntent list: writes checkpoint commit when focus.md exists', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspaceWithFocus(root);
+
+  createIntentWorkspace(contentRoot, { intentId: 'active-item', mode: 'quick', changeType: 'docs' });
+
+  const captured = await captureConsole(() => runIntent({ args: ['list', '--json'], cwd: root }));
+  const parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.scope, 'active');
+  assert.equal(parsed.count, 1);
+
+  const focusContent = fs.readFileSync(path.join(root, 'svfactory', 'focus.md'), 'utf8');
+  assert.match(focusContent, /event=intent\.list/);
+  assert.match(focusContent, /note=Intent list inspected \(scope: active\)/);
+
+  const log = runGit(root, ['log', '--oneline', '-1']);
+  assert.equal(log.status, 0, log.stderr || log.stdout);
+  assert.match(log.stdout, /chore\(checkpoint\): intent\.list/);
 });
 
 test('runIntent cancel: closes active intent as dropped alias', async () => {

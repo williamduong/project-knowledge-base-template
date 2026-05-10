@@ -66,3 +66,16 @@ Planned migration path:
 3. add runtime check
 4. add test gate
 5. mark natural text as reference-only
+
+## H. Deterministic Rule Authoring
+
+When SVFactory creates or hardens a deterministic rule entry, use the CLI authoring surface first.
+
+Required flow:
+1. run `kbx rules next-id <domain>` to allocate the next monotonic rule ID and canonical module path
+2. run `kbx rules scaffold <domain> --title="..." --description="..." --source-doc=path --since-version=vX.Y.Z`
+3. for one-shot authoring, use `--append` only when the reported module shape is supported and auditable
+4. otherwise review the generated snippet before inserting it into the target rule module manually
+4. keep `registerRules(rules)` as the single registration entrypoint
+
+Do not manually invent a new rule ID when the CLI authoring surface is available.

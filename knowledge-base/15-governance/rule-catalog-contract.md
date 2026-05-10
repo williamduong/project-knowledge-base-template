@@ -50,6 +50,22 @@ Rules registration must fail on:
 3. invalid enum values
 4. missing source_doc path in workspace
 
+## Rule Authoring CLI Surface
+
+Rule authoring support must remain deterministic and low-risk.
+
+Supported authoring commands:
+1. `kbx rules next-id <domain>`
+2. `kbx rules scaffold <domain> --title="..." --description="..." --source-doc=path --since-version=vX.Y.Z`
+3. `kbx rules scaffold <domain> ... --append`
+
+Authoring contract:
+- `next-id` suggests the next monotonic rule ID within a known domain and reports the canonical module path.
+- `scaffold` generates a canonical rule object snippet using registry defaults and enum validation.
+- `scaffold --append` may mutate only supported canonical module shapes and must fail fast on unsupported layouts.
+- `scaffold` may write the snippet to an output file, but does not mutate an existing runtime rule module automatically.
+- Runtime registration still occurs by adding the generated rule object to the canonical domain module and keeping `registerRules(rules)` as the single entrypoint.
+
 ## Namespace Mapping (Phase C.2)
 
 - AX namespace: constitutional deterministic-alignment checks

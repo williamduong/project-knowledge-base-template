@@ -192,6 +192,14 @@ Currently implemented commands:
 - `release plan [--bump=patch|minor|major]` — Dry-run alias: print resolved step plan, no execution
 - `release run [--bump=patch|minor|major] [--yes]` — Execute release pipeline
 
+**Rules (v2.7+)**
+
+- `rules list [--json]` — List registered deterministic rules
+- `rules check <rule-id> [--json]` — Run one rule by ID
+- `rules lint [--json]` — Run the full rule set against the current KB
+- `rules next-id <domain> [--json]` — Suggest the next monotonic rule ID and canonical module path
+- `rules scaffold <domain> --title=... --description=... --source-doc=... --since-version=... [--out=path] [--append] [--json]` — Generate a canonical rule snippet; optionally append it to supported canonical module shapes with fail-fast guards
+
 **AI IDE Adapter Files**
 
 `kbx init` automatically generates the relevant adapter file for the active AI IDE and also creates project-scoped Copilot prompt files:

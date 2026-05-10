@@ -135,9 +135,10 @@ Rule contract:
 
 Default trigger events:
 1. `kbx intent create`
-2. `kbx intent status` (single intent and overview)
-3. `kbx intent close`
-4. `kbx intent checkpoint` (manual user-triggered checkpoint)
+2. `kbx intent list`
+3. `kbx intent status` (single intent and overview)
+4. `kbx intent close`
+5. `kbx intent checkpoint` (manual user-triggered checkpoint)
 
 Commit policy:
 - Commit occurs on the current branch (no branch restriction).

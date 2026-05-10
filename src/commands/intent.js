@@ -686,6 +686,12 @@ async function runList(ctx, options) {
       count: items.length,
       intents: items,
     }, null, 2));
+
+    recordIntentCheckpoint({
+      workspaceRoot: ctx.workspaceRoot,
+      eventName: 'intent.list',
+      note: options.checkpointNote || `Intent list inspected (scope: ${listScope})`,
+    });
     return;
   }
 
@@ -741,6 +747,12 @@ async function runList(ctx, options) {
   lines.push('Run "kb intent status <id-or-slug>" for details.');
 
   await printWithPager(lines);
+
+  recordIntentCheckpoint({
+    workspaceRoot: ctx.workspaceRoot,
+    eventName: 'intent.list',
+    note: options.checkpointNote || `Intent list inspected (scope: ${listScope})`,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1460,7 +1472,7 @@ function printHelp() {
   console.log('                  --type=<type> Change type: docs (default), feature, fix, refactor.');
   console.log('                  Creates intent in _archive/ with snapshot of changed KB files.');
   console.log('  checkpoint      Write a focus.md checkpoint entry and commit immediately.');
-  console.log('                  Triggered automatically on create/status/close when focus.md exists.');
+  console.log('                  Triggered automatically on create/list/status/close when focus.md exists.');
   console.log('');
 }
 

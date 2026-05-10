@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const Module = require('module');
 
 const { runRules } = require('../../src/commands/rules');
 
@@ -79,6 +80,57 @@ async function captureAsync(fn) {
   return { stdout: stdout.join('\n'), stderr: stderr.join('\n'), exitCode };
 }
 
+function withMockedRegistryConfig(tempModuleRelPath, fn) {
+  const rulesCommandPath = require.resolve('../../src/commands/rules');
+  const registryPath = require.resolve('../../src/lib/rules/registry');
+  const originalRegistry = require.cache[registryPath];
+  const originalRules = require.cache[rulesCommandPath];
+  delete require.cache[registryPath];
+  delete require.cache[rulesCommandPath];
+
+  const registry = require('../../src/lib/rules/registry');
+  const patchedRegistry = {
+    ...registry,
+    RULE_DOMAIN_CONFIG: {
+      ...registry.RULE_DOMAIN_CONFIG,
+      M: { ...registry.RULE_DOMAIN_CONFIG.M, module_path: tempModuleRelPath },
+    },
+    getRuleDomainConfig(domain) {
+      if (String(domain || '').trim().toUpperCase() === 'M') {
+        return { ...registry.RULE_DOMAIN_CONFIG.M, module_path: tempModuleRelPath };
+      }
+      return registry.getRuleDomainConfig(domain);
+    },
+  };
+  require.cache[registryPath] = {
+    id: registryPath,
+    filename: registryPath,
+    loaded: true,
+    exports: patchedRegistry,
+    children: [],
+    paths: Module._nodeModulePaths(path.dirname(registryPath)),
+  };
+
+  const { runRules: mockedRunRules } = require('../../src/commands/rules');
+  return Promise.resolve()
+    .then(() => fn(mockedRunRules))
+    .finally(() => {
+      delete require.cache[rulesCommandPath];
+      delete require.cache[registryPath];
+      if (originalRegistry) require.cache[registryPath] = originalRegistry;
+      if (originalRules) require.cache[rulesCommandPath] = originalRules;
+    });
+}
+
+function makeRepoTempRuleModule(fileName, content) {
+  const repoRoot = path.resolve(__dirname, '../..');
+  const relPath = `test/.tmp-${fileName}`;
+  const absPath = path.join(repoRoot, relPath);
+  fs.mkdirSync(path.dirname(absPath), { recursive: true });
+  fs.writeFileSync(absPath, content, 'utf8');
+  return { repoRoot, relPath, absPath };
+}
+
 // ─── kbx rules list ──────────────────────────────────────────────────────────
 
 describe('kbx rules list', () => {
@@ -106,6 +158,146 @@ describe('kbx rules list', () => {
       assert.ok(r.severity, `Missing severity: ${r.id}`);
       assert.ok(r.description, `Missing description: ${r.id}`);
     }
+  });
+});
+
+// ─── kbx rules next-id / scaffold ───────────────────────────────────────────
+
+describe('kbx rules authoring helpers', () => {
+  it('next-id suggests the next deterministic rule id for a domain', async () => {
+    const { stdout, exitCode } = await captureAsync(() => runRules({ args: ['next-id', 'M', '--json'] }));
+    const data = JSON.parse(stdout);
+    assert.equal(data.domain, 'M');
+    assert.equal(data.next_rule_id, 'KBX-M005');
+    assert.equal(data.module_path, 'src/lib/rules/metadata.js');
+    assert.equal(exitCode, 0);
+  });
+
+  it('scaffold emits canonical snippet and target module', async () => {
+    const { stdout, exitCode } = await captureAsync(() => runRules({
+      args: [
+        'scaffold',
+        'GB',
+        '--title=Checkpoint Trigger Coverage',
+        '--description=Ensure every checkpoint-triggered command is wired deterministically.',
+        '--source-doc=template/15-governance/git-binding-policy.md',
+        '--since-version=v2.8.0',
+        '--json',
+      ],
+    }));
+    const data = JSON.parse(stdout);
+    assert.equal(data.rule_id, 'KBX-GB003');
+    assert.equal(data.module_path, 'src/lib/rules/git-binding.js');
+    assert.match(data.snippet, /id: 'KBX-GB003'/);
+    assert.match(data.snippet, /check\(context\)/);
+    assert.equal(exitCode, 0);
+  });
+
+  it('scaffold can write snippet to output file', async () => {
+    const dir = makeTmpKb({});
+    const outFile = path.join(dir, 'rule-snippet.js');
+    const { exitCode } = await captureAsync(() => runRules({
+      args: [
+        'scaffold',
+        'PR',
+        '--title=Focus Sync Rule',
+        '--description=Ensure focus state stays aligned with deterministic runtime output.',
+        '--source-doc=template/15-governance/rule-catalog-contract.md',
+        '--since-version=v2.8.0',
+        `--out=${outFile}`,
+      ],
+    }));
+    const written = fs.readFileSync(outFile, 'utf8');
+    cleanup(dir);
+    assert.match(written, /KBX-PR027/);
+    assert.equal(exitCode, 0);
+  });
+
+  it('scaffold --append appends to canonical module when shape is supported', async () => {
+    const tempModule = makeRepoTempRuleModule('rules-append-supported.js', [
+      "'use strict';",
+      '',
+      'const { registerRules } = require(\'../src/lib/rule-engine\');',
+      'const { SEVERITY, OWNER_LAYER, ENFORCEABILITY, RUNTIME_STATUS } = require(\'../src/lib/rules/registry\');',
+      '',
+      'registerRules([',
+      '  {',
+      "    id: 'KBX-M001',",
+      "    title: 'Existing',",
+      "    description: 'Existing rule',",
+      "    severity: 'warn',",
+      "    owner_layer: OWNER_LAYER.SVFACTORY,",
+      "    enforceability: ENFORCEABILITY.AUTO,",
+      "    runtime_status: RUNTIME_STATUS.IMPLEMENTED,",
+      "    since_version: '2.7.0',",
+      "    source_doc: 'template/15-governance/metadata-schema.md',",
+      '    check() { return []; },',
+      '  }',
+      ']);',
+      '',
+    ].join('\n'));
+
+    await withMockedRegistryConfig(tempModule.relPath, async (mockedRunRules) => {
+      const { stdout, exitCode } = await captureAsync(() => mockedRunRules({
+        args: [
+          'scaffold',
+          'M',
+          '--title=Appended Rule',
+          '--description=Append into supported shape.',
+          '--source-doc=template/15-governance/metadata-schema.md',
+          '--since-version=v2.8.0',
+          '--append',
+          '--json',
+        ],
+      }));
+      const data = JSON.parse(stdout);
+      assert.equal(data.appended, true);
+      assert.equal(exitCode, 0);
+    });
+
+    const written = fs.readFileSync(tempModule.absPath, 'utf8');
+    cleanup(tempModule.absPath);
+    assert.match(written, /KBX-M005/);
+    assert.match(written, /Appended Rule/);
+  });
+
+  it('scaffold --append exits 1 when module shape is unsupported', async () => {
+    const tempModule = makeRepoTempRuleModule('rules-append-unsupported.js', [
+      "'use strict';",
+      'module.exports = [];',
+    ].join('\n'));
+
+    await withMockedRegistryConfig(tempModule.relPath, async (mockedRunRules) => {
+      const { exitCode } = await captureAsync(() => mockedRunRules({
+        args: [
+          'scaffold',
+          'M',
+          '--title=Bad Append',
+          '--description=Unsupported append shape.',
+          '--source-doc=template/15-governance/metadata-schema.md',
+          '--since-version=v2.8.0',
+          '--append',
+        ],
+      }));
+      assert.equal(exitCode, 1);
+    });
+
+    cleanup(tempModule.absPath);
+  });
+
+  it('scaffold exits 1 when source doc path does not exist', async () => {
+    const { exitCode, stderr } = await captureAsync(() => runRules({
+      args: [
+        'scaffold',
+        'M',
+        '--title=Bad Source',
+        '--description=Invalid test.',
+        '--source-doc=template/15-governance/does-not-exist.md',
+        '--since-version=v2.8.0',
+      ],
+    }));
+    assert.equal(exitCode, 1);
+    assert.match(stderr, /source_doc path not found/);
   });
 });
 
@@ -222,6 +414,9 @@ describe('kbx rules help', () => {
     assert.ok(stdout.includes('kbx rules lint'), `Expected usage line, got: ${stdout}`);
     assert.ok(stdout.includes('kbx rules check'), `Expected check line, got: ${stdout}`);
     assert.ok(stdout.includes('kbx rules list'), `Expected list line, got: ${stdout}`);
+    assert.ok(stdout.includes('kbx rules next-id'), `Expected next-id line, got: ${stdout}`);
+    assert.ok(stdout.includes('kbx rules scaffold'), `Expected scaffold line, got: ${stdout}`);
+    assert.ok(stdout.includes('--append'), `Expected --append flag in help, got: ${stdout}`);
   });
 
   it('unknown subcommand exits 1 with error', async () => {

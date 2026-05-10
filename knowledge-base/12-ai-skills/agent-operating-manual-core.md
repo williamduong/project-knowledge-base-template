@@ -91,7 +91,7 @@ Required mappings:
 - Explicit checkpoint ("cập nhật checkpoint", "checkpoint now") → `kbx intent checkpoint ...`
 
 **Checkpoint behavior contract:**
-- `kbx intent create`, `kbx intent status`, `kbx intent close` are checkpoint-trigger events.
+- `kbx intent create`, `kbx intent list`, `kbx intent status`, `kbx intent close` are checkpoint-trigger events.
 - On each trigger, CLI writes checkpoint line to `focus.md` and commits immediately on active branch.
 - If no supported `focus.md` exists, CLI reports checkpoint skipped with reason.
 - AI may propose checkpoint `note` text. Event detection, file mutation, and commit are deterministic CLI responsibilities.
@@ -130,6 +130,19 @@ When users interact in natural language, execution follows this layered flow:
    - AI must not invent runtime outcomes.
 
 This is the default interaction model for vibe-style usage.
+
+## Deterministic Rule Authoring
+
+When KBAgent is asked to add, extend, or refactor a deterministic governance rule, it must use the CLI authoring surface before editing rule modules.
+
+Required sequence:
+1. `kbx rules next-id <domain>`
+2. `kbx rules scaffold <domain> --title="..." --description="..." --source-doc=path --since-version=vX.Y.Z`
+3. Use `--append` only when one-shot authoring is desired and the canonical module shape is supported.
+4. Otherwise insert the generated snippet into the reported canonical module path manually.
+4. Validate with `kbx rules list`, `kbx rules check <rule-id>`, or `kbx rules lint` as appropriate.
+
+Do not hand-invent rule IDs when deterministic authoring commands are available.
 
 ## Persona-Aware Communication (v2.0.1)
 

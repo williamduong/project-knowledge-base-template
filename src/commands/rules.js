@@ -3,7 +3,19 @@
 const fs = require('fs');
 const path = require('path');
 const { loadRules, runRules: engineRunRules, runRule } = require('../lib/rule-engine');
+const {
+  SEVERITY,
+  OWNER_LAYER,
+  ENFORCEABILITY,
+  RUNTIME_STATUS,
+  RULE_DOMAIN_CONFIG,
+  getRuleDomainConfig,
+  suggestNextRuleId,
+  buildRuleScaffold,
+} = require('../lib/rules/registry');
 const { readState, setRuleLifecycle, readHistory, exportGraphIngest } = require('../lib/rule-lifecycle');
+
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
 /**
  * Parse common flags: --json, --rule <id>
@@ -62,6 +74,133 @@ function parseLifecycleArgs(args = []) {
   }
 
   return { options, positional };
+}
+
+function parseAuthoringArgs(args = []) {
+  const options = {
+    json: false,
+    title: null,
+    description: null,
+    sourceDoc: null,
+    sinceVersion: null,
+    severity: SEVERITY.WARN,
+    ownerLayer: OWNER_LAYER.SHARED,
+    enforceability: ENFORCEABILITY.AUTO,
+    runtimeStatus: RUNTIME_STATUS.PLANNED,
+    out: null,
+    append: false,
+    errors: [],
+  };
+
+  const positional = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === '--json') {
+      options.json = true;
+    } else if (arg.startsWith('--title=')) {
+      options.title = arg.slice('--title='.length).trim();
+    } else if (arg.startsWith('--description=')) {
+      options.description = arg.slice('--description='.length).trim();
+    } else if (arg.startsWith('--source-doc=')) {
+      options.sourceDoc = arg.slice('--source-doc='.length).trim();
+    } else if (arg.startsWith('--since-version=')) {
+      options.sinceVersion = arg.slice('--since-version='.length).trim();
+    } else if (arg.startsWith('--severity=')) {
+      options.severity = arg.slice('--severity='.length).trim();
+    } else if (arg.startsWith('--owner-layer=')) {
+      options.ownerLayer = arg.slice('--owner-layer='.length).trim();
+    } else if (arg.startsWith('--enforceability=')) {
+      options.enforceability = arg.slice('--enforceability='.length).trim();
+    } else if (arg.startsWith('--runtime-status=')) {
+      options.runtimeStatus = arg.slice('--runtime-status='.length).trim();
+    } else if (arg.startsWith('--out=')) {
+      options.out = arg.slice('--out='.length).trim();
+    } else if (arg === '--append') {
+      options.append = true;
+    } else if (arg.startsWith('--')) {
+      options.errors.push(`Unknown option: ${arg}`);
+    } else {
+      positional.push(arg);
+    }
+  }
+
+  return { options, positional };
+}
+
+function indentBlock(text, spaces) {
+  const prefix = ' '.repeat(spaces);
+  return String(text || '')
+    .split('\n')
+    .map((line) => `${prefix}${line}`)
+    .join('\n');
+}
+
+function appendRuleSnippetToModule(modulePath, snippet) {
+  const original = fs.readFileSync(modulePath, 'utf8');
+
+  const registerArrayMarker = 'registerRules([';
+  const registerArrayEnd = '\n]);';
+  const rulesArrayMarker = 'const rules = [';
+  const rulesArrayEnd = '\n];';
+
+  if (original.includes(registerArrayMarker) && original.includes(registerArrayEnd)) {
+    const insertAt = original.lastIndexOf(registerArrayEnd);
+    if (insertAt < 0) {
+      throw new Error(`Unable to locate registerRules array terminator in ${modulePath}`);
+    }
+    const indentedSnippet = indentBlock(snippet, 2);
+    return `${original.slice(0, insertAt)},\n\n${indentedSnippet}${original.slice(insertAt)}`;
+  }
+
+  if (original.includes(rulesArrayMarker) && original.includes(rulesArrayEnd)) {
+    const insertAt = original.indexOf(rulesArrayEnd, original.indexOf(rulesArrayMarker));
+    if (insertAt < 0) {
+      throw new Error(`Unable to locate rules array terminator in ${modulePath}`);
+    }
+    const indentedSnippet = indentBlock(snippet, 2);
+    return `${original.slice(0, insertAt)},\n${indentedSnippet}${original.slice(insertAt)}`;
+  }
+
+  throw new Error(`Unsupported rule module shape for append: ${modulePath}`);
+}
+
+function isKnownEnumValue(value, enumObject) {
+  return Object.values(enumObject).includes(value);
+}
+
+function normalizeDomain(domain) {
+  return String(domain || '').trim().toUpperCase();
+}
+
+function validateAuthoringOptions(domain, options) {
+  const errors = [...options.errors];
+  const normalizedDomain = normalizeDomain(domain);
+  if (!getRuleDomainConfig(normalizedDomain)) {
+    errors.push(`Unknown rule domain: ${domain}. Supported: ${Object.keys(RULE_DOMAIN_CONFIG).join(', ')}`);
+  }
+  if (!options.title) errors.push('Missing required option: --title');
+  if (!options.description) errors.push('Missing required option: --description');
+  if (!options.sourceDoc) errors.push('Missing required option: --source-doc');
+  if (!options.sinceVersion) errors.push('Missing required option: --since-version');
+  if (!isKnownEnumValue(options.severity, SEVERITY)) {
+    errors.push(`Invalid --severity value: ${options.severity}`);
+  }
+  if (!isKnownEnumValue(options.ownerLayer, OWNER_LAYER)) {
+    errors.push(`Invalid --owner-layer value: ${options.ownerLayer}`);
+  }
+  if (!isKnownEnumValue(options.enforceability, ENFORCEABILITY)) {
+    errors.push(`Invalid --enforceability value: ${options.enforceability}`);
+  }
+  if (!isKnownEnumValue(options.runtimeStatus, RUNTIME_STATUS)) {
+    errors.push(`Invalid --runtime-status value: ${options.runtimeStatus}`);
+  }
+  if (options.sourceDoc) {
+    const sourceDocPath = path.join(PROJECT_ROOT, options.sourceDoc);
+    if (!fs.existsSync(sourceDocPath)) {
+      errors.push(`source_doc path not found: ${options.sourceDoc}`);
+    }
+  }
+  return errors;
 }
 
 /**
@@ -183,6 +322,109 @@ function runList({ args = [] } = {}) {
       if (r.source_doc) console.log(`    source: ${r.source_doc}`);
     }
   }
+}
+
+function runNextId({ args = [] } = {}) {
+  const { options, positional } = parseAuthoringArgs(args);
+  const domain = normalizeDomain(positional[0]);
+  const domainConfig = getRuleDomainConfig(domain);
+
+  if (options.errors.length > 0 || !domainConfig) {
+    const errors = [...options.errors];
+    if (!domainConfig) {
+      errors.push(`Usage: kbx rules next-id <domain> [--json]`);
+      errors.push(`Supported domains: ${Object.keys(RULE_DOMAIN_CONFIG).join(', ')}`);
+    }
+    for (const error of errors) console.error(error);
+    process.exitCode = 1;
+    return;
+  }
+
+  const nextRuleId = suggestNextRuleId(loadRules(), domain);
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx rules next-id',
+      domain,
+      next_rule_id: nextRuleId,
+      module_path: domainConfig.module_path,
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Next rule ID for ${domain}: ${nextRuleId}`);
+  console.log(`Module: ${domainConfig.module_path}`);
+}
+
+function runScaffold({ args = [] } = {}) {
+  const { options, positional } = parseAuthoringArgs(args);
+  const domain = normalizeDomain(positional[0]);
+  const errors = validateAuthoringOptions(domain, options);
+  const domainConfig = getRuleDomainConfig(domain);
+
+  if (errors.length > 0) {
+    for (const error of errors) console.error(error);
+    console.error('Usage: kbx rules scaffold <domain> --title="..." --description="..." --source-doc=path --since-version=vX.Y.Z [--severity=warn] [--owner-layer=shared] [--enforceability=auto] [--runtime-status=planned] [--out=path] [--json]');
+    process.exitCode = 1;
+    return;
+  }
+
+  const ruleId = suggestNextRuleId(loadRules(), domain);
+  const snippet = buildRuleScaffold({
+    ruleId,
+    title: options.title,
+    description: options.description,
+    severity: options.severity,
+    ownerLayer: options.ownerLayer,
+    enforceability: options.enforceability,
+    runtimeStatus: options.runtimeStatus,
+    sinceVersion: options.sinceVersion,
+    sourceDoc: options.sourceDoc,
+  });
+
+  const modulePath = path.join(PROJECT_ROOT, domainConfig.module_path);
+  let appended = false;
+
+  try {
+    if (options.append) {
+      const updatedModule = appendRuleSnippetToModule(modulePath, snippet);
+      fs.writeFileSync(modulePath, updatedModule, 'utf8');
+      appended = true;
+    }
+
+    if (options.out) {
+      const outPath = path.isAbsolute(options.out) ? options.out : path.join(process.cwd(), options.out);
+      fs.mkdirSync(path.dirname(outPath), { recursive: true });
+      fs.writeFileSync(outPath, `${snippet}\n`, 'utf8');
+    }
+  } catch (error) {
+    console.error(error.message);
+    process.exitCode = 1;
+    return;
+  }
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx rules scaffold',
+      domain,
+      rule_id: ruleId,
+      module_path: domainConfig.module_path,
+      appended,
+      out: options.out || null,
+      snippet,
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Scaffolded ${ruleId}`);
+  console.log(`Target module: ${domainConfig.module_path}`);
+  if (appended) {
+    console.log('Append: applied to canonical rule module');
+  }
+  if (options.out) {
+    console.log(`Output file: ${options.out}`);
+  }
+  console.log('');
+  console.log(snippet);
 }
 
 function runLifecycleStatus({ args = [], cwd = process.cwd() } = {}) {
@@ -338,6 +580,10 @@ function runRulesHelp() {
   console.log('  kbx rules lint [--json]            Run all rules against the KB. Exit 1 if errors found.');
   console.log('  kbx rules check <rule-id> [--json] Run a single rule by ID.');
   console.log('  kbx rules list [--json]            List all registered rules.');
+  console.log('  kbx rules next-id <domain> [--json]');
+  console.log('                                    Suggest the next deterministic rule ID and target module.');
+  console.log('  kbx rules scaffold <domain> --title="..." --description="..." --source-doc=path --since-version=vX.Y.Z [--severity=warn] [--owner-layer=shared] [--enforceability=auto] [--runtime-status=planned] [--out=path] [--append] [--json]');
+  console.log('                                    Generate a canonical rule scaffold; optionally append it to the canonical rule module with guarded shape checks.');
   console.log('  kbx rules lifecycle status [--json]');
   console.log('                                    Show rule lifecycle state skeleton.');
   console.log('  kbx rules lifecycle set <rule-id> [--status=...] [--state=...] [--note=...] [--json]');
@@ -365,6 +611,10 @@ async function runRulesCommand({ args = [], cwd = process.cwd() } = {}) {
     await runCheck({ args: rest, cwd });
   } else if (subcommand === 'list') {
     runList({ args: rest });
+  } else if (subcommand === 'next-id') {
+    runNextId({ args: rest });
+  } else if (subcommand === 'scaffold') {
+    runScaffold({ args: rest });
   } else if (subcommand === 'lifecycle') {
     runLifecycle({ args: rest, cwd });
   } else if (subcommand === 'help' || subcommand === '--help' || subcommand === '-h') {
