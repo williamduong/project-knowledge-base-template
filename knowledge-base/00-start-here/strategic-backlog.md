@@ -84,6 +84,7 @@ Rules:
 | KB-026 | Generative loop contract (retry/reclassification/escalation) | knowledge-management | P0 | 2026-05-18 | deferred | Backlog intent: `knowledge-base/intents/_backlog/v2-8-4-generative-loop-contract.md`. Component 5 split for bounded retry policy. |
 | KB-027 | Dispatch integration test plan (coverage matrix + gates) | knowledge-management | P0 | 2026-05-19 | deferred | Backlog intent: `knowledge-base/intents/_backlog/v2-8-5-dispatch-integration-test-plan.md`. Component 6 split as pre-implementation planning gate. |
 | KB-028 | Runtime test harness for dispatch fixture compliance | knowledge-management | P0 | 2026-05-20 | deferred | Backlog intent: `knowledge-base/intents/_backlog/v2-9-0-dispatch-runtime-test-harness.md`. Required gate before v2-9-1 runtime implementation. |
+| KB-029 | Intent operational scorecard template | knowledge-management | P1 | 2026-05-22 | deferred | Backlog intent: `knowledge-base/intents/_backlog/v2-8-6-intent-operational-scorecard-template.md`. Depends on commit `858e7ab`; do not implement until explicitly approved. |
 
 ## Intent Sequencing (v2.6 -> v2.10+)
 
