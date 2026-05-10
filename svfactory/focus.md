@@ -62,3 +62,7 @@ None remaining for v2.7 ship. Decision blocker: v2.7 GA timeline (extended beta 
 - v2.4.0 published npm latest. Tag v2.4.0 pushed.
 - Intent v2-4-svfactory-rename archived to _closed/released/.
 - focus.md updated.
+
+## Intent Checkpoints
+- 2026-05-10T09:28:22.753Z | event=intent.status | branch=intent/v2-8-customization-lifecycle-and-safe-uninstall | intent=v2-7-nl-rules-to-cli-logic | note=Intent status inspected
+
