@@ -15,12 +15,25 @@
 const fs = require('fs');
 const path = require('path');
 const { registerRules } = require('../rule-engine');
+const { OWNER_LAYER, ENFORCEABILITY, RUNTIME_STATUS } = require('./registry');
 
 const REQUIRED_FIELDS = ['title', 'type', 'status', 'owner'];
 
-const ALLOWED_STATUS = ['active', 'draft', 'deprecated', 'archived'];
-const ALLOWED_VERIFICATION = ['code-verified', 'design-only', 'unverified', 'outdated'];
-const ALLOWED_TIME_STATE = ['current', 'point-in-time', 'evergreen', 'historical', '2026-current', 'future'];
+// Keep parser backward-compatible across shipped template generations.
+const ALLOWED_STATUS = ['active', 'draft', 'deprecated', 'archived', 'stable', 'template'];
+const ALLOWED_VERIFICATION = ['code-verified', 'design-only', 'unverified', 'self-referential', 'outdated'];
+const ALLOWED_TIME_STATE = [
+  'current',
+  'point-in-time',
+  'evergreen',
+  'historical',
+  '2026-current',
+  'future',
+  'to_be',
+  'mixed',
+  'timeless',
+  'target',
+];
 
 /**
  * Parse frontmatter fields from a markdown file.
@@ -49,7 +62,7 @@ function parseFrontmatterFields(content) {
 function collectKbDocs(rootDir) {
   const results = [];
   if (!fs.existsSync(rootDir)) return results;
-  const SKIP = new Set(['.kb', '.git', 'node_modules', 'intents', '_archive', '_closed', '_backlog', '_active', 'proposed-changes']);
+  const SKIP = new Set(['.kb', '.git', 'node_modules', '.github', 'intents', '_archive', '_closed', '_backlog', '_active', 'proposed-changes']);
   function walk(dir) {
     let entries;
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
@@ -70,8 +83,13 @@ function collectKbDocs(rootDir) {
 registerRules([
   {
     id: 'KBX-M001',
+    title: 'Required frontmatter fields',
     description: 'Required frontmatter fields must be present: title, type, status, owner.',
     severity: 'error',
+    owner_layer: OWNER_LAYER.SVFACTORY,
+    enforceability: ENFORCEABILITY.AUTO,
+    runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+    since_version: '2.7.0-beta.2',
     source_doc: 'template/15-governance/metadata-schema.md',
     check({ kbPath }) {
       const violations = [];
@@ -99,8 +117,13 @@ registerRules([
 
   {
     id: 'KBX-M002',
+    title: 'Valid status enum',
     description: `status field must be one of: ${ALLOWED_STATUS.join(', ')}.`,
     severity: 'error',
+    owner_layer: OWNER_LAYER.SVFACTORY,
+    enforceability: ENFORCEABILITY.AUTO,
+    runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+    since_version: '2.7.0-beta.2',
     source_doc: 'template/15-governance/metadata-schema.md',
     check({ kbPath }) {
       const violations = [];
@@ -127,8 +150,13 @@ registerRules([
 
   {
     id: 'KBX-M003',
+    title: 'Valid verification enum',
     description: `verification field, when present, must be one of: ${ALLOWED_VERIFICATION.join(', ')}.`,
     severity: 'warn',
+    owner_layer: OWNER_LAYER.SVFACTORY,
+    enforceability: ENFORCEABILITY.AUTO,
+    runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+    since_version: '2.7.0-beta.2',
     source_doc: 'template/15-governance/metadata-schema.md',
     check({ kbPath }) {
       const violations = [];
@@ -155,8 +183,13 @@ registerRules([
 
   {
     id: 'KBX-M004',
+    title: 'Valid time_state enum',
     description: `time_state field, when present, must be one of: ${ALLOWED_TIME_STATE.join(', ')}.`,
     severity: 'warn',
+    owner_layer: OWNER_LAYER.SVFACTORY,
+    enforceability: ENFORCEABILITY.AUTO,
+    runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+    since_version: '2.7.0-beta.2',
     source_doc: 'template/15-governance/metadata-schema.md',
     check({ kbPath }) {
       const violations = [];

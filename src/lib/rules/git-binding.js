@@ -13,7 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const { registerRules } = require('../rule-engine');
-const { SEVERITY } = require('./registry');
+const { SEVERITY, OWNER_LAYER, ENFORCEABILITY, RUNTIME_STATUS } = require('./registry');
 
 /**
  * Parse YAML-style frontmatter from intent.md.
@@ -84,8 +84,13 @@ function collectIntentFiles(kbPath) {
  */
 const GB001_INTENT_ID_FORMAT = {
   id: 'KBX-GB001',
+  title: 'Intent ID format vX-Y-slug',
   description: 'Intent IDs must follow vX-Y-slug pattern (e.g., v2-7-nl-rules-to-cli-logic)',
   severity: SEVERITY.ERROR,
+  owner_layer: OWNER_LAYER.SVFACTORY,
+  enforceability: ENFORCEABILITY.AUTO,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.7.0-beta.2',
   source_doc: 'template/15-governance/git-binding-policy.md',
   check(context) {
     const violations = [];
@@ -124,8 +129,13 @@ const GB001_INTENT_ID_FORMAT = {
  */
 const GB002_FOCUS_CHECKPOINT_SECTION = {
   id: 'KBX-GB002',
+  title: 'focus.md intent checkpoints section',
   description: 'focus.md must contain "## Intent Checkpoints" section when focus file is present',
   severity: SEVERITY.WARN,
+  owner_layer: OWNER_LAYER.SVFACTORY,
+  enforceability: ENFORCEABILITY.AUTO,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.7.0-beta.2',
   source_doc: 'template/15-governance/git-binding-policy.md',
   check(context) {
     const violations = [];

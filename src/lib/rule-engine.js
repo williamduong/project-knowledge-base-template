@@ -1,5 +1,7 @@
 'use strict';
 
+const { validateRuleDefinition, findDuplicateRuleIds } = require('./rules/registry');
+
 /**
  * Rule Engine — v2.7 Phase 1.0
  *
@@ -22,8 +24,10 @@ const registeredRules = [];
  */
 function registerRules(rules) {
   for (const rule of rules) {
-    if (!rule.id || !rule.severity || typeof rule.check !== 'function') {
-      throw new Error(`Invalid rule definition: missing id, severity, or check(). Got: ${JSON.stringify(rule)}`);
+    validateRuleDefinition(rule);
+    const duplicateIds = findDuplicateRuleIds([...registeredRules, rule]);
+    if (duplicateIds.length > 0) {
+      throw new Error(`Duplicate rule ID(s): ${duplicateIds.join(', ')}`);
     }
     registeredRules.push(rule);
   }

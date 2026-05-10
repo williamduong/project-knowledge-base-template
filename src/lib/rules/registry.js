@@ -1,5 +1,8 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 /**
  * Rule Registry Contract — v2.7 Phase 2
  *
@@ -37,13 +40,37 @@ const SEVERITY = Object.freeze({
   INFO: 'info',
 });
 
+const OWNER_LAYER = Object.freeze({
+  SVFACTORY: 'svfactory',
+  KBAGENT: 'kbagent',
+  SHARED: 'shared',
+});
+
+const ENFORCEABILITY = Object.freeze({
+  AUTO: 'auto',
+  SEMI: 'semi',
+  HUMAN: 'human',
+});
+
+const RUNTIME_STATUS = Object.freeze({
+  IMPLEMENTED: 'implemented',
+  PLANNED: 'planned',
+});
+
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
+
 // ─── Rule Definition Contract ───────────────────────────────────────────────
 
 /**
  * @typedef {Object} RuleDefinition
  * @property {string} id - Unique rule ID (KBX-DOMAIN###)
+ * @property {string} title - Stable short rule title
  * @property {string} description - Human-readable rule description
  * @property {string} severity - One of SEVERITY.ERROR | WARN | INFO
+ * @property {string} owner_layer - One of OWNER_LAYER.SVFACTORY | KBAGENT | SHARED
+ * @property {string} enforceability - One of ENFORCEABILITY.AUTO | SEMI | HUMAN
+ * @property {string} runtime_status - One of RUNTIME_STATUS.IMPLEMENTED | PLANNED
+ * @property {string} since_version - Version when rule contract became valid
  * @property {string} source_doc - Path to governance doc that defines this rule
  *                                 (e.g., 'template/15-governance/metadata-schema.md')
  * @property {Function} check - (context: {kbPath, contentRoot}) => RuleViolation[] | []
@@ -74,10 +101,25 @@ function validateRuleDefinition(rule) {
     throw new Error(`Rule must be an object, got ${typeof rule}`);
   }
 
-  const { id, description, severity, source_doc, check } = rule;
+  const {
+    id,
+    title,
+    description,
+    severity,
+    owner_layer,
+    enforceability,
+    runtime_status,
+    since_version,
+    source_doc,
+    check,
+  } = rule;
 
   if (typeof id !== 'string' || !id.match(/^KBX-[A-Z]+\d{3}$/)) {
     throw new Error(`Invalid rule ID format: "${id}" (expected KBX-DOMAIN###)`);
+  }
+
+  if (typeof title !== 'string' || title.trim().length === 0) {
+    throw new Error(`Rule ${id}: title missing or empty`);
   }
 
   if (typeof description !== 'string' || description.length === 0) {
@@ -88,8 +130,29 @@ function validateRuleDefinition(rule) {
     throw new Error(`Rule ${id}: severity must be one of ${Object.values(SEVERITY).join(', ')}, got "${severity}"`);
   }
 
+  if (!Object.values(OWNER_LAYER).includes(owner_layer)) {
+    throw new Error(`Rule ${id}: owner_layer must be one of ${Object.values(OWNER_LAYER).join(', ')}, got "${owner_layer}"`);
+  }
+
+  if (!Object.values(ENFORCEABILITY).includes(enforceability)) {
+    throw new Error(`Rule ${id}: enforceability must be one of ${Object.values(ENFORCEABILITY).join(', ')}, got "${enforceability}"`);
+  }
+
+  if (!Object.values(RUNTIME_STATUS).includes(runtime_status)) {
+    throw new Error(`Rule ${id}: runtime_status must be one of ${Object.values(RUNTIME_STATUS).join(', ')}, got "${runtime_status}"`);
+  }
+
+  if (typeof since_version !== 'string' || since_version.trim().length === 0) {
+    throw new Error(`Rule ${id}: since_version missing or empty`);
+  }
+
   if (typeof source_doc !== 'string' || source_doc.length === 0) {
     throw new Error(`Rule ${id}: source_doc missing or empty`);
+  }
+
+  const sourceDocPath = path.join(PROJECT_ROOT, source_doc);
+  if (!fs.existsSync(sourceDocPath)) {
+    throw new Error(`Rule ${id}: source_doc path not found: ${source_doc}`);
   }
 
   if (typeof check !== 'function') {
@@ -115,6 +178,9 @@ function findDuplicateRuleIds(rules) {
 
 module.exports = {
   SEVERITY,
+  OWNER_LAYER,
+  ENFORCEABILITY,
+  RUNTIME_STATUS,
   RULE_DOMAINS,
   validateRuleDefinition,
   findDuplicateRuleIds,

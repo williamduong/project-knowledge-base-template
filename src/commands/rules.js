@@ -123,8 +123,13 @@ function runList({ args = [] } = {}) {
       count: rules.length,
       rules: rules.map(r => ({
         id: r.id,
+        title: r.title,
         severity: r.severity,
         description: r.description,
+        owner_layer: r.owner_layer,
+        enforceability: r.enforceability,
+        runtime_status: r.runtime_status,
+        since_version: r.since_version,
         source_doc: r.source_doc || null,
       })),
     }, null, 2));

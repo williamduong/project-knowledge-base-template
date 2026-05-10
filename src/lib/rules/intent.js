@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const { registerRules } = require('../rule-engine');
-const { SEVERITY } = require('./registry');
+const { SEVERITY, OWNER_LAYER, ENFORCEABILITY, RUNTIME_STATUS } = require('./registry');
 
 /**
  * Parse YAML-style frontmatter from intent.md, including nested fields.
@@ -121,9 +121,14 @@ function collectIntentFiles(kbPath) {
  */
 const I001_ACTIVE_INTENT_HAS_NEXT_ACTION = {
   id: 'KBX-I001',
+  title: 'Active intents require focus.next_action',
   description: 'Active intents must have non-empty focus.next_action field',
   severity: SEVERITY.WARN,
-  source_doc: 'knowledge-base/intents directories (_active, _closed, etc.)',
+  owner_layer: OWNER_LAYER.KBAGENT,
+  enforceability: ENFORCEABILITY.AUTO,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.7.0-beta.2',
+  source_doc: 'template/12-ai-skills/intent-lifecycle-schema.md',
   check(context) {
     const violations = [];
     const { kbPath } = context;
@@ -161,9 +166,14 @@ const I001_ACTIVE_INTENT_HAS_NEXT_ACTION = {
  */
 const I002_FEATURE_HAS_CHANGE_SCOPE = {
   id: 'KBX-I002',
+  title: 'Feature intents require change_scope',
   description: 'Feature/breaking intents must have non-empty change_scope field',
   severity: SEVERITY.WARN,
-  source_doc: 'knowledge-base/intents directories (_active, _closed, etc.)',
+  owner_layer: OWNER_LAYER.KBAGENT,
+  enforceability: ENFORCEABILITY.AUTO,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.7.0-beta.2',
+  source_doc: 'template/12-ai-skills/intent-lifecycle-schema.md',
   check(context) {
     const violations = [];
     const { kbPath } = context;

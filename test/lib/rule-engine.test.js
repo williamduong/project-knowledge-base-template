@@ -85,7 +85,7 @@ describe('registerRules', () => {
   it('throws if rule is missing required fields', () => {
     assert.throws(
       () => registerRules([{ id: 'TEST-BAD', description: 'no check' }]),
-      /missing id, severity, or check/
+      /Invalid rule ID format|title missing|severity must be one of|check must be a function/
     );
   });
 });

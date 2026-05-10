@@ -13,7 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 const { registerRules } = require('../rule-engine');
-const { SEVERITY } = require('./registry');
+const { SEVERITY, OWNER_LAYER, ENFORCEABILITY, RUNTIME_STATUS } = require('./registry');
 
 const ALLOWED_TIME_STATE = [
   'current',
@@ -22,6 +22,10 @@ const ALLOWED_TIME_STATE = [
   'historical',
   '2026-current',
   'future',
+  'to_be',
+  'mixed',
+  'timeless',
+  'target',
 ];
 
 /**
@@ -72,8 +76,13 @@ function collectKbDocs(rootDir) {
  */
 const V001_TIME_STATE_REQUIRED = {
   id: 'KBX-V001',
+  title: 'time_state required with code-verified',
   description: 'time_state field must be present when verification = code-verified',
   severity: SEVERITY.ERROR,
+  owner_layer: OWNER_LAYER.SVFACTORY,
+  enforceability: ENFORCEABILITY.AUTO,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.7.0-beta.2',
   source_doc: 'template/15-governance/verification-policy.md',
   check(context) {
     const violations = [];
@@ -105,8 +114,13 @@ const V001_TIME_STATE_REQUIRED = {
  */
 const V002_TIME_STATE_VALID = {
   id: 'KBX-V002',
+  title: 'Valid verification time_state',
   description: `time_state must be one of: ${ALLOWED_TIME_STATE.join(', ')}`,
   severity: SEVERITY.ERROR,
+  owner_layer: OWNER_LAYER.SVFACTORY,
+  enforceability: ENFORCEABILITY.AUTO,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.7.0-beta.2',
   source_doc: 'template/15-governance/verification-policy.md',
   check(context) {
     const violations = [];
