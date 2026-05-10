@@ -26,16 +26,16 @@ Mark each row as `PASS` or `FAIL`.
 
 | ID | Criterion | Status | Notes |
 |---|---|---|---|
-| C1 | Canonical docs exist in template/15-governance and are tracked by git | TODO | |
-| C2 | Fixture schema terminology matches approved tuple/output shape | TODO | |
-| C3 | Exactly 15 seed fixtures exist (no more, no less) | TODO | |
-| C4 | Every fixture uses mode enum: diagnostic/execution only | TODO | |
-| C5 | Every fixture resolves to exactly one pipe or HumanGateRequired | TODO | |
-| C6 | Rule selection is explainable from tuple fields in every fixture | TODO | |
-| C7 | Conditional rule behavior is deterministic (no random branching) | TODO | |
-| C8 | No runtime implementation or state mutation included | TODO | |
-| C9 | Human-gate fixtures use primary_pipe: null + fallback_or_escalation: HumanGateRequired | TODO | |
-| C10 | Determinism replay pair (dispatch-014/015) yields same expected output | TODO | |
+| C1 | Canonical docs exist in template/15-governance and are tracked by git | PASS | Verified via git ls-files for 4 contracts + schema + checklist. |
+| C2 | Fixture schema terminology matches approved tuple/output shape | PASS | fixture-schema aligns with approved 8-field tuple and 6-field output shape. |
+| C3 | Exactly 15 seed fixtures exist (no more, no less) | PASS | Count check returns 15 dispatch fixture files. |
+| C4 | Every fixture uses mode enum: diagnostic/execution only | PASS | Automated scan reports badModes=0. |
+| C5 | Every fixture resolves to exactly one pipe or HumanGateRequired | PASS | Automated scan reports badOutcome=0. |
+| C6 | Rule selection is explainable from tuple fields in every fixture | PASS | Automated scan reports missingExplain=0; explainability block present in all fixtures. |
+| C7 | Conditional rule behavior is deterministic (no random branching) | PASS | Automated scan reports missingDet=0 with determinism_checks true in all fixtures. |
+| C8 | No runtime implementation or state mutation included | PASS | Session 1 commit scope is governance docs + fixtures only; no runtime paths included. |
+| C9 | Human-gate fixtures use primary_pipe: null + fallback_or_escalation: HumanGateRequired | PASS | Automated scan reports badHumanGatePattern=0. |
+| C10 | Determinism replay pair (dispatch-014/015) yields same expected output | PASS | Block comparison returns replay_expected_output_match=true. |
 
 ## Approval Gate
 
