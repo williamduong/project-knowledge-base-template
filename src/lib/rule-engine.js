@@ -96,3 +96,4 @@ require('./rules/metadata');
 require('./rules/verification');
 require('./rules/intent');
 require('./rules/git-binding');
+require('./rules/contract-alignment');

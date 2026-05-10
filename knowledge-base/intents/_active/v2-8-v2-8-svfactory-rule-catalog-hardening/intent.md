@@ -15,9 +15,19 @@ change_scope:
   - src/lib/rules/verification.js
   - src/lib/rules/intent.js
   - src/lib/rules/git-binding.js
+  - src/lib/rules/contract-alignment.js
+  - src/lib/rule-lifecycle.js
   - src/commands/rules.js
   - test/lib/rule-registry.test.js
   - test/lib/rule-engine.test.js
+  - test/lib/contract-alignment-rules.test.js
+  - test/lib/rule-lifecycle.test.js
+  - test/lib/natural-rules-size-gate.test.js
+  - test/commands/rules-lifecycle.test.js
+  - template/15-governance/rule-catalog-contract.md
+  - knowledge-base/15-governance/rule-catalog-contract.md
+  - svfactory/agent.md
+  - svfactory/rules-extensions.md
   - knowledge-base/intents/_active/v2-8-v2-8-svfactory-rule-catalog-hardening/plan.md
   - knowledge-base/intents/_active/v2-8-v2-8-svfactory-rule-catalog-hardening/impact.md
 impact_signals: []

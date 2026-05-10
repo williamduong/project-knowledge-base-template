@@ -141,6 +141,45 @@ Validation gates (must fail deterministically):
 4. Existing rules CLI behavior stays backward-compatible for list/lint/check usage.
 5. Phase C runtime rewiring remains deferred until this contract is accepted.
 
+## Phase C Execution (Completed in this checkpoint)
+
+### C.1 Natural-Rules File Split + Size Gate
+
+- Split natural rules into exactly two files:
+	- `svfactory/agent.md` (core/foundation rules)
+	- `svfactory/rules-extensions.md` (single extension file)
+- Added deterministic size gate test ensuring each file <= 8KB.
+
+### C.2 Planned AX/PR/WF/KA Rules -> Deterministic Checks
+
+- Added deterministic alignment rule module:
+	- `KBX-AX003`
+	- `KBX-PR025`
+	- `KBX-WF008`
+	- `KBX-KA103`
+- Added canonical source doc for these rules:
+	- `template/15-governance/rule-catalog-contract.md`
+
+### C.3 Rule-Lifecycle Skeleton (state/status/history)
+
+- Added lifecycle storage and transitions:
+	- state file
+	- append-only history events
+	- set/status/history operations
+- Exposed lifecycle operations through CLI skeleton:
+	- `kbx rules lifecycle status`
+	- `kbx rules lifecycle set`
+	- `kbx rules lifecycle history`
+
+### GraphDB Readiness Hook
+
+Rule lifecycle skeleton is intentionally file-based now so it can later map to:
+- graphdb lane for rules/governance entities
+- graphdb lane for real-time intent/work management
+- graphdb lane for source-derived code graph (gitnexus style)
+
+Current checkpoint provides deterministic IDs and event history suitable for later graph ingestion.
+
 ## Files Touched
 
 > List each file and describe whether it is new or modified.

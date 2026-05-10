@@ -1,7 +1,7 @@
 'use strict';
 
-const path = require('path');
 const { loadRules, runRules: engineRunRules, runRule } = require('../lib/rule-engine');
+const { readState, setRuleLifecycle, readHistory } = require('../lib/rule-lifecycle');
 
 /**
  * Parse common flags: --json, --rule <id>
@@ -19,6 +19,44 @@ function parseArgs(args = []) {
     }
   }
   return options;
+}
+
+function parseLifecycleArgs(args = []) {
+  const options = {
+    json: false,
+    status: null,
+    state: null,
+    note: null,
+    limit: 50,
+    errors: [],
+  };
+
+  const positional = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === '--json') {
+      options.json = true;
+    } else if (arg.startsWith('--status=')) {
+      options.status = arg.slice('--status='.length).trim();
+    } else if (arg.startsWith('--state=')) {
+      options.state = arg.slice('--state='.length).trim();
+    } else if (arg.startsWith('--note=')) {
+      options.note = arg.slice('--note='.length).trim();
+    } else if (arg.startsWith('--limit=')) {
+      const parsed = Number(arg.slice('--limit='.length).trim());
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        options.limit = parsed;
+      } else {
+        options.errors.push(`Invalid --limit value: ${arg}`);
+      }
+    } else if (arg.startsWith('--')) {
+      options.errors.push(`Unknown option: ${arg}`);
+    } else {
+      positional.push(arg);
+    }
+  }
+
+  return { options, positional };
 }
 
 /**
@@ -142,6 +180,118 @@ function runList({ args = [] } = {}) {
   }
 }
 
+function runLifecycleStatus({ args = [], cwd = process.cwd() } = {}) {
+  const { options } = parseLifecycleArgs(args);
+  if (options.errors.length > 0) {
+    for (const e of options.errors) console.error(e);
+    process.exitCode = 1;
+    return;
+  }
+
+  const snapshot = readState(cwd);
+  const rules = Object.values(snapshot.state.rules || {}).sort((a, b) => a.rule_id.localeCompare(b.rule_id));
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx rules lifecycle status',
+      count: rules.length,
+      updated_at: snapshot.state.updated_at,
+      rules,
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Rule lifecycle records: ${rules.length}`);
+  for (const record of rules) {
+    console.log(`  ${record.rule_id}  status=${record.status}  state=${record.state}`);
+  }
+}
+
+function runLifecycleSet({ args = [], cwd = process.cwd() } = {}) {
+  const { options, positional } = parseLifecycleArgs(args);
+  if (options.errors.length > 0) {
+    for (const e of options.errors) console.error(e);
+    process.exitCode = 1;
+    return;
+  }
+
+  const ruleId = positional[0];
+  if (!ruleId) {
+    console.error('Usage: kbx rules lifecycle set <rule-id> [--status=...] [--state=...] [--note=...] [--json]');
+    process.exitCode = 1;
+    return;
+  }
+
+  if (!options.status && !options.state) {
+    console.error('kbx rules lifecycle set requires --status and/or --state.');
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = setRuleLifecycle(cwd, {
+    ruleId,
+    status: options.status || undefined,
+    state: options.state || undefined,
+    note: options.note || null,
+  });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx rules lifecycle set',
+      rule: result.rule,
+      event: result.event,
+    }, null, 2));
+    return;
+  }
+
+  console.log(`[OK] ${result.rule.rule_id} status=${result.rule.status} state=${result.rule.state}`);
+}
+
+function runLifecycleHistory({ args = [], cwd = process.cwd() } = {}) {
+  const { options, positional } = parseLifecycleArgs(args);
+  if (options.errors.length > 0) {
+    for (const e of options.errors) console.error(e);
+    process.exitCode = 1;
+    return;
+  }
+
+  const ruleId = positional[0] || null;
+  const events = readHistory(cwd, { ruleId, limit: options.limit });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx rules lifecycle history',
+      rule_id: ruleId,
+      count: events.length,
+      events,
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Rule lifecycle history: ${events.length}`);
+  for (const event of events) {
+    console.log(`  ${event.ts}  ${event.rule_id}  ${event.from_status}->${event.to_status}  ${event.from_state}->${event.to_state}`);
+  }
+}
+
+function runLifecycle({ args = [], cwd = process.cwd() } = {}) {
+  const [sub = 'status', ...rest] = args;
+  if (sub === 'status') {
+    runLifecycleStatus({ args: rest, cwd });
+    return;
+  }
+  if (sub === 'set') {
+    runLifecycleSet({ args: rest, cwd });
+    return;
+  }
+  if (sub === 'history') {
+    runLifecycleHistory({ args: rest, cwd });
+    return;
+  }
+  console.error(`Unknown rules lifecycle subcommand: ${sub}. Use status | set | history.`);
+  process.exitCode = 1;
+}
+
 /**
  * kbx rules help
  */
@@ -151,6 +301,12 @@ function runRulesHelp() {
   console.log('  kbx rules lint [--json]            Run all rules against the KB. Exit 1 if errors found.');
   console.log('  kbx rules check <rule-id> [--json] Run a single rule by ID.');
   console.log('  kbx rules list [--json]            List all registered rules.');
+  console.log('  kbx rules lifecycle status [--json]');
+  console.log('                                    Show rule lifecycle state skeleton.');
+  console.log('  kbx rules lifecycle set <rule-id> [--status=...] [--state=...] [--note=...] [--json]');
+  console.log('                                    Update rule lifecycle status/state and append history event.');
+  console.log('  kbx rules lifecycle history [rule-id] [--limit=N] [--json]');
+  console.log('                                    Show lifecycle history events.');
   console.log('  kbx rules help                     Show this help.');
   console.log('');
   console.log('Severity:');
@@ -170,6 +326,8 @@ async function runRulesCommand({ args = [], cwd = process.cwd() } = {}) {
     await runCheck({ args: rest, cwd });
   } else if (subcommand === 'list') {
     runList({ args: rest });
+  } else if (subcommand === 'lifecycle') {
+    runLifecycle({ args: rest, cwd });
   } else if (subcommand === 'help' || subcommand === '--help' || subcommand === '-h') {
     runRulesHelp();
   } else {
