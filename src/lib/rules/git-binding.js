@@ -7,6 +7,7 @@
  *
  * Rules:
  *   KBX-GB001  Intent IDs must follow vX-Y-slug pattern (e.g., v2-7-nl-rules-to-cli-logic)
+ *   KBX-GB002  focus.md must expose Intent Checkpoints section for deterministic checkpoint trace
  */
 
 const fs = require('fs');
@@ -50,6 +51,8 @@ function collectIntentFiles(kbPath) {
     for (const ent of entries) {
       const abs = path.join(dir, ent.name);
       if (ent.isDirectory() && ent.name.startsWith('_')) {
+        // Skip archived legacy intents to preserve backward compatibility.
+        if (ent.name === '_archive') continue;
         // _active, _closed, etc.
         scanDir(abs);
       } else if (ent.isDirectory()) {
@@ -113,9 +116,52 @@ const GB001_INTENT_ID_FORMAT = {
   },
 };
 
+/**
+ * KBX-GB002: focus.md must expose checkpoint section
+ *
+ * Deterministic checkpoint commits rely on this section to keep append-only trace lines.
+ * We only enforce when a focus.md file exists in known root paths.
+ */
+const GB002_FOCUS_CHECKPOINT_SECTION = {
+  id: 'KBX-GB002',
+  description: 'focus.md must contain "## Intent Checkpoints" section when focus file is present',
+  severity: SEVERITY.WARN,
+  source_doc: 'template/15-governance/git-binding-policy.md',
+  check(context) {
+    const violations = [];
+    const { kbPath } = context;
+
+    const candidates = [
+      path.join(kbPath, 'svfactory', 'focus.md'),
+      path.join(kbPath, 'kb-root', 'focus.md'),
+    ];
+
+    const focusPath = candidates.find((candidate) => fs.existsSync(candidate));
+    if (!focusPath) {
+      return violations;
+    }
+
+    let content;
+    try {
+      content = fs.readFileSync(focusPath, 'utf8');
+    } catch {
+      return violations;
+    }
+
+    if (!content.includes('## Intent Checkpoints')) {
+      violations.push({
+        file: path.relative(kbPath, focusPath),
+        message: 'Missing "## Intent Checkpoints" section required for deterministic checkpoint history',
+      });
+    }
+
+    return violations;
+  },
+};
+
 // ─── Export ─────────────────────────────────────────────────────────────────
 
-const rules = [GB001_INTENT_ID_FORMAT];
+const rules = [GB001_INTENT_ID_FORMAT, GB002_FOCUS_CHECKPOINT_SECTION];
 
 registerRules(rules);
 

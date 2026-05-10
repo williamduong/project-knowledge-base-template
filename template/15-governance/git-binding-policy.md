@@ -124,6 +124,30 @@ This filter is enforced unconditionally so that editing docs never triggers impa
 4. For paths that intentionally have no doc coverage, document the rationale (e.g., `09-operations/coverage-exceptions.md`) so future audits see the decision.
 5. Re-run `kbx status` to confirm `clean` (or an explained `attention`).
 
+## Checkpoint Commit Rule (KBX-GB002)
+
+Intent checkpoint tracking is deterministic and file-backed via `focus.md`.
+
+Rule contract:
+- Checkpoint file: `svfactory/focus.md` or `kb-root/focus.md` (first existing path wins).
+- Required heading: `## Intent Checkpoints`.
+- On checkpoint-trigger events, CLI appends one timestamped checkpoint line and commits the file immediately.
+
+Default trigger events:
+1. `kbx intent create`
+2. `kbx intent status` (single intent and overview)
+3. `kbx intent close`
+4. `kbx intent checkpoint` (manual user-triggered checkpoint)
+
+Commit policy:
+- Commit occurs on the current branch (no branch restriction).
+- Commit scope is limited to the checkpoint file path.
+- History source of truth is git log + checkpoint lines in `focus.md`.
+
+AI generation boundary:
+- AI may propose checkpoint `note` text only.
+- Event detection, file mutation, and git commit are deterministic CLI responsibilities.
+
 ## Baseline Coupling
 
 Impact analysis compares `<baseline>..HEAD`. The baseline lives in `<contentRoot>/.kb/state.json` under `sourceRepositoryGitBaseline` (per [`repository-revision-state.md`](../00-start-here/repository-revision-state.md)).

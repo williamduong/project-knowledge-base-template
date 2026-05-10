@@ -33,6 +33,7 @@ const {
 } = require('../lib/intent');
 const { analyzeIntentConflicts, suggestApplyOrder, generateLessonCandidates } = require('../lib/intent-intelligence');
 const { runRelease } = require('./release');
+const { recordIntentCheckpoint } = require('../lib/intent-checkpoint');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -59,6 +60,7 @@ function parseArgs(args) {
     lastUpdated: null,
     stale: false,
     aged: false,
+    checkpointNote: null,
   };
 
   const setListScope = (scope) => {
@@ -114,6 +116,10 @@ function parseArgs(args) {
     }
     if (arg.startsWith('--date=')) {
       options.lastUpdated = arg.slice('--date='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--note=')) {
+      options.checkpointNote = arg.slice('--note='.length).trim();
       continue;
     }
     if (arg.startsWith('--release=')) {
@@ -218,8 +224,12 @@ function parseArgs(args) {
       throw new Error('kb intent extract requires a commit range (e.g. HEAD~5..HEAD)');
     }
     options.commitRange = rest[1];
+  } else if (options.sub === 'checkpoint') {
+    if (rest.length >= 2) {
+      options.intentId = rest[1];
+    }
   } else {
-    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, cleanup, close, cancel, archive, apply, suggest-lessons, extract`);
+    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, cleanup, close, cancel, archive, apply, suggest-lessons, extract, checkpoint`);
   }
 
   return options;
@@ -356,6 +366,13 @@ async function runCreate(ctx, options, cwd) {
   }
 
   const wsPath = createIntentWorkspace(ctx.contentRoot, { intentId, mode, changeType });
+
+  recordIntentCheckpoint({
+    workspaceRoot: cwd,
+    eventName: 'intent.create',
+    intentId,
+    note: options.checkpointNote || 'Intent created',
+  });
 
   if (json) {
     console.log(JSON.stringify({
@@ -554,6 +571,13 @@ async function runStatus(ctx, options) {
         }
       }
     }
+
+    recordIntentCheckpoint({
+      workspaceRoot: ctx.workspaceRoot,
+      eventName: 'intent.status',
+      intentId: info.record.id,
+      note: options.checkpointNote || 'Intent status inspected',
+    });
     return;
   }
 
@@ -595,6 +619,12 @@ async function runStatus(ctx, options) {
       console.log('Run "kb intent status <id-or-slug>" for details on a specific intent.');
     }
   }
+
+  recordIntentCheckpoint({
+    workspaceRoot: ctx.workspaceRoot,
+    eventName: 'intent.status.overview',
+    note: options.checkpointNote || 'Intent status overview inspected',
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -963,6 +993,14 @@ async function runClose(ctx, options) {
     releaseRef: closeType === 'released' ? options.release : null,
     dropReason: closeType === 'dropped' ? options.reason : null,
   });
+
+  recordIntentCheckpoint({
+    workspaceRoot: ctx.workspaceRoot,
+    eventName: 'intent.close',
+    intentId: options.intentId,
+    note: options.checkpointNote || `Intent closed as ${closeType}`,
+  });
+
   if (options.json) {
     console.log(JSON.stringify({
       command: 'kb intent close',
@@ -975,6 +1013,35 @@ async function runClose(ctx, options) {
   }
   console.log(`Intent "${options.intentId}" closed as ${closeType}.`);
   console.log(`Path: ${closedPath}`);
+}
+
+async function runCheckpoint(ctx, options, cwd) {
+  const result = recordIntentCheckpoint({
+    workspaceRoot: cwd,
+    eventName: 'intent.checkpoint.manual',
+    intentId: options.intentId,
+    note: options.checkpointNote || 'Manual checkpoint requested',
+  });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kb intent checkpoint',
+      intent_id: options.intentId || null,
+      skipped: Boolean(result.skipped),
+      reason: result.reason || null,
+      focus_file: result.relFocus || null,
+      status: result.skipped ? 'skipped' : 'committed',
+    }, null, 2));
+    return;
+  }
+
+  if (result.skipped) {
+    console.log('Intent checkpoint skipped: no focus.md found (svfactory/focus.md or kb-root/focus.md).');
+    return;
+  }
+
+  console.log('Intent checkpoint committed.');
+  console.log(`File: ${result.relFocus}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -1307,6 +1374,7 @@ async function runIntent({ args, cwd }) {
   }
 
   const ctx = resolveExistingState({ workspaceRoot: cwd });
+  ctx.workspaceRoot = cwd;
 
   if (options.sub === 'create') {
     await runCreate(ctx, options, cwd);
@@ -1334,6 +1402,8 @@ async function runIntent({ args, cwd }) {
     await runCleanup(ctx, options);
   } else if (options.sub === 'extract') {
     await runExtract(ctx, options, cwd);
+  } else if (options.sub === 'checkpoint') {
+    await runCheckpoint(ctx, options, cwd);
   }
 }
 
@@ -1355,6 +1425,7 @@ function printHelp() {
   console.log('  kb intent archive <id> [--json]');
   console.log('  kb intent suggest-lessons [--json]');
   console.log('  kb intent extract <range> [--title="..."] [--type=<type>] [--json]');
+  console.log('  kb intent checkpoint [<id>] [--note="..."] [--json]');
   console.log('');
   console.log('Subcommands:');
   console.log('  create          Create a new intent workspace.');
@@ -1388,6 +1459,8 @@ function printHelp() {
   console.log('                  --title="..." Optional title for the extracted intent.');
   console.log('                  --type=<type> Change type: docs (default), feature, fix, refactor.');
   console.log('                  Creates intent in _archive/ with snapshot of changed KB files.');
+  console.log('  checkpoint      Write a focus.md checkpoint entry and commit immediately.');
+  console.log('                  Triggered automatically on create/status/close when focus.md exists.');
   console.log('');
 }
 

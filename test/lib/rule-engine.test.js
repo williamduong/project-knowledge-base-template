@@ -72,9 +72,10 @@ describe('loadRules', () => {
     }
   });
 
-  it('Phase 2 git-binding rule is present: KBX-GB001', () => {
+  it('Phase 2 git-binding rules are present: KBX-GB001, KBX-GB002', () => {
     const ids = loadRules().map(r => r.id);
     assert.ok(ids.includes('KBX-GB001'), `Missing Phase 2 rule: KBX-GB001`);
+    assert.ok(ids.includes('KBX-GB002'), `Missing Phase 2 rule: KBX-GB002`);
   });
 });
 
@@ -641,5 +642,50 @@ describe('KBX-GB001: intent ID format', () => {
     const v = violations.filter(x => x.rule_id === 'KBX-GB001');
     assert.equal(v.length, 1);
     assert.ok(v[0].message.includes('v2-7'));
+  });
+});
+
+// ─── KBX-GB002 — focus checkpoint section ───────────────────────────────────
+
+describe('KBX-GB002: focus checkpoint section', () => {
+  let tmpDir;
+  after(() => cleanup(tmpDir));
+
+  it('no violation when svfactory/focus.md has checkpoint heading', () => {
+    tmpDir = makeTmpKb({
+      'svfactory/focus.md': [
+        '# Focus',
+        '',
+        '## Intent Checkpoints',
+        '',
+        '- 2026-05-10T00:00:00.000Z | event=intent.status | branch=main',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-GB002']);
+    const v = violations.filter(x => x.rule_id === 'KBX-GB002');
+    assert.equal(v.length, 0);
+  });
+
+  it('warn violation when focus file exists without checkpoint heading', () => {
+    tmpDir = makeTmpKb({
+      'svfactory/focus.md': [
+        '# Focus',
+        '',
+        'No checkpoint section yet.',
+      ].join('\n'),
+    });
+    const { violations } = runRules(tmpDir, ['KBX-GB002']);
+    const v = violations.filter(x => x.rule_id === 'KBX-GB002');
+    assert.equal(v.length, 1);
+    assert.ok(v[0].message.includes('Intent Checkpoints'));
+  });
+
+  it('no violation when no focus file exists', () => {
+    tmpDir = makeTmpKb({
+      'knowledge-base/01-product/doc.md': '# Doc',
+    });
+    const { violations } = runRules(tmpDir, ['KBX-GB002']);
+    const v = violations.filter(x => x.rule_id === 'KBX-GB002');
+    assert.equal(v.length, 0);
   });
 });
