@@ -1,7 +1,7 @@
 ---
 title: Graph-ingest data loss incident (2026-05-10)
 type: incident
-status: active
+status: resolved
 owner: knowledge-management
 time_state: current
 verification: unverified
@@ -56,11 +56,23 @@ Results:
 - Recovery status: **partial evidence only**.
 - Full content restoration from recovered artifacts alone: **not possible at this time**.
 
-## Impact
+## Resolution Checkpoint (2026-05-10)
+
+Resolution outcome:
+1. Controlled reconstruction was executed under intent `v2-9-graph-ingest-reconstruction`.
+2. Reconstruction intent was closed as released under `knowledge-base/intents/_closed/released/v2-9-graph-ingest-reconstruction/`.
+3. Runtime harness work resumed after closure checkpoint.
+
+Current policy:
+1. `knowledge-base/.kb/graph-ingest/` is treated as generated artifacts.
+2. Lane files remain untracked in this workspace unless release policy changes.
+3. Source of truth remains KB docs, intents, rules, and code, not graph-ingest lane snapshots.
+
+## Historical Impact (at incident time)
 
 - `knowledge-base/.kb/graph-ingest` is missing.
 - Any workflow expecting those lane artifacts is blocked/stale until owner decision.
-- Runtime harness work stays paused per owner direction.
+- Runtime harness work was paused at incident time until reconstruction checkpoint closure.
 
 ## Owner Decision Needed
 
@@ -98,8 +110,8 @@ Select one path:
 	 - decide commit strategy
 11. Do not commit reconstructed files unless owner explicitly approves.
 
-## Guardrail Until Resolved
+## Guardrail During Incident Window
 
-- No runtime harness work.
+- No runtime harness work before reconstruction checkpoint closure.
 - No recreation from memory.
 - No commit of reconstructed artifacts unless explicitly approved.
