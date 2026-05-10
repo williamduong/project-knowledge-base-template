@@ -80,6 +80,19 @@ test('parseArgs: check sub with --json', () => {
   assert.equal(o.json, true);
 });
 
+test('parseArgs: export positional lane', () => {
+  const o = parseArgs(['export', 'rules', '--json']);
+  assert.equal(o.sub, 'export');
+  assert.equal(o.lane, 'rules');
+  assert.equal(o.json, true);
+});
+
+test('parseArgs: lane alias sets export + lane', () => {
+  const o = parseArgs(['lane', 'intents']);
+  assert.equal(o.sub, 'export');
+  assert.equal(o.lane, 'intents');
+});
+
 test('parseArgs: --output= value', () => {
   const o = parseArgs(['export', '--output=/tmp/out.jsonl']);
   assert.equal(o.output, '/tmp/out.jsonl');

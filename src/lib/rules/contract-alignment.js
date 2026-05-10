@@ -24,6 +24,64 @@ function joinRel(base, p) {
 }
 
 const ALIGNMENT_DOC = 'template/15-governance/rule-catalog-contract.md';
+const HARDENING_INTENT_ID = 'v2-8-v2-8-svfactory-rule-catalog-hardening';
+const REQUIRED_LANES = ['rules', 'intents', 'source'];
+
+function hasIntentDirectory(kbPath, relPath) {
+  return fs.existsSync(path.join(kbPath, relPath, HARDENING_INTENT_ID));
+}
+
+function isHardeningIntentActive(kbPath) {
+  return (
+    hasIntentDirectory(kbPath, path.join('knowledge-base', 'intents', '_active')) ||
+    hasIntentDirectory(kbPath, path.join('intents', '_active'))
+  );
+}
+
+function laneArtifactCandidates(kbPath, lane) {
+  return [
+    path.join(kbPath, 'knowledge-base', '.kb', 'graph-ingest', `${lane}.json`),
+    path.join(kbPath, '.kb', 'graph-ingest', `${lane}.json`),
+  ];
+}
+
+function validateLaneArtifact(kbPath, lane) {
+  const candidates = laneArtifactCandidates(kbPath, lane);
+  const existing = candidates.find((filePath) => fs.existsSync(filePath));
+  if (!existing) {
+    return {
+      ok: false,
+      file: joinRel(kbPath, candidates[0]),
+      message: `Missing graph-ingest lane artifact for "${lane}".`,
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(existing, 'utf8'));
+    if (parsed.format !== 'graph-ingest-v1') {
+      return {
+        ok: false,
+        file: joinRel(kbPath, existing),
+        message: `Lane artifact "${lane}" must declare format="graph-ingest-v1".`,
+      };
+    }
+    if (parsed.lane !== lane) {
+      return {
+        ok: false,
+        file: joinRel(kbPath, existing),
+        message: `Lane artifact "${lane}" must declare lane="${lane}".`,
+      };
+    }
+  } catch {
+    return {
+      ok: false,
+      file: joinRel(kbPath, existing),
+      message: `Lane artifact "${lane}" must be valid JSON graph-ingest payload.`,
+    };
+  }
+
+  return { ok: true };
+}
 
 const AX003_DETERMINISTIC_BLOCK_ALIGNMENT = {
   id: 'KBX-AX003',
@@ -307,9 +365,40 @@ const KA104_SESSION_CHOOSER_ALIGNMENT = {
   },
 };
 
+const AX005_GRAPH_INGEST_LANE_GATE = {
+  id: 'KBX-AX005',
+  title: 'Graph-ingest lane artifact acceptance gate',
+  description: 'When v2.8 rule-catalog hardening intent is active, required lane artifacts must exist and be valid.',
+  severity: SEVERITY.ERROR,
+  owner_layer: OWNER_LAYER.SHARED,
+  enforceability: ENFORCEABILITY.AUTO,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.8.0',
+  source_doc: ALIGNMENT_DOC,
+  check({ kbPath }) {
+    if (!isHardeningIntentActive(kbPath)) {
+      return [];
+    }
+
+    const violations = [];
+    for (const lane of REQUIRED_LANES) {
+      const checkResult = validateLaneArtifact(kbPath, lane);
+      if (!checkResult.ok) {
+        violations.push({
+          file: checkResult.file,
+          message: `${checkResult.message} Run: kbx graph lane ${lane}`,
+        });
+      }
+    }
+
+    return violations;
+  },
+};
+
 registerRules([
   AX003_DETERMINISTIC_BLOCK_ALIGNMENT,
   AX004_CLI_FIRST_GATE_ALIGNMENT,
+  AX005_GRAPH_INGEST_LANE_GATE,
   PR025_THREE_LAYER_ALIGNMENT,
   PR026_SESSION_HOOK_BOUNDARY_ALIGNMENT,
   WF008_INTENT_GATE_ALIGNMENT,
@@ -321,6 +410,7 @@ registerRules([
 module.exports = [
   AX003_DETERMINISTIC_BLOCK_ALIGNMENT,
   AX004_CLI_FIRST_GATE_ALIGNMENT,
+  AX005_GRAPH_INGEST_LANE_GATE,
   PR025_THREE_LAYER_ALIGNMENT,
   PR026_SESSION_HOOK_BOUNDARY_ALIGNMENT,
   WF008_INTENT_GATE_ALIGNMENT,

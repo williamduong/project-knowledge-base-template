@@ -60,12 +60,27 @@ Rules registration must fail on:
 This document is the canonical source_doc for alignment rules:
 - KBX-AX003
 - KBX-AX004
+- KBX-AX005
 - KBX-PR025
 - KBX-PR026
 - KBX-WF008
 - KBX-WF011
 - KBX-KA103
 - KBX-KA104
+
+## Lane Artifact Acceptance Gate (v2.8)
+
+Rule `KBX-AX005` is a deterministic acceptance gate for v2.8 rule-catalog hardening.
+
+When active intent `v2-8-v2-8-svfactory-rule-catalog-hardening` exists, the following artifacts must exist and be valid:
+1. `knowledge-base/.kb/graph-ingest/rules.json`
+2. `knowledge-base/.kb/graph-ingest/intents.json`
+3. `knowledge-base/.kb/graph-ingest/source.json`
+
+Validation contract:
+- Each file must be valid JSON.
+- `format` must equal `graph-ingest-v1`.
+- `lane` must match file lane (`rules`, `intents`, `source`).
 
 ## Session Hook Contract
 

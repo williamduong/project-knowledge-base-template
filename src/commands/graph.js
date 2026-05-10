@@ -55,9 +55,18 @@ function parseArgs(args) {
   }
 
   if (rest.length === 0) {
-    throw new Error('kb graph requires a subcommand: export | check | help');
+    throw new Error('kb graph requires a subcommand: export | lane | check | help');
   }
   options.sub = rest[0];
+
+  if (options.sub === 'lane' || options.sub === 'export-lane') {
+    options.sub = 'export';
+    if (!options.lane) {
+      options.lane = rest[1] || null;
+    }
+  } else if (options.sub === 'export' && !options.lane && rest[1]) {
+    options.lane = rest[1];
+  }
 
   if (options.lane && !VALID_LANES.has(options.lane)) {
     throw new Error(`Invalid lane "${options.lane}". Allowed: rules, intents, source`);
@@ -273,6 +282,8 @@ kb graph — graph export and consistency check (v1.9 mini)
 
 Usage:
   kb graph export [--output=<path>] [--lane=<rules|intents|source>] [--json]
+  kb graph export <rules|intents|source> [--output=<path>] [--json]
+  kb graph lane <rules|intents|source> [--output=<path>] [--json]
   kb graph check  [--json]
 
 Subcommands:

@@ -28,6 +28,7 @@ describe('contract alignment rules (Phase C.2)', () => {
     for (const id of [
       'KBX-AX003',
       'KBX-AX004',
+      'KBX-AX005',
       'KBX-PR025',
       'KBX-PR026',
       'KBX-WF008',
@@ -130,5 +131,31 @@ describe('contract alignment rules (Phase C.2)', () => {
     ]);
     cleanup(kbPath);
     assert.ok(violations.length > 0);
+  });
+
+  it('fails AX005 when hardening intent is active but lane artifacts are missing', () => {
+    const kbPath = makeTmpKb({
+      'knowledge-base/intents/_active/v2-8-v2-8-svfactory-rule-catalog-hardening/intent.md': '# active',
+    });
+
+    const { violations } = runRules(kbPath, ['KBX-AX005']);
+    cleanup(kbPath);
+
+    assert.equal(violations.length, 3);
+    assert.ok(violations.every((v) => v.rule_id === 'KBX-AX005'));
+  });
+
+  it('passes AX005 when hardening intent is active and lane artifacts are valid', () => {
+    const kbPath = makeTmpKb({
+      'knowledge-base/intents/_active/v2-8-v2-8-svfactory-rule-catalog-hardening/intent.md': '# active',
+      'knowledge-base/.kb/graph-ingest/rules.json': JSON.stringify({ format: 'graph-ingest-v1', lane: 'rules' }),
+      'knowledge-base/.kb/graph-ingest/intents.json': JSON.stringify({ format: 'graph-ingest-v1', lane: 'intents' }),
+      'knowledge-base/.kb/graph-ingest/source.json': JSON.stringify({ format: 'graph-ingest-v1', lane: 'source' }),
+    });
+
+    const { violations } = runRules(kbPath, ['KBX-AX005']);
+    cleanup(kbPath);
+
+    assert.equal(violations.length, 0);
   });
 });

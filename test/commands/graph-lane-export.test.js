@@ -130,4 +130,13 @@ describe('kbx graph export lane', () => {
     assert.ok(payload.nodes.length >= 2);
     assert.ok(payload.edges.length >= 1);
   });
+
+  it('supports lane alias command', async () => {
+    const out = await captureAsync(() => runGraph(['lane', 'rules', '--json'], { workspaceRoot }));
+    const json = JSON.parse(out.stdout);
+
+    assert.equal(json.ok, true);
+    assert.equal(json.lane, 'rules');
+    assert.ok(fs.existsSync(json.output));
+  });
 });
