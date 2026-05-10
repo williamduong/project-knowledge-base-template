@@ -49,6 +49,55 @@ function writeDocsFixture(root) {
   fs.writeFileSync(bPath, '# b\n', 'utf8');
 }
 
+function writeLaneFixture(root, lane, payload) {
+  const lanePath = path.join(root, 'knowledge-base', '.kb', 'graph-ingest', `${lane}.json`);
+  fs.mkdirSync(path.dirname(lanePath), { recursive: true });
+  fs.writeFileSync(lanePath, JSON.stringify(payload, null, 2), 'utf8');
+}
+
+function writeApplyAuditFixture(root) {
+  const applyRoot = path.join(root, 'knowledge-base', '.kb', 'apply');
+  const receiptsRoot = path.join(applyRoot, 'receipts');
+  fs.mkdirSync(receiptsRoot, { recursive: true });
+
+  const receipt = {
+    schema: 'kbx-apply-receipt-v1',
+    applied_at: '2026-05-11T10:00:00.000Z',
+    request: 'update docs index links',
+    classification: {
+      intent_type: 'update',
+      target_scope: 'docs',
+      mutation_class: 'docs-only',
+    },
+    suggestion: {
+      primary_pipe: 'PipeDocsFast',
+      required_gates: ['P2', 'P10'],
+      fallback_or_escalation: null,
+    },
+    write_operations: [],
+    status: 'applied-safe-noop',
+  };
+
+  fs.writeFileSync(
+    path.join(receiptsRoot, '20260511-update-docs-index-links.json'),
+    JSON.stringify(receipt, null, 2),
+    'utf8'
+  );
+
+  fs.writeFileSync(
+    path.join(applyRoot, 'ledger.jsonl'),
+    `${JSON.stringify({
+      applied_at: receipt.applied_at,
+      receipt: '.kb/apply/receipts/20260511-update-docs-index-links.json',
+      request: receipt.request,
+      target_scope: 'docs',
+      mutation_class: 'docs-only',
+      status: receipt.status,
+    })}\n`,
+    'utf8'
+  );
+}
+
 async function captureAsync(fn) {
   const stdout = [];
   const stderr = [];
@@ -138,5 +187,66 @@ describe('kbx graph export lane', () => {
     assert.equal(json.ok, true);
     assert.equal(json.lane, 'rules');
     assert.ok(fs.existsSync(json.output));
+  });
+
+  it('exports read-only frontend json graph with schema version, nodes, and edges', async () => {
+    writeLaneFixture(workspaceRoot, 'intents', {
+      format: 'graph-ingest-v1',
+      lane: 'intents',
+      nodes: [
+        { id: 'intent:demo', type: 'Intent', properties: { id: 'demo', lifecycle: 'active' } },
+      ],
+      edges: [],
+    });
+    writeLaneFixture(workspaceRoot, 'rules', {
+      format: 'graph-ingest-v1',
+      lane: 'rules',
+      nodes: [
+        { id: 'rule:KBX-M001', type: 'Rule', properties: { rule_id: 'KBX-M001' } },
+      ],
+      edges: [],
+    });
+    writeLaneFixture(workspaceRoot, 'source', {
+      format: 'graph-ingest-v1',
+      lane: 'source',
+      nodes: [
+        { id: 'src:entity:1', type: 'SourceEntity', properties: { source_path: 'src/a.ts' } },
+      ],
+      edges: [
+        { type: 'RELATES_TO', from: 'src:entity:1', to: 'src:entity:1', properties: {} },
+      ],
+    });
+    writeApplyAuditFixture(workspaceRoot);
+
+    const outPath = path.join(workspaceRoot, '.kbx-graph', 'latest.json');
+    const out = await captureAsync(() => runGraph([
+      'export',
+      '--format=json',
+      '--out',
+      outPath,
+      '--json',
+    ], { workspaceRoot }));
+
+    const summary = JSON.parse(out.stdout);
+    assert.equal(summary.ok, true);
+    assert.equal(summary.schema_version, 'kbx-observability-graph-v1');
+    assert.ok(fs.existsSync(outPath));
+
+    const payload = JSON.parse(fs.readFileSync(outPath, 'utf8'));
+    assert.ok(Array.isArray(payload.nodes));
+    assert.ok(Array.isArray(payload.edges));
+    assert.equal(payload.schema_version, 'kbx-observability-graph-v1');
+    assert.ok(payload.nodes.some((n) => n.type === 'Intent'));
+    assert.ok(payload.nodes.some((n) => n.type === 'Rule'));
+    assert.ok(payload.nodes.some((n) => n.type === 'Artifact'));
+    assert.ok(payload.edges.some((e) => e.type === 'INTENT_RUN'));
+    assert.ok(payload.edges.some((e) => e.type === 'RUN_DECISION'));
+    assert.ok(payload.edges.some((e) => e.type === 'DECISION_PIPE'));
+    assert.ok(payload.edges.some((e) => e.type === 'DECISION_RULE'));
+    assert.ok(payload.edges.some((e) => e.type === 'DECISION_GATE'));
+    assert.ok(payload.edges.some((e) => e.type === 'GATE_EVIDENCE'));
+    assert.ok(payload.edges.some((e) => e.type === 'RUN_RESULT'));
+    assert.equal(payload.read_only, true);
+    assert.equal(payload.validation.ok, true);
   });
 });

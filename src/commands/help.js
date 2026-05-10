@@ -38,6 +38,8 @@ function runHelp({ packageJson, args }) {
     console.log('  kbx intent suggest-lessons [--json]');
     console.log('  kbx chaos [--json] [--no-save] [--quiet] [--scan-src <dir>]');
     console.log('  kbx graph export [--lane=<rules|intents|source>] [--output=<path>] [--json]');
+      console.log('  kbx graph export --format json --out .kbx-graph/latest.json [--json]');
+      console.log('  kbx graph export --format json --out .kbx-graph/latest.json [--json]');
     console.log('  kbx graph lane <rules|intents|source> [--output=<path>] [--json]');
     console.log('  kbx graph check  [--json]');
     console.log('  kbx ontology <show|validate|audit|build> [options]');
