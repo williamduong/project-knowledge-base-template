@@ -5,7 +5,7 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: self-referential
-last_updated: 2026-05-04
+last_updated: 2026-05-10
 last_verified: 2026-05-04
 related:
   - current-state.md
@@ -69,6 +69,23 @@ Execution disambiguation:
 - Use `runtime-step` for `/kbx-plan` and `/kbx-run` checklist actions.
 
 Rule: avoid bare `state`, `status`, `phase`, `task`, or `step` in governance prose when a compound term exists.
+
+## Namespace and Prompt Contract Lock (v2.9)
+
+Namespace responsibilities:
+- `knowledge-base/.kb/` is the runtime artifact namespace (state, runtime plan, caches, generated projections).
+- `.kbx/` is the project identity and resolver namespace (workspace identity, project-level metadata).
+- `.sfact/` is reserved for SVFactory maintainer internals and is not a downstream runtime artifact namespace.
+
+Prompt surface responsibilities:
+- Canonical downstream prompt namespace is `kbx`: `/kbx-plan`, `/kbx-run`, `/kbx-ask`, and `@kbx`.
+- Legacy `kb` prompt aliases (`/kb-plan`, `/kb-run`, `/kb-ask`, `@kb`) are compatibility-only and must be marked deprecated where retained.
+
+Deprecation window:
+- Keep `kb` aliases during v2.9.x for compatibility.
+- Target removal milestone is v2.10.0 unless blocked by downstream acceptance evidence.
+
+Rule: do not rename `knowledge-base/.kb/` to `.kbx/` or `.sfact/` without an explicit versioned migration contract.
 
 ## Roadmap Glossary Locks (v1.7-v2.0)
 
