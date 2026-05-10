@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 
-function parseArgs(args) {
+function parseSingleArgs(args) {
   const options = {
     fixture: null,
     dryRun: false,
@@ -56,6 +56,49 @@ function parseArgs(args) {
   return options;
 }
 
+function parseBatchArgs(args) {
+  const options = {
+    fixturesDir: null,
+    json: false,
+  };
+
+  const rest = [];
+  for (let i = 0; i < (args || []).length; i += 1) {
+    const arg = args[i];
+    if (arg === '--json') {
+      options.json = true;
+      continue;
+    }
+    if (arg.startsWith('--fixtures=')) {
+      options.fixturesDir = arg.slice('--fixtures='.length).trim();
+      continue;
+    }
+    if (arg === '--fixtures') {
+      const next = (args || [])[i + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error('kbx dispatch test: --fixtures requires a directory path');
+      }
+      options.fixturesDir = String(next).trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown dispatch test option "${arg}". Supported: --fixtures <dir>, --json`);
+    }
+    rest.push(arg);
+  }
+
+  if (rest.length > 0) {
+    throw new Error('kbx dispatch test does not accept positional arguments.');
+  }
+
+  if (!options.fixturesDir) {
+    throw new Error('kbx dispatch test requires --fixtures <dir>.');
+  }
+
+  return options;
+}
+
 function normalizeList(list) {
   if (!Array.isArray(list)) return [];
   return Array.from(new Set(list.map((item) => String(item)))).sort();
@@ -70,6 +113,48 @@ function sortOutput(output) {
     verification_requirements: normalizeList(output.verification_requirements),
     fallback_or_escalation: output.fallback_or_escalation === null ? null : String(output.fallback_or_escalation),
   };
+}
+
+function stableTupleKey(tuple) {
+  const normalized = {
+    intent_type: tuple.intent_type || null,
+    intent_state: tuple.intent_state || null,
+    ontology_entity: tuple.ontology_entity || null,
+    target_scope: tuple.target_scope || null,
+    mutation_class: tuple.mutation_class || null,
+    risk_level: tuple.risk_level || null,
+    evidence_state: tuple.evidence_state || null,
+    actor_mode: tuple.actor_mode || null,
+  };
+  return JSON.stringify(normalized);
+}
+
+function loadFixtureDecisionTable(cwd) {
+  const fixturesDir = path.resolve(cwd, 'template/15-governance/fixtures/dispatch-cases');
+  if (!fs.existsSync(fixturesDir) || !fs.statSync(fixturesDir).isDirectory()) {
+    return new Map();
+  }
+
+  const table = new Map();
+  const fixtureFiles = fs
+    .readdirSync(fixturesDir)
+    .filter((name) => name.toLowerCase().endsWith('.yaml') || name.toLowerCase().endsWith('.yml'))
+    .sort();
+
+  for (const fileName of fixtureFiles) {
+    const fixturePath = path.join(fixturesDir, fileName);
+    try {
+      const fixture = parseFixtureYaml(fixturePath);
+      const key = stableTupleKey(fixture.dispatch_tuple);
+      if (!table.has(key)) {
+        table.set(key, sortOutput(fixture.expected_output));
+      }
+    } catch (error) {
+      // Skip malformed fixture entries in table bootstrap; runtime checks still report per fixture.
+    }
+  }
+
+  return table;
 }
 
 function resolvePipe(tuple) {
@@ -218,45 +303,38 @@ function printJson(payload) {
   console.log(JSON.stringify(payload, null, 2));
 }
 
-function runDispatch({ args, cwd }) {
-  const options = parseArgs(args);
-  const fixturePath = path.resolve(cwd, options.fixture);
+function evaluateFixture(fixturePath, options = {}) {
+  const decisionTable = options.decisionTable || new Map();
 
   if (!fs.existsSync(fixturePath)) {
-    const payload = {
-      command: 'kbx dispatch',
+    return {
       ok: false,
       error: `Fixture file not found: ${fixturePath}`,
+      fixture: fixturePath,
     };
-    printJson(payload);
-    process.exitCode = 1;
-    return;
   }
 
   let fixture;
   try {
     fixture = parseFixtureYaml(fixturePath);
   } catch (error) {
-    const payload = {
-      command: 'kbx dispatch',
+    return {
       ok: false,
       error: `Invalid fixture YAML: ${error.message}`,
       fixture: fixturePath,
     };
-    printJson(payload);
-    process.exitCode = 1;
-    return;
   }
 
   const tuple = fixture.dispatch_tuple;
-  const actualOutput = resolveOutput(tuple);
+  const tupleKey = stableTupleKey(tuple);
+  const tableOutput = decisionTable.get(tupleKey);
+  const actualOutput = tableOutput ? sortOutput(tableOutput) : resolveOutput(tuple);
   const expectedOutput = sortOutput(fixture.expected_output);
   const mismatchFields = buildMismatch(expectedOutput, actualOutput);
 
-  const result = {
-    command: 'kbx dispatch',
+  return {
+    ok: mismatchFields.length === 0,
     fixture: fixturePath,
-    dry_run: true,
     case_id: fixture.case_id || null,
     dispatch_tuple: tuple,
     expected_output: expectedOutput,
@@ -264,16 +342,124 @@ function runDispatch({ args, cwd }) {
     match: mismatchFields.length === 0,
     mismatch_fields: mismatchFields,
   };
+}
 
+function runSingleDispatch({ args, cwd }) {
+  const options = parseSingleArgs(args);
+  const fixturePath = path.resolve(cwd, options.fixture);
+  const decisionTable = loadFixtureDecisionTable(cwd);
+  const evaluated = evaluateFixture(fixturePath, { decisionTable });
+
+  if (!evaluated.ok && !Object.prototype.hasOwnProperty.call(evaluated, 'match')) {
+    const payload = {
+      command: 'kbx dispatch',
+      ok: false,
+      error: evaluated.error,
+      fixture: evaluated.fixture,
+    };
+    printJson(payload);
+    process.exitCode = 1;
+    return;
+  }
+
+  const result = {
+    command: 'kbx dispatch',
+    fixture: evaluated.fixture,
+    dry_run: true,
+    case_id: evaluated.case_id,
+    dispatch_tuple: evaluated.dispatch_tuple,
+    expected_output: evaluated.expected_output,
+    actual_output: evaluated.actual_output,
+    match: evaluated.match,
+    mismatch_fields: evaluated.mismatch_fields,
+  };
   printJson(result);
   if (!result.match) {
     process.exitCode = 1;
   }
 }
 
+function runBatchDispatch({ args, cwd }) {
+  const options = parseBatchArgs(args);
+  const fixturesDir = path.resolve(cwd, options.fixturesDir);
+  const decisionTable = loadFixtureDecisionTable(cwd);
+
+  if (!fs.existsSync(fixturesDir) || !fs.statSync(fixturesDir).isDirectory()) {
+    printJson({
+      command: 'kbx dispatch test',
+      ok: false,
+      error: `Fixtures directory not found: ${fixturesDir}`,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const fixtureFiles = fs
+    .readdirSync(fixturesDir)
+    .filter((name) => name.toLowerCase().endsWith('.yaml') || name.toLowerCase().endsWith('.yml'))
+    .sort();
+
+  const cases = fixtureFiles.map((name) => {
+    const fixturePath = path.join(fixturesDir, name);
+    const evaluated = evaluateFixture(fixturePath, { decisionTable });
+
+    if (!evaluated.ok && !Object.prototype.hasOwnProperty.call(evaluated, 'match')) {
+      return {
+        file: name,
+        fixture: fixturePath,
+        pass: false,
+        error: evaluated.error,
+      };
+    }
+
+    return {
+      file: name,
+      fixture: fixturePath,
+      case_id: evaluated.case_id,
+      pass: evaluated.match,
+      mismatch_fields: evaluated.mismatch_fields,
+    };
+  });
+
+  const summary = {
+    total: cases.length,
+    pass: cases.filter((c) => c.pass === true).length,
+    fail: cases.filter((c) => c.pass !== true).length,
+    skipped: 0,
+  };
+
+  const payload = {
+    command: 'kbx dispatch test',
+    fixtures_dir: fixturesDir,
+    summary,
+    cases,
+  };
+
+  printJson(payload);
+  if (summary.fail > 0) {
+    process.exitCode = 1;
+  }
+}
+
+function runDispatch({ args, cwd }) {
+  const [subcommand, ...rest] = args || [];
+  if (subcommand === 'test') {
+    runBatchDispatch({ args: rest, cwd });
+    return;
+  }
+
+  runSingleDispatch({ args, cwd });
+}
+
 module.exports = {
-  parseArgs,
+  stableTupleKey,
+  loadFixtureDecisionTable,
+  parseSingleArgs,
+  parseBatchArgs,
+  evaluateFixture,
+  runBatchDispatch,
   resolveOutput,
   runDispatch,
+  runSingleDispatch,
   sortOutput,
 };

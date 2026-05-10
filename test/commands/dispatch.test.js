@@ -6,7 +6,12 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const { runDispatch } = require('../../src/commands/dispatch');
+const {
+  parseBatchArgs,
+  parseSingleArgs,
+  runBatchDispatch,
+  runDispatch,
+} = require('../../src/commands/dispatch');
 
 function captureRun(fn) {
   const stdout = [];
@@ -38,6 +43,19 @@ function captureRun(fn) {
 }
 
 describe('kbx dispatch', () => {
+  it('parses single-fixture args', () => {
+    const parsed = parseSingleArgs(['--fixture', 'a.yaml', '--dry-run', '--json']);
+    assert.equal(parsed.fixture, 'a.yaml');
+    assert.equal(parsed.dryRun, true);
+    assert.equal(parsed.json, true);
+  });
+
+  it('parses batch-fixture args', () => {
+    const parsed = parseBatchArgs(['--fixtures', 'fixtures-dir', '--json']);
+    assert.equal(parsed.fixturesDir, 'fixtures-dir');
+    assert.equal(parsed.json, true);
+  });
+
   it('passes fixture dispatch-001-read-only-explain', () => {
     const cwd = path.resolve(__dirname, '..', '..');
     const out = captureRun(() => runDispatch({
@@ -102,6 +120,67 @@ describe('kbx dispatch', () => {
       assert.equal(out.exitCode, 1);
       assert.equal(payload.ok, false);
       assert.match(payload.error, /Invalid fixture YAML/);
+    } finally {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('runs batch fixture tests and reports totals', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: ['test', '--fixtures', 'template/15-governance/fixtures/dispatch-cases', '--json'],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 0);
+    assert.equal(payload.command, 'kbx dispatch test');
+    assert.equal(payload.summary.total, 30);
+    assert.equal(payload.summary.fail, 0);
+    assert.equal(payload.summary.pass, 30);
+    assert.equal(payload.summary.skipped, 0);
+  });
+
+  it('returns non-zero for batch run when one fixture mismatches', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kbx-dispatch-batch-mismatch-'));
+    const fixturePath = path.join(tempDir, 'dispatch-bad.yaml');
+    fs.writeFileSync(
+      fixturePath,
+      [
+        'case_id: dispatch-bad',
+        'dispatch_tuple:',
+        '  intent_type: explain',
+        '  intent_state: active',
+        '  ontology_entity: Rule',
+        '  target_scope: docs',
+        '  mutation_class: read-only',
+        '  risk_level: low',
+        '  evidence_state: sufficient',
+        '  actor_mode: agent-assisted',
+        'expected_output:',
+        '  primary_pipe: PipeStandard',
+        '  applicable_rules: []',
+        '  required_gates: []',
+        '  allowed_actions: []',
+        '  verification_requirements: []',
+        '  fallback_or_escalation: null',
+      ].join('\n'),
+      'utf8',
+    );
+
+    try {
+      const out = captureRun(() => runBatchDispatch({
+        args: ['--fixtures', tempDir, '--json'],
+        cwd,
+      }));
+
+      const payload = JSON.parse(out.stdout);
+      assert.equal(out.exitCode, 1);
+      assert.equal(payload.summary.total, 1);
+      assert.equal(payload.summary.fail, 1);
+      assert.equal(payload.summary.pass, 0);
+      assert.equal(payload.summary.skipped, 0);
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
