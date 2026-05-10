@@ -1,0 +1,29 @@
+case_id: dispatch-012-recovery-intent-recover
+scenario: Recover flow after blocked intent lifecycle
+mode: execution
+dispatch_tuple:
+  intent_type: recover
+  intent_state: blocked
+  ontology_entity: Intent
+  target_scope: rules
+  mutation_class: contract-changing
+  risk_level: medium
+  evidence_state: partial
+  actor_mode: human-led
+expected_output:
+  primary_pipe: PipeRecovery
+  applicable_rules: [KBX-M001, KBX-M002, KBX-M003, KBX-I001, KBX-I002, KBX-WF011, KBX-KA104]
+  required_gates: [P2, P10, P19]
+  allowed_actions: [reclassify-intent, request-evidence]
+  verification_requirements: [recovery-trace-required]
+  fallback_or_escalation: null
+explainability:
+  tuple_to_pipe_basis: [intent_type=recover]
+  tuple_to_rule_basis: [ontology_entity=Intent, workflow=recovery]
+determinism_checks:
+  repeated_resolution_same_output: true
+  no_random_branching: true
+acceptance:
+  resolves_to_single_pipe_or_human_gate: true
+  conditional_rules_tuple_based: true
+  no_state_mutation: true

@@ -1,0 +1,29 @@
+case_id: dispatch-002-docs-fast-update
+scenario: Update wording in governance docs with sufficient evidence
+mode: execution
+dispatch_tuple:
+  intent_type: update
+  intent_state: active
+  ontology_entity: Artifact
+  target_scope: docs
+  mutation_class: docs-only
+  risk_level: low
+  evidence_state: sufficient
+  actor_mode: agent-assisted
+expected_output:
+  primary_pipe: PipeDocsFast
+  applicable_rules: [KBX-M001, KBX-M002, KBX-M003, KBX-M004, KBX-GB001, KBX-AX003, KBX-PR025]
+  required_gates: [P2, P10]
+  allowed_actions: [edit-doc, update-link]
+  verification_requirements: [evidence-present, audit-log-required]
+  fallback_or_escalation: null
+explainability:
+  tuple_to_pipe_basis: [mutation_class=docs-only, evidence_state=sufficient, risk_level=low]
+  tuple_to_rule_basis: [target_scope=docs, mutation_class!=read-only]
+determinism_checks:
+  repeated_resolution_same_output: true
+  no_random_branching: true
+acceptance:
+  resolves_to_single_pipe_or_human_gate: true
+  conditional_rules_tuple_based: true
+  no_state_mutation: true

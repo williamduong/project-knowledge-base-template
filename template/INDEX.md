@@ -55,6 +55,7 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 - Version patch prompts: [12-ai-skills/version-patch-prompts.md](12-ai-skills/version-patch-prompts.md)
 - Maintenance queue: [00-start-here/strategic-backlog.md](00-start-here/strategic-backlog.md)
 - Verification rules: [15-governance/verification-policy.md](15-governance/verification-policy.md)
+- Action dispatch contracts: [15-governance/action-dispatch-contract.md](15-governance/action-dispatch-contract.md)
 - Self evolution doctrine: [15-governance/self-evolution-doctrine.md](15-governance/self-evolution-doctrine.md)
 - Versioning policy: [15-governance/template-versioning-policy.md](15-governance/template-versioning-policy.md)
 - Release policy: [15-governance/release-policy.md](15-governance/release-policy.md)
@@ -119,3 +120,11 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 4. 06-api and 07-database
 5. 04-frontend and 05-backend
 6. 08-security, 09-operations, 10-testing
+
+## Governance Contracts (Dispatch)
+
+- [15-governance/action-dispatch-contract.md](15-governance/action-dispatch-contract.md)
+- [15-governance/dispatch-decision-tuple.md](15-governance/dispatch-decision-tuple.md)
+- [15-governance/rule-selector-contract.md](15-governance/rule-selector-contract.md)
+- [15-governance/human-gate-contract.md](15-governance/human-gate-contract.md)
+- [15-governance/fixtures/dispatch-cases/fixture-schema.md](15-governance/fixtures/dispatch-cases/fixture-schema.md)

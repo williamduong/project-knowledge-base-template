@@ -5,8 +5,8 @@ status: active
 owner: knowledge-management
 time_state: current
 verification: unverified
-last_updated: 2026-05-04
-last_verified: 2026-05-04
+last_updated: 2026-05-10
+last_verified: 2026-05-10
 related:
 	- current-verified-index.md
 	- target-state-index.md
@@ -77,6 +77,8 @@ Rules:
 | KB-019 | Propose minimal KBAgent DB schema (intents/documents/rule_results/audit_events) | architecture | P1 | 2026-05-28 | todo | Backlog intent: `knowledge-base/intents/_backlog/v2-8-kbagent-minimal-db-schema.md`. Produce backend decision matrix (SQLite-first vs GraphDB-later) and non-breaking adoption plan. |
 | KB-020 | Implement KBAgent DB layer + ship Intent Web UI as inseparable bundle (v2.9) | knowledge-management | P1 | 2026-Q3 | todo | Backlog intent: `knowledge-base/intents/_backlog/v2-9-db-and-intent-web-ui.md`. SQLite adapter + `kbx serve` (downstream user) + SVFactory governance view (Layer C). Bundle constraint: neither ships without the other. Absorbs KB-013 scope. |
 | KB-021 | Research-driven KB intelligence: autonomous repo analysis + GraphDB persistence (v2.10) | knowledge-management | P1 | 2026-Q3 | todo | Backlog intent: `knowledge-base/intents/_backlog/v2-10-research-driven-kb-intelligence.md`. AI autonomously researches repo, infers KB architecture, persists findings to GraphDB (no template files). Generic template stored as reference spec, not files. Depends on v2-9 DB. |
+| KB-022 | Expand dispatch fixture set from 15 to 30+ after Session 1 schema approval | knowledge-management | P0 | 2026-05-14 | deferred | Backlog intent: `knowledge-base/intents/_backlog/v2-8-1-dispatch-fixtures-expansion-to-30.md`. Hard gate: all PASS in `template/15-governance/fixtures/dispatch-cases/review-checklist-session-1.md` before expansion. |
+| KB-023 | Phase 2 runtime implementation: action dispatch + rule selector | knowledge-management | P0 | 2026-05-21 | deferred | Backlog intent: `knowledge-base/intents/_backlog/v2-9-1-action-dispatch-runtime-phase-2.md`. Blocked until Session 1 contract + fixture approval gate closes. |
 
 ## Intent Sequencing (v2.6 -> v2.10+)
 

@@ -1,0 +1,29 @@
+case_id: dispatch-011-human-gate-irreversible-risk
+scenario: Docs-only proposal marked irreversible risk
+mode: execution
+dispatch_tuple:
+  intent_type: update
+  intent_state: proposed
+  ontology_entity: Artifact
+  target_scope: docs
+  mutation_class: docs-only
+  risk_level: irreversible
+  evidence_state: sufficient
+  actor_mode: agent-assisted
+expected_output:
+  primary_pipe: null
+  applicable_rules: [KBX-M001, KBX-M002, KBX-M003, KBX-V001, KBX-GB001]
+  required_gates: [P2, P10, P20]
+  allowed_actions: [request-human-gate]
+  verification_requirements: [irreversible-risk-approval]
+  fallback_or_escalation: HumanGateRequired
+explainability:
+  tuple_to_pipe_basis: [risk_level=irreversible]
+  tuple_to_rule_basis: [risk-driven verification family included]
+determinism_checks:
+  repeated_resolution_same_output: true
+  no_random_branching: true
+acceptance:
+  resolves_to_single_pipe_or_human_gate: true
+  conditional_rules_tuple_based: true
+  no_state_mutation: true

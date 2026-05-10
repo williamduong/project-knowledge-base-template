@@ -1,0 +1,29 @@
+case_id: dispatch-005-human-gate-release
+scenario: Prepare release mutation with package and release scope
+mode: execution
+dispatch_tuple:
+  intent_type: release
+  intent_state: proposed
+  ontology_entity: Release
+  target_scope: release
+  mutation_class: release-changing
+  risk_level: high
+  evidence_state: sufficient
+  actor_mode: agent-assisted
+expected_output:
+  primary_pipe: null
+  applicable_rules: [KBX-M001, KBX-M002, KBX-V001, KBX-GB001, KBX-WF008, KBX-WF011]
+  required_gates: [P2, P10, P19, P20]
+  allowed_actions: [request-human-gate]
+  verification_requirements: [release-approval-required]
+  fallback_or_escalation: HumanGateRequired
+explainability:
+  tuple_to_pipe_basis: [target_scope=release, mutation_class=release-changing]
+  tuple_to_rule_basis: [intent_type=release]
+determinism_checks:
+  repeated_resolution_same_output: true
+  no_random_branching: true
+acceptance:
+  resolves_to_single_pipe_or_human_gate: true
+  conditional_rules_tuple_based: true
+  no_state_mutation: true

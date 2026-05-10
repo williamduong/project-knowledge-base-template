@@ -1,0 +1,29 @@
+case_id: dispatch-015-determinism-replay-b
+scenario: Determinism replay baseline B (same tuple as dispatch-014)
+mode: execution
+dispatch_tuple:
+  intent_type: create
+  intent_state: draft
+  ontology_entity: Intent
+  target_scope: rules
+  mutation_class: contract-changing
+  risk_level: medium
+  evidence_state: sufficient
+  actor_mode: human-led
+expected_output:
+  primary_pipe: PipeStandard
+  applicable_rules: [KBX-M001, KBX-M002, KBX-M003, KBX-I001, KBX-I002, KBX-GB001, KBX-WF008, KBX-KA103]
+  required_gates: [P2, P10, P19]
+  allowed_actions: [create-intent, link-evidence]
+  verification_requirements: [intent-schema-valid]
+  fallback_or_escalation: null
+explainability:
+  tuple_to_pipe_basis: [matches standard_path predicates]
+  tuple_to_rule_basis: [intent and rule scope predicates]
+determinism_checks:
+  repeated_resolution_same_output: true
+  no_random_branching: true
+acceptance:
+  resolves_to_single_pipe_or_human_gate: true
+  conditional_rules_tuple_based: true
+  no_state_mutation: true
