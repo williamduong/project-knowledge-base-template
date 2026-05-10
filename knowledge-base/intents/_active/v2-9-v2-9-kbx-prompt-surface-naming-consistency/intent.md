@@ -6,11 +6,12 @@ created_at: "2026-05-10T15:46:33.019Z"
 focus:
   current: "Canonical naming contract documented: .kb stays runtime namespace; kbx prompt surface is canonical with kb aliases deprecated."
   last_updated: 2026-05-10
-  next_action: "Build migration inventory for remaining legacy kb prompt mentions and prioritize removals by surface risk."
+  next_action: "Execute high-priority migration on active downstream repositories that still expose @kb and /kb-* as primary entrypoints."
 change_type: governance
 change_scope:
   - template/00-start-here/terminology-guard.md
   - knowledge-base/00-start-here/terminology-guard.md
+  - knowledge-base/intents/_active/v2-9-v2-9-kbx-prompt-surface-naming-consistency/intent.md
 impact_signals:
   - naming consistency
   - backward compatibility
@@ -42,8 +43,28 @@ Why this is low-risk:
 2. Avoids forced path migration for existing downstream workspaces.
 3. Provides explicit deprecation window instead of abrupt alias removal.
 
+## Migration Inventory (2026-05-10)
+
+Scan scope:
+1. `kbx-beta-downstream/.github/**`
+2. `authcore/**`
+3. `VipePix-Generation/**`
+4. `platform-control-plane/**`
+
+Findings:
+1. `kbx-beta-downstream`: no legacy `/kb-*` or `@kb` prompt surface found under `.github/`.
+2. `authcore`: legacy prompt files remain active at `apps/client/.github/prompts/kb-*.prompt.md`.
+3. `VipePix-Generation`: legacy prompt surface still referenced via `@kb` and `/kb-*` in `.github/agents/kbv.agent.md` plus integration banners in `AGENTS.md` and `.github/copilot-instructions.md`.
+4. `platform-control-plane`: historical changelog entries still use legacy names in `knowledge-base/TEMPLATE_CHANGELOG.md`.
+
+Priority order:
+1. P0: `authcore` and `VipePix-Generation` active agent/prompt entrypoints.
+2. P1: historical documentation surfaces (`TEMPLATE_CHANGELOG.md`) where alias references are archival.
+3. P2: optional cleanup of disabled legacy templates in self-host workspace.
+
 ## Staged Files
 
 1. `knowledge-base/00-start-here/terminology-guard.md`
 2. `template/00-start-here/terminology-guard.md`
+3. `knowledge-base/intents/_active/v2-9-v2-9-kbx-prompt-surface-naming-consistency/intent.md`
 
