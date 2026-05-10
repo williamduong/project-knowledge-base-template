@@ -8,6 +8,7 @@ const path = require('path');
 
 const {
   parseBatchArgs,
+  parseGroundArgs,
   parseSelectArgs,
   parseSingleArgs,
   runBatchDispatch,
@@ -61,6 +62,14 @@ describe('kbx dispatch', () => {
     const parsed = parseSelectArgs(['--fixture', 'a.yaml', '--mode', 'diagnostic', '--json']);
     assert.equal(parsed.fixture, 'a.yaml');
     assert.equal(parsed.mode, 'diagnostic');
+    assert.equal(parsed.json, true);
+  });
+
+  it('parses grounding args', () => {
+    const parsed = parseGroundArgs(['--fixture', 'a.yaml', '--projected-chaos=81', '--active-intents=2', '--json']);
+    assert.equal(parsed.fixture, 'a.yaml');
+    assert.equal(parsed.projectedChaos, 81);
+    assert.equal(parsed.activeIntents, 2);
     assert.equal(parsed.json, true);
   });
 
@@ -221,5 +230,39 @@ describe('kbx dispatch', () => {
     assert.equal(out.exitCode, 1);
     assert.equal(payload.ok, false);
     assert.match(payload.error, /invalid mode/i);
+  });
+
+  it('runs principal grounding dry-run with non-blocking output', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: ['ground', '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-001-read-only-explain.yaml', '--json'],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 0);
+    assert.equal(payload.command, 'kbx dispatch ground');
+    assert.equal(payload.grounding.summary.escalation, 'none');
+    assert.equal(payload.grounding.summary.hard_fail_count, 0);
+  });
+
+  it('returns non-zero when principal grounding triggers hard-fail', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: [
+        'ground',
+        '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-006-human-gate-missing-evidence.yaml',
+        '--active-intents=2',
+        '--gate-record=missing',
+        '--json',
+      ],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 1);
+    assert.equal(payload.command, 'kbx dispatch ground');
+    assert.equal(payload.grounding.summary.escalation, 'HumanGateRequired');
+    assert.ok(payload.grounding.summary.hard_fail_count > 0);
   });
 });

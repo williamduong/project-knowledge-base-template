@@ -160,6 +160,109 @@ function parseSelectArgs(args) {
   return options;
 }
 
+function parseGroundArgs(args) {
+  const options = {
+    fixture: null,
+    json: false,
+    projectedChaos: null,
+    activeIntents: 1,
+    gateRecord: 'present',
+    downstreamAcceptance: 'present',
+    tierBreach: false,
+    traceComplete: true,
+    pathRoot: 'contentRoot',
+    compatRisk: false,
+  };
+
+  const rest = [];
+  for (let i = 0; i < (args || []).length; i += 1) {
+    const arg = args[i];
+    if (arg === '--json') {
+      options.json = true;
+      continue;
+    }
+    if (arg === '--tier-breach') {
+      options.tierBreach = true;
+      continue;
+    }
+    if (arg === '--compat-risk') {
+      options.compatRisk = true;
+      continue;
+    }
+    if (arg.startsWith('--trace-complete=')) {
+      options.traceComplete = arg.slice('--trace-complete='.length).trim() !== 'false';
+      continue;
+    }
+    if (arg.startsWith('--path-root=')) {
+      options.pathRoot = arg.slice('--path-root='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--gate-record=')) {
+      options.gateRecord = arg.slice('--gate-record='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--downstream-acceptance=')) {
+      options.downstreamAcceptance = arg.slice('--downstream-acceptance='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--projected-chaos=')) {
+      options.projectedChaos = Number(arg.slice('--projected-chaos='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--active-intents=')) {
+      options.activeIntents = Number(arg.slice('--active-intents='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--fixture=')) {
+      options.fixture = arg.slice('--fixture='.length).trim();
+      continue;
+    }
+    if (arg === '--fixture') {
+      const next = (args || [])[i + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error('kbx dispatch ground: --fixture requires a path value');
+      }
+      options.fixture = String(next).trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown dispatch ground option "${arg}".`);
+    }
+    rest.push(arg);
+  }
+
+  if (rest.length > 0) {
+    throw new Error('kbx dispatch ground does not accept positional arguments.');
+  }
+
+  if (!options.fixture) {
+    throw new Error('kbx dispatch ground requires --fixture <path>.');
+  }
+
+  if (!Number.isInteger(options.activeIntents) || options.activeIntents < 1) {
+    throw new Error('kbx dispatch ground: --active-intents must be an integer >= 1.');
+  }
+
+  if (options.projectedChaos !== null && !Number.isFinite(options.projectedChaos)) {
+    throw new Error('kbx dispatch ground: --projected-chaos must be a finite number.');
+  }
+
+  if (!['present', 'missing'].includes(options.gateRecord)) {
+    throw new Error('kbx dispatch ground: --gate-record must be present or missing.');
+  }
+
+  if (!['present', 'missing'].includes(options.downstreamAcceptance)) {
+    throw new Error('kbx dispatch ground: --downstream-acceptance must be present or missing.');
+  }
+
+  if (!['contentRoot', 'hardcoded'].includes(options.pathRoot)) {
+    throw new Error('kbx dispatch ground: --path-root must be contentRoot or hardcoded.');
+  }
+
+  return options;
+}
+
 function normalizeList(list) {
   if (!Array.isArray(list)) return [];
   return Array.from(new Set(list.map((item) => String(item)))).sort();
@@ -267,6 +370,128 @@ function resolveSelectorPolicy(mode) {
     load_policy: 'phase_ordered',
     violation_policy: 'fail_fast_on_blocking',
     stop_on_hard_fail: true,
+  };
+}
+
+const PRINCIPLE_BINDINGS = {
+  P0: { gate: 'G-DETERMINISTIC-PLACEMENT', rules: ['KBX-AX005', 'KBX-PG-000'], defaultSeverity: 'hard-fail' },
+  P2: { gate: 'G-EVIDENCE-SUFFICIENCY', rules: ['KBX-V001', 'KBX-V002', 'KBX-PG-002'], defaultSeverity: 'hard-fail' },
+  P3: { gate: 'G-BACKWARD-COMPAT', rules: ['KBX-M001', 'KBX-WF008', 'KBX-PG-003'], defaultSeverity: 'hard-fail' },
+  P7: { gate: 'G-STORAGE-CONTEXT', rules: ['KBX-GB001', 'KBX-GB002', 'KBX-PG-007'], defaultSeverity: 'hard-fail' },
+  P18: { gate: 'G-INTENT-UNIQUENESS', rules: ['KBX-I001', 'KBX-I002', 'KBX-PG-018'], defaultSeverity: 'hard-fail' },
+  P19: { gate: 'G-CHAOS-ESTIMATE', rules: ['KBX-WF008', 'KBX-KA103', 'KBX-PG-019'], defaultSeverity: 'warn' },
+  P20: { gate: 'G-HUMAN-GATE-RECORD', rules: ['KBX-KA104', 'KBX-PG-020'], defaultSeverity: 'hard-fail' },
+  P21: { gate: 'G-DOWNSTREAM-ACCEPTANCE', rules: ['KBX-AX003', 'KBX-PR026', 'KBX-PG-021'], defaultSeverity: 'warn' },
+  P24: { gate: 'G-THREE-LAYER-TRACE', rules: ['KBX-KA103', 'KBX-KA104', 'KBX-PG-024'], defaultSeverity: 'hard-fail' },
+  P25: { gate: 'G-THREE-LAYER-TRACE', rules: ['KBX-WF011', 'KBX-PR025', 'KBX-PG-025'], defaultSeverity: 'warn' },
+};
+
+const SEVERITY_RANK = { none: 0, info: 1, warn: 2, 'hard-fail': 3 };
+
+function buildFinding(principle, severity, reason, triggered) {
+  const binding = PRINCIPLE_BINDINGS[principle];
+  return {
+    principle,
+    gate: binding.gate,
+    relevant_rules: binding.rules,
+    severity,
+    triggered,
+    reason,
+  };
+}
+
+function evaluatePrincipalGrounding(tuple, context) {
+  const findings = [];
+
+  const mutationIntent = ['create', 'update', 'refactor', 'release'].includes(tuple.intent_type);
+  const evidenceHardFail = mutationIntent && ['none', 'conflicting'].includes(tuple.evidence_state);
+  findings.push(buildFinding(
+    'P2',
+    evidenceHardFail ? 'hard-fail' : 'info',
+    evidenceHardFail ? 'mutation intent with insufficient/conflicting evidence' : 'evidence baseline satisfied for this tuple',
+    evidenceHardFail,
+  ));
+
+  findings.push(buildFinding(
+    'P3',
+    context.compatRisk ? 'hard-fail' : 'info',
+    context.compatRisk ? 'compatibility risk signaled for minor-line behavior' : 'no compatibility risk signal provided',
+    context.compatRisk,
+  ));
+
+  findings.push(buildFinding(
+    'P7',
+    context.pathRoot === 'hardcoded' ? 'hard-fail' : 'info',
+    context.pathRoot === 'hardcoded' ? 'hardcoded path root detected' : 'contentRoot placement respected',
+    context.pathRoot === 'hardcoded',
+  ));
+
+  findings.push(buildFinding(
+    'P18',
+    context.activeIntents > 1 ? 'hard-fail' : 'info',
+    context.activeIntents > 1 ? `multiple active intents in scope (${context.activeIntents})` : 'single active intent in scope',
+    context.activeIntents > 1,
+  ));
+
+  const chaosTriggered = Number.isFinite(context.projectedChaos) && context.projectedChaos > 80;
+  findings.push(buildFinding(
+    'P19',
+    chaosTriggered ? 'hard-fail' : 'warn',
+    chaosTriggered ? `projected chaos ${context.projectedChaos} exceeds threshold 80` : 'projected chaos within threshold or unspecified',
+    chaosTriggered,
+  ));
+
+  const blockingActor = tuple.risk_level === 'high'
+    || tuple.risk_level === 'irreversible'
+    || tuple.mutation_class === 'source-changing'
+    || tuple.mutation_class === 'release-changing';
+  const missingGateRecord = blockingActor && context.gateRecord === 'missing';
+  findings.push(buildFinding(
+    'P20',
+    missingGateRecord ? 'hard-fail' : 'info',
+    missingGateRecord ? 'blocking actor exists but human gate record is missing' : 'human gate record requirement satisfied for current context',
+    missingGateRecord,
+  ));
+
+  const closeBoundary = tuple.intent_state === 'closed' || tuple.intent_state === 'blocked';
+  const missingDownstream = closeBoundary && context.downstreamAcceptance === 'missing';
+  findings.push(buildFinding(
+    'P21',
+    missingDownstream ? 'warn' : 'info',
+    missingDownstream ? 'downstream acceptance missing at close boundary' : 'no downstream acceptance gap detected at boundary',
+    missingDownstream,
+  ));
+
+  findings.push(buildFinding(
+    'P24',
+    context.tierBreach ? 'hard-fail' : 'info',
+    context.tierBreach ? 'tier boundary breach detected between soft and hard contract layers' : 'tier boundary remains consistent',
+    context.tierBreach,
+  ));
+
+  const traceViolation = !context.traceComplete;
+  const p25Severity = traceViolation && closeBoundary ? 'hard-fail' : (traceViolation ? 'warn' : 'info');
+  findings.push(buildFinding(
+    'P25',
+    p25Severity,
+    traceViolation ? 'three-layer trace is incomplete' : 'three-layer trace is complete',
+    traceViolation,
+  ));
+
+  const maxSeverity = findings.reduce((acc, item) => (SEVERITY_RANK[item.severity] > SEVERITY_RANK[acc] ? item.severity : acc), 'none');
+  const hardFailCount = findings.filter((f) => f.severity === 'hard-fail').length;
+  const warnCount = findings.filter((f) => f.severity === 'warn').length;
+  const infoCount = findings.filter((f) => f.severity === 'info').length;
+
+  return {
+    findings,
+    summary: {
+      hard_fail_count: hardFailCount,
+      warn_count: warnCount,
+      info_count: infoCount,
+      final_severity: maxSeverity,
+      escalation: hardFailCount > 0 ? 'HumanGateRequired' : 'none',
+    },
   };
 }
 
@@ -665,6 +890,72 @@ function runSelectDispatch({ args, cwd }) {
   printJson(payload);
 }
 
+function runGroundDispatch({ args, cwd }) {
+  let options;
+  try {
+    options = parseGroundArgs(args);
+  } catch (error) {
+    printJson({
+      command: 'kbx dispatch ground',
+      ok: false,
+      error: error.message,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const fixturePath = path.resolve(cwd, options.fixture);
+  if (!fs.existsSync(fixturePath)) {
+    printJson({
+      command: 'kbx dispatch ground',
+      ok: false,
+      error: `Fixture file not found: ${fixturePath}`,
+      fixture: fixturePath,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  let fixture;
+  try {
+    fixture = parseFixtureYaml(fixturePath);
+  } catch (error) {
+    printJson({
+      command: 'kbx dispatch ground',
+      ok: false,
+      error: `Invalid fixture YAML: ${error.message}`,
+      fixture: fixturePath,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const context = {
+    projectedChaos: options.projectedChaos,
+    activeIntents: options.activeIntents,
+    gateRecord: options.gateRecord,
+    downstreamAcceptance: options.downstreamAcceptance,
+    tierBreach: options.tierBreach,
+    traceComplete: options.traceComplete,
+    pathRoot: options.pathRoot,
+    compatRisk: options.compatRisk,
+  };
+
+  const grounding = evaluatePrincipalGrounding(fixture.dispatch_tuple, context);
+  const payload = {
+    command: 'kbx dispatch ground',
+    fixture: fixturePath,
+    dispatch_tuple: fixture.dispatch_tuple,
+    context,
+    grounding,
+  };
+
+  printJson(payload);
+  if (grounding.summary.escalation === 'HumanGateRequired') {
+    process.exitCode = 1;
+  }
+}
+
 function runDispatch({ args, cwd }) {
   const [subcommand, ...rest] = args || [];
   if (subcommand === 'test') {
@@ -677,6 +968,11 @@ function runDispatch({ args, cwd }) {
     return;
   }
 
+  if (subcommand === 'ground') {
+    runGroundDispatch({ args: rest, cwd });
+    return;
+  }
+
   runSingleDispatch({ args, cwd });
 }
 
@@ -685,12 +981,15 @@ module.exports = {
   loadFixtureDecisionTable,
   parseSingleArgs,
   parseSelectArgs,
+  parseGroundArgs,
   parseBatchArgs,
   evaluateFixture,
   runBatchDispatch,
   runSelectDispatch,
+  runGroundDispatch,
   selectApplicableRules,
   resolveSelectorPolicy,
+  evaluatePrincipalGrounding,
   resolveOutput,
   runDispatch,
   runSingleDispatch,
