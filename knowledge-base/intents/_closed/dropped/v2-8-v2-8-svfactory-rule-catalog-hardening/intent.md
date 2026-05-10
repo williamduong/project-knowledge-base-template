@@ -1,7 +1,7 @@
 ---
 id: v2-8-v2-8-svfactory-rule-catalog-hardening
 mode: full
-lifecycle: active
+lifecycle: closed
 created_at: "2026-05-10T09:32:01.307Z"
 focus:
   current: "Scanned baseline complete (2026-05-10). Ready to activate for full SVFactory+KBAgent rule catalog sweep and refactor plan."
@@ -9,27 +9,6 @@ focus:
   next_action: "Activate intent, run full rule inventory sweep, then implement catalog hardening phases A-D"
 change_type: governance
 change_scope:
-  - src/lib/rules/registry.js
-  - src/lib/rule-engine.js
-  - src/lib/rules/metadata.js
-  - src/lib/rules/verification.js
-  - src/lib/rules/intent.js
-  - src/lib/rules/git-binding.js
-  - src/lib/rules/contract-alignment.js
-  - src/lib/rule-lifecycle.js
-  - src/commands/rules.js
-  - test/lib/rule-registry.test.js
-  - test/lib/rule-engine.test.js
-  - test/lib/contract-alignment-rules.test.js
-  - test/lib/rule-lifecycle.test.js
-  - test/lib/natural-rules-size-gate.test.js
-  - test/commands/rules-lifecycle.test.js
-  - template/15-governance/rule-catalog-contract.md
-  - knowledge-base/15-governance/rule-catalog-contract.md
-  - svfactory/agent.md
-  - svfactory/rules-extensions.md
-  - knowledge-base/intents/_active/v2-8-v2-8-svfactory-rule-catalog-hardening/plan.md
-  - knowledge-base/intents/_active/v2-8-v2-8-svfactory-rule-catalog-hardening/impact.md
 impact_signals: []
 decision_summary: "Phase A complete: mapped SVFactory + KBAgent rule surfaces to deterministic ownership and enforceability. Phase B locked: canonical rule metadata schema and registration-time test gates implemented before any Phase C runtime wiring."
 review_after: null
@@ -44,6 +23,10 @@ description: "Define a deterministic, testable rule catalog contract for SVFacto
 activated_at: "2026-05-10T09:32:01.312Z"
 architecture_position:
   wave: v2.8
+close_type: dropped
+closed_at: "2026-05-10T13:37:51.766Z"
+drop_reason: "Superseded by narrow Component 3 scope; catalog hardening continues later via dedicated follow-up intent"
+release_ref: null
 ---
 
 # Intent: v2-8-v2-8-svfactory-rule-catalog-hardening

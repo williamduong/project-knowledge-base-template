@@ -1,7 +1,7 @@
 ---
 id: v2-9-v2-9-natural-rules-foundation-file-architecture
 mode: full
-lifecycle: active
+lifecycle: closed
 created_at: "2026-05-10T09:54:11.108Z"
 focus:
   current: "Activated with measurable success conditions for post-refactor rules architecture"
@@ -23,6 +23,10 @@ description: "Finalize long-term natural-language rule architecture so only foun
 activated_at: "2026-05-10T09:54:11.119Z"
 architecture_position:
   wave: v2.9
+close_type: dropped
+closed_at: "2026-05-10T13:37:53.052Z"
+drop_reason: "Backlogged/superseded while v2.8 Component 3 executes first; v2.9 stream resumes after v2.8 triage"
+release_ref: null
 ---
 
 # Intent: v2-9-v2-9-natural-rules-foundation-file-architecture
