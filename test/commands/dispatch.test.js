@@ -9,6 +9,7 @@ const path = require('path');
 const {
   parseBatchArgs,
   parseGroundArgs,
+  parseLoopArgs,
   parseSelectArgs,
   parseSingleArgs,
   parseVerifyEndArgs,
@@ -79,6 +80,14 @@ describe('kbx dispatch', () => {
     assert.equal(parsed.fixture, 'a.yaml');
     assert.equal(parsed.projectedChaos, 77);
     assert.equal(parsed.evidenceArtifacts, 2);
+    assert.equal(parsed.json, true);
+  });
+
+  it('parses loop args', () => {
+    const parsed = parseLoopArgs(['--fixture', 'a.yaml', '--max-attempts=2', '--target-outcome=pass', '--json']);
+    assert.equal(parsed.fixture, 'a.yaml');
+    assert.equal(parsed.maxAttempts, 2);
+    assert.equal(parsed.targetOutcome, 'pass');
     assert.equal(parsed.json, true);
   });
 
@@ -332,5 +341,63 @@ describe('kbx dispatch', () => {
     assert.equal(payload.snapshot_after.gate_results.chaos_gate, 'fail');
     assert.equal(payload.snapshot_after.escalation, 'HumanGateRequired');
     assert.equal(payload.snapshot_after.close_readiness, 'blocked');
+  });
+
+  it('stops loop with success when target outcome passes at attempt 2', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: [
+        'loop',
+        '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-003-standard-contract-update.yaml',
+        '--max-attempts=2',
+        '--target-outcome=pass',
+        '--json',
+      ],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 0);
+    assert.equal(payload.command, 'kbx dispatch loop');
+    assert.equal(payload.simulation.stop_reason, 'verification_passed');
+    assert.equal(payload.simulation.escalation, 'none');
+    assert.equal(payload.simulation.final_attempt, 2);
+  });
+
+  it('escalates when loop retry budget is exhausted', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: [
+        'loop',
+        '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-003-standard-contract-update.yaml',
+        '--max-attempts=2',
+        '--target-outcome=fail',
+        '--json',
+      ],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 1);
+    assert.equal(payload.simulation.stop_reason, 'retry_budget_exhausted');
+    assert.equal(payload.simulation.escalation, 'HumanGateRequired');
+  });
+
+  it('escalates on loop mutation boundary violation', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: [
+        'loop',
+        '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-003-standard-contract-update.yaml',
+        '--boundary-violation-attempt=1',
+        '--json',
+      ],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 1);
+    assert.equal(payload.simulation.stop_reason, 'mutation_boundary_violation');
+    assert.equal(payload.simulation.escalation, 'HumanGateRequired');
   });
 });

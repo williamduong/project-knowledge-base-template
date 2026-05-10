@@ -382,6 +382,121 @@ function parseVerifyEndArgs(args) {
   return options;
 }
 
+function parseLoopArgs(args) {
+  const options = {
+    fixture: null,
+    json: false,
+    maxAttempts: 2,
+    startAttempt: 0,
+    targetOutcome: 'pass',
+    evidenceUpgradeAttempt: null,
+    riskDowngradeAttempt: null,
+    mutationDowngradeAttempt: null,
+    boundaryViolationAttempt: null,
+    contradictionAttempt: null,
+    idempotencyBreach: false,
+  };
+
+  const rest = [];
+  for (let i = 0; i < (args || []).length; i += 1) {
+    const arg = args[i];
+    if (arg === '--json') {
+      options.json = true;
+      continue;
+    }
+    if (arg === '--idempotency-breach') {
+      options.idempotencyBreach = true;
+      continue;
+    }
+    if (arg.startsWith('--fixture=')) {
+      options.fixture = arg.slice('--fixture='.length).trim();
+      continue;
+    }
+    if (arg === '--fixture') {
+      const next = (args || [])[i + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error('kbx dispatch loop: --fixture requires a path value');
+      }
+      options.fixture = String(next).trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--max-attempts=')) {
+      options.maxAttempts = Number(arg.slice('--max-attempts='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--start-attempt=')) {
+      options.startAttempt = Number(arg.slice('--start-attempt='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--target-outcome=')) {
+      options.targetOutcome = arg.slice('--target-outcome='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--evidence-upgrade-attempt=')) {
+      options.evidenceUpgradeAttempt = Number(arg.slice('--evidence-upgrade-attempt='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--risk-downgrade-attempt=')) {
+      options.riskDowngradeAttempt = Number(arg.slice('--risk-downgrade-attempt='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--mutation-downgrade-attempt=')) {
+      options.mutationDowngradeAttempt = Number(arg.slice('--mutation-downgrade-attempt='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--boundary-violation-attempt=')) {
+      options.boundaryViolationAttempt = Number(arg.slice('--boundary-violation-attempt='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--contradiction-attempt=')) {
+      options.contradictionAttempt = Number(arg.slice('--contradiction-attempt='.length).trim());
+      continue;
+    }
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown dispatch loop option "${arg}".`);
+    }
+    rest.push(arg);
+  }
+
+  if (rest.length > 0) {
+    throw new Error('kbx dispatch loop does not accept positional arguments.');
+  }
+
+  if (!options.fixture) {
+    throw new Error('kbx dispatch loop requires --fixture <path>.');
+  }
+
+  if (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 0 || options.maxAttempts > 2) {
+    throw new Error('kbx dispatch loop: --max-attempts must be integer 0..2.');
+  }
+
+  if (!Number.isInteger(options.startAttempt) || options.startAttempt < 0 || options.startAttempt > options.maxAttempts) {
+    throw new Error('kbx dispatch loop: --start-attempt must be integer between 0 and max-attempts.');
+  }
+
+  if (!['pass', 'warn', 'fail'].includes(options.targetOutcome)) {
+    throw new Error('kbx dispatch loop: --target-outcome must be pass, warn, or fail.');
+  }
+
+  const attemptFields = [
+    'evidenceUpgradeAttempt',
+    'riskDowngradeAttempt',
+    'mutationDowngradeAttempt',
+    'boundaryViolationAttempt',
+    'contradictionAttempt',
+  ];
+
+  for (const field of attemptFields) {
+    const value = options[field];
+    if (value !== null && (!Number.isInteger(value) || value < 0 || value > 3)) {
+      throw new Error(`kbx dispatch loop: --${field.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())} must be integer 0..3.`);
+    }
+  }
+
+  return options;
+}
+
 function normalizeList(list) {
   if (!Array.isArray(list)) return [];
   return Array.from(new Set(list.map((item) => String(item)))).sort();
@@ -697,6 +812,151 @@ function evaluatePipelineEndVerification(fixture, context) {
       escalation,
       close_readiness: closeReadiness,
     },
+  };
+}
+
+function stricterMutationClass(currentClass) {
+  const order = ['read-only', 'docs-only', 'contract-changing', 'source-changing', 'release-changing'];
+  const idx = order.indexOf(currentClass);
+  if (idx < 0 || idx >= order.length - 1) return currentClass;
+  return order[idx + 1];
+}
+
+function stricterRiskLevel(currentRisk) {
+  const order = ['low', 'medium', 'high', 'irreversible'];
+  const idx = order.indexOf(currentRisk);
+  if (idx < 0 || idx >= order.length - 1) return currentRisk;
+  return order[idx + 1];
+}
+
+function evaluateGenerativeLoop(fixture, options) {
+  const events = [];
+  const attempts = [];
+
+  if (options.idempotencyBreach) {
+    return {
+      stop_reason: 'idempotency_breach',
+      escalation: 'HumanGateRequired',
+      final_attempt: options.startAttempt,
+      final_outcome: 'fail',
+      attempts,
+      events: ['idempotency-breach-detected'],
+      recommendation: 'stop-and-escalate',
+    };
+  }
+
+  let tuple = { ...fixture.dispatch_tuple };
+  let latestOutcome = 'fail';
+  let latestAttempt = options.startAttempt;
+  let previousOutcome = null;
+
+  for (let attempt = options.startAttempt; attempt <= options.maxAttempts; attempt += 1) {
+    latestAttempt = attempt;
+
+    if (options.boundaryViolationAttempt === attempt) {
+      events.push(`attempt_${attempt}:boundary-violation-requested`);
+      return {
+        stop_reason: 'mutation_boundary_violation',
+        escalation: 'HumanGateRequired',
+        final_attempt: attempt,
+        final_outcome: 'fail',
+        attempts,
+        events,
+        recommendation: 'stop-and-escalate',
+      };
+    }
+
+    if (options.riskDowngradeAttempt === attempt) {
+      events.push(`attempt_${attempt}:risk-downgrade-without-evidence`);
+      return {
+        stop_reason: 'illegal_reclassification',
+        escalation: 'HumanGateRequired',
+        final_attempt: attempt,
+        final_outcome: 'fail',
+        attempts,
+        events,
+        recommendation: 'stop-and-escalate',
+      };
+    }
+
+    if (options.mutationDowngradeAttempt === attempt) {
+      events.push(`attempt_${attempt}:mutation-class-downgrade-without-approval`);
+      return {
+        stop_reason: 'illegal_reclassification',
+        escalation: 'HumanGateRequired',
+        final_attempt: attempt,
+        final_outcome: 'fail',
+        attempts,
+        events,
+        recommendation: 'stop-and-escalate',
+      };
+    }
+
+    if (options.evidenceUpgradeAttempt === attempt && tuple.evidence_state === 'partial') {
+      tuple = { ...tuple, evidence_state: 'sufficient' };
+      events.push(`attempt_${attempt}:evidence-upgraded-to-sufficient`);
+    }
+
+    if (options.evidenceUpgradeAttempt === attempt && tuple.evidence_state === 'none') {
+      tuple = { ...tuple, evidence_state: 'partial' };
+      events.push(`attempt_${attempt}:evidence-upgraded-to-partial`);
+    }
+
+    if (tuple.risk_level === 'low' && tuple.mutation_class !== 'read-only' && attempt > options.startAttempt) {
+      tuple = { ...tuple, risk_level: stricterRiskLevel(tuple.risk_level) };
+      events.push(`attempt_${attempt}:risk-reclassified-upward`);
+    }
+
+    if (tuple.mutation_class === 'docs-only' && tuple.evidence_state === 'none') {
+      tuple = { ...tuple, mutation_class: stricterMutationClass(tuple.mutation_class) };
+      events.push(`attempt_${attempt}:mutation-class-tightened`);
+    }
+
+    latestOutcome = attempt === options.maxAttempts ? options.targetOutcome : 'fail';
+
+    if (options.contradictionAttempt === attempt && previousOutcome && previousOutcome !== latestOutcome) {
+      events.push(`attempt_${attempt}:contradictory-outcome-detected`);
+      return {
+        stop_reason: 'contradictory_outcomes',
+        escalation: 'HumanGateRequired',
+        final_attempt: attempt,
+        final_outcome: latestOutcome,
+        attempts,
+        events,
+        recommendation: 'stop-and-escalate',
+      };
+    }
+
+    attempts.push({
+      attempt,
+      tuple,
+      outcome: latestOutcome,
+      action: latestOutcome === 'pass' ? 'stop' : 'retry',
+    });
+
+    if (latestOutcome === 'pass') {
+      return {
+        stop_reason: 'verification_passed',
+        escalation: 'none',
+        final_attempt: attempt,
+        final_outcome: latestOutcome,
+        attempts,
+        events,
+        recommendation: 'stop-success',
+      };
+    }
+
+    previousOutcome = latestOutcome;
+  }
+
+  return {
+    stop_reason: 'retry_budget_exhausted',
+    escalation: 'HumanGateRequired',
+    final_attempt: latestAttempt,
+    final_outcome: latestOutcome,
+    attempts,
+    events,
+    recommendation: 'stop-and-escalate',
   };
 }
 
@@ -1231,6 +1491,64 @@ function runVerifyEndDispatch({ args, cwd }) {
   }
 }
 
+function runLoopDispatch({ args, cwd }) {
+  let options;
+  try {
+    options = parseLoopArgs(args);
+  } catch (error) {
+    printJson({
+      command: 'kbx dispatch loop',
+      ok: false,
+      error: error.message,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const fixturePath = path.resolve(cwd, options.fixture);
+  if (!fs.existsSync(fixturePath)) {
+    printJson({
+      command: 'kbx dispatch loop',
+      ok: false,
+      error: `Fixture file not found: ${fixturePath}`,
+      fixture: fixturePath,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  let fixture;
+  try {
+    fixture = parseFixtureYaml(fixturePath);
+  } catch (error) {
+    printJson({
+      command: 'kbx dispatch loop',
+      ok: false,
+      error: `Invalid fixture YAML: ${error.message}`,
+      fixture: fixturePath,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const simulation = evaluateGenerativeLoop(fixture, options);
+  const payload = {
+    command: 'kbx dispatch loop',
+    fixture: fixturePath,
+    options: {
+      max_attempts: options.maxAttempts,
+      start_attempt: options.startAttempt,
+      target_outcome: options.targetOutcome,
+    },
+    simulation,
+  };
+
+  printJson(payload);
+  if (simulation.escalation === 'HumanGateRequired') {
+    process.exitCode = 1;
+  }
+}
+
 function runDispatch({ args, cwd }) {
   const [subcommand, ...rest] = args || [];
   if (subcommand === 'test') {
@@ -1253,6 +1571,11 @@ function runDispatch({ args, cwd }) {
     return;
   }
 
+  if (subcommand === 'loop') {
+    runLoopDispatch({ args: rest, cwd });
+    return;
+  }
+
   runSingleDispatch({ args, cwd });
 }
 
@@ -1263,13 +1586,16 @@ module.exports = {
   parseSelectArgs,
   parseGroundArgs,
   parseVerifyEndArgs,
+  parseLoopArgs,
   parseBatchArgs,
   evaluateFixture,
   evaluatePipelineEndVerification,
+  evaluateGenerativeLoop,
   runBatchDispatch,
   runSelectDispatch,
   runGroundDispatch,
   runVerifyEndDispatch,
+  runLoopDispatch,
   selectApplicableRules,
   resolveSelectorPolicy,
   evaluatePrincipalGrounding,
