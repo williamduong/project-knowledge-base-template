@@ -11,6 +11,7 @@ const {
   setRuleLifecycle,
   listRuleLifecycle,
   readHistory,
+  exportGraphIngest,
 } = require('../../src/lib/rule-lifecycle');
 
 let workspaceRoot;
@@ -66,5 +67,19 @@ describe('rule lifecycle skeleton', () => {
     const history = readHistory(workspaceRoot, { ruleId: 'KBX-V001', limit: 10 });
     assert.equal(history.length, 1);
     assert.equal(history[0].to_status, 'active');
+  });
+
+  it('exports lifecycle graph ingest payload', () => {
+    setRuleLifecycle(workspaceRoot, {
+      ruleId: 'KBX-GB001',
+      status: 'active',
+      state: 'implemented',
+    });
+
+    const payload = exportGraphIngest(workspaceRoot);
+    assert.equal(payload.format, 'graph-ingest-v1');
+    assert.ok(payload.nodes.length >= 2, 'Expected rule node + event node');
+    assert.ok(payload.edges.length >= 1, 'Expected at least one rule-event edge');
+    assert.equal(payload.stats.rule_count, 1);
   });
 });

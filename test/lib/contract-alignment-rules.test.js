@@ -25,7 +25,16 @@ function cleanup(dir) {
 describe('contract alignment rules (Phase C.2)', () => {
   it('loads new AX/PR/WF/KA rule IDs', () => {
     const ids = loadRules().map((r) => r.id);
-    for (const id of ['KBX-AX003', 'KBX-PR025', 'KBX-WF008', 'KBX-KA103']) {
+    for (const id of [
+      'KBX-AX003',
+      'KBX-AX004',
+      'KBX-PR025',
+      'KBX-PR026',
+      'KBX-WF008',
+      'KBX-WF011',
+      'KBX-KA103',
+      'KBX-KA104',
+    ]) {
       assert.ok(ids.includes(id), `Missing alignment rule ${id}`);
     }
   });
@@ -35,6 +44,8 @@ describe('contract alignment rules (Phase C.2)', () => {
       'template/.github/agents/kbx.agent.template.md': [
         'SV Factory gate tier (deterministic)',
         'MUST stop immediately',
+        'Run `kbx status --json`',
+        'Run `kbx doctor --json`',
         'Three-Layer Vibe Execution Contract',
         'Layer 1',
         'Layer 2',
@@ -42,6 +53,8 @@ describe('contract alignment rules (Phase C.2)', () => {
         'Gate 1',
         'Gate 2',
         'Gate 3',
+        'Session-start intent chooser',
+        'Run `kbx intent list`',
         'Deterministic NL intent-trigger mapping',
         'kbx intent status',
         'kbx intent create',
@@ -54,6 +67,8 @@ describe('contract alignment rules (Phase C.2)', () => {
         'Layer 1',
         'Layer 2',
         'Layer 3',
+        'Session-start intent chooser',
+        'Run `kbx intent list`',
         'Deterministic NL intent-trigger mapping',
         'kbx intent status',
         'kbx intent create',
@@ -61,13 +76,37 @@ describe('contract alignment rules (Phase C.2)', () => {
       ].join('\n'),
       'svfactory/process.md': [
         'Workflow 8',
+        'Workflow 11',
+        'Layer 1',
+        'Layer 2',
+        'Layer 3',
         'Gate 1',
         'Gate 2',
         'Gate 3',
       ].join('\n'),
+      'svfactory/agent.md': [
+        'Session hooks are mandatory',
+        'Pre-start hook',
+        'deterministic CLI checks first',
+        'End-session hook',
+      ].join('\n'),
+      'svfactory/rules-extensions.md': [
+        'Session Hook Slots',
+        'Pre-start hook slot',
+        'Pre-end hook slot',
+      ].join('\n'),
     });
 
-    const { violations } = runRules(kbPath, ['KBX-AX003', 'KBX-PR025', 'KBX-WF008', 'KBX-KA103']);
+    const { violations } = runRules(kbPath, [
+      'KBX-AX003',
+      'KBX-AX004',
+      'KBX-PR025',
+      'KBX-PR026',
+      'KBX-WF008',
+      'KBX-WF011',
+      'KBX-KA103',
+      'KBX-KA104',
+    ]);
     cleanup(kbPath);
     assert.equal(violations.length, 0);
   });
@@ -79,7 +118,16 @@ describe('contract alignment rules (Phase C.2)', () => {
       'svfactory/process.md': 'stub',
     });
 
-    const { violations } = runRules(kbPath, ['KBX-AX003', 'KBX-PR025', 'KBX-WF008', 'KBX-KA103']);
+    const { violations } = runRules(kbPath, [
+      'KBX-AX003',
+      'KBX-AX004',
+      'KBX-PR025',
+      'KBX-PR026',
+      'KBX-WF008',
+      'KBX-WF011',
+      'KBX-KA103',
+      'KBX-KA104',
+    ]);
     cleanup(kbPath);
     assert.ok(violations.length > 0);
   });

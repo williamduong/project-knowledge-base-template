@@ -134,6 +134,76 @@ function readHistory(workspaceRoot, { ruleId, limit = 50 } = {}) {
   return filtered.slice(Math.max(filtered.length - limit, 0));
 }
 
+function toRuleNode(record) {
+  return {
+    id: `rule:${record.rule_id}`,
+    type: 'Rule',
+    properties: {
+      rule_id: record.rule_id,
+      status: record.status,
+      state: record.state,
+      updated_at: record.updated_at,
+      history_count: record.history_count || 0,
+    },
+  };
+}
+
+function toEventNode(event, index) {
+  return {
+    id: `rule-event:${event.rule_id}:${index}`,
+    type: 'RuleLifecycleEvent',
+    properties: {
+      ts: event.ts,
+      rule_id: event.rule_id,
+      actor: event.actor,
+      event: event.event,
+      from_status: event.from_status,
+      to_status: event.to_status,
+      from_state: event.from_state,
+      to_state: event.to_state,
+      note: event.note || null,
+    },
+  };
+}
+
+function exportGraphIngest(workspaceRoot, { includeHistory = true } = {}) {
+  const lifecycle = listRuleLifecycle(workspaceRoot);
+  const history = includeHistory ? readHistory(workspaceRoot, { limit: 0 }) : [];
+
+  const nodes = [];
+  const edges = [];
+
+  for (const record of lifecycle) {
+    nodes.push(toRuleNode(record));
+  }
+
+  history.forEach((event, index) => {
+    const eventNode = toEventNode(event, index);
+    nodes.push(eventNode);
+    edges.push({
+      type: 'RULE_EVENT',
+      from: `rule:${event.rule_id}`,
+      to: eventNode.id,
+      properties: {
+        ts: event.ts,
+      },
+    });
+  });
+
+  return {
+    format: 'graph-ingest-v1',
+    exported_at: new Date().toISOString(),
+    nodes,
+    edges,
+    stats: {
+      rule_count: lifecycle.length,
+      event_count: history.length,
+      node_count: nodes.length,
+      edge_count: edges.length,
+    },
+  };
+}
+
 module.exports = {
   VALID_STATUS,
   VALID_STATE,
@@ -143,4 +213,5 @@ module.exports = {
   setRuleLifecycle,
   listRuleLifecycle,
   readHistory,
+  exportGraphIngest,
 };

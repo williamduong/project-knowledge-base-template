@@ -154,9 +154,13 @@ Validation gates (must fail deterministically):
 
 - Added deterministic alignment rule module:
 	- `KBX-AX003`
+	- `KBX-AX004`
 	- `KBX-PR025`
+	- `KBX-PR026`
 	- `KBX-WF008`
+	- `KBX-WF011`
 	- `KBX-KA103`
+	- `KBX-KA104`
 - Added canonical source doc for these rules:
 	- `template/15-governance/rule-catalog-contract.md`
 
@@ -170,6 +174,7 @@ Validation gates (must fail deterministically):
 	- `kbx rules lifecycle status`
 	- `kbx rules lifecycle set`
 	- `kbx rules lifecycle history`
+	- `kbx rules lifecycle export` (graph-ingest bridge)
 
 ### GraphDB Readiness Hook
 

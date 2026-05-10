@@ -88,4 +88,22 @@ describe('kbx rules lifecycle command', () => {
     assert.equal(data.rule_id, 'KBX-V001');
     assert.equal(data.count, 1);
   });
+
+  it('exports lifecycle graph ingest payload as JSON', async () => {
+    await captureAsync(() => runRules({
+      args: ['lifecycle', 'set', 'KBX-GB001', '--status=active', '--state=implemented'],
+      cwd: workspaceRoot,
+    }));
+
+    const out = await captureAsync(() => runRules({
+      args: ['lifecycle', 'export', '--json'],
+      cwd: workspaceRoot,
+    }));
+
+    const data = JSON.parse(out.stdout);
+    assert.equal(data.command, 'kbx rules lifecycle export');
+    assert.equal(data.format, 'graph-ingest-v1');
+    assert.ok(data.nodes.length >= 2);
+    assert.ok(data.edges.length >= 1);
+  });
 });

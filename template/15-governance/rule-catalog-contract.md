@@ -60,6 +60,16 @@ Rules registration must fail on:
 
 This document is the canonical source_doc for alignment rules:
 - KBX-AX003
+- KBX-AX004
 - KBX-PR025
+- KBX-PR026
 - KBX-WF008
+- KBX-WF011
 - KBX-KA103
+- KBX-KA104
+
+## Session Hook Contract
+
+Core hook slots expected by rule alignment checks:
+1. Pre-start hook: deterministic CLI-first checks run before free-form reasoning.
+2. Pre-end hook: session-end hygiene (checkpoint/commit trace or explicit unresolved state report).

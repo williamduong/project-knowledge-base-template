@@ -10,6 +10,15 @@
 3. For broad/migration/upgrade tasks, read repository revision state before trusting KB freshness.
 4. For unknowns, mark assumptions explicitly; never state unverified facts as settled.
 
+## A1. Session Hook Slots (requested policy)
+
+1. Pre-start hook slot (before session work):
+	- Run deterministic CLI-first checks (status/doctor/intent context) before non-deterministic reasoning.
+	- Optionally enforce cleanup of unresolved previous session state.
+2. Pre-end hook slot (before session ends):
+	- Run end-session hygiene (checkpoint/focus update/commit trace or explicit pending-state output).
+	- Session cannot claim done while hiding unresolved blockers.
+
 ## B. Deterministic Layer Rules
 
 1. Runtime-invariant rules belong in CLI/runtime code paths, not only in prompts.

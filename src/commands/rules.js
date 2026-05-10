@@ -1,7 +1,9 @@
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const { loadRules, runRules: engineRunRules, runRule } = require('../lib/rule-engine');
-const { readState, setRuleLifecycle, readHistory } = require('../lib/rule-lifecycle');
+const { readState, setRuleLifecycle, readHistory, exportGraphIngest } = require('../lib/rule-lifecycle');
 
 /**
  * Parse common flags: --json, --rule <id>
@@ -28,6 +30,7 @@ function parseLifecycleArgs(args = []) {
     state: null,
     note: null,
     limit: 50,
+    out: null,
     errors: [],
   };
 
@@ -49,6 +52,8 @@ function parseLifecycleArgs(args = []) {
       } else {
         options.errors.push(`Invalid --limit value: ${arg}`);
       }
+    } else if (arg.startsWith('--out=')) {
+      options.out = arg.slice('--out='.length).trim();
     } else if (arg.startsWith('--')) {
       options.errors.push(`Unknown option: ${arg}`);
     } else {
@@ -274,6 +279,34 @@ function runLifecycleHistory({ args = [], cwd = process.cwd() } = {}) {
   }
 }
 
+function runLifecycleExport({ args = [], cwd = process.cwd() } = {}) {
+  const { options } = parseLifecycleArgs(args);
+  if (options.errors.length > 0) {
+    for (const e of options.errors) console.error(e);
+    process.exitCode = 1;
+    return;
+  }
+
+  const payload = exportGraphIngest(cwd, { includeHistory: true });
+
+  if (options.out) {
+    const outPath = path.isAbsolute(options.out) ? options.out : path.join(cwd, options.out);
+    fs.mkdirSync(path.dirname(outPath), { recursive: true });
+    fs.writeFileSync(outPath, JSON.stringify(payload, null, 2), 'utf8');
+    if (!options.json) {
+      console.log(`Graph ingest export written: ${outPath}`);
+      return;
+    }
+  }
+
+  if (options.json || !options.out) {
+    console.log(JSON.stringify({
+      command: 'kbx rules lifecycle export',
+      ...payload,
+    }, null, 2));
+  }
+}
+
 function runLifecycle({ args = [], cwd = process.cwd() } = {}) {
   const [sub = 'status', ...rest] = args;
   if (sub === 'status') {
@@ -288,7 +321,11 @@ function runLifecycle({ args = [], cwd = process.cwd() } = {}) {
     runLifecycleHistory({ args: rest, cwd });
     return;
   }
-  console.error(`Unknown rules lifecycle subcommand: ${sub}. Use status | set | history.`);
+  if (sub === 'export') {
+    runLifecycleExport({ args: rest, cwd });
+    return;
+  }
+  console.error(`Unknown rules lifecycle subcommand: ${sub}. Use status | set | history | export.`);
   process.exitCode = 1;
 }
 
@@ -307,6 +344,8 @@ function runRulesHelp() {
   console.log('                                    Update rule lifecycle status/state and append history event.');
   console.log('  kbx rules lifecycle history [rule-id] [--limit=N] [--json]');
   console.log('                                    Show lifecycle history events.');
+  console.log('  kbx rules lifecycle export [--out=path] [--json]');
+  console.log('                                    Export lifecycle graph payload for graph-ingest bridge.');
   console.log('  kbx rules help                     Show this help.');
   console.log('');
   console.log('Severity:');

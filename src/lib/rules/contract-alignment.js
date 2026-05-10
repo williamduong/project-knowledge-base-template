@@ -175,16 +175,156 @@ const KA103_NL_TRIGGER_ALIGNMENT = {
   },
 };
 
+const AX004_CLI_FIRST_GATE_ALIGNMENT = {
+  id: 'KBX-AX004',
+  title: 'CLI-first gate alignment',
+  description: 'CLI-first deterministic gate markers must exist across SVFactory and KBAgent contracts.',
+  severity: SEVERITY.WARN,
+  owner_layer: OWNER_LAYER.SHARED,
+  enforceability: ENFORCEABILITY.SEMI,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.8.0',
+  source_doc: ALIGNMENT_DOC,
+  check({ kbPath }) {
+    const violations = [];
+    const svfactoryCore = path.join(kbPath, 'svfactory', 'agent.md');
+    const agentTemplate = path.join(kbPath, 'template', '.github', 'agents', 'kbx.agent.template.md');
+
+    const coreText = readIfExists(svfactoryCore);
+    if (coreText && !containsAll(coreText, ['Pre-start hook', 'deterministic CLI checks first'])) {
+      violations.push({
+        file: joinRel(kbPath, svfactoryCore),
+        message: 'Missing CLI-first session hook markers in svfactory/agent.md.',
+      });
+    }
+
+    const agentText = readIfExists(agentTemplate);
+    if (agentText && !containsAll(agentText, ['Run `kbx status --json`', 'Run `kbx doctor --json`'])) {
+      violations.push({
+        file: joinRel(kbPath, agentTemplate),
+        message: 'Missing mandatory CLI-first preflight markers in KBAgent template.',
+      });
+    }
+
+    return violations;
+  },
+};
+
+const PR026_SESSION_HOOK_BOUNDARY_ALIGNMENT = {
+  id: 'KBX-PR026',
+  title: 'Session hook boundary alignment',
+  description: 'Session start/end hook markers must exist in SVFactory natural rules.',
+  severity: SEVERITY.WARN,
+  owner_layer: OWNER_LAYER.SVFACTORY,
+  enforceability: ENFORCEABILITY.SEMI,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.8.0',
+  source_doc: ALIGNMENT_DOC,
+  check({ kbPath }) {
+    const violations = [];
+    const coreFile = path.join(kbPath, 'svfactory', 'agent.md');
+    const extFile = path.join(kbPath, 'svfactory', 'rules-extensions.md');
+
+    const coreText = readIfExists(coreFile);
+    if (coreText && !containsAll(coreText, ['Session hooks are mandatory', 'Pre-start hook', 'End-session hook'])) {
+      violations.push({
+        file: joinRel(kbPath, coreFile),
+        message: 'Missing mandatory session hook markers in SVFactory core rules.',
+      });
+    }
+
+    const extText = readIfExists(extFile);
+    if (extText && !containsAll(extText, ['Session Hook Slots', 'Pre-start hook slot', 'Pre-end hook slot'])) {
+      violations.push({
+        file: joinRel(kbPath, extFile),
+        message: 'Missing detailed session hook slot markers in SVFactory extension rules.',
+      });
+    }
+
+    return violations;
+  },
+};
+
+const WF011_THREE_LAYER_WORKFLOW_ALIGNMENT = {
+  id: 'KBX-WF011',
+  title: 'Workflow 11 three-layer alignment',
+  description: 'Workflow 11 three-layer execution markers must remain present in SVFactory process.',
+  severity: SEVERITY.WARN,
+  owner_layer: OWNER_LAYER.SVFACTORY,
+  enforceability: ENFORCEABILITY.SEMI,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.8.0',
+  source_doc: ALIGNMENT_DOC,
+  check({ kbPath }) {
+    const violations = [];
+    const processFile = path.join(kbPath, 'svfactory', 'process.md');
+    const processText = readIfExists(processFile);
+
+    if (processText && !containsAll(processText, ['Workflow 11', 'Layer 1', 'Layer 2', 'Layer 3'])) {
+      violations.push({
+        file: joinRel(kbPath, processFile),
+        message: 'Missing Workflow 11 three-layer markers in svfactory/process.md.',
+      });
+    }
+
+    return violations;
+  },
+};
+
+const KA104_SESSION_CHOOSER_ALIGNMENT = {
+  id: 'KBX-KA104',
+  title: 'Session chooser alignment',
+  description: 'KBAgent contract must keep mandatory session chooser and deterministic preflight markers.',
+  severity: SEVERITY.WARN,
+  owner_layer: OWNER_LAYER.KBAGENT,
+  enforceability: ENFORCEABILITY.SEMI,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.8.0',
+  source_doc: ALIGNMENT_DOC,
+  check({ kbPath }) {
+    const violations = [];
+    const files = [
+      path.join(kbPath, 'template', '.github', 'agents', 'kbx.agent.template.md'),
+      path.join(kbPath, 'template', '12-ai-skills', 'agent-operating-manual.md'),
+    ];
+
+    for (const file of files) {
+      const text = readIfExists(file);
+      if (!text) continue;
+      const ok = containsAll(text, [
+        'Session-start intent chooser',
+        'Run `kbx intent list`',
+      ]);
+      if (!ok) {
+        violations.push({
+          file: joinRel(kbPath, file),
+          message: 'Missing mandatory session chooser markers in KBAgent contract docs.',
+        });
+      }
+    }
+
+    return violations;
+  },
+};
+
 registerRules([
   AX003_DETERMINISTIC_BLOCK_ALIGNMENT,
+  AX004_CLI_FIRST_GATE_ALIGNMENT,
   PR025_THREE_LAYER_ALIGNMENT,
+  PR026_SESSION_HOOK_BOUNDARY_ALIGNMENT,
   WF008_INTENT_GATE_ALIGNMENT,
+  WF011_THREE_LAYER_WORKFLOW_ALIGNMENT,
   KA103_NL_TRIGGER_ALIGNMENT,
+  KA104_SESSION_CHOOSER_ALIGNMENT,
 ]);
 
 module.exports = [
   AX003_DETERMINISTIC_BLOCK_ALIGNMENT,
+  AX004_CLI_FIRST_GATE_ALIGNMENT,
   PR025_THREE_LAYER_ALIGNMENT,
+  PR026_SESSION_HOOK_BOUNDARY_ALIGNMENT,
   WF008_INTENT_GATE_ALIGNMENT,
+  WF011_THREE_LAYER_WORKFLOW_ALIGNMENT,
   KA103_NL_TRIGGER_ALIGNMENT,
+  KA104_SESSION_CHOOSER_ALIGNMENT,
 ];

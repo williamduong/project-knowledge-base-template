@@ -44,6 +44,9 @@ Then print 5 lines:
 6. Storage correctness: use context.contentRoot, never hardcode KB paths.
 7. Downstream-first acceptance: self-host validation is not final downstream acceptance.
 8. Layer separation: SVFactory legislative, KBAgent executive, kbx CLI deterministic bridge.
+9. Session hooks are mandatory:
+	- Pre-start hook: run deterministic CLI checks first (status/doctor/intent context) before free-form reasoning.
+	- End-session hook: enforce session-end hygiene (checkpoint/commit or explicit unresolved-state report).
 
 ## Interaction Contract
 
