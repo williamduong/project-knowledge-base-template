@@ -8,6 +8,7 @@ const path = require('path');
 
 const {
   parseBatchArgs,
+  parseSelectArgs,
   parseSingleArgs,
   runBatchDispatch,
   runDispatch,
@@ -53,6 +54,13 @@ describe('kbx dispatch', () => {
   it('parses batch-fixture args', () => {
     const parsed = parseBatchArgs(['--fixtures', 'fixtures-dir', '--json']);
     assert.equal(parsed.fixturesDir, 'fixtures-dir');
+    assert.equal(parsed.json, true);
+  });
+
+  it('parses selector args', () => {
+    const parsed = parseSelectArgs(['--fixture', 'a.yaml', '--mode', 'diagnostic', '--json']);
+    assert.equal(parsed.fixture, 'a.yaml');
+    assert.equal(parsed.mode, 'diagnostic');
     assert.equal(parsed.json, true);
   });
 
@@ -184,5 +192,34 @@ describe('kbx dispatch', () => {
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
+  });
+
+  it('runs selector mode with explainability output', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: ['select', '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-003-standard-contract-update.yaml', '--json'],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 0);
+    assert.equal(payload.command, 'kbx dispatch select');
+    assert.equal(payload.mode, 'execution');
+    assert.ok(payload.applicable_rules.includes('KBX-I001'));
+    assert.ok(payload.applicable_rules.includes('KBX-GB001'));
+    assert.ok(Array.isArray(payload.explainability.tuple_to_rule_basis));
+  });
+
+  it('returns non-zero JSON error for selector invalid mode', () => {
+    const cwd = path.resolve(__dirname, '..', '..');
+    const out = captureRun(() => runDispatch({
+      args: ['select', '--fixture', 'template/15-governance/fixtures/dispatch-cases/dispatch-001-read-only-explain.yaml', '--mode', 'invalid', '--json'],
+      cwd,
+    }));
+
+    const payload = JSON.parse(out.stdout);
+    assert.equal(out.exitCode, 1);
+    assert.equal(payload.ok, false);
+    assert.match(payload.error, /invalid mode/i);
   });
 });

@@ -99,6 +99,67 @@ function parseBatchArgs(args) {
   return options;
 }
 
+function parseSelectArgs(args) {
+  const options = {
+    fixture: null,
+    mode: null,
+    json: false,
+  };
+
+  const rest = [];
+  for (let i = 0; i < (args || []).length; i += 1) {
+    const arg = args[i];
+    if (arg === '--json') {
+      options.json = true;
+      continue;
+    }
+    if (arg.startsWith('--mode=')) {
+      options.mode = arg.slice('--mode='.length).trim();
+      continue;
+    }
+    if (arg === '--mode') {
+      const next = (args || [])[i + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error('kbx dispatch select: --mode requires a value (diagnostic|execution)');
+      }
+      options.mode = String(next).trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--fixture=')) {
+      options.fixture = arg.slice('--fixture='.length).trim();
+      continue;
+    }
+    if (arg === '--fixture') {
+      const next = (args || [])[i + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error('kbx dispatch select: --fixture requires a path value');
+      }
+      options.fixture = String(next).trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown dispatch select option "${arg}". Supported: --fixture <path>, --mode <diagnostic|execution>, --json`);
+    }
+    rest.push(arg);
+  }
+
+  if (rest.length > 0) {
+    throw new Error('kbx dispatch select does not accept positional arguments.');
+  }
+
+  if (!options.fixture) {
+    throw new Error('kbx dispatch select requires --fixture <path>.');
+  }
+
+  if (options.mode && options.mode !== 'diagnostic' && options.mode !== 'execution') {
+    throw new Error(`kbx dispatch select: invalid mode "${options.mode}". Use diagnostic or execution.`);
+  }
+
+  return options;
+}
+
 function normalizeList(list) {
   if (!Array.isArray(list)) return [];
   return Array.from(new Set(list.map((item) => String(item)))).sort();
@@ -112,6 +173,100 @@ function sortOutput(output) {
     allowed_actions: normalizeList(output.allowed_actions),
     verification_requirements: normalizeList(output.verification_requirements),
     fallback_or_escalation: output.fallback_or_escalation === null ? null : String(output.fallback_or_escalation),
+  };
+}
+
+const RULE_FAMILIES = {
+  M: ['KBX-M001', 'KBX-M002', 'KBX-M003', 'KBX-M004'],
+  V: ['KBX-V001', 'KBX-V002'],
+  I: ['KBX-I001', 'KBX-I002'],
+  GB: ['KBX-GB001', 'KBX-GB002'],
+  AXPR: ['KBX-AX003', 'KBX-AX004', 'KBX-AX005', 'KBX-PR025', 'KBX-PR026'],
+  WFKA: ['KBX-WF008', 'KBX-WF011', 'KBX-KA103', 'KBX-KA104'],
+};
+
+const RULE_ORDER_PREFIX = ['KBX-M', 'KBX-V', 'KBX-I', 'KBX-GB', 'KBX-AX', 'KBX-PR', 'KBX-WF', 'KBX-KA'];
+
+function orderRules(rules) {
+  const dedup = Array.from(new Set(rules.map((r) => String(r))));
+  return dedup.sort((a, b) => {
+    const idxA = RULE_ORDER_PREFIX.findIndex((prefix) => a.startsWith(prefix));
+    const idxB = RULE_ORDER_PREFIX.findIndex((prefix) => b.startsWith(prefix));
+    const safeA = idxA === -1 ? RULE_ORDER_PREFIX.length : idxA;
+    const safeB = idxB === -1 ? RULE_ORDER_PREFIX.length : idxB;
+    if (safeA !== safeB) return safeA - safeB;
+    return a.localeCompare(b);
+  });
+}
+
+function selectApplicableRules(tuple) {
+  const selectedRules = [];
+  const tupleToRuleBasis = [];
+  const skippedFamilies = [];
+
+  const includeFamily = (family, reason) => {
+    selectedRules.push(...RULE_FAMILIES[family]);
+    tupleToRuleBasis.push(reason);
+  };
+
+  includeFamily('M', 'always: metadata baseline');
+
+  const intentScope = tuple.ontology_entity === 'Intent' || tuple.target_scope === 'rules';
+  if (intentScope) {
+    includeFamily('I', 'if_intent_scope: ontology_entity=Intent or target_scope=rules');
+  } else {
+    skippedFamilies.push('I');
+  }
+
+  const verificationSensitive = ['contract-changing', 'source-changing', 'release-changing'].includes(tuple.mutation_class);
+  if (verificationSensitive) {
+    includeFamily('V', 'if_verification_sensitive: mutation_class in [contract-changing, source-changing, release-changing]');
+  } else {
+    skippedFamilies.push('V');
+  }
+
+  const gitTouching = tuple.mutation_class !== 'read-only';
+  if (gitTouching) {
+    includeFamily('GB', 'if_git_touching: mutation_class != read-only');
+  } else {
+    skippedFamilies.push('GB');
+  }
+
+  const agentSurface = ['template', 'docs', 'graph'].includes(tuple.target_scope);
+  if (agentSurface) {
+    includeFamily('AXPR', 'if_agent_surface: target_scope in [template, docs, graph]');
+  } else {
+    skippedFamilies.push('AXPR');
+  }
+
+  const workflowUpdate = ['create', 'update', 'release', 'recover'].includes(tuple.intent_type);
+  if (workflowUpdate) {
+    includeFamily('WFKA', 'if_workflow_update: intent_type in [create, update, release, recover]');
+  } else {
+    skippedFamilies.push('WFKA');
+  }
+
+  return {
+    applicable_rules: orderRules(selectedRules),
+    tuple_to_rule_basis: tupleToRuleBasis,
+    skipped_rule_families: skippedFamilies,
+  };
+}
+
+function resolveSelectorPolicy(mode) {
+  if (mode === 'diagnostic') {
+    return {
+      mode: 'diagnostic',
+      load_policy: 'all_applicable',
+      violation_policy: 'report_all',
+      stop_on_hard_fail: false,
+    };
+  }
+  return {
+    mode: 'execution',
+    load_policy: 'phase_ordered',
+    violation_policy: 'fail_fast_on_blocking',
+    stop_on_hard_fail: true,
   };
 }
 
@@ -441,10 +596,84 @@ function runBatchDispatch({ args, cwd }) {
   }
 }
 
+function runSelectDispatch({ args, cwd }) {
+  let options;
+  try {
+    options = parseSelectArgs(args);
+  } catch (error) {
+    printJson({
+      command: 'kbx dispatch select',
+      ok: false,
+      error: error.message,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const fixturePath = path.resolve(cwd, options.fixture);
+  if (!fs.existsSync(fixturePath)) {
+    printJson({
+      command: 'kbx dispatch select',
+      ok: false,
+      error: `Fixture file not found: ${fixturePath}`,
+      fixture: fixturePath,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  let fixture;
+  try {
+    fixture = parseFixtureYaml(fixturePath);
+  } catch (error) {
+    printJson({
+      command: 'kbx dispatch select',
+      ok: false,
+      error: `Invalid fixture YAML: ${error.message}`,
+      fixture: fixturePath,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const mode = options.mode || fixture.mode || 'execution';
+  if (mode !== 'diagnostic' && mode !== 'execution') {
+    printJson({
+      command: 'kbx dispatch select',
+      ok: false,
+      error: `Invalid selector mode "${mode}". Use diagnostic or execution.`,
+      fixture: fixturePath,
+    });
+    process.exitCode = 1;
+    return;
+  }
+
+  const selection = selectApplicableRules(fixture.dispatch_tuple);
+  const payload = {
+    command: 'kbx dispatch select',
+    fixture: fixturePath,
+    mode,
+    dispatch_tuple: fixture.dispatch_tuple,
+    selector_policy: resolveSelectorPolicy(mode),
+    applicable_rules: selection.applicable_rules,
+    explainability: {
+      tuple_to_rule_basis: selection.tuple_to_rule_basis,
+      skipped_rule_families: selection.skipped_rule_families,
+    },
+  };
+
+  printJson(payload);
+}
+
 function runDispatch({ args, cwd }) {
   const [subcommand, ...rest] = args || [];
   if (subcommand === 'test') {
     runBatchDispatch({ args: rest, cwd });
+    return;
+  }
+
+  if (subcommand === 'select') {
+    runSelectDispatch({ args: rest, cwd });
     return;
   }
 
@@ -455,9 +684,13 @@ module.exports = {
   stableTupleKey,
   loadFixtureDecisionTable,
   parseSingleArgs,
+  parseSelectArgs,
   parseBatchArgs,
   evaluateFixture,
   runBatchDispatch,
+  runSelectDispatch,
+  selectApplicableRules,
+  resolveSelectorPolicy,
   resolveOutput,
   runDispatch,
   runSingleDispatch,
