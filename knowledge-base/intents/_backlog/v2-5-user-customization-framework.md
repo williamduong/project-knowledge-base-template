@@ -7,7 +7,7 @@ created_at: 2026-05-07T06:25:48.969Z
 focus:
   current: ""
   last_updated: 2026-05-07
-  next_action: "Promote when v2.4 is stable and released as @latest"
+   next_action: "Superseded by v2-9-customization-lifecycle-and-safe-uninstall for full lifecycle and uninstall-safe preservation scope"
 schema_version: 2.4.0-beta.2
 ---
 
@@ -18,6 +18,11 @@ schema_version: 2.4.0-beta.2
 KB Agent ships with opinionated defaults for intent governance (stale threshold, required fields, ID format, branch prefix, wave field, release reference format). Currently these are hardcoded and not overridable without forking the template.
 
 This intent delivers a config layer so teams can override defaults per-project while still receiving upgrade patches automatically.
+
+Status update (2026-05-10):
+- This backlog item is now treated as a narrow predecessor.
+- Full cross-feature lifecycle (classification, upgrade merge policy, uninstall archive, restore flow) is tracked in `v2-9-customization-lifecycle-and-safe-uninstall`.
+- Execution order is dependency-gated behind ontology/backend milestones.
 
 **Activation trigger:** v2.4.0 is shipped as `@latest`. Customization framework is the first v2.5 feature.
 

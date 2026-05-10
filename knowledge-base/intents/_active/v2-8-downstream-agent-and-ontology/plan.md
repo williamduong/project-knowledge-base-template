@@ -235,6 +235,23 @@ Exit criteria (v2.8.x): Deferred
 
 ---
 
+## Deferred Dependency Chain: Customization Lifecycle + Safe Uninstall
+
+The following feature set is explicitly deferred and dependency-gated:
+- End-to-end user customization lifecycle
+- Upgrade-time customization merge policy
+- Uninstall-time custom asset archive and restore flow
+
+Execution order requirement:
+1. Complete NL-rule-to-ontology deterministic path (Workstream 2 outcomes)
+2. Lock backend/graph-compatible protocol baseline (Workstream 3 milestone)
+3. Then implement customization lifecycle and safe uninstall in a dedicated follow-up intent
+
+Tracking reference:
+- `knowledge-base/intents/_backlog/v2-9-customization-lifecycle-and-safe-uninstall.md`
+
+---
+
 ## Overall Roadmap (v2.8)
 
 ### Phase 0 — Boundary Lock & Planning (Current)
