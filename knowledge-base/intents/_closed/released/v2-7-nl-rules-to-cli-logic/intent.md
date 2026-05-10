@@ -1,7 +1,7 @@
 ---
 id: v2-7-nl-rules-to-cli-logic
 mode: full
-lifecycle: active
+lifecycle: closed
 created_at: "2026-05-08T18:21:21.154Z"
 focus:
   current: "Phase 4 complete (all template docs updated with rule IDs, 710/710 tests pass). v2.7 ready for release."
@@ -19,6 +19,10 @@ lesson_id: null
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
+close_type: released
+closed_at: "2026-05-10T09:59:56.842Z"
+release_ref: v2.7.0-beta.2
+drop_reason: null
 ---
 
 # Intent: v2-7-nl-rules-to-cli-logic
