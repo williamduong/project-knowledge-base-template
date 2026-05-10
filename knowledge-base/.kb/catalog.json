@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "current": "v2.8.0-beta.0",
+  "releases": [
+    {
+      "version": "v2.8.0-beta.0",
+      "released_at": "2026-05-11",
+      "git_tag": "v2.8.0-beta.0",
+      "git_commit": "67e7a00",
+      "template_version": "v2.8.0-beta.0",
+      "summary": "Beta release for dispatch/inspect/plan/apply runtime track",
+      "prerelease": true,
+      "stats": {
+        "intents_applied": 2,
+        "docs_changed": 0,
+        "ad_hoc_commits": 0
+      },
+      "intents_applied": [
+        {
+          "intent_id": "v2-3-5-stabilization",
+          "mode": "full",
+          "change_type": "governance",
+          "applied_at": "2026-05-05T06:00:46.155Z"
+        },
+        {
+          "intent_id": "v2-3-6-planned-backlog",
+          "mode": "full",
+          "change_type": "governance",
+          "applied_at": "2026-05-05T06:33:56.701Z"
+        }
+      ]
+    }
+  ]
+}
