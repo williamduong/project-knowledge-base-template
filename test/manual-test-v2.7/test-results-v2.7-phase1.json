@@ -1,0 +1,633 @@
+{
+  "timestamp": "2026-05-10T04:43:04.315Z",
+  "version": "2.7.0-beta.1",
+  "phase": "Manual Test v2.7 — Phase 1",
+  "total_suites": 7,
+  "total_tests": 50,
+  "total_passed": 50,
+  "total_failed": 0,
+  "total_errors": 0,
+  "total_duration_ms": 884,
+  "suites": [
+    {
+      "suite": "YAML Parsing Edge Cases",
+      "total": 6,
+      "passed": 6,
+      "failed": 0,
+      "errors": 0,
+      "duration_ms": 51,
+      "results": [
+        {
+          "id": "yaml-1a",
+          "name": "Valid frontmatter baseline",
+          "category": "YAML Parsing",
+          "status": "PASS",
+          "duration_ms": 17,
+          "message": "No violations found",
+          "expected": "0 violations",
+          "actual": "2 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "yaml-1b",
+          "name": "Nested YAML with focus object",
+          "category": "YAML Parsing",
+          "status": "PASS",
+          "duration_ms": 6,
+          "message": "Nested YAML parsed correctly",
+          "expected": "No I001 violations",
+          "actual": "0 I001 violations",
+          "severity": "high"
+        },
+        {
+          "id": "yaml-1c",
+          "name": "Unicode characters in frontmatter",
+          "category": "YAML Parsing",
+          "status": "PASS",
+          "duration_ms": 5,
+          "message": "Unicode handled correctly",
+          "expected": "0 violations",
+          "actual": "4 violations",
+          "severity": "medium"
+        },
+        {
+          "id": "yaml-1d",
+          "name": "Windows CRLF line endings",
+          "category": "YAML Parsing",
+          "status": "PASS",
+          "duration_ms": 8,
+          "message": "CRLF line endings handled",
+          "expected": "0 violations",
+          "actual": "6 violations",
+          "severity": "high"
+        },
+        {
+          "id": "yaml-1e",
+          "name": "Missing closing frontmatter marker",
+          "category": "YAML Parsing",
+          "status": "PASS",
+          "duration_ms": 6,
+          "message": "Incomplete frontmatter handled without crash",
+          "expected": "No crash",
+          "actual": "Executed successfully",
+          "severity": "high"
+        },
+        {
+          "id": "yaml-1f",
+          "name": "Empty frontmatter block",
+          "category": "YAML Parsing",
+          "status": "PASS",
+          "duration_ms": 6,
+          "message": "Empty frontmatter detected as missing fields",
+          "expected": "M001 violations detected",
+          "actual": "3 M001 violations",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "suite": "Regex Validation - Intent IDs",
+      "total": 14,
+      "passed": 14,
+      "failed": 0,
+      "errors": 0,
+      "duration_ms": 148,
+      "results": [
+        {
+          "id": "intent-valid-v2_7_rules",
+          "name": "Valid intent ID: v2-7-rules",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "Intent ID v2-7-rules is valid",
+          "expected": "No KBX-GB001 violations",
+          "actual": "0 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-valid-v2_7_rules_engine",
+          "name": "Valid intent ID: v2-7-rules-engine",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 5,
+          "message": "Intent ID v2-7-rules-engine is valid",
+          "expected": "No KBX-GB001 violations",
+          "actual": "0 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-valid-v2_7_nl_to_cli_logic",
+          "name": "Valid intent ID: v2-7-nl-to-cli-logic",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 6,
+          "message": "Intent ID v2-7-nl-to-cli-logic is valid",
+          "expected": "No KBX-GB001 violations",
+          "actual": "0 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-valid-v10_20_feature",
+          "name": "Valid intent ID: v10-20-feature",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 5,
+          "message": "Intent ID v10-20-feature is valid",
+          "expected": "No KBX-GB001 violations",
+          "actual": "0 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-valid-v1_1_a",
+          "name": "Valid intent ID: v1-1-a",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 6,
+          "message": "Intent ID v1-1-a is valid",
+          "expected": "No KBX-GB001 violations",
+          "actual": "0 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-invalid-2_7_rules",
+          "name": "Invalid intent ID: 2-7-rules",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 8,
+          "message": "Intent ID 2-7-rules correctly rejected",
+          "expected": "KBX-GB001 violation detected",
+          "actual": "1 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-invalid-v2_7_rules",
+          "name": "Invalid intent ID: v2.7-rules",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 7,
+          "message": "Intent ID v2.7-rules correctly rejected",
+          "expected": "KBX-GB001 violation detected",
+          "actual": "2 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-invalid-v2_7_rules",
+          "name": "Invalid intent ID: v2_7_rules",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 14,
+          "message": "Intent ID v2_7_rules correctly rejected",
+          "expected": "KBX-GB001 violation detected",
+          "actual": "3 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-invalid-v2_7",
+          "name": "Invalid intent ID: v2-7",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 10,
+          "message": "Intent ID v2-7 correctly rejected",
+          "expected": "KBX-GB001 violation detected",
+          "actual": "4 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-invalid-v2_7_RULES",
+          "name": "Invalid intent ID: v2-7-RULES",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 13,
+          "message": "Intent ID v2-7-RULES correctly rejected",
+          "expected": "KBX-GB001 violation detected",
+          "actual": "5 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-invalid-v2_7__rules",
+          "name": "Invalid intent ID: v2-7-_rules",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 13,
+          "message": "Intent ID v2-7-_rules correctly rejected",
+          "expected": "KBX-GB001 violation detected",
+          "actual": "6 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-invalid-v2_7_rules_",
+          "name": "Invalid intent ID: v2-7-rules-",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 16,
+          "message": "Intent ID v2-7-rules- correctly rejected",
+          "expected": "KBX-GB001 violation detected",
+          "actual": "7 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-invalid-v2_7_ru__les",
+          "name": "Invalid intent ID: v2-7-ru--les",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 20,
+          "message": "Intent ID v2-7-ru--les correctly rejected",
+          "expected": "KBX-GB001 violation detected",
+          "actual": "8 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "intent-invalid-V2_7_rules",
+          "name": "Invalid intent ID: V2-7-rules",
+          "category": "Regex Validation",
+          "status": "PASS",
+          "duration_ms": 18,
+          "message": "Intent ID V2-7-rules correctly rejected",
+          "expected": "KBX-GB001 violation detected",
+          "actual": "8 violations",
+          "severity": "critical"
+        }
+      ]
+    },
+    {
+      "suite": "Time State Validation",
+      "total": 13,
+      "passed": 13,
+      "failed": 0,
+      "errors": 0,
+      "duration_ms": 64,
+      "results": [
+        {
+          "id": "time-state-valid-current",
+          "name": "Valid time_state: current",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 8,
+          "message": "time_state 'current' is valid",
+          "expected": "No V002 violations",
+          "actual": "0 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-valid-point_in_time",
+          "name": "Valid time_state: point-in-time",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 5,
+          "message": "time_state 'point-in-time' is valid",
+          "expected": "No V002 violations",
+          "actual": "0 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-valid-evergreen",
+          "name": "Valid time_state: evergreen",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "time_state 'evergreen' is valid",
+          "expected": "No V002 violations",
+          "actual": "0 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-valid-historical",
+          "name": "Valid time_state: historical",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 6,
+          "message": "time_state 'historical' is valid",
+          "expected": "No V002 violations",
+          "actual": "0 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-valid-2026_current",
+          "name": "Valid time_state: 2026-current",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 5,
+          "message": "time_state '2026-current' is valid",
+          "expected": "No V002 violations",
+          "actual": "0 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-valid-future",
+          "name": "Valid time_state: future",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "time_state 'future' is valid",
+          "expected": "No V002 violations",
+          "actual": "0 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-invalid-CURRENT",
+          "name": "Invalid time_state: 'CURRENT'",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 7,
+          "message": "time_state 'CURRENT' correctly rejected",
+          "expected": "V002 violation detected",
+          "actual": "1 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-invalid-Current",
+          "name": "Invalid time_state: 'Current'",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "time_state 'Current' correctly rejected",
+          "expected": "V002 violation detected",
+          "actual": "1 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-invalid-curr3nt",
+          "name": "Invalid time_state: 'curr3nt'",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "time_state 'curr3nt' correctly rejected",
+          "expected": "V002 violation detected",
+          "actual": "1 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-invalid-2024_current",
+          "name": "Invalid time_state: '2024-current'",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 5,
+          "message": "time_state '2024-current' correctly rejected",
+          "expected": "V002 violation detected",
+          "actual": "1 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-invalid-2027_current",
+          "name": "Invalid time_state: '2027-current'",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "time_state '2027-current' correctly rejected",
+          "expected": "V002 violation detected",
+          "actual": "1 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-invalid-point_in_time",
+          "name": "Invalid time_state: 'point_in_time'",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "time_state 'point_in_time' correctly rejected",
+          "expected": "V002 violation detected",
+          "actual": "1 violations",
+          "severity": "high"
+        },
+        {
+          "id": "time-state-invalid-",
+          "name": "Invalid time_state: ''",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "time_state '' correctly rejected",
+          "expected": "V002 violation detected",
+          "actual": "0 violations",
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "suite": "Code-Verified Requirements",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "duration_ms": 14,
+      "results": [
+        {
+          "id": "verified-with-time-state",
+          "name": "code-verified with time_state - PASS",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 6,
+          "message": "code-verified with time_state passes",
+          "expected": "No V001 violations",
+          "actual": "0 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "verified-without-time-state",
+          "name": "code-verified without time_state - FAIL",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "code-verified without time_state correctly rejected",
+          "expected": "V001 violation detected",
+          "actual": "1 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "unverified-no-time-state-required",
+          "name": "unverified without time_state - PASS",
+          "category": "Verification Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "unverified without time_state passes",
+          "expected": "No V001 violations",
+          "actual": "1 violations",
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "suite": "Intent Action Validation",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "duration_ms": 13,
+      "results": [
+        {
+          "id": "active-with-next-action",
+          "name": "Active intent with next_action - PASS",
+          "category": "Intent Rules",
+          "status": "PASS",
+          "duration_ms": 5,
+          "message": "Active intent with next_action passes",
+          "expected": "No I001 violations",
+          "actual": "0 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "active-without-next-action",
+          "name": "Active intent without next_action - FAIL",
+          "category": "Intent Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "Active intent without next_action correctly rejected",
+          "expected": "I001 violation detected",
+          "actual": "0 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "closed-intent-no-action-required",
+          "name": "Closed intent without next_action - PASS",
+          "category": "Intent Rules",
+          "status": "PASS",
+          "duration_ms": 4,
+          "message": "Closed intent does not trigger I001",
+          "expected": "No I001 violations",
+          "actual": "0 violations",
+          "severity": "high"
+        }
+      ]
+    },
+    {
+      "suite": "Metadata Field Validation",
+      "total": 8,
+      "passed": 8,
+      "failed": 0,
+      "errors": 0,
+      "duration_ms": 56,
+      "results": [
+        {
+          "id": "all-required-fields",
+          "name": "Document with all required fields - PASS",
+          "category": "Metadata Rules",
+          "status": "PASS",
+          "duration_ms": 6,
+          "message": "All required fields present",
+          "expected": "No M001 violations",
+          "actual": "1 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "missing-verification",
+          "name": "Missing verification field - FAIL",
+          "category": "Metadata Rules",
+          "status": "PASS",
+          "duration_ms": 5,
+          "message": "Missing verification detected",
+          "expected": "M001 violation",
+          "actual": "2 violations",
+          "severity": "critical"
+        },
+        {
+          "id": "invalid-status-value",
+          "name": "Invalid status value - FAIL",
+          "category": "Metadata Rules",
+          "status": "PASS",
+          "duration_ms": 5,
+          "message": "Invalid status value detected",
+          "expected": "M002 violation",
+          "actual": "3 violations",
+          "severity": "high"
+        },
+        {
+          "id": "valid-status-current",
+          "name": "Valid status: current",
+          "category": "Metadata Rules",
+          "status": "PASS",
+          "duration_ms": 9,
+          "message": "Status 'current' is valid",
+          "expected": "No M002 violations",
+          "actual": "4 violations",
+          "severity": "medium"
+        },
+        {
+          "id": "valid-status-archived",
+          "name": "Valid status: archived",
+          "category": "Metadata Rules",
+          "status": "PASS",
+          "duration_ms": 6,
+          "message": "Status 'archived' is valid",
+          "expected": "No M002 violations",
+          "actual": "4 violations",
+          "severity": "medium"
+        },
+        {
+          "id": "valid-status-draft",
+          "name": "Valid status: draft",
+          "category": "Metadata Rules",
+          "status": "PASS",
+          "duration_ms": 8,
+          "message": "Status 'draft' is valid",
+          "expected": "No M002 violations",
+          "actual": "4 violations",
+          "severity": "medium"
+        },
+        {
+          "id": "valid-status-deprecated",
+          "name": "Valid status: deprecated",
+          "category": "Metadata Rules",
+          "status": "PASS",
+          "duration_ms": 7,
+          "message": "Status 'deprecated' is valid",
+          "expected": "No M002 violations",
+          "actual": "4 violations",
+          "severity": "medium"
+        },
+        {
+          "id": "valid-status-planned",
+          "name": "Valid status: planned",
+          "category": "Metadata Rules",
+          "status": "PASS",
+          "duration_ms": 9,
+          "message": "Status 'planned' is valid",
+          "expected": "No M002 violations",
+          "actual": "5 violations",
+          "severity": "medium"
+        }
+      ]
+    },
+    {
+      "suite": "CLI Commands",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "errors": 0,
+      "duration_ms": 500,
+      "results": [
+        {
+          "id": "cli-rules-list",
+          "name": "kbx rules list - returns all 9 rules",
+          "category": "CLI Commands",
+          "status": "PASS",
+          "duration_ms": 174,
+          "message": "All 9 rules listed",
+          "expected": "KBX-M001..M004, V001..V002, I001..I002, GB001",
+          "actual": "All present",
+          "severity": "critical"
+        },
+        {
+          "id": "cli-rules-help",
+          "name": "kbx rules help - displays usage",
+          "category": "CLI Commands",
+          "status": "PASS",
+          "duration_ms": 155,
+          "message": "Help displays all commands",
+          "expected": "Commands: list, lint, check, help",
+          "actual": "All displayed",
+          "severity": "medium"
+        },
+        {
+          "id": "cli-invalid-rule-id",
+          "name": "kbx rules check with invalid ID - error handling",
+          "category": "CLI Commands",
+          "status": "PASS",
+          "duration_ms": 171,
+          "message": "Invalid rule ID correctly rejected",
+          "expected": "Error thrown",
+          "actual": "Error thrown as expected",
+          "severity": "high"
+        }
+      ]
+    }
+  ]
+}

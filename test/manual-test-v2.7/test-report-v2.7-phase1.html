@@ -1,0 +1,848 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>v2.7 Manual Test Report</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    header .meta {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 30px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .summary-card {
+      text-align: center;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-card .number {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .summary-card .label {
+      font-size: 0.9em;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-card.passed .number {
+      color: #27ae60;
+    }
+
+    .summary-card.failed .number {
+      color: #e74c3c;
+    }
+
+    .summary-card.error .number {
+      color: #f39c12;
+    }
+
+    .summary-card.duration .number {
+      color: #3498db;
+    }
+
+    .results {
+      padding: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95em;
+    }
+
+    thead {
+      background: #f8f9fa;
+      position: sticky;
+      top: 0;
+    }
+
+    thead th {
+      padding: 15px;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 2px solid #e0e0e0;
+      text-transform: uppercase;
+      font-size: 0.85em;
+      letter-spacing: 0.5px;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #e0e0e0;
+      transition: background 0.2s;
+    }
+
+    tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .test-row td {
+      padding: 12px 15px;
+    }
+
+    .test-row.pass {
+      border-left: 4px solid #27ae60;
+    }
+
+    .test-row.pass td:first-child {
+      color: #27ae60;
+      font-weight: bold;
+    }
+
+    .test-row.fail {
+      border-left: 4px solid #e74c3c;
+      background: #ffebee;
+    }
+
+    .test-row.fail td:first-child {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .test-row.error {
+      border-left: 4px solid #f39c12;
+      background: #fff3e0;
+    }
+
+    .test-row.error td:first-child {
+      color: #f39c12;
+      font-weight: bold;
+    }
+
+    .suite-row {
+      background: linear-gradient(90deg, #f5f5f5 0%, #ffffff 100%);
+    }
+
+    .suite-row td {
+      padding: 12px 15px;
+      font-weight: 600;
+      border-top: 2px solid #ddd;
+    }
+
+    .suite-name {
+      display: flex !important;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .suite-stats {
+      background: #667eea;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      margin-left: 10px;
+    }
+
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+
+    .severity {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .severity.critical {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .severity.high {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .severity.medium {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+
+    .severity.low {
+      background: #f3e5f5;
+      color: #6a1b9a;
+    }
+
+    .message-cell {
+      font-size: 0.9em;
+      color: #666;
+      word-break: break-word;
+      max-width: 300px;
+    }
+
+    footer {
+      background: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      color: #666;
+      font-size: 0.9em;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
+      border-radius: 4px;
+    }
+
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin: 20px;
+      border-radius: 4px;
+      color: #856404;
+    }
+
+    @media print {
+      body {
+        background: white;
+      }
+      .container {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🧪 v2.7 Manual Test Report</h1>
+      <div class="meta">
+        Phase 1: Rules + CLI Deep Testing | Generated: 5/10/2026, 11:43:04 AM
+      </div>
+    </header>
+
+    <div class="summary">
+      <div class="summary-card passed">
+        <div class="label">Passed</div>
+        <div class="number">50</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 100%"></div>
+        </div>
+      </div>
+      <div class="summary-card failed">
+        <div class="label">Failed</div>
+        <div class="number">0</div>
+      </div>
+      <div class="summary-card error">
+        <div class="label">Errors</div>
+        <div class="number">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Pass Rate</div>
+        <div class="number">100.0%</div>
+      </div>
+      <div class="summary-card duration">
+        <div class="label">Duration</div>
+        <div class="number">0.9s</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Total Tests</div>
+        <div class="number">50</div>
+      </div>
+    </div>
+
+    
+
+    <div class="results">
+      <table>
+        <thead>
+          <tr>
+            <th width="5%">Status</th>
+            <th width="15%">Test ID</th>
+            <th width="25%">Test Name</th>
+            <th width="10%">Severity</th>
+            <th width="10%">Duration</th>
+            <th width="35%">Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+    <tr class="suite-row">
+      <td colspan="6" class="suite-name">
+        <strong>YAML Parsing Edge Cases</strong>
+        <span class="suite-stats">6/6 passed</span>
+      </td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>yaml-1a</code></td>
+      <td><strong>Valid frontmatter baseline</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>17ms</td>
+      <td class="message-cell">No violations found</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>yaml-1b</code></td>
+      <td><strong>Nested YAML with focus object</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>6ms</td>
+      <td class="message-cell">Nested YAML parsed correctly</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>yaml-1c</code></td>
+      <td><strong>Unicode characters in frontmatter</strong></td>
+      <td><span class="severity medium">medium</span></td>
+      <td>5ms</td>
+      <td class="message-cell">Unicode handled correctly</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>yaml-1d</code></td>
+      <td><strong>Windows CRLF line endings</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>8ms</td>
+      <td class="message-cell">CRLF line endings handled</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>yaml-1e</code></td>
+      <td><strong>Missing closing frontmatter marker</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>6ms</td>
+      <td class="message-cell">Incomplete frontmatter handled without crash</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>yaml-1f</code></td>
+      <td><strong>Empty frontmatter block</strong></td>
+      <td><span class="severity medium">medium</span></td>
+      <td>6ms</td>
+      <td class="message-cell">Empty frontmatter detected as missing fields</td>
+    </tr>
+    
+    
+    <tr class="suite-row">
+      <td colspan="6" class="suite-name">
+        <strong>Regex Validation - Intent IDs</strong>
+        <span class="suite-stats">14/14 passed</span>
+      </td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-valid-v2_7_rules</code></td>
+      <td><strong>Valid intent ID: v2-7-rules</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>4ms</td>
+      <td class="message-cell">Intent ID v2-7-rules is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-valid-v2_7_rules_engine</code></td>
+      <td><strong>Valid intent ID: v2-7-rules-engine</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>5ms</td>
+      <td class="message-cell">Intent ID v2-7-rules-engine is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-valid-v2_7_nl_to_cli_logic</code></td>
+      <td><strong>Valid intent ID: v2-7-nl-to-cli-logic</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>6ms</td>
+      <td class="message-cell">Intent ID v2-7-nl-to-cli-logic is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-valid-v10_20_feature</code></td>
+      <td><strong>Valid intent ID: v10-20-feature</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>5ms</td>
+      <td class="message-cell">Intent ID v10-20-feature is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-valid-v1_1_a</code></td>
+      <td><strong>Valid intent ID: v1-1-a</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>6ms</td>
+      <td class="message-cell">Intent ID v1-1-a is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-invalid-2_7_rules</code></td>
+      <td><strong>Invalid intent ID: 2-7-rules</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>8ms</td>
+      <td class="message-cell">Intent ID 2-7-rules correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-invalid-v2_7_rules</code></td>
+      <td><strong>Invalid intent ID: v2.7-rules</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>7ms</td>
+      <td class="message-cell">Intent ID v2.7-rules correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-invalid-v2_7_rules</code></td>
+      <td><strong>Invalid intent ID: v2_7_rules</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>14ms</td>
+      <td class="message-cell">Intent ID v2_7_rules correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-invalid-v2_7</code></td>
+      <td><strong>Invalid intent ID: v2-7</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>10ms</td>
+      <td class="message-cell">Intent ID v2-7 correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-invalid-v2_7_RULES</code></td>
+      <td><strong>Invalid intent ID: v2-7-RULES</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>13ms</td>
+      <td class="message-cell">Intent ID v2-7-RULES correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-invalid-v2_7__rules</code></td>
+      <td><strong>Invalid intent ID: v2-7-_rules</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>13ms</td>
+      <td class="message-cell">Intent ID v2-7-_rules correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-invalid-v2_7_rules_</code></td>
+      <td><strong>Invalid intent ID: v2-7-rules-</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>16ms</td>
+      <td class="message-cell">Intent ID v2-7-rules- correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-invalid-v2_7_ru__les</code></td>
+      <td><strong>Invalid intent ID: v2-7-ru--les</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>20ms</td>
+      <td class="message-cell">Intent ID v2-7-ru--les correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>intent-invalid-V2_7_rules</code></td>
+      <td><strong>Invalid intent ID: V2-7-rules</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>18ms</td>
+      <td class="message-cell">Intent ID V2-7-rules correctly rejected</td>
+    </tr>
+    
+    
+    <tr class="suite-row">
+      <td colspan="6" class="suite-name">
+        <strong>Time State Validation</strong>
+        <span class="suite-stats">13/13 passed</span>
+      </td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-valid-current</code></td>
+      <td><strong>Valid time_state: current</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>8ms</td>
+      <td class="message-cell">time_state 'current' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-valid-point_in_time</code></td>
+      <td><strong>Valid time_state: point-in-time</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>5ms</td>
+      <td class="message-cell">time_state 'point-in-time' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-valid-evergreen</code></td>
+      <td><strong>Valid time_state: evergreen</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>4ms</td>
+      <td class="message-cell">time_state 'evergreen' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-valid-historical</code></td>
+      <td><strong>Valid time_state: historical</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>6ms</td>
+      <td class="message-cell">time_state 'historical' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-valid-2026_current</code></td>
+      <td><strong>Valid time_state: 2026-current</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>5ms</td>
+      <td class="message-cell">time_state '2026-current' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-valid-future</code></td>
+      <td><strong>Valid time_state: future</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>4ms</td>
+      <td class="message-cell">time_state 'future' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-invalid-CURRENT</code></td>
+      <td><strong>Invalid time_state: 'CURRENT'</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>7ms</td>
+      <td class="message-cell">time_state 'CURRENT' correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-invalid-Current</code></td>
+      <td><strong>Invalid time_state: 'Current'</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>4ms</td>
+      <td class="message-cell">time_state 'Current' correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-invalid-curr3nt</code></td>
+      <td><strong>Invalid time_state: 'curr3nt'</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>4ms</td>
+      <td class="message-cell">time_state 'curr3nt' correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-invalid-2024_current</code></td>
+      <td><strong>Invalid time_state: '2024-current'</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>5ms</td>
+      <td class="message-cell">time_state '2024-current' correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-invalid-2027_current</code></td>
+      <td><strong>Invalid time_state: '2027-current'</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>4ms</td>
+      <td class="message-cell">time_state '2027-current' correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-invalid-point_in_time</code></td>
+      <td><strong>Invalid time_state: 'point_in_time'</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>4ms</td>
+      <td class="message-cell">time_state 'point_in_time' correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>time-state-invalid-</code></td>
+      <td><strong>Invalid time_state: ''</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>4ms</td>
+      <td class="message-cell">time_state '' correctly rejected</td>
+    </tr>
+    
+    
+    <tr class="suite-row">
+      <td colspan="6" class="suite-name">
+        <strong>Code-Verified Requirements</strong>
+        <span class="suite-stats">3/3 passed</span>
+      </td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>verified-with-time-state</code></td>
+      <td><strong>code-verified with time_state - PASS</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>6ms</td>
+      <td class="message-cell">code-verified with time_state passes</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>verified-without-time-state</code></td>
+      <td><strong>code-verified without time_state - FAIL</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>4ms</td>
+      <td class="message-cell">code-verified without time_state correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>unverified-no-time-state-required</code></td>
+      <td><strong>unverified without time_state - PASS</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>4ms</td>
+      <td class="message-cell">unverified without time_state passes</td>
+    </tr>
+    
+    
+    <tr class="suite-row">
+      <td colspan="6" class="suite-name">
+        <strong>Intent Action Validation</strong>
+        <span class="suite-stats">3/3 passed</span>
+      </td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>active-with-next-action</code></td>
+      <td><strong>Active intent with next_action - PASS</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>5ms</td>
+      <td class="message-cell">Active intent with next_action passes</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>active-without-next-action</code></td>
+      <td><strong>Active intent without next_action - FAIL</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>4ms</td>
+      <td class="message-cell">Active intent without next_action correctly rejected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>closed-intent-no-action-required</code></td>
+      <td><strong>Closed intent without next_action - PASS</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>4ms</td>
+      <td class="message-cell">Closed intent does not trigger I001</td>
+    </tr>
+    
+    
+    <tr class="suite-row">
+      <td colspan="6" class="suite-name">
+        <strong>Metadata Field Validation</strong>
+        <span class="suite-stats">8/8 passed</span>
+      </td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>all-required-fields</code></td>
+      <td><strong>Document with all required fields - PASS</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>6ms</td>
+      <td class="message-cell">All required fields present</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>missing-verification</code></td>
+      <td><strong>Missing verification field - FAIL</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>5ms</td>
+      <td class="message-cell">Missing verification detected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>invalid-status-value</code></td>
+      <td><strong>Invalid status value - FAIL</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>5ms</td>
+      <td class="message-cell">Invalid status value detected</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>valid-status-current</code></td>
+      <td><strong>Valid status: current</strong></td>
+      <td><span class="severity medium">medium</span></td>
+      <td>9ms</td>
+      <td class="message-cell">Status 'current' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>valid-status-archived</code></td>
+      <td><strong>Valid status: archived</strong></td>
+      <td><span class="severity medium">medium</span></td>
+      <td>6ms</td>
+      <td class="message-cell">Status 'archived' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>valid-status-draft</code></td>
+      <td><strong>Valid status: draft</strong></td>
+      <td><span class="severity medium">medium</span></td>
+      <td>8ms</td>
+      <td class="message-cell">Status 'draft' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>valid-status-deprecated</code></td>
+      <td><strong>Valid status: deprecated</strong></td>
+      <td><span class="severity medium">medium</span></td>
+      <td>7ms</td>
+      <td class="message-cell">Status 'deprecated' is valid</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>valid-status-planned</code></td>
+      <td><strong>Valid status: planned</strong></td>
+      <td><span class="severity medium">medium</span></td>
+      <td>9ms</td>
+      <td class="message-cell">Status 'planned' is valid</td>
+    </tr>
+    
+    
+    <tr class="suite-row">
+      <td colspan="6" class="suite-name">
+        <strong>CLI Commands</strong>
+        <span class="suite-stats">3/3 passed</span>
+      </td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>cli-rules-list</code></td>
+      <td><strong>kbx rules list - returns all 9 rules</strong></td>
+      <td><span class="severity critical">critical</span></td>
+      <td>174ms</td>
+      <td class="message-cell">All 9 rules listed</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>cli-rules-help</code></td>
+      <td><strong>kbx rules help - displays usage</strong></td>
+      <td><span class="severity medium">medium</span></td>
+      <td>155ms</td>
+      <td class="message-cell">Help displays all commands</td>
+    </tr>
+    
+    <tr class="test-row pass">
+      <td>✓</td>
+      <td><code>cli-invalid-rule-id</code></td>
+      <td><strong>kbx rules check with invalid ID - error handling</strong></td>
+      <td><span class="severity high">high</span></td>
+      <td>171ms</td>
+      <td class="message-cell">Invalid rule ID correctly rejected</td>
+    </tr>
+    
+    
+        </tbody>
+      </table>
+    </div>
+
+    <footer>
+      <p>Generated by kbx Manual Test Suite v2.7.0-beta.1 | Phase 1: Rules + CLI Testing</p>
+      <p>For detailed JSON results, see: <code>test-results-v2.7-phase1.json</code></p>
+    </footer>
+  </div>
+</body>
+</html>
+  
