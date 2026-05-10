@@ -64,6 +64,7 @@ None remaining for v2.7 ship. Decision blocker: v2.7 GA timeline (extended beta 
 - focus.md updated.
 
 ## Intent Checkpoints
+- 2026-05-10T09:59:56.888Z | event=intent.close | branch=intent/v2-8-customization-lifecycle-and-safe-uninstall | intent=v2-7-nl-rules-to-cli-logic | note=Intent closed as released
 - 2026-05-10T09:59:18.809Z | event=intent.status | branch=intent/v2-8-customization-lifecycle-and-safe-uninstall | intent=v2-7-nl-rules-to-cli-logic | note=Intent status inspected
 - 2026-05-10T09:32:02.345Z | event=intent.status | branch=intent/v2-8-customization-lifecycle-and-safe-uninstall | intent=v2-8-v2-8-svfactory-rule-catalog-hardening | note=Intent status inspected
 - 2026-05-10T09:28:23.826Z | event=intent.status | branch=intent/v2-8-customization-lifecycle-and-safe-uninstall | intent=v2-8-svfactory-rule-catalog-hardening | note=Intent status inspected
