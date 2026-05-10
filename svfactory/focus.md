@@ -13,39 +13,26 @@ v2.7 — NL Rules → CLI Hard Logic (rule engine)
 
 **Version:** v2.8 Phase 0 — Boundary Lock & Testing Strategy
 
-**Session State (2026-05-10, Checkpoint 5):**
-- v2.7 SHIPPED: 4 phases complete, 710/710 tests passing ✅
-- v2.7.0-beta.1 on npm: `npm install @williamduong/kbx@beta` ready 🎉
-- v2.8 Phase 0 COMPLETE: 3 workstreams scoped + phases gated + risks assessed
-- **Phase 1 Manual Tests COMPLETE:** 50 deep tests, 100% pass rate, HTML report ready 🧪
-  - YAML parsing (6 tests) — Unicode, CRLF, nested structures ✓
-  - Regex validation (14 tests) — Intent ID patterns vX-Y-slug ✓
-  - Verification rules (16 tests) — time_state, code-verified ✓
-  - Intent rules (3 tests) — next_action enforcement ✓
-  - Metadata rules (8 tests) — Required fields, enum values ✓
-  - CLI commands (3 tests) — list, help, error handling ✓
-- **NO BUGS FOUND** — All edge cases pass, chaos input handled gracefully
-- **New intent created:** `v2-8-kbx-beta-bug-hunt` for failure-oriented kbx beta testing
-- **Phase 2 beta plan drafted:** failure-oriented pack for token burn, loops, hallucination drift, and multi-project ambiguity
-- Checkpoint: Phase 1 test results delivered, ready for deeper beta bug-hunt planning and Phase 2 (integration + doctor)
+**Session State (2026-05-10, Checkpoint 9):**
+- v2.7.0-beta.2 published: 2 bugs fixed in cross-source validation ✅
+  - Bug #1 (missing import update.js): FIXED ✅ — VipePix legacy update succeeds
+  - Bug #2 (missing baseline guidance init): FIXED ✅ — platform-control-plane tracked-mode UX clear
+  - Bug #3 (legacy noise): marked MEDIUM, not fixed (no chaos reduction benefit)
+- All 3 source repos tested WARN-only, chaos stable, no regressions
+- Ready for GA decision or extended beta soak
 
 **Active intents:**
 - v2-7-nl-rules-to-cli-logic (READY TO CLOSE — manual tests complete)
 - v2-8-downstream-agent-and-ontology (Phase 0 locked, awaiting Phase 1 kickoff)
 - v2-8-kbx-beta-bug-hunt (active — kbx-only deep failure-mode testing)
 
-**Next action:** 
-  1. Execute Phase 2 failure-oriented beta tests for kbx only
-  2. Decide: Release v2.7.0 GA OR continue build with WS1/WS2/WS3 or collect more beta feedback
+**Next action:**
+  1. Review v2.7.0-beta.2 with 2 bugs fixed — prepare GA decision memo
+  2. Decide timeline: extended beta soak vs. immediate v2.7 GA promotion
 
 ## Active Blockers
 
-None. v2.7 shipped (beta). v2.8 Phase 0 planning complete. Next: decide v2.7 GA vs continue to Phase 1 build.
-**Đang focus:** v2.7 (Phase 1 — rule engine scaffold)
-**Intent active:** v2-7-nl-rules-to-cli-logic (Phase 0 complete, Phase 1 starting)
-**Status:** v2.6 fully closed (intent closed released v2.6.0, 650/650 tests). v2.7 post-v2.6 gate unlocked.
-**CLI target (working version):** v2.5.1-beta.1
-**Last shipped:** v2.4.0 (npm latest). v2.6.0 commits staged; not yet npm-published.
+None remaining for v2.7 ship. Decision blocker: v2.7 GA timeline (extended beta soak vs. immediate promotion).
 ## Recent Decisions (last 5)
 
 1. Release rule: tag AFTER publish, không push trước khi npm publish thành công.
@@ -59,7 +46,7 @@ None. v2.7 shipped (beta). v2.8 Phase 0 planning complete. Next: decide v2.7 GA 
 | v3.0 | Long-term | Monorepo split packages/svfactory + packages/kb-agent (KB-015) |
 
 - `kbx` không cài global — dùng `node ./bin/kbx.js` trong workspace này hoặc `npx @williamduong/kbx` cho downstream.
-- npm dist-tag: `beta → 2.4.0-rc.2`, `latest → 2.4.0`.
+- npm dist-tag: `beta → 2.7.0-beta.2`, `latest → 2.4.0`.
 - CONSTITUTION.md nằm ở gốc repo, maintainer-only, không ship qua npm.
 - focus.md phải được update cuối mỗi session trước khi kết thúc — đây là nguồn truth duy nhất cho bootstrap.
 

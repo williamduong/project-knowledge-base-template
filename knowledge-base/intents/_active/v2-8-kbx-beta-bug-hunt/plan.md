@@ -125,3 +125,103 @@ This intent is successful when we have:
 ## Next Step
 
 Produce `impact.md` and then turn this plan into a concrete manual test document set for the beta team.
+
+## Execution Snapshot (2026-05-10)
+
+Automated CLI-only scenarios were run (no human prompt interaction) with `@williamduong/kbx@beta`:
+
+1. Downstream legacy source repo (`D:\Source\kbx-beta-downstream`)
+- `kbx init --yes --skip-bootstrap` (private-git): PASS
+- `kbx status --json`: clean verdict, expected uncommitted artifacts after init
+- `kbx test --all`: WARN (frontmatter coverage + dirty tree), no crash
+- `kbx doctor --strict --json`: WARN, no rules-lint violations
+- `kbx maintain --fast`: PASS/WARN only, pipeline stable
+- `kbx workspace detect/promote/verify --json`: PASS
+
+2. Fresh standalone project (`D:\Source\_kbx-cli-scratch\new-project-standalone`)
+- `kbx init --yes --mode tracked --skip-bootstrap`: PASS
+- `kbx test --all`: WARN
+- `kbx doctor --strict --json`: FAIL due to rules-lint violations on template defaults
+- `kbx rules lint --json`: 30 violations, including enum mismatch and missing required fields on shipped docs
+
+## Immediate Work Items
+
+1. Align rule enum sets with shipped template realities (backward-compatible union).
+2. Normalize template docs that violate required metadata fields by default.
+
+## Checkpoint 9: Post-fix regression validation (2026-05-10)
+
+**Cross-source bughunt re-executed after Bug #1 + Bug #2 fixes:**
+
+- VipePix (legacy KB upgrade flow):
+  - `kbx update --accept-baseline --refresh-prompts` → **EXIT_CODE=0** ✅ (FIXED from FAIL)
+  - Agent + prompt files refresh successful
+  - Chaos score: 50 (manageable) - stable
+
+- platform-control-plane (greenfield tracked-mode):
+  - `kbx init --yes --mode tracked --skip-bootstrap` → shows baseline guidance ✅ (FIXED UX)
+  - After git commit + baseline set: status transitions blocked → clean
+  - Tracked-mode user path now clear and unambiguous
+  - Chaos score: 50 (manageable) - stable
+
+- authcore (mono-repo multi-project):
+  - `kbx workspace detect` → 1 project detected
+  - `kbx maintain --fast` → WARN-only (expected, no regressions)
+  - `kbx rules lint` → 0 violations
+  - Chaos score: 50 (manageable) - stable
+
+**Result:** All 3 scenarios pass without regressions. Bug #1 and Bug #2 both fixed and validated.
+
+**Next:** Decide v2.7 GA timeline (extended beta soak vs. immediate promotion).
+3. Re-run standalone strict checks until `doctor --strict` is WARN/PASS (not FAIL).
+4. Repack beta and repeat downstream scenario loop before release decision.
+
+## Completion Update (2026-05-10)
+
+Status of immediate items:
+
+1. Done: metadata and verification rule enums were aligned for backward compatibility.
+2. Done: default template docs were normalized for required frontmatter fields.
+3. Done: fresh workspace generated with local patched CLI now reports `rules lint` = 0 and `doctor --strict` = WARN (no FAIL).
+4. Done: repacked candidate `2.7.0-beta.2`; downstream source repo upgraded to beta.2 and revalidated with WARN-only test/doctor outcomes.
+
+Open step before close:
+
+1. Done: Published `2.7.0-beta.2` to npm beta tag.
+2. Done: Completed registry-based downstream validation (`npm i @williamduong/kbx@beta`) and verified `kbx test --all` + `kbx doctor --strict --json` with WARN-only results.
+
+## Post-Publish Note
+
+- npm dist-tags now report `beta: 2.7.0-beta.2`.
+- Release-ready conclusion for beta line: achieved for CLI deterministic gates and downstream install regression.
+
+## Cross-Source Bughunt Update (2026-05-10)
+
+Real-world validation was added using three additional sources on the same machine:
+
+1. `D:\Source\vipepix\VipePix-Generation` (legacy KB upgrade)
+- `kbx status --json`: attention (unbound changes)
+- `kbx update --accept-baseline --refresh-prompts`: EXIT_CODE=1 (bug candidate: update returns non-zero without actionable diagnostics)
+- `kbx rules lint --json`: PASS
+- `kbx doctor --strict --json`: WARN-only (expected legacy warnings)
+- `kbx test --all`: WARN-only (legacy source_of_truth/frontmatter drift)
+
+2. `D:\Source\saascore\platform-control-plane` (new project, no git)
+- Auto bootstrap with `git init` succeeded.
+- `kbx init --yes --mode tracked --skip-bootstrap`: PASS
+- `kbx status --json`: blocked/no-baseline (expected first-run state)
+- `kbx rules lint --json`: PASS
+- `kbx doctor --strict --json`: WARN-only
+- `kbx test --all`: WARN-only
+
+3. `D:\Source\saascore\authcore` (merged API + frontend monorepo)
+- Fresh init completed in existing git repo (`private-git` mode).
+- `kbx workspace detect --json`: PASS (single detected project in current repo root).
+- `kbx maintain --fast`: WARN-only, pipeline stable.
+- `kbx rules lint --json`: PASS
+- `kbx doctor --strict --json`: WARN-only
+- `kbx test --all`: WARN-only
+
+Automation note:
+
+- A machine-level version guard was added in test harness to enforce global `kbx` == npm `beta` dist-tag before running scenarios.
