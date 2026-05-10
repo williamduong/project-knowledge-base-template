@@ -7,7 +7,7 @@
 
 ## Active Version Target
 
-v2.7 — NL Rules → CLI Hard Logic (rule engine)
+v2.8 — Boundary Lock, Bug Hunt, and Rule-Catalog Hardening
 
 ## Current Phase
 
@@ -22,13 +22,13 @@ v2.7 — NL Rules → CLI Hard Logic (rule engine)
 - Ready for GA decision or extended beta soak
 
 **Active intents:**
-- v2-7-nl-rules-to-cli-logic (READY TO CLOSE — manual tests complete)
 - v2-8-downstream-agent-and-ontology (Phase 0 locked, awaiting Phase 1 kickoff)
 - v2-8-kbx-beta-bug-hunt (active — kbx-only deep failure-mode testing)
+- v2-8-v2-8-svfactory-rule-catalog-hardening (active — deterministic rule expansion)
 
 **Next action:**
-  1. Review v2.7.0-beta.2 with 2 bugs fixed — prepare GA decision memo
-  2. Decide timeline: extended beta soak vs. immediate v2.7 GA promotion
+  1. Execute v2.8 bug-hunt deep scenarios with chaos-first reduction ordering
+  2. Continue rule-catalog hardening with deterministic checks and lifecycle traceability
 
 ## Active Blockers
 
