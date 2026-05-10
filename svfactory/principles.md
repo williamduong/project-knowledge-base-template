@@ -218,6 +218,35 @@ Fallback khi project context missing:
 
 AI generation không được coi là source of truth cho hành vi nhất quán khi đã có rule engine/CLI tương ứng.
 
+## P25. Three-layer vibe execution contract (shared for SVFactory + KBAgent)
+
+Mọi tương tác vibe-style từ user phải đi qua 3 layer cố định, không được đảo thứ tự:
+
+1. **Layer 1 — Intake & Normalize (NL -> CLI intent):**
+- Nhận user prompt tự nhiên (VN/EN/mixed)
+- Classify intent/action
+- Chuẩn hóa thành command plan deterministic (`kbx intent status/create/close`, `kbx init/update/...`)
+- Ghi rõ phần nào là `deterministic-action` vs `ai-assist`
+
+2. **Layer 2 — Deterministic Runtime (CLI first):**
+- Chạy CLI command tương ứng làm source of truth
+- Thu kết quả thực thi thật (exit code, output, changed files)
+- Nếu command fail/block -> dừng tại đây, không để AI tự "guess-fix" thay runtime
+
+3. **Layer 3 — AI Completion (post-CLI assist):**
+- Chỉ xử lý phần còn lại sau khi Layer 2 xong: điền placeholder, tóm tắt, đề xuất wording, plan notes
+- Không được giả lập kết quả CLI
+- Không được mutate vùng deterministic state ngoài contract của command vừa chạy
+
+Áp dụng chung cho:
+- SVFactory mode (maintainer workflows)
+- KBAgent mode (downstream runtime orchestration)
+
+Boundary bắt buộc:
+- Rule/invariant thuộc Layer 2 (CLI/runtime)
+- AI text generation thuộc Layer 3
+- Layer 1 chỉ là normalization/orchestration bridge
+
 ---
 
 ## Append history

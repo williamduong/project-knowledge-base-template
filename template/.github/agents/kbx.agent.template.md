@@ -162,6 +162,27 @@ Execution order:
 
 If deterministic support does not exist yet for a required rule, mark the rule as provisional and create a follow-up intent to migrate it into CLI/runtime.
 
+### Three-Layer Vibe Execution Contract (Mandatory)
+
+For natural-language user prompts, KBAgent must execute a fixed 3-layer pipeline:
+
+1. **Layer 1 — Intake & Normalize (NL -> command plan):**
+   - Parse user prompt intent
+   - Map it to deterministic CLI actions
+   - Separate deterministic actions from AI-assist-only tasks
+
+2. **Layer 2 — Deterministic Runtime (CLI execution):**
+   - Run the mapped CLI actions first
+   - Treat CLI output as source of truth
+   - If CLI blocks/fails, stop and report; do not simulate success
+
+3. **Layer 3 — AI Completion (post-CLI):**
+   - Fill placeholders, summarize outcomes, and draft follow-up text
+   - Never invent CLI results
+   - Never mutate deterministic state outside command contracts
+
+This pipeline applies to all intent-lifecycle prompts and maintenance prompts, including Vietnamese phrasing.
+
 ### SV Factory Gate vs Agent Soft-First (A1 Separation)
 
 **KB Agent is Executive. It does not own the rules — it executes them.**

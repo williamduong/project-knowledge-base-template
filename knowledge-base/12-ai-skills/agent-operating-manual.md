@@ -138,6 +138,25 @@ Do not create files first and register them later.
 - Preserve existing conventions unless migration is requested.
 - Do not surface avoidable setup questions when template defaults already define the operating choice.
 
+## Three-Layer Vibe Flow (SVFactory + KBAgent)
+
+When users interact in natural language, execution must follow this layered flow:
+
+1. **Layer 1: Intake & Normalize**
+  - Convert user phrasing into explicit CLI actions.
+  - Classify which tasks are deterministic-runtime vs AI-assist.
+
+2. **Layer 2: Deterministic Runtime**
+  - Execute CLI actions first.
+  - Use runtime output as canonical truth.
+  - On runtime failure, report and stop; no AI-only workaround for deterministic gates.
+
+3. **Layer 3: AI Completion**
+  - Complete residual work after CLI (placeholder fill, summaries, wording).
+  - AI must not invent runtime outcomes.
+
+This is the default interaction model for vibe-style usage.
+
 ## Persona-Aware Communication (v2.0.1)
 
 The agent adapts its communication style based on `state.json.userPersona.skillLevel`. Read this field at every activation. Do not default to master-level if the stored preference differs.

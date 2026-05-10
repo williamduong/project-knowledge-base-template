@@ -278,6 +278,35 @@ Khi Gate 3 được áp dụng, chỉ tiếp tục sau khi branch decision đã 
    - thêm test coverage cho behavior deterministic
 3. Cập nhật docs/prompt theo behavior đã chốt từ runtime, không đảo ngược thứ tự.
 4. Nếu chưa kịp implement runtime:
+
+---
+
+## Workflow 11: Three-Layer Vibe Execution (P25)
+
+**Trigger:** User gõ prompt tự nhiên (không viết lệnh CLI cụ thể) nhưng yêu cầu thao tác hệ thống SVFactory/KBAgent.
+
+**Mục tiêu:** Đảm bảo mọi "vibe" interaction vẫn deterministic-first và có trace rõ.
+
+**Step A — Layer 1 (Intake & Normalize):**
+1. Parse user intent từ prompt tự nhiên.
+2. Map sang action group: `intent`, `maintenance`, `release`, `status`, `custom`.
+3. Chuẩn hóa thành command plan cụ thể (ví dụ: `kbx intent status`, `kbx intent create`, `kbx intent close`).
+4. Đánh dấu phần nào cần AI post-processing sau CLI.
+
+**Step B — Layer 2 (Deterministic Runtime):**
+1. Chạy command plan bằng CLI.
+2. Thu output thật + exit code.
+3. Nếu fail/block: dừng flow, báo đúng lỗi runtime, không nhảy sang AI guess.
+
+**Step C — Layer 3 (AI Completion):**
+1. Dựa trên output Layer 2, xử lý phần còn lại: điền placeholder, chuẩn hóa wording, summarize, next steps.
+2. Không tự khẳng định runtime result nếu chưa có evidence từ Layer 2.
+3. Không mutate deterministic state ngoài phạm vi command vừa chạy.
+
+**Acceptance:**
+- Với mỗi task vibe-style, trace được đủ 3 layer trong reasoning/output.
+- Không có case AI trả lời như đã chạy command nhưng thực tế chưa chạy.
+- Rule/invariant mới luôn được đưa vào Layer 2 nếu có thể.
    - ghi rõ rule ở trạng thái provisional trong docs
    - tạo follow-up intent để migrate rule vào CLI/runtime.
 
