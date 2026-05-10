@@ -128,3 +128,4 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 - [15-governance/rule-selector-contract.md](15-governance/rule-selector-contract.md)
 - [15-governance/human-gate-contract.md](15-governance/human-gate-contract.md)
 - [15-governance/fixtures/dispatch-cases/fixture-schema.md](15-governance/fixtures/dispatch-cases/fixture-schema.md)
+- [15-governance/dispatch-governance-retrospective.md](15-governance/dispatch-governance-retrospective.md)
