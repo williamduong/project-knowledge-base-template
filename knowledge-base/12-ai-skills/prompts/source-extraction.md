@@ -1,6 +1,10 @@
 ---
 doc_id: source-extraction-prompt
 title: Source Extraction Prompt Template
+type: guide
+status: draft
+owner: knowledge-management
+time_state: current
 version: 1.0.0
 applies_to: kb extract command, AI-assisted doc generation
 verification: design-only

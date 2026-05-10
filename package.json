@@ -1,6 +1,6 @@
 {
   "name": "@williamduong/kbx",
-  "version": "2.7.0-beta.1",
+  "version": "2.7.0-beta.2",
   "description": "CLI for installing and maintaining the Project Knowledge Base Template.",
   "keywords": [
     "knowledge-base",
@@ -26,7 +26,7 @@
   ],
   "private": false,
   "license": "AGPL-3.0-only",
-  "author": "William Duong (Dương Tấn Nghĩa) <duongtannghia@gmail.com>",
+  "author": "William Duong <duongtannghia@gmail.com> (Dương Tấn Nghĩa)",
   "homepage": "https://github.com/williamduong/project-knowledge-base-template",
   "repository": {
     "type": "git",
@@ -92,5 +92,13 @@
   },
   "devDependencies": {
     "@williamduong/kb": "^2.3.6"
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/williamduong/project-knowledge-base-template/issues"
   }
 }

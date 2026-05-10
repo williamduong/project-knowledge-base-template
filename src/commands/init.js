@@ -172,10 +172,15 @@ function createAgentAndPromptFiles({ workspaceRoot, repoRoot, overwrite = false 
   return created;
 }
 
-function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE }) {
+function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE, mode }) {
   const adapterFile = detectedIDE === 'vscode' ? 'AGENTS.md' : (detectedIDE.charAt(0).toUpperCase() + detectedIDE.slice(1) + ' adapter');
   console.log('');
   console.log(`IDE: ${detectedIDE} (adapter: ${adapterFile})`);
+  
+  if (mode === 'tracked') {
+    console.log('Note: Tracked mode requires explicit baseline. Run: kbx baseline set --to-head');
+  }
+  
   console.log('Next: /kbx-plan, /kbx-run, /kbx-ask <question>  |  Verify: kbx status');
 }
 
@@ -356,7 +361,7 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
 
   // Print handoff prompt for Copilot
   const detectedIDE = detectIDE();
-  printHandoffPrompt({ workspaceRoot, visibleMountPath: storagePaths.visibleMountPath, detectedIDE });
+  printHandoffPrompt({ workspaceRoot, visibleMountPath: storagePaths.visibleMountPath, detectedIDE, mode: options.mode });
 }
 
 module.exports = {

@@ -1,7 +1,7 @@
 ---
 title: Extension Mechanism
 type: reference
-status: template
+status: draft
 owner: engineering
 time_state: current
 verification: design-only

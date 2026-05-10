@@ -5,6 +5,7 @@ const { getTemplateVersion } = require('../lib/template');
 const { persistStateAndRender, readStateFile } = require('../lib/state');
 const { performSync } = require('./sync');
 const { createAgentAndPromptFiles } = require('./init');
+const { resolveProject } = require('../lib/project-resolver');
 
 function parseArgs(args) {
   const options = {

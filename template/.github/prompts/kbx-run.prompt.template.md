@@ -4,7 +4,7 @@ type: directive
 category: knowledge-management
 scope: project
 trigger: /kbx-run
-version: 2.7.0-beta.1
+version: 2.7.0-beta.2
 ---
 
 # /kbx-run — Execute KB plan steps (explicit/advanced mode)
