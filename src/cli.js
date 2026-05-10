@@ -37,6 +37,7 @@ const { runWorkspace } = require('./commands/workspace');
 const runOntology = require('./commands/ontology');
 const { runRules } = require('./commands/rules');
 const { runDispatch } = require('./commands/dispatch');
+const { runInspect } = require('./commands/inspect');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -221,6 +222,11 @@ async function run(argv) {
 
   if (command === 'dispatch') {
     await runDispatch({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'inspect') {
+    await runInspect({ args: rest, cwd: process.cwd() });
     return;
   }
 

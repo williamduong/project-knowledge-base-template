@@ -41,6 +41,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kbx graph check  [--json]');
     console.log('  kbx ontology <show|validate|audit|build> [options]');
     console.log('  kbx rules <lint|check|list> [options]');
+    console.log('  kbx inspect --path <file-or-folder> [--json]');
     console.log('  kbx dispatch --fixture <path> --dry-run [--json]');
     console.log('  kbx dispatch test --fixtures <dir> [--json]');
     console.log('  kbx dispatch select --fixture <path> [--mode diagnostic|execution] [--json]');
@@ -140,6 +141,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kbx rules lint [--json]');
   console.log('  kbx rules check <rule-id> [--json]');
   console.log('  kbx rules list [--json]');
+  console.log('  kbx inspect --path <file-or-folder> [--json]');
   console.log('  kbx dispatch --fixture <path> --dry-run [--json]');
   console.log('  kbx dispatch test --fixtures <dir> [--json]');
   console.log('  kbx dispatch select --fixture <path> [--mode diagnostic|execution] [--json]');
