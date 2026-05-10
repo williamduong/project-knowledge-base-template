@@ -41,6 +41,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kbx graph check  [--json]');
     console.log('  kbx ontology <show|validate|audit|build> [options]');
     console.log('  kbx rules <lint|check|list> [options]');
+    console.log('  kbx dispatch --fixture <path> --dry-run [--json]');
     console.log('  kbx extract <source-file> [--target-doc=<path>] [--apply=<output>] [--uncovered] [--model=<hint>] [--yes] [--json]');
     console.log('  kbx ingest <source-file> [--type=auto|text|pdf|image|docx|xlsx] [--json]');
     console.log('  kbx uninstall [--keep-ai-files] [--remove-hook] [--force]');
@@ -134,6 +135,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kbx rules lint [--json]');
   console.log('  kbx rules check <rule-id> [--json]');
   console.log('  kbx rules list [--json]');
+  console.log('  kbx dispatch --fixture <path> --dry-run [--json]');
   console.log('  kbx version');
   console.log('');
   console.log('Implemented commands:');
