@@ -9,6 +9,8 @@ focus:
   last_updated: 2026-05-11
   next_action: "Activate when v2-10-kbagent-roadmap-gap-p2-gate-loop-contract is closed and gate policy contracts are finalized."
 schema_version: 2.7.0-beta.2
+depends_on:
+  - v2-10-kbagent-roadmap-gap-p2-gate-loop-contract
 estimate_factors:
   newUncoveredModules: 6
   addedUncoveredLOC: 3500

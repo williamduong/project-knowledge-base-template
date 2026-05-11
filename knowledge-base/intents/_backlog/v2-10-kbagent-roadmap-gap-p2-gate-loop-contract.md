@@ -9,6 +9,8 @@ focus:
   last_updated: 2026-05-11
   next_action: "Activate when Dispatch/CDM alignment intent closes and gate policy references are ready for contract formalization."
 schema_version: 2.7.0-beta.2
+depends_on:
+  - v2-10-kbagent-roadmap-gap-p1-dispatch-cdm
 ---
 
 # Backlog Intent: v2-10-kbagent-roadmap-gap-p2-gate-loop-contract

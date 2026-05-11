@@ -9,6 +9,8 @@ focus:
   last_updated: 2026-05-11
   next_action: "Activate when P0 alignment is merged and terminology drift is resolved."
 schema_version: 2.7.0-beta.2
+depends_on:
+  - v2-10-kbagent-roadmap-gap-p0-alignment
 ---
 
 # Backlog Intent: v2-10-kbagent-roadmap-gap-p1-dispatch-cdm
