@@ -10,6 +10,8 @@ const { listIntentRecords } = require('../lib/intent');
 const { selectApplicableRules } = require('./dispatch');
 
 const VALID_LANES = new Set(['rules', 'intents', 'source']);
+const WORKFLOW_LIFECYCLE_STATES = new Set(['backlog', 'active', 'closed', 'archived']);
+const ONTOLOGY_LIFECYCLE_STATES = new Set(['DRAFT', 'PROPOSED', 'VERIFIED', 'EXECUTED', 'COMMITTED']);
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -115,6 +117,59 @@ function parseDependsOn(meta) {
   return [];
 }
 
+function validateIntentLifecycleDomains(properties, { nodeId = 'unknown', laneName = 'intents' } = {}) {
+  const props = properties && typeof properties === 'object' ? properties : {};
+
+  if (Object.prototype.hasOwnProperty.call(props, 'lifecycle')) {
+    throw new Error(
+      `${laneName} lane intent node "${nodeId}" uses legacy "lifecycle" field. ` +
+      'Use "workflow_lifecycle" and "ontology_lifecycle" explicitly.'
+    );
+  }
+
+  const workflow = props.workflow_lifecycle;
+  const ontology = props.ontology_lifecycle;
+
+  if (workflow !== undefined && workflow !== null) {
+    if (ONTOLOGY_LIFECYCLE_STATES.has(workflow)) {
+      throw new Error(
+        `${laneName} lane intent node "${nodeId}" has ontology lifecycle "${workflow}" in workflow_lifecycle.`
+      );
+    }
+    if (!WORKFLOW_LIFECYCLE_STATES.has(workflow)) {
+      throw new Error(
+        `${laneName} lane intent node "${nodeId}" has invalid workflow_lifecycle "${workflow}". ` +
+        `Allowed: ${Array.from(WORKFLOW_LIFECYCLE_STATES).join(', ')}`
+      );
+    }
+  }
+
+  if (ontology !== undefined && ontology !== null) {
+    if (WORKFLOW_LIFECYCLE_STATES.has(ontology)) {
+      throw new Error(
+        `${laneName} lane intent node "${nodeId}" has workflow lifecycle "${ontology}" in ontology_lifecycle.`
+      );
+    }
+    if (!ONTOLOGY_LIFECYCLE_STATES.has(ontology)) {
+      throw new Error(
+        `${laneName} lane intent node "${nodeId}" has invalid ontology_lifecycle "${ontology}". ` +
+        `Allowed: ${Array.from(ONTOLOGY_LIFECYCLE_STATES).join(', ')}`
+      );
+    }
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(props, 'workflow_lifecycle')) {
+    throw new Error(
+      `${laneName} lane intent node "${nodeId}" is missing required workflow_lifecycle field.`
+    );
+  }
+
+  return {
+    workflow_lifecycle: workflow ?? null,
+    ontology_lifecycle: ontology ?? null,
+  };
+}
+
 function buildIntentsLanePayload(contentRoot) {
   const records = listIntentRecords(contentRoot);
   const nodes = [];
@@ -129,7 +184,8 @@ function buildIntentsLanePayload(contentRoot) {
         id: intentId,
         slug: record.slug || null,
         scope: record.scope,
-        lifecycle: record.lifecycle,
+        workflow_lifecycle: record.lifecycle,
+        ontology_lifecycle: null,
         close_type: record.closeType || null,
       },
     });
@@ -390,6 +446,21 @@ function importLanePayload(store, laneName, payload) {
           lane: laneName,
           source_type: node.type,
           ...(node.properties || {}),
+        },
+      });
+      continue;
+    }
+
+    if (laneName === 'intents' && node.type === 'Intent') {
+      const validated = validateIntentLifecycleDomains(node.properties || {}, { nodeId: node.id, laneName });
+      addNode(store, {
+        id: node.id,
+        type: node.type,
+        properties: {
+          lane: laneName,
+          ...(node.properties || {}),
+          workflow_lifecycle: validated.workflow_lifecycle,
+          ontology_lifecycle: validated.ontology_lifecycle,
         },
       });
       continue;
@@ -947,4 +1018,10 @@ function runGraph(args, { workspaceRoot }) {
   }
 }
 
-module.exports = { runGraph, parseArgs };
+module.exports = {
+  runGraph,
+  parseArgs,
+  validateIntentLifecycleDomains,
+  WORKFLOW_LIFECYCLE_STATES,
+  ONTOLOGY_LIFECYCLE_STATES,
+};

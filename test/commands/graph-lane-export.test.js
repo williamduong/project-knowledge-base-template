@@ -6,7 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const { runGraph } = require('../../src/commands/graph');
+const { runGraph, validateIntentLifecycleDomains } = require('../../src/commands/graph');
 const { setRuleLifecycle } = require('../../src/lib/rule-lifecycle');
 
 let workspaceRoot;
@@ -194,7 +194,11 @@ describe('kbx graph export lane', () => {
       format: 'graph-ingest-v1',
       lane: 'intents',
       nodes: [
-        { id: 'intent:demo', type: 'Intent', properties: { id: 'demo', lifecycle: 'active' } },
+        {
+          id: 'intent:demo',
+          type: 'Intent',
+          properties: { id: 'demo', workflow_lifecycle: 'active', ontology_lifecycle: null },
+        },
       ],
       edges: [],
     });
@@ -248,5 +252,38 @@ describe('kbx graph export lane', () => {
     assert.ok(payload.edges.some((e) => e.type === 'RUN_RESULT'));
     assert.equal(payload.read_only, true);
     assert.equal(payload.validation.ok, true);
+  });
+
+  it('hard-fails when intents lane still uses legacy lifecycle field', () => {
+    assert.throws(
+      () => validateIntentLifecycleDomains({ lifecycle: 'active' }, { nodeId: 'intent:legacy' }),
+      /legacy "lifecycle" field/
+    );
+  });
+
+  it('hard-fails when workflow_lifecycle receives ontology states', () => {
+    assert.throws(
+      () => validateIntentLifecycleDomains({ workflow_lifecycle: 'DRAFT', ontology_lifecycle: null }, { nodeId: 'intent:bad-workflow' }),
+      /ontology lifecycle "DRAFT" in workflow_lifecycle/
+    );
+  });
+
+  it('hard-fails when ontology_lifecycle receives workflow states', () => {
+    assert.throws(
+      () => validateIntentLifecycleDomains({ workflow_lifecycle: 'active', ontology_lifecycle: 'closed' }, { nodeId: 'intent:bad-ontology' }),
+      /workflow lifecycle "closed" in ontology_lifecycle/
+    );
+  });
+
+  it('accepts explicit lifecycle domains for intent nodes', () => {
+    const result = validateIntentLifecycleDomains(
+      { workflow_lifecycle: 'active', ontology_lifecycle: 'VERIFIED' },
+      { nodeId: 'intent:ok' }
+    );
+
+    assert.deepEqual(result, {
+      workflow_lifecycle: 'active',
+      ontology_lifecycle: 'VERIFIED',
+    });
   });
 });
