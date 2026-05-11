@@ -7,6 +7,7 @@ const { resolveExistingState } = require('../lib/context');
 const { readImpactFile, deriveVerdict: deriveImpactVerdict } = require('../lib/impact');
 const { buildGraph, findStrongCycles } = require('../lib/impact-graph');
 const { readCatalog } = require('../lib/catalog');
+const { runMaintain } = require('./maintain');
 const { listActiveIntentIds, readIntentMeta, listStagedFiles, loadForwardEstimatesFromBacklog } = require('../lib/intent');
 const {
   readDebtIndex,
@@ -435,7 +436,16 @@ const BUILTIN_FORWARD_ESTIMATES = [
 // ---------------------------------------------------------------------------
 
 function parseArgs(args) {
-  const options = { json: false, noSave: false, quiet: false, scanSrc: null, estimateOnly: false };
+  const options = {
+    json: false,
+    noSave: false,
+    quiet: false,
+    scanSrc: null,
+    estimateOnly: false,
+    autoMaintainOnSpike: false,
+    maintainFast: true,
+    maintainCreateIntent: false,
+  };
   const remaining = [];
   let i = 0;
   while (i < (args || []).length) {
@@ -444,14 +454,39 @@ function parseArgs(args) {
     if (a === '--no-save')      { options.noSave        = true; i++; continue; }
     if (a === '--quiet')        { options.quiet         = true; i++; continue; }
     if (a === '--estimate')     { options.estimateOnly  = true; i++; continue; }
+    if (a === '--auto-maintain-on-spike') { options.autoMaintainOnSpike = true; i++; continue; }
+    if (a === '--maintain-fast') { options.maintainFast = true; i++; continue; }
+    if (a === '--maintain-full') { options.maintainFast = false; i++; continue; }
+    if (a === '--maintain-create-intent') {
+      options.maintainCreateIntent = true;
+      options.autoMaintainOnSpike = true;
+      i++;
+      continue;
+    }
     if (a === '--scan-src') {
       if (!args[i + 1]) throw new Error('--scan-src requires a directory argument');
       options.scanSrc = args[i + 1]; i += 2; continue;
     }
     remaining.push(a); i++;
   }
-  if (remaining.length) throw new Error(`Unknown chaos option(s): ${remaining.join(', ')}. Supported: --json, --no-save, --quiet, --estimate, --scan-src <dir>`);
+  if (remaining.length) {
+    throw new Error(
+      `Unknown chaos option(s): ${remaining.join(', ')}. ` +
+      'Supported: --json, --no-save, --quiet, --estimate, --scan-src <dir>, ' +
+      '--auto-maintain-on-spike, --maintain-fast, --maintain-full, --maintain-create-intent'
+    );
+  }
   return options;
+}
+
+function buildMaintainArgsForSpike(options) {
+  const args = [];
+  if (options.maintainFast) args.push('--fast');
+  args.push('--suggest-intent');
+  if (options.maintainCreateIntent) {
+    args.push('--create-intent');
+  }
+  return args;
 }
 
 // ---------------------------------------------------------------------------
@@ -754,6 +789,12 @@ function runChaos({ args, cwd, packageJson }) {
   const previous = snapshots.length > 0 ? snapshots[snapshots.length - 1] : null;
   const trend    = compareChaosSnapshots(result, previous);
 
+  let maintainHook = {
+    attempted: false,
+    triggered: false,
+    skippedReason: null,
+  };
+
   // Forward estimates
   const backlogEstimates = loadForwardEstimatesFromBacklog(context.contentRoot);
   const allEstimates = [...backlogEstimates, ...BUILTIN_FORWARD_ESTIMATES];
@@ -776,6 +817,18 @@ function runChaos({ args, cwd, packageJson }) {
     return;
   }
 
+  if (trend.spikeDetected && options.autoMaintainOnSpike) {
+    if (options.json) {
+      maintainHook.skippedReason = 'json-output-mode';
+    } else {
+      const maintainArgs = buildMaintainArgsForSpike(options);
+      maintainHook.attempted = true;
+      maintainHook.triggered = true;
+      console.log('kb chaos: spike detected, invoking kb maintain hook...');
+      runMaintain({ args: maintainArgs, cwd, packageJson });
+    }
+  }
+
   if (options.json) {
     const out = {
       command: 'kb chaos',
@@ -789,6 +842,7 @@ function runChaos({ args, cwd, packageJson }) {
       contextSignals,
       trend,
       estimates,
+      maintainHook,
       snapshotSaved: saved,
     };
     console.log(JSON.stringify(out, null, 2));
@@ -799,6 +853,9 @@ function runChaos({ args, cwd, packageJson }) {
     console.log(`${result.score} ${result.level}`);
     if (trend.spikeDetected) {
       console.error(`SPIKE +${trend.delta} from ${trend.previousScore}`);
+      if (options.autoMaintainOnSpike && maintainHook.skippedReason === 'json-output-mode') {
+        console.error('SPIKE hook skipped in json mode. Run: kb chaos --auto-maintain-on-spike');
+      }
     }
     return;
   }
@@ -820,6 +877,9 @@ function runChaos({ args, cwd, packageJson }) {
   console.log(trendStr);
   if (trend.spikeDetected) {
     console.log(`  ⚠ Chaos spike! Previous=${trend.previousScore}, current=${result.score}. Stop and review before adding features.`);
+    if (!options.autoMaintainOnSpike) {
+      console.log('  ⚠ Tip: run "kb chaos --auto-maintain-on-spike" to auto-run maintain loop.');
+    }
   }
   console.log(BAR);
   console.log('');
@@ -841,6 +901,7 @@ module.exports = {
   runChaos,
   scanModuleStats,
   parseArgs,
+  buildMaintainArgsForSpike,
   LANG_CONFIG,
   deepScanModule,
   detectLanguage,

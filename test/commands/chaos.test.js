@@ -8,6 +8,7 @@ const path   = require('path');
 
 const {
   parseArgs,
+  buildMaintainArgsForSpike,
   scanModuleStats,
   LANG_CONFIG,
   deepScanModule,
@@ -51,6 +52,23 @@ test('parseArgs: --scan-src missing dir throws', () => {
 
 test('parseArgs: unknown flag throws', () => {
   assert.throws(() => parseArgs(['--unknown']), /Unknown chaos option/);
+});
+
+test('parseArgs: auto-maintain flags', () => {
+  const opts = parseArgs(['--auto-maintain-on-spike', '--maintain-full', '--maintain-create-intent']);
+  assert.equal(opts.autoMaintainOnSpike, true);
+  assert.equal(opts.maintainFast, false);
+  assert.equal(opts.maintainCreateIntent, true);
+});
+
+test('buildMaintainArgsForSpike: fast mode without create', () => {
+  const args = buildMaintainArgsForSpike({ maintainFast: true, maintainCreateIntent: false });
+  assert.deepEqual(args, ['--fast', '--suggest-intent']);
+});
+
+test('buildMaintainArgsForSpike: full mode with create intent', () => {
+  const args = buildMaintainArgsForSpike({ maintainFast: false, maintainCreateIntent: true });
+  assert.deepEqual(args, ['--suggest-intent', '--create-intent']);
 });
 
 // ---------------------------------------------------------------------------
