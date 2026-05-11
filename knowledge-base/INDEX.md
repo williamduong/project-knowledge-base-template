@@ -65,6 +65,30 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 - Release pipeline examples: [16-release-pipelines/examples/README.md](16-release-pipelines/examples/README.md)
 - Template changelog: [TEMPLATE_CHANGELOG.md](TEMPLATE_CHANGELOG.md)
 
+## SVFactory Knowledge Base
+
+Dedicated architecture and governance documentation for SVFactory meta-factory:
+
+- **Index:** [svfactory-kb/INDEX.md](svfactory-kb/INDEX.md)
+- **Architecture overview:** [svfactory-kb/00-architecture-overview.md](svfactory-kb/00-architecture-overview.md)
+- **Features list:** [svfactory-kb/01-features-list.md](svfactory-kb/01-features-list.md)
+- **Rules matrix:** [svfactory-kb/02-rules-matrix.md](svfactory-kb/02-rules-matrix.md)
+- **Pipeline & workflow:** [svfactory-kb/03-pipeline.md](svfactory-kb/03-pipeline.md)
+- **Database schema:** [svfactory-kb/04-database-schema.md](svfactory-kb/04-database-schema.md)
+- **Foundation & master principles:** [svfactory-kb/05-foundation-principles.md](svfactory-kb/05-foundation-principles.md)
+
+## KBAgent Knowledge Base
+
+Dedicated architecture and operational documentation for KBAgent Executive layer:
+
+- **Index:** [kbagent-kb/INDEX.md](kbagent-kb/INDEX.md)
+- **Architecture overview:** [kbagent-kb/00-architecture-overview.md](kbagent-kb/00-architecture-overview.md)
+- **Features list:** [kbagent-kb/01-features-list.md](kbagent-kb/01-features-list.md)
+- **Rules matrix:** [kbagent-kb/02-rules-matrix.md](kbagent-kb/02-rules-matrix.md)
+- **Coordination pipeline:** [kbagent-kb/03-pipeline.md](kbagent-kb/03-pipeline.md)
+- **Data model & extensions:** [kbagent-kb/04-database-schema.md](kbagent-kb/04-database-schema.md)
+- **Foundation & core principles:** [kbagent-kb/05-foundation-principles.md](kbagent-kb/05-foundation-principles.md)
+
 ## New Project Starter Path
 
 1. Read [00-start-here/project-scope-matrix.md](00-start-here/project-scope-matrix.md) to choose the right project archetype and optional modules.
@@ -78,7 +102,6 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 9. When updating template versions later, use [12-ai-skills/version-patch-prompts.md](12-ai-skills/version-patch-prompts.md) with [TEMPLATE_CHANGELOG.md](TEMPLATE_CHANGELOG.md).
 
 ## Directory Map
-
 - [00-start-here/](00-start-here/) - onboarding, map, indexes, scope
 - [01-product/](01-product/) - problem, personas, features, rules
 - [02-domain-model/](02-domain-model/) - entities, events, lifecycle
@@ -97,6 +120,8 @@ Detailed matrix: [00-start-here/project-scope-matrix.md](00-start-here/project-s
 - [15-governance/](15-governance/) - policy, metadata, cadence, bi-temporal
 - [16-release-pipelines/](16-release-pipelines/) - release pipeline YAML templates (npm-package, docs-only, custom)
 - [16-release-pipelines/examples/](16-release-pipelines/examples/) - example release pipelines for common project shapes
+- [svfactory-kb/](svfactory-kb/) - SVFactory meta-factory architecture and governance (separate from template)
+- [kbagent-kb/](kbagent-kb/) - KBAgent Executive layer architecture and operations (separate from template)
 
 ## Template Lifecycle
 
