@@ -11,13 +11,18 @@ const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 const app = express();
 const port = 4174;
 
-function runKbx(args) {
+function runKbx(args, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [cliPath, ...args], {
       cwd: repoRoot,
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
+
+    const timeout = setTimeout(() => {
+      child.kill('SIGTERM');
+      reject(new Error(`kbx command timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
 
     let stdout = '';
     let stderr = '';
@@ -30,11 +35,23 @@ function runKbx(args) {
       stderr += chunk.toString();
     });
 
-    child.on('error', reject);
+    child.on('error', (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
     child.on('close', (code) => {
+      clearTimeout(timeout);
       resolve({ code: code ?? 1, stdout: stdout.trim(), stderr: stderr.trim() });
     });
   });
+}
+
+function parseJsonSafe(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
 }
 
 app.get('/api/version', async (_req, res) => {
@@ -68,4 +85,29 @@ app.get('/api/interaction-model', (_req, res) => {
 
 app.listen(port, () => {
   console.log(`kbx-ui bridge listening on http://localhost:${port}`);
+});
+
+app.get('/api/status', async (_req, res) => {
+  try {
+    const result = await runKbx(['status', '--json']);
+    const parsed = parseJsonSafe(result.stdout);
+
+    res.status(result.code === 0 ? 200 : 500).json({
+      command: 'kbx status --json',
+      ok: result.code === 0,
+      exitCode: result.code,
+      parsed,
+      stdout: result.stdout,
+      stderr: result.stderr,
+    });
+  } catch (error) {
+    res.status(500).json({
+      command: 'kbx status --json',
+      ok: false,
+      exitCode: 1,
+      parsed: null,
+      stdout: '',
+      stderr: error instanceof Error ? error.message : String(error),
+    });
+  }
 });

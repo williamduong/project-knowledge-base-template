@@ -8,6 +8,23 @@ type VersionResponse = {
   stderr: string;
 };
 
+type StatusResponse = {
+  command: string;
+  ok: boolean;
+  exitCode: number;
+  parsed: {
+    command?: string;
+    status?: string;
+    release?: {
+      current?: string;
+      latest?: string;
+      hasTaggedRelease?: boolean;
+    };
+  } | null;
+  stdout: string;
+  stderr: string;
+};
+
 type InteractionModel = {
   chat: string;
   web: string;
@@ -16,19 +33,28 @@ type InteractionModel = {
 
 export default function App() {
   const [version, setVersion] = useState<VersionResponse | null>(null);
+  const [status, setStatus] = useState<StatusResponse | null>(null);
   const [interaction, setInteraction] = useState<InteractionModel | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const [versionResponse, interactionResponse] = await Promise.all([
-        fetch('/api/version').then((response) => response.json() as Promise<VersionResponse>),
-        fetch('/api/interaction-model').then((response) => response.json() as Promise<InteractionModel>),
-      ]);
+      try {
+        const [versionResponse, statusResponse, interactionResponse] = await Promise.all([
+          fetch('/api/version').then((response) => response.json() as Promise<VersionResponse>),
+          fetch('/api/status').then((response) => response.json() as Promise<StatusResponse>),
+          fetch('/api/interaction-model').then((response) => response.json() as Promise<InteractionModel>),
+        ]);
 
-      setVersion(versionResponse);
-      setInteraction(interactionResponse);
-      setLoading(false);
+        setVersion(versionResponse);
+        setStatus(statusResponse);
+        setInteraction(interactionResponse);
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : String(loadError));
+      } finally {
+        setLoading(false);
+      }
     }
 
     void load();
@@ -62,6 +88,21 @@ export default function App() {
         </article>
 
         <article className="panel">
+          <p className="panel-label">Next bridge step</p>
+          <h2>kbx status --json</h2>
+          {loading && <p className="muted">Loading runtime status...</p>}
+          {!loading && status && (
+            <>
+              <p className={status.ok ? 'status ok' : 'status error'}>
+                {status.ok ? 'Runtime status readable' : 'Runtime status failed'}
+              </p>
+              <pre>{status.parsed ? JSON.stringify(status.parsed, null, 2) : status.stdout || status.stderr}</pre>
+              <p className="meta">{status.command} · exit {status.exitCode}</p>
+            </>
+          )}
+        </article>
+
+        <article className="panel">
           <p className="panel-label">Interaction boundary</p>
           <h2>Chat, web, CLI</h2>
           {interaction && (
@@ -73,6 +114,12 @@ export default function App() {
           )}
         </article>
       </section>
+
+      {error && (
+        <section className="error-banner">
+          <p><strong>Load error:</strong> {error}</p>
+        </section>
+      )}
     </main>
   );
 }

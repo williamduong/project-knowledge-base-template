@@ -136,6 +136,20 @@ pre {
   line-height: 1.8;
 }
 
+.error-banner {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(208, 112, 112, 0.4);
+  background: rgba(208, 112, 112, 0.1);
+  color: #f6c7c7;
+}
+
+.error-banner p {
+  margin: 0;
+  font-size: 13px;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     padding: 24px 16px 40px;
