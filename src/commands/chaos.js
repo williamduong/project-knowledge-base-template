@@ -7,7 +7,7 @@ const { resolveExistingState } = require('../lib/context');
 const { readImpactFile, deriveVerdict: deriveImpactVerdict } = require('../lib/impact');
 const { buildGraph, findStrongCycles } = require('../lib/impact-graph');
 const { readCatalog } = require('../lib/catalog');
-const { listActiveIntentIds, readIntentMeta, listStagedFiles } = require('../lib/intent');
+const { listActiveIntentIds, readIntentMeta, listStagedFiles, loadForwardEstimatesFromBacklog } = require('../lib/intent');
 const {
   readDebtIndex,
   readEntropyIndex,
@@ -409,21 +409,24 @@ function scanModuleStats(srcDir, testDir, churnData = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Built-in forward estimate plans
+// Built-in forward estimate plans (fallback/reference)
 // ---------------------------------------------------------------------------
 
-const DEFAULT_FORWARD_ESTIMATES = [
+const BUILTIN_FORWARD_ESTIMATES = [
   {
     plan: 'v1.9 add kb graph check/export (2 commands, ~600 LOC)',
     factors: { newUncoveredModules: 0, addedUncoveredLOC: 0, addedHighCoupling: 1, addedTests: 40 },
+    source: 'builtin',
   },
   {
     plan: 'v1.8.1 refactor status.js (resolve E01 + D01)',
     factors: { resolvedHighEntropy: 1, resolvedHighDebt: 1, addedTests: 0 },
+    source: 'builtin',
   },
   {
     plan: 'v1.8.2 add tests for bootstrap+init (resolve D03)',
     factors: { resolvedCoverageDebt: 1, addedTests: 4 },
+    source: 'builtin',
   },
 ];
 
@@ -752,8 +755,11 @@ function runChaos({ args, cwd, packageJson }) {
   const trend    = compareChaosSnapshots(result, previous);
 
   // Forward estimates
-  const estimates = DEFAULT_FORWARD_ESTIMATES.map(e => ({
+  const backlogEstimates = loadForwardEstimatesFromBacklog(context.contentRoot);
+  const allEstimates = [...backlogEstimates, ...BUILTIN_FORWARD_ESTIMATES];
+  const estimates = allEstimates.map(e => ({
     plan: e.plan,
+    source: e.source || 'builtin',
     ...estimateDeltaChaos(result.score, e.factors),
   }));
 

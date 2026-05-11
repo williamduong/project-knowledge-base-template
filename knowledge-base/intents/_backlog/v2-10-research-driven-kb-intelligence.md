@@ -9,6 +9,11 @@ focus:
   last_updated: 2026-05-09
   next_action: "Detail requirements during v2.10 planning phase; design AI prompt framework and GraphDB schema extensions"
 schema_version: 2.5.1-beta.1
+estimate_factors:
+  newUncoveredModules: 3
+  addedUncoveredLOC: 1500
+  addedHighCoupling: 2
+  addedTests: 25
 ---
 
 # Backlog Intent: v2-10-research-driven-kb-intelligence

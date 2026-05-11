@@ -9,6 +9,11 @@ focus:
   last_updated: 2026-05-09
   next_action: "Activate after v2-8-kbagent-minimal-db-schema is closed and accepted; then wire /research views alongside intent views"
 schema_version: 2.5.1-beta.1
+estimate_factors:
+  newUncoveredModules: 4
+  addedUncoveredLOC: 2200
+  addedHighCoupling: 3
+  addedTests: 40
 ---
 
 # Backlog Intent: v2-9-db-and-intent-web-ui

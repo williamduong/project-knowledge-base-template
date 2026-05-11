@@ -927,6 +927,60 @@ function getActiveIntentsSummary(contentRoot) {
   return { count: ids.length, intents };
 }
 
+/**
+ * Load forward estimates from backlog intents that have estimate_factors field.
+ * Returns array of {plan, factors, source: 'backlog'}.
+ * Validates factors against SUPPORTED_FACTORS set.
+ */
+function loadForwardEstimatesFromBacklog(contentRoot) {
+  const backlogIds = listBacklogIntentIds(contentRoot);
+  const estimates = [];
+
+  const SUPPORTED_FACTORS = new Set([
+    'addedUncoveredLOC',
+    'newUncoveredModules',
+    'addedHighCoupling',
+    'resolvedHighEntropy',
+    'resolvedHighDebt',
+    'addedTests',
+    'resolvedCoverageDebt',
+  ]);
+
+  for (const id of backlogIds) {
+    try {
+      const meta = readIntentMeta(contentRoot, id);
+      if (!meta.estimate_factors || Object.keys(meta.estimate_factors).length === 0) {
+        continue; // Skip intents without estimate_factors
+      }
+
+      // Validate factor keys
+      const factors = meta.estimate_factors;
+      let hasInvalidFactor = false;
+      for (const key of Object.keys(factors)) {
+        if (!SUPPORTED_FACTORS.has(key)) {
+          console.warn(`⚠ Intent "${id}": unsupported factor "${key}". Skipped.`);
+          hasInvalidFactor = true;
+          break;
+        }
+      }
+      if (hasInvalidFactor) continue;
+
+      // Build estimate entry: use slug + title as plan identifier
+      const planLabel = `${meta.slug || id}: ${meta.title || id}`;
+      estimates.push({
+        plan: planLabel,
+        factors: factors,
+        source: 'backlog',
+      });
+    } catch (err) {
+      // Silently skip malformed intents
+      continue;
+    }
+  }
+
+  return estimates;
+}
+
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
@@ -966,6 +1020,7 @@ module.exports = {
   readIntentMeta,
   readIntentMetaFile,
   listBacklogIntentIds,
+  loadForwardEstimatesFromBacklog,
   listActiveIntentIds,
   listClosedIntentRecords,
   listArchivedIntentRecords,

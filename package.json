@@ -91,7 +91,8 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@williamduong/kb": "^2.3.6"
+    "@williamduong/kb": "^2.3.6",
+    "ava": "^6.4.1"
   },
   "main": "index.js",
   "directories": {
