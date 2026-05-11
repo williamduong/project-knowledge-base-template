@@ -15,6 +15,7 @@ Primary objective:
 - High-level phases are clear (P0-P5) but implementation coupling to runtime gates is still implicit.
 - Single active intent (P0): `v2-10-v2-10-kbagent-roadmap-gap-p0-alignment`. P1/P2/v11 backlog intents are queued with `depends_on` chain.
 - Phase 0 closeout in progress: CLI naming normalization is complete, and roadmap wording now distinguishes workflow lifecycle vs ontology lifecycle plus Principles vs runtime rules. Remaining work is to keep the other roadmap artifacts consistent.
+- Phase 1 bootstrap evidence exists: Option B localhost shell scaffolded at `site/kbx-ui/`; bridge endpoint `/api/version` successfully executes `kbx --version` and returns `2.7.0-beta.2`.
 
 ## Target State
 
@@ -66,6 +67,10 @@ Exit gate:
 - Option B selected with written evidence table and rationale.
 - Minimal executable proof exists: webapp bridge can execute `kbx --version` and render output.
 - Interaction boundary is explicit: Copilot Chat with agent KBAgent may propose actions, but web/chat mutations are applied only through CLI-backed paths.
+
+Observed evidence:
+- `npm --prefix ./site/kbx-ui run build` passed.
+- `GET http://localhost:4174/api/version` returned `{ ok: true, stdout: "2.7.0-beta.2" }`.
 
 ### Phase 2 - CLI Bridge Implementation
 

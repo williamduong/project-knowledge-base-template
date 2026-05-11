@@ -396,18 +396,18 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
         <span class="task-effort e-low">low</span>
       </div>
       <div class="task-row">
-        <i class="ti ti-square-rounded task-ico todo"></i>
+        <i class="ti ti-circle-check task-ico done"></i>
         <div class="task-content">
           <div class="task-title">Scaffold project</div>
-          <div class="task-desc">Khởi tạo localhost webapp · setup TypeScript · base layout · bridge backend gọi <code>kbx</code> qua CLI · dark theme tokens (đã có sẵn trong các HTML mockup)</div>
+          <div class="task-desc">Done: localhost webapp scaffolded at <code>site/kbx-ui/</code> (Vite + React + TypeScript) with bridge backend invoking <code>kbx</code> via CLI.</div>
         </div>
         <span class="task-effort e-med">medium</span>
       </div>
       <div class="task-row">
-        <i class="ti ti-square-rounded task-ico todo"></i>
+        <i class="ti ti-circle-check task-ico done"></i>
         <div class="task-content">
           <div class="task-title">"Hello world" — show kbx version</div>
-          <div class="task-desc">Webapp gọi bridge → bridge gọi <code>kbx --version</code>, hiển thị "kbx v2.7.0-beta.2" trên màn hình. Copilot Chat vẫn chạy độc lập trong VS Code và chỉ mutate state thông qua CLI path tương tự.</div>
+          <div class="task-desc">Done: bridge endpoint <code>/api/version</code> calls <code>kbx --version</code> successfully and returns <code>2.7.0-beta.2</code>. Copilot Chat remains in VS Code and mutations still go through CLI path.</div>
         </div>
         <span class="task-effort e-low">low</span>
       </div>
