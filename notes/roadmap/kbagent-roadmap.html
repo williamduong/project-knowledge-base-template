@@ -349,16 +349,49 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
     <div class="deliverable">
       <div class="del-label">Recommendation</div>
       <div class="del-body">
-        <strong>Option B (localhost webapp)</strong> cho phase 1-4. Lý do: speed-to-prototype cao nhất, dễ test, có thể demo standalone. Sau khi mature, convert sang Option A (VSCode extension) cho phase 5+ — reuse được React components.
+        <strong>Decision locked: Option B (localhost webapp)</strong> cho phase 1-4. Copilot Chat vẫn chạy trong VS Code với agent <code>KBAgent</code>; webapp chỉ là operator shell localhost. Mọi update state phải đi qua <code>kbx</code> CLI hoặc API wrapper gọi CLI, không cho web gọi model trực tiếp. Sau khi mature, có thể convert sang Option A (VSCode extension) cho phase 5+ và reuse React components.
+      </div>
+    </div>
+
+    <div class="deliverable">
+      <div class="del-label">Interaction Model</div>
+      <div class="del-body">
+        <strong>Copilot Chat + KBAgent</strong> dùng để propose hành động, generate patch/prompt, và giải thích state.<br>
+        <strong>Localhost webapp</strong> hiển thị data runtime, nhận thao tác operator, rồi gọi <code>kbx</code> qua bridge layer.<br>
+        <strong>CLI</strong> là write-path duy nhất cho stateful actions: update intent, run dispatch, inspect graph, apply change, retro, verify.<br>
+        Kết quả: chat và web cùng nhìn một source of truth, nhưng mutation vẫn deterministic qua CLI.
+      </div>
+    </div>
+
+    <div class="deliverable">
+      <div class="del-label">Evidence Table</div>
+      <div class="del-body">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:0 8px 7px 0;color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.06em">Criterion</th>
+              <th style="text-align:left;padding:0 8px 7px 0;color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.06em">Option A</th>
+              <th style="text-align:left;padding:0 8px 7px 0;color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.06em">Option B</th>
+              <th style="text-align:left;padding:0 0 7px 0;color:var(--t3);font-size:10px;text-transform:uppercase;letter-spacing:.06em">Option C</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--t1)">Time-to-prototype</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--t2)">medium</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--gt)">best</td><td style="padding:7px 0 7px 0;border-top:1px solid var(--bd);color:var(--t2)">medium</td></tr>
+            <tr><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--t1)">Copilot Chat coexistence</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--gt)">native</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--gt)">good enough via side-by-side browser + chat</td><td style="padding:7px 0 7px 0;border-top:1px solid var(--bd);color:var(--t2)">indirect</td></tr>
+            <tr><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--t1)">CLI bridge complexity</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--t2)">medium</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--gt)">lowest</td><td style="padding:7px 0 7px 0;border-top:1px solid var(--bd);color:var(--t2)">medium</td></tr>
+            <tr><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--t1)">Packaging burden</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--rt)">high</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--gt)">low</td><td style="padding:7px 0 7px 0;border-top:1px solid var(--bd);color:var(--rt)">high</td></tr>
+            <tr><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--t1)">Phase 1 fit</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--t2)">good</td><td style="padding:7px 8px 7px 0;border-top:1px solid var(--bd);color:var(--gt)">best</td><td style="padding:7px 0 7px 0;border-top:1px solid var(--bd);color:var(--t2)">weak</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
     <div class="task-list" style="margin-top:14px">
       <div class="task-row">
-        <i class="ti ti-square-rounded task-ico todo"></i>
+        <i class="ti ti-circle-check task-ico done"></i>
         <div class="task-content">
-          <div class="task-title">Decision meeting — chốt shell</div>
-          <div class="task-desc">Quyết định A/B/C. Document lý do để không quay lại tranh luận.</div>
+          <div class="task-title">Decision locked — Option B</div>
+          <div class="task-desc">Document rationale: localhost webapp wins Phase 1 on time-to-prototype, CLI bridge simplicity, and acceptable coexistence with Copilot Chat using agent <code>KBAgent</code>.</div>
         </div>
         <span class="task-effort e-low">low</span>
       </div>
@@ -366,7 +399,7 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
         <i class="ti ti-square-rounded task-ico todo"></i>
         <div class="task-content">
           <div class="task-title">Scaffold project</div>
-          <div class="task-desc">Khởi tạo project · setup TypeScript · base layout · dark theme tokens (đã có sẵn trong các HTML mockup)</div>
+          <div class="task-desc">Khởi tạo localhost webapp · setup TypeScript · base layout · bridge backend gọi <code>kbx</code> qua CLI · dark theme tokens (đã có sẵn trong các HTML mockup)</div>
         </div>
         <span class="task-effort e-med">medium</span>
       </div>
@@ -374,7 +407,7 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
         <i class="ti ti-square-rounded task-ico todo"></i>
         <div class="task-content">
           <div class="task-title">"Hello world" — show kbx version</div>
-          <div class="task-desc">UI gọi <code>kbx --version</code>, hiển thị "kbx v2.7.0-beta.2" trên màn hình. Đây là proof shell + CLI nói chuyện được.</div>
+          <div class="task-desc">Webapp gọi bridge → bridge gọi <code>kbx --version</code>, hiển thị "kbx v2.7.0-beta.2" trên màn hình. Copilot Chat vẫn chạy độc lập trong VS Code và chỉ mutate state thông qua CLI path tương tự.</div>
         </div>
         <span class="task-effort e-low">low</span>
       </div>
@@ -383,9 +416,10 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
     <div class="gate-block">
       <div class="gate-h"><i class="ti ti-shield-check"></i>Exit gate P1</div>
       <div class="gate-body">
-        ✓ Shell choice documented<br>
-        ✓ Project chạy được với <code>npm run dev</code> (hoặc tương đương)<br>
-        ✓ UI gọi được CLI tối thiểu 1 command và hiển thị output
+        ✓ Option B documented with evidence table and rationale<br>
+        ✓ Project chạy được với <code>npm run dev</code><br>
+        ✓ Webapp bridge gọi được CLI tối thiểu 1 command và hiển thị output<br>
+        ✓ Mutation path policy documented: chat/web only propose or trigger actions, CLI remains the single deterministic write path
       </div>
     </div>
   </div>

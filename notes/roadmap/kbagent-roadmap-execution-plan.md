@@ -57,14 +57,15 @@ Exit gate:
 ### Phase 1 - Shell Decision and Bootstrap
 
 Goal:
-- Lock UI shell decision and produce deterministic bootstrap output.
+- Lock Option B (localhost webapp) as the Phase 1 shell and produce deterministic bootstrap output through a CLI-backed bridge.
 
 Entry gate:
 - Phase 0 alignment complete.
 
 Exit gate:
-- One shell selected with rationale.
-- Minimal executable proof exists (CLI bridge hello path).
+- Option B selected with written evidence table and rationale.
+- Minimal executable proof exists: webapp bridge can execute `kbx --version` and render output.
+- Interaction boundary is explicit: Copilot Chat with agent KBAgent may propose actions, but web/chat mutations are applied only through CLI-backed paths.
 
 ### Phase 2 - CLI Bridge Implementation
 
