@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent — Implementation Roadmap</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c0c;--bg1:#141414;--bg2:#1a1a1a;--bg3:#222;--bg4:#2c2c2c;
+  --bd:#1e1e1e;--bd2:#2e2e2e;--bd3:#444;
+  --t0:#f0ede8;--t1:#c8c4bc;--t2:#888480;--t3:#505050;
+  --green:#3a9468;--gd:#0c1e14;--gt:#5ed498;
+  --amber:#b88010;--ad:#241c04;--at:#e0b030;
+  --red:#904040;--rd:#1e1010;--rt:#d07070;
+  --blue:#1c5898;--bld:#081830;--bt:#68a8dc;
+  --purple:#583898;--pd:#141028;--pt:#a070d8;
+  --teal:#1a7870;--td:#061818;--tt:#50c0b4;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html,body{background:var(--bg);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.65}
+.page{max-width:1080px;margin:0 auto;padding:32px 28px 60px}
+
+h1{font-size:24px;font-weight:500;color:var(--t0);margin-bottom:6px}
+.subtitle{font-size:13px;color:var(--t2);margin-bottom:28px;line-height:1.6}
+.subtitle code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:3px;color:var(--bt)}
+
+/* status banner */
+.banner{background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--bt);border-radius:5px;padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.banner i{font-size:18px;color:var(--bt)}
+.banner-text{font-size:12px;color:var(--t1);flex:1;line-height:1.6}
+.banner-text strong{color:var(--t0)}
+
+/* PHASE TIMELINE */
+.timeline{position:relative;margin:32px 0 40px;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:14px;top:6px;bottom:6px;width:1px;background:var(--bd2)}
+.tl-row{position:relative;padding-bottom:24px}
+.tl-row:last-child{padding-bottom:0}
+.tl-dot{position:absolute;left:-26px;top:6px;width:14px;height:14px;border-radius:50%;border:2px solid var(--bd3);background:var(--bg);z-index:1}
+.tl-dot.done{background:var(--gt);border-color:var(--gt)}
+.tl-dot.cur{background:var(--bt);border-color:var(--bt);box-shadow:0 0 0 4px rgba(104,168,220,.15)}
+.tl-dot.next{background:transparent;border-color:var(--bd3)}
+.tl-phase{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:3px;font-family:var(--mono)}
+.tl-title{font-size:14px;font-weight:500;color:var(--t0);margin-bottom:3px}
+.tl-meta{font-size:11px;color:var(--t2);font-family:var(--mono)}
+
+/* section */
+.section{margin-bottom:36px}
+.sec-h{font-size:16px;font-weight:500;color:var(--t0);margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px}
+.sec-h i{font-size:17px;color:var(--t3)}
+
+/* PHASE CARD */
+.phase-card{background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;margin-bottom:20px;overflow:hidden}
+.phase-card.done{border-left:3px solid var(--gt)}
+.phase-card.cur{border-left:3px solid var(--bt)}
+.phase-card.next{border-left:3px solid var(--bd3);opacity:.85}
+.phase-hd{padding:14px 18px;background:var(--bg3);display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--bd2)}
+.phase-num{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:500;flex-shrink:0}
+.phase-num.done{background:var(--gd);color:var(--gt)}
+.phase-num.cur{background:var(--bld);color:var(--bt)}
+.phase-num.next{background:var(--bg4);color:var(--t3)}
+.phase-title-wrap{flex:1}
+.phase-title{font-size:14px;font-weight:500;color:var(--t0);margin-bottom:2px}
+.phase-sub{font-size:11px;color:var(--t2);font-family:var(--mono)}
+.phase-time{font-size:10px;padding:3px 8px;border-radius:3px;font-family:var(--mono);flex-shrink:0;white-space:nowrap}
+.t-done{background:var(--gd);color:var(--gt);border:1px solid #183828}
+.t-cur{background:var(--bld);color:var(--bt);border:1px solid #143060}
+.t-next{background:var(--bg4);color:var(--t3);border:1px solid var(--bd2)}
+.phase-body{padding:16px 18px}
+
+/* TASK ROW */
+.task-list{display:flex;flex-direction:column;gap:0}
+.task-row{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid var(--bd)}
+.task-row:last-child{border:none;padding-bottom:0}
+.task-row:first-child{padding-top:0}
+.task-ico{font-size:14px;flex-shrink:0;margin-top:3px}
+.task-ico.done{color:var(--gt)}
+.task-ico.todo{color:var(--t3)}
+.task-ico.now{color:var(--bt)}
+.task-content{flex:1}
+.task-title{font-size:12px;font-weight:500;color:var(--t0);margin-bottom:2px}
+.task-desc{font-size:11px;color:var(--t2);line-height:1.6}
+.task-desc code{font-family:var(--mono);font-size:10px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--bt)}
+.task-effort{font-size:10px;padding:1px 6px;border-radius:2px;font-family:var(--mono);flex-shrink:0;margin-top:3px;margin-left:7px;display:inline-block}
+.e-low{background:var(--gd);color:var(--gt)}
+.e-med{background:var(--ad);color:var(--at)}
+.e-high{background:var(--rd);color:var(--rt)}
+
+/* DELIVERABLE */
+.deliverable{background:var(--bg1);border:1px solid var(--bd2);border-radius:5px;padding:12px 14px;margin-top:12px}
+.del-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:5px}
+.del-body{font-size:12px;color:var(--t1);line-height:1.6}
+.del-body code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--bt)}
+
+/* GATE BLOCK */
+.gate-block{background:var(--ad);border:1px solid #382808;border-radius:5px;padding:11px 14px;margin-top:12px}
+.gate-h{font-size:11px;font-weight:500;color:var(--at);margin-bottom:4px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.06em}
+.gate-body{font-size:11px;color:var(--t1);line-height:1.6}
+.gate-body code{font-family:var(--mono);font-size:10px;background:rgba(0,0,0,0.3);padding:1px 4px;border-radius:2px;color:var(--at)}
+
+/* TLDR */
+.tldr{background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;padding:16px 18px;margin-bottom:24px}
+.tldr-title{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.tldr-body{font-size:13px;color:var(--t1);line-height:1.7}
+.tldr-body strong{color:var(--t0)}
+
+/* tech choice */
+.choice-row{display:grid;grid-template-columns:140px 1fr;gap:14px;padding:10px 0;border-bottom:1px solid var(--bd);align-items:start}
+.choice-row:last-child{border:none}
+.choice-label{font-family:var(--mono);font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.choice-detail{font-size:12px;color:var(--t1);line-height:1.65}
+.choice-detail code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--bt)}
+
+/* SUMMARY METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+.metric-card{background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;padding:14px}
+.metric-n{font-family:var(--mono);font-size:24px;font-weight:300;color:var(--t0);margin-bottom:2px}
+.metric-l{font-size:11px;color:var(--t3)}
+
+/* DEPENDENCY ARROW */
+.dep-flow{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;margin-bottom:8px;font-size:11px}
+.dep-pill{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:3px;white-space:nowrap}
+.dep-arrow{color:var(--t3);font-size:14px}
+.dp-done{background:var(--gd);color:var(--gt);border:1px solid #183828}
+.dp-cur{background:var(--bld);color:var(--bt);border:1px solid #143060}
+.dp-next{background:var(--bg3);color:var(--t2);border:1px solid var(--bd2)}
+
+code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--bt)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>KBAgent — Implementation roadmap</h1>
+<p class="subtitle">Lộ trình từ documentation hiện tại đến giao diện quản lý chạy thực · 5 phases · ~8-12 tuần effort</p>
+
+<div class="banner">
+  <i class="ti ti-flag"></i>
+  <div class="banner-text">
+    <strong>Mục tiêu cuối:</strong> giao diện quản lý chạy thực, đọc/ghi data từ <code>knowledge-base/intents/</code>, gọi được <code>kbx</code> CLI, hiển thị chaos history, intent lifecycle, dispatch tuple — đúng như mockup <code>kbagent-workspace.html</code>.
+  </div>
+</div>
+
+<div class="metrics">
+  <div class="metric-card"><div class="metric-n" style="color:var(--gt)">P0</div><div class="metric-l">Gap fix · đã có roadmap</div></div>
+  <div class="metric-card"><div class="metric-n" style="color:var(--bt)">P1-P5</div><div class="metric-l">Implementation phases · mới</div></div>
+  <div class="metric-card"><div class="metric-n">38</div><div class="metric-l">CLI commands sẵn dùng được</div></div>
+  <div class="metric-card"><div class="metric-n">~10w</div><div class="metric-l">Effort total ước tính</div></div>
+</div>
+
+<!-- ══ DEPENDENCY FLOW ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-route"></i>Toàn cảnh lộ trình</div>
+<div class="dep-flow">
+  <span class="dep-pill dp-done">P0 Gap fix</span>
+  <span class="dep-arrow"><i class="ti ti-chevron-right"></i></span>
+  <span class="dep-pill dp-cur">P1 Choose UI shell</span>
+  <span class="dep-arrow"><i class="ti ti-chevron-right"></i></span>
+  <span class="dep-pill dp-next">P2 CLI bridge</span>
+  <span class="dep-arrow"><i class="ti ti-chevron-right"></i></span>
+  <span class="dep-pill dp-next">P3 Read-only UI</span>
+  <span class="dep-arrow"><i class="ti ti-chevron-right"></i></span>
+  <span class="dep-pill dp-next">P4 Interactive UI</span>
+  <span class="dep-arrow"><i class="ti ti-chevron-right"></i></span>
+  <span class="dep-pill dp-next">P5 Polish &amp; ship</span>
+</div>
+<p style="font-size:11px;color:var(--t3);margin-top:8px;font-family:var(--mono)">Mỗi phase có gate exit deterministic — không pass thì không proceed.</p>
+</div>
+
+<!-- ══ TL;DR ══ -->
+<div class="tldr">
+<div class="tldr-title">TL;DR — 5 phases</div>
+<div class="tldr-body">
+<strong>P0 (1-2 ngày):</strong> fix gap analysis P0 items (naming, lifecycle states, tách principles/rules) — không có UI, chỉ doc cleanup.<br>
+<strong>P1 (3-5 ngày):</strong> chọn UI shell — VSCode extension vs localhost webapp vs Electron. Build "Hello World" của lựa chọn đó.<br>
+<strong>P2 (1-2 tuần):</strong> bridge layer — REST API hoặc IPC wrap quanh <code>kbx</code> CLI. Mọi command đều có <code>--json</code> flag rồi, parse output là xong.<br>
+<strong>P3 (2-3 tuần):</strong> UI read-only — đọc intents, chaos history, rules, dispatch tuple. Không edit. Giống <code>kbagent-workspace.html</code> mockup nhưng có data thực.<br>
+<strong>P4 (2-3 tuần):</strong> UI interactive — create/update intent, approve, dispatch, retro. Bao gồm Foundation editor save xuống <code>.kb/</code>.<br>
+<strong>P5 (1-2 tuần):</strong> polish — error handling, search, keyboard shortcuts, theme. Package &amp; ship.
+</div>
+</div>
+
+<!-- ══ TIMELINE OVERVIEW ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-calendar"></i>Timeline overview</div>
+<div class="timeline">
+  <div class="tl-row">
+    <div class="tl-dot done"></div>
+    <div class="tl-phase">Đã hoàn thành</div>
+    <div class="tl-title">Documentation + Gap analysis</div>
+    <div class="tl-meta">9 HTML artifacts · 32 concepts compared · roadmap fix sẵn</div>
+  </div>
+  <div class="tl-row">
+    <div class="tl-dot cur"></div>
+    <div class="tl-phase">Phase 0 · 1-2 ngày</div>
+    <div class="tl-title">Gap P0 fix — alignment với repo v2.8</div>
+    <div class="tl-meta">naming · lifecycle states · tách principles/rules</div>
+  </div>
+  <div class="tl-row">
+    <div class="tl-dot next"></div>
+    <div class="tl-phase">Phase 1 · 3-5 ngày</div>
+    <div class="tl-title">Chọn UI shell + bootstrap</div>
+    <div class="tl-meta">decision · scaffold project · "Hello world"</div>
+  </div>
+  <div class="tl-row">
+    <div class="tl-dot next"></div>
+    <div class="tl-phase">Phase 2 · 1-2 tuần</div>
+    <div class="tl-title">CLI bridge layer</div>
+    <div class="tl-meta">wrap <code>kbx</code> commands · JSON parse · error handling</div>
+  </div>
+  <div class="tl-row">
+    <div class="tl-dot next"></div>
+    <div class="tl-phase">Phase 3 · 2-3 tuần</div>
+    <div class="tl-title">Read-only UI shell</div>
+    <div class="tl-meta">Workspace · System · Documents · Search — display only</div>
+  </div>
+  <div class="tl-row">
+    <div class="tl-dot next"></div>
+    <div class="tl-phase">Phase 4 · 2-3 tuần</div>
+    <div class="tl-title">Interactive UI — full feature parity</div>
+    <div class="tl-meta">create/edit/approve · Foundation editor · Dispatch flow</div>
+  </div>
+  <div class="tl-row">
+    <div class="tl-dot next"></div>
+    <div class="tl-phase">Phase 5 · 1-2 tuần</div>
+    <div class="tl-title">Polish · package · ship</div>
+    <div class="tl-meta">error UX · keyboard · theme · marketplace publish</div>
+  </div>
+</div>
+</div>
+
+<!-- ══ PHASE 0 ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-tool"></i>Phase 0 — Gap fix (đã có roadmap)</div>
+
+<div class="phase-card cur">
+  <div class="phase-hd">
+    <div class="phase-num cur">P0</div>
+    <div class="phase-title-wrap">
+      <div class="phase-title">Align documentation với repo v2.8</div>
+      <div class="phase-sub">prerequisite cho mọi UI work · không cần code mới</div>
+    </div>
+    <span class="phase-time t-cur">1-2 ngày</span>
+  </div>
+  <div class="phase-body">
+    <div class="task-list">
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Search-and-replace <code>kb</code> → <code>kbx</code></div>
+          <div class="task-desc">Trong tất cả HTML files đã build. Commit hash repo: 71d68f2 (2026-05-10).</div>
+        </div>
+        <span class="task-effort e-low">low</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Update lifecycle states</div>
+          <div class="task-desc"><code>backlog/active/staged/closed/archived</code> → <code>DRAFT/PROPOSED/VERIFIED/EXECUTED/COMMITTED</code></div>
+        </div>
+        <span class="task-effort e-low">low</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Tách Principles khỏi Rules</div>
+          <div class="task-desc">7 KBX-AX rules của ta → convert thành Principles P0-P25 style. Runtime rules giữ ở rule families M/V/I/GB/AX/PR/WF/KA.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Quyết định: 8 node types vs 10 CDM entities</div>
+          <div class="task-desc">Recommendation: giữ 8 cho SaaS variant, MAP vào CDM khi export. Document mapping table.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+    </div>
+
+    <div class="gate-block">
+      <div class="gate-h"><i class="ti ti-shield-check"></i>Exit gate P0</div>
+      <div class="gate-body">
+        ✓ Tất cả <code>kb</code> trong docs đã đổi thành <code>kbx</code><br>
+        ✓ Lifecycle states match repo<br>
+        ✓ Principles/Rules tách rõ ràng — không lẫn lộn<br>
+        ✓ Ontology decision documented (8 + CDM mapping)
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ PHASE 1 ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-window-maximize"></i>Phase 1 — Chọn UI shell</div>
+
+<div class="phase-card next">
+  <div class="phase-hd">
+    <div class="phase-num next">P1</div>
+    <div class="phase-title-wrap">
+      <div class="phase-title">Quyết định UI shell + scaffold project</div>
+      <div class="phase-sub">không có lựa chọn đúng tuyệt đối — chọn dựa trên use case</div>
+    </div>
+    <span class="phase-time t-next">3-5 ngày</span>
+  </div>
+  <div class="phase-body">
+    <p style="font-size:12px;color:var(--t2);margin-bottom:14px">3 options — chọn 1, không kết hợp được:</p>
+
+    <div class="choice-row">
+      <div class="choice-label">Option A<br>VSCode extension</div>
+      <div class="choice-detail">
+        <strong style="color:var(--gt)">✓</strong> Đúng design ban đầu · tích hợp Copilot tốt · user đã có VSCode mở<br>
+        <strong style="color:var(--rt)">✗</strong> Phải học VSCode extension API · webview communication phức tạp · publish marketplace<br>
+        <code>~5 ngày scaffold</code> · activate command, webview panel, message passing
+      </div>
+    </div>
+
+    <div class="choice-row">
+      <div class="choice-label">Option B<br>Localhost webapp</div>
+      <div class="choice-detail">
+        <strong style="color:var(--gt)">✓</strong> Nhanh nhất prototype · React/Next.js familiar · không phụ thuộc VSCode<br>
+        <strong style="color:var(--rt)">✗</strong> User phải <code>npm run kbx:ui</code> riêng · tabs browser tách rời IDE<br>
+        <code>~3 ngày scaffold</code> · Next.js + Express backend
+      </div>
+    </div>
+
+    <div class="choice-row">
+      <div class="choice-label">Option C<br>Electron app</div>
+      <div class="choice-detail">
+        <strong style="color:var(--gt)">✓</strong> Standalone · cài 1 lần · không cần VSCode mở<br>
+        <strong style="color:var(--rt)">✗</strong> Bundle nặng (~150MB) · update story phức tạp · ngách user nhỏ<br>
+        <code>~5 ngày scaffold</code> · Electron + React + IPC
+      </div>
+    </div>
+
+    <div class="deliverable">
+      <div class="del-label">Recommendation</div>
+      <div class="del-body">
+        <strong>Option B (localhost webapp)</strong> cho phase 1-4. Lý do: speed-to-prototype cao nhất, dễ test, có thể demo standalone. Sau khi mature, convert sang Option A (VSCode extension) cho phase 5+ — reuse được React components.
+      </div>
+    </div>
+
+    <div class="task-list" style="margin-top:14px">
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Decision meeting — chốt shell</div>
+          <div class="task-desc">Quyết định A/B/C. Document lý do để không quay lại tranh luận.</div>
+        </div>
+        <span class="task-effort e-low">low</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Scaffold project</div>
+          <div class="task-desc">Khởi tạo project · setup TypeScript · base layout · dark theme tokens (đã có sẵn trong các HTML mockup)</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">"Hello world" — show kbx version</div>
+          <div class="task-desc">UI gọi <code>kbx --version</code>, hiển thị "kbx v2.7.0-beta.2" trên màn hình. Đây là proof shell + CLI nói chuyện được.</div>
+        </div>
+        <span class="task-effort e-low">low</span>
+      </div>
+    </div>
+
+    <div class="gate-block">
+      <div class="gate-h"><i class="ti ti-shield-check"></i>Exit gate P1</div>
+      <div class="gate-body">
+        ✓ Shell choice documented<br>
+        ✓ Project chạy được với <code>npm run dev</code> (hoặc tương đương)<br>
+        ✓ UI gọi được CLI tối thiểu 1 command và hiển thị output
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ PHASE 2 ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-plug"></i>Phase 2 — CLI bridge layer</div>
+
+<div class="phase-card next">
+  <div class="phase-hd">
+    <div class="phase-num next">P2</div>
+    <div class="phase-title-wrap">
+      <div class="phase-title">Wrap kbx commands thành callable API</div>
+      <div class="phase-sub">38 commands đã có <code>--json</code> flag — parse là xong</div>
+    </div>
+    <span class="phase-time t-next">1-2 tuần</span>
+  </div>
+  <div class="phase-body">
+    <div class="task-list">
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Build executor function</div>
+          <div class="task-desc">TypeScript function gọi <code>kbx</code> qua <code>child_process.spawn</code>, parse JSON output, handle exit code 0/1 deterministic.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Type definitions cho commands</div>
+          <div class="task-desc">Tạo types cho input args + output JSON của 12 commands core: <code>intent</code>, <code>chaos</code>, <code>dispatch</code>, <code>graph</code>, <code>doctor</code>, <code>show</code>, <code>status</code>, <code>inspect</code>, <code>impact</code>, <code>rules</code>, <code>ontology</code>, <code>verify</code>.</div>
+        </div>
+        <span class="task-effort e-high">high</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">File watcher cho realtime updates</div>
+          <div class="task-desc">Watch <code>knowledge-base/intents/</code>, <code>.kb/chaos-history.ndjson</code> — emit events khi files thay đổi. UI subscribe và refresh.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Error handling layer</div>
+          <div class="task-desc">Khi <code>kbx</code> exit 1: parse stderr, map về user-friendly error message. Khi command không tồn tại: clear error thay vì crash UI.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Direct file readers (fallback)</div>
+          <div class="task-desc">Một số reads không cần qua CLI — đọc trực tiếp <code>.kb/ontology.json</code>, intent frontmatter. Nhanh hơn nhưng phải maintain sync với CLI logic.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+    </div>
+
+    <div class="deliverable">
+      <div class="del-label">Deliverable</div>
+      <div class="del-body">
+        <code>src/services/kbx-bridge.ts</code> export functions như:<br>
+        <code>kbx.intent.list(filter): Promise&lt;Intent[]&gt;</code><br>
+        <code>kbx.chaos.snapshot(): Promise&lt;ChaosSnapshot&gt;</code><br>
+        <code>kbx.dispatch.resolve(tuple): Promise&lt;DispatchResult&gt;</code>
+      </div>
+    </div>
+
+    <div class="gate-block">
+      <div class="gate-h"><i class="ti ti-shield-check"></i>Exit gate P2</div>
+      <div class="gate-body">
+        ✓ Tối thiểu 12 core commands callable từ TypeScript với types đầy đủ<br>
+        ✓ File watcher emit events khi <code>knowledge-base/intents/</code> thay đổi<br>
+        ✓ Error path tested — exit 1 không crash UI<br>
+        ✓ Unit tests pass cho mỗi wrapper function
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ PHASE 3 ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-eye"></i>Phase 3 — Read-only UI shell</div>
+
+<div class="phase-card next">
+  <div class="phase-hd">
+    <div class="phase-num next">P3</div>
+    <div class="phase-title-wrap">
+      <div class="phase-title">UI hiển thị data — chưa edit được</div>
+      <div class="phase-sub">port <code>kbagent-workspace.html</code> mockup sang React/Vue với data thực</div>
+    </div>
+    <span class="phase-time t-next">2-3 tuần</span>
+  </div>
+  <div class="phase-body">
+    <div class="task-list">
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Workspace tab — intent list + detail panel</div>
+          <div class="task-desc">Left: intent list từ <code>kbx intent list --json</code>. Right: detail panel hiển thị tasks, repos, linked_goal_id, dispatch tuple. Split layout như mockup.</div>
+        </div>
+        <span class="task-effort e-high">high</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">System tab — chaos + status</div>
+          <div class="task-desc">Chaos score gauge từ <code>kbx chaos snapshot --json</code>. History chart từ <code>chaos-history.ndjson</code>. Doctor status từ <code>kbx doctor --json</code>. Recharts hoặc tương đương.</div>
+        </div>
+        <span class="task-effort e-high">high</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Documents tab — KB tree</div>
+          <div class="task-desc">Render 16-tier folder structure từ <code>knowledge-base/</code>. Click file → render markdown preview. Frontmatter section riêng.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Rules tab — 4 family + principles</div>
+          <div class="task-desc">List rules từ <code>kbx rules list --json</code>. Filter by family. Click rule → detail panel với linked principles + binding gates.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Dispatch tuple viewer</div>
+          <div class="task-desc">Page riêng hoặc panel hiển thị tuple 8 input + 6 output. Read-only — chỉ show, chưa edit. Test với fixtures từ <code>template/15-governance/fixtures/dispatch-cases/</code>.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Search box global</div>
+          <div class="task-desc">Search across intents, rules, KB docs, principles. Fuse.js hoặc tương đương cho client-side fuzzy search.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+    </div>
+
+    <div class="gate-block">
+      <div class="gate-h"><i class="ti ti-shield-check"></i>Exit gate P3</div>
+      <div class="gate-body">
+        ✓ User mở UI → thấy intents thực, chaos thực, rules thực<br>
+        ✓ Refresh khi file system thay đổi<br>
+        ✓ Mọi data point có link đến source file<br>
+        ✓ Không có nút edit/save nào ở phase này — chỉ display
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ PHASE 4 ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-edit"></i>Phase 4 — Interactive UI</div>
+
+<div class="phase-card next">
+  <div class="phase-hd">
+    <div class="phase-num next">P4</div>
+    <div class="phase-title-wrap">
+      <div class="phase-title">Full feature parity với CLI</div>
+      <div class="phase-sub">create, edit, approve — tất cả qua UI</div>
+    </div>
+    <span class="phase-time t-next">2-3 tuần</span>
+  </div>
+  <div class="phase-body">
+    <div class="task-list">
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Intent CRUD</div>
+          <div class="task-desc">Create form gọi <code>kbx intent create</code>. Edit inline tasks. Approve button gọi <code>kbx intent approve</code>. State transition buttons với guard logic.</div>
+        </div>
+        <span class="task-effort e-high">high</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Foundation editor live integration</div>
+          <div class="task-desc">Port <code>kbagent-foundation.html</code> editor. Save form fields xuống <code>.kb/ontology-contract.json</code> + <code>knowledge-base/00-start-here/system-map.md</code>. Validate qua <code>kbx ontology validate</code>.</div>
+        </div>
+        <span class="task-effort e-high">high</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Dispatch tuple builder</div>
+          <div class="task-desc">UI form điền 8 input fields. Realtime resolve qua <code>kbx dispatch resolve</code>. Show output (pipe, rules, gates). Test deterministic — same input → same output.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Copilot suggest button (vibe code)</div>
+          <div class="task-desc">Per intent: button "Copy suggest prompt" → clipboard. User paste vào Copilot. Đúng pattern P25 three-layer execution.</div>
+        </div>
+        <span class="task-effort e-low">low</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Apply diff viewer</div>
+          <div class="task-desc">Trước khi <code>kbx apply</code>, hiển thị diff (git diff style). Impact check kết quả ở panel bên cạnh. User confirm/cancel.</div>
+        </div>
+        <span class="task-effort e-high">high</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Retro form</div>
+          <div class="task-desc">Khi intent staged: form điền evidence note + lesson. Submit → <code>kbx intent retro</code>. Show :ADVANCES preview trước khi commit.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Maintain loop UI</div>
+          <div class="task-desc">Trigger <code>kbx maintain</code>, show proposed fix intents, approve/dismiss individually, inject vào backlog.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Checkpoint save/load</div>
+          <div class="task-desc">Save current state (intent + branch + step) qua UI. Load checkpoint → restore. History list with diff between checkpoints.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+    </div>
+
+    <div class="gate-block">
+      <div class="gate-h"><i class="ti ti-shield-check"></i>Exit gate P4</div>
+      <div class="gate-body">
+        ✓ User có thể hoàn thành Flow F2→F3→F4 (create → execute → retro) hoàn toàn qua UI, không cần terminal<br>
+        ✓ Foundation editor save data thực vào filesystem<br>
+        ✓ Dispatch tuple builder pass 32 fixture cases<br>
+        ✓ Tất cả mutations có confirm dialog + diff preview
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ PHASE 5 ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-sparkles"></i>Phase 5 — Polish &amp; ship</div>
+
+<div class="phase-card next">
+  <div class="phase-hd">
+    <div class="phase-num next">P5</div>
+    <div class="phase-title-wrap">
+      <div class="phase-title">Production-ready quality</div>
+      <div class="phase-sub">error UX · keyboard · theme · package</div>
+    </div>
+    <span class="phase-time t-next">1-2 tuần</span>
+  </div>
+  <div class="phase-body">
+    <div class="task-list">
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Error UX polish</div>
+          <div class="task-desc">Toast notifications · inline validation · clear error messages khi CLI exit 1 · retry buttons.</div>
+        </div>
+        <span class="task-effort e-med">medium</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Keyboard shortcuts</div>
+          <div class="task-desc"><code>cmd+k</code> command palette · <code>cmd+/</code> search · <code>cmd+enter</code> approve · arrow nav intent list.</div>
+        </div>
+        <span class="task-effort e-low">low</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Theme support</div>
+          <div class="task-desc">Dark theme đã có sẵn từ mockup. Light theme variant (optional). Sync với VSCode theme nếu Option A.</div>
+        </div>
+        <span class="task-effort e-low">low</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Empty states + onboarding</div>
+          <div class="task-desc">Khi project chưa init: hướng dẫn chạy <code>kbx init</code>. Khi không có intents: explain backlog/active workflow.</div>
+        </div>
+        <span class="task-effort e-low">low</span>
+      </div>
+      <div class="task-row">
+        <i class="ti ti-square-rounded task-ico todo"></i>
+        <div class="task-content">
+          <div class="task-title">Package &amp; ship</div>
+          <div class="task-desc">Option A: VSCode marketplace publish. Option B: bundle thành npm package, <code>npx kbx-ui</code>. Option C: build installers cho Mac/Win/Linux.</div>
+        </div>
+        <span class="task-effort e-high">high</span>
+      </div>
+    </div>
+
+    <div class="gate-block">
+      <div class="gate-h"><i class="ti ti-shield-check"></i>Exit gate P5</div>
+      <div class="gate-body">
+        ✓ User install + dùng được không có docs<br>
+        ✓ Error states clear, không có crash<br>
+        ✓ Published to distribution channel (marketplace/npm/installers)<br>
+        ✓ Version 1.0.0 release notes
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══ KEY RISKS ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-alert-octagon"></i>Risks &amp; mitigation</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+  <div style="background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--rt);border-radius:5px;padding:13px 16px">
+    <div style="font-size:12px;font-weight:500;color:var(--t0);margin-bottom:5px">CLI breaking changes</div>
+    <div style="font-size:11px;color:var(--t2);line-height:1.6">Repo đang ở v2.7-beta, target v2.9. Commands có thể đổi signature. Mitigation: pin <code>kbx</code> version trong UI, mark compatibility range.</div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--rt);border-radius:5px;padding:13px 16px">
+    <div style="font-size:12px;font-weight:500;color:var(--t0);margin-bottom:5px">Schema drift</div>
+    <div style="font-size:11px;color:var(--t2);line-height:1.6">JSON output format có thể đổi. Mitigation: schema validation ở bridge layer, fail loud khi parse error thay vì silently corrupt.</div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--at);border-radius:5px;padding:13px 16px">
+    <div style="font-size:12px;font-weight:500;color:var(--t0);margin-bottom:5px">Spawn overhead</div>
+    <div style="font-size:11px;color:var(--t2);line-height:1.6">Mỗi command call spawn Node process (~100-300ms). Mitigation: batch reads, file watcher cho realtime updates, daemon mode (nếu repo support).</div>
+  </div>
+  <div style="background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--at);border-radius:5px;padding:13px 16px">
+    <div style="font-size:12px;font-weight:500;color:var(--t0);margin-bottom:5px">Concurrent writes</div>
+    <div style="font-size:11px;color:var(--t2);line-height:1.6">User dùng cả terminal và UI. Mitigation: file watcher detect changes, prompt user merge/reload. KBX-AX004 single write point giúp ở đây.</div>
+  </div>
+</div>
+</div>
+
+<!-- ══ FINAL ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-target"></i>Câu hỏi quyết định ngay</div>
+<div class="tldr">
+<div class="tldr-body" style="font-size:13px">
+Trước khi bắt đầu P0, cần chốt 2 thứ:<br><br>
+<strong>1.</strong> UI shell A/B/C? (Recommendation: B localhost webapp cho prototype, convert sang A VSCode extension sau)<br>
+<strong>2.</strong> Ai sẽ implement? (solo dev / team / hire / Copilot-assisted)<br><br>
+Trả lời 2 câu này → có thể bắt đầu P0 ngay hôm nay.
+</div>
+</div>
+</div>
+
+</div>
+</body>
+</html>

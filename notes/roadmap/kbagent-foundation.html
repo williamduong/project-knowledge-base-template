@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent — Foundation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0e0e;--bg1:#141414;--bg2:#1a1a1a;--bg3:#222;--bg4:#2c2c2c;--bg5:#383838;
+  --bd:#222;--bd2:#333;--bd3:#464646;
+  --t0:#f2efe9;--t1:#cac6be;--t2:#8a8680;--t3:#505050;
+  --green:#3a9468;--gd:#0c1e14;--gt:#5ed498;
+  --amber:#b88010;--ad:#241c04;--at:#e0b030;
+  --red:#904040;--rd:#1e1010;--rt:#d07070;
+  --blue:#1c5898;--bld:#081830;--bt:#68a8dc;
+  --purple:#583898;--pd:#141028;--pt:#a070d8;
+  --teal:#1a7870;--td:#061818;--tt:#50c0b4;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html,body{background:var(--bg);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.6;min-height:100vh}
+
+/* ── APP SHELL ── */
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:220px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bd);overflow-y:auto;display:flex;flex-direction:column}
+.main{flex:1;overflow-y:auto;background:var(--bg)}
+
+/* SIDEBAR */
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--bd)}
+.sb-logo-inner{display:flex;align-items:center;gap:8px}
+.sb-ico{width:26px;height:26px;background:var(--blue);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#d0e8ff;flex-shrink:0}
+.sb-name{font-size:13px;font-weight:500;color:var(--t0)}
+.sb-ver{font-size:10px;color:var(--t3);font-family:var(--mono);margin-top:1px}
+.sb-section{padding:14px 10px 6px;font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+.sb-item{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:4px;cursor:pointer;transition:all .1s;margin:1px 4px;font-size:12px;color:var(--t2);user-select:none}
+.sb-item:hover{background:var(--bg3);color:var(--t1)}
+.sb-item.on{background:var(--bld);color:var(--bt)}
+.sb-item i{font-size:14px;flex-shrink:0}
+.sb-badge{margin-left:auto;font-size:10px;padding:1px 6px;border-radius:2px;font-family:var(--mono)}
+.sb-footer{margin-top:auto;padding:12px 16px;border-top:1px solid var(--bd)}
+.sb-footer-note{font-size:10px;color:var(--t3);line-height:1.6}
+
+/* MAIN CONTENT */
+.content{padding:28px 32px;max-width:860px}
+.page-title{font-size:20px;font-weight:500;color:var(--t0);margin-bottom:4px}
+.page-sub{font-size:12px;color:var(--t2);margin-bottom:24px}
+
+/* SECTION */
+.section{margin-bottom:32px}
+.sec-hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--bd)}
+.sec-title{font-size:14px;font-weight:500;color:var(--t0);flex:1}
+.sec-tag{font-size:10px;padding:2px 8px;border-radius:3px;font-family:var(--mono)}
+.tag-editable{background:var(--pd);color:var(--pt);border:1px solid #2a1848}
+.tag-fixed{background:var(--gd);color:var(--gt);border:1px solid #183828}
+.tag-auto{background:var(--td);color:var(--tt);border:1px solid #0c2828}
+
+/* EDITABLE FIELD */
+.field{margin-bottom:14px}
+.field-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.field-label-note{font-size:10px;color:var(--t3);text-transform:none;letter-spacing:0;font-weight:400;font-family:var(--mono)}
+.field-input{width:100%;background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:8px 11px;font-size:12px;color:var(--t0);font-family:var(--sans);outline:none;transition:border-color .1s;resize:vertical}
+.field-input:focus{border-color:var(--bt)}
+.field-input::placeholder{color:var(--t3)}
+.field-textarea{min-height:72px;font-family:var(--sans);line-height:1.6}
+.field-mono{font-family:var(--mono);font-size:11px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+/* GOAL CARD */
+.goal-card{background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--green);border-radius:5px;margin-bottom:12px;overflow:hidden}
+.goal-hd{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none;transition:background .1s}
+.goal-hd:hover{background:var(--bg3)}
+.goal-num{font-family:var(--mono);font-size:10px;color:var(--t3);min-width:60px;flex-shrink:0}
+.goal-name-display{font-size:12px;font-weight:500;color:var(--t0);flex:1}
+.goal-horizon{font-size:10px;color:var(--t3);font-family:var(--mono);flex-shrink:0}
+.goal-chev{font-size:12px;color:var(--t3);transition:transform .15s;flex-shrink:0}
+.goal-hd.open .goal-chev{transform:rotate(90deg)}
+.goal-body{display:none;padding:12px 14px;border-top:1px solid var(--bd);background:var(--bg1)}
+.goal-body.show{display:block}
+
+/* CRITERIA */
+.criteria-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.criterion-row{display:flex;align-items:center;gap:8px}
+.crit-name{flex:1;background:var(--bg3);border:1px solid var(--bd2);border-radius:3px;padding:5px 9px;font-size:11px;color:var(--t0);font-family:var(--sans);outline:none}
+.crit-name:focus{border-color:var(--bt)}
+.crit-target{width:70px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd2);border-radius:3px;padding:5px 9px;font-size:11px;color:var(--at);font-family:var(--mono);outline:none;text-align:right}
+.crit-target:focus{border-color:var(--bt)}
+.crit-unit{width:68px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd2);border-radius:3px;padding:5px 9px;font-size:11px;color:var(--t2);font-family:var(--mono);outline:none}
+.crit-unit:focus{border-color:var(--bt)}
+.crit-del{width:22px;height:22px;background:transparent;border:none;color:var(--t3);cursor:pointer;border-radius:3px;display:flex;align-items:center;justify-content:center;transition:all .1s;flex-shrink:0}
+.crit-del:hover{background:var(--rd);color:var(--rt)}
+.add-crit{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t3);cursor:pointer;padding:4px 0;background:none;border:none;font-family:var(--sans);transition:color .1s;margin-top:4px}
+.add-crit:hover{color:var(--bt)}
+
+/* RULE CARD */
+.rule-row{display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-bottom:1px solid var(--bd);background:var(--bg2)}
+.rule-row:last-child{border:none}
+.rule-row:hover{background:var(--bg3)}
+.rule-id-badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px;flex-shrink:0;white-space:nowrap;margin-top:2px}
+.r-ax{background:var(--pd);color:var(--pt);border:1px solid #2a1848}
+.r-p{background:var(--bld);color:var(--bt);border:1px solid #143060}
+.r-d{background:var(--ad);color:var(--at);border:1px solid #382808}
+.r-o{background:var(--gd);color:var(--gt);border:1px solid #183828}
+.rule-body-text{flex:1}
+.rule-title-text{font-size:12px;font-weight:500;color:var(--t0);margin-bottom:2px}
+.rule-desc-text{font-size:11px;color:var(--t2);line-height:1.6}
+.rule-state-badge{font-size:10px;padding:2px 6px;border-radius:3px;font-family:var(--mono);flex-shrink:0;white-space:nowrap;margin-top:2px}
+.rs-verified{background:var(--gd);color:var(--gt)}
+.rs-implemented{background:var(--bld);color:var(--bt)}
+.rs-planned{background:var(--ad);color:var(--at)}
+.rs-draft{background:var(--bg4);color:var(--t2)}
+
+/* SYSTEM MAP PREVIEW */
+.preview-block{background:var(--bg1);border:1px solid var(--bd2);border-radius:5px;padding:14px 16px;font-family:var(--mono);font-size:11px;color:var(--t1);line-height:1.8;white-space:pre-wrap;user-select:all}
+.prev-key{color:var(--bt)}
+.prev-val{color:var(--gt)}
+.prev-comment{color:var(--t3)}
+.prev-placeholder{color:var(--at)}
+
+/* BUTTONS */
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btn{height:32px;padding:0 14px;border-radius:4px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;border:1px solid var(--bd3);background:transparent;color:var(--t1);font-family:var(--sans);transition:all .1s}
+.btn:hover{background:var(--bg4);color:var(--t0)}
+.btn i{font-size:14px}
+.btn-p{background:var(--blue);border-color:var(--blue);color:#d0e8ff}
+.btn-p:hover{background:#1a5090}
+.btn-g{background:var(--gd);border-color:var(--green);color:var(--gt)}
+.btn-g:hover{background:#142a1e}
+
+/* COPY / EXPORT */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--bg4);border:1px solid var(--bd3);border-radius:4px;padding:7px 14px;font-size:12px;color:var(--t0);opacity:0;transition:all .2s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--bd);margin:24px 0}
+
+/* INLINE SELECT */
+.sel{background:var(--bg3);border:1px solid var(--bd2);border-radius:3px;padding:5px 9px;font-size:11px;color:var(--t0);font-family:var(--sans);outline:none;cursor:pointer}
+.sel:focus{border-color:var(--bt)}
+
+/* STATUS BANNER */
+.status-banner{background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0}
+.status-text{font-size:12px;color:var(--t1)}
+.status-version{font-family:var(--mono);font-size:10px;color:var(--t3);margin-left:auto}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-inner">
+      <div class="sb-ico"><i class="ti ti-brain"></i></div>
+      <div>
+        <div class="sb-name">KBAgent</div>
+        <div class="sb-ver">v2.7.0-β2 · SaaS</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sb-section">Foundation</div>
+  <div class="sb-item on" onclick="showPage('foundation',this)"><i class="ti ti-map"></i>System foundation</div>
+  <div class="sb-item" onclick="showPage('goals',this)"><i class="ti ti-flag"></i>Default goals<span class="sb-badge" style="background:var(--gd);color:var(--gt)">4</span></div>
+  <div class="sb-item" onclick="showPage('rules',this)"><i class="ti ti-shield"></i>Master rules<span class="sb-badge" style="background:var(--pd);color:var(--pt)">28</span></div>
+
+  <div class="sb-section">Reference</div>
+  <div class="sb-item" onclick="showPage('preview',this)"><i class="ti ti-file-code"></i>system-map preview</div>
+  <div class="sb-item" onclick="showPage('export',this)"><i class="ti ti-download"></i>Export / copy</div>
+
+  <div class="sb-footer">
+    <div class="sb-footer-note">
+      <span style="color:var(--pt)">●</span> editable by user<br>
+      <span style="color:var(--gt)">●</span> built-in default<br>
+      <span style="color:var(--tt)">●</span> auto-generated
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+<div class="content">
+
+<!-- ══ PAGE: FOUNDATION ══ -->
+<div class="page-content on" id="page-foundation">
+  <div class="page-title">System foundation</div>
+  <div class="page-sub">Identity và context của project. Được điền lúc onboarding — có thể chỉnh sửa bất cứ lúc nào.</div>
+
+  <div class="status-banner">
+    <div class="status-dot"></div>
+    <span class="status-text">Foundation chưa được điền — chạy <code style="font-family:var(--mono);font-size:11px;color:var(--bt)">kbx init</code> để bắt đầu onboarding interview</code></span>
+    <span class="status-version">kbx v2.7.0</span>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">Project identity</span>
+      <span class="sec-tag tag-editable">user fills</span>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Project name</div>
+        <input class="field-input" id="f-name" placeholder="e.g. Acme SaaS Platform" oninput="updatePreview()">
+      </div>
+      <div class="field">
+        <div class="field-label">Domain description <span class="field-label-note">— short tagline</span></div>
+        <input class="field-input" id="f-desc" placeholder="e.g. B2B invoicing and payment platform" oninput="updatePreview()">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Team / Owner</div>
+        <input class="field-input" id="f-owner" placeholder="e.g. william" oninput="updatePreview()">
+      </div>
+      <div class="field">
+        <div class="field-label">Multi-tenancy model</div>
+        <select class="field-input sel" id="f-tenancy" onchange="updatePreview()">
+          <option value="">— select —</option>
+          <option value="single-tenant">single-tenant</option>
+          <option value="multi-tenant">multi-tenant</option>
+          <option value="hybrid">hybrid</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">Tech stack <span class="field-label-note">— comma separated</span></div>
+      <input class="field-input" id="f-stack" placeholder="e.g. Node.js, TypeScript, PostgreSQL, React, Docker" oninput="updatePreview()">
+    </div>
+    <div class="field">
+      <div class="field-label">Repositories <span class="field-label-note">— comma separated, must match ontology repo_origin values</span></div>
+      <input class="field-input" id="f-repos" placeholder="e.g. core-api, web-app, billing-service, auth-service, infra" oninput="updatePreview()">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">Infrastructure</span>
+      <span class="sec-tag tag-editable">user fills</span>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label">Production URL</div>
+        <input class="field-input" id="f-prod" placeholder="https://app.yourproduct.io" oninput="updatePreview()">
+      </div>
+      <div class="field">
+        <div class="field-label">Staging URL</div>
+        <input class="field-input" id="f-staging" placeholder="https://staging.yourproduct.io" oninput="updatePreview()">
+      </div>
+    </div>
+    <div class="field-row-3">
+      <div class="field">
+        <div class="field-label">Auth provider</div>
+        <select class="field-input sel" id="f-auth" onchange="updatePreview()">
+          <option value="">— select —</option>
+          <option>Supabase Auth</option>
+          <option>Auth0</option>
+          <option>Clerk</option>
+          <option>NextAuth</option>
+          <option>Custom JWT</option>
+          <option>Session-based</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="field-label">Billing provider</div>
+        <select class="field-input sel" id="f-billing" onchange="updatePreview()">
+          <option value="">— select —</option>
+          <option>Stripe</option>
+          <option>Paddle</option>
+          <option>LemonSqueezy</option>
+          <option>Custom</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="field-label">Deployment</div>
+        <select class="field-input sel" id="f-deploy" onchange="updatePreview()">
+          <option value="">— select —</option>
+          <option>Docker Compose</option>
+          <option>Kubernetes</option>
+          <option>Serverless</option>
+          <option>Railway</option>
+          <option>Render</option>
+          <option>AWS ECS</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">Self-evolution doctrine</span>
+      <span class="sec-tag tag-fixed">built-in</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--bd2);border-radius:4px">
+        <i class="ti ti-circle-check" style="color:var(--gt);font-size:14px"></i>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--gt)">v1.6</span>
+        <span style="font-size:12px;color:var(--t2)">Foundation — intent lifecycle, file-based KB</span>
+        <span style="margin-left:auto;font-size:10px;padding:2px 6px;background:var(--gd);color:var(--gt);border-radius:3px;font-family:var(--mono)">complete</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--bd2);border-radius:4px">
+        <i class="ti ti-circle-check" style="color:var(--gt);font-size:14px"></i>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--gt)">v1.7</span>
+        <span style="font-size:12px;color:var(--t2)">Evidence recorder — apply-record, evidence metadata</span>
+        <span style="margin-left:auto;font-size:10px;padding:2px 6px;background:var(--gd);color:var(--gt);border-radius:3px;font-family:var(--mono)">complete</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bld);border:1px solid var(--blue);border-radius:4px">
+        <i class="ti ti-player-play" style="color:var(--bt);font-size:14px"></i>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--bt)">v1.8</span>
+        <span style="font-size:12px;color:var(--t1)">Observer — chaos score, signals, supervision loop</span>
+        <span style="margin-left:auto;font-size:10px;padding:2px 6px;background:var(--bld);color:var(--bt);border:1px solid var(--blue);border-radius:3px;font-family:var(--mono)">current</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--bd2);border-radius:4px;opacity:.6">
+        <i class="ti ti-clock" style="color:var(--t3);font-size:14px"></i>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--t3)">v1.9</span>
+        <span style="font-size:12px;color:var(--t3)">Graph builder — Kuzu embedded, queryable graph, :ADVANCES edges</span>
+        <span style="margin-left:auto;font-size:10px;padding:2px 6px;background:var(--bg3);color:var(--t3);border-radius:3px;font-family:var(--mono)">next</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--bd2);border-radius:4px;opacity:.5">
+        <i class="ti ti-clock" style="color:var(--t3);font-size:14px"></i>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--t3)">v2.0</span>
+        <span style="font-size:12px;color:var(--t3)">Reasoner — cross-intent impact, pattern inference, rule suggestion</span>
+        <span style="margin-left:auto;font-size:10px;padding:2px 6px;background:var(--bg3);color:var(--t3);border-radius:3px;font-family:var(--mono)">roadmap</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-p" onclick="showPage('goals',document.querySelectorAll('.sb-item')[1])"><i class="ti ti-arrow-right"></i>Next: set goals</button>
+    <button class="btn btn-g" onclick="copyFoundation()"><i class="ti ti-copy"></i>Copy as system-map.md</button>
+  </div>
+</div>
+
+<!-- ══ PAGE: GOALS ══ -->
+<div class="page-content" id="page-goals">
+  <div class="page-title">Default goals</div>
+  <div class="page-sub">4 goals mặc định cho SaaS. Chỉnh targets theo số thực của project. Criteria được đo bởi Measure step qua :ADVANCES edges.</div>
+
+  <div id="goals-container"></div>
+
+  <div class="btn-row">
+    <button class="btn" onclick="addGoal()"><i class="ti ti-plus"></i>Add goal</button>
+    <button class="btn btn-p" onclick="showPage('rules',document.querySelectorAll('.sb-item')[2])"><i class="ti ti-arrow-right"></i>Next: master rules</button>
+    <button class="btn btn-g" onclick="copyGoals()"><i class="ti ti-copy"></i>Copy as seed-goals.json</button>
+  </div>
+</div>
+
+<!-- ══ PAGE: RULES ══ -->
+<div class="page-content" id="page-rules">
+  <div class="page-title">Master rules</div>
+  <div class="page-sub">28 rules across 4 tiers. AX = constitutional (không thay đổi). P = process. D = domain SaaS. O = operational (tự sinh).</div>
+
+  <div class="section">
+    <div class="sec-hd"><span class="sec-title">Constitutional — AX</span><span class="sec-tag tag-fixed">immutable</span></div>
+    <div style="background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;overflow:hidden" id="rules-ax"></div>
+  </div>
+  <div class="section">
+    <div class="sec-hd"><span class="sec-title">Process — P</span><span class="sec-tag tag-editable">adjustable via Flow 10</span></div>
+    <div style="background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;overflow:hidden" id="rules-p"></div>
+  </div>
+  <div class="section">
+    <div class="sec-hd"><span class="sec-title">Domain SaaS — D</span><span class="sec-tag tag-editable">user can add / modify</span></div>
+    <div style="background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;overflow:hidden" id="rules-d"></div>
+  </div>
+  <div class="section">
+    <div class="sec-hd"><span class="sec-title">Operational — O</span><span class="sec-tag tag-auto">auto-generated by system</span></div>
+    <div style="background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;overflow:hidden" id="rules-o"></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-g" onclick="copyRules()"><i class="ti ti-copy"></i>Copy as seed-rules.json</button>
+    <button class="btn btn-p" onclick="showPage('preview',document.querySelectorAll('.sb-item')[3])"><i class="ti ti-eye"></i>Preview system-map</button>
+  </div>
+</div>
+
+<!-- ══ PAGE: PREVIEW ══ -->
+<div class="page-content" id="page-preview">
+  <div class="page-title">system-map.md preview</div>
+  <div class="page-sub">Live preview — cập nhật theo Foundation fields. Copy để dùng làm 00-start-here/system-map.md.</div>
+  <div class="preview-block" id="sysmap-preview"></div>
+  <div class="btn-row">
+    <button class="btn btn-g" onclick="copyPreview()"><i class="ti ti-copy"></i>Copy markdown</button>
+  </div>
+</div>
+
+<!-- ══ PAGE: EXPORT ══ -->
+<div class="page-content" id="page-export">
+  <div class="page-title">Export / copy all</div>
+  <div class="page-sub">Copy từng file để paste vào project của bạn.</div>
+
+  <div class="section">
+    <div class="sec-hd"><span class="sec-title">Files ready to copy</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg2);border:1px solid var(--bd2);border-radius:5px">
+        <i class="ti ti-file-code" style="font-size:15px;color:var(--gt)"></i>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--t0)">.kb/ontology-contract.json</div><div style="font-size:11px;color:var(--t3)">node types · edge types · repo_origin · thresholds</div></div>
+        <button class="btn" onclick="copyOntology()"><i class="ti ti-copy"></i>Copy</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg2);border:1px solid var(--bd2);border-radius:5px">
+        <i class="ti ti-circle" style="font-size:15px;color:var(--tt)"></i>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--t0)">.kb/graph/seed-goals.json</div><div style="font-size:11px;color:var(--t3)">4 default goals with criteria — edit targets</div></div>
+        <button class="btn" onclick="copyGoals()"><i class="ti ti-copy"></i>Copy</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg2);border:1px solid var(--bd2);border-radius:5px">
+        <i class="ti ti-shield" style="font-size:15px;color:var(--pt)"></i>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--t0)">.kb/graph/seed-rules.json</div><div style="font-size:11px;color:var(--t3)">28 master rules across 4 tiers</div></div>
+        <button class="btn" onclick="copyRules()"><i class="ti ti-copy"></i>Copy</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg2);border:1px solid var(--bd2);border-radius:5px">
+        <i class="ti ti-map" style="font-size:15px;color:var(--bt)"></i>
+        <div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--t0)">knowledge-base/00-start-here/system-map.md</div><div style="font-size:11px;color:var(--t3)">populated from Foundation fields above</div></div>
+        <button class="btn" onclick="copyPreview()"><i class="ti ti-copy"></i>Copy</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- content -->
+</div><!-- main -->
+</div><!-- shell -->
+
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+// ── DATA ──
+const GOALS_DATA = [
+  { id:'GOAL-001', title:'Keep product reliable and performant', horizon:'ongoing',
+    color:'var(--green)', criteria:[
+      {name:'API p99 latency',  target:'500',  unit:'ms',           dir:'≤'},
+      {name:'Uptime',           target:'99.9', unit:'%',            dir:'≥'},
+      {name:'Chaos score',      target:'45',   unit:'score',        dir:'≤'},
+      {name:'Critical bug TTR', target:'4',    unit:'hours',        dir:'≤'},
+    ]},
+  { id:'GOAL-002', title:'Grow and retain customer base', horizon:'Q{{Q}} {{YEAR}}',
+    color:'#4a8', criteria:[
+      {name:'Monthly churn rate',      target:'2',  unit:'%',  dir:'≤'},
+      {name:'Onboarding completion',   target:'80', unit:'%',  dir:'≥'},
+      {name:'Feature adoption rate',   target:'60', unit:'%',  dir:'≥'},
+    ]},
+  { id:'GOAL-003', title:'Maintain secure and compliant platform', horizon:'ongoing',
+    color:'#e06040', criteria:[
+      {name:'Critical CVEs unpatched >7d', target:'0',  unit:'count', dir:'='},
+      {name:'Auth on sensitive routes',    target:'100',unit:'%',     dir:'='},
+      {name:'Compliance doc coverage',     target:'90', unit:'%',     dir:'≥'},
+    ]},
+  { id:'GOAL-004', title:'Sustain healthy engineering velocity', horizon:'Q{{Q}} {{YEAR}}',
+    color:'var(--bt)', criteria:[
+      {name:'Intent close rate',  target:'80', unit:'%',           dir:'≥'},
+      {name:'Doc coverage',       target:'85', unit:'%',           dir:'≥'},
+      {name:'Test coverage',      target:'70', unit:'%',           dir:'≥'},
+      {name:'Deploy frequency',   target:'2',  unit:'deploys/week',dir:'≥'},
+    ]},
+];
+
+const RULES_DATA = {
+  ax:[
+    {id:'KBX-AX001',title:'Separation of powers',state:'verified',desc:'SVFactory = legislative. KBAgent = executive. Never mix.'},
+    {id:'KBX-AX002',title:'Domain agnosticism of primitives',state:'verified',desc:'Core primitives contain zero domain logic. Domain config in ontology-contract.json.'},
+    {id:'KBX-AX003',title:'Deterministic gate — exit 0/1 only',state:'verified',desc:'kbx CLI exits 0 or 1. No partial success. No LLM in the gate path.'},
+    {id:'KBX-AX004',title:'Single graph write point — retro only',state:'verified',desc:'Unified Graph written only during retro:write sub-pipeline. All else is read-only.'},
+    {id:'KBX-AX005',title:'Human approval at every intent gate',state:'verified',desc:'No intent advances to active without explicit human kbx intent approve.'},
+    {id:'KBX-AX006',title:'Evidence on every node and edge',state:'verified',desc:'Every graph write must include: source · confidence · timestamp · linked_intent_id · version.'},
+    {id:'KBX-AX007',title:'Goals never auto-close',state:'verified',desc:'Goals transition only via explicit human command. System emits warnings, never acts on them.'},
+  ],
+  p:[
+    {id:'KBX-P001',title:'One active intent per version branch',state:'verified',desc:'Only one intent may be active|staged per branch. Exception intents may coexist with --allow-parallel.'},
+    {id:'KBX-P002',title:'Three-layer vibe execution',state:'verified',desc:'NL input → CLI normalize → CLI execute → AI completion. Copilot suggests, human approves, CLI executes.'},
+    {id:'KBX-P003',title:'Goal alignment before activation',state:'verified',desc:'Every exec intent must pass goal-align check. Fix and exception intents are exempt.'},
+    {id:'KBX-P004',title:'Impact check before each apply',state:'implemented',desc:'impact:check traverses :AFFECTS/:DEPENDS_ON/:BREAKS before every kbx apply.'},
+    {id:'KBX-P005',title:'Maintain-first when chaos ≥ 70',state:'implemented',desc:'When chaos = unstable|chaotic, no new exec intent may activate until score < 60.'},
+    {id:'KBX-P006',title:'Retrospective is mandatory',state:'verified',desc:'kbx intent archive requires retro_completed=true. Retro must include evidence note and lesson.'},
+    {id:'KBX-P007',title:'Release gate requires chaos ≤ 50',state:'planned',desc:'P4 release-gate fails if latest chaos > 50. Hotfix releases may bypass with --hotfix (logged).'},
+    {id:'KBX-P008',title:'doc:gate blocks on low coverage',state:'implemented',desc:'doc:gate checks coverage %, placeholder ratio (<15%), and frontmatter validity on all .md files.'},
+    {id:'KBX-P009',title:'NL patch must normalize before apply',state:'planned',desc:'NL content changes go through update:patch: NL → canonical → meaning diff → human validates → apply.'},
+  ],
+  d:[
+    {id:'KBX-S001',title:'Auth middleware on all sensitive routes',state:'planned',desc:'Every billing/PII/admin route must have auth middleware. Detected by chaos:scan route patterns.'},
+    {id:'KBX-S002',title:'No secrets in source code',state:'planned',desc:'No API keys/tokens/passwords as string literals. Detected by chaos:scan secret_patterns → blocks gate.'},
+    {id:'KBX-S003',title:'Rate limiting on auth endpoints',state:'draft',desc:'Login/signup/reset/refresh must have rate limiting. Max 5 attempts/IP/min.'},
+    {id:'KBX-B001',title:'Billing provider is source of truth',state:'planned',desc:'Subscription status always fetched from provider. Cached state TTL ≤ 300s.'},
+    {id:'KBX-B002',title:'Idempotent webhook handlers',state:'draft',desc:'All billing webhooks must be idempotent via event ID deduplication.'},
+    {id:'KBX-T001',title:'Integration tests on critical SaaS paths',state:'planned',desc:'Auth, billing, onboarding, data export must have integration tests. Detected by chaos:scan.'},
+    {id:'KBX-D001',title:'Multi-tenant data isolation',state:'draft',desc:'All queries on user data must include tenant_id scoping. No cross-tenant data leaks.'},
+    {id:'KBX-D002',title:'Graceful degradation on third-party failure',state:'draft',desc:'All third-party calls (billing, email, analytics) must have timeout + fallback. No 500 to user.'},
+  ],
+  o:[
+    {id:'KBX-O001',title:'Lesson → rule promotion (3× pattern)',state:'planned',desc:'When 3+ retros produce same-domain lesson, maintain loop proposes draft :Rule. Human reviews.'},
+    {id:'KBX-O002',title:'Chaos dimension spike → fix intent',state:'implemented',desc:'Single dimension delta > 8 between snapshots → auto-propose targeted fix intent.'},
+    {id:'KBX-O003',title:'High fan-in code → structural review',state:'planned',desc:'fan_in > 30 on any :Code node → propose structural review intent.'},
+    {id:'KBX-O004',title:'Stale source-of-truth doc → review intent',state:'planned',desc:'source_of_truth docs with no linked intent for >90 days → propose review intent.'},
+  ],
+};
+
+// ── RENDER GOALS ──
+function renderGoals(){
+  const c=document.getElementById('goals-container');
+  c.innerHTML='';
+  GOALS_DATA.forEach((g,gi)=>{
+    const card=document.createElement('div');
+    card.className='goal-card';
+    card.style.borderLeftColor=g.color;
+    card.innerHTML=`
+      <div class="goal-hd" onclick="toggleGoal(this)">
+        <span class="goal-num">${g.id}</span>
+        <input class="goal-name-display" style="background:transparent;border:none;outline:none;font-size:12px;font-weight:500;color:var(--t0);flex:1;cursor:text" value="${g.title}" oninput="GOALS_DATA[${gi}].title=this.value;updatePreview()">
+        <input style="background:transparent;border:none;outline:none;font-size:10px;color:var(--t3);font-family:var(--mono);width:120px;text-align:right" value="${g.horizon}" oninput="GOALS_DATA[${gi}].horizon=this.value">
+        <i class="ti ti-chevron-right goal-chev"></i>
+      </div>
+      <div class="goal-body">
+        <div style="font-size:11px;color:var(--t3);margin-bottom:8px;display:flex;align-items:center;gap:8px">
+          <span>Criteria — editable targets</span>
+          <span style="font-family:var(--mono);font-size:10px">name | target | unit</span>
+        </div>
+        <div class="criteria-list" id="crit-${gi}"></div>
+        <button class="add-crit" onclick="addCrit(${gi})"><i class="ti ti-plus" style="font-size:12px"></i>Add criterion</button>
+      </div>`;
+    c.appendChild(card);
+    renderCriteria(gi);
+  });
+}
+
+function renderCriteria(gi){
+  const list=document.getElementById('crit-'+gi);
+  if(!list)return;
+  list.innerHTML='';
+  GOALS_DATA[gi].criteria.forEach((cr,ci)=>{
+    const row=document.createElement('div');
+    row.className='criterion-row';
+    row.innerHTML=`
+      <input class="crit-name" value="${cr.name}" placeholder="criterion name" oninput="GOALS_DATA[${gi}].criteria[${ci}].name=this.value">
+      <select style="width:36px;flex-shrink:0;background:var(--bg3);border:1px solid var(--bd2);border-radius:3px;padding:5px 3px;font-size:11px;color:var(--at);font-family:var(--mono);outline:none" onchange="GOALS_DATA[${gi}].criteria[${ci}].dir=this.value">
+        ${['≤','≥','=','<','>'].map(d=>`<option${d===cr.dir?' selected':''}>${d}</option>`).join('')}
+      </select>
+      <input class="crit-target" value="${cr.target}" placeholder="target" oninput="GOALS_DATA[${gi}].criteria[${ci}].target=this.value">
+      <input class="crit-unit" value="${cr.unit}" placeholder="unit" oninput="GOALS_DATA[${gi}].criteria[${ci}].unit=this.value">
+      <button class="crit-del" onclick="delCrit(${gi},${ci})"><i class="ti ti-x" style="font-size:11px"></i></button>`;
+    list.appendChild(row);
+  });
+}
+
+function toggleGoal(hd){
+  const body=hd.nextElementSibling;
+  const open=body.classList.toggle('show');
+  hd.classList.toggle('open',open);
+}
+function addCrit(gi){
+  GOALS_DATA[gi].criteria.push({name:'',target:'',unit:'',dir:'≥'});
+  renderCriteria(gi);
+}
+function delCrit(gi,ci){
+  GOALS_DATA[gi].criteria.splice(ci,1);
+  renderCriteria(gi);
+}
+function addGoal(){
+  GOALS_DATA.push({id:'GOAL-00'+(GOALS_DATA.length+1),title:'New goal',horizon:'Q{{Q}} {{YEAR}}',color:'var(--bt)',criteria:[]});
+  renderGoals();
+}
+
+// ── RENDER RULES ──
+function renderRules(){
+  const STATE_CLASS={'verified':'rs-verified','implemented':'rs-implemented','planned':'rs-planned','draft':'rs-draft'};
+  ['ax','p','d','o'].forEach(tier=>{
+    const c=document.getElementById('rules-'+tier);
+    const cls={'ax':'r-ax','p':'r-p','d':'r-d','o':'r-o'}[tier];
+    c.innerHTML=RULES_DATA[tier].map(r=>`
+      <div class="rule-row">
+        <span class="rule-id-badge ${cls}">${r.id}</span>
+        <div class="rule-body-text">
+          <div class="rule-title-text">${r.title}</div>
+          <div class="rule-desc-text">${r.desc}</div>
+        </div>
+        <span class="rule-state-badge ${STATE_CLASS[r.state]||'rs-draft'}">${r.state}</span>
+      </div>`).join('');
+  });
+}
+
+// ── SYSTEM MAP PREVIEW ──
+function updatePreview(){
+  const n=v('f-name','{{PROJECT_NAME}}');
+  const d=v('f-desc','{{SAAS_DESCRIPTION}}');
+  const o=v('f-owner','{{OWNER}}');
+  const st=v('f-stack','{{TECH_STACK}}');
+  const r=v('f-repos','{{REPO_LIST}}');
+  const au=v('f-auth','{{AUTH_PROVIDER}}');
+  const bi=v('f-billing','{{BILLING_PROVIDER}}');
+  const de=v('f-deploy','{{DEPLOYMENT}}');
+  const te=v('f-tenancy','{{TENANCY}}');
+  const prod=v('f-prod','{{PROD_URL}}');
+  const stag=v('f-staging','{{STAGING_URL}}');
+  const md=`---
+id: doc-000-001
+tier: 0
+title: System map
+source_of_truth: true
+tags: [foundation, orientation]
+---
+
+# System map
+
+## Project identity
+
+**Name:** ${n}
+**Domain:** SaaS — ${d}
+**Owner:** ${o}
+**Stack:** ${st}
+**Repos:** ${r}
+**Multi-tenancy:** ${te}
+
+## Infrastructure
+
+**Production:** ${prod}
+**Staging:** ${stag}
+**Auth:** ${au}
+**Billing:** ${bi}
+**Deployment:** ${de}
+
+## Active goals
+
+| ID       | Title                                    | Horizon   | Status |
+|----------|------------------------------------------|-----------|--------|
+${GOALS_DATA.map(g=>`| ${g.id} | ${g.title.substring(0,40)} | ${g.horizon} | active |`).join('\n')}
+
+## Current focus
+
+> Populated by \`kbx checkpoint load\`
+
+## Self-evolution doctrine stage
+
+Current: \`v1.8 Observer\`
+Next milestone: \`v1.9 Graph Builder\``;
+
+  const pre=document.getElementById('sysmap-preview');
+  if(pre)pre.textContent=md;
+}
+function v(id,fb){const el=document.getElementById(id);return el&&el.value?el.value:fb;}
+
+// ── COPY FUNCTIONS ──
+function copyFoundation(){copyText(document.getElementById('sysmap-preview').textContent);}
+function copyPreview(){copyText(document.getElementById('sysmap-preview').textContent);}
+function copyGoals(){
+  const obj={goals:GOALS_DATA.map(g=>({id:g.id,title:g.title,horizon:g.horizon,owner:v('f-owner','{{OWNER}}'),status:'active',criteria:g.criteria.map(c=>({name:c.name,target:c.target,unit:c.unit,current:null}))}))};
+  copyText(JSON.stringify(obj,null,2));
+}
+function copyRules(){
+  const all=[...RULES_DATA.ax,...RULES_DATA.p,...RULES_DATA.d,...RULES_DATA.o];
+  const obj={rules:all.map(r=>({id:r.id,title:r.title,status:'active',state:r.state,body:r.desc,domain:r.id.startsWith('KBX-AX')?'governance':r.id.startsWith('KBX-P')?'process':r.id.startsWith('KBX-S')?'security':r.id.startsWith('KBX-B')?'billing':r.id.startsWith('KBX-T')?'testing':r.id.startsWith('KBX-D')?'saas-arch':'operational'}))};
+  copyText(JSON.stringify(obj,null,2));
+}
+function copyOntology(){
+  const repos=v('f-repos','core-api,web-app,billing-service,auth-service,infra').split(',').map(s=>s.trim()).filter(Boolean);
+  const obj={version:'1.0.0',domain:'saas',repo_origin:{type:'enum',values:repos},chaos_thresholds:{stable:30,manageable:50,unstable:70},node_types:{Goal:{required:['id','title','horizon','owner','status','criteria']},Intent:{required:['id','title','type','status','repos']},Rule:{required:['id','title','status','state']},KBDoc:{required:['id','path','tier']},Code:{required:['id','file_path','repo_origin'],_populated_by:'scan'},Signal:{required:['id','type','level','score','timestamp']},Release:{required:['id','version','released_at']},Lesson:{required:['id','title','domain','level']}},edge_types:{ADVANCES:{from:['Intent','Release'],to:'Goal',properties:['criterion_name','delta']},SERVES:{from:'Goal',to:'Goal'},IMPLEMENTS:{from:'Intent',to:['KBDoc','Code','Rule']},DEPENDS_ON:{from:['Intent','Code'],to:['Intent','Code']},BREAKS:{from:'Intent',to:'Code'},FIXES:{from:'Intent',to:'Code'},AFFECTS:{from:'Code',to:'Code'},GOVERNS:{from:'Rule',to:'Code'}}};
+  copyText(JSON.stringify(obj,null,2));
+}
+
+function copyText(t){
+  navigator.clipboard.writeText(t).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+  const toast=document.getElementById('toast');
+  toast.textContent='Copied to clipboard!';
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>toast.classList.remove('show'),2200);
+}
+
+// ── NAV ──
+function showPage(id,el){
+  document.querySelectorAll('.page-content').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('on'));
+  const page=document.getElementById('page-'+id);
+  if(page)page.classList.add('on');
+  if(el)el.classList.add('on');
+  if(id==='preview')updatePreview();
+}
+
+// ── CSS for page visibility ──
+const style=document.createElement('style');
+style.textContent='.page-content{display:none}.page-content.on{display:block}';
+document.head.appendChild(style);
+
+// ── INIT ──
+renderGoals();
+renderRules();
+updatePreview();
+</script>
+</body>
+</html>

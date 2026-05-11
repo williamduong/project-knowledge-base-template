@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent — SaaS Data Template</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0e0e;--bg1:#161616;--bg2:#1e1e1e;--bg3:#272727;--bg4:#323232;--bg5:#404040;
+  --bd:#262626;--bd2:#363636;--bd3:#484848;
+  --t0:#f0ede8;--t1:#c8c4bc;--t2:#888480;--t3:#484644;
+  --green:#3a9468;--gd:#0e2018;--gt:#60d498;
+  --amber:#b88010;--ad:#281c04;--at:#e0b030;
+  --red:#904040;--rd:#221010;--rt:#d07070;
+  --blue:#1c5898;--bld:#0a1c34;--bt:#68a8dc;
+  --purple:#583898;--pd:#180e2c;--pt:#a070d8;
+  --teal:#1a7870;--td:#061e1c;--tt:#50c0b4;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html,body{background:var(--bg);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.6}
+
+/* ── LAYOUT ── */
+.page{max-width:1100px;margin:0 auto;padding:32px 24px}
+h1{font-size:22px;font-weight:500;color:var(--t0);margin-bottom:6px}
+.subtitle{font-size:13px;color:var(--t2);margin-bottom:32px}
+
+/* TIER TABS */
+.tier-tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:28px}
+.ttab{padding:10px 20px;font-size:12px;font-weight:500;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;user-select:none;white-space:nowrap}
+.ttab:hover{color:var(--t1)}
+.ttab.on{color:var(--t0);border-bottom-color:var(--bt)}
+
+/* TIER PAGES */
+.tpage{display:none}
+.tpage.on{display:block}
+
+/* SECTION */
+.section{margin-bottom:28px}
+.sec-hd{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sec-title{font-size:14px;font-weight:500;color:var(--t0)}
+.sec-badge{font-size:10px;padding:2px 8px;border-radius:3px;font-family:var(--mono);font-weight:500}
+.bd-init{background:var(--gd);color:var(--gt);border:1px solid #1a4028}
+.bd-scan{background:var(--bld);color:var(--bt);border:1px solid #143060}
+.bd-enrich{background:var(--pd);color:var(--pt);border:1px solid #281848}
+.bd-auto{background:var(--td);color:var(--tt);border:1px solid #0c2c28}
+
+/* FILE BLOCK */
+.file-block{background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;overflow:hidden;margin-bottom:10px}
+.file-hd{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg3);cursor:pointer;user-select:none;transition:background .1s}
+.file-hd:hover{background:var(--bg4)}
+.file-name{font-family:var(--mono);font-size:12px;color:var(--gt);flex:1}
+.file-path{font-size:11px;color:var(--t3);font-family:var(--mono)}
+.file-chev{font-size:13px;color:var(--t3);transition:transform .15s;flex-shrink:0}
+.file-hd.open .file-chev{transform:rotate(90deg)}
+.file-body{display:none;padding:0}
+.file-body.show{display:block}
+pre{background:var(--bg1);padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--t1)}
+pre .k{color:var(--bt)}
+pre .s{color:var(--gt)}
+pre .n{color:var(--at)}
+pre .c{color:var(--t3)}
+pre .p{color:var(--pt)}
+
+/* NODE TABLE */
+.ntable{width:100%;border-collapse:collapse;font-size:12px}
+.ntable th{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;padding:0 12px 8px;text-align:left;font-weight:500;white-space:nowrap}
+.ntable td{padding:7px 12px;border-top:1px solid var(--bd);color:var(--t1);vertical-align:top}
+.ntable tr:hover td{background:var(--bg3)}
+.ntable .node-id{font-family:var(--mono);font-size:10px;color:var(--bt);white-space:nowrap}
+.ntable .node-props{font-family:var(--mono);font-size:10px;color:var(--t2);line-height:1.6}
+.ntable .origin{font-size:10px;padding:2px 7px;border-radius:3px;font-family:var(--mono);white-space:nowrap}
+.o-init{background:var(--gd);color:var(--gt)}
+.o-scan{background:var(--bld);color:var(--bt)}
+.o-enrich{background:var(--pd);color:var(--pt)}
+.o-auto{background:var(--td);color:var(--tt)}
+
+/* EDGE TABLE */
+.edge-row{display:flex;align-items:flex-start;gap:10px;padding:7px 12px;border-top:1px solid var(--bd);font-size:12px}
+.edge-from{font-family:var(--mono);font-size:10px;color:var(--bt);min-width:90px;flex-shrink:0;margin-top:2px}
+.edge-type{font-family:var(--mono);font-size:10px;color:var(--gt);min-width:120px;flex-shrink:0;margin-top:2px}
+.edge-to{font-family:var(--mono);font-size:10px;color:var(--pt);min-width:90px;flex-shrink:0;margin-top:2px}
+.edge-props{font-size:11px;color:var(--t2);flex:1;font-family:var(--mono)}
+
+/* ENRICHMENT TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--bd)}
+.tl-item:last-child{border:none}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.tl-content{flex:1}
+.tl-trigger{font-size:12px;font-weight:500;color:var(--t0);margin-bottom:3px}
+.tl-detail{font-size:11px;color:var(--t2);font-family:var(--mono);line-height:1.6}
+
+/* LEGEND */
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--bd);margin-top:24px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2)}
+.leg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* copy btn */
+.copy-btn{height:22px;padding:0 8px;background:transparent;border:1px solid var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;cursor:pointer;display:flex;align-items:center;gap:3px;font-family:var(--sans);transition:all .1s}
+.copy-btn:hover{border-color:var(--bt);color:var(--bt)}
+.copy-btn i{font-size:11px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--bg4);border:1px solid var(--bd3);border-radius:4px;padding:6px 14px;font-size:12px;color:var(--t0);opacity:0;transition:all .2s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>KBAgent — SaaS data template</h1>
+<p class="subtitle">3-tier data architecture · built-in defaults vs scan-from-source vs enriched over time</p>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>built-in default — ships with template</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>scan-from-source — kbx init --retrofit</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>enriched by user — filled during onboarding/use</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--teal)"></div>auto-generated — written by system (retro, chaos, etc)</div>
+</div>
+
+<!-- TIER TABS -->
+<div class="tier-tabs" style="margin-top:20px">
+  <div class="ttab on" onclick="showTier('t1',this)">Tier 1 — File system</div>
+  <div class="ttab" onclick="showTier('t2',this)">Tier 2 — Unified Graph</div>
+  <div class="ttab" onclick="showTier('t3',this)">Tier 3 — Append-only</div>
+  <div class="ttab" onclick="showTier('enrich',this)">Enrichment timeline</div>
+</div>
+
+<!-- ══════════════════ TIER 1 ══════════════════ -->
+<div class="tpage on" id="tpage-t1">
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">.kb/ — core config</span>
+      <span class="sec-badge bd-init">built-in default</span>
+    </div>
+
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-file-code" style="font-size:14px;color:var(--gt)"></i>
+        <span class="file-name">ontology-contract.json</span>
+        <span class="file-path">.kb/ontology-contract.json</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText(document.getElementById('oc-content').textContent)"><i class="ti ti-copy"></i>copy</button>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <pre id="oc-content"><span class="c">// BUILT-IN DEFAULT — SaaS variant</span>
+{
+  <span class="k">"version"</span>: <span class="s">"1.0.0"</span>,
+  <span class="k">"domain"</span>: <span class="s">"saas"</span>,
+  <span class="k">"repo_origin"</span>: {
+    <span class="k">"values"</span>: [<span class="s">"core-api"</span>, <span class="s">"web-app"</span>, <span class="s">"mobile"</span>, <span class="s">"auth-service"</span>,
+               <span class="s">"billing-service"</span>, <span class="s">"worker"</span>, <span class="s">"infra"</span>, <span class="s">"shared-lib"</span>],
+    <span class="c">// edit to match your actual repos after kbx init</span>
+  },
+  <span class="k">"chaos_thresholds"</span>: { <span class="k">"stable"</span>: <span class="n">30</span>, <span class="k">"manageable"</span>: <span class="n">50</span>, <span class="k">"unstable"</span>: <span class="n">70</span> },
+  <span class="k">"node_types"</span>: { <span class="c">/* Goal, Intent, Rule, KBDoc, Code, Signal, Release, Lesson */</span> },
+  <span class="k">"edge_types"</span>: { <span class="c">/* ADVANCES, SERVES, IMPLEMENTS, AFFECTS, GOVERNS... */</span> }
+}</pre>
+      </div>
+    </div>
+
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-file-code" style="font-size:14px;color:var(--at)"></i>
+        <span class="file-name">scan-manifest.json</span>
+        <span class="file-path">.kb/scan-manifest.json</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText(document.getElementById('sm-content').textContent)"><i class="ti ti-copy"></i>copy</button>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <pre id="sm-content"><span class="c">// BUILT-IN DEFAULT — tells kbx init --retrofit what to scan</span>
+{
+  <span class="k">"scan_targets"</span>: {
+    <span class="k">"source_dirs"</span>: [<span class="s">"src"</span>, <span class="s">"app"</span>, <span class="s">"lib"</span>, <span class="s">"server"</span>, <span class="s">"api"</span>, <span class="s">"services"</span>],
+    <span class="k">"doc_dirs"</span>:    [<span class="s">"docs"</span>, <span class="s">"README.md"</span>, <span class="s">"CHANGELOG.md"</span>],
+    <span class="k">"skip"</span>: [<span class="s">"node_modules"</span>, <span class="s">"dist"</span>, <span class="s">"build"</span>, <span class="s">".next"</span>, <span class="s">"coverage"</span>]
+  },
+  <span class="k">"extract_from_source"</span>: {
+    <span class="k">"Code_nodes"</span>:    <span class="s">"all .ts .js .py .go files"</span>,
+    <span class="k">"complexity"</span>:    <span class="s">"cyclomatic per function (warn >10, critical >20)"</span>,
+    <span class="k">"dependencies"</span>: <span class="s">"import graph → :DEPENDS_ON edges"</span>,
+    <span class="k">"routes"</span>:       <span class="s">"app.get( router. @Get( → route inventory"</span>,
+    <span class="k">"auth_patterns"</span>:<span class="s">"authMiddleware requireAuth jwtVerify"</span>,
+    <span class="k">"secrets_check"</span>:<span class="s">"process.env. hardcoded → KBX-S002 violation"</span>
+  },
+  <span class="k">"extract_from_git"</span>: {
+    <span class="k">"commits"</span>:     <span class="s">"last 50 → infer active areas"</span>,
+    <span class="k">"open_prs"</span>:    <span class="s">"titles → suggest backlog intents"</span>
+  }
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">knowledge-base/00-start-here/</span>
+      <span class="sec-badge bd-init">built-in default</span>
+      <span class="sec-badge bd-enrich" style="margin-left:4px">enriched by user</span>
+    </div>
+
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-map" style="font-size:14px;color:var(--tt)"></i>
+        <span class="file-name">system-map.md</span>
+        <span class="file-path">knowledge-base/00-start-here/system-map.md</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText(document.getElementById('sysmap-content').textContent)"><i class="ti ti-copy"></i>copy</button>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <pre id="sysmap-content"><span class="c">---
+id: doc-000-001
+tier: 0
+title: System map
+source_of_truth: true
+tags: [foundation, orientation]
+---</span>
+
+<span class="c"># System map</span>
+
+<span class="c">## Project identity  ← USER FILLS DURING ONBOARDING</span>
+<span class="p">**Name:**</span> <span class="at">{{PROJECT_NAME}}</span>
+<span class="p">**Domain:**</span> SaaS — <span class="at">{{SAAS_DESCRIPTION}}</span>
+<span class="p">**Stack:**</span> <span class="at">{{TECH_STACK}}</span>
+<span class="p">**Repos:**</span> <span class="at">{{REPO_LIST}}</span>
+
+<span class="c">## Active goals  ← BUILT-IN DEFAULT (4 SaaS goals pre-seeded)</span>
+| ID       | Title                                    | Status |
+|----------|------------------------------------------|--------|
+| GOAL-001 | Keep product reliable and performant     | active |
+| GOAL-002 | Grow and retain customer base            | active |
+| GOAL-003 | Maintain secure and compliant platform   | active |
+| GOAL-004 | Sustain healthy engineering velocity     | active |
+
+<span class="c">## Current focus  ← AUTO (kbx checkpoint load populates this)</span>
+<span class="at">> populated by kbx checkpoint load</span>
+
+<span class="c">## Self-evolution doctrine stage  ← BUILT-IN</span>
+Current: `v1.8 Observer` · Next: `v1.9 Graph Builder`</pre>
+      </div>
+    </div>
+
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-file-text" style="font-size:14px;color:var(--bt)"></i>
+        <span class="file-name">getting-started.md</span>
+        <span class="file-path">knowledge-base/00-start-here/getting-started.md</span>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <pre><span class="c">---
+id: doc-000-002
+tier: 0
+title: Getting started
+---</span>
+
+<span class="c">## New project</span>    kbx init
+<span class="c">## Existing code</span>  kbx init --retrofit
+<span class="c">## Daily loop</span>     checkpoint load → intent → copilot → retro → checkpoint save
+<span class="c">## Key commands</span>   kbx intent create · kbx chaos · kbx maintain · kbx doctor</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">Intents — backlog (SaaS starters)</span>
+      <span class="sec-badge bd-init">built-in default</span>
+    </div>
+
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-list-check" style="font-size:14px;color:var(--bt)"></i>
+        <span class="file-name">INT-SAAS-001.md</span>
+        <span class="file-path">intents/_backlog/</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText(document.getElementById('int1-content').textContent)"><i class="ti ti-copy"></i>copy</button>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <pre id="int1-content"><span class="c">---</span>
+<span class="k">id:</span>             <span class="s">INT-SAAS-001</span>
+<span class="k">title:</span>          <span class="s">Set up auth middleware on all API routes</span>
+<span class="k">type:</span>           <span class="s">exec</span>
+<span class="k">status:</span>         <span class="s">backlog</span>
+<span class="k">milestone:</span>      <span class="s">v1.0</span>
+<span class="k">repos:</span>          <span class="s">[core-api, auth-service]</span>
+<span class="k">linked_goal_id:</span> <span class="s">GOAL-003</span>
+<span class="k">linked_rules:</span>   <span class="s">[KBX-S001]</span>
+<span class="k">tasks:</span>
+  - <span class="k">id:</span> T-001  <span class="k">title:</span> <span class="s">Scan and list unprotected routes</span>   <span class="k">status:</span> todo
+  - <span class="k">id:</span> T-002  <span class="k">title:</span> <span class="s">Apply auth middleware to sensitive routes</span>  <span class="k">status:</span> todo
+  - <span class="k">id:</span> T-003  <span class="k">title:</span> <span class="s">Write integration tests for coverage</span>  <span class="k">status:</span> todo
+<span class="c">---</span></pre>
+      </div>
+    </div>
+
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-list-check" style="font-size:14px;color:var(--bt)"></i>
+        <span class="file-name">INT-SAAS-002.md</span>
+        <span class="file-path">intents/_backlog/</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText(document.getElementById('int2-content').textContent)"><i class="ti ti-copy"></i>copy</button>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <pre id="int2-content"><span class="c">---</span>
+<span class="k">id:</span>             <span class="s">INT-SAAS-002</span>
+<span class="k">title:</span>          <span class="s">Implement billing webhook handlers</span>
+<span class="k">type:</span>           <span class="s">exec</span>
+<span class="k">status:</span>         <span class="s">backlog</span>
+<span class="k">milestone:</span>      <span class="s">v1.0</span>
+<span class="k">repos:</span>          <span class="s">[billing-service, core-api]</span>
+<span class="k">linked_goal_id:</span> <span class="s">GOAL-002</span>
+<span class="k">linked_rules:</span>   <span class="s">[KBX-B001, KBX-T001]</span>
+<span class="k">tasks:</span>
+  - <span class="k">id:</span> T-001  <span class="k">title:</span> <span class="s">Set up billing webhook endpoint</span>      <span class="k">status:</span> todo
+  - <span class="k">id:</span> T-002  <span class="k">title:</span> <span class="s">Handle subscription.created/deleted</span>   <span class="k">status:</span> todo
+  - <span class="k">id:</span> T-003  <span class="k">title:</span> <span class="s">Handle invoice.payment_failed + retry</span> <span class="k">status:</span> todo
+  - <span class="k">id:</span> T-004  <span class="k">title:</span> <span class="s">Write integration tests</span>              <span class="k">status:</span> todo
+<span class="c">---</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">governance/</span>
+      <span class="sec-badge bd-init">built-in default</span>
+      <span class="sec-badge bd-scan" style="margin-left:4px">populated by scan</span>
+    </div>
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-file-text" style="font-size:14px;color:var(--at)"></i>
+        <span class="file-name">debt-index.md + entropy-index.md</span>
+        <span class="file-path">knowledge-base/15-governance/</span>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <pre><span class="c">// debt-index.md — EMPTY on init, populated by kbx maintain</span>
+<span class="c">// entropy-index.md — EMPTY on init, populated by kbx chaos --scan-src</span>
+
+| ID | Description | Severity | Age | Linked intent | Source |
+|----|-------------|----------|-----|---------------|--------|
+| <span class="at">←populated by kbx maintain / chaos --scan-src→</span>   |</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TIER 2 ══════════════════ -->
+<div class="tpage" id="tpage-t2">
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">Graph nodes — seed data (.kb/graph/seed-goals.json)</span>
+      <span class="sec-badge bd-init">built-in default</span>
+    </div>
+    <div class="file-block">
+      <div class="file-hd open" onclick="toggleFile(this)">
+        <i class="ti ti-circle" style="font-size:14px;color:var(--tt)"></i>
+        <span class="file-name">:Goal nodes (4 SaaS defaults)</span>
+        <i class="ti ti-chevron-right file-chev" style="transform:rotate(90deg)"></i>
+      </div>
+      <div class="file-body show">
+        <table class="ntable">
+          <thead><tr><th style="padding-left:14px">Node ID</th><th>Properties</th><th>Criteria (criteria[])</th><th>Origin</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="node-id" style="padding-left:14px">GOAL-001</td>
+              <td class="node-props">title: Keep product reliable<br>horizon: ongoing<br>owner: {{OWNER}}<br>status: active</td>
+              <td class="node-props">API p99 &lt; 500ms · target 500ms<br>Uptime ≥ 99.9% · target 99.9%<br>Chaos score ≤ 45<br>Critical bug TTR &lt; 4h</td>
+              <td><span class="origin o-init">built-in</span></td>
+            </tr>
+            <tr>
+              <td class="node-id" style="padding-left:14px">GOAL-002</td>
+              <td class="node-props">title: Grow and retain customers<br>horizon: Q{{Q}} {{YEAR}}<br>status: active</td>
+              <td class="node-props">Monthly churn ≤ 2%<br>Onboarding completion ≥ 80%<br>Feature adoption ≥ 60%</td>
+              <td><span class="origin o-init">built-in</span></td>
+            </tr>
+            <tr>
+              <td class="node-id" style="padding-left:14px">GOAL-003</td>
+              <td class="node-props">title: Maintain secure platform<br>horizon: ongoing<br>status: active</td>
+              <td class="node-props">Critical CVEs unpatched = 0<br>Auth coverage 100% sensitive routes<br>Compliance doc coverage ≥ 90%</td>
+              <td><span class="origin o-init">built-in</span></td>
+            </tr>
+            <tr>
+              <td class="node-id" style="padding-left:14px">GOAL-004</td>
+              <td class="node-props">title: Healthy engineering velocity<br>horizon: Q{{Q}} {{YEAR}}<br>status: active</td>
+              <td class="node-props">Intent close rate ≥ 80%<br>Doc coverage ≥ 85%<br>Test coverage ≥ 70%<br>Deploy freq ≥ 2×/week</td>
+              <td><span class="origin o-init">built-in</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-circle" style="font-size:14px;color:var(--pt)"></i>
+        <span class="file-name">:Rule nodes (11 SaaS defaults — seed-rules.json)</span>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <table class="ntable">
+          <thead><tr><th style="padding-left:14px">Rule ID</th><th>Title</th><th>Domain</th><th>State</th><th>Origin</th></tr></thead>
+          <tbody>
+            <tr><td class="node-id" style="padding-left:14px">KBX-AX001</td><td>Separation of powers</td><td class="node-props">governance</td><td class="node-props">verified</td><td><span class="origin o-init">built-in</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-AX002</td><td>Domain agnosticism</td><td class="node-props">governance</td><td class="node-props">verified</td><td><span class="origin o-init">built-in</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-AX003</td><td>Deterministic gate</td><td class="node-props">governance</td><td class="node-props">verified</td><td><span class="origin o-init">built-in</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-P001</td><td>One active intent per version</td><td class="node-props">intent</td><td class="node-props">verified</td><td><span class="origin o-init">built-in</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-P002</td><td>Graph written only at retro</td><td class="node-props">data</td><td class="node-props">verified</td><td><span class="origin o-init">built-in</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-P003</td><td>Goal alignment required</td><td class="node-props">intent</td><td class="node-props">verified</td><td><span class="origin o-init">built-in</span></td></div></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-P004</td><td>Three-layer vibe execution</td><td class="node-props">execution</td><td class="node-props">verified</td><td><span class="origin o-init">built-in</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-S001</td><td>Auth on sensitive routes</td><td class="node-props">security</td><td class="node-props">planned</td><td><span class="origin o-init">built-in</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-S002</td><td>No secrets in source</td><td class="node-props">security</td><td class="node-props">planned</td><td><span class="origin o-init">built-in</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-B001</td><td>Billing is source of truth</td><td class="node-props">billing</td><td class="node-props">planned</td><td><span class="origin o-init">built-in</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBX-T001</td><td>Integration tests on critical paths</td><td class="node-props">testing</td><td class="node-props">planned</td><td><span class="origin o-init">built-in</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">Graph nodes — scan-populated</span>
+      <span class="sec-badge bd-scan">scan-from-source</span>
+    </div>
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-circle" style="font-size:14px;color:var(--bt)"></i>
+        <span class="file-name">:Code nodes  (example — after kbx init --retrofit)</span>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <table class="ntable">
+          <thead><tr><th style="padding-left:14px">Node ID</th><th>file_path</th><th>Properties</th><th>Origin</th></tr></thead>
+          <tbody>
+            <tr><td class="node-id" style="padding-left:14px">CODE-001</td><td class="node-props">src/routes/billing.ts</td><td class="node-props">repo: billing-service · lang: ts<br>complexity: 14 ⚠ · fan_in: 3</td><td><span class="origin o-scan">scan</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">CODE-002</td><td class="node-props">src/middleware/auth.ts</td><td class="node-props">repo: core-api · lang: ts<br>complexity: 6 · fan_in: 28</td><td><span class="origin o-scan">scan</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">CODE-003</td><td class="node-props">src/services/subscription.ts</td><td class="node-props">repo: billing-service · lang: ts<br>complexity: 22 🔴 · fan_in: 7</td><td><span class="origin o-scan">scan</span></td></tr>
+          </tbody>
+        </table>
+        <pre style="padding:8px 14px;font-size:11px;color:var(--t2)"><span class="c">// :DEPENDS_ON edges also written from import graph during scan
+// :GOVERNS edges written when Rule patterns match file content</span></pre>
+      </div>
+    </div>
+
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-circle" style="font-size:14px;color:var(--t2)"></i>
+        <span class="file-name">:KBDoc nodes  (from README + docs/ scan)</span>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <table class="ntable">
+          <thead><tr><th style="padding-left:14px">Node ID</th><th>path</th><th>Properties</th><th>Origin</th></tr></thead>
+          <tbody>
+            <tr><td class="node-id" style="padding-left:14px">KBDOC-001</td><td class="node-props">README.md</td><td class="node-props">tier: 0 · source_of_truth: false<br>tags: [overview] · verified: false</td><td><span class="origin o-scan">scan</span></td></tr>
+            <tr><td class="node-id" style="padding-left:14px">KBDOC-002</td><td class="node-props">docs/architecture.md</td><td class="node-props">tier: 2 · source_of_truth: false<br>tags: [architecture] · verified: false</td><td><span class="origin o-scan">scan</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">Graph nodes — auto-generated over time</span>
+      <span class="sec-badge bd-auto">auto-generated</span>
+    </div>
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-circles-relation" style="font-size:14px;color:var(--tt)"></i>
+        <span class="file-name">:Intent :Signal :Lesson :Release — written at retro / chaos / release pipeline</span>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <table class="ntable">
+          <thead><tr><th style="padding-left:14px">Type</th><th>Written when</th><th>Key properties</th></tr></thead>
+          <tbody>
+            <tr><td class="node-id" style="padding-left:14px">:Intent</td><td style="font-size:12px;color:var(--t1)">P1: create + activate + close</td><td class="node-props">id · type · status · repos[] · linked_goal_id · closed_at</td></tr>
+            <tr><td class="node-id" style="padding-left:14px">:Signal</td><td style="font-size:12px;color:var(--t1)">P1:measure + P2:scan (chaos:scan)</td><td class="node-props">level · score · delta · breakdown{7}</td></tr>
+            <tr><td class="node-id" style="padding-left:14px">:Lesson</td><td style="font-size:12px;color:var(--t1)">P1:retro (retro:write)</td><td class="node-props">title · domain · level · linked_intent_id</td></tr>
+            <tr><td class="node-id" style="padding-left:14px">:Release</td><td style="font-size:12px;color:var(--t1)">P4:graph-write</td><td class="node-props">version · released_at · linked_intents[]</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:10px 14px;background:var(--bg3);border-top:1px solid var(--bd)">
+          <div style="font-size:11px;color:var(--t2);font-family:var(--mono)">Evidence metadata on ALL above: source · confidence · timestamp · linked_intent_id · version · repo_origin</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" style="margin-top:16px;margin-bottom:0">
+      <div class="sec-hd"><span class="sec-title">Key edges — written at retro</span><span class="sec-badge bd-auto">auto-generated</span></div>
+      <div class="file-block">
+        <div class="file-hd open" onclick="toggleFile(this)">
+          <i class="ti ti-arrow-right" style="font-size:14px;color:var(--tt)"></i>
+          <span class="file-name">Edge examples (after first retro)</span>
+          <i class="ti ti-chevron-right file-chev" style="transform:rotate(90deg)"></i>
+        </div>
+        <div class="file-body show">
+          <div style="padding:8px 0">
+            <div style="padding:0 12px 6px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;font-weight:500">from → type → to · properties</div>
+            <div class="edge-row"><span class="edge-from">INT-SAAS-001</span><span class="edge-type">:ADVANCES</span><span class="edge-to">GOAL-003</span><span class="edge-props">{criterion: "Auth coverage 100%", delta: +12}</span></div>
+            <div class="edge-row"><span class="edge-from">INT-SAAS-001</span><span class="edge-type">:IMPLEMENTS</span><span class="edge-to">CODE-002</span><span class="edge-props">{evidence: {source:"copilot", confidence:0.9}}</span></div>
+            <div class="edge-row"><span class="edge-from">INT-SAAS-001</span><span class="edge-type">:ENFORCES</span><span class="edge-to">KBX-S001</span><span class="edge-props">{state_change: "planned→implemented"}</span></div>
+            <div class="edge-row"><span class="edge-from">INT-SAAS-001</span><span class="edge-type">:PRODUCES</span><span class="edge-to">LESSON-001</span><span class="edge-props">{domain:"security", level:"project"}</span></div>
+            <div class="edge-row"><span class="edge-from">CODE-003</span><span class="edge-type">:AFFECTS</span><span class="edge-to">CODE-002</span><span class="edge-props">{detected: "import graph scan"}</span></div>
+            <div class="edge-row"><span class="edge-from">KBX-S001</span><span class="edge-type">:GOVERNS</span><span class="edge-to">CODE-001</span><span class="edge-props">{pattern_match: "billing route"}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TIER 3 ══════════════════ -->
+<div class="tpage" id="tpage-t3">
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">chaos-history.ndjson</span>
+      <span class="sec-badge bd-auto">auto-generated (chaos:scan)</span>
+    </div>
+    <div class="file-block">
+      <div class="file-hd open" onclick="toggleFile(this)">
+        <i class="ti ti-wave-sine" style="font-size:14px;color:var(--rt)"></i>
+        <span class="file-name">chaos-history.ndjson — append-only, one line per run</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText(document.getElementById('chaos-content').textContent)"><i class="ti ti-copy"></i>copy</button>
+        <i class="ti ti-chevron-right file-chev" style="transform:rotate(90deg)"></i>
+      </div>
+      <div class="file-body show">
+        <pre id="chaos-content"><span class="c">// Entry 0 — BUILT-IN PLACEHOLDER (replaced by first kbx chaos run)</span>
+{"id":"snap-000","timestamp":"{{ISO}}","score":null,"level":"unknown","note":"baseline placeholder"}
+
+<span class="c">// Entry 1 — first kbx chaos after init --retrofit (AUTO-GENERATED)</span>
+{"id":"snap-001","timestamp":"2025-01-08T09:00:00Z","score":68,"level":"unstable",
+ "breakdown":{"structural":18,"coverage":14,"testing":12,"intent":10,"release":8,"cognitive":4,"other":2},
+ "delta":null,"note":"retrofit baseline — known debt acknowledged"}
+
+<span class="c">// Entry 2 — after first intent closed (AUTO-GENERATED)</span>
+{"id":"snap-002","timestamp":"2025-01-14T17:30:00Z","score":54,"level":"manageable",
+ "breakdown":{"structural":14,"coverage":12,"testing":8,"intent":8,"release":6,"cognitive":4,"other":2},
+ "delta":-14,"forward_estimates":[{"version":"v1.1","projected":42}]}
+
+<span class="c">// Entry 3 — after maintain loop (AUTO-GENERATED)</span>
+{"id":"snap-003","timestamp":"2025-01-20T11:00:00Z","score":42,"level":"manageable",
+ "breakdown":{"structural":10,"coverage":10,"testing":7,"intent":7,"release":4,"cognitive":3,"other":1},
+ "delta":-12,"forward_estimates":[{"version":"v1.1","projected":35}]}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">checkpoints.json</span>
+      <span class="sec-badge bd-init">empty on init</span>
+      <span class="sec-badge bd-auto" style="margin-left:4px">populated by kbx checkpoint save</span>
+    </div>
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-bookmark" style="font-size:14px;color:var(--pt)"></i>
+        <span class="file-name">checkpoints.json</span>
+        <button class="copy-btn" onclick="event.stopPropagation();copyText(document.getElementById('cp-content').textContent)"><i class="ti ti-copy"></i>copy</button>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <pre id="cp-content"><span class="c">// EMPTY on init · kbx checkpoint save appends entries</span>
+{
+  "checkpoints": [
+    {
+      "id": "cp-001",
+      "timestamp": "2025-01-08T18:00:00Z",
+      "intent_id": "INT-SAAS-001",
+      "branch": "intent/INT-SAAS-001-auth-middleware",
+      "step": "execute",
+      "staged_files": [],
+      "note": "End of day — T-001 done, T-002 in progress",
+      "chaos_at_save": 64
+    },
+    {
+      "id": "cp-002",
+      "timestamp": "2025-01-14T19:30:00Z",
+      "intent_id": "INT-SAAS-001",
+      "branch": "intent/INT-SAAS-001-auth-middleware",
+      "step": "staged",
+      "staged_files": ["src/middleware/auth.ts","src/routes/billing.ts","test/auth.integration.ts"],
+      "note": "All tasks done, gate passed — ready for retro tomorrow",
+      "chaos_at_save": 56
+    }
+  ]
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-hd">
+      <span class="sec-title">release-catalog.json</span>
+      <span class="sec-badge bd-init">empty on init</span>
+      <span class="sec-badge bd-auto" style="margin-left:4px">populated by P4 release pipeline</span>
+    </div>
+    <div class="file-block">
+      <div class="file-hd" onclick="toggleFile(this)">
+        <i class="ti ti-package" style="font-size:14px;color:var(--at)"></i>
+        <span class="file-name">release-catalog.json</span>
+        <i class="ti ti-chevron-right file-chev"></i>
+      </div>
+      <div class="file-body">
+        <pre><span class="c">// EMPTY on init · P4 pipeline appends entries</span>
+{
+  "releases": [
+    {
+      "id": "REL-001",
+      "version": "1.0.0",
+      "released_at": "2025-02-01T10:00:00Z",
+      "intent_ids": ["INT-SAAS-001", "INT-SAAS-002"],
+      "chaos_at_release": 38,
+      "graph_export_path": ".kb/exports/graph-v1.0.0.cypher",
+      "changelog_summary": "Auth middleware coverage + billing webhooks"
+    }
+  ]
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ ENRICHMENT TIMELINE ══════════════════ -->
+<div class="tpage" id="tpage-enrich">
+  <div class="section">
+    <div class="sec-hd"><span class="sec-title">Vòng đời dữ liệu — từ lúc init đến khi hệ trưởng thành</span></div>
+    <div class="timeline">
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--green)"></div>
+        <div class="tl-content">
+          <div class="tl-trigger">kbx init · T=0 — built-in defaults loaded</div>
+          <div class="tl-detail">
+            ✓ ontology-contract.json · scan-manifest.json · chaos-history (placeholder)<br>
+            ✓ 4 :Goal nodes seeded · 11 :Rule nodes seeded<br>
+            ✓ 2 starter intents in _backlog/ · KB folder structure 16-tier<br>
+            ✓ system-map.md template · getting-started.md<br>
+            ✗ criteria.current = null (nothing measured yet)<br>
+            ✗ no :Code nodes · no :KBDoc nodes · no edges in graph
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--blue)"></div>
+        <div class="tl-content">
+          <div class="tl-trigger">kbx init --retrofit · T=0 (if existing codebase)</div>
+          <div class="tl-detail">
+            ✓ :Code nodes created from all source files (complexity, fan_in, lang)<br>
+            ✓ :DEPENDS_ON edges from import graph<br>
+            ✓ :KBDoc nodes from README + docs/<br>
+            ✓ :GOVERNS edges where Rule patterns match code<br>
+            ✓ debt-index pre-populated · entropy-index pre-populated<br>
+            ✓ chaos baseline snapshot (score ≠ 0, reflects real state)<br>
+            ✓ open PRs → suggested backlog intents
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--purple)"></div>
+        <div class="tl-content">
+          <div class="tl-trigger">Onboarding interview complete · T+1h</div>
+          <div class="tl-detail">
+            ✓ system-map.md filled: project name, stack, repos, team<br>
+            ✓ Goals: owner + horizon filled · targets reviewed<br>
+            ✓ ontology-contract.json: repo_origin updated to match real repos<br>
+            ✓ architecture/overview.md drafted<br>
+            ✓ auth-model.md + billing-model.md skeletons filled
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--teal)"></div>
+        <div class="tl-content">
+          <div class="tl-trigger">First intent closed + retro · T+1 week</div>
+          <div class="tl-detail">
+            ✓ :Intent node in graph (closed_at, repos[], linked_goal_id)<br>
+            ✓ :ADVANCES edge → GOAL-003 (criteria.current updated +12)<br>
+            ✓ :IMPLEMENTS edges → :Code nodes touched<br>
+            ✓ :ENFORCES edge → KBX-S001 (state: planned→implemented)<br>
+            ✓ :Lesson node created (domain: security)<br>
+            ✓ Evidence metadata on all above nodes+edges<br>
+            ✓ chaos-history: new snapshot · delta computed<br>
+            ✓ First checkpoint saved · history list starts
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--amber)"></div>
+        <div class="tl-content">
+          <div class="tl-trigger">First maintain run · T+2 weeks</div>
+          <div class="tl-detail">
+            ✓ debt-index enriched (new stale items detected)<br>
+            ✓ entropy-index updated (complexity scores refreshed)<br>
+            ✓ :Signal node added (chaos_spike or chaos_stable)<br>
+            ✓ 2-3 fix intents proposed → user approves → _backlog<br>
+            ✓ chaos history: trend visible (3 data points)
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--purple)"></div>
+        <div class="tl-content">
+          <div class="tl-trigger">First release · T+1 month</div>
+          <div class="tl-detail">
+            ✓ :Release node in graph · :INCLUDED_IN edges from all closed intents<br>
+            ✓ release-catalog.json: first entry<br>
+            ✓ :ADVANCES edges aggregated → criteria.current shows real % progress<br>
+            ✓ graph export snapshot archived (.kb/exports/graph-v1.0.0.cypher)<br>
+            ✓ Goals: some criteria now have real current values (not null)
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <div class="tl-dot" style="background:var(--teal)"></div>
+        <div class="tl-content">
+          <div class="tl-trigger">Mature state · T+3 months</div>
+          <div class="tl-detail">
+            ✓ All goal criteria.current populated (no more null)<br>
+            ✓ Graph: 100+ nodes, 200+ edges, all with evidence<br>
+            ✓ KBX-S001/S002/B001/T001 state: planned→implemented→verified<br>
+            ✓ Chaos score trend visible (5+ snapshots)<br>
+            ✓ Lesson library growing (team/project/system levels)<br>
+            ✓ Impact check gives meaningful traversal results<br>
+            ✓ Checkpoint history enables fast context restore<br>
+            → Ready for v1.9 Graph Builder upgrade
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div><!-- end .page -->
+
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+function showTier(id,el){
+  document.querySelectorAll('.tpage').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ttab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tpage-'+id).classList.add('on');
+  el.classList.add('on');
+}
+function toggleFile(hd){
+  const body=hd.nextElementSibling;
+  const open=body.classList.toggle('show');
+  hd.classList.toggle('open',open);
+}
+function copyText(t){
+  const clean=t.replace(/<[^>]+>/g,'').replace(/^\s+/gm,'').trim();
+  navigator.clipboard.writeText(clean).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=clean;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+  const toast=document.getElementById('toast');
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>toast.classList.remove('show'),2000);
+}
+</script>
+</body>
+</html>

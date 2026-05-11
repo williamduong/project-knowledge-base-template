@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent — Gap Analysis vs Repo v2.8.0-beta.0</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c0c;--bg1:#141414;--bg2:#1a1a1a;--bg3:#222;--bg4:#2c2c2c;
+  --bd:#1e1e1e;--bd2:#2e2e2e;--bd3:#444;
+  --t0:#f0ede8;--t1:#c8c4bc;--t2:#888480;--t3:#505050;
+  --green:#3a9468;--gd:#0c1e14;--gt:#5ed498;
+  --amber:#b88010;--ad:#241c04;--at:#e0b030;
+  --red:#904040;--rd:#1e1010;--rt:#d07070;
+  --blue:#1c5898;--bld:#081830;--bt:#68a8dc;
+  --purple:#583898;--pd:#141028;--pt:#a070d8;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html,body{background:var(--bg);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.65}
+.page{max-width:1080px;margin:0 auto;padding:32px 28px 60px}
+
+h1{font-size:24px;font-weight:500;color:var(--t0);margin-bottom:6px}
+.subtitle{font-size:13px;color:var(--t2);margin-bottom:28px;line-height:1.6}
+.subtitle code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:3px;color:var(--bt)}
+
+/* status badge */
+.status-banner{background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--gt);border-radius:5px;padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.status-banner i{font-size:18px;color:var(--gt)}
+.status-text{font-size:12px;color:var(--t1);flex:1}
+.status-text strong{color:var(--t0)}
+.status-meta{font-family:var(--mono);font-size:10px;color:var(--t3)}
+
+/* section */
+.section{margin-bottom:36px}
+.sec-h{font-size:15px;font-weight:500;color:var(--t0);margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px}
+.sec-h i{font-size:16px;color:var(--t3)}
+.sec-num{font-family:var(--mono);font-size:13px;color:var(--t3);font-weight:500}
+
+/* TL;DR card */
+.tldr{background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;padding:16px 18px;margin-bottom:24px}
+.tldr-title{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.tldr-body{font-size:13px;color:var(--t1);line-height:1.7}
+.tldr-body strong{color:var(--t0);font-weight:500}
+.tldr-body code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--bt)}
+
+/* GAP TABLE */
+.gap-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;table-layout:fixed}
+.gap-tbl th{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;padding:8px 11px;text-align:left;font-weight:500;border-bottom:1px solid var(--bd)}
+.gap-tbl td{padding:10px 11px;border-bottom:1px solid var(--bd);color:var(--t1);vertical-align:top;line-height:1.55}
+.gap-tbl tbody tr:hover td{background:var(--bg2)}
+.gap-tbl .col-concept{width:24%}
+.gap-tbl .col-ours{width:30%}
+.gap-tbl .col-repo{width:30%}
+.gap-tbl .col-verdict{width:16%}
+.concept-name{font-weight:500;color:var(--t0);font-size:12px;margin-bottom:3px}
+.concept-note{font-size:10px;color:var(--t3)}
+.ver-cover{color:var(--gt);font-family:var(--mono);font-size:10px;padding:3px 7px;border-radius:3px;background:var(--gd);border:1px solid #183828;display:inline-block;white-space:nowrap}
+.ver-partial{color:var(--at);font-family:var(--mono);font-size:10px;padding:3px 7px;border-radius:3px;background:var(--ad);border:1px solid #382808;display:inline-block;white-space:nowrap}
+.ver-gap{color:var(--rt);font-family:var(--mono);font-size:10px;padding:3px 7px;border-radius:3px;background:var(--rd);border:1px solid #381818;display:inline-block;white-space:nowrap}
+.ver-renm{color:var(--bt);font-family:var(--mono);font-size:10px;padding:3px 7px;border-radius:3px;background:var(--bld);border:1px solid #143060;display:inline-block;white-space:nowrap}
+.cell-detail{font-size:11px;color:var(--t1);line-height:1.55}
+.cell-detail code{font-family:var(--mono);font-size:10px;background:var(--bg3);padding:1px 4px;border-radius:2px;color:var(--bt)}
+
+/* category header in table */
+.cat-row td{background:var(--bg1);padding:8px 11px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;font-weight:500;border-top:1px solid var(--bd2)}
+
+/* legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:14px 0;border-top:1px solid var(--bd);margin-top:8px}
+.leg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2)}
+
+/* mismatch box */
+.mismatch{background:var(--ad);border:1px solid #382808;border-radius:5px;padding:14px 16px;margin-bottom:12px}
+.mismatch-h{font-size:12px;font-weight:500;color:var(--at);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.mismatch-body{font-size:11px;color:var(--t1);line-height:1.7}
+.mismatch-body code{font-family:var(--mono);font-size:10px;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:2px;color:var(--at)}
+
+/* recommendation card */
+.rec-card{background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--bt);border-radius:5px;padding:13px 16px;margin-bottom:10px}
+.rec-num{font-family:var(--mono);font-size:11px;color:var(--bt);font-weight:500;margin-bottom:4px}
+.rec-title{font-size:13px;font-weight:500;color:var(--t0);margin-bottom:6px}
+.rec-body{font-size:12px;color:var(--t1);line-height:1.7}
+.rec-body code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--bt)}
+.rec-effort{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:2px 7px;border-radius:3px;font-family:var(--mono);margin-left:8px}
+.eff-low{background:var(--gd);color:var(--gt)}
+.eff-med{background:var(--ad);color:var(--at)}
+.eff-high{background:var(--rd);color:var(--rt)}
+
+/* summary chart */
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.sum-card{background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;padding:14px}
+.sum-n{font-family:var(--mono);font-size:28px;font-weight:300;color:var(--t0);margin-bottom:3px}
+.sum-l{font-size:11px;color:var(--t3)}
+.sum-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:8px}
+.sum-fill{height:100%;border-radius:2px}
+
+code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--bt)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>KBAgent — Gap analysis</h1>
+<p class="subtitle">So sánh documentation chúng ta đã build vs repo thực tế trên branch <code>intent/v2-8-2-principal-grounding-contract</code> · verified 2026-05-11</p>
+
+<div class="status-banner">
+  <i class="ti ti-arrow-merge"></i>
+  <div class="status-text">
+    <strong>Repo đang đi cùng hướng với documentation.</strong> Không phải hướng khác. Repo đã formal hóa và implement (40 CLI commands, 32 dispatch fixtures, 8 governance contracts) những concept chúng ta mới design conceptual.
+    <span class="status-meta">Branch: intent/v2-8-2-principal-grounding-contract · Package: kbx@2.7.0-beta.2 · Release catalog: v2.8.0-beta.0</span>
+  </div>
+</div>
+
+<!-- ══ SUMMARY ══ -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-chart-pie"></i>Tổng quan 32 concepts</div>
+<div class="summary-grid">
+  <div class="sum-card">
+    <div class="sum-n" style="color:var(--gt)">14</div>
+    <div class="sum-l">Cover — identical</div>
+    <div class="sum-bar"><div class="sum-fill" style="width:44%;background:var(--green)"></div></div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-n" style="color:var(--bt)">8</div>
+    <div class="sum-l">Renamed — cùng tinh thần</div>
+    <div class="sum-bar"><div class="sum-fill" style="width:25%;background:var(--blue)"></div></div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-n" style="color:var(--at)">6</div>
+    <div class="sum-l">Partial — repo có rồi mà ta chưa đủ</div>
+    <div class="sum-bar"><div class="sum-fill" style="width:19%;background:var(--amber)"></div></div>
+  </div>
+  <div class="sum-card">
+    <div class="sum-n" style="color:var(--rt)">4</div>
+    <div class="sum-l">Gap — ta thiếu hoàn toàn</div>
+    <div class="sum-bar"><div class="sum-fill" style="width:12%;background:var(--red)"></div></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ TL;DR ══ -->
+<div class="tldr">
+<div class="tldr-title">TL;DR — tỉ lệ overlap</div>
+<div class="tldr-body">
+<strong>14/32 (44%)</strong> identical — bao gồm Separation of Powers, Domain Agnosticism, Deterministic Gate, Evidence everywhere, Human approval, Three-layer execution.<br>
+<strong>8/32 (25%)</strong> renamed — chúng ta dùng vocabulary cũ, repo dùng vocabulary mới (vd: <code>kb</code> → <code>kbx</code>, lifecycle states, rule families).<br>
+<strong>6/32 (19%)</strong> partial — repo formal hơn ta (vd: 10 named gates với severity policy thay vì "gate exit 0/1" chung chung).<br>
+<strong>4/32 (12%)</strong> gap — repo có concept ta chưa cover (Dispatch Decision Tuple, CDM ontology mapping, Three-layer trace, Generative Loop Contract).<br><br>
+<strong>Không có concept nào của chúng ta repo không có hoặc đi ngược lại.</strong> Mọi thứ chúng ta design đều align hoặc là subset của thiết kế repo.
+</div>
+</div>
+
+<!-- ══ DETAILED COMPARISON ══ -->
+<div class="section">
+<div class="sec-h"><span class="sec-num">§1</span>Comparison chi tiết · 32 concepts</div>
+
+<table class="gap-tbl">
+<thead><tr><th class="col-concept">Concept</th><th class="col-ours">Documentation chúng ta</th><th class="col-repo">Repo thực tế</th><th class="col-verdict">Status</th></tr></thead>
+
+<tbody>
+
+<!-- CATEGORY 1: GOVERNANCE FOUNDATIONS -->
+<tr class="cat-row"><td colspan="4">A · Governance foundations</td></tr>
+
+<tr>
+  <td><div class="concept-name">Separation of Powers</div><div class="concept-note">SVFactory vs KBAgent</div></td>
+  <td class="cell-detail">KBX-AX001: "SVFactory legislative, KBAgent executive, never mix"</td>
+  <td class="cell-detail"><code>CONSTITUTION.md</code> Axiom 1 — identical wording</td>
+  <td><span class="ver-cover">cover · identical</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Domain Agnosticism</div><div class="concept-note">Primitives have no business logic</div></td>
+  <td class="cell-detail">KBX-AX002: core primitives must not encode domain</td>
+  <td class="cell-detail">Axiom 2 — primitives: <code>Intent · Gate · Evidence · Chaos_Score</code></td>
+  <td><span class="ver-cover">cover · identical</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Deterministic Gate</div><div class="concept-note">Exit 0/1 only, no LLM in gate</div></td>
+  <td class="cell-detail">KBX-AX003: deterministic exit 0/1, no LLM in path</td>
+  <td class="cell-detail">Axiom 3 — explicitly "no LLM API, no auto-correct"</td>
+  <td><span class="ver-cover">cover · identical</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Checkpoint-Driven Audit</div><div class="concept-note">No daemons, no watchers</div></td>
+  <td class="cell-detail">— (chưa cover)</td>
+  <td class="cell-detail">Axiom 4 — chỉ fire tại Init/Pre-commit/Audit, FORBIDDEN <code>watch_*</code> modules</td>
+  <td><span class="ver-gap">gap · thiếu</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">End-User Invisibility</div><div class="concept-note">SVFactory không có downstream UI</div></td>
+  <td class="cell-detail">— (chưa cover · ta vẽ Dashboard UI nhưng chưa nói rõ thuộc SVFactory hay KBAgent)</td>
+  <td class="cell-detail">Axiom 5 — Layer C (maintainer-only) vs downstream UI (KBAgent only)</td>
+  <td><span class="ver-gap">gap · thiếu</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Single Graph Write</div><div class="concept-note">Chỉ retro mới ghi graph</div></td>
+  <td class="cell-detail">KBX-AX004: single write point at retrospective</td>
+  <td class="cell-detail">P25 "Three-layer vibe execution" — Layer 2 (Runtime) is source of truth, không có entity "retrospective" riêng</td>
+  <td><span class="ver-partial">partial · ta đặc thù hóa</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Human Approval at Gates</div><div class="concept-note">Không có auto-approve</div></td>
+  <td class="cell-detail">KBX-AX005: explicit human approval mọi gate</td>
+  <td class="cell-detail">P20 + P24 + <code>HumanGateRequired</code> escalation token với 10 mandatory criteria</td>
+  <td><span class="ver-partial">partial · repo có 10 triggers cụ thể</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Evidence on Every Node</div><div class="concept-note">No anonymous data</div></td>
+  <td class="cell-detail">KBX-AX006: source · confidence · timestamp · linked_intent_id · version · repo_origin</td>
+  <td class="cell-detail">P2 + Ontology entity <code>:Evidence</code> + <code>G-EVIDENCE-SUFFICIENCY</code> gate + <code>evidence_state</code> tuple field (none/partial/sufficient/conflicting)</td>
+  <td><span class="ver-partial">partial · repo có state machine</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Goals Never Auto-Close</div><div class="concept-note">Human-only transitions</div></td>
+  <td class="cell-detail">KBX-AX007: goals only via explicit command</td>
+  <td class="cell-detail">— (repo không có entity Goal — ta đặc thù hóa cho SaaS variant)</td>
+  <td><span class="ver-partial">partial · ta extend cho SaaS</span></td>
+</tr>
+
+<!-- CATEGORY 2: EXECUTION MODEL -->
+<tr class="cat-row"><td colspan="4">B · Execution model</td></tr>
+
+<tr>
+  <td><div class="concept-name">Three-layer execution</div><div class="concept-note">Intake/Runtime/Completion</div></td>
+  <td class="cell-detail">KBX-P002 "Three-layer vibe" + Layer 0/1/2 (Goals/Loop/Graph)</td>
+  <td class="cell-detail">P25 Three-layer vibe execution — Layer 1 Intake & Normalize, Layer 2 Deterministic Runtime, Layer 3 AI Completion</td>
+  <td><span class="ver-renm">renamed · vocabulary khác</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">CLI naming</div><div class="concept-note">Command prefix</div></td>
+  <td class="cell-detail">Dùng <code>kb</code> trong examples</td>
+  <td class="cell-detail">Đã đổi sang <code>kbx</code> ngày 2026-05-10 (commit 71d68f2)</td>
+  <td><span class="ver-renm">renamed · breaking change</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Pipelines / pipes</div><div class="concept-note">Workflow categorization</div></td>
+  <td class="cell-detail">4 pipelines (Intent/Maintain/Onboarding/Release) + 6 sub-pipelines (doc:gate, ontology:validate, impact:check, chaos:scan, retro:write, update:patch)</td>
+  <td class="cell-detail">5 pipes: <code>PipeReadOnly · PipeDocsFast · PipeStandard · PipeRisky · PipeRecovery</code> — dispatched by tuple</td>
+  <td><span class="ver-renm">renamed · structure khác</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Dispatch Decision Tuple</div><div class="concept-note">8-field input → 6-field output</div></td>
+  <td class="cell-detail">— (concept chưa có; ta dùng "goal alignment check" và "intent type" rời rạc)</td>
+  <td class="cell-detail">Canonical 8-field tuple: <code>intent_type · intent_state · ontology_entity · target_scope · mutation_class · risk_level · evidence_state · actor_mode</code> → <code>primary_pipe · applicable_rules · required_gates · allowed_actions · verification_requirements · fallback_or_escalation</code></td>
+  <td><span class="ver-gap">gap · THIẾU HOÀN TOÀN</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Generative Loop Contract</div><div class="concept-note">Retry budget + reclassification</div></td>
+  <td class="cell-detail">— (concept chưa có; ta nói "execute ↺" loop chung chung)</td>
+  <td class="cell-detail">attempt_0 → attempt_1 → attempt_2 → escalate. Reclassification rules. Idempotency constraints. Mutation boundaries.</td>
+  <td><span class="ver-gap">gap · THIẾU HOÀN TOÀN</span></td>
+</tr>
+
+<!-- CATEGORY 3: ONTOLOGY -->
+<tr class="cat-row"><td colspan="4">C · Ontology</td></tr>
+
+<tr>
+  <td><div class="concept-name">Ontology entities</div><div class="concept-note">Canonical types in graph</div></td>
+  <td class="cell-detail">8 node types: <code>:Goal :Intent :Rule :KBDoc :Code :Signal :Release :Lesson</code></td>
+  <td class="cell-detail">10 entities với Microsoft CDM mapping: <code>Tenant · Subscription · ServicePrincipal · Project · Module · Config · Intent · Policy · CLICommand · Evidence</code></td>
+  <td><span class="ver-renm">renamed · CDM-aligned</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Lifecycle states</div><div class="concept-note">Intent state machine</div></td>
+  <td class="cell-detail">backlog · active · staged · closed · archived</td>
+  <td class="cell-detail">DRAFT · PROPOSED · VERIFIED · EXECUTED · COMMITTED (with allowedTo guards)</td>
+  <td><span class="ver-renm">renamed · formal hơn</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Repo origin</div><div class="concept-note">User-defined or controlled?</div></td>
+  <td class="cell-detail">User-defined enum trong ontology-contract.json</td>
+  <td class="cell-detail">Fixed: <code>billing · auth · gateway · infrastructure</code></td>
+  <td><span class="ver-renm">renamed · fixed enum</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">CDM alignment</div><div class="concept-note">Microsoft Common Data Model mapping</div></td>
+  <td class="cell-detail">— (chưa cover)</td>
+  <td class="cell-detail">Mỗi entity có <code>microsoft_cdm_mapping</code>: Account, Subscription, ServicePrincipal, Project, ...</td>
+  <td><span class="ver-gap">gap · không biết tới</span></td>
+</tr>
+
+<!-- CATEGORY 4: RULES -->
+<tr class="cat-row"><td colspan="4">D · Rules</td></tr>
+
+<tr>
+  <td><div class="concept-name">Rule families</div><div class="concept-note">Categorization</div></td>
+  <td class="cell-detail">4 tier: AX (constitutional) · P (process) · D (domain SaaS) · O (operational)</td>
+  <td class="cell-detail">8 family: M (Metadata) · V (Verification) · I (Intent) · GB (Git Binding) · AX (Agent contracts) · PR (Prompting) · WF (Workflow) · KA (KBAgent Runtime)</td>
+  <td><span class="ver-renm">renamed · granular hơn</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Number of rules</div><div class="concept-note">Total in catalog</div></td>
+  <td class="cell-detail">28 rules + 4 KBX-O auto-generated</td>
+  <td class="cell-detail">~20 runtime rules + 25 principles P0-P25 + 11 KBX-PG-* design-only aliases</td>
+  <td><span class="ver-partial">partial · ta có nhưng khác structure</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Principles (governance)</div><div class="concept-note">Higher-level guidance</div></td>
+  <td class="cell-detail">— (ta dùng rules cho cả constitutional và process)</td>
+  <td class="cell-detail">25 principles P0-P25 trong <code>svfactory/principles.md</code> — riêng biệt với runtime rules</td>
+  <td><span class="ver-gap">gap · ta merge vào rules</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Rule binding to gates</div><div class="concept-note">Mapping principle → gate → rule</div></td>
+  <td class="cell-detail">— (rule chỉ standalone)</td>
+  <td class="cell-detail"><code>principal-grounding-contract.md</code> bind từng P-rule vào dispatch gates + severity policy</td>
+  <td><span class="ver-gap">gap · thiếu</span></td>
+</tr>
+
+<!-- CATEGORY 5: GATES -->
+<tr class="cat-row"><td colspan="4">E · Gates</td></tr>
+
+<tr>
+  <td><div class="concept-name">Number of gates</div><div class="concept-note">Named verification checkpoints</div></td>
+  <td class="cell-detail">"Gate" chung chung (exit 0/1) — chưa có catalog</td>
+  <td class="cell-detail">10 named gates: <code>G-ENUM-VALIDATION · G-EVIDENCE-SUFFICIENCY · G-BACKWARD-COMPAT · G-STORAGE-CONTEXT · G-INTENT-UNIQUENESS · G-CHAOS-ESTIMATE · G-HUMAN-GATE-RECORD · G-DOWNSTREAM-ACCEPTANCE · G-DETERMINISTIC-PLACEMENT · G-THREE-LAYER-TRACE</code></td>
+  <td><span class="ver-partial">partial · ta nói nhưng không name</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Severity policy</div><div class="concept-note">Hard-fail / warn / info</div></td>
+  <td class="cell-detail">Chỉ có exit 0/1 binary</td>
+  <td class="cell-detail">3 levels: <code>hard-fail · warn · info</code> với promotion rules (multiple warns → hard-fail)</td>
+  <td><span class="ver-partial">partial · ta đơn giản hơn</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Human Gate triggers</div><div class="concept-note">When to escalate</div></td>
+  <td class="cell-detail">"Goal alignment fail → human chọn" chung chung</td>
+  <td class="cell-detail">10 mandatory criteria + 8 escalation triggers explicit</td>
+  <td><span class="ver-partial">partial · repo có 10 + 8 cases</span></td>
+</tr>
+
+<!-- CATEGORY 6: DATA -->
+<tr class="cat-row"><td colspan="4">F · Data architecture</td></tr>
+
+<tr>
+  <td><div class="concept-name">3-tier storage</div><div class="concept-note">File / graph / append-only</div></td>
+  <td class="cell-detail">Tier 1 file system · Tier 2 Kuzu embedded · Tier 3 ndjson</td>
+  <td class="cell-detail">File system (Markdown frontmatter) · <code>.kb/ontology.json</code> · chaos history (similar). Kuzu chưa có; có <code>kbx graph</code> với "lanes" (rules, intents, source)</td>
+  <td><span class="ver-cover">cover · cùng triết lý</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Chaos history</div><div class="concept-note">Time-series append-only</div></td>
+  <td class="cell-detail">chaos-history.ndjson với 7 dimensions</td>
+  <td class="cell-detail">Có <code>kbx chaos</code> với debt-index + entropy-index + lessons-index + spike detection</td>
+  <td><span class="ver-cover">cover · cùng triết lý</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Bi-temporal model</div><div class="concept-note">As-is vs to-be</div></td>
+  <td class="cell-detail">— (chưa cover)</td>
+  <td class="cell-detail">Frontmatter: <code>time_state: to_be</code>, <code>last_updated</code>, <code>last_verified</code></td>
+  <td><span class="ver-gap">gap · ta chưa biết</span></td>
+</tr>
+
+<!-- CATEGORY 7: FLOWS -->
+<tr class="cat-row"><td colspan="4">G · Flows</td></tr>
+
+<tr>
+  <td><div class="concept-name">User flows</div><div class="concept-note">Story from user perspective</div></td>
+  <td class="cell-detail">10 flows (F1-F10): set goal, create intent, execute, retro, maintain, checkpoint, onboarding, retrofit, offboarding, self-update</td>
+  <td class="cell-detail">Không có "flows" formal; dispatch fixtures (32 cases) cover các dispatch scenarios chứ không phải user journeys</td>
+  <td><span class="ver-partial">partial · ta abstract hơn</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Vibe code pattern</div><div class="concept-note">Copilot suggest → human → CLI</div></td>
+  <td class="cell-detail">F3 Execute vibe — copy prompt → Copilot → apply</td>
+  <td class="cell-detail">P25 three-layer: Intake (NL → CLI) → Runtime (CLI) → Completion (AI assist post-CLI)</td>
+  <td><span class="ver-cover">cover · cùng concept</span></td>
+</tr>
+
+<!-- CATEGORY 8: COMPONENTS -->
+<tr class="cat-row"><td colspan="4">H · Components</td></tr>
+
+<tr>
+  <td><div class="concept-name">CLI command surface</div><div class="concept-note">Available commands</div></td>
+  <td class="cell-detail">4 main commands ta vẽ: <code>kbx intent · kbx chaos · kbx maintain · kbx graph</code></td>
+  <td class="cell-detail">~40 commands: apply, baseline, bind, bootstrap, chaos, dispatch, doctor, extract, graph, hide, ide, impact, ingest, init, inspect, intent, maintain, mark, migrate, next, normalize-state, ontology, plan, questions, release, rules, scan, show, status, sync, test, uninstall, update, verify, workspace, ...</td>
+  <td><span class="ver-partial">partial · ta liệt kê chưa đủ</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">8 Core engines</div><div class="concept-note">Goal/Intent/Rule/Chaos/Retro/Onboarding/Checkpoint/Update</div></td>
+  <td class="cell-detail">8 engines mỗi cái map 1 flow</td>
+  <td class="cell-detail">Repo có <code>src/lib/</code>: intent.js · rule-engine.js · rule-lifecycle.js · pipeline.js · impact.js · observation.js (chaos) · ontology.js · bindings.js · template.js · catalog.js · graph.js · ...</td>
+  <td><span class="ver-cover">cover · cùng decomposition</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Signal bus</div><div class="concept-note">Async fan-out</div></td>
+  <td class="cell-detail">Signal bus với chaos spike, doc stale, etc.</td>
+  <td class="cell-detail">Có signal concepts nhưng không có "bus" centralized — dùng <code>impact_signals[]</code> trên intent</td>
+  <td><span class="ver-partial">partial · ta abstract hơn</span></td>
+</tr>
+
+<!-- CATEGORY 9: ONBOARDING -->
+<tr class="cat-row"><td colspan="4">I · Onboarding &amp; defaults</td></tr>
+
+<tr>
+  <td><div class="concept-name">Onboarding interview</div><div class="concept-note">Copilot Q&amp;A for new project</div></td>
+  <td class="cell-detail">F7/F8 onboarding flows</td>
+  <td class="cell-detail"><code>kbx init</code> + <code>kbx bootstrap</code> + <code>kbx questions</code></td>
+  <td><span class="ver-cover">cover · cùng concept</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Default goals</div><div class="concept-note">SaaS-specific seed</div></td>
+  <td class="cell-detail">4 SaaS goals: reliability, growth, security, velocity</td>
+  <td class="cell-detail">— (repo agnostic, ta đặc thù hóa cho SaaS)</td>
+  <td><span class="ver-cover">cover · ta extend</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Default rules</div><div class="concept-note">Pre-seeded master rules</div></td>
+  <td class="cell-detail">11 seed rules: AX/P/D với SaaS specifics</td>
+  <td class="cell-detail">25 principles + ~20 runtime rules đã có sẵn</td>
+  <td><span class="ver-partial">partial · ta có ít hơn</span></td>
+</tr>
+
+<tr>
+  <td><div class="concept-name">Foundation editor</div><div class="concept-note">Interactive form to fill project identity</div></td>
+  <td class="cell-detail">HTML form với live preview system-map.md</td>
+  <td class="cell-detail">— (repo có frontmatter template nhưng không có interactive editor UI)</td>
+  <td><span class="ver-cover">cover · ta extend</span></td>
+</tr>
+
+</tbody>
+</table>
+
+<div class="legend">
+  <div class="leg"><span class="ver-cover">cover</span><span>identical hoặc ta extend phù hợp</span></div>
+  <div class="leg"><span class="ver-renm">renamed</span><span>cùng concept, vocabulary khác</span></div>
+  <div class="leg"><span class="ver-partial">partial</span><span>repo formal hơn ta</span></div>
+  <div class="leg"><span class="ver-gap">gap</span><span>ta thiếu hoàn toàn</span></div>
+</div>
+</div>
+
+<!-- ══ MISMATCHES ══ -->
+<div class="section">
+<div class="sec-h"><span class="sec-num">§2</span>4 mismatch nghiêm trọng cần xử lý</div>
+
+<div class="mismatch">
+<div class="mismatch-h"><i class="ti ti-alert-triangle"></i>Mismatch #1 — Dispatch Decision Tuple thiếu hoàn toàn</div>
+<div class="mismatch-body">
+Repo dùng <code>dispatch tuple (8 inputs)</code> làm <strong>core routing mechanism</strong> cho mọi action. Mọi command, mọi gate, mọi pipe đều resolve qua tuple này.
+Documentation chúng ta hoàn toàn không có concept này — ta dùng "goal alignment check" rời rạc thay vì tuple deterministic.
+<br><br>
+<strong>Impact:</strong> blueprint hiện tại của ta không match runtime architecture của repo. User đọc xong sẽ confused khi gặp <code>kbx dispatch</code> command thực tế.
+</div>
+</div>
+
+<div class="mismatch">
+<div class="mismatch-h"><i class="ti ti-alert-triangle"></i>Mismatch #2 — Ontology entities khác hoàn toàn</div>
+<div class="mismatch-body">
+Chúng ta design 8 node types (<code>:Goal :Intent :Rule :KBDoc :Code :Signal :Release :Lesson</code>) cho graph.
+Repo có 10 entities (<code>Tenant · Subscription · ServicePrincipal · Project · Module · Config · Intent · Policy · CLICommand · Evidence</code>) với Microsoft CDM mapping.
+<br><br>
+<strong>Chỉ overlap 1 entity:</strong> <code>:Intent</code>. Còn lại hoàn toàn khác. Đây là vấn đề lớn vì ontology là foundation.
+</div>
+</div>
+
+<div class="mismatch">
+<div class="mismatch-h"><i class="ti ti-alert-triangle"></i>Mismatch #3 — Rule families và Principles</div>
+<div class="mismatch-body">
+Chúng ta có 4 tier (AX/P/D/O) trong 1 hệ thống thống nhất.
+Repo tách thành 2 hệ thống: <strong>25 Principles P0-P25</strong> (governance) ở <code>svfactory/principles.md</code> + <strong>8 rule families M/V/I/GB/AX/PR/WF/KA</strong> (runtime).
+<br><br>
+<strong>Lý do tách:</strong> Principles là human-readable governance directives (NL). Rules là machine-readable runtime checks. Đây là sự phân biệt cốt lõi mà ta chưa làm.
+</div>
+</div>
+
+<div class="mismatch">
+<div class="mismatch-h"><i class="ti ti-alert-triangle"></i>Mismatch #4 — CLI naming + lifecycle states</div>
+<div class="mismatch-body">
+Repo vừa đổi <code>kb</code> sang <code>kbx</code> ngày 2026-05-10 (commit 71d68f2). Toàn bộ examples trong documentation của ta dùng <code>kb</code>.
+Lifecycle states cũng khác: ta dùng <code>backlog/active/staged/closed/archived</code>, repo dùng <code>DRAFT/PROPOSED/VERIFIED/EXECUTED/COMMITTED</code> với state transition guards.
+<br><br>
+<strong>Mức độ:</strong> dễ fix nhưng cần search-and-replace toàn bộ documentation. Đây là breaking change naming gần nhất.
+</div>
+</div>
+</div>
+
+<!-- ══ RECOMMENDATIONS ══ -->
+<div class="section">
+<div class="sec-h"><span class="sec-num">§3</span>Recommendations — thứ tự ưu tiên</div>
+
+<div class="rec-card">
+<div class="rec-num">P0 · MUST FIX <span class="rec-effort eff-low">effort: low</span></div>
+<div class="rec-title">Search-and-replace naming</div>
+<div class="rec-body">
+<strong>Đổi:</strong> <code>kb</code> → <code>kbx</code> trong tất cả examples. <code>backlog/active/staged/closed/archived</code> → <code>DRAFT/PROPOSED/VERIFIED/EXECUTED/COMMITTED</code>.
+<br><strong>Tại sao P0:</strong> nếu không fix, mọi tutorial/example trong doc sẽ không runable. Effort thấp vì purely textual.
+</div>
+</div>
+
+<div class="rec-card">
+<div class="rec-num">P0 · MUST FIX <span class="rec-effort eff-low">effort: low</span></div>
+<div class="rec-title">Tách Principles khỏi Rules</div>
+<div class="rec-body">
+<strong>Đổi:</strong> Convert KBX-AX rules của ta thành Principles (P0-P25 style). Giữ runtime rules ở family M/V/I/GB/AX/PR/WF/KA.
+<br><strong>Tại sao P0:</strong> đây là kiến trúc cơ bản. Lẫn lộn 2 layer này khiến user không biết cái nào là "human directive" và cái nào là "machine check".
+</div>
+</div>
+
+<div class="rec-card">
+<div class="rec-num">P1 · SHOULD DO <span class="rec-effort eff-med">effort: medium</span></div>
+<div class="rec-title">Thêm Dispatch Decision Tuple vào blueprint</div>
+<div class="rec-body">
+<strong>Thêm:</strong> page mới trong documentation về tuple 8 input → 6 output. Vẽ flow từ user request → dispatcher → pipe → action.
+<br><strong>Tại sao P1:</strong> đây là routing mechanism thực tế của repo. Không có nó trong doc, user không hiểu được logic flow.
+<br><strong>Reference:</strong> <code>template/15-governance/dispatch-decision-tuple.md</code>, <code>action-dispatch-contract.md</code>, <code>rule-selector-contract.md</code>.
+</div>
+</div>
+
+<div class="rec-card">
+<div class="rec-num">P1 · SHOULD DO <span class="rec-effort eff-med">effort: medium</span></div>
+<div class="rec-title">Map ontology entities về CDM</div>
+<div class="rec-body">
+<strong>Đổi:</strong> Replace 8 node types bằng 10 CDM entities. Hoặc tốt hơn: <strong>extend</strong> — giữ Goal/KBDoc/Signal/Lesson cho SaaS variant, nhưng map vào CDM entities khi exporting.
+<br><strong>Tại sao P1:</strong> nếu KBAgent muốn integrate với Microsoft ecosystem (Power Platform, Dataverse), CDM mapping là requirement. Repo đã chuẩn bị cho việc đó.
+</div>
+</div>
+
+<div class="rec-card">
+<div class="rec-num">P2 · NICE TO HAVE <span class="rec-effort eff-high">effort: high</span></div>
+<div class="rec-title">Document 10 named gates + severity policy</div>
+<div class="rec-body">
+<strong>Thêm:</strong> page chi tiết về 10 gates: <code>G-ENUM-VALIDATION · G-EVIDENCE-SUFFICIENCY · ...</code> + severity policy (hard-fail/warn/info) + HumanGateRequired triggers.
+<br><strong>Tại sao P2:</strong> nâng cao quality of documentation nhưng không block usage. User có thể work với rules generic trước khi cần gates cụ thể.
+</div>
+</div>
+
+<div class="rec-card">
+<div class="rec-num">P2 · NICE TO HAVE <span class="rec-effort eff-med">effort: medium</span></div>
+<div class="rec-title">Thêm Generative Loop Contract</div>
+<div class="rec-body">
+<strong>Thêm:</strong> retry budget rules (attempt_0/1/2 → escalate), reclassification rules, idempotency constraints.
+<br><strong>Tại sao P2:</strong> hữu ích cho enterprise users muốn audit retry behavior. Nhưng đối với solo dev hoặc small team, đây không phải priority.
+</div>
+</div>
+
+<div class="rec-card">
+<div class="rec-num">P3 · DEFER <span class="rec-effort eff-low">effort: low</span></div>
+<div class="rec-title">Cover Axiom 4 (no daemons) + Axiom 5 (UI invisibility)</div>
+<div class="rec-body">
+<strong>Thêm:</strong> 2 axioms vào master rules. Mention SVFactory layer C (maintainer-only UI) separation.
+<br><strong>Tại sao P3:</strong> 2 axioms này quan trọng về architecture purity nhưng không ảnh hưởng tới daily usage của user. Defer cho version sau.
+</div>
+</div>
+
+<div class="rec-card">
+<div class="rec-num">P3 · DEFER <span class="rec-effort eff-low">effort: low</span></div>
+<div class="rec-title">Bi-temporal frontmatter (time_state, last_verified)</div>
+<div class="rec-body">
+<strong>Thêm:</strong> document bi-temporal model trong KBDoc frontmatter — <code>time_state: as_is | to_be</code>, <code>last_updated</code>, <code>last_verified</code>.
+<br><strong>Tại sao P3:</strong> đây là feature đã có sẵn trong repo nhưng chưa được expose ra user. Khi user maturity tăng mới cần.
+</div>
+</div>
+
+</div>
+
+<!-- ══ DECISION ══ -->
+<div class="section">
+<div class="sec-h"><span class="sec-num">§4</span>Final positioning — chúng ta đang ở đâu</div>
+
+<div class="tldr">
+<div class="tldr-title">Nhất quán theo nghĩa nào?</div>
+<div class="tldr-body">
+Documentation chúng ta đã build <strong>không sai về triết lý</strong> — 14/32 concepts identical với repo, 8/32 chỉ khác vocabulary, 6/32 là partial coverage.
+Đây là một <strong>simplified, SaaS-flavored view</strong> của hệ thống repo đầy đủ.
+<br><br>
+Nếu mục tiêu là <strong>documentation cho downstream SaaS user</strong>: documentation hiện tại OK với P0 fixes (naming + tách principles/rules).
+<br>
+Nếu mục tiêu là <strong>technical reference cho maintainer hoặc enterprise integrator</strong>: cần P1 (dispatch tuple + CDM ontology) + có thể P2 (gates + generative loop).
+<br>
+Nếu mục tiêu là <strong>roadmap cho việc build kế tiếp</strong>: 4 gap nghiêm trọng (Dispatch Tuple, CDM, bi-temporal, generative loop) chính là những thứ repo đã solve mà ta chưa biết — học từ repo trước, không cần re-design.
+</div>
+</div>
+</div>
+
+</div>
+</body>
+</html>

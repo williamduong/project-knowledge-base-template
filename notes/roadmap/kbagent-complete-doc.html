@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent — Complete System Documentation</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c0c;--bg1:#141414;--bg2:#1b1b1b;--bg3:#222;--bg4:#2c2c2c;--bg5:#3a3a3a;
+  --bd:#1e1e1e;--bd2:#2e2e2e;--bd3:#444;
+  --t0:#f2efe9;--t1:#cac6be;--t2:#8a8680;--t3:#505050;
+  --green:#3a9468;--gd:#0c1e14;--gt:#5ed498;
+  --amber:#b88010;--ad:#241c04;--at:#e0b030;
+  --red:#904040;--rd:#1e1010;--rt:#d07070;
+  --blue:#1c5898;--bld:#081830;--bt:#68a8dc;
+  --purple:#583898;--pd:#141028;--pt:#a070d8;
+  --teal:#1a7870;--td:#061818;--tt:#50c0b4;
+  --coral:#8a3820;--cd:#221008;--ct:#d08060;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html,body{background:var(--bg);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.6;height:100%}
+.shell{display:flex;height:100vh;overflow:hidden}
+
+/* ─── SIDEBAR ─── */
+.sb{width:240px;flex-shrink:0;background:var(--bg1);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden}
+.sb-top{flex-shrink:0}
+.sb-logo{padding:14px 14px 11px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
+.sb-ico{width:28px;height:28px;background:var(--blue);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#d0e8ff;flex-shrink:0}
+.sb-name{font-size:13px;font-weight:500;color:var(--t0)}
+.sb-ver{font-size:10px;color:var(--t3);font-family:var(--mono)}
+.sb-search-wrap{padding:8px 10px;border-bottom:1px solid var(--bd)}
+.sb-search{width:100%;background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:5px 9px;font-size:11px;color:var(--t0);font-family:var(--sans);outline:none}
+.sb-search:focus{border-color:var(--bt)}
+.sb-search::placeholder{color:var(--t3)}
+.sb-nav{flex:1;overflow-y:auto;padding:4px 0 12px;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.sb-nav::-webkit-scrollbar{width:3px}
+.sb-nav::-webkit-scrollbar-thumb{background:var(--bg5)}
+.sb-sec{padding:10px 12px 4px;font-size:10px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.08em}
+.nav-item{display:flex;align-items:center;gap:7px;padding:6px 10px;margin:1px 5px;border-radius:4px;cursor:pointer;transition:all .1s;font-size:12px;color:var(--t2);user-select:none}
+.nav-item:hover{background:var(--bg3);color:var(--t1)}
+.nav-item.on{background:var(--bld);color:var(--bt)}
+.nav-item i{font-size:13px;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:9px;padding:1px 5px;border-radius:2px;font-family:var(--mono);flex-shrink:0}
+.sb-foot{padding:10px 12px;border-top:1px solid var(--bd);font-size:10px;color:var(--t3);line-height:1.7;flex-shrink:0}
+
+/* ─── MAIN ─── */
+.main{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.main::-webkit-scrollbar{width:5px}
+.main::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px}
+
+/* ─── PAGES ─── */
+.doc-page{display:none}
+.doc-page.on{display:block}
+
+/* ─── PAGE HEADER ─── */
+.pg-hd{background:var(--bg1);border-bottom:1px solid var(--bd);padding:22px 30px 18px;position:sticky;top:0;z-index:20}
+.pg-hd-row{display:flex;align-items:center;gap:12px}
+.pg-hd-ico{width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.pg-title{font-size:17px;font-weight:500;color:var(--t0)}
+.pg-sub{font-size:12px;color:var(--t2);margin-top:2px}
+.pg-tags{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+
+/* ─── CONTENT ─── */
+.pg-body{padding:26px 30px 52px;max-width:900px}
+.section{margin-bottom:28px}
+.sec-h{font-size:14px;font-weight:500;color:var(--t0);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px}
+.sec-h i{font-size:14px;color:var(--t3)}
+
+/* ─── CHIPS ─── */
+.chip{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 7px;border-radius:3px;font-weight:500;font-family:var(--mono);white-space:nowrap;line-height:1.5}
+.cg{background:var(--gd);color:var(--gt);border:1px solid #183828}
+.ca{background:var(--ad);color:var(--at);border:1px solid #382808}
+.cr{background:var(--rd);color:var(--rt);border:1px solid #381818}
+.cb{background:var(--bld);color:var(--bt);border:1px solid #143060}
+.cp{background:var(--pd);color:var(--pt);border:1px solid #281848}
+.ct{background:var(--td);color:var(--tt);border:1px solid #0e2828}
+.cgr{background:var(--bg3);color:var(--t2);border:1px solid var(--bd2)}
+
+/* ─── CALLOUT ─── */
+.callout{background:var(--bg2);border-left:3px solid var(--bt);border-radius:0 5px 5px 0;padding:11px 14px;margin-bottom:14px;font-size:12px;color:var(--t1);line-height:1.75}
+.callout.green{border-left-color:var(--green)}
+.callout.amber{border-left-color:var(--at)}
+.callout.purple{border-left-color:var(--pt)}
+.callout strong{color:var(--t0);font-weight:500}
+.callout code{font-family:var(--mono);font-size:10px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--bt)}
+
+/* ─── CARDS ─── */
+.card{background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;padding:13px 15px;margin-bottom:10px}
+.card-h{font-size:12px;font-weight:500;color:var(--t0);margin-bottom:5px;display:flex;align-items:center;gap:7px}
+.card-b{font-size:12px;color:var(--t1);line-height:1.7}
+.card-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.card-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-n{font-family:var(--mono);font-size:26px;font-weight:300;color:var(--t0);margin-bottom:3px}
+.stat-l{font-size:11px;color:var(--t3)}
+
+/* ─── TABLE ─── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px}
+.tbl th{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;padding:0 11px 7px;text-align:left;font-weight:500;white-space:nowrap}
+.tbl td{padding:7px 11px;border-top:1px solid var(--bd);color:var(--t1);vertical-align:top;line-height:1.5}
+.tbl tbody tr:hover td{background:var(--bg2)}
+.mono{font-family:var(--mono);font-size:11px}
+.blue{color:var(--bt)} .green{color:var(--gt)} .amber{color:var(--at)} .purple{color:var(--pt)} .teal{color:var(--tt)} .red{color:var(--rt)}
+
+/* ─── CODE ─── */
+pre,code{font-family:var(--mono)}
+pre{background:var(--bg1);border:1px solid var(--bd2);border-radius:5px;padding:13px 15px;overflow-x:auto;font-size:11px;line-height:1.75;color:var(--t1);margin-bottom:14px}
+.k{color:var(--bt)} .s{color:var(--gt)} .n{color:var(--at)} .c{color:var(--t3)} .p{color:var(--pt)}
+code{font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:2px;color:var(--bt)}
+
+/* ─── PIPE STEP ─── */
+.pipe{display:flex;flex-direction:column;gap:0;margin-bottom:14px}
+.pipe-row{display:flex;align-items:flex-start;gap:11px;padding:11px 0;border-bottom:1px solid var(--bd)}
+.pipe-row:last-child{border:none}
+.pipe-n{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:500;flex-shrink:0;margin-top:2px}
+.pipe-c{flex:1}
+.pipe-title{font-size:12px;font-weight:500;color:var(--t0);margin-bottom:2px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.pipe-desc{font-size:11px;color:var(--t2);line-height:1.6;font-family:var(--mono)}
+.exit0{font-size:10px;padding:1px 6px;border-radius:2px;background:var(--gd);color:var(--gt);font-family:var(--mono)}
+.exit1{font-size:10px;padding:1px 6px;border-radius:2px;background:var(--rd);color:var(--rt);font-family:var(--mono)}
+
+/* ─── RULE ROW ─── */
+.rules-block{background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;overflow:hidden;margin-bottom:14px}
+.rule-r{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s}
+.rule-r:hover{background:var(--bg3)}
+.rule-r:last-child{border:none}
+.rule-rid{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px;flex-shrink:0;margin-top:2px;white-space:nowrap}
+.r-ax{background:var(--pd);color:var(--pt);border:1px solid #2a1848}
+.r-p{background:var(--bld);color:var(--bt);border:1px solid #143060}
+.r-d{background:var(--ad);color:var(--at);border:1px solid #382808}
+.r-o{background:var(--gd);color:var(--gt);border:1px solid #183828}
+.rule-body{flex:1}
+.rule-t{font-size:12px;font-weight:500;color:var(--t0);margin-bottom:2px}
+.rule-d{font-size:11px;color:var(--t2);line-height:1.6}
+.rule-st{font-size:10px;padding:2px 6px;border-radius:3px;font-family:var(--mono);flex-shrink:0;margin-top:2px}
+.rs-v{background:var(--gd);color:var(--gt)} .rs-i{background:var(--bld);color:var(--bt)} .rs-p{background:var(--ad);color:var(--at)} .rs-d{background:var(--bg4);color:var(--t2)}
+
+/* ─── GOAL CARD ─── */
+.goal-c{background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid var(--green);border-radius:4px;padding:12px 14px;margin-bottom:10px}
+.goal-n{font-size:12px;font-weight:500;color:var(--t0);margin-bottom:2px}
+.goal-m{font-size:10px;color:var(--t3);font-family:var(--mono);margin-bottom:8px}
+.crit{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:11px}
+.crit-lbl{color:var(--t1);flex:1}
+.crit-v{color:var(--at);font-family:var(--mono);font-size:10px;flex-shrink:0}
+
+/* ─── NODE GRID ─── */
+.node-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.node-c{background:var(--bg2);border:1px solid var(--bd2);border-radius:4px;padding:10px 11px}
+.node-lbl{font-family:var(--mono);font-size:11px;font-weight:500;margin-bottom:5px}
+.node-p{font-size:10px;color:var(--t3);font-family:var(--mono);line-height:1.75}
+
+/* ─── FLOW STEPS ─── */
+.fsteps{display:flex;gap:0;margin-bottom:12px;border:1px solid var(--bd2);border-radius:4px;overflow:hidden}
+.fs{flex:1;text-align:center;padding:7px 3px;font-size:11px;font-weight:500;background:var(--bg2);color:var(--t3);font-family:var(--mono);border-right:1px solid var(--bd2);position:relative}
+.fs:last-child{border-right:none}
+.fs.hl{background:var(--bld);color:var(--bt)}
+.fs.hl::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--bt)}
+.fs.done{color:var(--gt)}
+.fs.done::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--green)}
+
+/* ─── EDITABLE FIELD ─── */
+.field{margin-bottom:12px}
+.fl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin-bottom:4px}
+.fi{width:100%;background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:7px 10px;font-size:12px;color:var(--t0);font-family:var(--sans);outline:none;transition:border-color .1s}
+.fi:focus{border-color:var(--bt)}
+.fi::placeholder{color:var(--t3)}
+.fi-sel{cursor:pointer}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+/* ─── CRIT EDIT ─── */
+.crit-edit-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.ce-name{flex:1;background:var(--bg3);border:1px solid var(--bd2);border-radius:3px;padding:4px 8px;font-size:11px;color:var(--t0);font-family:var(--sans);outline:none}
+.ce-name:focus{border-color:var(--bt)}
+.ce-dir{width:34px;background:var(--bg3);border:1px solid var(--bd2);border-radius:3px;padding:4px 2px;font-size:11px;color:var(--at);font-family:var(--mono);outline:none;text-align:center}
+.ce-num{width:64px;background:var(--bg3);border:1px solid var(--bd2);border-radius:3px;padding:4px 8px;font-size:11px;color:var(--at);font-family:var(--mono);outline:none;text-align:right}
+.ce-unit{width:80px;background:var(--bg3);border:1px solid var(--bd2);border-radius:3px;padding:4px 8px;font-size:11px;color:var(--t2);font-family:var(--mono);outline:none}
+.ce-del{width:20px;height:20px;background:transparent;border:none;color:var(--t3);cursor:pointer;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.ce-del:hover{background:var(--rd);color:var(--rt)}
+.add-crit-btn{background:none;border:none;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:4px;padding:2px 0;transition:color .1s}
+.add-crit-btn:hover{color:var(--bt)}
+
+/* ─── BTN ─── */
+.btn{height:30px;padding:0 12px;border-radius:4px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--bd3);background:transparent;color:var(--t1);font-family:var(--sans);transition:all .1s}
+.btn:hover{background:var(--bg4);color:var(--t0)}
+.btn i{font-size:13px}
+.btn-p{background:var(--blue);border-color:var(--blue);color:#d0e8ff}
+.btn-p:hover{background:#1a5090}
+.btn-g{background:var(--gd);border-color:var(--green);color:var(--gt)}
+.btn-g:hover{background:#142a1e}
+.btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:14px}
+
+/* ─── SVG WRAPPER ─── */
+.svg-box{background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;padding:14px;margin-bottom:14px;overflow-x:auto}
+
+/* ─── DOCTRINE ─── */
+.doctrine-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--bd2);border-radius:4px;margin-bottom:6px}
+.doctrine-row.cur{background:var(--bld);border-color:var(--blue)}
+.doctrine-row.done{opacity:.55}
+.doctrine-row.next{opacity:.65}
+
+/* ─── PREVIEW ─── */
+.preview{background:var(--bg1);border:1px solid var(--bd2);border-radius:5px;padding:14px 16px;font-family:var(--mono);font-size:11px;color:var(--t1);line-height:1.8;white-space:pre-wrap;user-select:all;margin-bottom:14px}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--bg4);border:1px solid var(--bd3);border-radius:4px;padding:7px 14px;font-size:12px;color:var(--t0);opacity:0;transition:all .2s;pointer-events:none;z-index:999}
+.toast.show{opacity:1}
+
+/* ─── SEARCH HL ─── */
+.srhl{background:#b88010;color:#000;border-radius:2px}
+</style>
+</head>
+<body>
+<div class="shell">
+<!-- ─────────── SIDEBAR ─────────── -->
+<div class="sb">
+<div class="sb-top">
+<div class="sb-logo">
+  <div class="sb-ico"><i class="ti ti-brain"></i></div>
+  <div><div class="sb-name">KBAgent</div><div class="sb-ver">v2.7 · SaaS docs</div></div>
+</div>
+<div class="sb-search-wrap">
+  <input class="sb-search" id="sb-search" placeholder="Search docs..." oninput="doSearch(this.value)">
+</div>
+</div>
+<div class="sb-nav">
+  <div class="sb-sec">Overview</div>
+  <div class="nav-item on" onclick="go('blueprint',this)"><i class="ti ti-layout-dashboard"></i>Blueprint</div>
+
+  <div class="sb-sec">Architecture</div>
+  <div class="nav-item" onclick="go('flows',this)"><i class="ti ti-arrows-right"></i>User flows</div>
+  <div class="nav-item" onclick="go('components',this)"><i class="ti ti-puzzle"></i>Components</div>
+  <div class="nav-item" onclick="go('data',this)"><i class="ti ti-database"></i>Data architecture</div>
+
+  <div class="sb-sec">Configuration</div>
+  <div class="nav-item" onclick="go('defdata',this)"><i class="ti ti-table"></i>Default data<span class="nav-badge cg">fixed/custom</span></div>
+  <div class="nav-item" onclick="go('pipelines',this)"><i class="ti ti-git-branch"></i>Pipelines<span class="nav-badge cb">4+6</span></div>
+  <div class="nav-item" onclick="go('rules',this)"><i class="ti ti-list-check"></i>Rules (D+O)<span class="nav-badge ca">12</span></div>
+  <div class="nav-item" onclick="go('masterrules',this)"><i class="ti ti-shield"></i>Master rules<span class="nav-badge cp">7+9</span></div>
+  <div class="nav-item" onclick="go('foundation',this)"><i class="ti ti-map"></i>Foundation<span class="nav-badge ct">editable</span></div>
+</div>
+<div class="sb-foot">
+  <span style="color:var(--gt)">■</span> built-in fixed &nbsp;
+  <span style="color:var(--pt)">■</span> customizable &nbsp;
+  <span style="color:var(--tt)">■</span> auto-generated
+</div>
+</div>
+<!-- ─────────── MAIN ─────────── -->
+<div class="main" id="main">
+
+<!-- ═══════════════ PAGE: BLUEPRINT ═══════════════ -->
+<div class="doc-page on" id="pg-blueprint">
+<div class="pg-hd">
+  <div class="pg-hd-row">
+    <div class="pg-hd-ico" style="background:var(--bld)"><i class="ti ti-layout-dashboard" style="color:var(--bt)"></i></div>
+    <div><div class="pg-title">Blueprint</div><div class="pg-sub">KBAgent — evolvable, human-gated, copilot-driven · SaaS variant v2.7</div></div>
+  </div>
+  <div class="pg-tags"><span class="chip cg">evolvable</span><span class="chip cb">3 layers</span><span class="chip cp">10 flows</span><span class="chip ca">28 rules</span><span class="chip ct">Kuzu graph</span></div>
+</div>
+<div class="pg-body">
+
+<div class="callout green"><strong>KBAgent is evolvable, not self-evolving.</strong> Humans decide direction. System reduces friction, maintains evidence, and proposes — never acts unilaterally. SVFactory is legislative; KBAgent is executive.</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-layers"></i>3-layer architecture</div>
+<div class="svg-box">
+<svg width="100%" viewBox="0 0 640 430" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<!-- L0 -->
+<rect x="8" y="8" width="622" height="98" rx="8" fill="none" stroke="#3a9468" stroke-width="0.8" stroke-dasharray="5 3" opacity="0.6"/>
+<text x="18" y="23" font-family="IBM Plex Sans" font-size="10" fill="#5ed498" font-weight="500">Layer 0 — Goals  (invariant · human-only · shared across all projects)</text>
+<rect x="18" y="32" width="152" height="52" rx="5" fill="#0c1e14" stroke="#3a9468" stroke-width="0.7"/>
+<text x="94" y="54" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="#f0ede8" font-weight="500">Goal</text>
+<text x="94" y="70" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#888480">title · horizon · owner</text>
+<text x="94" y="83" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#888480">criteria [{name,target,unit,current}]</text>
+<rect x="182" y="32" width="148" height="52" rx="5" fill="#0c1e14" stroke="#3a9468" stroke-width="0.5"/>
+<text x="256" y="54" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="#f0ede8" font-weight="500">Sub-goals</text>
+<text x="256" y="70" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#888480">:SERVES → Goal</text>
+<line x1="170" y1="58" x2="180" y2="58" stroke="#5ed498" stroke-width="0.8" marker-end="url(#arr)"/>
+<rect x="472" y="32" width="148" height="52" rx="5" fill="#141028" stroke="#583898" stroke-width="0.5"/>
+<text x="546" y="54" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" fill="#f0ede8" font-weight="500">Master rules</text>
+<text x="546" y="70" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#888480">KBX-AX · ontology · policy</text>
+<!-- L1 -->
+<rect x="8" y="118" width="622" height="196" rx="8" fill="none" stroke="#1c5898" stroke-width="0.8" stroke-dasharray="6 4" opacity="0.5"/>
+<text x="18" y="133" font-family="IBM Plex Sans" font-size="10" fill="#68a8dc" font-weight="500">Layer 1 — Main loop  (evolvable · human-gated at every decision point)</text>
+<rect x="18" y="142" width="610" height="30" rx="4" fill="none" stroke="#2e2e2e" stroke-width="0.5"/>
+<rect x="26" y="146" width="118" height="22" rx="3" fill="#222" stroke="#2e2e2e" stroke-width="0.4"/><text x="85" y="157" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#c8c4bc">Human creates</text>
+<rect x="152" y="146" width="148" height="22" rx="3" fill="#222" stroke="#2e2e2e" stroke-width="0.4"/><text x="226" y="157" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#c8c4bc">Signal detector proposes</text>
+<rect x="308" y="146" width="158" height="22" rx="3" fill="#241c04" stroke="#b88010" stroke-width="0.4"/><text x="387" y="157" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#e0b030">Maintain: fix intents</text>
+<rect x="18" y="182" width="610" height="26" rx="4" fill="#221008" stroke="#8a3820" stroke-width="0.6"/>
+<text x="323" y="195" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#d08060" font-weight="500">Goal alignment check — pass → proceed · fail → warn → human: backlog / exception / update goal</text>
+<!-- 4 steps -->
+<rect x="18" y="218" width="108" height="52" rx="5" fill="#081830" stroke="#1c5898" stroke-width="0.6"/>
+<text x="72" y="238" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#f0ede8" font-weight="500">① Generate</text>
+<text x="72" y="254" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#888480">backlog → active</text>
+<line x1="126" y1="244" x2="144" y2="244" stroke="#68a8dc" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="146" y="218" width="128" height="52" rx="5" fill="#081830" stroke="#1c5898" stroke-width="0.8"/>
+<text x="210" y="238" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#f0ede8" font-weight="500">② Execute</text>
+<text x="210" y="252" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#888480">Copilot · kbx CLI</text>
+<text x="210" y="265" text-anchor="middle" font-family="IBM Plex Sans" font-size="9" fill="#68a8dc">exit 0 | exit 1</text>
+<line x1="274" y1="244" x2="292" y2="244" stroke="#68a8dc" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="294" y="218" width="128" height="52" rx="5" fill="#141028" stroke="#583898" stroke-width="0.8"/>
+<text x="358" y="235" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#f0ede8" font-weight="500">③ Retro</text>
+<text x="358" y="250" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#a070d8">ONLY graph write</text>
+<text x="358" y="264" text-anchor="middle" font-family="IBM Plex Sans" font-size="9" fill="#888480">evidence · :Lesson · :ADVANCES</text>
+<line x1="422" y1="244" x2="440" y2="244" stroke="#68a8dc" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="442" y="218" width="108" height="52" rx="5" fill="#221008" stroke="#8a3820" stroke-width="0.6"/>
+<text x="496" y="238" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#f0ede8" font-weight="500">④ Measure</text>
+<text x="496" y="254" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#888480">chaos · KPI · signals</text>
+<path d="M496 270 Q496 308 72 308 Q72 282 72 272" fill="none" stroke="#68a8dc" stroke-width="0.8" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+<text x="284" y="305" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#68a8dc">next cycle — idles if no intent in backlog</text>
+<!-- L2 -->
+<rect x="8" y="326" width="622" height="92" rx="8" fill="none" stroke="#2e2e2e" stroke-width="0.5" opacity="0.5"/>
+<text x="18" y="341" font-family="IBM Plex Sans" font-size="10" fill="#888480" font-weight="500">Layer 2 — Unified Knowledge Graph  (Kuzu embedded · written only at ③ Retro · domain-agnostic)</text>
+<rect x="18" y="350" width="610" height="32" rx="5" fill="#061818" stroke="#1a7870" stroke-width="0.7"/>
+<text x="323" y="363" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" fill="#f0ede8" font-weight="500">Unified Knowledge Graph — 1 embedded DB</text>
+<text x="323" y="377" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#50c0b4">:Goal :Intent :Rule :KBDoc :Code :Signal :Release :Lesson  ·  evidence metadata on every node + edge</text>
+<text x="323" y="410" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#505050">Human gates: goal change · intent approve · goal alignment · retro sign-off · maintain approve · update validate</text>
+<!-- feedback arrow L1→L0 criteria -->
+<path d="M550 218 Q562 218 562 58 Q562 42 622 42" fill="none" stroke="#5ed498" stroke-width="0.7" stroke-dasharray="3 3" marker-end="url(#arr)"/>
+</svg>
+</div>
+</div>
+
+<div class="card-grid">
+  <div class="card"><div class="card-h"><i class="ti ti-ban" style="color:var(--rt)"></i>Not self-evolving</div><div class="card-b">Human approval at every gate. Copilot suggests, human approves, CLI executes. System proposes — never acts unilaterally.</div></div>
+  <div class="card"><div class="card-h"><i class="ti ti-lock" style="color:var(--at)"></i>Single graph write point</div><div class="card-b">Graph written ONLY at ③ Retro via <code>retro:write</code>. All other ops read-only. Guarantees evidence quality and consistent state.</div></div>
+  <div class="card"><div class="card-h"><i class="ti ti-planet" style="color:var(--bt)"></i>Domain-agnostic core</div><div class="card-b">Primitives (Intent, Goal, Rule, Signal) contain zero domain logic. SaaS rules/goals live in config — swappable per domain.</div></div>
+  <div class="card"><div class="card-h"><i class="ti ti-terminal" style="color:var(--gt)"></i>Deterministic gate</div><div class="card-b"><code>kbx</code> CLI exits 0 or 1 only. No partial success. No LLM in the gate path. Gate is predictable regardless of AI output quality.</div></div>
+</div>
+
+</div></div>
+
+<!-- ═══════════════ PAGE: FLOWS ═══════════════ -->
+<div class="doc-page" id="pg-flows">
+<div class="pg-hd">
+  <div class="pg-hd-row">
+    <div class="pg-hd-ico" style="background:var(--bld)"><i class="ti ti-arrows-right" style="color:var(--bt)"></i></div>
+    <div><div class="pg-title">User flows</div><div class="pg-sub">10 flows — onboarding đến offboarding. Flows = user perspective; Pipelines = technical steps.</div></div>
+  </div>
+</div>
+<div class="pg-body">
+
+<table class="tbl">
+<thead><tr><th>#</th><th>Flow</th><th>Trigger</th><th>Workflow state</th><th>→</th></tr></thead>
+<tbody>
+<tr><td class="mono blue">F1</td><td>Set / change goal</td><td>Human wants to set or update a goal</td><td>:Goal node saved · intents re-checked</td><td class="mono">F2</td></tr>
+<tr><td class="mono blue">F2</td><td>Create &amp; activate intent</td><td>Human or signal detector</td><td>Workflow state: <code>_active/</code> (workflow lifecycle) · ontology draft state is separate</td><td class="mono">F3</td></tr>
+<tr><td class="mono blue">F3</td><td>Execute intent (vibe code)</td><td>Intent active · Dashboard open</td><td>Intent staged · gate exit 0 · ontology state advances toward <code>VERIFIED</code></td><td class="mono">F4</td></tr>
+<tr><td class="mono blue">F4</td><td>Retrospective</td><td>Intent staged · human starts retro</td><td>Intent archived · graph updated · criteria advance · ontology state reaches <code>COMMITTED</code></td><td class="mono">F1 or idle</td></tr>
+<tr><td class="mono amber">F5</td><td>Maintain loop</td><td>Chaos spike / cron / manual</td><td>Fix intents closed · workflow state returns to backlog/active as needed</td><td class="mono">F3→F4</td></tr>
+<tr><td class="mono amber">F6</td><td>Checkpoint / Focus</td><td>Human saves or loads checkpoint</td><td>Context restored · ready for F3</td><td class="mono">F3</td></tr>
+<tr><td class="mono green">F7</td><td>New project onboarding</td><td><code>kbx init</code> — empty repo</td><td>Doctor ✓ · baseline set · intents in backlog workflow state</td><td class="mono">F2</td></tr>
+<tr><td class="mono green">F8</td><td>Source maintenance onboarding</td><td><code>kbx init --retrofit</code></td><td>Debt acknowledged · chaos baseline set · workflow state may seed backlog</td><td class="mono">F5 or F2</td></tr>
+<tr><td class="mono red">F9</td><td>Offboarding / uninstall</td><td>Human: <code>kbx uninstall</code></td><td>Archive exported · hooks removed · clean</td><td class="mono">—</td></tr>
+<tr><td class="mono purple">F10</td><td>KBAgent self-update</td><td>SVFactory releases new version</td><td>Version bumped · :Release node in graph · ontology lifecycle unaffected</td><td class="mono">F3→F4</td></tr>
+</tbody>
+</table>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-repeat"></i>Core loop — F2 → F3 → F4</div>
+<div class="fsteps">
+  <div class="fs done">F1 Goals</div>
+  <div class="fs hl">F2 Intent</div>
+  <div class="fs">F3 Execute</div>
+  <div class="fs">F4 Retro</div>
+  <div class="fs" style="color:var(--gt)">↻ next</div>
+</div>
+<div class="callout">F5 (maintain) injects fix intents into F3 when chaos spikes. F6 (checkpoint) lets human resume at any point. F7+F8 are one-time onboarding flows that hand off to F2.</div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-brand-speedtest"></i>F3 — Execute detail (vibe code pattern)</div>
+<div class="pipe">
+<div class="pipe-row"><div class="pipe-n" style="background:var(--bg3);color:var(--bt)">1</div><div class="pipe-c"><div class="pipe-title">Open Dashboard · pick intent</div><div class="pipe-desc">step dots: ✓ ● ○ ○ · suggest buttons visible · intent detail in right panel</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--bg3);color:var(--bt)">2</div><div class="pipe-c"><div class="pipe-title">Copy suggest prompt → paste to Copilot</div><div class="pipe-desc">Dashboard never calls kbx directly · human controls when to engage Copilot</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--bg3);color:var(--bt)">3</div><div class="pipe-c"><div class="pipe-title">Copilot reads context → suggests</div><div class="pipe-desc">intent + tasks + KB docs + repos → suggests code / docs / plan / refactor</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--gd);color:var(--gt)">4</div><div class="pipe-c"><div class="pipe-title">Human reviews → <code>kbx apply</code> <span class="exit0">exit 0</span> <span class="exit1">exit 1</span></div><div class="pipe-desc">impact:check auto-runs before every apply · exit 1 → fix first · exit 0 → continue loop</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--ad);color:var(--at)">5</div><div class="pipe-c"><div class="pipe-title">Stage when done → <code>kbx intent stage</code></div><div class="pipe-desc">gate sub-pipeline runs → doc:gate + ontology:validate + tests → exit 0 → proceed to F4</div></div></div>
+</div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-rocket"></i>F7+F8 — Onboarding paths</div>
+<div class="card-grid">
+<div class="card"><div class="card-h"><i class="ti ti-sparkles" style="color:var(--gt)"></i>F7 New project (from zero)</div><div class="card-b">
+  <code>kbx init</code> → Copilot interview (project type, stack, team) → generate system-map.md → set first goal → scaffold 16-tier KB → suggest 2-3 starter intents → <code>kbx doctor</code> exit 0 → chaos baseline → handoff to F2.
+</div></div>
+<div class="card"><div class="card-h"><i class="ti ti-tools" style="color:var(--bt)"></i>F8 Retrofit (existing codebase)</div><div class="card-b">
+  <code>kbx init --retrofit</code> → scan source per scan-manifest → import README/docs as :KBDoc → infer goals from codebase → human reviews + reconciles → chaos baseline (score ≠ 0, real debt acknowledged) → debt-index pre-populated → handoff to F5 or F2.
+</div></div>
+</div>
+</div>
+
+</div></div>
+
+<!-- ═══════════════ PAGE: COMPONENTS ═══════════════ -->
+<div class="doc-page" id="pg-components">
+<div class="pg-hd">
+  <div class="pg-hd-row">
+    <div class="pg-hd-ico" style="background:var(--pd)"><i class="ti ti-puzzle" style="color:var(--pt)"></i></div>
+    <div><div class="pg-title">Components</div><div class="pg-sub">6 layers · 8 core engines · signal bus · 3-tier storage · 5 external adapters</div></div>
+  </div>
+</div>
+<div class="pg-body">
+
+<div class="callout amber"><strong>Critical constraint:</strong> Unified Graph has exactly ONE writer — the Retro engine. All other components are read-only. Enforced at Kuzu connection level.</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-layout-grid"></i>All components</div>
+<table class="tbl">
+<thead><tr><th>Layer</th><th>Component</th><th>Responsibility</th></tr></thead>
+<tbody>
+<tr><td class="mono blue">Presentation</td><td>Dashboard UI</td><td>VSCode webview · Workspace/System/Documents/Search tabs · suggest prompts for Copilot · read-only observer</td></tr>
+<tr><td class="mono blue">Presentation</td><td>Search UI</td><td>Full-text across KB docs · graph nodes · intents · CLI reference</td></tr>
+<tr><td class="mono green">kbx CLI</td><td>kbx intent</td><td>create · activate · approve · stage · close · archive — enforces KBX-P001</td></tr>
+<tr><td class="mono green">kbx CLI</td><td>kbx chaos</td><td>compute 7-dim score · --scan-src AST · snapshot to ndjson · emit :Signal</td></tr>
+<tr><td class="mono green">kbx CLI</td><td>kbx maintain</td><td>scan debt/entropy · propose fix intents · approve flow · verify delta</td></tr>
+<tr><td class="mono green">kbx CLI</td><td>kbx graph</td><td>export Cypher/JSON · ontology validate · find cycles · query nodes</td></tr>
+<tr><td class="mono purple">Core engine</td><td>Goal engine</td><td>CRUD goals · eval criteria via :ADVANCES · emit drift warnings · never auto-closes</td></tr>
+<tr><td class="mono purple">Core engine</td><td>Intent engine</td><td>lifecycle state machine · goal-align check · task management · repos[] tagging</td></tr>
+<tr><td class="mono purple">Core engine</td><td>Rule engine</td><td>KBX-xxx lifecycle · draft→active→retired · validate against ontology-contract.json</td></tr>
+<tr><td class="mono purple">Core engine</td><td>Chaos engine</td><td>7 dimensions · AST complexity · snapshot append · spike detect · forward estimates</td></tr>
+<tr><td class="mono purple">Core engine</td><td>Retro engine</td><td><strong>ONLY writer</strong> — evidence metadata · :Lesson nodes · :ADVANCES edges · chaos snapshot</td></tr>
+<tr><td class="mono purple">Core engine</td><td>Onboarding engine</td><td>init · retrofit scan · interview flow · scaffold template · baseline chaos · doctor check</td></tr>
+<tr><td class="mono purple">Core engine</td><td>Checkpoint engine</td><td>save/load focus state — branch · intent · step · staged files · focus.md snapshot</td></tr>
+<tr><td class="mono purple">Core engine</td><td>Update engine</td><td>diff logic vs NL changes · NL normalize → canonical · meaning diff · regression · version bump</td></tr>
+<tr><td class="mono amber">Signal bus</td><td>Signal bus</td><td>async fan-out — chaos spike · goal drift · intent out-of-goal · doc stale · maintain needed</td></tr>
+<tr><td class="mono teal">Storage</td><td>KB file store</td><td>16-tier Markdown · intent files · focus.md · debt-index · entropy-index · ontology-contract</td></tr>
+<tr><td class="mono teal">Storage</td><td>Unified Graph (Kuzu)</td><td>embedded · no server · Cypher-compatible · schema from ontology-contract.json</td></tr>
+<tr><td class="mono teal">Storage</td><td>Chaos history</td><td>chaos-history.ndjson — append-only · one entry per run · trend computable</td></tr>
+<tr><td class="mono teal">Storage</td><td>Checkpoint store</td><td>checkpoints.json — JSON array · save/load focus state · history list</td></tr>
+<tr><td class="mono" style="color:var(--t2)">External</td><td>Git adapter</td><td>multi-repo status · branch · open PRs · commit history · repos[] matching</td></tr>
+<tr><td class="mono" style="color:var(--t2)">External</td><td>Infra adapter</td><td>Docker health · staging/prod status · deploy info · env config</td></tr>
+<tr><td class="mono" style="color:var(--t2)">External</td><td>LLM adapter</td><td>Copilot / Claude API — suggest · interview · NL normalize · KB draft from source</td></tr>
+<tr><td class="mono" style="color:var(--t2)">External</td><td>Source scanner</td><td>AST parse · cyclomatic complexity · circular deps · fan-in · secret pattern detect</td></tr>
+<tr><td class="mono" style="color:var(--t2)">External</td><td>Export adapter</td><td>JSON / Cypher / ZIP — graph export · KB archive · offboarding bundle</td></tr>
+</tbody>
+</table>
+</div>
+</div></div>
+
+<!-- ═══════════════ PAGE: DATA ═══════════════ -->
+<div class="doc-page" id="pg-data">
+<div class="pg-hd">
+  <div class="pg-hd-row">
+    <div class="pg-hd-ico" style="background:var(--td)"><i class="ti ti-database" style="color:var(--tt)"></i></div>
+    <div><div class="pg-title">Data architecture</div><div class="pg-sub">3-tier storage · Kuzu embedded graph · 8 node types · append-only flat files</div></div>
+  </div>
+</div>
+<div class="pg-body">
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-stack"></i>3-tier rationale</div>
+<table class="tbl">
+<thead><tr><th>Tier</th><th>Technology</th><th>Why this choice</th><th>What lives here</th></tr></thead>
+<tbody>
+<tr><td><span class="chip cg">Tier 1</span></td><td>File system (Git-tracked)</td><td>Human-readable · Copilot-accessible · version-controlled · diff-able · no setup</td><td>KB Markdown docs · intent files · focus.md · debt/entropy index · ontology-contract.json · apply-record.json</td></tr>
+<tr><td><span class="chip cb">Tier 2</span></td><td>Kuzu embedded graph</td><td>No server · Cypher-compatible · runs in Node.js process · queryable graph traversal for impact check</td><td>Unified Knowledge Graph — all 8 node types · all edge types · evidence metadata · bootstrapped from ontology-contract</td></tr>
+<tr><td><span class="chip ca">Tier 3</span></td><td>Append-only flat files</td><td>Portable · simple · no query needed · human-readable · zero dependency</td><td>chaos-history.ndjson · checkpoints.json · release-catalog.json</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-circles-relation"></i>Graph node types</div>
+<div class="node-grid">
+<div class="node-c"><div class="node-lbl" style="color:var(--tt)">:Goal</div><div class="node-p">id · title · horizon<br>owner · status<br>criteria[{name,<br>target,unit,current}]<br><em style="color:var(--gt)">■ built-in seed</em></div></div>
+<div class="node-c"><div class="node-lbl" style="color:var(--bt)">:Intent</div><div class="node-p">id · title · type<br>status · milestone<br>repos[] · linked_goal_id<br>closed_at<br><em style="color:var(--tt)">■ auto (P1)</em></div></div>
+<div class="node-c"><div class="node-lbl" style="color:var(--pt)">:Rule</div><div class="node-p">id (KBX-xxx)<br>status · state<br>domain · body<br>linked_rules[]<br><em style="color:var(--gt)">■ built-in seed</em></div></div>
+<div class="node-c"><div class="node-lbl" style="color:var(--t2)">:KBDoc</div><div class="node-p">id · path (16-tier)<br>tier · tags[]<br>source_of_truth<br>verified_at<br><em style="color:var(--bt)">■ scan + manual</em></div></div>
+<div class="node-c"><div class="node-lbl" style="color:var(--gt)">:Code</div><div class="node-p">file_path · language<br>complexity · fan_in<br>repo_origin<br>linked_intent_id<br><em style="color:var(--bt)">■ scan only</em></div></div>
+<div class="node-c"><div class="node-lbl" style="color:var(--rt)">:Signal</div><div class="node-p">type · level<br>score · delta<br>breakdown {7 dims}<br>timestamp<br><em style="color:var(--tt)">■ auto (chaos:scan)</em></div></div>
+<div class="node-c"><div class="node-lbl" style="color:var(--at)">:Release</div><div class="node-p">version (semver)<br>released_at<br>linked_intents[]<br>changelog_summary<br><em style="color:var(--tt)">■ auto (P4)</em></div></div>
+<div class="node-c"><div class="node-lbl" style="color:var(--t1)">:Lesson</div><div class="node-p">title · domain<br>level: team|project<br>lifecycle:<br>proposed→enforced<br><em style="color:var(--tt)">■ auto (retro:write)</em></div></div>
+</div>
+<div class="callout purple"><strong>Evidence metadata</strong> required on every node AND edge: <code>source · confidence · timestamp · linked_intent_id · version · repo_origin</code> — written by Retro engine only, validated by <code>ontology:validate</code>.</div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-arrow-right"></i>Key edge types</div>
+<table class="tbl">
+<thead><tr><th>Edge</th><th>From → To</th><th>Purpose</th><th>Written when</th></tr></thead>
+<tbody>
+<tr><td class="mono blue">:ADVANCES</td><td>Intent|Release → Goal</td><td>Updates criteria.current — core KPI mechanism</td><td>③ Retro only</td></tr>
+<tr><td class="mono green">:SERVES</td><td>Goal → Goal</td><td>Sub-goal hierarchy</td><td>Goal creation</td></tr>
+<tr><td class="mono blue">:IMPLEMENTS</td><td>Intent → KBDoc|Code|Rule</td><td>Traceability — what this intent changed</td><td>③ Retro only</td></tr>
+<tr><td class="mono amber">:AFFECTS</td><td>Code → Code</td><td>Impact graph — traversed by impact:check</td><td>Scan · ③ Retro</td></tr>
+<tr><td class="mono amber">:DEPENDS_ON</td><td>Code|Intent → Code|Intent</td><td>Dependency tracking</td><td>Scan · ③ Retro</td></tr>
+<tr><td class="mono red">:BREAKS / :FIXES</td><td>Intent → Code</td><td>Change impact tracking</td><td>③ Retro only</td></tr>
+<tr><td class="mono purple">:GOVERNS</td><td>Rule → Code</td><td>Rule-to-file enforcement evidence</td><td>Scan</td></tr>
+<tr><td class="mono teal">:INCLUDED_IN</td><td>Intent → Release</td><td>Release traceability</td><td>P4 pipeline</td></tr>
+</tbody>
+</table>
+</div>
+</div></div>
+
+
+<!-- ═══════════════ PAGE: DEFAULT DATA ═══════════════ -->
+<div class="doc-page" id="pg-defdata">
+<div class="pg-hd">
+  <div class="pg-hd-row">
+    <div class="pg-hd-ico" style="background:var(--gd)"><i class="ti ti-table" style="color:var(--gt)"></i></div>
+    <div><div class="pg-title">Default data</div><div class="pg-sub">What ships with the SaaS template · fixed vs customizable · what gets enriched over time</div></div>
+  </div>
+  <div class="pg-tags"><span class="chip cg">built-in fixed</span><span class="chip cp">user customizable</span><span class="chip ct">auto-generated</span></div>
+</div>
+<div class="pg-body">
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-flag"></i>Default goals — 4 SaaS goals <span class="chip cp" style="margin-left:4px">targets customizable</span></div>
+<div class="goal-c" style="border-left-color:var(--gt)">
+  <div class="goal-n">GOAL-001 — Keep product reliable and performant</div>
+  <div class="goal-m">horizon: ongoing · owner: {{OWNER}}</div>
+  <div class="crit"><span class="crit-lbl">API p99 latency</span><span class="crit-v">≤ 500 ms</span></div>
+  <div class="crit"><span class="crit-lbl">Uptime</span><span class="crit-v">≥ 99.9 %</span></div>
+  <div class="crit"><span class="crit-lbl">Chaos score</span><span class="crit-v">≤ 45</span></div>
+  <div class="crit"><span class="crit-lbl">Critical bug TTR</span><span class="crit-v">≤ 4 hours</span></div>
+</div>
+<div class="goal-c" style="border-left-color:#4a8">
+  <div class="goal-n">GOAL-002 — Grow and retain customer base</div>
+  <div class="goal-m">horizon: Q{{Q}} {{YEAR}} · owner: {{OWNER}}</div>
+  <div class="crit"><span class="crit-lbl">Monthly churn rate</span><span class="crit-v">≤ 2 %</span></div>
+  <div class="crit"><span class="crit-lbl">Onboarding completion</span><span class="crit-v">≥ 80 %</span></div>
+  <div class="crit"><span class="crit-lbl">Feature adoption rate</span><span class="crit-v">≥ 60 %</span></div>
+</div>
+<div class="goal-c" style="border-left-color:var(--rt)">
+  <div class="goal-n">GOAL-003 — Maintain secure and compliant platform</div>
+  <div class="goal-m">horizon: ongoing · owner: {{OWNER}}</div>
+  <div class="crit"><span class="crit-lbl">Critical CVEs unpatched &gt;7d</span><span class="crit-v">= 0</span></div>
+  <div class="crit"><span class="crit-lbl">Auth on sensitive routes</span><span class="crit-v">= 100 %</span></div>
+  <div class="crit"><span class="crit-lbl">Compliance doc coverage</span><span class="crit-v">≥ 90 %</span></div>
+</div>
+<div class="goal-c" style="border-left-color:var(--bt)">
+  <div class="goal-n">GOAL-004 — Sustain healthy engineering velocity</div>
+  <div class="goal-m">horizon: Q{{Q}} {{YEAR}} · owner: {{OWNER}}</div>
+  <div class="crit"><span class="crit-lbl">Intent close rate</span><span class="crit-v">≥ 80 %</span></div>
+  <div class="crit"><span class="crit-lbl">Doc coverage</span><span class="crit-v">≥ 85 %</span></div>
+  <div class="crit"><span class="crit-lbl">Test coverage</span><span class="crit-v">≥ 70 %</span></div>
+  <div class="crit"><span class="crit-lbl">Deploy frequency</span><span class="crit-v">≥ 2×/week</span></div>
+</div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-list-check"></i>Default intents — starter backlog <span class="chip cg" style="margin-left:4px">fixed structure</span><span class="chip cp" style="margin-left:4px">tasks editable</span></div>
+<table class="tbl">
+<thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Milestone</th><th>Repos</th><th>Linked goal</th><th>Rules</th></tr></thead>
+<tbody>
+<tr><td class="mono blue">INT-SAAS-001</td><td>Set up auth middleware on all API routes</td><td class="mono">exec</td><td class="mono">v1.0</td><td class="mono">core-api, auth-service</td><td class="mono green">GOAL-003</td><td class="mono purple">KBX-S001</td></tr>
+<tr><td class="mono blue">INT-SAAS-002</td><td>Implement billing webhook handlers</td><td class="mono">exec</td><td class="mono">v1.0</td><td class="mono">billing-service, core-api</td><td class="mono green">GOAL-002</td><td class="mono purple">KBX-B001, KBX-T001</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-file-code"></i>Data enrichment timeline — what grows over time</div>
+<table class="tbl">
+<thead><tr><th>When</th><th>Event</th><th>Data added</th><th>Origin</th></tr></thead>
+<tbody>
+<tr><td class="mono green">T=0</td><td>kbx init</td><td>4 :Goal nodes · 11 :Rule nodes · 2 intent files · KB folder 16-tier · ontology-contract</td><td><span class="chip cg">built-in</span></td></tr>
+<tr><td class="mono blue">T=0</td><td>kbx init --retrofit</td><td>:Code nodes (all source files) · :KBDoc nodes · :DEPENDS_ON edges · debt-index · chaos baseline ≠ 0</td><td><span class="chip cb">scan</span></td></tr>
+<tr><td class="mono purple">T+1h</td><td>Onboarding interview</td><td>system-map filled · ontology repo_origin updated · arch/auth/billing docs drafted</td><td><span class="chip cp">user</span></td></tr>
+<tr><td class="mono teal">T+1wk</td><td>First retro</td><td>:Intent node · :ADVANCES edges → criteria.current updates · :Lesson node · evidence on all nodes</td><td><span class="chip ct">auto</span></td></tr>
+<tr><td class="mono teal">T+2wk</td><td>First maintain run</td><td>debt-index enriched · entropy-index refreshed · :Signal node · 2-3 fix intents in backlog</td><td><span class="chip ct">auto</span></td></tr>
+<tr><td class="mono teal">T+1mo</td><td>First release</td><td>:Release node · :INCLUDED_IN edges · release-catalog.json entry · graph export snapshot</td><td><span class="chip ct">auto</span></td></tr>
+<tr><td class="mono teal">T+3mo</td><td>Mature state</td><td>All goal criteria.current populated · :Rule states planned→implemented→verified · lesson library growing</td><td><span class="chip ct">auto</span></td></tr>
+</tbody>
+</table>
+</div>
+
+</div></div>
+
+<!-- ═══════════════ PAGE: PIPELINES ═══════════════ -->
+<div class="doc-page" id="pg-pipelines">
+<div class="pg-hd">
+  <div class="pg-hd-row">
+    <div class="pg-hd-ico" style="background:var(--bld)"><i class="ti ti-git-branch" style="color:var(--bt)"></i></div>
+    <div><div class="pg-title">Pipelines</div><div class="pg-sub">4 main pipelines + 6 sub-pipelines. Main pipelines = human flows. Sub-pipelines = called internally.</div></div>
+  </div>
+  <div class="pg-tags"><span class="chip cg">P1 fixed</span><span class="chip cb">P2 fixed</span><span class="chip ct">P3 guided</span><span class="chip cp">P4 fixed</span></div>
+</div>
+<div class="pg-body">
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-arrows-right"></i>P1 — Intent lifecycle (8 steps)</div>
+<div class="callout amber"><strong>Workflow lifecycle</strong> uses folder-based states like <code>_backlog/</code>, <code>_active/</code>, and <code>_archive/</code>. <strong>Ontology lifecycle</strong> uses formal states like <code>DRAFT</code>, <code>PROPOSED</code>, <code>VERIFIED</code>, <code>EXECUTED</code>, and <code>COMMITTED</code>; do not conflate the two.</div>
+<div class="pipe">
+<div class="pipe-row"><div class="pipe-n" style="background:var(--bg3);color:var(--bt)">1</div><div class="pipe-c"><div class="pipe-title"><span class="chip cgr">create</span>kbx intent create --title --type --repos[] --milestone</div><div class="pipe-desc">writes intent.md to <code>_backlog/</code> · workflow state = backlog · ontology state = <code>DRAFT</code></div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--cd);color:var(--ct)">2</div><div class="pipe-c"><div class="pipe-title"><span class="chip ca">goal-align</span>kbx intent align — match intent vs active goals <span class="exit0">exit 0</span><span class="exit1">exit 1</span></div><div class="pipe-desc">exit 1: warn · human decides: keep in backlog workflow, convert to exception, or update goal</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--ad);color:var(--at)">3</div><div class="pipe-c"><div class="pipe-title"><span class="chip ca">human-approve</span>kbx intent approve — no auto-approve path</div><div class="pipe-desc">human reviews in Dashboard · explicit approval required (KBX-AX005)</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--bld);color:var(--bt)">4</div><div class="pipe-c"><div class="pipe-title"><span class="chip cb">activate</span>kbx intent activate — enforces KBX-P001</div><div class="pipe-desc">checks: no other active intent · moves to <code>_active/</code> · workflow state = active · ontology state = <code>PROPOSED</code></div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--bld);color:var(--bt)">5</div><div class="pipe-c"><div class="pipe-title"><span class="chip cb">execute ↺</span>Copilot → human approve → kbx apply · sub: impact:check before each apply</div><div class="pipe-desc">repeats until staged · exit 1 on kbx apply → fix first · workflow state = staged · ontology state = <code>EXECUTED</code></div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--cd);color:var(--ct)">6</div><div class="pipe-c"><div class="pipe-title"><span class="chip ca">gate</span>kbx gate — deterministic <span class="exit0">exit 0</span><span class="exit1">exit 1</span> · sub: doc:gate + ontology:validate + tests</div><div class="pipe-desc">exit 1 → back to step 5 with error report · no LLM in gate path (KBX-AX003) · ontology state must pass <code>VERIFIED</code></div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--pd);color:var(--pt)">7</div><div class="pipe-c"><div class="pipe-title"><span class="chip cp">retro</span>kbx intent retro — ONLY graph write point · sub: retro:write</div><div class="pipe-desc">evidence + :Lesson + :ADVANCES → criteria.current updates · workflow state = closed → <code>_archive/</code> · ontology state = <code>COMMITTED</code></div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--cd);color:var(--ct)">8</div><div class="pipe-c"><div class="pipe-title"><span class="chip ca">measure</span>sub: chaos:scan · aggregate criteria · emit signals → signal bus</div><div class="pipe-desc">triggers P2 if chaos spike · dashboard refreshes · next cycle begins or idles</div></div></div>
+</div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-tool"></i>P2 — Maintain loop (7 steps)</div>
+<div class="pipe">
+<div class="pipe-row"><div class="pipe-n" style="background:var(--ad);color:var(--at)">1</div><div class="pipe-c"><div class="pipe-title"><span class="chip ca">trigger</span>chaos ≥ 70 · cron schedule · manual <code>kbx maintain</code> · kbx doctor exit 1</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--ad);color:var(--at)">2</div><div class="pipe-c"><div class="pipe-title"><span class="chip ca">scan</span>sub: chaos:scan --full · read debt-index + entropy-index · doc coverage</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--ad);color:var(--at)">3</div><div class="pipe-c"><div class="pipe-title"><span class="chip ca">score</span>compute chaos coefficient · append to chaos-history.ndjson</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--ad);color:var(--at)">4</div><div class="pipe-c"><div class="pipe-title"><span class="chip ca">propose</span>generate fix intents from scan results · type=fix · no goal-align required</div><div class="pipe-desc">writes to _backlog/ with _source=maintain · KBX-O002/O003/O004 may trigger here</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--cd);color:var(--ct)">5</div><div class="pipe-c"><div class="pipe-title"><span class="chip ca">human-approve</span>Dashboard signals section shows fix intents · kbx intent approve / dismiss</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--bld);color:var(--bt)">6</div><div class="pipe-c"><div class="pipe-title"><span class="chip cb">inject → P1 step 4</span>(activate)</div></div></div>
+<div class="pipe-row"><div class="pipe-n" style="background:var(--gd);color:var(--gt)">7</div><div class="pipe-c"><div class="pipe-title"><span class="chip cg">verify</span>after P1 retro: re-run chaos:scan · delta must be negative</div></div></div>
+</div>
+</div>
+
+<div class="card-grid">
+<div class="card"><div class="card-h"><i class="ti ti-sparkles" style="color:var(--gt)"></i>P3 — Onboarding (6 steps)</div><div class="card-b">
+<strong>1.</strong> init (detect new vs retrofit) → <strong>2a.</strong> interview (Copilot Q&A) or <strong>2b.</strong> scan source (scan-manifest.json) → <strong>3.</strong> scaffold template + fill placeholders + seed goals/rules → <strong>4.</strong> baseline chaos (first snapshot) → <strong>5.</strong> kbx doctor exit 0 → <strong>6.</strong> suggest 2-3 starter intents → handoff to P1.
+</div></div>
+<div class="card"><div class="card-h"><i class="ti ti-package" style="color:var(--pt)"></i>P4 — Release (6 steps)</div><div class="card-b">
+<strong>1.</strong> trigger (manual or N intents hit milestone) → <strong>2.</strong> collect closed intents since last release → <strong>3.</strong> release-gate (kbx gate --release, chaos ≤ 50, tests pass) → <strong>4.</strong> version bump (semver) → <strong>5.</strong> graph-write :Release + :INCLUDED_IN edges → <strong>6.</strong> append release-catalog.json + export graph snapshot.
+</div></div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-code-circle"></i>Sub-pipelines — called from within main pipelines</div>
+<table class="tbl">
+<thead><tr><th>Sub-pipeline</th><th>Called from</th><th>What it does</th><th>Output</th></tr></thead>
+<tbody>
+<tr><td class="mono green">doc:gate</td><td>P1:gate · P2:scan</td><td>Check KB doc coverage % · placeholder ratio &lt;15% · frontmatter validity</td><td><span class="exit0">exit 0</span> <span class="exit1">exit 1</span></td></tr>
+<tr><td class="mono green">ontology:validate</td><td>P1:gate · P4:gate</td><td>Validate all graph nodes vs ontology-contract.json schema</td><td><span class="exit0">exit 0</span> <span class="exit1">exit 1</span></td></tr>
+<tr><td class="mono blue">impact:check</td><td>P1:execute per apply</td><td>Traverse :AFFECTS :DEPENDS_ON :BREAKS from changed files · show affected list to human</td><td>Node list</td></tr>
+<tr><td class="mono amber">chaos:scan</td><td>P1:measure · P2:scan · P3:baseline</td><td>7-dim score computation · optional --scan-src AST · append ndjson · emit :Signal</td><td>Score + signal</td></tr>
+<tr><td class="mono purple">retro:write</td><td><strong>P1:retro ONLY</strong></td><td>Write evidence on nodes/edges · create :Lesson · write :ADVANCES edges · update criteria.current</td><td>Graph write</td></tr>
+<tr><td class="mono amber">update:patch</td><td>P10 self-update</td><td>Diff logic vs NL changes · NL→canonical form · meaning diff → human validates → apply as intent</td><td>Intent → P1</td></tr>
+</tbody>
+</table>
+</div>
+
+</div></div>
+
+
+<!-- ═══════════════ PAGE: RULES ═══════════════ -->
+<div class="doc-page" id="pg-rules">
+<div class="pg-hd">
+  <div class="pg-hd-row">
+    <div class="pg-hd-ico" style="background:var(--ad)"><i class="ti ti-list-check" style="color:var(--at)"></i></div>
+    <div><div class="pg-title">Rules — Domain &amp; Operational</div><div class="pg-sub">D = SaaS domain rules (replaceable per domain) · O = auto-generated by system over time</div></div>
+  </div>
+  <div class="pg-tags"><span class="chip cp">D rules — user can add/modify</span><span class="chip ct">O rules — auto-generated</span></div>
+</div>
+<div class="pg-body">
+
+<div class="callout amber"><strong>Domain rules (D)</strong> are SaaS-specific. When you switch domain (research, e-commerce, enterprise), swap these rules via Flow 10. <strong>Operational rules (O)</strong> grow over time as the system learns repeated patterns from retrospectives.</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-shield-lock"></i>Domain — Security <span class="chip cp" style="margin-left:6px">SaaS · user can modify</span></div>
+<div class="rules-block">
+<div class="rule-r"><span class="rule-rid r-d">KBX-S001</span><div class="rule-body"><div class="rule-t">Auth middleware on all sensitive routes</div><div class="rule-d">Every route handling billing, PII, or admin actions must have auth middleware. Detected by chaos:scan route + auth pattern matching. Linked to INT-SAAS-001.</div></div><span class="rule-st rs-p">planned</span></div>
+<div class="rule-r"><span class="rule-rid r-d">KBX-S002</span><div class="rule-body"><div class="rule-t">No secrets in source code</div><div class="rule-d">No API keys, tokens, or passwords as string literals. Detected by chaos:scan secret_patterns → blocks gate immediately. Process.env only.</div></div><span class="rule-st rs-p">planned</span></div>
+<div class="rule-r"><span class="rule-rid r-d">KBX-S003</span><div class="rule-body"><div class="rule-t">Rate limiting on auth endpoints</div><div class="rule-d">Login, signup, password-reset, token-refresh must have rate limiting. Max 5 attempts/IP/min. Detected by checking middleware presence on auth route patterns.</div></div><span class="rule-st rs-d">draft</span></div>
+</div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-currency-dollar"></i>Domain — Billing <span class="chip cp" style="margin-left:6px">SaaS · user can modify</span></div>
+<div class="rules-block">
+<div class="rule-r"><span class="rule-rid r-d">KBX-B001</span><div class="rule-body"><div class="rule-t">Billing provider is source of truth</div><div class="rule-d">Subscription status always fetched from billing provider (Stripe/Paddle). Cached state TTL ≤ 300s. Prevents stale subscription leading to access control errors. Linked to INT-SAAS-002.</div></div><span class="rule-st rs-p">planned</span></div>
+<div class="rule-r"><span class="rule-rid r-d">KBX-B002</span><div class="rule-body"><div class="rule-t">Idempotent webhook handlers</div><div class="rule-d">All billing webhook handlers must be idempotent — processing same event twice produces same result. Implement using event ID deduplication store.</div></div><span class="rule-st rs-d">draft</span></div>
+</div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-test-pipe"></i>Domain — Testing &amp; Architecture <span class="chip cp" style="margin-left:6px">SaaS · user can modify</span></div>
+<div class="rules-block">
+<div class="rule-r"><span class="rule-rid r-d">KBX-T001</span><div class="rule-body"><div class="rule-t">Integration tests on critical SaaS paths</div><div class="rule-d">Auth, billing, onboarding, and data export flows must have integration tests (not just unit tests). Detected by chaos:scan testing dimension checking critical path test coverage.</div></div><span class="rule-st rs-p">planned</span></div>
+<div class="rule-r"><span class="rule-rid r-d">KBX-D001</span><div class="rule-body"><div class="rule-t">Multi-tenant data isolation</div><div class="rule-d">All DB queries on user data must include tenant_id scoping. No cross-tenant data leaks. Detected by scanning ORM/query patterns for missing where clauses on tenant-scoped models.</div></div><span class="rule-st rs-d">draft</span></div>
+<div class="rule-r"><span class="rule-rid r-d">KBX-D002</span><div class="rule-body"><div class="rule-t">Graceful degradation on third-party failure</div><div class="rule-d">All third-party calls (billing, email, analytics, storage) must have timeout + fallback. No third-party failure causes a 500 to end user. Scan checks for missing try/catch + fallback.</div></div><span class="rule-st rs-d">draft</span></div>
+</div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-robot"></i>Operational — auto-generated by system <span class="chip ct" style="margin-left:6px">grows over time</span></div>
+<div class="callout green">Operational rules are proposed by the system when it detects patterns. Human reviews and approves. After 3 months of use, expect 5–10 project-specific KBX-O rules.</div>
+<div class="rules-block">
+<div class="rule-r"><span class="rule-rid r-o">KBX-O001</span><div class="rule-body"><div class="rule-t">Lesson → rule promotion (3× same pattern)</div><div class="rule-d">When same-domain lesson appears in 3+ retrospectives, maintain loop proposes a draft :Rule. Human reviews Copilot-drafted body, edits, and approves. Applied via update:patch pipeline.</div></div><span class="rule-st rs-p">planned</span></div>
+<div class="rule-r"><span class="rule-rid r-o">KBX-O002</span><div class="rule-body"><div class="rule-t">Chaos dimension spike → auto-suggest fix intent</div><div class="rule-d">When single chaos dimension increases by &gt;8 points between consecutive snapshots, chaos:scan auto-proposes targeted fix intent. Appears in Dashboard signals. Human approves.</div></div><span class="rule-st rs-i">implemented</span></div>
+<div class="rule-r"><span class="rule-rid r-o">KBX-O003</span><div class="rule-body"><div class="rule-t">High fan-in code → structural review intent</div><div class="rule-d">:Code node with fan_in &gt; 30 triggers structural review intent proposal on next chaos:scan. High fan-in = systemic risk — any change affects 30+ dependents. Review checks interface stability.</div></div><span class="rule-st rs-p">planned</span></div>
+<div class="rule-r"><span class="rule-rid r-o">KBX-O004</span><div class="rule-body"><div class="rule-t">Stale source-of-truth doc → review intent</div><div class="rule-d">source_of_truth=true :KBDoc with no linked intent :IMPLEMENTS for &gt;90 days is flagged stale. Maintain loop proposes review intent. Prevents silent drift between docs and reality.</div></div><span class="rule-st rs-p">planned</span></div>
+</div>
+</div>
+
+</div></div>
+
+<!-- ═══════════════ PAGE: MASTER RULES ═══════════════ -->
+<div class="doc-page" id="pg-masterrules">
+<div class="pg-hd">
+  <div class="pg-hd-row">
+    <div class="pg-hd-ico" style="background:var(--pd)"><i class="ti ti-shield" style="color:var(--pt)"></i></div>
+    <div><div class="pg-title">Master rules</div><div class="pg-sub">AX = constitutional (immutable) · P = process (adjustable via Flow 10)</div></div>
+  </div>
+  <div class="pg-tags"><span class="chip cg">AX — immutable, 7 rules</span><span class="chip cb">P — adjustable via Flow 10, 9 rules</span></div>
+</div>
+<div class="pg-body">
+
+<div class="callout purple"><strong>Constitutional rules (AX)</strong> cannot be overridden by anyone, including the user. Violating them breaks system consistency. They are the axioms of KBAgent. <strong>Process rules (P)</strong> can be adjusted via Flow 10 (update:patch) with justification — but require NL normalization + human validation, not direct edits.</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-crown"></i>Constitutional — AX <span class="chip cg" style="margin-left:6px">immutable</span></div>
+<div class="rules-block">
+<div class="rule-r"><span class="rule-rid r-ax">KBX-AX001</span><div class="rule-body"><div class="rule-t">Separation of powers</div><div class="rule-d">SVFactory is legislative — produces templates and rules. KBAgent is executive — runs intents and maintains knowledge. These two must never mix. A KBAgent instance cannot modify its own template source. SVFactory cannot execute intents directly.</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-ax">KBX-AX002</span><div class="rule-body"><div class="rule-t">Domain agnosticism of primitives</div><div class="rule-d">KBAgent core primitives (Intent, Goal, Rule, Signal, Evidence) must contain zero domain logic. Domain specifics live exclusively in ontology-contract.json and seed files. Engine code never hardcodes domain terms like "billing" or "auth".</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-ax">KBX-AX003</span><div class="rule-body"><div class="rule-t">Deterministic gate — exit 0/1 only, no LLM in gate path</div><div class="rule-d">kbx CLI exits exactly 0 (pass) or 1 (fail). No partial success, no warnings-as-pass, no LLM judgment in the gate path. If any check fails, the entire gate fails. Human reviews exit 1 — no auto-retry, no auto-fix.</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-ax">KBX-AX004</span><div class="rule-body"><div class="rule-t">Single graph write point — retrospective only</div><div class="rule-d">The Unified Knowledge Graph may only be written during the retrospective step via retro:write sub-pipeline. All other operations (chaos scan, intent activation, goal check) are read-only on the graph. Enforced at Kuzu connection level.</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-ax">KBX-AX005</span><div class="rule-body"><div class="rule-t">Human approval at every intent gate</div><div class="rule-d">No intent — exec, fix, or exception — may advance from draft to active without explicit human approval via kbx intent approve. Signal detector proposals, maintain fix intents, and goal-aligned suggestions all require explicit approval. There is no auto-approve path.</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-ax">KBX-AX006</span><div class="rule-body"><div class="rule-t">Evidence on every node and edge — no anonymous data</div><div class="rule-d">Every node and every edge written to the Unified Graph must carry evidence metadata: source, confidence, timestamp, linked_intent_id, version, repo_origin. Writes without evidence are rejected by retro:write. No anonymous knowledge.</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-ax">KBX-AX007</span><div class="rule-body"><div class="rule-t">Goals never auto-close — human changes only</div><div class="rule-d">Goals are invariants. No pipeline, chaos spike, or criteria threshold crossing may automatically close or supersede a goal. Goals move to warning or superseded only via explicit human action. System emits warnings; it may not act on them autonomously.</div></div><span class="rule-st rs-v">verified</span></div>
+</div>
+</div>
+
+<div class="section">
+<div class="sec-h"><i class="ti ti-settings"></i>Process — P <span class="chip cb" style="margin-left:6px">adjustable via Flow 10</span></div>
+<div class="rules-block">
+<div class="rule-r"><span class="rule-rid r-p">KBX-P001</span><div class="rule-body"><div class="rule-t">One active intent per version branch</div><div class="rule-d">Only one intent may be active|staged per branch. A second activation requires the first to be closed or archived. Exception intents may coexist with --allow-parallel flag (logged). Enforced by kbx intent activate checking _active/ count.</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-p">KBX-P002</span><div class="rule-body"><div class="rule-t">Three-layer vibe execution</div><div class="rule-d">All work: NL input → CLI normalize → CLI execute → AI completion. Copilot suggests before the gate. Copilot summarizes after the gate. Copilot never executes. Dashboard suggest buttons copy prompts — they never call kbx directly.</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-p">KBX-P003</span><div class="rule-body"><div class="rule-t">Goal alignment required before activation</div><div class="rule-d">Every exec intent must pass goal-align check. Alignment means the intent's work will advance at least one criterion of at least one active goal. Fix and exception intents are exempt with explicit type declaration and human approval.</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-p">KBX-P004</span><div class="rule-body"><div class="rule-t">Impact check before each kbx apply</div><div class="rule-d">impact:check sub-pipeline must traverse :AFFECTS/:DEPENDS_ON/:BREAKS before every kbx apply. Result shown to human before confirmation. Cannot be skipped without --skip-impact flag (which is logged as a :Signal node).</div></div><span class="rule-st rs-i">implemented</span></div>
+<div class="rule-r"><span class="rule-rid r-p">KBX-P005</span><div class="rule-body"><div class="rule-t">Maintain-first when chaos ≥ 70 (unstable)</div><div class="rule-d">When chaos score = unstable|chaotic, no new exec intent may activate until score drops below 60. System enters maintain-first mode. Fix intents take priority. Enforced by P1:activate checking latest chaos snapshot level.</div></div><span class="rule-st rs-i">implemented</span></div>
+<div class="rule-r"><span class="rule-rid r-p">KBX-P006</span><div class="rule-body"><div class="rule-t">Retrospective is mandatory — no skip</div><div class="rule-d">An intent may not be archived without completing a retrospective. kbx intent archive without prior retro exits 1. Retro must include evidence note and one lesson candidate. kbx intent archive checks retro_completed=true before proceeding.</div></div><span class="rule-st rs-v">verified</span></div>
+<div class="rule-r"><span class="rule-rid r-p">KBX-P007</span><div class="rule-body"><div class="rule-t">Release gate requires chaos ≤ 50</div><div class="rule-d">A release (P4) may not proceed if latest chaos snapshot is above 50. Gate checks chaos as part of exit 0/1 decision. Hotfix releases may bypass with --hotfix flag, which is logged as a :Signal node for audit.</div></div><span class="rule-st rs-p">planned</span></div>
+<div class="rule-r"><span class="rule-rid r-p">KBX-P008</span><div class="rule-body"><div class="rule-t">doc:gate blocks commit if coverage below threshold</div><div class="rule-d">doc:gate checks: KB doc coverage %, placeholder ratio (&lt;15% threshold), and valid frontmatter on all .md files. Fails gate with exit 1 if any check fails. Called by P1:gate and P4:release-gate.</div></div><span class="rule-st rs-i">implemented</span></div>
+<div class="rule-r"><span class="rule-rid r-p">KBX-P009</span><div class="rule-body"><div class="rule-t">NL patch must normalize before apply</div><div class="rule-d">Any change to natural language content (rules, principles, KB docs, goal criteria descriptions) must go through update:patch sub-pipeline: NL → canonical → meaning diff → human validates diff → apply as intent. Direct text edits without this pipeline are flagged by ontology:validate.</div></div><span class="rule-st rs-p">planned</span></div>
+</div>
+</div>
+
+<div class="callout blue"><strong>Principles are separate from runtime rules.</strong> The governance principles live in <code>svfactory/principles.md</code> as P0-P25 and describe human-readable, repository-level direction. The AX/P families below are runtime rule sets used by KBAgent at execution time. Do not collapse them into one layer.</div>
+
+</div></div>
+
+
+<!-- ═══════════════ PAGE: FOUNDATION ═══════════════ -->
+<div class="doc-page" id="pg-foundation">
+<div class="pg-hd">
+  <div class="pg-hd-row">
+    <div class="pg-hd-ico" style="background:var(--td)"><i class="ti ti-map" style="color:var(--tt)"></i></div>
+    <div><div class="pg-title">Foundation</div><div class="pg-sub">Fill in to generate system-map.md, seed-goals.json, seed-rules.json — copy and use directly</div></div>
+  </div>
+  <div class="pg-tags"><span class="chip cp">all fields editable</span><span class="chip cg">built-in defaults pre-filled</span></div>
+</div>
+<div class="pg-body">
+
+<!-- IDENTITY -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-building"></i>Project identity</div>
+<div class="fgrid">
+  <div class="field"><div class="fl">Project name</div><input class="fi" id="f-name" placeholder="e.g. Acme SaaS Platform" oninput="livePreview()"></div>
+  <div class="field"><div class="fl">Domain description</div><input class="fi" id="f-desc" placeholder="e.g. B2B invoicing and payment platform" oninput="livePreview()"></div>
+</div>
+<div class="fgrid">
+  <div class="field"><div class="fl">Owner / team</div><input class="fi" id="f-owner" placeholder="e.g. william" oninput="livePreview()"></div>
+  <div class="field"><div class="fl">Multi-tenancy</div>
+    <select class="fi fi-sel" id="f-tenancy" onchange="livePreview()">
+      <option value="">— select —</option>
+      <option>single-tenant</option><option>multi-tenant</option><option>hybrid</option>
+    </select>
+  </div>
+</div>
+<div class="field"><div class="fl">Tech stack (comma separated)</div><input class="fi" id="f-stack" placeholder="e.g. Node.js, TypeScript, PostgreSQL, React, Docker" oninput="livePreview()"></div>
+<div class="field"><div class="fl">Repositories (comma separated — must match ontology repo_origin)</div><input class="fi" id="f-repos" placeholder="e.g. core-api, web-app, billing-service, auth-service, infra" oninput="livePreview()"></div>
+</div>
+
+<!-- INFRA -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-server"></i>Infrastructure</div>
+<div class="fgrid">
+  <div class="field"><div class="fl">Production URL</div><input class="fi" id="f-prod" placeholder="https://app.yourproduct.io" oninput="livePreview()"></div>
+  <div class="field"><div class="fl">Staging URL</div><input class="fi" id="f-staging" placeholder="https://staging.yourproduct.io" oninput="livePreview()"></div>
+</div>
+<div class="fgrid3">
+  <div class="field"><div class="fl">Auth provider</div>
+    <select class="fi fi-sel" id="f-auth" onchange="livePreview()">
+      <option value="">— select —</option>
+      <option>Supabase Auth</option><option>Auth0</option><option>Clerk</option><option>NextAuth</option><option>Custom JWT</option><option>Session-based</option>
+    </select>
+  </div>
+  <div class="field"><div class="fl">Billing provider</div>
+    <select class="fi fi-sel" id="f-billing" onchange="livePreview()">
+      <option value="">— select —</option>
+      <option>Stripe</option><option>Paddle</option><option>LemonSqueezy</option><option>Custom</option>
+    </select>
+  </div>
+  <div class="field"><div class="fl">Deployment</div>
+    <select class="fi fi-sel" id="f-deploy" onchange="livePreview()">
+      <option value="">— select —</option>
+      <option>Docker Compose</option><option>Kubernetes</option><option>Railway</option><option>Render</option><option>AWS ECS</option><option>Serverless</option>
+    </select>
+  </div>
+</div>
+</div>
+
+<!-- GOALS EDITOR -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-flag"></i>Goals &amp; criteria <span class="chip cp" style="margin-left:6px">edit targets</span></div>
+<div id="goals-editor"></div>
+<div class="btns"><button class="btn" onclick="addGoal()"><i class="ti ti-plus"></i>Add goal</button></div>
+</div>
+
+<!-- DOCTRINE -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-dna"></i>Self-evolution doctrine <span class="chip cg" style="margin-left:6px">built-in</span></div>
+<div class="doctrine-row done"><i class="ti ti-circle-check" style="font-size:14px;color:var(--gt)"></i><span class="mono green" style="min-width:40px">v1.6</span><span style="font-size:12px;color:var(--t2)">Foundation — intent lifecycle, file-based KB</span><span style="margin-left:auto" class="chip cg">complete</span></div>
+<div class="doctrine-row done"><i class="ti ti-circle-check" style="font-size:14px;color:var(--gt)"></i><span class="mono green" style="min-width:40px">v1.7</span><span style="font-size:12px;color:var(--t2)">Evidence recorder — apply-record, evidence metadata</span><span style="margin-left:auto" class="chip cg">complete</span></div>
+<div class="doctrine-row cur"><i class="ti ti-player-play" style="font-size:14px;color:var(--bt)"></i><span class="mono blue" style="min-width:40px">v1.8</span><span style="font-size:12px;color:var(--t1)">Observer — chaos score, signals, supervision loop</span><span style="margin-left:auto" class="chip cb">current</span></div>
+<div class="doctrine-row next"><i class="ti ti-clock" style="font-size:14px;color:var(--t3)"></i><span class="mono" style="min-width:40px;color:var(--t3)">v1.9</span><span style="font-size:12px;color:var(--t3)">Graph builder — Kuzu embedded, queryable graph, :ADVANCES edges live</span><span style="margin-left:auto" class="chip cgr">next</span></div>
+<div class="doctrine-row next" style="opacity:.5"><i class="ti ti-clock" style="font-size:14px;color:var(--t3)"></i><span class="mono" style="min-width:40px;color:var(--t3)">v2.0</span><span style="font-size:12px;color:var(--t3)">Reasoner — cross-intent impact, pattern inference, rule suggestion</span><span style="margin-left:auto" class="chip cgr">roadmap</span></div>
+</div>
+
+<!-- LIVE PREVIEW -->
+<div class="section">
+<div class="sec-h"><i class="ti ti-eye"></i>system-map.md — live preview</div>
+<div class="preview" id="live-preview"></div>
+<div class="btns">
+  <button class="btn btn-g" onclick="copyPreview()"><i class="ti ti-copy"></i>Copy system-map.md</button>
+  <button class="btn btn-g" onclick="copyGoalsJSON()"><i class="ti ti-copy"></i>Copy seed-goals.json</button>
+  <button class="btn btn-g" onclick="copyOntologyJSON()"><i class="ti ti-copy"></i>Copy ontology-contract.json</button>
+</div>
+</div>
+
+</div></div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+<div class="toast" id="toast">Copied!</div>
+<script>
+// ─── NAVIGATION ───
+function go(id, el){
+  document.querySelectorAll('.doc-page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  const page = document.getElementById('pg-'+id);
+  if(page) page.classList.add('on');
+  if(el) el.classList.add('on');
+  if(id==='foundation') livePreview();
+  document.getElementById('main').scrollTo(0,0);
+}
+
+// ─── SEARCH ───
+function doSearch(q){
+  const pages = document.querySelectorAll('.doc-page');
+  const hl = q.trim().toLowerCase();
+  pages.forEach(pg=>{
+    pg.querySelectorAll('.srhl').forEach(s=>{
+      s.outerHTML = s.textContent;
+    });
+  });
+  if(!hl) return;
+  const walker = (node)=>{
+    if(node.nodeType===3){
+      const t=node.textContent;
+      const li=t.toLowerCase();
+      const idx=li.indexOf(hl);
+      if(idx>-1){
+        const span=document.createElement('span');
+        span.innerHTML=t.substring(0,idx)+'<span class="srhl">'+t.substring(idx,idx+hl.length)+'</span>'+t.substring(idx+hl.length);
+        node.parentNode.replaceChild(span,node);
+      }
+    } else if(node.nodeType===1 && !['SCRIPT','STYLE','INPUT','SELECT'].includes(node.tagName)){
+      Array.from(node.childNodes).forEach(walker);
+    }
+  };
+  pages.forEach(pg=>walker(pg));
+}
+
+// ─── GOALS EDITOR ───
+const GOALS = [
+  {id:'GOAL-001',title:'Keep product reliable and performant',horizon:'ongoing',color:'var(--gt)',
+   crit:[{n:'API p99 latency',d:'≤',v:'500',u:'ms'},{n:'Uptime',d:'≥',v:'99.9',u:'%'},{n:'Chaos score',d:'≤',v:'45',u:'score'},{n:'Critical bug TTR',d:'≤',v:'4',u:'hours'}]},
+  {id:'GOAL-002',title:'Grow and retain customer base',horizon:'Q{{Q}} {{YEAR}}',color:'#4aaa88',
+   crit:[{n:'Monthly churn rate',d:'≤',v:'2',u:'%'},{n:'Onboarding completion',d:'≥',v:'80',u:'%'},{n:'Feature adoption rate',d:'≥',v:'60',u:'%'}]},
+  {id:'GOAL-003',title:'Maintain secure and compliant platform',horizon:'ongoing',color:'var(--rt)',
+   crit:[{n:'Critical CVEs unpatched >7d',d:'=',v:'0',u:'count'},{n:'Auth on sensitive routes',d:'=',v:'100',u:'%'},{n:'Compliance doc coverage',d:'≥',v:'90',u:'%'}]},
+  {id:'GOAL-004',title:'Sustain healthy engineering velocity',horizon:'Q{{Q}} {{YEAR}}',color:'var(--bt)',
+   crit:[{n:'Intent close rate',d:'≥',v:'80',u:'%'},{n:'Doc coverage',d:'≥',v:'85',u:'%'},{n:'Test coverage',d:'≥',v:'70',u:'%'},{n:'Deploy frequency',d:'≥',v:'2',u:'deploys/week'}]},
+];
+
+function renderGoals(){
+  const c=document.getElementById('goals-editor');
+  if(!c) return;
+  c.innerHTML='';
+  GOALS.forEach((g,gi)=>{
+    const div=document.createElement('div');
+    div.style.cssText='background:var(--bg2);border:1px solid var(--bd2);border-left:3px solid '+g.color+';border-radius:4px;margin-bottom:10px;overflow:hidden';
+    div.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 13px;cursor:pointer;user-select:none;background:var(--bg3)" onclick="this.nextSibling.style.display=this.nextSibling.style.display==='none'?'block':'none'">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--t3);min-width:70px">${g.id}</span>
+        <input style="background:transparent;border:none;outline:none;font-size:12px;font-weight:500;color:var(--t0);flex:1" value="${g.title}" oninput="GOALS[${gi}].title=this.value;livePreview()" onclick="event.stopPropagation()">
+        <input style="background:transparent;border:none;outline:none;font-size:10px;color:var(--t3);font-family:var(--mono);width:110px;text-align:right" value="${g.horizon}" oninput="GOALS[${gi}].horizon=this.value" onclick="event.stopPropagation()">
+        <i class="ti ti-chevron-down" style="font-size:12px;color:var(--t3)"></i>
+      </div>
+      <div style="display:none;padding:10px 13px;border-top:1px solid var(--bd)">
+        <div style="font-size:10px;color:var(--t3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.07em">Criteria — name | dir | target | unit</div>
+        <div id="crit-${gi}"></div>
+        <button onclick="addCrit(${gi})" style="background:none;border:none;color:var(--t3);font-size:11px;cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:4px;margin-top:4px;transition:color .1s" onmouseover="this.style.color='var(--bt)'" onmouseout="this.style.color='var(--t3)'"><i class="ti ti-plus" style="font-size:12px"></i>Add criterion</button>
+      </div>`;
+    c.appendChild(div);
+    renderCrit(gi);
+  });
+}
+
+function renderCrit(gi){
+  const c=document.getElementById('crit-'+gi);
+  if(!c) return;
+  c.innerHTML='';
+  GOALS[gi].crit.forEach((cr,ci)=>{
+    const r=document.createElement('div');
+    r.className='crit-edit-row';
+    r.innerHTML=`
+      <input class="ce-name" value="${cr.n}" placeholder="criterion name" oninput="GOALS[${gi}].crit[${ci}].n=this.value">
+      <select class="ce-dir" onchange="GOALS[${gi}].crit[${ci}].d=this.value">${['≤','≥','=','<','>'].map(d=>`<option${d===cr.d?' selected':''}>${d}</option>`).join('')}</select>
+      <input class="ce-num" value="${cr.v}" placeholder="target" oninput="GOALS[${gi}].crit[${ci}].v=this.value">
+      <input class="ce-unit" value="${cr.u}" placeholder="unit" oninput="GOALS[${gi}].crit[${ci}].u=this.value">
+      <button class="ce-del" onclick="GOALS[${gi}].crit.splice(${ci},1);renderCrit(${gi})"><i class="ti ti-x"></i></button>`;
+    c.appendChild(r);
+  });
+}
+
+function addCrit(gi){ GOALS[gi].crit.push({n:'',d:'≥',v:'',u:''}); renderCrit(gi); }
+function addGoal(){
+  GOALS.push({id:'GOAL-00'+(GOALS.length+1),title:'New goal',horizon:'Q{{Q}} {{YEAR}}',color:'var(--bt)',crit:[]});
+  renderGoals();
+}
+
+// ─── LIVE PREVIEW ───
+function fv(id,fb){ const e=document.getElementById(id); return e&&e.value?e.value:fb; }
+
+function livePreview(){
+  const n=fv('f-name','{{PROJECT_NAME}}'), d=fv('f-desc','{{SAAS_DESCRIPTION}}');
+  const o=fv('f-owner','{{OWNER}}'), st=fv('f-stack','{{TECH_STACK}}');
+  const r=fv('f-repos','{{REPO_LIST}}'), te=fv('f-tenancy','{{TENANCY}}');
+  const prod=fv('f-prod','{{PROD_URL}}'), stag=fv('f-staging','{{STAGING_URL}}');
+  const au=fv('f-auth','{{AUTH_PROVIDER}}'), bi=fv('f-billing','{{BILLING_PROVIDER}}');
+  const de=fv('f-deploy','{{DEPLOYMENT}}');
+  const goalTable = GOALS.map(g=>`| ${g.id.padEnd(8)} | ${g.title.substring(0,42).padEnd(44)} | ${g.horizon.padEnd(14)} | active  |`).join('\n');
+  const md = `---
+id: doc-000-001
+tier: 0
+title: System map
+source_of_truth: true
+tags: [foundation, orientation]
+---
+
+# System map
+
+## Project identity
+
+**Name:** ${n}
+**Domain:** SaaS — ${d}
+**Owner:** ${o}
+**Stack:** ${st}
+**Repos:** ${r}
+**Multi-tenancy:** ${te}
+
+## Infrastructure
+
+| Environment | URL | Status |
+|-------------|-----|--------|
+| Production  | ${prod} | active |
+| Staging     | ${stag} | active |
+
+**Auth:** ${au}
+**Billing:** ${bi}
+**Deployment:** ${de}
+
+## Active goals
+
+| ID       | Title                                        | Horizon        | Status  |
+|----------|----------------------------------------------|----------------|---------|
+${goalTable}
+
+## Current focus
+
+> Populated by \`kbx checkpoint load\`
+
+## Self-evolution doctrine stage
+
+Current: \`v1.8 Observer\`  ·  Next milestone: \`v1.9 Graph Builder\``;
+  const prev=document.getElementById('live-preview');
+  if(prev) prev.textContent=md;
+}
+
+// ─── COPY UTILS ───
+function copyText(t){
+  navigator.clipboard.writeText(t).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=t;ta.style.cssText='position:fixed;opacity:0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+  const toast=document.getElementById('toast');
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>toast.classList.remove('show'),2200);
+}
+
+function copyPreview(){ copyText(document.getElementById('live-preview').textContent); }
+
+function copyGoalsJSON(){
+  const obj={_status:'built-in',goals:GOALS.map(g=>({
+    id:g.id,title:g.title,horizon:g.horizon,
+    owner:fv('f-owner','{{OWNER}}'),status:'active',
+    criteria:g.crit.map(c=>({name:c.n,direction:c.d,target:c.v,unit:c.u,current:null}))
+  }))};
+  copyText(JSON.stringify(obj,null,2));
+}
+
+function copyOntologyJSON(){
+  const repos=fv('f-repos','core-api,web-app,billing-service,auth-service,infra')
+    .split(',').map(s=>s.trim()).filter(Boolean);
+  const obj={
+    _status:'built-in',version:'1.0.0',domain:'saas',
+    repo_origin:{type:'enum',values:repos,_note:'Edit to match your actual repos'},
+    chaos_thresholds:{stable:30,manageable:50,unstable:70},
+    node_types:{
+      Goal:{required:['id','title','horizon','owner','status','criteria']},
+      Intent:{required:['id','title','type','status','repos'],type_values:['exec','fix','exception']},
+      Rule:{required:['id','title','status','state'],id_pattern:'KBX-[A-Z]{1,3}[0-9]{3}'},
+      KBDoc:{required:['id','path','tier'],tier_range:[0,15]},
+      Code:{required:['id','file_path','repo_origin'],_populated_by:'scan'},
+      Signal:{required:['id','type','level','score','timestamp']},
+      Release:{required:['id','version','released_at']},
+      Lesson:{required:['id','title','domain','level']}
+    },
+    edge_types:{
+      ADVANCES:{from:['Intent','Release'],to:'Goal',properties:['criterion_name','delta']},
+      SERVES:{from:'Goal',to:'Goal'},
+      IMPLEMENTS:{from:'Intent',to:['KBDoc','Code','Rule']},
+      DEPENDS_ON:{from:['Intent','Code'],to:['Intent','Code']},
+      BREAKS:{from:'Intent',to:'Code'},FIXES:{from:'Intent',to:'Code'},
+      AFFECTS:{from:'Code',to:'Code'},GOVERNS:{from:'Rule',to:'Code'},
+      INCLUDED_IN:{from:'Intent',to:'Release'}
+    },
+    evidence_metadata:{_required_on:'all nodes and edges',
+      fields:['source','confidence','timestamp','linked_intent_id','version','repo_origin']}
+  };
+  copyText(JSON.stringify(obj,null,2));
+}
+
+// ─── INIT ───
+renderGoals();
+livePreview();
+</script>
+</body>
+</html>

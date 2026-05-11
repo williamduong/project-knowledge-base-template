@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#141414;--bg1:#1e1e1e;--bg2:#252525;--bg3:#2e2e2e;--bg4:#383838;--bg5:#464646;
+  --bd:#303030;--bd2:#404040;--bd3:#565656;
+  --t0:#f2efe9;--t1:#cdc8c1;--t2:#918d87;--t3:#585450;
+  --green:#3d9970;--gd:#162a1e;--gt:#70d4a0;
+  --amber:#c8920c;--ad:#2e2006;--at:#e8b832;
+  --red:#9b4040;--rd:#2a1414;--rt:#de7878;
+  --blue:#2060a0;--bld:#0e2038;--bt:#72b4e4;
+  --purple:#6040a0;--pt:#b088e0;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html,body{height:100%;background:var(--bg0);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.6;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100vh}
+
+/* ── HEADER ── */
+.hd{height:48px;background:var(--bg1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 18px;gap:0;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:9px;padding-right:16px;border-right:1px solid var(--bd2);margin-right:14px}
+.logo-ico{width:28px;height:28px;background:var(--blue);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#d0e8ff}
+.logo-txt{font-size:14px;font-weight:500;color:var(--t0)}
+.logo-ver{font-size:11px;color:var(--t3);font-family:var(--mono);margin-left:4px}
+.tabs{display:flex;height:48px;align-items:flex-end}
+.tab{height:38px;padding:0 16px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;user-select:none;white-space:nowrap}
+.tab:hover{color:var(--t1)}
+.tab.on{color:var(--t0);border-bottom-color:var(--bt)}
+.tab i{font-size:14px}
+.hd-r{margin-left:auto;display:flex;align-items:center;gap:9px}
+.chaos-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:4px;background:var(--gd);border:1px solid #1e5030}
+.chaos-n{font-family:var(--mono);font-size:12px;color:var(--gt)}
+.chaos-l{font-size:11px;color:var(--gt);opacity:.8}
+.vsep{width:1px;height:20px;background:var(--bd2)}
+.hbtn{height:30px;padding:0 12px;border-radius:4px;font-size:12px;display:flex;align-items:center;gap:5px;border:1px solid var(--bd3);background:transparent;color:var(--t1);cursor:pointer;font-family:var(--sans);transition:all .1s;white-space:nowrap}
+.hbtn:hover{background:var(--bg4);color:var(--t0)}
+.hbtn i{font-size:14px}
+.hbtn-p{background:var(--blue);border-color:var(--blue);color:#d0e8ff}
+.hbtn-p:hover{background:#1a5090}
+
+/* ── PAGES ── */
+.page{flex:1;overflow:hidden;display:none}
+.page.on{display:flex;flex-direction:column}
+.scroll{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.scroll::-webkit-scrollbar{width:6px}
+.scroll::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:2px 8px;border-radius:3px;font-weight:500;font-family:var(--mono);white-space:nowrap;line-height:1.4}
+.cg{background:var(--gd);color:var(--gt);border:1px solid #204830}
+.ca{background:var(--ad);color:var(--at);border:1px solid #3e2a0a}
+.cr{background:var(--rd);color:var(--rt);border:1px solid #3e1a1a}
+.cb{background:var(--bld);color:var(--bt);border:1px solid #143060}
+.cgr{background:var(--bg3);color:var(--t2);border:1px solid var(--bd2)}
+.cpur{background:#1e1030;color:var(--pt);border:1px solid #3a2060}
+
+/* section */
+.sec{border-bottom:1px solid var(--bd)}
+.sec-hd{min-height:36px;display:flex;align-items:center;padding:0 18px;gap:10px;cursor:pointer;user-select:none;background:var(--bg1);transition:background .1s}
+.sec-hd:hover{background:var(--bg2)}
+.sec-lbl{font-size:11px;font-weight:500;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;flex:1}
+.sec-ico{font-size:14px;color:var(--t3)}
+.chev{font-size:13px;color:var(--t3);transition:transform .15s;flex-shrink:0}
+.sec-hd.cls .chev{transform:rotate(-90deg)}
+.sec-bd{padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.sec-bd.h{display:none}
+
+/* btns */
+.btns{display:flex;gap:7px;flex-wrap:wrap}
+.btn{height:30px;padding:0 12px;border-radius:4px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;border:1px solid var(--bd3);background:transparent;color:var(--t1);font-family:var(--sans);transition:all .1s}
+.btn:hover{background:var(--bg4);color:var(--t0)}
+.btn i{font-size:14px}
+.btn-hi{border-color:var(--bt);color:var(--bt)}
+.btn-hi:hover{background:var(--bld)}
+.btn-p{background:var(--blue);border-color:var(--blue);color:#d0e8ff}
+.btn-p:hover{background:#1a5090}
+.btn-warn{border-color:var(--rd);color:var(--rt)}
+.btn-warn:hover{background:var(--rd)}
+
+/* ── FOUNDATION ── */
+.found{background:var(--bg2);border-bottom:1px solid var(--bd);padding:18px}
+.found-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
+.found-ico{width:44px;height:44px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#d0e8ff;flex-shrink:0}
+.found-title{font-size:16px;font-weight:500;color:var(--t0);margin-bottom:4px}
+.found-desc{font-size:12px;color:var(--t2);line-height:1.6}
+.ms-label{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px;font-weight:500}
+.milestones{display:flex;gap:9px;overflow-x:auto;padding-bottom:4px}
+.milestones::-webkit-scrollbar{height:3px}
+.milestones::-webkit-scrollbar-thumb{background:var(--bg5)}
+.ms{background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:11px 13px;flex-shrink:0;min-width:152px;cursor:pointer;transition:all .12s}
+.ms:hover{border-color:var(--bd3)}
+.ms.cur{border-left:3px solid var(--bt)}
+.ms.done{opacity:.5}
+.ms-v{font-family:var(--mono);font-size:10px;color:var(--bt);margin-bottom:3px}
+.ms-n{font-size:12px;color:var(--t1);margin-bottom:8px;font-weight:500}
+.ms-bar{height:4px;background:var(--bg5);border-radius:2px;overflow:hidden;margin-bottom:4px}
+.ms-fill{height:100%;border-radius:2px}
+.ms-pct{font-size:11px;color:var(--t3);font-family:var(--mono)}
+
+/* goals */
+.goal-card{background:var(--bg3);border:1px solid var(--bd2);border-left:3px solid var(--green);border-radius:4px;padding:13px 15px}
+.goal-card.warn{border-left-color:var(--at)}
+.goal-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.goal-name{font-size:13px;font-weight:500;color:var(--t0);margin-bottom:3px;line-height:1.4}
+.goal-m{font-size:11px;color:var(--t3);font-family:var(--mono)}
+.cr-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.cr-row:last-child{margin-bottom:0}
+.cr-lbl{font-size:12px;color:var(--t1);min-width:210px;flex-shrink:0}
+.cr-track{flex:1;height:4px;background:var(--bg5);border-radius:2px;overflow:hidden}
+.cr-fill{height:100%;border-radius:2px}
+.cr-val{font-size:11px;min-width:50px;text-align:right;flex-shrink:0;font-family:var(--mono)}
+
+/* checkpoint */
+.cp-card{background:var(--bg3);border:1px solid var(--bd2);border-left:3px solid var(--pt);border-radius:4px;padding:13px 15px;margin-bottom:12px}
+.cp-name{font-size:13px;font-weight:500;color:var(--t0);margin-bottom:3px}
+.cp-meta{font-size:11px;color:var(--t3);font-family:var(--mono);margin-bottom:8px}
+.cp-desc{font-size:12px;color:var(--t1);line-height:1.7;margin-bottom:10px}
+.cp-hist{display:flex;flex-direction:column;gap:5px}
+.cp-hi{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border:1px solid var(--bd);border-radius:4px;cursor:pointer;transition:all .1s}
+.cp-hi:hover{border-color:var(--bd3);background:var(--bg3)}
+.cp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.cp-id{font-family:var(--mono);font-size:11px;color:var(--bt);min-width:76px}
+.cp-title{font-size:12px;color:var(--t1);flex:1}
+.cp-time{font-size:11px;color:var(--t3);font-family:var(--mono)}
+
+/* ══════════════════════════════════════
+   INTENT SPLIT LAYOUT
+══════════════════════════════════════ */
+.intent-split{display:flex;gap:0;min-height:420px;border:1px solid var(--bd);border-radius:4px;overflow:hidden}
+
+/* LEFT: intent list */
+.int-list{width:280px;flex-shrink:0;border-right:1px solid var(--bd);display:flex;flex-direction:column;background:var(--bg2)}
+.int-list-hd{padding:10px 13px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:7px}
+.int-list-title{font-size:11px;font-weight:500;color:var(--t2);text-transform:uppercase;letter-spacing:.07em;flex:1}
+.int-list-add{width:22px;height:22px;border-radius:3px;background:transparent;border:1px solid var(--bd2);color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .1s}
+.int-list-add:hover{border-color:var(--bd3);color:var(--t0);background:var(--bg4)}
+.int-items{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.int-items::-webkit-scrollbar{width:4px}
+.int-items::-webkit-scrollbar-thumb{background:var(--bg5)}
+
+.int-item{display:flex;flex-direction:column;gap:5px;padding:11px 13px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s;position:relative}
+.int-item:hover{background:var(--bg3)}
+.int-item.sel{background:var(--bld);border-left:2px solid var(--bt)}
+.int-item.sel .int-item-id{color:var(--bt)}
+.int-item-r1{display:flex;align-items:center;gap:7px}
+.int-item-id{font-family:var(--mono);font-size:10px;color:var(--t3);flex-shrink:0}
+.int-item-title{font-size:12px;color:var(--t0);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;cursor:default;user-select:text}
+.int-item-r2{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.int-item-ms{font-size:10px;padding:1px 6px;border-radius:2px;background:var(--gd);color:var(--gt);font-family:var(--mono);border:1px solid #1e4828}
+.int-item-repos{font-size:10px;color:var(--t3);font-family:var(--mono)}
+
+/* step dots in list */
+.step-dots{display:flex;align-items:center;gap:3px;margin-left:auto;flex-shrink:0}
+.sdot{width:7px;height:7px;border-radius:50%;border:1px solid var(--bd3)}
+.sdot.done{background:var(--green);border-color:var(--green)}
+.sdot.cur{background:var(--bt);border-color:var(--bt);box-shadow:0 0 4px var(--bt)}
+.sdot.todo{background:transparent}
+
+/* RIGHT: intent detail */
+.int-detail{flex:1;display:flex;flex-direction:column;background:var(--bg1);overflow:hidden;min-width:0}
+.int-detail-empty{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--t3)}
+.int-detail-empty i{font-size:32px}
+
+/* detail header — always visible */
+.int-dhd{padding:14px 18px 12px;border-bottom:1px solid var(--bd);flex-shrink:0;background:var(--bg2)}
+.int-dhd-r1{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.int-did{font-family:var(--mono);font-size:11px;color:var(--bt);flex-shrink:0;margin-top:2px}
+.int-dtitle{font-size:15px;font-weight:500;color:var(--t0);flex:1;line-height:1.4}
+.int-dhd-r2{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.int-repo-tag{font-size:10px;padding:2px 8px;border-radius:3px;background:var(--bg4);color:var(--t2);border:1px solid var(--bd2);font-family:var(--mono);cursor:default}
+.int-repo-tag i{font-size:10px;vertical-align:-1px;margin-right:2px}
+
+/* loop bar — always visible */
+.loop-bar{display:flex;border-bottom:1px solid var(--bd);flex-shrink:0}
+.lb-step{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 8px;border-right:1px solid var(--bd);position:relative;cursor:default;transition:background .1s}
+.lb-step:last-child{border-right:none}
+.lb-step.done{background:var(--bg2)}
+.lb-step.cur{background:var(--bld)}
+.lb-step:hover{background:var(--bg3)}
+.lb-step::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.lb-step.done::after{background:var(--green)}
+.lb-step.cur::after{background:var(--bt)}
+.lb-num{font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:2px}
+.lb-lbl{font-size:12px;font-weight:500}
+.lb-step.done .lb-lbl{color:var(--gt)}
+.lb-step.cur .lb-lbl{color:var(--bt)}
+.lb-step.todo .lb-lbl{color:var(--t3)}
+.lb-sub{font-size:10px;color:var(--t3);margin-top:2px;font-family:var(--mono)}
+.lb-step.done .lb-sub{color:var(--gt);opacity:.7}
+.lb-step.cur .lb-sub{color:var(--bt);opacity:.8}
+
+/* quick actions — always visible */
+.int-actions{padding:12px 18px;border-bottom:1px solid var(--bd);background:var(--bg2);flex-shrink:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.int-action-label{font-size:11px;color:var(--t3);margin-right:2px;white-space:nowrap}
+
+/* detail body scrollable */
+.int-dbody{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent;padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.int-dbody::-webkit-scrollbar{width:5px}
+.int-dbody::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px}
+
+/* detail info block */
+.d-block{background:var(--bg2);border:1px solid var(--bd2);border-radius:4px;padding:13px 15px}
+.d-block-title{font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.d-meta-grid{display:grid;grid-template-columns:auto 1fr;gap:5px 14px}
+.d-meta-k{font-size:12px;color:var(--t3);white-space:nowrap}
+.d-meta-v{font-size:12px;color:var(--t1);font-family:var(--mono)}
+
+/* task table */
+.task-table{width:100%;border-collapse:collapse}
+.task-table th{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;padding:0 10px 8px;text-align:left;font-weight:500}
+.task-table td{padding:7px 10px;border-top:1px solid var(--bd);font-size:12px;color:var(--t1);vertical-align:middle}
+.task-table tr.task-open td{background:var(--bg3)}
+.task-table tbody tr:hover td{background:var(--bg3);cursor:pointer}
+.task-id{font-family:var(--mono);font-size:10px;color:var(--bt);white-space:nowrap}
+.task-title-col{color:var(--t0);max-width:180px;user-select:text;cursor:text}
+.task-detail-row td{padding:0;border-top:none}
+.task-detail-inner{display:none;padding:10px 14px;background:var(--bg0);font-size:12px;color:var(--t2);line-height:1.7;border-top:1px solid var(--bd)}
+.task-detail-inner.show{display:block}
+.task-chev{font-size:12px;color:var(--t3);transition:transform .15s;flex-shrink:0}
+.task-open .task-chev{transform:rotate(90deg)}
+.task-add-row td{padding:8px 10px;border-top:1px solid var(--bd)}
+.task-add-btn{font-size:11px;color:var(--t3);cursor:pointer;display:flex;align-items:center;gap:5px;background:transparent;border:none;font-family:var(--sans);transition:color .1s}
+.task-add-btn:hover{color:var(--t1)}
+
+/* ── SYSTEM TAB ── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.stat-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:14px;text-align:center}
+.stat-n{font-family:var(--mono);font-size:28px;font-weight:300;color:var(--t0);margin-bottom:4px;line-height:1}
+.stat-l{font-size:12px;color:var(--t3)}
+.stat-sub{font-size:11px;font-family:var(--mono);margin-top:5px}
+.bar-row{display:flex;align-items:center;gap:9px;margin-bottom:8px;font-size:12px}
+.bar-row:last-child{margin-bottom:0}
+.bar-lbl{color:var(--t1);min-width:52px;font-family:var(--mono)}
+.bar-track{flex:1;height:4px;background:var(--bg5);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px}
+.bar-val{font-family:var(--mono);font-size:11px;min-width:28px;text-align:right}
+.git-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.git-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:13px 15px}
+.git-hd{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.git-name{font-size:13px;font-weight:500;color:var(--t0);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.git-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.git-row:last-child{margin-bottom:0}
+.git-lbl{color:var(--t3);min-width:80px;flex-shrink:0}
+.git-val{color:var(--t1);font-family:var(--mono);font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.git-link{font-size:11px;color:var(--bt);cursor:pointer;display:flex;align-items:center;gap:3px;text-decoration:none;flex-shrink:0}
+.git-link:hover{text-decoration:underline}
+.sigs{display:flex;flex-direction:column}
+.sig{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)}
+.sig:last-child{border:none}
+.sig-ico{font-size:15px;flex-shrink:0;margin-top:2px}
+.sig-body{flex:1}
+.sig-t{font-size:13px;color:var(--t0);line-height:1.5;margin-bottom:2px}
+.sig-s{font-size:11px;color:var(--t3);font-family:var(--mono)}
+.sig-time{font-size:11px;color:var(--t3);flex-shrink:0;font-family:var(--mono)}
+.sig-btn{height:26px;padding:0 11px;background:transparent;border:1px solid var(--bd2);border-radius:3px;color:var(--t1);font-size:11px;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:all .1s;margin-left:6px}
+.sig-btn:hover{background:var(--bg5);color:var(--t0)}
+.chaos-g{display:grid;grid-template-columns:110px 1fr;gap:18px;align-items:start}
+.chaos-n{font-family:var(--mono);font-size:44px;font-weight:300;color:var(--t0);line-height:1;margin-bottom:7px}
+.cd{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.cd:last-child{margin-bottom:0}
+.cd-n{font-size:12px;color:var(--t2);min-width:76px;font-family:var(--mono)}
+.cd-t{flex:1;height:5px;background:var(--bg5);border-radius:2px;overflow:hidden}
+.cd-f{height:100%;border-radius:2px}
+.cd-v{font-size:11px;color:var(--t3);min-width:28px;text-align:right;font-family:var(--mono)}
+.gstats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.gs{background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:11px;text-align:center}
+.gs-n{font-family:var(--mono);font-size:22px;font-weight:300;color:var(--t0)}
+.gs-l{font-size:11px;color:var(--t3);margin-top:3px}
+.npills{display:flex;flex-wrap:wrap;gap:5px}
+.np{font-size:11px;padding:3px 10px;border-radius:3px;border:1px solid var(--bd2);color:var(--t2);cursor:pointer;font-family:var(--mono);transition:all .1s}
+.np:hover{border-color:var(--bt);color:var(--bt);background:var(--bld)}
+.infra-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.infra-card{background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:13px 15px}
+.infra-hd{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.infra-name{font-size:13px;font-weight:500;color:var(--t0);flex:1}
+.sdot-env{width:8px;height:8px;border-radius:50%}
+.sdot-g{background:var(--green);box-shadow:0 0 6px var(--green)}
+.sdot-a{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+.infra-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.infra-row:last-child{margin-bottom:0}
+.infra-lbl{font-size:11px;color:var(--t3);min-width:68px;flex-shrink:0}
+.infra-val{font-size:12px;color:var(--t1);font-family:var(--mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.infra-link{font-size:11px;color:var(--bt);cursor:pointer;display:flex;align-items:center;gap:3px;text-decoration:none;flex-shrink:0}
+.infra-link:hover{text-decoration:underline}
+
+/* docs */
+.docs-layout{flex:1;display:flex;overflow:hidden}
+.docs-tree{width:240px;flex-shrink:0;border-right:1px solid var(--bd);overflow-y:auto;background:var(--bg1);scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.docs-tree::-webkit-scrollbar{width:4px}
+.docs-tree::-webkit-scrollbar-thumb{background:var(--bg5)}
+.docs-view{flex:1;overflow-y:auto;padding:22px 26px;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.docs-view::-webkit-scrollbar{width:5px}
+.docs-view::-webkit-scrollbar-thumb{background:var(--bg5)}
+.tree-shd{height:30px;display:flex;align-items:center;padding:0 14px;gap:7px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);cursor:pointer;user-select:none;background:var(--bg1);transition:background .1s;border-bottom:1px solid var(--bd)}
+.tree-shd:hover{background:var(--bg2)}
+.tree-shd i{font-size:13px}
+.tree-shd .chev{margin-left:auto}
+.ti-item{display:flex;align-items:center;gap:7px;padding:5px 14px 5px 24px;font-size:12px;color:var(--t2);cursor:pointer;transition:all .1s}
+.ti-item:hover{background:var(--bg3);color:var(--t0)}
+.ti-item.on{background:var(--bld);color:var(--bt)}
+.ti-item i{font-size:13px;flex-shrink:0}
+.ti-badge{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--t3)}
+.doc-hd{margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--bd)}
+.doc-title{font-size:20px;font-weight:500;color:var(--t0);margin-bottom:7px}
+.doc-meta{display:flex;gap:12px;font-size:11px;color:var(--t3);font-family:var(--mono);flex-wrap:wrap}
+.doc-body{font-size:13px;color:var(--t1);line-height:1.8}
+.doc-body h2{font-size:15px;font-weight:500;color:var(--t0);margin:22px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--bd)}
+.doc-body h3{font-size:13px;font-weight:500;color:var(--t0);margin:14px 0 6px}
+.doc-body p{margin-bottom:12px}
+.doc-body code{font-family:var(--mono);font-size:11px;color:var(--bt);background:var(--bld);padding:2px 6px;border-radius:3px}
+.doc-body pre{background:var(--bg2);border:1px solid var(--bd);border-radius:4px;padding:12px 15px;margin:10px 0 14px;overflow-x:auto}
+.doc-body pre code{background:none;padding:0;font-size:12px;color:var(--gt)}
+.doc-body ul{padding-left:18px;margin-bottom:12px}
+.doc-body ul li{margin-bottom:5px}
+.callout{background:var(--bg2);border-left:3px solid var(--bt);border-radius:0 4px 4px 0;padding:10px 14px;margin:12px 0;font-size:12px;color:var(--t1)}
+
+/* search */
+.search-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.search-bar{padding:16px 18px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.sinp-wrap{position:relative}
+.sinp{width:100%;height:38px;background:var(--bg2);border:1px solid var(--bd2);border-radius:4px;padding:0 38px 0 14px;font-size:13px;color:var(--t0);font-family:var(--sans);outline:none;transition:border-color .1s}
+.sinp:focus{border-color:var(--bt)}
+.sinp::placeholder{color:var(--t3)}
+.sico{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:17px;color:var(--t3);pointer-events:none}
+.filters{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.fil{height:24px;padding:0 11px;border-radius:12px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;border:1px solid var(--bd2);background:transparent;color:var(--t2);font-family:var(--sans);transition:all .1s}
+.fil:hover{border-color:var(--bd3);color:var(--t1)}
+.fil.on{background:var(--bld);border-color:var(--bt);color:var(--bt)}
+.results{flex:1;overflow-y:auto;padding:12px 18px;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:var(--bg5) transparent}
+.rg-lbl{font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;padding:10px 0 6px;font-weight:500}
+.ri{display:flex;align-items:flex-start;gap:11px;padding:9px 12px;border-radius:4px;cursor:pointer;border:1px solid transparent;transition:all .1s}
+.ri:hover{background:var(--bg3);border-color:var(--bd2)}
+.ri-ico{font-size:15px;flex-shrink:0;margin-top:2px}
+.ri-body{flex:1;min-width:0}
+.ri-title{font-size:13px;color:var(--t0);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ri-title mark{background:transparent;color:var(--bt);font-weight:500}
+.ri-sub{font-size:11px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ri-meta{font-size:11px;color:var(--t3);flex-shrink:0;font-family:var(--mono)}
+.empty{font-size:12px;color:var(--t3);text-align:center;padding:40px 0}
+.empty i{font-size:28px;display:block;margin-bottom:10px}
+
+/* status bar */
+.statusbar{height:24px;background:#007acc;display:flex;align-items:center;padding:0 14px;gap:16px;flex-shrink:0}
+.sb{font-size:11px;color:#fff;display:flex;align-items:center;gap:4px;opacity:.9}
+.sb i{font-size:12px}
+
+/* copy & suggest */
+.copy-btn{height:20px;padding:0 7px;background:transparent;border:1px solid var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;cursor:pointer;font-family:var(--sans);transition:all .1s;display:inline-flex;align-items:center;gap:3px;flex-shrink:0;white-space:nowrap}
+.copy-btn:hover{border-color:var(--bt);color:var(--bt);background:var(--bld)}
+.copy-btn i{font-size:11px}
+.suggest-btn{height:28px;padding:0 12px;background:transparent;border:1px dashed var(--bd3);border-radius:4px;color:var(--t2);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .1s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.suggest-btn:hover{border-color:var(--bt);color:var(--bt);background:var(--bld);border-style:solid}
+.suggest-btn i{font-size:13px}
+.suggest-section{padding:10px 14px;border-top:1px solid var(--bd);background:var(--bg0)}
+.suggest-label{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;font-weight:500;margin-bottom:7px}
+/* toast */
+.toast{position:fixed;bottom:36px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--bg4);border:1px solid var(--bd3);border-radius:5px;padding:7px 14px;font-size:12px;color:var(--t0);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* selectable text in detail */
+.int-dtitle{cursor:text;user-select:text}
+.int-did{cursor:text;user-select:text}
+.d-block p{user-select:text;cursor:text}
+.d-meta-v{user-select:text;cursor:text}
+/* milestone title selectable */
+.ms-n{cursor:text;user-select:text}
+.ms-v{cursor:text;user-select:text}
+/* goal name selectable */
+.goal-name{cursor:text;user-select:text}
+/* cp-title selectable */
+.cp-title{cursor:text;user-select:text}
+.cp-name{cursor:text;user-select:text}
+/* task title */
+.task-title-col{cursor:text;user-select:text}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<div class="hd">
+  <div class="logo">
+    <div class="logo-ico"><i class="ti ti-brain"></i></div>
+    <span class="logo-txt">KBAgent</span>
+    <span class="logo-ver">v2.7.0-β2</span>
+  </div>
+  <div class="tabs">
+    <div class="tab on" onclick="showTab('ws',this)"><i class="ti ti-layout-dashboard"></i>Workspace</div>
+    <div class="tab" onclick="showTab('system',this)"><i class="ti ti-server"></i>System</div>
+    <div class="tab" onclick="showTab('docs',this)"><i class="ti ti-books"></i>Documents</div>
+    <div class="tab" onclick="showTab('search',this)"><i class="ti ti-search"></i>Search KB</div>
+  </div>
+  <div class="hd-r">
+    <div class="chaos-pill"><span class="chaos-n">42.1</span><span class="chaos-l">manageable</span></div>
+    <div class="vsep"></div>
+    <button class="hbtn" onclick="jumpSearch()"><i class="ti ti-search"></i>Search</button>
+    <button class="hbtn hbtn-p"><i class="ti ti-plus"></i>New intent</button>
+  </div>
+</div>
+
+<!-- ══════════════ WORKSPACE ══════════════ -->
+<div class="page on" id="page-ws">
+<div class="scroll">
+
+  <!-- FOUNDATION -->
+  <div class="found">
+    <div class="found-top">
+      <div class="found-ico"><i class="ti ti-package"></i></div>
+      <div style="flex:1">
+        <div class="found-title">project-knowledge-base-template</div>
+        <div class="found-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit — evolvable, domain-agnostic, human-gated knowledge system factory.</div>
+      </div>
+      <button class="btn btn-hi" style="height:32px;flex-shrink:0" onclick="jumpSearch()"><i class="ti ti-search"></i>Search KB</button>
+    </div>
+    <div class="ms-label">Milestones</div>
+    <div class="milestones">
+      <div class="ms done"><div style="display:flex;align-items:center;gap:4px"><div class="ms-v" style="flex:1">v2.6</div><button class="copy-btn" onclick="copyPrompt('Summarize what was achieved in milestone v2.6 Evidence loop')"><i class="ti ti-copy"></i></button></div><div class="ms-n">Evidence loop</div><div class="ms-bar"><div class="ms-fill" style="width:100%;background:var(--green)"></div></div><div class="ms-pct" style="color:var(--gt)">✓ complete</div></div>
+      <div class="ms done"><div class="ms-v">v2.7</div><div class="ms-n">Supervision loop</div><div class="ms-bar"><div class="ms-fill" style="width:100%;background:var(--green)"></div></div><div class="ms-pct" style="color:var(--gt)">✓ complete</div></div>
+      <div class="ms cur"><div style="display:flex;align-items:center;gap:4px"><div class="ms-v" style="flex:1">v2.8 ← current</div><button class="copy-btn" onclick="copyPrompt('What is the current status of milestone v2.8 Principal grounding and what intents are remaining?')"><i class="ti ti-copy"></i></button></div><div class="ms-n">Principal grounding</div><div class="ms-bar"><div class="ms-fill" style="width:60%;background:var(--bt)"></div></div><div class="ms-pct" style="color:var(--bt)">60% · beta</div></div>
+      <div class="ms"><div class="ms-v">v2.9</div><div class="ms-n">Graph loop</div><div class="ms-bar"><div class="ms-fill" style="width:20%;background:var(--at)"></div></div><div class="ms-pct" style="color:var(--at)">20% · planned</div></div>
+      <div class="ms"><div class="ms-v">v3.0</div><div class="ms-n">Reasoning loop</div><div class="ms-bar"><div class="ms-fill" style="width:0%"></div></div><div class="ms-pct">roadmap</div></div>
+    </div>
+  </div>
+
+  <!-- GOALS -->
+  <div class="sec">
+    <div class="sec-hd" id="hd-goals" onclick="tog('goals')">
+      <i class="ti ti-flag sec-ico" style="color:var(--gt)"></i>
+      <span class="sec-lbl">Goals &amp; criteria</span>
+      <div style="display:flex;gap:5px;margin-right:10px"><span class="chip cg">2 active</span><span class="chip ca">1 warning</span></div>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <div class="sec-bd" id="bd-goals">
+      <div class="goal-card">
+        <div class="goal-hd"><div><div class="goal-name">Lorem ipsum dolor sit amet, consectetur adipiscing elit</div><div class="goal-m">Q3 2026 · owner: william · long horizon · shared across all projects</div></div><span class="chip cg">active</span></div>
+        <div class="cr-row"><span class="cr-lbl">Chaos score ≤ 45</span><div class="cr-track"><div class="cr-fill" style="width:93%;background:var(--green)"></div></div><span class="cr-val" style="color:var(--gt)">42 / 45</span></div>
+        <div class="cr-row"><span class="cr-lbl">Intent close rate ≥ 80%</span><div class="cr-track"><div class="cr-fill" style="width:78%;background:var(--at)"></div></div><span class="cr-val" style="color:var(--at)">62%</span></div>
+        <div class="cr-row"><span class="cr-lbl">Doc coverage ≥ 90%</span><div class="cr-track"><div class="cr-fill" style="width:86%;background:var(--at)"></div></div><span class="cr-val" style="color:var(--at)">77%</span></div>
+      </div>
+      <div class="goal-card warn">
+        <div class="goal-hd"><div><div class="goal-name">Sed ut perspiciatis unde omnis iste natus error voluptatem</div><div class="goal-m">Q2 2026 · owner: william · short horizon · shared across all projects</div></div><span class="chip ca">warning</span></div>
+        <div class="cr-row"><span class="cr-lbl">Ontology contract validated</span><div class="cr-track"><div class="cr-fill" style="width:40%;background:var(--bt)"></div></div><span class="cr-val" style="color:var(--bt)">40%</span></div>
+        <div class="cr-row"><span class="cr-lbl">Graph export working</span><div class="cr-track"><div class="cr-fill" style="width:20%;background:var(--rt)"></div></div><span class="cr-val" style="color:var(--rt)">20%</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKPOINT -->
+  <div class="sec">
+    <div class="sec-hd" id="hd-cp" onclick="tog('cp')">
+      <i class="ti ti-bookmark sec-ico" style="color:var(--pt)"></i>
+      <span class="sec-lbl">Checkpoint / Focus</span>
+      <span class="chip cpur" style="margin-right:10px">focus: v2-8-2</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <div class="sec-bd" id="bd-cp">
+      <div class="cp-card">
+        <div class="cp-name">v2-8-2 · lorem ipsum principal grounding contract</div>
+        <div class="cp-meta">saved: 2025-01-14 09:23 · branch: intent/v2-8-2-principal-grounding-contract</div>
+        <div class="cp-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam. 21 files staged, awaiting retrospective sign-off.</div>
+        <div class="btns">
+          <button class="btn btn-p"><i class="ti ti-player-play"></i>Load checkpoint</button>
+          <button class="btn"><i class="ti ti-file-description"></i>focus.md</button>
+          <button class="btn"><i class="ti ti-bookmark"></i>Save checkpoint</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;font-weight:500;margin-bottom:8px">History</div>
+      <div class="cp-hist">
+        <div class="cp-hi"><div class="cp-dot" style="background:var(--gt)"></div><span class="cp-id">v2-7-0</span><span class="cp-title">Supervision loop complete — all tests passing</span><span class="cp-time">3d ago</span></div>
+        <div class="cp-hi"><div class="cp-dot" style="background:var(--bt)"></div><span class="cp-id">v2-8-0</span><span class="cp-title">Runtime harness init — dispatch skeleton done</span><span class="cp-time">6d ago</span></div>
+        <div class="cp-hi"><div class="cp-dot" style="background:var(--at)"></div><span class="cp-id">v2-8-1</span><span class="cp-title">kbx dispatch v1 draft — blocked on contract</span><span class="cp-time">2w ago</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTENTS — SPLIT LAYOUT -->
+  <div class="sec">
+    <div class="sec-hd" id="hd-intents" onclick="tog('intents')">
+      <i class="ti ti-list-check sec-ico"></i>
+      <span class="sec-lbl">Intents</span>
+      <div style="display:flex;gap:5px;margin-right:10px">
+        <span class="chip cpur">1 staged</span>
+        <span class="chip cg">1 active</span>
+        <span class="chip ca">2 backlog</span>
+        <span class="chip cr">1 ⚠</span>
+      </div>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <div class="sec-bd" id="bd-intents" style="padding:12px 14px">
+      <div class="intent-split">
+
+        <!-- LEFT LIST -->
+        <div class="int-list">
+          <div class="int-list-hd">
+            <span class="int-list-title">All intents</span>
+            <button class="int-list-add" title="New intent"><i class="ti ti-plus"></i></button>
+          </div>
+          <div class="int-items" id="int-items">
+
+            <div class="int-item sel" onclick="selIntent(this,'i1')" data-id="i1">
+              <div class="int-item-r1">
+                <span class="int-item-id">v2-8-2</span>
+                <span class="int-item-title">Lorem ipsum principal grounding</span>
+                <button class="copy-btn" style="margin-left:4px" onclick="event.stopPropagation();copyPrompt('Work on intent v2-8-2 lorem ipsum principal grounding contract — show status and suggest next step')"><i class="ti ti-copy"></i></button>
+                <div class="step-dots" title="② Execute — staged">
+                  <div class="sdot done" title="Generate"></div>
+                  <div class="sdot cur" title="Execute"></div>
+                  <div class="sdot todo" title="Retro"></div>
+                  <div class="sdot todo" title="Measure"></div>
+                </div>
+              </div>
+              <div class="int-item-r2">
+                <span class="chip cpur" style="font-size:10px">staged</span>
+                <span class="it-ms" style="font-size:10px;padding:1px 6px;border-radius:2px;background:var(--gd);color:var(--gt);font-family:var(--mono);border:1px solid #1e4828">v2.8</span>
+                <span class="int-item-repos"><i class="ti ti-git-branch" style="font-size:10px;vertical-align:-1px"></i> 3 repos</span>
+              </div>
+            </div>
+
+            <div class="int-item" onclick="selIntent(this,'i2')" data-id="i2">
+              <div class="int-item-r1">
+                <span class="int-item-id">v2-9-0-a</span>
+                <span class="int-item-title">Consectetur dispatch runtime</span>
+                <div class="step-dots" title="① Generate — active">
+                  <div class="sdot cur" title="Generate"></div>
+                  <div class="sdot todo" title="Execute"></div>
+                  <div class="sdot todo" title="Retro"></div>
+                  <div class="sdot todo" title="Measure"></div>
+                </div>
+              </div>
+              <div class="int-item-r2">
+                <span class="chip cg" style="font-size:10px">active</span>
+                <span class="it-ms" style="font-size:10px;padding:1px 6px;border-radius:2px;background:var(--gd);color:var(--gt);font-family:var(--mono);border:1px solid #1e4828">v2.9</span>
+                <span class="int-item-repos"><i class="ti ti-git-branch" style="font-size:10px;vertical-align:-1px"></i> 2 repos</span>
+              </div>
+            </div>
+
+            <div class="int-item" onclick="selIntent(this,'i3')" data-id="i3">
+              <div class="int-item-r1">
+                <span class="int-item-id">v2-9-0-b</span>
+                <span class="int-item-title">Eiusmod graph ontology schema</span>
+                <div class="step-dots" title="backlog">
+                  <div class="sdot todo"></div><div class="sdot todo"></div><div class="sdot todo"></div><div class="sdot todo"></div>
+                </div>
+              </div>
+              <div class="int-item-r2">
+                <span class="chip cgr" style="font-size:10px">backlog</span>
+                <span class="it-ms" style="font-size:10px;padding:1px 6px;border-radius:2px;background:var(--gd);color:var(--gt);font-family:var(--mono);border:1px solid #1e4828">v2.9</span>
+                <span class="int-item-repos"><i class="ti ti-git-branch" style="font-size:10px;vertical-align:-1px"></i> 4 repos</span>
+              </div>
+            </div>
+
+            <div class="int-item" onclick="selIntent(this,'i4')" data-id="i4">
+              <div class="int-item-r1">
+                <span class="int-item-id">fix-001</span>
+                <span class="int-item-title">Maintain: prune stale debt</span>
+                <div class="step-dots" title="pending"><div class="sdot todo"></div><div class="sdot todo"></div><div class="sdot todo"></div><div class="sdot todo"></div></div>
+              </div>
+              <div class="int-item-r2">
+                <span class="chip ca" style="font-size:10px">pending</span>
+                <span class="int-item-repos"><i class="ti ti-git-branch" style="font-size:10px;vertical-align:-1px"></i> 1 repo</span>
+              </div>
+            </div>
+
+            <div class="int-item" onclick="selIntent(this,'i5')" data-id="i5">
+              <div class="int-item-r1">
+                <span class="int-item-id" style="color:var(--rt)">v2-8-3</span>
+                <span class="int-item-title" style="color:var(--rt)">Ut labore — KPI criteria</span>
+                <div class="step-dots"><div class="sdot todo"></div><div class="sdot todo"></div><div class="sdot todo"></div><div class="sdot todo"></div></div>
+              </div>
+              <div class="int-item-r2">
+                <span class="chip cr" style="font-size:10px">⚠ out-of-goal</span>
+                <span class="int-item-repos"><i class="ti ti-git-branch" style="font-size:10px;vertical-align:-1px"></i> 2 repos</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT DETAIL -->
+        <div class="int-detail" id="int-detail">
+          <!-- populated by JS -->
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- end ws scroll -->
+</div>
+
+<!-- ══════════════ SYSTEM ══════════════ -->
+<div class="page" id="page-system">
+<div class="scroll">
+
+  <div class="sec">
+    <div class="sec-hd" id="hd-stats" onclick="tog('stats')">
+      <i class="ti ti-chart-bar sec-ico" style="color:var(--bt)"></i>
+      <span class="sec-lbl">Intent overview</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <div class="sec-bd" id="bd-stats">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-n" style="color:var(--bt)">5</div><div class="stat-l">Total active</div><div class="stat-sub" style="color:var(--bt)">this sprint</div></div>
+        <div class="stat-card"><div class="stat-n" style="color:var(--gt)">18</div><div class="stat-l">Closed</div><div class="stat-sub" style="color:var(--gt)">↑ +3 this week</div></div>
+        <div class="stat-card"><div class="stat-n" style="color:var(--at)">62%</div><div class="stat-l">Close rate</div><div class="stat-sub" style="color:var(--at)">target ≥ 80%</div></div>
+        <div class="stat-card"><div class="stat-n" style="color:var(--rt)">1</div><div class="stat-l">Out-of-goal</div><div class="stat-sub" style="color:var(--rt)">needs resolve</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+        <div class="d-block" style="background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:13px 15px">
+          <div class="d-block-title" style="font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">By milestone</div>
+          <div class="bar-row"><span class="bar-lbl">v2.8</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--bt)"></div></div><span class="bar-val" style="color:var(--bt)">2/3</span></div>
+          <div class="bar-row"><span class="bar-lbl">v2.9</span><div class="bar-track"><div class="bar-fill" style="width:20%;background:var(--at)"></div></div><span class="bar-val" style="color:var(--at)">1/5</span></div>
+          <div class="bar-row"><span class="bar-lbl">fix</span><div class="bar-track"><div class="bar-fill" style="width:0%;background:var(--gt)"></div></div><span class="bar-val" style="color:var(--t3)">0/2</span></div>
+        </div>
+        <div class="d-block" style="background:var(--bg3);border:1px solid var(--bd2);border-radius:4px;padding:13px 15px">
+          <div class="d-block-title" style="font-size:11px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">By type</div>
+          <div class="bar-row"><span class="bar-lbl">exec</span><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--bt)"></div></div><span class="bar-val" style="color:var(--bt)">3</span></div>
+          <div class="bar-row"><span class="bar-lbl">fix</span><div class="bar-track"><div class="bar-fill" style="width:20%;background:var(--at)"></div></div><span class="bar-val" style="color:var(--at)">1</span></div>
+          <div class="bar-row"><span class="bar-lbl">⚠ oog</span><div class="bar-track"><div class="bar-fill" style="width:20%;background:var(--rt)"></div></div><span class="bar-val" style="color:var(--rt)">1</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd" id="hd-git" onclick="tog('git')">
+      <i class="ti ti-git-branch sec-ico"></i>
+      <span class="sec-lbl">Git repositories</span>
+      <div style="display:flex;gap:5px;margin-right:10px"><span class="chip cg">3 repos</span><span class="chip ca">1 behind</span></div>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <div class="sec-bd" id="bd-git">
+      <div class="git-grid">
+        <div class="git-card"><div class="git-hd"><i class="ti ti-brand-github" style="font-size:15px;color:var(--t2)"></i><span class="git-name">project-knowledge-base-template</span><span class="chip cg" style="font-size:10px">main</span></div><div class="git-row"><span class="git-lbl">Branch</span><span class="git-val" style="color:var(--bt)">intent/v2-8-2</span></div><div class="git-row"><span class="git-lbl">Last commit</span><span class="git-val">d19821c — 21 files changed</span><a class="git-link" href="#"><i class="ti ti-external-link"></i></a></div><div class="git-row"><span class="git-lbl">Status</span><span class="git-val" style="color:var(--gt)">↑ 21 ahead · synced</span></div><div class="git-row"><span class="git-lbl">Open PRs</span><span class="git-val">2 open · 0 draft</span><a class="git-link" href="#">View →</a></div></div>
+        <div class="git-card"><div class="git-hd"><i class="ti ti-brand-github" style="font-size:15px;color:var(--t2)"></i><span class="git-name">kbx-beta-downstream</span><span class="chip ca" style="font-size:10px">behind</span></div><div class="git-row"><span class="git-lbl">Branch</span><span class="git-val">main</span></div><div class="git-row"><span class="git-lbl">Last commit</span><span class="git-val">a4f92bc — 3 days ago</span><a class="git-link" href="#"><i class="ti ti-external-link"></i></a></div><div class="git-row"><span class="git-lbl">Status</span><span class="git-val" style="color:var(--at)">↓ 8 behind upstream</span></div><div class="git-row"><span class="git-lbl">Open PRs</span><span class="git-val">0 open</span><a class="git-link" href="#">View →</a></div></div>
+        <div class="git-card"><div class="git-hd"><i class="ti ti-brand-github" style="font-size:15px;color:var(--t2)"></i><span class="git-name">authcore</span><span class="chip cg" style="font-size:10px">synced</span></div><div class="git-row"><span class="git-lbl">Branch</span><span class="git-val">main</span></div><div class="git-row"><span class="git-lbl">Last commit</span><span class="git-val">b8c34de — 1 day ago</span><a class="git-link" href="#"><i class="ti ti-external-link"></i></a></div><div class="git-row"><span class="git-lbl">Status</span><span class="git-val" style="color:var(--gt)">up to date</span></div><div class="git-row"><span class="git-lbl">Open PRs</span><span class="git-val">1 open</span><a class="git-link" href="#">View →</a></div></div>
+        <div class="git-card"><div class="git-hd"><i class="ti ti-brand-github" style="font-size:15px;color:var(--t2)"></i><span class="git-name">platform-control-plane</span><span class="chip cg" style="font-size:10px">synced</span></div><div class="git-row"><span class="git-lbl">Branch</span><span class="git-val">main</span></div><div class="git-row"><span class="git-lbl">Last commit</span><span class="git-val">c91f02a — 5h ago</span><a class="git-link" href="#"><i class="ti ti-external-link"></i></a></div><div class="git-row"><span class="git-lbl">Status</span><span class="git-val" style="color:var(--gt)">up to date</span></div><div class="git-row"><span class="git-lbl">Open PRs</span><span class="git-val">0 open</span><a class="git-link" href="#">View →</a></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd" id="hd-sig" onclick="tog('sig')">
+      <i class="ti ti-bell sec-ico"></i>
+      <span class="sec-lbl">Signals &amp; alerts</span>
+      <span class="chip cr" style="margin-right:10px">2 action needed</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <div class="sec-bd" id="bd-sig">
+      <div class="sigs">
+        <div class="sig"><i class="ti ti-alert-triangle sig-ico" style="color:var(--rt)"></i><div class="sig-body"><div class="sig-t">Intent v2-8-3 ngoài goal alignment</div><div class="sig-s">resolve: backlog · exception · update goal</div></div><span class="sig-time">2m</span><button class="sig-btn">Resolve →</button></div>
+        <div class="sig"><i class="ti ti-info-circle sig-ico" style="color:var(--bt)"></i><div class="sig-body"><div class="sig-t">Doc coverage 77% — target 90% (+13% needed)</div><div class="sig-s">linked: GOAL-001 · criteria gap</div></div><span class="sig-time">1h</span><button class="sig-btn">Intent →</button></div>
+        <div class="sig"><i class="ti ti-tool sig-ico" style="color:var(--at)"></i><div class="sig-body"><div class="sig-t">Maintain: 2 fix intents pending approval</div><div class="sig-s">fix-001: prune debt · fix-002: entropy index</div></div><span class="sig-time">6h</span><button class="sig-btn">Review →</button></div>
+        <div class="sig"><i class="ti ti-circle-check sig-ico" style="color:var(--gt)"></i><div class="sig-body"><div class="sig-t">Chaos snapshot saved — trend ↓ −2.4</div><div class="sig-s">structural debt reduced after v2-8-1 retro</div></div><span class="sig-time">3h</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd cls" id="hd-chaos" onclick="tog('chaos')">
+      <i class="ti ti-wave-sine sec-ico"></i>
+      <span class="sec-lbl">Chaos score</span>
+      <span class="chip cg" style="margin-right:10px">42.1 · manageable · ↓ −2.4</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <div class="sec-bd h" id="bd-chaos">
+      <div class="chaos-g">
+        <div><div class="chaos-n">42.1</div><span class="chip cg">manageable</span><div style="font-size:12px;color:var(--gt);font-family:var(--mono);margin-top:7px">↓ −2.4 vs prev</div></div>
+        <div>
+          <div class="cd"><span class="cd-n">structural</span><div class="cd-t"><div class="cd-f" style="width:30%;background:var(--bt)"></div></div><span class="cd-v">−18</span></div>
+          <div class="cd"><span class="cd-n">coverage</span><div class="cd-t"><div class="cd-f" style="width:55%;background:var(--at)"></div></div><span class="cd-v">−12</span></div>
+          <div class="cd"><span class="cd-n">intent</span><div class="cd-t"><div class="cd-f" style="width:23%;background:var(--bt)"></div></div><span class="cd-v">−14</span></div>
+          <div class="cd"><span class="cd-n">cognitive</span><div class="cd-t"><div class="cd-f" style="width:15%;background:var(--bt)"></div></div><span class="cd-v">−8</span></div>
+          <div class="cd"><span class="cd-n">testing</span><div class="cd-t"><div class="cd-f" style="width:10%;background:var(--bt)"></div></div><span class="cd-v">−5</span></div>
+        </div>
+      </div>
+      <div class="btns"><button class="btn"><i class="ti ti-refresh"></i>Re-run chaos</button><button class="btn"><i class="ti ti-history"></i>History</button></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd cls" id="hd-graph" onclick="tog('graph')">
+      <i class="ti ti-share sec-ico"></i>
+      <span class="sec-lbl">Knowledge graph</span>
+      <span style="font-size:11px;color:var(--t3);font-family:var(--mono);margin-right:10px">142 nodes · 318 edges · 3h ago</span>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <div class="sec-bd h" id="bd-graph">
+      <div class="gstats"><div class="gs"><div class="gs-n">142</div><div class="gs-l">nodes</div></div><div class="gs"><div class="gs-n">318</div><div class="gs-l">edges</div></div><div class="gs"><div class="gs-n">2</div><div class="gs-l">goals</div></div><div class="gs"><div class="gs-n">14</div><div class="gs-l">intents</div></div></div>
+      <div class="npills"><span class="np">:Goal (2)</span><span class="np">:Intent (14)</span><span class="np">:Rule (28)</span><span class="np">:KBDoc (67)</span><span class="np">:Code (19)</span><span class="np">:Signal (8)</span><span class="np">:Release (4)</span><span class="np">:Lesson (4)</span></div>
+      <div class="btns" style="margin-top:4px"><button class="btn"><i class="ti ti-download"></i>Export graph</button><button class="btn"><i class="ti ti-hexagon"></i>Validate ontology</button><button class="btn"><i class="ti ti-rotate"></i>Find cycles</button></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-hd cls" id="hd-infra" onclick="tog('infra')">
+      <i class="ti ti-server sec-ico"></i>
+      <span class="sec-lbl">Infrastructure</span>
+      <div style="display:flex;gap:5px;margin-right:10px"><span class="chip cg">3 healthy</span><span class="chip ca">1 degraded</span></div>
+      <i class="ti ti-chevron-down chev"></i>
+    </div>
+    <div class="sec-bd h" id="bd-infra">
+      <div class="infra-grid">
+        <div class="infra-card"><div class="infra-hd"><i class="ti ti-cloud" style="font-size:15px;color:var(--bt)"></i><span class="infra-name">Production</span><div class="sdot-env sdot-g"></div></div><div class="infra-row"><span class="infra-lbl">URL</span><span class="infra-val">app.lorem-ipsum.io</span><a class="infra-link" href="#"><i class="ti ti-external-link"></i></a></div><div class="infra-row"><span class="infra-lbl">Branch</span><span class="infra-val" style="color:var(--gt)">main</span></div><div class="infra-row"><span class="infra-lbl">Deploy</span><span class="infra-val">v2.7.0 · 2d ago</span></div><div class="infra-row"><span class="infra-lbl">Uptime</span><span class="infra-val" style="color:var(--gt)">99.9%</span></div></div>
+        <div class="infra-card"><div class="infra-hd"><i class="ti ti-flask" style="font-size:15px;color:var(--pt)"></i><span class="infra-name">Staging</span><div class="sdot-env sdot-a"></div></div><div class="infra-row"><span class="infra-lbl">URL</span><span class="infra-val">staging.lorem-ipsum.io</span><a class="infra-link" href="#"><i class="ti ti-external-link"></i></a></div><div class="infra-row"><span class="infra-lbl">Branch</span><span class="infra-val" style="color:var(--bt)">intent/v2-8-2</span></div><div class="infra-row"><span class="infra-lbl">Deploy</span><span class="infra-val">v2.8.0-beta · 3h ago</span></div><div class="infra-row"><span class="infra-lbl">Status</span><span class="infra-val" style="color:var(--at)">⚠ build queued</span></div></div>
+        <div class="infra-card"><div class="infra-hd"><i class="ti ti-brand-docker" style="font-size:15px;color:var(--bt)"></i><span class="infra-name">Docker</span><div class="sdot-env sdot-g"></div></div><div class="infra-row"><span class="infra-lbl">Image</span><span class="infra-val">kbagent:2.7.0</span></div><div class="infra-row"><span class="infra-lbl">Containers</span><span class="infra-val" style="color:var(--gt)">3 running</span></div><div class="infra-row"><span class="infra-lbl">Registry</span><span class="infra-val">ghcr.io/williamduong</span></div><div class="infra-row"><span class="infra-lbl">Compose</span><span class="infra-val">docker-compose.yml</span></div></div>
+        <div class="infra-card"><div class="infra-hd"><i class="ti ti-device-laptop" style="font-size:15px;color:var(--t2)"></i><span class="infra-name">Local dev</span><div class="sdot-env sdot-g"></div></div><div class="infra-row"><span class="infra-lbl">URL</span><span class="infra-val">localhost:3000</span><a class="infra-link" href="#"><i class="ti ti-external-link"></i></a></div><div class="infra-row"><span class="infra-lbl">Node</span><span class="infra-val">v20.11.0</span></div><div class="infra-row"><span class="infra-lbl">kbx</span><span class="infra-val" style="color:var(--gt)">v2.7.0-beta.2</span></div><div class="infra-row"><span class="infra-lbl">DB</span><span class="infra-val">PostgreSQL · :5432</span></div></div>
+      </div>
+      <div class="btns" style="margin-top:4px"><button class="btn"><i class="ti ti-brand-docker"></i>docker compose up</button><button class="btn"><i class="ti ti-refresh"></i>Redeploy staging</button><button class="btn"><i class="ti ti-file-description"></i>View logs</button></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════ DOCUMENTS ══════════════ -->
+<div class="page" id="page-docs">
+<div class="docs-layout">
+  <div class="docs-tree">
+    <div class="tree-shd"><i class="ti ti-folder"></i>knowledge-base<i class="ti ti-chevron-down chev"></i></div>
+    <div class="ti-item on"><i class="ti ti-map"></i>system-map.md<span class="ti-badge">📌</span></div>
+    <div class="ti-item"><i class="ti ti-file-text"></i>foundation.md</div>
+    <div class="ti-item"><i class="ti ti-file-certificate"></i>CONSTITUTION.md</div>
+    <div class="tree-shd" style="padding-left:18px;font-size:10px;border-top:1px solid var(--bd)"><i class="ti ti-folder"></i>12-ai-skills<i class="ti ti-chevron-down chev"></i></div>
+    <div class="ti-item" style="padding-left:30px"><i class="ti ti-file-text"></i>agent-operating-manual.md</div>
+    <div class="tree-shd" style="padding-left:18px;font-size:10px;border-top:1px solid var(--bd)"><i class="ti ti-folder"></i>15-governance<i class="ti ti-chevron-down chev"></i></div>
+    <div class="ti-item" style="padding-left:30px"><i class="ti ti-file-text"></i>self-evolution-doctrine.md</div>
+    <div class="ti-item" style="padding-left:30px"><i class="ti ti-file-text"></i>chaos-score.md</div>
+    <div class="tree-shd" style="padding-left:18px;font-size:10px;border-top:1px solid var(--bd)"><i class="ti ti-folder"></i>13-knowledge-graph<i class="ti ti-chevron-down chev"></i></div>
+    <div class="ti-item" style="padding-left:30px"><i class="ti ti-file-text"></i>ontology-contract.md</div>
+    <div class="tree-shd" style="border-top:1px solid var(--bd)"><i class="ti ti-folder"></i>intents<i class="ti ti-chevron-down chev"></i></div>
+    <div class="ti-item"><i class="ti ti-folder"></i>_active</div>
+    <div class="ti-item"><i class="ti ti-folder"></i>_backlog</div>
+    <div class="ti-item"><i class="ti ti-folder"></i>_archive</div>
+    <div class="tree-shd" style="border-top:1px solid var(--bd)"><i class="ti ti-terminal" style="color:var(--gt)"></i><span style="color:var(--gt)">CLI &amp; Tools</span><i class="ti ti-chevron-down chev"></i></div>
+    <div class="ti-item" style="color:var(--gt)"><i class="ti ti-command"></i>kbx commands<span class="ti-badge" style="color:var(--gt)">ref</span></div>
+    <div class="ti-item"><i class="ti ti-file-text"></i>install.md</div>
+    <div class="tree-shd" style="border-top:1px solid var(--bd)"><i class="ti ti-database"></i>Graph nodes<span style="margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--t3)">142</span></div>
+    <div class="ti-item"><i class="ti ti-circle" style="color:var(--gt)"></i>:Goal (2)</div>
+    <div class="ti-item"><i class="ti ti-circle" style="color:var(--bt)"></i>:Intent (14)</div>
+    <div class="ti-item"><i class="ti ti-circle" style="color:var(--pt)"></i>:Rule (28)</div>
+    <div class="ti-item"><i class="ti ti-circle" style="color:var(--t2)"></i>:KBDoc (67)</div>
+  </div>
+  <div class="docs-view">
+    <div class="doc-hd"><div class="doc-title">system-map.md</div><div class="doc-meta"><span>00-start-here/system-map.md</span><span>updated: 2025-01-14</span><span class="chip cg" style="font-size:10px">source-of-truth</span></div></div>
+    <div class="doc-body">
+      <h2>Project identity</h2>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      <div class="callout">KBAgent is <strong>evolvable</strong>, not self-evolving — humans decide direction, the system reduces friction and maintains evidence.</div>
+      <h2>Goals</h2>
+      <p>Goals are shared across all projects — there are no per-project goals. Only intents are project-specific.</p>
+      <ul>
+        <li><code>GOAL-001</code> Lorem ipsum dolor sit amet consectetur · Q3 2026</li>
+        <li><code>GOAL-002</code> Sed ut perspiciatis unde omnis iste natus · Q2 2026 · ⚠ warning</li>
+      </ul>
+      <h2>Architecture</h2>
+      <pre><code>Layer 0 — Goals (invariant · human-only · shared)
+Layer 1 — Main loop (evolvable · human-gated)
+  ① Generate → ② Execute → ③ Retro → ④ Measure
+Layer 2 — Unified Knowledge Graph
+  written only at ③ Retro</code></pre>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════ SEARCH ══════════════ -->
+<div class="page" id="page-search">
+<div class="search-wrap">
+  <div class="search-bar">
+    <div class="sinp-wrap"><input class="sinp" type="text" placeholder="Search KB — docs, intents, graph nodes, rules, CLI..." id="sinp" oninput="doSearch(this.value)"><i class="ti ti-search sico"></i></div>
+    <div class="filters">
+      <button class="fil on" onclick="this.classList.toggle('on')"><i class="ti ti-file-text" style="font-size:12px"></i>Docs</button>
+      <button class="fil on" onclick="this.classList.toggle('on')"><i class="ti ti-list-check" style="font-size:12px"></i>Intents</button>
+      <button class="fil on" onclick="this.classList.toggle('on')"><i class="ti ti-share" style="font-size:12px"></i>Graph</button>
+      <button class="fil on" onclick="this.classList.toggle('on')"><i class="ti ti-shield" style="font-size:12px"></i>Rules</button>
+      <button class="fil" onclick="this.classList.toggle('on')"><i class="ti ti-terminal" style="font-size:12px"></i>CLI</button>
+    </div>
+  </div>
+  <div class="results" id="results"><div class="empty"><i class="ti ti-search"></i>Type to search across KB docs, intents, graph nodes and rules</div></div>
+</div>
+</div>
+
+<!-- STATUS -->
+<div class="statusbar">
+  <span class="sb"><i class="ti ti-git-branch"></i>intent/v2-8-2-principal-grounding-contract</span>
+  <span class="sb"><i class="ti ti-circle-check"></i>0 errors</span>
+  <span class="sb"><i class="ti ti-alert-triangle"></i>2 warnings</span>
+  <span style="flex:1"></span>
+  <span class="sb"><i class="ti ti-bolt"></i>kbx v2.7.0-beta.2</span>
+  <span class="sb">MCP: 0 sessions</span>
+</div>
+
+</div>
+
+<script>
+/* ── INTENT DATA ── */
+const INTENTS = {
+  i1: {
+    id:'v2-8-2', title:'Lorem ipsum principal grounding contract',
+    milestone:'v2.8', type:'exec', status:'staged',
+    repos:['project-kb-template','kbx-beta-downstream','authcore'],
+    goal:'GOAL-001 · Lorem ipsum dolor sit amet',
+    created:'2025-01-08', updated:'2025-01-14',
+    loop:{step:1, steps:[
+      {n:'①',lbl:'Generate',sub:'backlog → active',state:'done'},
+      {n:'②',lbl:'Execute',sub:'21 files staged',state:'cur'},
+      {n:'③',lbl:'Retro',sub:'pending',state:'todo'},
+      {n:'④',lbl:'Measure',sub:'pending',state:'todo'},
+    ]},
+    description:'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.',
+    actions:[
+      {lbl:'Start retrospective',icon:'ti-player-play',prompt:'Run kbx intent retro for intent v2-8-2, write graph evidence and close intent'},
+      {lbl:'View staged files',icon:'ti-file-description',prompt:'List all staged files for intent v2-8-2 and summarize changes'},
+      {lbl:'Impact check',icon:'ti-git-merge',prompt:'Run kbx impact for intent v2-8-2 and list all affected nodes'},
+    ],
+    tasks:[
+      {id:'T-001',title:'Lorem ipsum — constitution axioms review',status:'done',detail:'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.'},
+      {id:'T-002',title:'Sed ut perspiciatis — contract file alignment',status:'done',detail:'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit consequuntur magni.'},
+      {id:'T-003',title:'At vero eos — kbx contract validation',status:'in-progress',detail:'Ut labore et dolore magnam aliquam quaerat voluptatem. Quis autem vel eum iure reprehenderit.'},
+      {id:'T-004',title:'Duis aute irure — retrospective prep',status:'todo',detail:'Nam libero tempore cum soluta nobis eligendi optio cumque nihil impedit quo minus.'},
+    ],
+  },
+  i2: {
+    id:'v2-9-0-a', title:'Consectetur dispatch runtime harness',
+    milestone:'v2.9', type:'exec', status:'active',
+    repos:['project-kb-template','platform-control-plane'],
+    goal:'GOAL-002 · Sed ut perspiciatis unde omnis',
+    created:'2025-01-10', updated:'2025-01-13',
+    loop:{step:0, steps:[
+      {n:'①',lbl:'Generate',sub:'in progress',state:'cur'},
+      {n:'②',lbl:'Execute',sub:'pending',state:'todo'},
+      {n:'③',lbl:'Retro',sub:'pending',state:'todo'},
+      {n:'④',lbl:'Measure',sub:'pending',state:'todo'},
+    ]},
+    description:'Consectetur adipiscing elit. Quis nostrum exercitationem ullam corporis suscipit laboriosam nisi ut aliquid ex ea commodi consequatur.',
+    actions:[
+      {lbl:'Continue working',icon:'ti-pencil',prompt:'Continue intent v2-9-0-a dispatch runtime harness — show current progress and suggest next task'},
+      {lbl:'Impact check',icon:'ti-git-merge',prompt:'Run kbx impact for intent v2-9-0-a and list affected nodes'},
+    ],
+    tasks:[
+      {id:'T-010',title:'Lorem ipsum dispatch skeleton',status:'done',detail:'Lorem ipsum dolor sit amet consectetur.'},
+      {id:'T-011',title:'Sed ut perspiciatis intent resolver',status:'in-progress',detail:'Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis.'},
+      {id:'T-012',title:'At vero eos — integration tests',status:'todo',detail:'Nam libero tempore cum soluta nobis est eligendi optio.'},
+    ],
+  },
+  i3: {
+    id:'v2-9-0-b', title:'Eiusmod graph ontology unified schema',
+    milestone:'v2.9', type:'exec', status:'backlog',
+    repos:['project-kb-template','kbx-beta-downstream','authcore','platform-control-plane'],
+    goal:'GOAL-002 · Sed ut perspiciatis unde omnis',
+    created:'2025-01-12', updated:'2025-01-12',
+    loop:{step:-1, steps:[
+      {n:'①',lbl:'Generate',sub:'not started',state:'todo'},
+      {n:'②',lbl:'Execute',sub:'pending',state:'todo'},
+      {n:'③',lbl:'Retro',sub:'pending',state:'todo'},
+      {n:'④',lbl:'Measure',sub:'pending',state:'todo'},
+    ]},
+    description:'Lorem ipsum dolor sit amet — blocked on v2-8-2 retro. Will define :Goal, :Intent, :Rule, :Code node types and all edge schema.',
+    actions:[{lbl:'Activate intent',icon:'ti-player-play',prompt:'Activate intent v2-9-0-b graph ontology unified schema and run goal alignment check'}],
+    tasks:[
+      {id:'T-020',title:'Define :Goal :Intent node schema',status:'todo',detail:'Lorem ipsum dolor sit amet.'},
+      {id:'T-021',title:'Define edge types and evidence metadata',status:'todo',detail:'Consectetur adipiscing elit.'},
+    ],
+  },
+  i4: {
+    id:'fix-001', title:'Maintain: prune stale debt entries',
+    milestone:null, type:'fix', status:'pending',
+    repos:['project-kb-template'],
+    goal:null,
+    created:'2025-01-14', updated:'2025-01-14',
+    loop:{step:-1, steps:[
+      {n:'①',lbl:'Generate',sub:'proposed',state:'todo'},
+      {n:'②',lbl:'Execute',sub:'pending',state:'todo'},
+      {n:'③',lbl:'Retro',sub:'pending',state:'todo'},
+      {n:'④',lbl:'Measure',sub:'pending',state:'todo'},
+    ]},
+    description:'Proposed by maintain loop. Prune 14 stale entries from debt-index.md. Exception intent — no goal alignment required.',
+    actions:[
+      {lbl:'Approve fix intent',icon:'ti-check',prompt:'Approve fix-001 maintain intent and start execution — prune stale debt entries'},
+      {lbl:'Reject and explain',icon:'ti-x',prompt:'Reject fix-001 and explain why this debt cleanup is not needed now'},
+    ],
+    tasks:[
+      {id:'T-F01',title:'Prune debt-index.md — 14 entries',status:'todo',detail:'Remove stale debt entries older than 90 days with no linked intent.'},
+    ],
+  },
+  i5: {
+    id:'v2-8-3', title:'Ut labore KPI criteria engine',
+    milestone:null, type:'exec', status:'out-of-goal',
+    repos:['project-kb-template','kbx-beta-downstream'],
+    goal:null,
+    created:'2025-01-13', updated:'2025-01-13',
+    loop:{step:-1, steps:[
+      {n:'①',lbl:'Generate',sub:'blocked',state:'todo'},
+      {n:'②',lbl:'Execute',sub:'pending',state:'todo'},
+      {n:'③',lbl:'Retro',sub:'pending',state:'todo'},
+      {n:'④',lbl:'Measure',sub:'pending',state:'todo'},
+    ]},
+    description:'⚠ Goal alignment check FAILED — this intent does not serve any active goal. Cannot activate until resolved.',
+    actions:[
+      {lbl:'Move to backlog',icon:'ti-archive',prompt:'Move intent v2-8-3 to backlog because it fails goal alignment'},
+      {lbl:'Create exception',icon:'ti-flag',prompt:'Create an exception for intent v2-8-3 and justify why it should proceed outside current goals'},
+      {lbl:'Update goal to include this',icon:'ti-pencil',prompt:'Suggest how to update GOAL-001 or GOAL-002 to include the KPI criteria engine work'},
+    ],
+    tasks:[],
+  },
+};
+
+const TASK_STATUS_CHIP = {
+  done:`<span class="chip cg" style="font-size:10px">done</span>`,
+  'in-progress':`<span class="chip cb" style="font-size:10px">in progress</span>`,
+  todo:`<span class="chip cgr" style="font-size:10px">todo</span>`,
+};
+
+function renderDetail(id) {
+  const d = INTENTS[id];
+  const isWarn = d.status === 'out-of-goal';
+  const accentColor = isWarn ? 'var(--rt)' : d.status==='staged' ? 'var(--pt)' : d.status==='active' ? 'var(--gt)' : 'var(--t3)';
+
+  // repo tags
+  let repoTags = d.repos.map(r=>`<span class="int-repo-tag"><i class="ti ti-git-branch"></i>${r}</span>`).join('');
+  // goal tag
+  let goalTag = d.goal ? `<span class="int-repo-tag" style="color:var(--gt);border-color:#204830;background:var(--gd)"><i class="ti ti-flag" style="font-size:10px;vertical-align:-1px"></i>${d.goal}</span>` : `<span class="int-repo-tag" style="color:var(--rt);border-color:#3e1a1a;background:var(--rd)"><i class="ti ti-alert-triangle" style="font-size:10px;vertical-align:-1px"></i> no goal</span>`;
+
+  // loop bar
+  let loopHTML = d.loop.steps.map(s=>`
+    <div class="lb-step ${s.state}">
+      <span class="lb-num">${s.n}</span>
+      <span class="lb-lbl">${s.lbl}</span>
+      <span class="lb-sub">${s.sub}</span>
+    </div>`).join('');
+
+  // actions
+  let actHTML = d.actions.map(a=>`<button class="suggest-btn" onclick="copyPrompt('${a.prompt||a.lbl} — intent ${d.id}: ${d.title}')"><i class="ti ${a.icon}"></i>${a.lbl} <i class="ti ti-copy" style="font-size:11px;opacity:.6"></i></button>`).join('');
+
+  // tasks
+  let taskRows = d.tasks.map((t,i)=>`
+    <tr onclick="toggleTaskRow(this,${i},'${id}')">
+      <td><span class="task-chev"><i class="ti ti-chevron-right"></i></span></td>
+      <td class="task-id">${t.id}</td>
+      <td class="task-title-col">${t.title}</td>
+      <td>${TASK_STATUS_CHIP[t.status]||''}</td><td><button class="copy-btn" onclick="event.stopPropagation();copyPrompt('Work on task ${t.id}: ${t.title} — intent ${d.id}')"><i class="ti ti-copy"></i></button></td>
+    </tr>
+    <tr class="task-detail-row" data-idx="${i}" data-intent="${id}">
+      <td colspan="4"><div class="task-detail-inner">${t.detail}</div></td>
+    </tr>`).join('');
+
+  const det = document.getElementById('int-detail');
+  det.innerHTML = `
+    <div class="int-dhd">
+      <div class="int-dhd-r1">
+        <span class="int-did">${d.id}</span>
+        <span class="int-dtitle">${d.title}</span>
+        ${d.milestone ? `<span class="chip cg" style="flex-shrink:0">${d.milestone}</span>` : ''}
+        <span class="chip ${d.status==='staged'?'cpur':d.status==='active'?'cg':d.status==='backlog'?'cgr':d.status==='pending'?'ca':'cr'}" style="flex-shrink:0">${d.status}</span>
+      </div>
+      <div class="int-dhd-r2">
+        ${goalTag}
+        ${repoTags}
+        <span class="int-repo-tag" style="color:var(--t3)"><i class="ti ti-calendar" style="font-size:10px;vertical-align:-1px"></i> ${d.updated}</span>
+      </div>
+    </div>
+    <div class="loop-bar">${loopHTML}</div>
+    <div class="int-actions">
+      <span class="int-action-label" style="font-size:11px;color:var(--t3);margin-right:2px">Suggest to copilot:</span>
+      ${actHTML}
+    </div>
+    <div class="int-dbody">
+      <div class="d-block">
+        <div class="d-block-title">Description</div>
+        <p style="font-size:13px;color:var(--t1);line-height:1.7;margin:0">${d.description}</p>
+      </div>
+      ${d.tasks.length ? `
+      <div class="d-block" style="padding:0">
+        <div style="padding:11px 14px;border-bottom:1px solid var(--bd)"><span class="d-block-title" style="display:inline">Tasks</span><span style="font-size:11px;color:var(--t3);margin-left:8px">${d.tasks.length} total</span></div>
+        <table class="task-table" style="margin:0">
+          <thead><tr>
+            <th style="width:16px;padding-left:12px"></th>
+            <th style="width:80px">ID</th>
+            <th>Title</th>
+            <th style="width:100px">Status</th><th style="width:28px"></th>
+          </tr></thead>
+          <tbody>${taskRows}</tbody>
+          <tfoot><tr class="task-add-row"><td colspan="4"><button class="task-add-btn"><i class="ti ti-plus" style="font-size:12px"></i>Add task</button></td></tr></tfoot>
+        </table>
+      </div>` : ''}
+      <div class="d-block">
+        <div class="d-block-title">Metadata</div>
+        <div class="d-meta-grid">
+          <span class="d-meta-k">Type</span><span class="d-meta-v">${d.type}</span>
+          <span class="d-meta-k">Created</span><span class="d-meta-v">${d.created}</span>
+          <span class="d-meta-k">Updated</span><span class="d-meta-v">${d.updated}</span>
+          <span class="d-meta-k">Repos</span><span class="d-meta-v">${d.repos.length} linked</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleTaskRow(tr, idx, intentId) {
+  const detailRow = tr.nextElementSibling;
+  const inner = detailRow.querySelector('.task-detail-inner');
+  const isOpen = inner.classList.toggle('show');
+  tr.classList.toggle('task-open', isOpen);
+}
+
+function selIntent(el, id) {
+  document.querySelectorAll('.int-item').forEach(i=>i.classList.remove('sel'));
+  el.classList.add('sel');
+  renderDetail(id);
+}
+
+/* ── SECTION TOGGLE ── */
+function tog(id){
+  const bd=document.getElementById('bd-'+id);
+  const hd=document.getElementById('hd-'+id);
+  if(!bd||!hd)return;
+  bd.classList.toggle('h');
+  hd.classList.toggle('cls');
+}
+
+/* ── TAB SWITCHING ── */
+function showTab(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  if(el)el.classList.add('on');
+}
+function copyPrompt(text){
+  navigator.clipboard.writeText(text).then(()=>{
+    const t=document.getElementById('toast');
+    t.textContent='Copied: '+text.substring(0,60)+(text.length>60?'...':'');
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer=setTimeout(()=>t.classList.remove('show'),2000);
+  }).catch(()=>{
+    // fallback
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+    const t=document.getElementById('toast');
+    t.textContent='Copied!';
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer=setTimeout(()=>t.classList.remove('show'),2000);
+  });
+}
+function jumpSearch(){
+  showTab('search',document.querySelectorAll('.tab')[3]);
+  setTimeout(()=>document.getElementById('sinp').focus(),50);
+}
+
+/* ── SEARCH ── */
+const DATA=[
+  {t:'doc',i:'ti-file-text',title:'system-map.md',sub:'00-start-here · source-of-truth · goals shared across all projects',m:'1d'},
+  {t:'doc',i:'ti-file-certificate',title:'CONSTITUTION.md',sub:'principal axioms 1–5 · SVFactory/KBAgent separation',m:'3d'},
+  {t:'doc',i:'ti-file-text',title:'self-evolution-doctrine.md',sub:'15-governance · v1.7→v2.0 progression',m:'5d'},
+  {t:'doc',i:'ti-file-text',title:'agent-operating-manual.md',sub:'12-ai-skills · three-layer vibe flow · P25',m:'2d'},
+  {t:'intent',i:'ti-list-check',title:'v2-8-2 lorem ipsum principal grounding',sub:'staged · 21 files · v2.8 · 3 repos',m:'active'},
+  {t:'intent',i:'ti-list-check',title:'v2-9-0-a consectetur dispatch runtime',sub:'active · v2.9 · 2 repos',m:'active'},
+  {t:'intent',i:'ti-list-check',title:'v2-9-0-b eiusmod graph ontology schema',sub:'backlog · v2.9 · 4 repos',m:'backlog'},
+  {t:'graph',i:'ti-circle',title:':Goal · GOAL-001',sub:'Lorem ipsum dolor · shared · criteria: chaos≤45, close-rate≥80%',m:'node'},
+  {t:'graph',i:'ti-circle',title:':Rule · KBX-P18',sub:'One active intent per version · active · verified',m:'node'},
+  {t:'rule',i:'ti-shield',title:'KBX-P18 · one active intent per version',sub:'active · implemented · verified',m:'rule'},
+  {t:'rule',i:'ti-shield',title:'KBX-P25 · three-layer vibe execution',sub:'NL → CLI → AI · active',m:'rule'},
+  {t:'doc',i:'ti-command',title:'kbx intent create',sub:'CLI · create intent with goal alignment check',m:'CLI'},
+  {t:'doc',i:'ti-command',title:'kbx chaos --scan-src',sub:'CLI · compute chaos from 7 dimensions',m:'CLI'},
+];
+function doSearch(q){
+  const out=document.getElementById('results');
+  if(!q.trim()){out.innerHTML='<div class="empty"><i class="ti ti-search"></i>Type to search</div>';return;}
+  const ql=q.toLowerCase();
+  const hits=DATA.filter(d=>d.title.toLowerCase().includes(ql)||d.sub.toLowerCase().includes(ql));
+  if(!hits.length){out.innerHTML='<div class="empty"><i class="ti ti-mood-empty"></i>No results for "'+q+'"</div>';return;}
+  const grps={doc:[],intent:[],graph:[],rule:[]};
+  hits.forEach(h=>{const k=h.t==='doc'?'doc':h.t;if(grps[k])grps[k].push(h);});
+  const lbls={doc:'Documents &amp; CLI',intent:'Intents',graph:'Graph nodes',rule:'Rules'};
+  let html='';
+  for(const[type,items] of Object.entries(grps)){
+    if(!items.length)continue;
+    html+=`<div class="rg-lbl">${lbls[type]}</div>`;
+    items.forEach(item=>{
+      const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+      const hi=item.title.replace(re,'<mark>$1</mark>');
+      html+=`<div class="ri"><i class="ti ${item.i} ri-ico" style="color:var(--t2)"></i><div class="ri-body"><div class="ri-title">${hi}</div><div class="ri-sub">${item.sub}</div></div><span class="ri-meta">${item.m}</span></div>`;
+    });
+  }
+  out.innerHTML=html;
+}
+
+/* init: select first intent */
+renderDetail('i1');
+</script>
+<div class="toast" id="toast">Copied to clipboard</div>
+</body>
+</html>

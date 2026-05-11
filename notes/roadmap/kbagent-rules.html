@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent — Master Rules</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0e0e;--bg1:#161616;--bg2:#1e1e1e;--bg3:#272727;--bg4:#323232;
+  --bd:#262626;--bd2:#363636;--bd3:#484848;
+  --t0:#f0ede8;--t1:#c8c4bc;--t2:#888480;--t3:#484644;
+  --green:#3a9468;--gd:#0e2018;--gt:#60d498;
+  --amber:#b88010;--ad:#281c04;--at:#e0b030;
+  --red:#904040;--rd:#221010;--rt:#d07070;
+  --blue:#1c5898;--bld:#0a1c34;--bt:#68a8dc;
+  --purple:#583898;--pd:#180e2c;--pt:#a070d8;
+  --coral:#8a3820;--cd:#221008;--ct:#d08060;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+html,body{background:var(--bg);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.6}
+.page{max-width:1060px;margin:0 auto;padding:32px 24px}
+
+/* TIER TABS */
+.tier-tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:28px;overflow-x:auto}
+.ttab{padding:10px 18px;font-size:12px;font-weight:500;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;user-select:none;white-space:nowrap;flex-shrink:0}
+.ttab:hover{color:var(--t1)}
+.ttab.on{color:var(--t0);border-bottom-color:var(--bt)}
+.tpage{display:none}
+.tpage.on{display:block}
+
+/* RULE CARD */
+.rule-card{background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;margin-bottom:10px;overflow:hidden;transition:border-color .1s}
+.rule-card:hover{border-color:var(--bd3)}
+.rule-hd{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;cursor:pointer;user-select:none}
+.rule-hd:hover{background:var(--bg3)}
+.rule-id{font-family:var(--mono);font-size:11px;min-width:88px;flex-shrink:0;margin-top:2px;font-weight:500}
+.rule-title{font-size:13px;font-weight:500;color:var(--t0);flex:1}
+.rule-domain{font-size:10px;padding:2px 7px;border-radius:3px;font-family:var(--mono);flex-shrink:0;white-space:nowrap}
+.rule-state{font-size:10px;padding:2px 7px;border-radius:3px;font-family:var(--mono);flex-shrink:0}
+.s-verified{background:var(--gd);color:var(--gt);border:1px solid #1a4028}
+.s-implemented{background:var(--bld);color:var(--bt);border:1px solid #143060}
+.s-planned{background:var(--ad);color:var(--at);border:1px solid #3a2808}
+.s-draft{background:var(--bg3);color:var(--t2);border:1px solid var(--bd2)}
+.rule-chev{font-size:13px;color:var(--t3);transition:transform .15s;flex-shrink:0;margin-top:2px}
+.rule-hd.open .rule-chev{transform:rotate(90deg)}
+.rule-body{display:none;padding:12px 16px 14px;border-top:1px solid var(--bd);background:var(--bg1)}
+.rule-body.show{display:block}
+.rule-body-row{display:flex;gap:0;margin-bottom:8px;font-size:12px}
+.rb-label{color:var(--t3);min-width:110px;flex-shrink:0}
+.rb-val{color:var(--t1);flex:1;font-family:var(--mono);font-size:11px;line-height:1.6}
+.rule-body-text{font-size:12px;color:var(--t1);line-height:1.75;margin-bottom:10px;border-left:2px solid var(--bd3);padding-left:12px}
+.rule-rationale{font-size:11px;color:var(--t2);line-height:1.7;margin-bottom:8px}
+.rule-linked{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tag{font-size:10px;padding:2px 7px;border-radius:3px;font-family:var(--mono);background:var(--bg3);color:var(--t2);border:1px solid var(--bd2)}
+.tag-pipeline{background:var(--bld);color:var(--bt);border-color:#143060}
+.tag-goal{background:var(--gd);color:var(--gt);border-color:#1a4028}
+.tag-rule{background:var(--pd);color:var(--pt);border-color:#281848}
+
+/* SECTION HEADER */
+.sec-hd{display:flex;align-items:center;gap:10px;margin-bottom:14px;margin-top:24px}
+.sec-title{font-size:14px;font-weight:500;color:var(--t0)}
+.sec-count{font-size:11px;color:var(--t3);font-family:var(--mono)}
+
+/* DOMAIN colors */
+.d-governance{background:var(--pd);color:var(--pt);border:1px solid #281848}
+.d-intent{background:var(--bld);color:var(--bt);border:1px solid #143060}
+.d-data{background:var(--gd);color:var(--gt);border:1px solid #1a4028}
+.d-execution{background:var(--cd);color:var(--ct);border:1px solid #3a1808}
+.d-security{background:var(--rd);color:var(--rt);border:1px solid #3a1010}
+.d-billing{background:var(--ad);color:var(--at);border:1px solid #3a2808}
+.d-testing{background:#0c1e18;color:#60b890;border:1px solid #1a3828}
+.d-quality{background:#1a1428;color:#9880c0;border:1px solid #2e2040}
+.d-chaos{background:#221008;color:#c08050;border:1px solid #3a1c08}
+.d-graph{background:#081818;color:#40b0a0;border:1px solid #10302c}
+.d-saas{background:#1e1808;color:#c0a040;border:1px solid #38280a}
+.d-pipeline{background:#0a1820;color:#5090c0;border:1px solid #143040}
+
+.copy-btn{height:22px;padding:0 8px;background:transparent;border:1px solid var(--bd2);border-radius:3px;color:var(--t3);font-size:10px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;font-family:var(--sans);transition:all .1s;margin-left:auto}
+.copy-btn:hover{border-color:var(--bt);color:var(--bt)}
+.copy-btn i{font-size:11px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(6px);background:var(--bg4);border:1px solid var(--bd3);border-radius:4px;padding:6px 14px;font-size:12px;color:var(--t0);opacity:0;transition:all .2s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* overview grid */
+.overview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:28px}
+.ov-card{background:var(--bg2);border:1px solid var(--bd2);border-radius:6px;padding:14px;cursor:pointer;transition:border-color .1s}
+.ov-card:hover{border-color:var(--bd3)}
+.ov-n{font-family:var(--mono);font-size:28px;font-weight:300;color:var(--t0);margin-bottom:4px}
+.ov-label{font-size:12px;color:var(--t2);margin-bottom:6px}
+.ov-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.ov-fill{height:100%;border-radius:2px}
+
+h1{font-size:22px;font-weight:500;color:var(--t0);margin-bottom:6px}
+.subtitle{font-size:13px;color:var(--t2);margin-bottom:28px}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>KBAgent — master rules</h1>
+<p class="subtitle">4 tầng · 28 rules · phân loại theo authority và scope</p>
+
+<!-- OVERVIEW -->
+<div class="overview-grid">
+  <div class="ov-card" onclick="showTier('ax',document.querySelectorAll('.ttab')[0])">
+    <div class="ov-n" style="color:var(--pt)">7</div>
+    <div class="ov-label">Constitutional (AX)</div>
+    <div class="ov-bar"><div class="ov-fill" style="width:100%;background:var(--purple)"></div></div>
+  </div>
+  <div class="ov-card" onclick="showTier('p',document.querySelectorAll('.ttab')[1])">
+    <div class="ov-n" style="color:var(--bt)">9</div>
+    <div class="ov-label">Process (P)</div>
+    <div class="ov-bar"><div class="ov-fill" style="width:100%;background:var(--blue)"></div></div>
+  </div>
+  <div class="ov-card" onclick="showTier('d',document.querySelectorAll('.ttab')[2])">
+    <div class="ov-n" style="color:var(--at)">8</div>
+    <div class="ov-label">Domain SaaS (D)</div>
+    <div class="ov-bar"><div class="ov-fill" style="width:100%;background:var(--amber)"></div></div>
+  </div>
+  <div class="ov-card" onclick="showTier('o',document.querySelectorAll('.ttab')[3])">
+    <div class="ov-n" style="color:var(--gt)">4</div>
+    <div class="ov-label">Operational (O)</div>
+    <div class="ov-bar"><div class="ov-fill" style="width:100%;background:var(--green)"></div></div>
+  </div>
+</div>
+
+<div class="tier-tabs">
+  <div class="ttab on"  onclick="showTier('ax',this)">Constitutional — AX</div>
+  <div class="ttab" onclick="showTier('p',this)">Process — P</div>
+  <div class="ttab" onclick="showTier('d',this)">Domain SaaS — D</div>
+  <div class="ttab" onclick="showTier('o',this)">Operational — O</div>
+</div>
+
+<!-- ══ AX: CONSTITUTIONAL ══ -->
+<div class="tpage on" id="tpage-ax">
+<p style="font-size:12px;color:var(--t2);margin-bottom:20px;border-left:2px solid var(--purple);padding-left:10px">Bất biến — không ai override, kể cả user. Đây là axioms của hệ thống, vi phạm thì hệ mất tính nhất quán.</p>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--pt)">KBX-AX001</span>
+    <span class="rule-title">Separation of powers</span>
+    <span class="rule-domain d-governance">governance</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">SVFactory is legislative — produces templates and rules. KBAgent is executive — runs intents and maintains knowledge. These two must never mix. A KBAgent instance cannot modify its own template source. SVFactory cannot execute intents directly.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Prevents circular dependency between the system that produces agents and the agents themselves. Ensures upgrades are deliberate (Flow 10), not accidental.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">kbx gate rejects commits that modify .kb/graph/ outside retro step</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P1:gate</span><span class="tag tag-pipeline">P4:release</span><span class="tag tag-rule">KBX-P002</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--pt)">KBX-AX002</span>
+    <span class="rule-title">Domain agnosticism of primitives</span>
+    <span class="rule-domain d-governance">governance</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">KBAgent core primitives — Intent, Goal, Rule, Signal, Evidence — must contain zero domain logic. Domain specifics (repo_origin enum, SaaS goal templates, security rules) live exclusively in ontology-contract.json and seed files. The engine code never hardcodes "billing" or "auth".</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Enables KBAgent to work for any domain (SaaS, research, blog, enterprise) by swapping the contract, not the engine.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">ontology:validate sub-pipeline · PR review on engine changes</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">ontology:validate</span><span class="tag tag-rule">KBX-AX001</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--pt)">KBX-AX003</span>
+    <span class="rule-title">Deterministic gate — no LLM in the gate path</span>
+    <span class="rule-domain d-execution">execution</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">kbx CLI exits exactly 0 (pass) or 1 (fail). No partial success, no warnings-as-pass, no LLM judgment in the gate path. If a check fails, the entire gate fails. Human reviews exit 1 — no auto-retry, no auto-fix.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Non-deterministic gates produce flaky pipelines. Trust requires predictability. Copilot assists before the gate, never inside it.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">kbx gate process.exit(0|1) — no other exit codes allowed</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P1:gate</span><span class="tag tag-pipeline">P4:release-gate</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--pt)">KBX-AX004</span>
+    <span class="rule-title">Single graph write point — retrospective only</span>
+    <span class="rule-domain d-data">data</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">The Unified Knowledge Graph may only be written during the retrospective step (retro:write sub-pipeline). All other operations — chaos scan, intent activation, goal check — are read-only on the graph. This is the single most important data integrity rule.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Prevents inconsistent state from concurrent or partial writes. Evidence quality is guaranteed when writes are batched at retro. Graph state always reflects completed, reviewed work.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">Kuzu connection opened read-only except during retro:write call · write guard in engine layer</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">retro:write</span><span class="tag tag-pipeline">P1:retro</span><span class="tag tag-rule">KBX-P002</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--pt)">KBX-AX005</span>
+    <span class="rule-title">Human approval at every intent gate</span>
+    <span class="rule-domain d-governance">governance</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">No intent — exec, fix, or exception — may advance from draft to active without explicit human approval. Signal detector proposals, maintain fix intents, and even goal-aligned suggestions all require kbx intent approve. There is no auto-approve path.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">This system is evolvable, not self-evolving. Human agency is the fundamental guarantee. Removing this creates autonomous drift.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">kbx intent activate checks status=approved before proceeding · rejects backlog→active skip</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P1:approve</span><span class="tag tag-pipeline">P2:approve</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--pt)">KBX-AX006</span>
+    <span class="rule-title">Evidence on every node and edge — no anonymous data</span>
+    <span class="rule-domain d-data">data</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">Every node and every edge written to the Unified Graph must carry evidence metadata: source, confidence, timestamp, linked_intent_id, version, repo_origin. Writes without evidence are rejected at retro:write. No anonymous knowledge.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Traceability enables impact check, audit, rollback, and drift detection. Without evidence, the graph becomes a black box that nobody trusts.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">retro:write validates evidence presence before Kuzu write · ontology:validate checks schema</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">retro:write</span><span class="tag tag-pipeline">ontology:validate</span><span class="tag tag-rule">KBX-AX004</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--pt)">KBX-AX007</span>
+    <span class="rule-title">Goals never auto-close — human changes only</span>
+    <span class="rule-domain d-governance">governance</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">Goals are invariants. No pipeline, no chaos spike, no criteria threshold crossing may automatically close or supersede a goal. Goals move to warning or superseded only via explicit human action (kbx goal update). The system may emit warnings; it may not act on them autonomously.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Goals are the North Star. Auto-closing them when criteria are met removes the long-term compass. A goal achieved usually spawns a higher goal — that is a human decision.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">Goal engine: status transitions require explicit command · kbx goal close requires --confirm flag</span></div>
+    <div class="rule-linked"><span class="tag tag-rule">KBX-AX005</span><span class="tag tag-goal">GOAL-*</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ P: PROCESS ══ -->
+<div class="tpage" id="tpage-p">
+<p style="font-size:12px;color:var(--t2);margin-bottom:20px;border-left:2px solid var(--blue);padding-left:10px">Cách hệ vận hành — có thể điều chỉnh nhưng cần justification rõ ràng và phải đi qua Flow 10 (update pipeline).</p>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--bt)">KBX-P001</span>
+    <span class="rule-title">One active intent per version branch</span>
+    <span class="rule-domain d-intent">intent</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">Only one intent may be in active or staged status per version branch at any time. A second activation requires the first to be closed or archived. Exception intents pending approval do not count toward this limit.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Parallel active intents create merge conflicts, unclear impact attribution, and diffuse focus. One thing at a time per branch.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">kbx intent activate checks _active/ count · rejects if count > 0</span></div>
+    <div class="rule-body-row"><span class="rb-label">Override</span><span class="rb-val">exception type intent can coexist · requires explicit --allow-parallel flag with justification</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P1:activate</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--bt)">KBX-P002</span>
+    <span class="rule-title">Three-layer vibe execution</span>
+    <span class="rule-domain d-execution">execution</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">All work follows: NL input (human or Copilot) → CLI normalize (structured command) → CLI execute (deterministic) → AI completion (post-gate). Copilot may suggest before the gate. Copilot may summarize after the gate. Copilot never executes.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Keeps execution auditable and reversible. AI-generated code is always reviewed by human before CLI commit. Gate is deterministic regardless of AI quality.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">Dashboard: suggest buttons copy prompts, they never call kbx directly · kbx apply requires human confirmation</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P1:execute</span><span class="tag tag-rule">KBX-AX003</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--bt)">KBX-P003</span>
+    <span class="rule-title">Goal alignment check before activation</span>
+    <span class="rule-domain d-intent">intent</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">Every exec intent must pass goal-align check before activation. Alignment means the intent's work will advance at least one criterion of at least one active goal. Fix and exception intents are exempt — they require explicit type declaration and human approval.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Prevents "busy work" that doesn't advance any goal. Forces intentional connection between tasks and strategy.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">P1:goal-align step · exit 1 if no goal match found · human must resolve before activate</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P1:goal-align</span><span class="tag tag-rule">KBX-AX005</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--bt)">KBX-P004</span>
+    <span class="rule-title">Impact check before each apply</span>
+    <span class="rule-domain d-data">data</span>
+    <span class="rule-state s-implemented">implemented</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">Before every kbx apply in the execute loop, impact:check must traverse the graph for :AFFECTS, :DEPENDS_ON, and :BREAKS edges from the files being changed. The result is shown to human before confirmation. Human may proceed or abort.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">As codebase grows, intent changes ripple. Without impact visibility, regressions are silent. This is the main value proposition of the graph layer.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">impact:check sub-pipeline runs automatically before kbx apply · cannot be skipped without --skip-impact flag (logged)</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">impact:check</span><span class="tag tag-pipeline">P1:execute</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--bt)">KBX-P005</span>
+    <span class="rule-title">Maintain loop triggered by chaos threshold</span>
+    <span class="rule-domain d-chaos">chaos</span>
+    <span class="rule-state s-implemented">implemented</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">When chaos score reaches unstable (≥70), the maintain loop must be triggered before any new exec intent can be activated. The system enters "maintain-first mode" until score drops below 60. Fix intents take priority over exec intents.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Building on an unstable foundation compounds debt. Forcing maintain-first prevents the chaos score from becoming a vanity metric.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">P1:activate checks latest chaos snapshot · blocks if level=unstable|chaotic and no active fix intent</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P2:trigger</span><span class="tag tag-pipeline">P1:activate</span><span class="tag tag-rule">KBX-P003</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--bt)">KBX-P006</span>
+    <span class="rule-title">Retrospective is mandatory — no skip</span>
+    <span class="rule-domain d-data">data</span>
+    <span class="rule-state s-verified">verified</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">An intent may not be archived without completing a retrospective. kbx intent archive without prior retro exits 1. The retro must include at minimum: evidence note and one lesson candidate (even if empty string is not accepted — requires actual content).</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Retrospectives are the learning mechanism. Skipping them means the graph never grows, criteria never update, and the system never improves.</span></div>
+    <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">kbx intent archive checks retro_completed=true in intent.md · rejects if false</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P1:retro</span><span class="tag tag-rule">KBX-AX004</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--bt)">KBX-P007</span>
+    <span class="rule-title">Release gate requires chaos ≤ 50</span>
+    <span class="rule-domain d-chaos">chaos</span>
+    <span class="rule-state s-planned">planned</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">A release (P4) may not proceed if the latest chaos snapshot is above 50 (manageable threshold). The release gate checks chaos score as part of exit 0/1 decision. Exception: hotfix releases may bypass with --hotfix flag, which is logged as a :Signal node.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Releasing with high chaos ships technical debt to production. The threshold of 50 is deliberately lower than the unstable threshold (70) — releases demand better hygiene than development.</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P4:release-gate</span><span class="tag tag-rule">KBX-AX003</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--bt)">KBX-P008</span>
+    <span class="rule-title">doc:gate blocks commit if coverage below threshold</span>
+    <span class="rule-domain d-quality">quality</span>
+    <span class="rule-state s-implemented">implemented</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">doc:gate sub-pipeline checks: (1) KB doc coverage % against goal threshold, (2) placeholder ratio in .md files — more than 15% {{}} or TODO blocks is a fail, (3) all .md files must have valid frontmatter (id, tier, title). Fails exit 1.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Undocumented systems accumulate hidden complexity. Gate enforcement makes documentation a first-class deliverable, not an afterthought.</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">doc:gate</span><span class="tag tag-pipeline">P1:gate</span><span class="tag tag-goal">GOAL-004</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--bt)">KBX-P009</span>
+    <span class="rule-title">NL patch must normalize before apply</span>
+    <span class="rule-domain d-execution">execution</span>
+    <span class="rule-state s-planned">planned</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">Any change to natural language content (rules, principles, KB docs, goal criteria descriptions) must go through the update:patch sub-pipeline: NL → canonical form → meaning diff → human validates diff → apply as intent. Direct edits to rule body text without this pipeline are flagged by ontology:validate.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">NL changes are the hardest to audit. Subtle wording shifts can change system behavior. Normalizing to canonical form makes diffs reviewable.</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">update:patch</span><span class="tag tag-rule">KBX-AX001</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ D: DOMAIN SAAS ══ -->
+<div class="tpage" id="tpage-d">
+<p style="font-size:12px;color:var(--t2);margin-bottom:20px;border-left:2px solid var(--amber);padding-left:10px">SaaS-specific — baked vào template SaaS nhưng user có thể thêm/sửa qua Flow 10. Non-SaaS domains sẽ thay bằng rules riêng của họ.</p>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--at)">KBX-S001</span>
+    <span class="rule-title">Auth middleware on all sensitive routes</span>
+    <span class="rule-domain d-security">security</span>
+    <span class="rule-state s-planned">planned</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">Every route that handles billing data, PII, admin actions, or subscription management must have authentication middleware. The scan pattern detects routes matching billing/admin/user/profile/subscription patterns and checks for auth wrapper presence.</p>
+    <div class="rule-body-row"><span class="rb-label">Detected by</span><span class="rb-val">chaos:scan --scan-src · route pattern + auth pattern matching · lists violations in entropy-index</span></div>
+    <div class="rule-body-row"><span class="rb-label">Linked intent</span><span class="rb-val">INT-SAAS-001 (pre-seeded in backlog)</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">chaos:scan</span><span class="tag tag-goal">GOAL-003</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--at)">KBX-S002</span>
+    <span class="rule-title">No secrets in source code</span>
+    <span class="rule-domain d-security">security</span>
+    <span class="rule-state s-planned">planned</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">No API keys, tokens, passwords, or credentials may appear as string literals in source files. All secrets must use environment variables or secret managers. The scan detects hardcoded strings matching common secret patterns (sk_live_, Bearer token, password=).</p>
+    <div class="rule-body-row"><span class="rb-label">Detected by</span><span class="rb-val">chaos:scan secret_patterns · immediate exit 1 on detection · blocks gate</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">chaos:scan</span><span class="tag tag-pipeline">P1:gate</span><span class="tag tag-goal">GOAL-003</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--at)">KBX-S003</span>
+    <span class="rule-title">Rate limiting on auth endpoints</span>
+    <span class="rule-domain d-security">security</span>
+    <span class="rule-state s-draft">draft</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">Login, signup, password-reset, and token-refresh endpoints must have rate limiting configured. Max 5 attempts per IP per minute for auth operations. Detected by scan checking for rate-limit middleware presence on auth route patterns.</p>
+    <div class="rule-linked"><span class="tag tag-pipeline">chaos:scan</span><span class="tag tag-goal">GOAL-003</span><span class="tag tag-rule">KBX-S001</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--at)">KBX-B001</span>
+    <span class="rule-title">Billing provider is source of truth</span>
+    <span class="rule-domain d-billing">billing</span>
+    <span class="rule-state s-planned">planned</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">Subscription status, plan limits, and payment state must always be fetched from the billing provider (Stripe, Paddle, etc.) and never cached without TTL. Locally cached subscription state must have TTL ≤ 300s. Detected by scanning for subscription/plan reads without TTL patterns.</p>
+    <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Stale cached subscription state leads to users accessing features they've cancelled, or paid users being blocked. Revenue integrity requires real-time source of truth.</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">chaos:scan</span><span class="tag tag-goal">GOAL-002</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--at)">KBX-B002</span>
+    <span class="rule-title">Idempotent webhook handlers</span>
+    <span class="rule-domain d-billing">billing</span>
+    <span class="rule-state s-draft">draft</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">All billing webhook handlers must be idempotent — processing the same event twice must produce the same result. Implement using event ID deduplication. Linked to INT-SAAS-002.</p>
+    <div class="rule-linked"><span class="tag tag-goal">GOAL-002</span><span class="tag tag-rule">KBX-B001</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--at)">KBX-T001</span>
+    <span class="rule-title">Integration tests on critical SaaS paths</span>
+    <span class="rule-domain d-testing">testing</span>
+    <span class="rule-state s-planned">planned</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">The following flows must have integration tests (not just unit tests): auth (login/logout/token refresh), billing (subscription create/cancel/webhook), onboarding (signup to first feature use), and data export. Detected by scanning test files for coverage of these critical paths.</p>
+    <div class="rule-body-row"><span class="rb-label">Detected by</span><span class="rb-val">chaos:scan testing dimension · checks test file patterns against critical path list</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">chaos:scan</span><span class="tag tag-goal">GOAL-004</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--at)">KBX-D001</span>
+    <span class="rule-title">Multi-tenant data isolation</span>
+    <span class="rule-domain d-saas">saas-arch</span>
+    <span class="rule-state s-draft">draft</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">All database queries accessing user data must include tenant_id scoping. No query may return data across tenant boundaries. Detected by scanning ORM/query patterns for missing where clauses on tenant-scoped models.</p>
+    <div class="rule-linked"><span class="tag tag-goal">GOAL-003</span><span class="tag tag-rule">KBX-S001</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--at)">KBX-D002</span>
+    <span class="rule-title">Graceful degradation on third-party failure</span>
+    <span class="rule-domain d-saas">saas-arch</span>
+    <span class="rule-state s-draft">draft</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">All third-party service calls (billing, email, analytics, storage) must have timeout + fallback handling. No third-party failure may cause a 500 to the end user. Detected by scanning API call patterns for missing try/catch + fallback.</p>
+    <div class="rule-linked"><span class="tag tag-goal">GOAL-001</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ══ O: OPERATIONAL ══ -->
+<div class="tpage" id="tpage-o">
+<p style="font-size:12px;color:var(--t2);margin-bottom:20px;border-left:2px solid var(--green);padding-left:10px">Tự sinh trong quá trình sử dụng — được tạo bởi retrospectives, maintain loop, và pattern học được từ lessons. Đây là phần hệ "học" theo thời gian.</p>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--gt)">KBX-O001</span>
+    <span class="rule-title">Pattern: lesson → rule promotion</span>
+    <span class="rule-domain d-pipeline">pipeline</span>
+    <span class="rule-state s-planned">planned</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">When the same lesson appears in 3 or more retrospectives (same domain + similar description), the maintain loop proposes promoting it to a :Rule node with status=draft. Human reviews the proposed rule, edits body, then approves. This is how the system learns from repeated patterns.</p>
+    <div class="rule-body-row"><span class="rb-label">Trigger</span><span class="rb-val">P2:propose · checks :Lesson nodes for frequency clusters · threshold: 3 occurrences same domain</span></div>
+    <div class="rule-body-row"><span class="rb-label">Output</span><span class="rb-val">Draft :Rule node created · Copilot suggests rule body from lesson text · human edits and approves</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P2:propose</span><span class="tag tag-pipeline">update:patch</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--gt)">KBX-O002</span>
+    <span class="rule-title">Chaos dimension spike → auto-suggest fix intent</span>
+    <span class="rule-domain d-chaos">chaos</span>
+    <span class="rule-state s-implemented">implemented</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">When a single chaos dimension score increases by more than 8 points between two consecutive snapshots, chaos:scan automatically generates a targeted fix intent for that dimension. The fix intent is proposed (not approved) and appears in the Dashboard signals section.</p>
+    <div class="rule-body-row"><span class="rb-label">Trigger</span><span class="rb-val">chaos:scan compares breakdown deltas · dimension delta > 8 → propose fix intent</span></div>
+    <div class="rule-body-row"><span class="rb-label">Output</span><span class="rb-val">type=fix intent in _backlog · title auto-generated from dimension name · no goal-align check</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">chaos:scan</span><span class="tag tag-pipeline">P2:propose</span><span class="tag tag-rule">KBX-P005</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--gt)">KBX-O003</span>
+    <span class="rule-title">High-fan-in code → structural review intent</span>
+    <span class="rule-domain d-pipeline">pipeline</span>
+    <span class="rule-state s-planned">planned</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">When a :Code node's fan_in exceeds 30 (30+ other files import it), the next chaos:scan proposes a structural review intent for that file. High fan-in creates systemic risk — any change to that file affects 30+ dependents. Review intent checks for interface stability and documentation.</p>
+    <div class="rule-body-row"><span class="rb-label">Trigger</span><span class="rb-val">chaos:scan structural dimension · fan_in > 30 per :Code node</span></div>
+    <div class="rule-body-row"><span class="rb-label">Output</span><span class="rb-val">type=fix intent · title: "Structural review: {file_path}" · linked :Code node in intent</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">chaos:scan</span><span class="tag tag-rule">KBX-P004</span></div>
+  </div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-hd" onclick="toggleRule(this)">
+    <span class="rule-id" style="color:var(--gt)">KBX-O004</span>
+    <span class="rule-title">Stale KB doc → coverage fix intent</span>
+    <span class="rule-domain d-quality">quality</span>
+    <span class="rule-state s-planned">planned</span>
+    <i class="ti ti-chevron-right rule-chev"></i>
+  </div>
+  <div class="rule-body">
+    <p class="rule-body-text">A :KBDoc node with source_of_truth=true that has not been touched (no linked intent :IMPLEMENTS → :KBDoc) in more than 90 days is flagged as stale. The maintain loop proposes a review intent to verify or update the document. Prevents silent drift between docs and reality.</p>
+    <div class="rule-body-row"><span class="rb-label">Trigger</span><span class="rb-val">P2:scan · checks :KBDoc.updated_at vs current date · source_of_truth docs only</span></div>
+    <div class="rule-body-row"><span class="rb-label">Output</span><span class="rb-val">type=fix intent · title: "Review stale doc: {path}" · type=exception (no goal-align required)</span></div>
+    <div class="rule-linked"><span class="tag tag-pipeline">P2:scan</span><span class="tag tag-pipeline">doc:gate</span><span class="tag tag-rule">KBX-P008</span></div>
+  </div>
+</div>
+
+<div style="margin-top:24px;padding:14px 16px;background:var(--bg2);border:1px solid var(--bd2);border-radius:6px">
+  <div style="font-size:12px;font-weight:500;color:var(--t0);margin-bottom:8px">Operational rules grow over time</div>
+  <div style="font-size:12px;color:var(--t2);line-height:1.8">
+    KBX-O001 (lesson → rule promotion) is the mechanism by which the team's patterns become system rules.<br>
+    After 3 months of use, expect 5–10 additional KBX-O rules specific to your codebase and team patterns.<br>
+    These are proposed by maintain loop, reviewed by human, then applied via Flow 10 (update:patch pipeline).
+  </div>
+</div>
+</div>
+
+</div>
+<div class="toast" id="toast">Copied!</div>
+<script>
+function showTier(id,el){
+  document.querySelectorAll('.tpage').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.ttab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('tpage-'+id).classList.add('on');
+  if(el)el.classList.add('on');
+}
+function toggleRule(hd){
+  const body=hd.nextElementSibling;
+  const open=body.classList.toggle('show');
+  hd.classList.toggle('open',open);
+}
+function copyText(t){
+  navigator.clipboard.writeText(t).catch(()=>{
+    const ta=document.createElement('textarea');
+    ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+  const toast=document.getElementById('toast');
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>toast.classList.remove('show'),2000);
+}
+</script>
+</body>
+</html>
