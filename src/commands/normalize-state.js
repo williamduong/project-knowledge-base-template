@@ -96,7 +96,7 @@ async function runNormalizeState({ args, cwd }) {
     changed.push({ file: doc.relativePath, state: inferred });
   }
 
-  console.log(`kb normalize-state: ${options.dryRun ? 'DRY-RUN' : 'PASS'}`);
+  console.log(`kbx normalize-state: ${options.dryRun ? 'DRY-RUN' : 'PASS'}`);
   console.log(`Updated: ${changed.length}`);
   console.log(`Skipped: ${skipped.length}`);
 

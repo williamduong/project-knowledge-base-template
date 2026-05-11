@@ -35,12 +35,12 @@ function parseArgs(args) {
 
   if (options.list) {
     if (rest.length > 1) {
-      throw new Error('kb bind --list accepts at most 1 argument: [<doc>]');
+      throw new Error('kbx bind --list accepts at most 1 argument: [<doc>]');
     }
     options.doc = rest[0] || null;
   } else {
     if (rest.length < 2) {
-      throw new Error('kb bind requires: <doc> <path...>   (or use --list)');
+      throw new Error('kbx bind requires: <doc> <path...>   (or use --list)');
     }
     options.doc = rest[0];
     options.paths = rest.slice(1);
@@ -53,7 +53,7 @@ function runListAll({ context, options }) {
   const bindings = listAllDocBindings(context.contentRoot);
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb bind --list',
+      command: 'kbx bind --list',
       contentRoot: context.contentRoot,
       bindings,
     }, null, 2));
@@ -61,12 +61,12 @@ function runListAll({ context, options }) {
   }
 
   if (bindings.length === 0) {
-    console.log('kb bind: no bindings declared.');
-    console.log(`Add one with: kb bind <doc> <path...>`);
+    console.log('kbx bind: no bindings declared.');
+    console.log(`Add one with: kbx bind <doc> <path...>`);
     return;
   }
 
-  console.log(`kb bind: ${bindings.length} doc(s) bound`);
+  console.log(`kbx bind: ${bindings.length} doc(s) bound`);
   for (const b of bindings) {
     console.log(`  ${b.doc}  [${b.source}]`);
     for (const p of b.paths) {
@@ -79,7 +79,7 @@ function runListOne({ context, options }) {
   const resolved = getDocBindings(context.contentRoot, options.doc);
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb bind --list',
+      command: 'kbx bind --list',
       doc: options.doc,
       paths: resolved.paths,
       source: resolved.source,
@@ -87,10 +87,10 @@ function runListOne({ context, options }) {
     return;
   }
   if (resolved.paths.length === 0) {
-    console.log(`kb bind: no binding for "${options.doc}".`);
+    console.log(`kbx bind: no binding for "${options.doc}".`);
     return;
   }
-  console.log(`kb bind: ${options.doc}  [${resolved.source}]`);
+  console.log(`kbx bind: ${options.doc}  [${resolved.source}]`);
   for (const p of resolved.paths) {
     console.log(`  - ${p}`);
   }
@@ -104,14 +104,14 @@ function runAdd({ context, options }) {
   const entry = next.bindings.find((b) => b.doc === options.doc.replace(/\\/g, '/'));
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb bind',
+      command: 'kbx bind',
       written: filePath,
       doc: entry.doc,
       paths: entry.paths,
     }, null, 2));
     return;
   }
-  console.log(`kb bind: updated ${filePath}`);
+  console.log(`kbx bind: updated ${filePath}`);
   console.log(`  doc  : ${entry.doc}`);
   console.log(`  paths: ${entry.paths.length}`);
   for (const p of entry.paths) {

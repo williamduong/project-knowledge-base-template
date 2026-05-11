@@ -290,7 +290,7 @@ function runDoctor({ args, cwd, packageJson }) {
         checks.push({
           name: 'git-impact-pending',
           status: 'WARN',
-          detail: `Impact scan skipped: ${impactData.skipped_reason}. Run "kb status" or "kb scan" once baseline is set.`,
+          detail: `Impact scan skipped: ${impactData.skipped_reason}. Run "kbx status" or "kbx scan" once baseline is set.`,
         });
       } else if (impactedCount > 0 || unboundCount > 0) {
         const parts = [];
@@ -299,7 +299,7 @@ function runDoctor({ args, cwd, packageJson }) {
         checks.push({
           name: 'git-impact-pending',
           status: 'WARN',
-          detail: `${parts.join('; ')}. Run "kb status" for details.`,
+          detail: `${parts.join('; ')}. Run "kbx status" for details.`,
         });
       } else {
         checks.push({
@@ -312,7 +312,7 @@ function runDoctor({ args, cwd, packageJson }) {
       checks.push({
         name: 'git-impact-pending',
         status: 'WARN',
-        detail: 'No impact.json found. Run "kb scan" to generate.',
+        detail: 'No impact.json found. Run "kbx scan" to generate.',
       });
     }
   }
@@ -390,7 +390,7 @@ function runDoctor({ args, cwd, packageJson }) {
         checks.push({
           name: 'last-verified-commit-missing',
           status: 'WARN',
-          detail: `${stale.length} doc(s) have last_verified set but last_verified_commit missing. Run "kb verify <doc>" to fill commit SHA.`,
+          detail: `${stale.length} doc(s) have last_verified set but last_verified_commit missing. Run "kbx verify <doc>" to fill commit SHA.`,
         });
       }
     } catch (err) {
@@ -408,7 +408,7 @@ function runDoctor({ args, cwd, packageJson }) {
         checks.push({
           name: 'legacy-schema-migration',
           status: 'WARN',
-          detail: `${legacyIntents.length} intent(s) use pre-v2.4 schema (no schema_version). Run "kb migrate --to=v2.4.0" to upgrade. Affected: ${legacyIntents.slice(0, 5).join(', ')}${legacyIntents.length > 5 ? ' ...' : ''}.`,
+          detail: `${legacyIntents.length} intent(s) use pre-v2.4 schema (no schema_version). Run "kbx migrate --to=v2.4.0" to upgrade. Affected: ${legacyIntents.slice(0, 5).join(', ')}${legacyIntents.length > 5 ? ' ...' : ''}.`,
         });
       } else {
         checks.push({

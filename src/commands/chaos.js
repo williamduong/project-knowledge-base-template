@@ -415,7 +415,7 @@ function scanModuleStats(srcDir, testDir, churnData = {}) {
 
 const BUILTIN_FORWARD_ESTIMATES = [
   {
-    plan: 'v1.9 add kb graph check/export (2 commands, ~600 LOC)',
+    plan: 'v1.9 add kbx graph check/export (2 commands, ~600 LOC)',
     factors: { newUncoveredModules: 0, addedUncoveredLOC: 0, addedHighCoupling: 1, addedTests: 40 },
     source: 'builtin',
   },
@@ -674,7 +674,7 @@ function deriveChaosContextSignals(contentRoot) {
   }
 
   // agreement-density: ratio of last 10 chaos snapshots where cognitive_reduction exceeded threshold.
-  // Uses chaos-history.md (already written by kb chaos) — no new file needed.
+  // Uses chaos-history.md (already written by kbx chaos) — no new file needed.
   try {
     const { snapshots } = readChaosHistory(contentRoot);
     const recent = snapshots.slice(-10);
@@ -761,7 +761,7 @@ function runChaos({ args, cwd, packageJson }) {
   try {
     context = resolveExistingState({ workspaceRoot });
   } catch (err) {
-    console.error('kb chaos: no KB found in this workspace. Run "kb init" first.');
+    console.error('kbx chaos: no KB found in this workspace. Run "kbx init" first.');
     process.exit(1);
   }
 
@@ -824,14 +824,14 @@ function runChaos({ args, cwd, packageJson }) {
       const maintainArgs = buildMaintainArgsForSpike(options);
       maintainHook.attempted = true;
       maintainHook.triggered = true;
-      console.log('kb chaos: spike detected, invoking kb maintain hook...');
+      console.log('kbx chaos: spike detected, invoking kbx maintain hook...');
       runMaintain({ args: maintainArgs, cwd, packageJson });
     }
   }
 
   if (options.json) {
     const out = {
-      command: 'kb chaos',
+      command: 'kbx chaos',
       cliVersion: packageJson && packageJson.version,
       score: result.score,
       level: result.level,
@@ -854,7 +854,7 @@ function runChaos({ args, cwd, packageJson }) {
     if (trend.spikeDetected) {
       console.error(`SPIKE +${trend.delta} from ${trend.previousScore}`);
       if (options.autoMaintainOnSpike && maintainHook.skippedReason === 'json-output-mode') {
-        console.error('SPIKE hook skipped in json mode. Run: kb chaos --auto-maintain-on-spike');
+        console.error('SPIKE hook skipped in json mode. Run: kbx chaos --auto-maintain-on-spike');
       }
     }
     return;
@@ -878,7 +878,7 @@ function runChaos({ args, cwd, packageJson }) {
   if (trend.spikeDetected) {
     console.log(`  ⚠ Chaos spike! Previous=${trend.previousScore}, current=${result.score}. Stop and review before adding features.`);
     if (!options.autoMaintainOnSpike) {
-      console.log('  ⚠ Tip: run "kb chaos --auto-maintain-on-spike" to auto-run maintain loop.');
+      console.log('  ⚠ Tip: run "kbx chaos --auto-maintain-on-spike" to auto-run maintain loop.');
     }
   }
   console.log(BAR);

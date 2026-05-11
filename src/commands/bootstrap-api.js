@@ -139,7 +139,7 @@ async function runBootstrapApi({ args, cwd }) {
   }
 
   if (discovered.length === 0) {
-    console.log('kb bootstrap-api: no @route annotations found.');
+    console.log('kbx bootstrap-api: no @route annotations found.');
     return;
   }
 
@@ -165,7 +165,7 @@ async function runBootstrapApi({ args, cwd }) {
     }
   }
 
-  console.log(`kb bootstrap-api: ${options.dryRun ? 'DRY-RUN' : 'PASS'}`);
+  console.log(`kbx bootstrap-api: ${options.dryRun ? 'DRY-RUN' : 'PASS'}`);
   console.log(`Controllers scanned: ${controllerFiles.length}`);
   console.log(`Endpoints discovered: ${discovered.length}`);
 

@@ -226,7 +226,7 @@ function renderChatBatchMarkdown({ items, batch, batchSize, total }) {
   });
 
   if (batch < totalBatches) {
-    output += `Next batch command: \`kb questions --chat --batch ${batch + 1} --batch-size ${batchSize}\`\n`;
+    output += `Next batch command: \`kbx questions --chat --batch ${batch + 1} --batch-size ${batchSize}\`\n`;
   } else {
     output += 'All batches completed for current question set.\n';
   }
@@ -261,7 +261,7 @@ function printChatBatch({ items, batch, batchSize }) {
   }
 
   if (safeBatch < totalBatches) {
-    console.log(`\nNext: kb questions --chat --batch ${safeBatch + 1} --batch-size ${batchSize}`);
+    console.log(`\nNext: kbx questions --chat --batch ${safeBatch + 1} --batch-size ${batchSize}`);
   } else {
     console.log('\nAll chat batches completed.');
   }
@@ -289,7 +289,7 @@ async function runQuestions({ args, cwd }) {
     'utf8'
   );
 
-  console.log(`kb questions: generated ${items.length} question(s).`);
+  console.log(`kbx questions: generated ${items.length} question(s).`);
   console.log(`Output: ${outputPath}`);
   console.log(`Chat batch output: ${chatOutputPath}`);
 

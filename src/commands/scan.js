@@ -152,7 +152,7 @@ function addTransitiveImpact({ impactData, ctx, depth }) {
 }
 
 function printHumanReport(impactData, verdict, filePath, options) {
-  console.log(`kb scan: ${verdict.label}${verdict.reason ? ` (${verdict.reason})` : ''}`);
+  console.log(`kbx scan: ${verdict.label}${verdict.reason ? ` (${verdict.reason})` : ''}`);
   console.log(`  baseline: ${impactData.baseline || 'NOT_AVAILABLE'}`);
   console.log(`  head    : ${impactData.head || 'NOT_AVAILABLE'}`);
   console.log(`  scanned : ${impactData.scanned_at}`);
@@ -237,7 +237,7 @@ function runScan({ args, cwd }) {
     const maxDepth = getConfigValue(cfg, 'impact.maxDepth', 5);
     let depth = options.depth !== null ? options.depth : defaultDepth;
     if (depth > maxDepth) {
-      process.stderr.write(`kb scan: requested --depth=${depth} exceeds impact.maxDepth=${maxDepth}; clamping.\n`);
+      process.stderr.write(`kbx scan: requested --depth=${depth} exceeds impact.maxDepth=${maxDepth}; clamping.\n`);
       depth = maxDepth;
     }
     addTransitiveImpact({ impactData, ctx: context, depth });
@@ -271,7 +271,7 @@ function runScan({ args, cwd }) {
     console.log(verdict.label);
   } else if (options.json) {
     const out = {
-      command: 'kb scan',
+      command: 'kbx scan',
       written: filePath,
       verdict,
       impact: impactData,

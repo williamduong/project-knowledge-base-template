@@ -245,7 +245,7 @@ function runUninstall({ args, cwd }) {
 
   removeManagedPreCommitHook({ workspaceRoot, options, removed, warnings });
 
-  console.log('kb uninstall summary:');
+  console.log('kbx uninstall summary:');
   if (removed.length === 0) {
     console.log('- No files removed.');
   } else {

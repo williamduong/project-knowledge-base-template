@@ -21,20 +21,20 @@ function parseArgs(args) {
     rest.push(arg);
   }
   if (rest.length === 0) {
-    throw new Error('kb baseline requires a subcommand: show | set');
+    throw new Error('kbx baseline requires a subcommand: show | set');
   }
   options.sub = rest[0];
   if (options.sub === 'set') {
     if (!options.toHead && rest.length < 2) {
-      throw new Error('kb baseline set requires <sha> or --to-head');
+      throw new Error('kbx baseline set requires <sha> or --to-head');
     }
     if (!options.toHead) {
       options.sha = rest[1];
     }
   } else if (options.sub === 'show') {
-    if (rest.length > 1) throw new Error('kb baseline show takes no arguments');
+    if (rest.length > 1) throw new Error('kbx baseline show takes no arguments');
   } else {
-    throw new Error(`kb baseline: unknown subcommand "${options.sub}". Supported: show, set`);
+    throw new Error(`kbx baseline: unknown subcommand "${options.sub}". Supported: show, set`);
   }
   return options;
 }
@@ -42,7 +42,7 @@ function parseArgs(args) {
 function showBaseline(ctx, options) {
   const state = readStateFile({ statePath: ctx.statePath });
   const out = {
-    command: 'kb baseline show',
+    command: 'kbx baseline show',
     storage_mode: ctx.mode,
     baseline: state.sourceRepositoryGitBaseline || null,
     baseline_captured_at: state.baselineCapturedAt || null,
@@ -54,7 +54,7 @@ function showBaseline(ctx, options) {
     console.log(JSON.stringify(out, null, 2));
     return;
   }
-  console.log(`kb baseline: ${out.baseline || 'NOT_AVAILABLE'}`);
+  console.log(`kbx baseline: ${out.baseline || 'NOT_AVAILABLE'}`);
   console.log(`  branch        : ${out.branch || 'unknown'}`);
   console.log(`  captured_at   : ${out.baseline_captured_at || 'unknown'}`);
   console.log(`  last_drift    : ${out.last_drift_check_at || 'unknown'}`);
@@ -81,12 +81,12 @@ async function setBaseline(ctx, workspaceRoot, options) {
   if (options.toHead) {
     const git = getGitMetadata(workspaceRoot);
     if (!git.head) {
-      throw new Error('kb baseline set --to-head: no git HEAD available.');
+      throw new Error('kbx baseline set --to-head: no git HEAD available.');
     }
     targetSha = git.head;
   }
   if (!targetSha) {
-    throw new Error('kb baseline set: target SHA missing.');
+    throw new Error('kbx baseline set: target SHA missing.');
   }
 
   const state = readStateFile({ statePath: ctx.statePath });
@@ -95,10 +95,10 @@ async function setBaseline(ctx, workspaceRoot, options) {
 
   if (!options.yes && !options.json) {
     const ok = await confirmPrompt(
-      `kb baseline set: change baseline ${previous || 'NOT_AVAILABLE'} → ${targetSha}?`
+      `kbx baseline set: change baseline ${previous || 'NOT_AVAILABLE'} → ${targetSha}?`
     );
     if (!ok) {
-      console.log('kb baseline set: aborted.');
+      console.log('kbx baseline set: aborted.');
       process.exit(2);
     }
   }
@@ -112,7 +112,7 @@ async function setBaseline(ctx, workspaceRoot, options) {
   fs.writeFileSync(ctx.statePath, JSON.stringify(state, null, 2), 'utf8');
 
   const out = {
-    command: 'kb baseline set',
+    command: 'kbx baseline set',
     previous,
     new: targetSha,
     captured_at: today,
@@ -122,7 +122,7 @@ async function setBaseline(ctx, workspaceRoot, options) {
     console.log(JSON.stringify(out, null, 2));
     return;
   }
-  console.log(`kb baseline set: ${previous || 'NOT_AVAILABLE'} → ${targetSha}`);
+  console.log(`kbx baseline set: ${previous || 'NOT_AVAILABLE'} → ${targetSha}`);
   console.log(`  captured_at: ${today}`);
   console.log(`  state_path : ${ctx.statePath}`);
 }

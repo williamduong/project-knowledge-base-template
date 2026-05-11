@@ -32,11 +32,11 @@ function parseArgs(args) {
   }
 
   if (!options.action) {
-    throw new Error('Missing ide action. Use "kb ide enable" or "kb ide disable".');
+    throw new Error('Missing ide action. Use "kbx ide enable" or "kbx ide disable".');
   }
 
   if (options.action === 'disable' && options.dryRun) {
-    throw new Error('Option --dry-run is only supported for "kb ide enable".');
+    throw new Error('Option --dry-run is only supported for "kbx ide enable".');
   }
 
   return options;
@@ -44,7 +44,7 @@ function parseArgs(args) {
 
 function printEnableText({ targets, results, dryRun }) {
   if (dryRun) {
-    console.log('kb ide enable (dry-run)');
+    console.log('kbx ide enable (dry-run)');
     if (targets.length === 0) {
       console.log('No IDE target files detected.');
     } else {
@@ -65,7 +65,7 @@ function printEnableText({ targets, results, dryRun }) {
   for (const result of results) {
     console.log(`  - ${result.file} (${result.action})`);
   }
-  console.log('To disable later: run "kb ide disable".');
+  console.log('To disable later: run "kbx ide disable".');
 }
 
 function printDisableText({ results }) {
@@ -114,7 +114,7 @@ function runIde({ args, cwd }) {
 
     if (options.json) {
       console.log(JSON.stringify({
-        command: 'kb ide enable',
+        command: 'kbx ide enable',
         dryRun: options.dryRun,
         workspaceRoot,
         enabled: true,
@@ -152,7 +152,7 @@ function runIde({ args, cwd }) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb ide disable',
+      command: 'kbx ide disable',
       workspaceRoot,
       enabled: false,
       targets: [],

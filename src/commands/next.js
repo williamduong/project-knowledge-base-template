@@ -42,16 +42,16 @@ function runNext({ args, cwd }) {
   const queue = collectNextActions({ impactData, documents, sourceIndex, now: new Date() });
 
   if (options.json) {
-    console.log(JSON.stringify({ command: 'kb next', ...queue }, null, 2));
+    console.log(JSON.stringify({ command: 'kbx next', ...queue }, null, 2));
     return;
   }
 
   if (queue.summary.total === 0) {
-    console.log('kb next: KB clean — no actions needed');
+    console.log('kbx next: KB clean — no actions needed');
     return;
   }
 
-  console.log(`kb next: ${queue.summary.total} actionable item(s) (drift=${queue.summary.drift}, review=${queue.summary.review}, missing=${queue.summary.missing}, source=${queue.summary.source})`);
+  console.log(`kbx next: ${queue.summary.total} actionable item(s) (drift=${queue.summary.drift}, review=${queue.summary.review}, missing=${queue.summary.missing}, source=${queue.summary.source})`);
   if (queue.nextBestAction) {
     const top = queue.nextBestAction.sourcePath || queue.nextBestAction.doc;
     console.log('');

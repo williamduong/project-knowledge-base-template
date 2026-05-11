@@ -397,7 +397,7 @@ async function runBootstrap({ args, cwd }) {
   const { contentRoot } = context;
 
   if (!fs.existsSync(contentRoot)) {
-    throw new Error(`KB content root not found: ${contentRoot}. Run kb init first.`);
+    throw new Error(`KB content root not found: ${contentRoot}. Run kbx init first.`);
   }
 
   const stack = detectStack(cwd);

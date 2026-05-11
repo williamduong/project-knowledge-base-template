@@ -25,11 +25,11 @@ function parseArgs(args) {
       continue;
     }
 
-    throw new Error(`Unknown mark option "${current}". Usage: kb mark --file <relative-md-path> --state <template|autofilled|needs-review|verified|blocked>`);
+    throw new Error(`Unknown mark option "${current}". Usage: kbx mark --file <relative-md-path> --state <template|autofilled|needs-review|verified|blocked>`);
   }
 
   if (!options.file || !options.state) {
-    throw new Error('Usage: kb mark --file <relative-md-path> --state <template|autofilled|needs-review|verified|blocked>');
+    throw new Error('Usage: kbx mark --file <relative-md-path> --state <template|autofilled|needs-review|verified|blocked>');
   }
 
   if (!ALLOWED_STATES.has(options.state)) {
@@ -78,7 +78,7 @@ async function runMark({ args, cwd }) {
   const updated = upsertKbState(text, options.state);
   fs.writeFileSync(targetPath, updated, 'utf8');
 
-  console.log(`kb mark: updated ${options.file}`);
+  console.log(`kbx mark: updated ${options.file}`);
   console.log(`kb_state: ${options.state}`);
 }
 

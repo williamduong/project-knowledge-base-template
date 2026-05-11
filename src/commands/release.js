@@ -106,7 +106,7 @@ function parseArgs(args) {
     if (arg === '-f' || arg === '--file') {
       const next = (args || [])[i + 1];
       if (!next || next.startsWith('--')) {
-        throw new Error('kb release run/plan: --file requires a value');
+        throw new Error('kbx release run/plan: --file requires a value');
       }
       options.file = String(next).trim();
       i += 1;
@@ -121,21 +121,21 @@ function parseArgs(args) {
   }
 
   if (rest.length === 0) {
-    throw new Error('kb release requires a subcommand: init | tag | list | show | notes | run | plan | init-pipeline');
+    throw new Error('kbx release requires a subcommand: init | tag | list | show | notes | run | plan | init-pipeline');
   }
 
   options.sub = rest[0];
 
   if (options.sub === 'init' || options.sub === 'list') {
     if (rest.length > 1) {
-      throw new Error(`kb release ${options.sub} takes no positional arguments`);
+      throw new Error(`kbx release ${options.sub} takes no positional arguments`);
     }
     return options;
   }
 
   if (options.sub === 'show') {
     if (rest.length !== 2) {
-      throw new Error('kb release show requires exactly 1 argument: <version>');
+      throw new Error('kbx release show requires exactly 1 argument: <version>');
     }
     options.version = rest[1];
     return options;
@@ -143,10 +143,10 @@ function parseArgs(args) {
 
   if (options.sub === 'tag') {
     if (rest.length !== 2) {
-      throw new Error('kb release tag requires exactly 1 argument: <version>');
+      throw new Error('kbx release tag requires exactly 1 argument: <version>');
     }
     if (!options.summary) {
-      throw new Error('kb release tag requires --summary=<text>');
+      throw new Error('kbx release tag requires --summary=<text>');
     }
     options.version = rest[1];
     return options;
@@ -154,28 +154,28 @@ function parseArgs(args) {
 
   if (options.sub === 'notes') {
     if (rest.length !== 2) {
-      throw new Error('kb release notes requires exactly 1 argument: <version>');
+      throw new Error('kbx release notes requires exactly 1 argument: <version>');
     }
     options.version = rest[1];
     if (!options.format) {
       options.format = options.json ? 'json' : 'md';
     }
     if (options.format !== 'md' && options.format !== 'json') {
-      throw new Error('kb release notes: --format must be md or json');
+      throw new Error('kbx release notes: --format must be md or json');
     }
     return options;
   }
 
   if (options.sub === 'run' || options.sub === 'plan') {
     if (rest.length > 1) {
-      throw new Error(`kb release ${options.sub} takes no positional arguments`);
+      throw new Error(`kbx release ${options.sub} takes no positional arguments`);
     }
 
     if (options.bump && !['patch', 'minor', 'major'].includes(options.bump)) {
-      throw new Error('kb release run/plan: --bump must be patch, minor, or major');
+      throw new Error('kbx release run/plan: --bump must be patch, minor, or major');
     }
     if (options.target && !['npm', 'gh', 'all'].includes(options.target)) {
-      throw new Error('kb release run/plan: --target must be npm, gh, or all');
+      throw new Error('kbx release run/plan: --target must be npm, gh, or all');
     }
 
     if (options.sub === 'plan') {
@@ -187,18 +187,18 @@ function parseArgs(args) {
 
   if (options.sub === 'init-pipeline') {
     if (rest.length > 1) {
-      throw new Error('kb release init-pipeline takes no positional arguments');
+      throw new Error('kbx release init-pipeline takes no positional arguments');
     }
 
     options.template = options.template || 'npm-package';
     if (!['npm-package', 'docs-only', 'custom'].includes(options.template)) {
-      throw new Error('kb release init-pipeline: --template must be npm-package, docs-only, or custom');
+      throw new Error('kbx release init-pipeline: --template must be npm-package, docs-only, or custom');
     }
 
     return options;
   }
 
-  throw new Error(`kb release: unknown subcommand "${options.sub}". Supported: init | tag | list | show | notes | run | plan | init-pipeline`);
+  throw new Error(`kbx release: unknown subcommand "${options.sub}". Supported: init | tag | list | show | notes | run | plan | init-pipeline`);
 }
 
 function normalizePrefix(prefix) {
@@ -327,7 +327,7 @@ function runReleaseInit({ workspaceRoot, contentRoot, options }) {
 
   const filePath = writeCatalog(contentRoot, catalog);
   const out = {
-    command: 'kb release init',
+    command: 'kbx release init',
     written: filePath,
     current: catalog.current,
     releases: catalog.releases.length,
@@ -340,7 +340,7 @@ function runReleaseInit({ workspaceRoot, contentRoot, options }) {
     return;
   }
 
-  console.log('kb release init: PASS');
+  console.log('kbx release init: PASS');
   console.log(`  written          : ${filePath}`);
   console.log(`  releases         : ${catalog.releases.length}`);
   console.log(`  current          : ${catalog.current || 'none'}`);
@@ -350,7 +350,7 @@ function runReleaseInit({ workspaceRoot, contentRoot, options }) {
 function runReleaseTag({ workspaceRoot, contentRoot, options }) {
   const existing = readCatalog(contentRoot);
   if (!existing) {
-    throw new Error('catalog.json not found. Run "kb release init" first.');
+    throw new Error('catalog.json not found. Run "kbx release init" first.');
   }
 
   const contentPaths = getReleaseContentPaths(contentRoot);
@@ -371,7 +371,7 @@ function runReleaseTag({ workspaceRoot, contentRoot, options }) {
   appendReleaseEntry(contentRoot, entry, { setCurrent: true });
 
   const out = {
-    command: 'kb release tag',
+    command: 'kbx release tag',
     version: entry.version,
     current: entry.version,
     prerelease: entry.prerelease,
@@ -382,7 +382,7 @@ function runReleaseTag({ workspaceRoot, contentRoot, options }) {
     return;
   }
 
-  console.log(`kb release tag: added ${entry.version}`);
+  console.log(`kbx release tag: added ${entry.version}`);
   console.log(`  current   : ${entry.version}`);
   console.log(`  prerelease: ${entry.prerelease ? 'yes' : 'no'}`);
 }
@@ -390,7 +390,7 @@ function runReleaseTag({ workspaceRoot, contentRoot, options }) {
 function runReleaseList({ contentRoot, options }) {
   const catalog = readCatalog(contentRoot);
   if (!catalog) {
-    throw new Error('catalog.json not found. Run "kb release init" first.');
+    throw new Error('catalog.json not found. Run "kbx release init" first.');
   }
 
   const items = catalog.releases.map((item) => ({
@@ -401,11 +401,11 @@ function runReleaseList({ contentRoot, options }) {
   }));
 
   if (options.json) {
-    console.log(JSON.stringify({ command: 'kb release list', current: catalog.current, releases: items }, null, 2));
+    console.log(JSON.stringify({ command: 'kbx release list', current: catalog.current, releases: items }, null, 2));
     return;
   }
 
-  console.log(`kb release list: ${items.length} release(s)`);
+  console.log(`kbx release list: ${items.length} release(s)`);
   for (const item of items) {
     const marker = item.current ? '*' : ' ';
     const pre = item.prerelease ? ' (prerelease)' : '';
@@ -416,7 +416,7 @@ function runReleaseList({ contentRoot, options }) {
 function runReleaseShow({ contentRoot, options }) {
   const catalog = readCatalog(contentRoot);
   if (!catalog) {
-    throw new Error('catalog.json not found. Run "kb release init" first.');
+    throw new Error('catalog.json not found. Run "kbx release init" first.');
   }
 
   const entry = catalog.releases.find((item) => item.version === options.version);
@@ -425,11 +425,11 @@ function runReleaseShow({ contentRoot, options }) {
   }
 
   if (options.json) {
-    console.log(JSON.stringify({ command: 'kb release show', current: catalog.current, release: entry }, null, 2));
+    console.log(JSON.stringify({ command: 'kbx release show', current: catalog.current, release: entry }, null, 2));
     return;
   }
 
-  console.log(`kb release show: ${entry.version}`);
+  console.log(`kbx release show: ${entry.version}`);
   console.log(`  current         : ${catalog.current === entry.version ? 'yes' : 'no'}`);
   console.log(`  released_at     : ${entry.released_at}`);
   console.log(`  git_tag         : ${entry.git_tag}`);
@@ -465,7 +465,7 @@ function runReleaseNotes({ workspaceRoot, contentRoot, options }) {
     fromTag = findPreviousTagFromGit(workspaceRoot, options.version);
   }
   if (!fromTag) {
-    throw new Error(`kb release notes: cannot infer previous release for ${options.version}. Use --from=<tag>.`);
+    throw new Error(`kbx release notes: cannot infer previous release for ${options.version}. Use --from=<tag>.`);
   }
 
   const contentPaths = getReleaseContentPaths(contentRoot);
@@ -499,7 +499,7 @@ function runReleaseNotes({ workspaceRoot, contentRoot, options }) {
 
   if (options.format === 'json' || options.json) {
     const payload = {
-      command: 'kb release notes',
+      command: 'kbx release notes',
       from: fromTag,
       to: options.version,
       content_paths: contentPaths,
@@ -511,7 +511,7 @@ function runReleaseNotes({ workspaceRoot, contentRoot, options }) {
   }
 
   if (resolvedOutputPath) {
-    console.log(`kb release notes: wrote ${resolvedOutputPath}`);
+    console.log(`kbx release notes: wrote ${resolvedOutputPath}`);
     return;
   }
   process.stdout.write(result.markdown);
@@ -534,7 +534,7 @@ function runReleaseInitPipeline({ contentRoot, options }) {
   const existed = fs.existsSync(targetPath);
   if (existed && !options.yes) {
     throw new Error(
-      `Pipeline already exists at ${targetPath}. Re-run with --yes to overwrite or use --file with kb release run/plan.`
+      `Pipeline already exists at ${targetPath}. Re-run with --yes to overwrite or use --file with kbx release run/plan.`
     );
   }
 
@@ -542,7 +542,7 @@ function runReleaseInitPipeline({ contentRoot, options }) {
   fs.copyFileSync(sourcePath, targetPath);
 
   const out = {
-    command: 'kb release init-pipeline',
+    command: 'kbx release init-pipeline',
     template: templateName,
     source: sourcePath,
     written: targetPath,
@@ -554,7 +554,7 @@ function runReleaseInitPipeline({ contentRoot, options }) {
     return;
   }
 
-  console.log('kb release init-pipeline: PASS');
+  console.log('kbx release init-pipeline: PASS');
   console.log(`  template : ${templateName}`);
   console.log(`  written  : ${targetPath}`);
 }
@@ -575,7 +575,7 @@ function runReleasePrecheck({ workspaceRoot, processRunner = spawnSync }) {
   });
 
   if (result && result.error) {
-    throw new Error(`Release pre-check failed to execute "kb status --quiet": ${result.error.message}`);
+    throw new Error(`Release pre-check failed to execute "kbx status --quiet": ${result.error.message}`);
   }
 
   const exitCode = result && typeof result.status === 'number' ? result.status : 1;
@@ -643,7 +643,7 @@ function buildAutoCatalogSummary({ version, inputs }) {
 function upsertCatalogReleaseFromTag({ workspaceRoot, contentRoot, version, summary }) {
   const existing = readCatalog(contentRoot);
   if (!existing) {
-    throw new Error('catalog.json not found. Run "kb release init" first.');
+    throw new Error('catalog.json not found. Run "kbx release init" first.');
   }
 
   const alreadyExists = (existing.releases || []).some((item) => item.version === version);
@@ -808,7 +808,7 @@ function runReleasePipeline({ workspaceRoot, contentRoot, options }) {
       console.log(
         JSON.stringify(
           {
-            command: options.sub === 'plan' ? 'kb release plan' : 'kb release run --dry-run',
+            command: options.sub === 'plan' ? 'kbx release plan' : 'kbx release run --dry-run',
             pipeline: filePath,
             inputs,
             steps: preview.steps,
@@ -820,7 +820,7 @@ function runReleasePipeline({ workspaceRoot, contentRoot, options }) {
       return;
     }
 
-    console.log(`kb release plan: ${preview.steps.length} step(s)`);
+    console.log(`kbx release plan: ${preview.steps.length} step(s)`);
     console.log(`  pipeline: ${filePath}`);
     console.log(`  inputs  : bump=${inputs.bump}, target=${inputs.target}${inputs.from_tag ? `, from_tag=${inputs.from_tag}` : ''}`);
     preview.steps.forEach((step, idx) => {
@@ -854,7 +854,7 @@ function runReleasePipeline({ workspaceRoot, contentRoot, options }) {
     console.log(
       JSON.stringify(
         {
-          command: 'kb release run',
+          command: 'kbx release run',
           pipeline: filePath,
           precheck,
           posthook,
@@ -871,13 +871,13 @@ function runReleasePipeline({ workspaceRoot, contentRoot, options }) {
     return;
   }
 
-  console.log(`kb release pre-check: ${precheck.status}`);
+  console.log(`kbx release pre-check: ${precheck.status}`);
   if (posthook.updated) {
-    console.log(`kb release post-hook: catalog updated (${posthook.version})`);
+    console.log(`kbx release post-hook: catalog updated (${posthook.version})`);
   } else {
-    console.log(`kb release post-hook: catalog unchanged (${posthook.reason || 'no-op'})`);
+    console.log(`kbx release post-hook: catalog unchanged (${posthook.reason || 'no-op'})`);
   }
-  console.log(`kb release run: PASS (${runtime.steps.length} step(s))`);
+  console.log(`kbx release run: PASS (${runtime.steps.length} step(s))`);
   for (const step of runtime.steps) {
     console.log(`  - ${step.name}: exit ${step.exitCode}`);
   }

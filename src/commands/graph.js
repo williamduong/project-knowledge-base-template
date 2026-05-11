@@ -71,11 +71,11 @@ function parseArgs(args) {
       rest.push(arg);
       continue;
     }
-    throw new Error(`Unknown graph option "${arg}". Run "kb graph help" for usage.`);
+    throw new Error(`Unknown graph option "${arg}". Run "kbx graph help" for usage.`);
   }
 
   if (rest.length === 0) {
-    throw new Error('kb graph requires a subcommand: export | lane | check | help');
+    throw new Error('kbx graph requires a subcommand: export | lane | check | help');
   }
   options.sub = rest[0];
 
@@ -289,7 +289,7 @@ function runExport(workspaceRoot, contentRoot, options) {
     if (options.json) {
       console.log(JSON.stringify({
         ok: true,
-        command: 'kb graph export',
+        command: 'kbx graph export',
         format: 'json',
         output: outputPath,
         schema_version: payload.schema_version,
@@ -317,7 +317,7 @@ function runExport(workspaceRoot, contentRoot, options) {
     if (options.json) {
       console.log(JSON.stringify({
         ok: true,
-        command: 'kb graph export',
+        command: 'kbx graph export',
         format: payload.format,
         lane: options.lane,
         output: outputPath,
@@ -941,14 +941,14 @@ function runCheck(contentRoot, options) {
 
 function printHelp() {
   console.log(`
-kb graph — graph export and consistency check (v1.9 mini)
+kbx graph — graph export and consistency check (v1.9 mini)
 
 Usage:
-  kb graph export [--output=<path>] [--lane=<rules|intents|source>] [--json]
-  kb graph export --format=json [--out=<path>] [--json]
-  kb graph export <rules|intents|source> [--output=<path>] [--json]
-  kb graph lane <rules|intents|source> [--output=<path>] [--json]
-  kb graph check  [--json]
+  kbx graph export [--output=<path>] [--lane=<rules|intents|source>] [--json]
+  kbx graph export --format=json [--out=<path>] [--json]
+  kbx graph export <rules|intents|source> [--output=<path>] [--json]
+  kbx graph lane <rules|intents|source> [--output=<path>] [--json]
+  kbx graph check  [--json]
 
 Subcommands:
   export    Export KB entities and relations as JSONL. Writes to stdout unless
@@ -1009,7 +1009,7 @@ function runGraph(args, { workspaceRoot }) {
     } else if (options.sub === 'check') {
       runCheck(contentRoot, options);
     } else {
-      console.error(`Unknown subcommand "${options.sub}". Run "kb graph help" for usage.`);
+      console.error(`Unknown subcommand "${options.sub}". Run "kbx graph help" for usage.`);
       process.exit(1);
     }
   } catch (err) {

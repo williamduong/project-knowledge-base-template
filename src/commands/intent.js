@@ -65,7 +65,7 @@ function parseArgs(args) {
 
   const setListScope = (scope) => {
     if (options.listScope !== 'active' && options.listScope !== scope) {
-      throw new Error('kb intent list accepts only one scope flag: --backlog | --closed | --archived | --all.');
+      throw new Error('kbx intent list accepts only one scope flag: --backlog | --closed | --archived | --all.');
     }
     options.listScope = scope;
   };
@@ -131,17 +131,17 @@ function parseArgs(args) {
       rest.push(arg);
       continue;
     }
-    throw new Error(`Unknown intent option "${arg}". Run "kb intent help" for usage.`);
+    throw new Error(`Unknown intent option "${arg}". Run "kbx intent help" for usage.`);
   }
 
   if (rest.length === 0) {
-    throw new Error('kb intent requires a subcommand: create | draft | activate | status | list | focus | close | cancel | archive');
+    throw new Error('kbx intent requires a subcommand: create | draft | activate | status | list | focus | close | cancel | archive');
   }
 
   options.sub = rest[0];
 
   if (options.listScope !== 'active' && options.sub !== 'list') {
-    throw new Error('List scope flags are only valid with "kb intent list".');
+    throw new Error('List scope flags are only valid with "kbx intent list".');
   }
 
   if (options.sub === 'create') {
@@ -150,23 +150,23 @@ function parseArgs(args) {
       options.intentId = rest[1];
     }
     if (!VALID_MODES.has(options.mode)) {
-      throw new Error(`kb intent create: invalid mode "${options.mode}". Supported: quick, full`);
+      throw new Error(`kbx intent create: invalid mode "${options.mode}". Supported: quick, full`);
     }
   } else if (options.sub === 'draft') {
     if (rest.length < 2) {
-      throw new Error('kb intent draft requires a slug.');
+      throw new Error('kbx intent draft requires a slug.');
     }
     options.intentId = rest[1];
   } else if (options.sub === 'activate') {
     if (rest.length < 2) {
-      throw new Error('kb intent activate requires a backlog slug.');
+      throw new Error('kbx intent activate requires a backlog slug.');
     }
     options.intentId = rest[1];
     if (!options.wave) {
-      throw new Error('kb intent activate requires --wave=<version>.');
+      throw new Error('kbx intent activate requires --wave=<version>.');
     }
     if (!VALID_MODES.has(options.mode)) {
-      throw new Error(`kb intent activate: invalid mode "${options.mode}". Supported: quick, full`);
+      throw new Error(`kbx intent activate: invalid mode "${options.mode}". Supported: quick, full`);
     }
   } else if (options.sub === 'status') {
     if (rest.length >= 2) {
@@ -176,39 +176,39 @@ function parseArgs(args) {
     // no positional args
   } else if (options.sub === 'cancel') {
     if (rest.length < 2) {
-      throw new Error('kb intent cancel requires an intent ID.');
+      throw new Error('kbx intent cancel requires an intent ID.');
     }
     options.intentId = rest[1];
   } else if (options.sub === 'focus') {
     if (rest.length < 2) {
-      throw new Error('kb intent focus requires an intent ID.');
+      throw new Error('kbx intent focus requires an intent ID.');
     }
     options.intentId = rest[1];
     if (options.current === null && options.nextAction === null) {
-      throw new Error('kb intent focus requires --current or --next.');
+      throw new Error('kbx intent focus requires --current or --next.');
     }
   } else if (options.sub === 'archive') {
     if (rest.length < 2) {
-      throw new Error('kb intent archive requires an intent ID.');
+      throw new Error('kbx intent archive requires an intent ID.');
     }
     options.intentId = rest[1];
   } else if (options.sub === 'close') {
     if (rest.length < 2) {
-      throw new Error('kb intent close requires an intent ID.');
+      throw new Error('kbx intent close requires an intent ID.');
     }
     options.intentId = rest[1];
     if (options.closeType !== 'released' && options.closeType !== 'dropped') {
-      throw new Error('kb intent close requires --type=released|dropped.');
+      throw new Error('kbx intent close requires --type=released|dropped.');
     }
     if (options.closeType === 'released' && !options.release) {
-      throw new Error('kb intent close --type=released requires --release=vX.Y.Z.');
+      throw new Error('kbx intent close --type=released requires --release=vX.Y.Z.');
     }
     if (options.closeType === 'dropped' && !options.reason) {
-      throw new Error('kb intent close --type=dropped requires --reason="...".');
+      throw new Error('kbx intent close --type=dropped requires --reason="...".');
     }
   } else if (options.sub === 'apply') {
     if (rest.length < 2) {
-      throw new Error('kb intent apply requires an intent ID.');
+      throw new Error('kbx intent apply requires an intent ID.');
     }
     options.intentId = rest[1];
     if (args && args.includes('--release')) options.release = true;
@@ -219,9 +219,9 @@ function parseArgs(args) {
   } else if (options.sub === 'cleanup') {
     // no positional args; optional --stale, --aged handled via flag parse above
   } else if (options.sub === 'extract') {
-    // kb intent extract <range> [--title="..."] [--type=...]
+    // kbx intent extract <range> [--title="..."] [--type=...]
     if (rest.length < 2) {
-      throw new Error('kb intent extract requires a commit range (e.g. HEAD~5..HEAD)');
+      throw new Error('kbx intent extract requires a commit range (e.g. HEAD~5..HEAD)');
     }
     options.commitRange = rest[1];
   } else if (options.sub === 'checkpoint') {
@@ -229,7 +229,7 @@ function parseArgs(args) {
       options.intentId = rest[1];
     }
   } else {
-    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, cleanup, close, cancel, archive, apply, suggest-lessons, extract, checkpoint`);
+    throw new Error(`kbx intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, cleanup, close, cancel, archive, apply, suggest-lessons, extract, checkpoint`);
   }
 
   return options;
@@ -376,7 +376,7 @@ async function runCreate(ctx, options, cwd) {
 
   if (json) {
     console.log(JSON.stringify({
-      command: 'kb intent create',
+      command: 'kbx intent create',
       intent_id: intentId,
       mode,
       change_type: changeType,
@@ -395,7 +395,7 @@ async function runCreate(ctx, options, cwd) {
     } else {
       console.log(`  2. Update decision_summary in intent.md before applying.`);
     }
-    console.log(`  3. Run "kb intent status ${intentId}" to review.`);
+    console.log(`  3. Run "kbx intent status ${intentId}" to review.`);
   }
 }
 
@@ -407,7 +407,7 @@ async function runDraft(ctx, options) {
   const filePath = createBacklogIntent(ctx.contentRoot, { slug, title: slug, description: '' });
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb intent draft',
+      command: 'kbx intent draft',
       slug,
       path: filePath,
       status: 'created',
@@ -433,7 +433,7 @@ async function runActivate(ctx, options) {
   });
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb intent activate',
+      command: 'kbx intent activate',
       slug,
       intent_id: intentId,
       workspace: wsPath,
@@ -474,7 +474,7 @@ function collectIntentStatusFromRecord(record) {
 
   const warnings = [];
   if (!rawMeta.schema_version && (rawMeta.status || rawMeta.lifecycle_state || rawMeta.legacy)) {
-    warnings.push(`Legacy schema detected (no schema_version). Run "kb migrate --to=v2.4.0" to persist canonical schema.`);
+    warnings.push(`Legacy schema detected (no schema_version). Run "kbx migrate --to=v2.4.0" to persist canonical schema.`);
   }
   if (record.scope === 'active' && (!meta.decision_summary || meta.decision_summary === '')) {
     warnings.push('decision_summary is empty — fill it before applying.');
@@ -513,7 +513,7 @@ async function runStatus(ctx, options) {
 
     if (json) {
       console.log(JSON.stringify({
-        command: 'kb intent status',
+        command: 'kbx intent status',
         intent_id: info.record.id,
         slug: info.record.slug,
         scope: info.record.scope,
@@ -599,7 +599,7 @@ async function runStatus(ctx, options) {
       };
     });
     console.log(JSON.stringify({
-      command: 'kb intent status',
+      command: 'kbx intent status',
       count: items.length,
       intents: items,
     }, null, 2));
@@ -616,7 +616,7 @@ async function runStatus(ctx, options) {
         );
       }
       console.log('');
-      console.log('Run "kb intent status <id-or-slug>" for details on a specific intent.');
+      console.log('Run "kbx intent status <id-or-slug>" for details on a specific intent.');
     }
   }
 
@@ -681,7 +681,7 @@ async function runList(ctx, options) {
 
   if (json) {
     console.log(JSON.stringify({
-      command: 'kb intent list',
+      command: 'kbx intent list',
       scope: listScope,
       count: items.length,
       intents: items,
@@ -744,7 +744,7 @@ async function runList(ctx, options) {
     );
   }
   lines.push('');
-  lines.push('Run "kb intent status <id-or-slug>" for details.');
+  lines.push('Run "kbx intent status <id-or-slug>" for details.');
 
   await printWithPager(lines);
 
@@ -766,9 +766,9 @@ async function runCancel(ctx, options) {
     const ok = await confirmPrompt(`Cancel intent "${intentId}"? This deprecated alias will close it as dropped.`);
     if (!ok) {
       if (json) {
-        console.log(JSON.stringify({ command: 'kb intent cancel', intent_id: intentId, status: 'aborted' }, null, 2));
+        console.log(JSON.stringify({ command: 'kbx intent cancel', intent_id: intentId, status: 'aborted' }, null, 2));
       } else {
-        console.log('kb intent cancel: aborted.');
+        console.log('kbx intent cancel: aborted.');
       }
       return;
     }
@@ -778,7 +778,7 @@ async function runCancel(ctx, options) {
 
   if (json) {
     console.log(JSON.stringify({
-      command: 'kb intent cancel',
+      command: 'kbx intent cancel',
       intent_id: intentId,
       deprecated: true,
       close_type: 'dropped',
@@ -817,7 +817,7 @@ async function runCleanup(ctx, options) {
         intent_id: id,
         rule: 'missing-focus-current',
         message: 'focus.current is required for active intent',
-        suggested_command: `kb intent focus ${id} --current "..." --next "..."`,
+        suggested_command: `kbx intent focus ${id} --current "..." --next "..."`,
       });
     }
     if (!focus || !focus.next_action || String(focus.next_action).trim() === '') {
@@ -826,7 +826,7 @@ async function runCleanup(ctx, options) {
         intent_id: id,
         rule: 'missing-focus-next-action',
         message: 'focus.next_action is required for active intent',
-        suggested_command: `kb intent focus ${id} --next "..."`,
+        suggested_command: `kbx intent focus ${id} --next "..."`,
       });
     }
 
@@ -841,7 +841,7 @@ async function runCleanup(ctx, options) {
             intent_id: id,
             rule: 'stale-focus',
             message: `focus.last_updated is ${Math.floor(ageDays)} days old (threshold: ${STALE_DAYS})`,
-            suggested_command: `kb intent focus ${id} --current "..." --next "..."`,
+            suggested_command: `kbx intent focus ${id} --current "..." --next "..."`,
           });
         }
       }
@@ -851,7 +851,7 @@ async function runCleanup(ctx, options) {
         intent_id: id,
         rule: 'missing-focus-last-updated',
         message: 'focus.last_updated is missing',
-        suggested_command: `kb intent focus ${id} --current "..." --next "..."`,
+        suggested_command: `kbx intent focus ${id} --current "..." --next "..."`,
       });
     }
 
@@ -897,7 +897,7 @@ async function runCleanup(ctx, options) {
           intent_id: id,
           rule: 'closed-aged',
           message: `Closed ${Math.floor(ageDays)} days ago (threshold: ${AGED_DAYS}). Candidate for archive.`,
-          suggested_command: `kb intent archive ${id}`,
+          suggested_command: `kbx intent archive ${id}`,
         });
       }
     }
@@ -919,7 +919,7 @@ async function runCleanup(ctx, options) {
 
   if (json) {
     console.log(JSON.stringify({
-      command: 'kb intent cleanup',
+      command: 'kbx intent cleanup',
       critical: critical.length,
       warning: warnings.length,
       findings: filtered,
@@ -968,7 +968,7 @@ async function runFocus(ctx, options) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb intent focus',
+      command: 'kbx intent focus',
       intent_id: options.intentId,
       current: options.current,
       next_action: options.nextAction,
@@ -987,7 +987,7 @@ async function runArchive(ctx, options) {
   const archivePath = archiveIntent(ctx.contentRoot, options.intentId, new Date().toISOString());
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb intent archive',
+      command: 'kbx intent archive',
       intent_id: options.intentId,
       archive_path: archivePath,
       status: 'archived',
@@ -1015,7 +1015,7 @@ async function runClose(ctx, options) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb intent close',
+      command: 'kbx intent close',
       intent_id: options.intentId,
       close_type: closeType,
       path: closedPath,
@@ -1037,7 +1037,7 @@ async function runCheckpoint(ctx, options, cwd) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb intent checkpoint',
+      command: 'kbx intent checkpoint',
       intent_id: options.intentId || null,
       skipped: Boolean(result.skipped),
       reason: result.reason || null,
@@ -1130,7 +1130,7 @@ async function runApply(ctx, options, cwd) {
   if (!yes && !json) {
     const ok = await confirmPrompt('Confirm apply?');
     if (!ok) {
-      console.log('kb intent apply: aborted.');
+      console.log('kbx intent apply: aborted.');
       return;
     }
   }
@@ -1183,7 +1183,7 @@ async function runApply(ctx, options, cwd) {
 
   if (json) {
     console.log(JSON.stringify({
-      command: 'kb intent apply',
+      command: 'kbx intent apply',
       intent_id: intentId,
       applied_files: applyResults,
       apply_record: record,
@@ -1216,7 +1216,7 @@ async function runSuggestLessons(ctx, options) {
 
   if (json) {
     console.log(JSON.stringify({
-      command: 'kb intent suggest-lessons',
+      command: 'kbx intent suggest-lessons',
       candidate_count: candidates.length,
       candidates,
     }, null, 2));
@@ -1249,13 +1249,13 @@ async function runExtract(ctx, options, cwd) {
   const { getChangedFilesSince, runGitCommand } = require('../lib/git');
 
   if (!commitRange) {
-    throw new Error('kb intent extract: missing commit range (e.g. HEAD~5..HEAD)');
+    throw new Error('kbx intent extract: missing commit range (e.g. HEAD~5..HEAD)');
   }
 
   // 1. Get changed files in range
   const changedFiles = getChangedFilesSince(cwd, commitRange.split('..')[0], commitRange.split('..')[1] || 'HEAD');
   if (!changedFiles || changedFiles.length === 0) {
-    throw new Error(`kb intent extract: no changes found in range "${commitRange}"`);
+    throw new Error(`kbx intent extract: no changes found in range "${commitRange}"`);
   }
 
   // 2. Filter KB files (knowledge-base/<tier>/ only, skip intents/, .kb/, code)
@@ -1266,7 +1266,7 @@ async function runExtract(ctx, options, cwd) {
   });
 
   if (kbFiles.length === 0) {
-    throw new Error(`kb intent extract: no KB files found in range "${commitRange}". Only knowledge-base/ tier files are extracted.`);
+    throw new Error(`kbx intent extract: no KB files found in range "${commitRange}". Only knowledge-base/ tier files are extracted.`);
   }
 
   // 3. Get commit messages for changelog
@@ -1354,7 +1354,7 @@ async function runExtract(ctx, options, cwd) {
 
   if (json) {
     console.log(JSON.stringify({
-      command: 'kb intent extract',
+      command: 'kbx intent extract',
       intent_id: intentId,
       commit_range: commitRange,
       kb_files_count: kbFiles.length,
@@ -1420,24 +1420,24 @@ async function runIntent({ args, cwd }) {
 }
 
 function printHelp() {
-  console.log('kb intent — Intent workspace management');
+  console.log('kbx intent — Intent workspace management');
   console.log('');
   console.log('Usage:');
-  console.log('  kb intent create [<id>] [--mode=quick|full] [--change-type=<type>] [--yes] [--json]');
-  console.log('  kb intent draft <slug> [--json]');
-  console.log('  kb intent activate <slug> --wave=vX.Y [--mode=quick|full] [--change-type=<type>] [--json]');
-  console.log('  kb intent status [<id-or-slug>] [--json]');
-  console.log('  kb intent list [--backlog|--closed|--archived|--all] [--json]');
-  console.log('  kb intent focus <id> [--current="..."] [--next="..."] [--date=YYYY-MM-DD] [--json]');
-  console.log('  kb intent cleanup [--stale] [--aged] [--json]');
-  console.log('  kb intent apply <id> [--release] [--yes] [--json]');
-  console.log('  kb intent close <id> --type=released --release=vX.Y.Z [--json]');
-  console.log('  kb intent close <id> --type=dropped --reason="..." [--json]');
-  console.log('  kb intent cancel <id> [--yes] [--json]');
-  console.log('  kb intent archive <id> [--json]');
-  console.log('  kb intent suggest-lessons [--json]');
-  console.log('  kb intent extract <range> [--title="..."] [--type=<type>] [--json]');
-  console.log('  kb intent checkpoint [<id>] [--note="..."] [--json]');
+  console.log('  kbx intent create [<id>] [--mode=quick|full] [--change-type=<type>] [--yes] [--json]');
+  console.log('  kbx intent draft <slug> [--json]');
+  console.log('  kbx intent activate <slug> --wave=vX.Y [--mode=quick|full] [--change-type=<type>] [--json]');
+  console.log('  kbx intent status [<id-or-slug>] [--json]');
+  console.log('  kbx intent list [--backlog|--closed|--archived|--all] [--json]');
+  console.log('  kbx intent focus <id> [--current="..."] [--next="..."] [--date=YYYY-MM-DD] [--json]');
+  console.log('  kbx intent cleanup [--stale] [--aged] [--json]');
+  console.log('  kbx intent apply <id> [--release] [--yes] [--json]');
+  console.log('  kbx intent close <id> --type=released --release=vX.Y.Z [--json]');
+  console.log('  kbx intent close <id> --type=dropped --reason="..." [--json]');
+  console.log('  kbx intent cancel <id> [--yes] [--json]');
+  console.log('  kbx intent archive <id> [--json]');
+  console.log('  kbx intent suggest-lessons [--json]');
+  console.log('  kbx intent extract <range> [--title="..."] [--type=<type>] [--json]');
+  console.log('  kbx intent checkpoint [<id>] [--note="..."] [--json]');
   console.log('');
   console.log('Subcommands:');
   console.log('  create          Create a new intent workspace.');

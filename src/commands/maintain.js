@@ -237,10 +237,10 @@ function runMaintain({ args, cwd, packageJson }) {
     console.log('maintain: fast mode skips doc:gate for quicker feedback.');
   }
 
-  console.log(`maintain: running kb test ${options.fast ? '(sample)' : '--all'}`);
+  console.log(`maintain: running kbx test ${options.fast ? '(sample)' : '--all'}`);
   runTest({ args: options.fast ? [] : ['--all'], cwd: workspaceRoot });
 
-  console.log(`maintain: running kb doctor ${options.fast ? '' : '--strict'}`.trim());
+  console.log(`maintain: running kbx doctor ${options.fast ? '' : '--strict'}`.trim());
   runDoctor({
     args: options.fast ? [] : ['--strict'],
     cwd: workspaceRoot,
@@ -298,7 +298,7 @@ function runMaintain({ args, cwd, packageJson }) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb maintain',
+      command: 'kbx maintain',
       mode: options.fast ? 'fast' : 'full',
       observation,
       intentProposal,
@@ -327,7 +327,7 @@ function checkStaleRelease({ workspaceRoot }) {
   }
 
   if (!catalog || !catalog.current) {
-    console.log('maintain: WARNING: no release tagged yet in catalog. Consider running: kb release tag <version>');
+    console.log('maintain: WARNING: no release tagged yet in catalog. Consider running: kbx release tag <version>');
     return;
   }
 
@@ -339,7 +339,7 @@ function checkStaleRelease({ workspaceRoot }) {
 
   const daysSince = Math.floor((Date.now() - releasedMs) / 86_400_000);
   if (daysSince > STALE_RELEASE_DAYS) {
-    console.log(`maintain: WARNING: current release ${catalog.current} was tagged ${daysSince} days ago (>${STALE_RELEASE_DAYS}d). Consider running: kb release tag <version>`);
+    console.log(`maintain: WARNING: current release ${catalog.current} was tagged ${daysSince} days ago (>${STALE_RELEASE_DAYS}d). Consider running: kbx release tag <version>`);
   }
 }
 

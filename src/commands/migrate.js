@@ -40,7 +40,7 @@ function parseArgs(args) {
   }
 
   if (!options.targetVersion) {
-    throw new Error('kb migrate requires --to=<version>.');
+    throw new Error('kbx migrate requires --to=<version>.');
   }
 
   return options;
@@ -190,7 +190,7 @@ async function runMigrate({ args, cwd }) {
   if (options.dryRun) {
     if (options.json) {
       console.log(JSON.stringify({
-        command: 'kb migrate',
+        command: 'kbx migrate',
         dry_run: true,
         workspace_root: workspaceRoot,
         ...result,
@@ -198,7 +198,7 @@ async function runMigrate({ args, cwd }) {
       return;
     }
 
-    console.log('kb migrate: DRY-RUN');
+    console.log('kbx migrate: DRY-RUN');
     console.log(`Target: ${result.target_version}`);
     console.log(`Legacy intents: ${result.legacy_count}/${result.count}`);
     console.log(`Full-write candidates: ${result.full_write_count}`);
@@ -236,7 +236,7 @@ async function runMigrate({ args, cwd }) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb migrate',
+      command: 'kbx migrate',
       dry_run: false,
       workspace_root: workspaceRoot,
       target_version: result.target_version,
@@ -249,7 +249,7 @@ async function runMigrate({ args, cwd }) {
     return;
   }
 
-  console.log(`kb migrate: DONE`);
+  console.log(`kbx migrate: DONE`);
   console.log(`Target: ${result.target_version}`);
   console.log(`Written (full): ${written.length}`);
   console.log(`Skipped: ${skipped.length}`);

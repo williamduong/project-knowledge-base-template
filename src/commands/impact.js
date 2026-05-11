@@ -28,7 +28,7 @@ function parseArgs(args) {
     if (arg.startsWith('--depth=')) {
       const v = Number(arg.slice('--depth='.length));
       if (!Number.isFinite(v) || v < 0) {
-        throw new Error(`kb impact: --depth must be a non-negative integer (got "${arg}")`);
+        throw new Error(`kbx impact: --depth must be a non-negative integer (got "${arg}")`);
       }
       options.depth = v;
       continue;
@@ -39,7 +39,7 @@ function parseArgs(args) {
     rest.push(arg);
   }
   if (rest.length !== 1) {
-    throw new Error('kb impact requires exactly 1 target: <doc-path | code-path>');
+    throw new Error('kbx impact requires exactly 1 target: <doc-path | code-path>');
   }
   options.target = rest[0];
   return options;
@@ -80,7 +80,7 @@ function runImpact({ args, cwd }) {
 
   let depth = options.depth === null ? defaultDepth : options.depth;
   if (depth > maxDepth) {
-    process.stderr.write(`kb impact: --depth=${depth} exceeds maxDepth=${maxDepth}; clamping.\n`);
+    process.stderr.write(`kbx impact: --depth=${depth} exceeds maxDepth=${maxDepth}; clamping.\n`);
     depth = maxDepth;
   }
 
@@ -89,11 +89,11 @@ function runImpact({ args, cwd }) {
   const resolvedTarget = resolveTargetNode(graph, candidates);
 
   if (!resolvedTarget) {
-    const msg = `kb impact: target not found in graph: "${options.target}". `
+    const msg = `kbx impact: target not found in graph: "${options.target}". `
       + `Tried doc node "${candidates.docCandidate}" and code node "code:${candidates.codeCandidate}".`;
     if (options.json) {
       console.log(JSON.stringify({
-        command: 'kb impact',
+        command: 'kbx impact',
         target: options.target,
         error: 'target-not-found',
         graph_stats: stats,
@@ -137,7 +137,7 @@ function runImpact({ args, cwd }) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb impact',
+      command: 'kbx impact',
       target: options.target,
       resolved: resolvedTarget,
       depth_used: depth,
@@ -153,7 +153,7 @@ function runImpact({ args, cwd }) {
     return;
   }
 
-  console.log(`kb impact: ${options.target}  (depth=${depth}, max=${maxDepth})`);
+  console.log(`kbx impact: ${options.target}  (depth=${depth}, max=${maxDepth})`);
   console.log(`  resolved as: ${resolvedTarget.kind}  [${resolvedTarget.id}]`);
   for (const g of groups) {
     if (g.depth === 0) continue;

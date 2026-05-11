@@ -35,7 +35,7 @@ function parseArgs(args) {
   }
 
   if (rest.length === 0) {
-    throw new Error('kb ingest requires a source file path');
+    throw new Error('kbx ingest requires a source file path');
   }
 
   if (!SUPPORTED_TYPES.has(options.type)) {
@@ -159,7 +159,7 @@ function runIngest({ args, cwd }) {
   } else {
     payload.status = 'requires-parser';
     payload.warnings.push('Parser for type "' + selectedType + '" is not installed in this patch build.');
-    payload.warnings.push('Use external extraction to markdown/text, then rerun: kb ingest <converted-file> --type=text');
+    payload.warnings.push('Use external extraction to markdown/text, then rerun: kbx ingest <converted-file> --type=text');
     payload.confidence = {
       overall: 0.2,
       extraction: 'metadata-only',
@@ -170,7 +170,7 @@ function runIngest({ args, cwd }) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb ingest',
+      command: 'kbx ingest',
       source_path: relSourcePath,
       type: selectedType,
       payload_path: payloadPath,

@@ -204,7 +204,7 @@ function parseArgs(args) {
   if (subcommand === 'add') {
     const text = rest.join(' ').trim();
     if (!text) {
-      throw new Error('Usage: kb plan add "<description>" [--owner <name>] [--priority P0|P1|P2]');
+      throw new Error('Usage: kbx plan add "<description>" [--owner <name>] [--priority P0|P1|P2]');
     }
 
     const options = { subcommand: 'add', text, owner: 'knowledge-management', priority: 'P1' };
@@ -222,7 +222,7 @@ function parseArgs(args) {
     const textEnd = rest.findIndex((r) => r.startsWith('--'));
     options.text = (textEnd === -1 ? rest : rest.slice(0, textEnd)).join(' ').trim();
     if (!options.text) {
-      throw new Error('kb plan add requires a non-empty description.');
+      throw new Error('kbx plan add requires a non-empty description.');
     }
 
     return options;
@@ -232,7 +232,7 @@ function parseArgs(args) {
     return { subcommand: 'list' };
   }
 
-  throw new Error(`Unknown plan subcommand "${subcommand}". Use: kb plan add "<text>" | kb plan list`);
+  throw new Error(`Unknown plan subcommand "${subcommand}". Use: kbx plan add "<text>" | kbx plan list`);
 }
 
 function resolvePlanPath(cwd) {
@@ -267,7 +267,7 @@ function nextId(content) {
 
 function addPlanItem({ planPath, text, owner, priority }) {
   if (!fs.existsSync(planPath)) {
-    throw new Error(`Queue file not found at: ${planPath}. Expected strategic-backlog.md (or legacy finalization-plan.md). Run kb init first.`);
+    throw new Error(`Queue file not found at: ${planPath}. Expected strategic-backlog.md (or legacy finalization-plan.md). Run kbx init first.`);
   }
 
   const content = fs.readFileSync(planPath, 'utf8');
@@ -291,7 +291,7 @@ function addPlanItem({ planPath, text, owner, priority }) {
 
 function listPlanItems({ planPath }) {
   if (!fs.existsSync(planPath)) {
-    throw new Error(`Queue file not found at: ${planPath}. Expected strategic-backlog.md (or legacy finalization-plan.md). Run kb init first.`);
+    throw new Error(`Queue file not found at: ${planPath}. Expected strategic-backlog.md (or legacy finalization-plan.md). Run kbx init first.`);
   }
 
   const content = fs.readFileSync(planPath, 'utf8');

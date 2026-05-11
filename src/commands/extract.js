@@ -30,7 +30,7 @@ function parseArgs(args) {
     if (arg === '--apply') {
       const nextArg = (args || [])[i + 1];
       if (!nextArg || nextArg.startsWith('--')) {
-        throw new Error('kb extract --apply requires an output file path');
+        throw new Error('kbx extract --apply requires an output file path');
       }
       options.applyFile = nextArg.trim();
       i += 1;
@@ -56,11 +56,11 @@ function parseArgs(args) {
   }
 
   if (!options.uncovered && !options.applyFile && rest.length === 0) {
-    throw new Error('kb extract requires a source file path or --uncovered flag');
+    throw new Error('kbx extract requires a source file path or --uncovered flag');
   }
 
   if (options.applyFile && !options.targetDoc) {
-    throw new Error('kb extract --apply requires --target-doc=<path>');
+    throw new Error('kbx extract --apply requires --target-doc=<path>');
   }
 
   if (rest.length > 0) options.sourcePath = rest[0];
@@ -98,7 +98,7 @@ You are extracting knowledge from source code into a KB documentation file.
 
 ## Model hint
 This prompt is designed for cheap/fast models (GPT-4o-mini, Gemini Flash, Claude Haiku).
-Paste output into: kb extract --apply <output-file> --target-doc={TARGET_DOC_PATH}
+Paste output into: kbx extract --apply <output-file> --target-doc={TARGET_DOC_PATH}
 
 ## Output: complete KB doc markdown
 `;
@@ -159,7 +159,7 @@ async function runExtract({ args, cwd }) {
 
     if (uncovered.length === 0) {
       console.log('No uncovered source files tracked in source-index.json.');
-      console.log('Add entries first with: kb extract <source-file> --target-doc=<doc>');
+      console.log('Add entries first with: kbx extract <source-file> --target-doc=<doc>');
       return;
     }
 
@@ -173,7 +173,7 @@ async function runExtract({ args, cwd }) {
       console.log(`  - ${e.source_path}`);
     }
     console.log('');
-    console.log('Run: kb extract <source-path> --target-doc=<doc-path>');
+    console.log('Run: kbx extract <source-path> --target-doc=<doc-path>');
     return;
   }
 
@@ -199,7 +199,7 @@ async function runExtract({ args, cwd }) {
 
     if (options.json) {
       console.log(JSON.stringify({
-        command: 'kb extract',
+        command: 'kbx extract',
         action: 'apply',
         output_file: absOutputFile,
         target_doc: options.targetDoc,
@@ -262,7 +262,7 @@ async function runExtract({ args, cwd }) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb extract',
+      command: 'kbx extract',
       source_path: relSourcePath,
       target_doc: options.targetDoc || null,
       model_hint: modelHint,
@@ -282,7 +282,7 @@ async function runExtract({ args, cwd }) {
   console.log(`  1. Open the prompt file above in your AI tool (Copilot, Claude, ChatGPT, etc.)`);
   console.log(`  2. Run it with a cheap/fast model (${modelHint} recommended)`);
   console.log(`  3. Save the output as a KB doc at: ${options.targetDoc || '<target-doc-path>'}`);
-  console.log(`  4. Run: kb intent create --change-type=docs  (to track the change as an intent)`);
+  console.log(`  4. Run: kbx intent create --change-type=docs  (to track the change as an intent)`);
 }
 
 module.exports = { runExtract, parseArgs, buildExtractionPrompt };

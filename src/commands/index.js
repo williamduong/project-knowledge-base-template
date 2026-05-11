@@ -131,7 +131,7 @@ function runOnce({ cwd }) {
   const isSilent = process.env.KB_INIT_SILENT === 'true';
 
   if (!isSilent) {
-    console.log('kb index: PASS');
+    console.log('kbx index: PASS');
     console.log(`Summary: ${summaryPath}`);
     console.log(`Docs: ${summary.kb.documentCount}`);
     console.log(`Placeholder docs: ${summary.kb.placeholderDocumentCount}`);
@@ -149,12 +149,12 @@ async function runIndex({ args, cwd }) {
     return;
   }
 
-  console.log('kb index watch: running every 10 seconds. Press Ctrl+C to stop.');
+  console.log('kbx index watch: running every 10 seconds. Press Ctrl+C to stop.');
   setInterval(() => {
     try {
       runOnce({ cwd });
     } catch (error) {
-      console.error(`kb index watch: ${error.message}`);
+      console.error(`kbx index watch: ${error.message}`);
     }
   }, 10000);
 }

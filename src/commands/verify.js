@@ -26,11 +26,11 @@ function parseArgs(args) {
   }
   if (options.all) {
     if (rest.length > 0) {
-      throw new Error('kb verify --all does not accept a target argument.');
+      throw new Error('kbx verify --all does not accept a target argument.');
     }
   } else {
     if (rest.length !== 1) {
-      throw new Error('kb verify requires exactly 1 target: <doc-path>   (or use --all)');
+      throw new Error('kbx verify requires exactly 1 target: <doc-path>   (or use --all)');
     }
     options.target = rest[0];
   }
@@ -116,9 +116,9 @@ function runVerify({ args, cwd }) {
       impactData = null;
     }
     if (!impactData || !Array.isArray(impactData.impacted) || impactData.impacted.length === 0) {
-      const msg = 'kb verify --all: no impacted docs in impact.json. Run `kb scan` first or pass a single doc.';
+      const msg = 'kbx verify --all: no impacted docs in impact.json. Run `kbx scan` first or pass a single doc.';
       if (options.json) {
-        console.log(JSON.stringify({ command: 'kb verify', mode: 'all', verified: [], failed: [], cleared: 0, message: msg }, null, 2));
+        console.log(JSON.stringify({ command: 'kbx verify', mode: 'all', verified: [], failed: [], cleared: 0, message: msg }, null, 2));
       } else {
         console.log(msg);
       }
@@ -148,7 +148,7 @@ function runVerify({ args, cwd }) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb verify',
+      command: 'kbx verify',
       mode: options.all ? 'all' : 'single',
       head_sha: headSha,
       verified,
@@ -160,7 +160,7 @@ function runVerify({ args, cwd }) {
     return;
   }
 
-  console.log(`kb verify: ${verified.length} ok, ${failed.length} failed (HEAD=${headSha || 'NOT_AVAILABLE'})`);
+  console.log(`kbx verify: ${verified.length} ok, ${failed.length} failed (HEAD=${headSha || 'NOT_AVAILABLE'})`);
   for (const v of verified) {
     console.log(`  ok  : ${v.doc}  (last_verified=${v.last_verified}, commit=${v.last_verified_commit})`);
     if (v.warning) console.log(`        warning: ${v.warning}`);

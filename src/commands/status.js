@@ -304,7 +304,7 @@ function runStatus({ args, cwd, packageJson }) {
 
   if (options.json) {
     console.log(JSON.stringify({
-      command: 'kb status',
+      command: 'kbx status',
       cliVersion: packageJson && packageJson.version,
       workspaceRoot,
       presence,
@@ -390,7 +390,7 @@ function runStatus({ args, cwd, packageJson }) {
     const releasedAt = currentEntry ? currentEntry.released_at : '';
     console.log(`- current release: ${catalogData.current}${releasedAt ? ` (released ${releasedAt})` : ''}`);
   } else if (catalogData) {
-    console.log('- current release: (none tagged yet — run: kb release tag <version>)');
+    console.log('- current release: (none tagged yet — run: kbx release tag <version>)');
   }
 
   if (releasePipeline && releasePipeline.configured) {
@@ -408,7 +408,7 @@ function runStatus({ args, cwd, packageJson }) {
   if (impactError) {
     console.log(`    error: ${impactError}`);
   } else if (!impactData) {
-    console.log(`    (no impact data; run "kb scan" to refresh)`);
+    console.log(`    (no impact data; run "kbx scan" to refresh)`);
   } else if (impactData.skipped_reason) {
     console.log(`    skipped: ${impactData.skipped_reason}`);
   } else {
@@ -470,7 +470,7 @@ function runStatus({ args, cwd, packageJson }) {
       const trendStr = chaosTrend && chaosTrend.hasPrevious
         ? ` (${chaosTrend.delta >= 0 ? '+' : ''}${chaosTrend.delta}${chaosTrend.spikeDetected ? ' SPIKE' : ''})`
         : '';
-      console.log(`    chaos   : ${chaosResult.score.toFixed(1)} / 100  [${chaosResult.level.toUpperCase()}]${trendStr}  — run "kb chaos" for full report`);
+      console.log(`    chaos   : ${chaosResult.score.toFixed(1)} / 100  [${chaosResult.level.toUpperCase()}]${trendStr}  — run "kbx chaos" for full report`);
     }
     if (reconstruction.triggered) {
       console.log(`    RECONSTRUCTION TRIGGER: ${reconstruction.triggers.join(', ')}`);

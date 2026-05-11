@@ -126,7 +126,7 @@ function runTest({ args, cwd }) {
     );
   }
 
-  console.log('kb test summary');
+  console.log('kbx test summary');
   console.log(`- mode: ${context.mode}`);
   console.log(`- state file: ${context.statePath}`);
   console.log(`- markdown documents indexed: ${docs.length}`);
@@ -152,7 +152,7 @@ function runTest({ args, cwd }) {
       console.log(`- ${failure}`);
     }
 
-    throw new Error(`kb test failed with ${failures.length} failure(s).`);
+    throw new Error(`kbx test failed with ${failures.length} failure(s).`);
   }
 
   const status = warnings.length > 0 ? 'WARN' : 'PASS';

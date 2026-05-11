@@ -334,7 +334,7 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
 
   if (isRerun && (!options.skipBootstrap || !options.skipIndex)) {
     console.log('Refresh mode: bootstrap/index were skipped to avoid unintended content changes.');
-    console.log('Use "kb maintain" for routine refresh checks.');
+    console.log('Use "kbx maintain" for routine refresh checks.');
   }
 
   if (runBootstrapStep) {
