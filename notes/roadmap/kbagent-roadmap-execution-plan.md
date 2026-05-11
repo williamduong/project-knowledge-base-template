@@ -14,7 +14,7 @@ Primary objective:
 - Roadmap content exists in `notes/roadmap/kbagent-roadmap.html`.
 - High-level phases are clear (P0-P5) but implementation coupling to runtime gates is still implicit.
 - Single active intent (P0): `v2-10-v2-10-kbagent-roadmap-gap-p0-alignment`. P1/P2/v11 backlog intents are queued with `depends_on` chain.
-- Phase 0 in progress: CLI naming normalization (233 fixes in src/commands/*.js) complete. Lifecycle domain labeling and principles/rules separation remain.
+- Phase 0 closeout in progress: CLI naming normalization is complete, and roadmap wording now distinguishes workflow lifecycle vs ontology lifecycle plus Principles vs runtime rules. Remaining work is to keep the other roadmap artifacts consistent.
 
 ## Target State
 
@@ -51,8 +51,8 @@ Entry gate:
 
 Exit gate:
 - ✓ All `kb` CLI command references in `src/commands/*.js` updated to `kbx` (233 replacements).
-- [ ] Lifecycle references are domain-explicit: workflow lifecycle (folder-based) vs ontology lifecycle (DRAFT/PROPOSED/VERIFIED/EXECUTED/COMMITTED).
-- [ ] Principles (P0-P25 in svfactory/principles.md) and runtime rule families (KBX-AX/P in kbagent-complete-doc.html) are documented as distinct layers.
+- ✓ Lifecycle references are domain-explicit: workflow lifecycle (folder-based) vs ontology lifecycle (DRAFT/PROPOSED/VERIFIED/EXECUTED/COMMITTED).
+- ✓ Principles (P0-P25 in svfactory/principles.md) and runtime rule families (KBX-AX/P in kbagent-complete-doc.html) are documented as distinct layers.
 
 ### Phase 1 - Shell Decision and Bootstrap
 

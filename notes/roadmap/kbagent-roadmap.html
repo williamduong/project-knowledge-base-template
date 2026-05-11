@@ -259,7 +259,7 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
         <i class="ti ti-square-rounded task-ico todo"></i>
         <div class="task-content">
           <div class="task-title">Update lifecycle states</div>
-          <div class="task-desc"><code>backlog/active/staged/closed/archived</code> → <code>DRAFT/PROPOSED/VERIFIED/EXECUTED/COMMITTED</code></div>
+          <div class="task-desc">Workflow lifecycle: <code>backlog/active/staged/closed/archived</code>. Ontology lifecycle: <code>DRAFT/PROPOSED/VERIFIED/EXECUTED/COMMITTED</code>. Keep them explicit and do not conflate them.</div>
         </div>
         <span class="task-effort e-low">low</span>
       </div>
@@ -267,7 +267,7 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
         <i class="ti ti-square-rounded task-ico todo"></i>
         <div class="task-content">
           <div class="task-title">Tách Principles khỏi Rules</div>
-          <div class="task-desc">7 KBX-AX rules của ta → convert thành Principles P0-P25 style. Runtime rules giữ ở rule families M/V/I/GB/AX/PR/WF/KA.</div>
+          <div class="task-desc">Governance Principles live in <code>svfactory/principles.md</code> as P0-P25. Runtime rules stay in the rule families M/V/I/GB/AX/PR/WF/KA. Keep the two layers separate.</div>
         </div>
         <span class="task-effort e-med">medium</span>
       </div>
@@ -285,8 +285,8 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
       <div class="gate-h"><i class="ti ti-shield-check"></i>Exit gate P0</div>
       <div class="gate-body">
         ✓ Tất cả <code>kb</code> trong docs đã đổi thành <code>kbx</code><br>
-        ✓ Lifecycle states match repo<br>
-        ✓ Principles/Rules tách rõ ràng — không lẫn lộn<br>
+        ✓ Workflow lifecycle và ontology lifecycle đều được ghi rõ, không lẫn lộn<br>
+        ✓ Governance Principles và runtime rules là hai lớp riêng biệt<br>
         ✓ Ontology decision documented (8 + CDM mapping)
       </div>
     </div>

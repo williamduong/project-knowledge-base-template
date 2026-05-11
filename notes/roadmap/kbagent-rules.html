@@ -135,6 +135,8 @@ h1{font-size:22px;font-weight:500;color:var(--t0);margin-bottom:6px}
   <div class="ttab" onclick="showTier('o',this)">Operational — O</div>
 </div>
 
+<p style="font-size:12px;color:var(--t2);margin-bottom:18px;border-left:2px solid var(--blue);padding-left:10px">Workflow lifecycle is separate from ontology lifecycle: workflow states are folder-based (<code>backlog</code>, <code>active</code>, <code>staged</code>, <code>closed</code>, <code>archived</code>), while ontology states are formal (<code>DRAFT</code>, <code>PROPOSED</code>, <code>VERIFIED</code>, <code>EXECUTED</code>, <code>COMMITTED</code>). Governance Principles live separately in <code>svfactory/principles.md</code> as P0-P25; AX/P below are runtime rules.</p>
+
 <!-- ══ AX: CONSTITUTIONAL ══ -->
 <div class="tpage on" id="tpage-ax">
 <p style="font-size:12px;color:var(--t2);margin-bottom:20px;border-left:2px solid var(--purple);padding-left:10px">Bất biến — không ai override, kể cả user. Đây là axioms của hệ thống, vi phạm thì hệ mất tính nhất quán.</p>
@@ -265,7 +267,7 @@ h1{font-size:22px;font-weight:500;color:var(--t0);margin-bottom:6px}
     <i class="ti ti-chevron-right rule-chev"></i>
   </div>
   <div class="rule-body">
-    <p class="rule-body-text">Only one intent may be in active or staged status per version branch at any time. A second activation requires the first to be closed or archived. Exception intents pending approval do not count toward this limit.</p>
+    <p class="rule-body-text">Only one intent may be in active or staged workflow state per version branch at any time. These are workflow lifecycle states, not ontology states. A second activation requires the first to be closed or archived. Exception intents pending approval do not count toward this limit.</p>
     <div class="rule-body-row"><span class="rb-label">Rationale</span><span class="rb-val">Parallel active intents create merge conflicts, unclear impact attribution, and diffuse focus. One thing at a time per branch.</span></div>
     <div class="rule-body-row"><span class="rb-label">Enforced by</span><span class="rb-val">kbx intent activate checks _active/ count · rejects if count > 0</span></div>
     <div class="rule-body-row"><span class="rb-label">Override</span><span class="rb-val">exception type intent can coexist · requires explicit --allow-parallel flag with justification</span></div>
