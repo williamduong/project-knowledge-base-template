@@ -109,8 +109,8 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
 <div class="status-banner">
   <i class="ti ti-arrow-merge"></i>
   <div class="status-text">
-    <strong>Repo đang đi cùng hướng với documentation.</strong> Không phải hướng khác. Repo đã formal hóa và implement (40 CLI commands, 32 dispatch fixtures, 8 governance contracts) những concept chúng ta mới design conceptual.
-    <span class="status-meta">Branch: intent/v2-8-2-principal-grounding-contract · Package: kbx@2.7.0-beta.2 · Release catalog: v2.8.0-beta.0</span>
+    <strong>Gap closure pass completed.</strong> The previously missing areas now have dedicated roadmap artifacts (dispatch tuple, CDM ontology mapping, gate catalog + generative loop, Axiom 4/5 boundary notes, bi-temporal model).
+    <span class="status-meta">Branch: intent/v2-8-2-principal-grounding-contract · Closure docs added: 2026-05-11</span>
   </div>
 </div>
 
@@ -470,6 +470,8 @@ Repo dùng <code>dispatch tuple (8 inputs)</code> làm <strong>core routing mech
 Documentation chúng ta hoàn toàn không có concept này — ta dùng "goal alignment check" rời rạc thay vì tuple deterministic.
 <br><br>
 <strong>Impact:</strong> blueprint hiện tại của ta không match runtime architecture của repo. User đọc xong sẽ confused khi gặp <code>kbx dispatch</code> command thực tế.
+<br><br>
+<strong>Status:</strong> closed by <code>notes/roadmap/kbagent-dispatch-decision-tuple.html</code>.
 </div>
 </div>
 
@@ -480,6 +482,8 @@ Chúng ta design 8 node types (<code>:Goal :Intent :Rule :KBDoc :Code :Signal :R
 Repo có 10 entities (<code>Tenant · Subscription · ServicePrincipal · Project · Module · Config · Intent · Policy · CLICommand · Evidence</code>) với Microsoft CDM mapping.
 <br><br>
 <strong>Chỉ overlap 1 entity:</strong> <code>:Intent</code>. Còn lại hoàn toàn khác. Đây là vấn đề lớn vì ontology là foundation.
+<br><br>
+<strong>Status:</strong> closed by <code>notes/roadmap/kbagent-ontology-cdm-mapping.html</code> (canonical mapping + SaaS extension rules + bi-temporal frontmatter model).
 </div>
 </div>
 
@@ -490,6 +494,8 @@ Chúng ta có 4 tier (AX/P/D/O) trong 1 hệ thống thống nhất.
 Repo tách thành 2 hệ thống: <strong>25 Principles P0-P25</strong> (governance) ở <code>svfactory/principles.md</code> + <strong>8 rule families M/V/I/GB/AX/PR/WF/KA</strong> (runtime).
 <br><br>
 <strong>Lý do tách:</strong> Principles là human-readable governance directives (NL). Rules là machine-readable runtime checks. Đây là sự phân biệt cốt lõi mà ta chưa làm.
+<br><br>
+<strong>Status:</strong> closed in roadmap artifacts (complete-doc, roadmap, rules) with explicit layer separation wording.
 </div>
 </div>
 
@@ -500,6 +506,8 @@ Repo vừa đổi <code>kb</code> sang <code>kbx</code> ngày 2026-05-10 (commit
 Lifecycle states cũng khác: ta dùng <code>backlog/active/staged/closed/archived</code>, repo dùng <code>DRAFT/PROPOSED/VERIFIED/EXECUTED/COMMITTED</code> với state transition guards.
 <br><br>
 <strong>Mức độ:</strong> dễ fix nhưng cần search-and-replace toàn bộ documentation. Đây là breaking change naming gần nhất.
+<br><br>
+<strong>Status:</strong> naming and lifecycle wording normalized across roadmap docs and CLI command help/output references.
 </div>
 </div>
 </div>

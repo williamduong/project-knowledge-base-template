@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent — Dispatch Decision Tuple</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0c0c0c;--bg1:#141414;--bg2:#1a1a1a;--bd:#2b2b2b;--t0:#f0ede8;--t1:#c8c4bc;--t2:#888480;--bt:#68a8dc;--gt:#5ed498;--at:#e0b030;--mono:'JetBrains Mono',monospace;--sans:'IBM Plex Sans',sans-serif}
+html,body{background:var(--bg);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.65}
+.page{max-width:1020px;margin:0 auto;padding:30px 24px 56px}
+h1{font-size:24px;font-weight:500;margin-bottom:6px}
+.sub{font-size:13px;color:var(--t2);margin-bottom:24px}
+.banner{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--bt);padding:12px 14px;border-radius:5px;margin-bottom:24px}
+.section{margin-bottom:28px}
+.h{font-size:15px;font-weight:500;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bd);display:flex;gap:8px;align-items:center}
+.h i{color:var(--t2)}
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:12px 14px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-family:var(--mono)}
+.mono{font-family:var(--mono);font-size:11px}
+.pill{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:3px;margin-right:6px}
+.p-in{background:#081830;color:var(--bt);border:1px solid #143060}
+.p-out{background:#0c1e14;color:var(--gt);border:1px solid #1a402a}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;text-align:left}
+.tbl td{padding:8px;border-top:1px solid var(--bd);vertical-align:top;color:var(--t1)}
+.code{background:var(--bg1);border:1px solid var(--bd);border-radius:5px;padding:10px 12px;font-family:var(--mono);font-size:11px;line-height:1.8;white-space:pre-wrap}
+code{font-family:var(--mono);font-size:11px;background:var(--bg1);padding:1px 5px;border-radius:2px;color:var(--bt)}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>KBAgent — Dispatch decision tuple</h1>
+  <p class="sub">Canonical router contract: 8 input fields resolve into 6 deterministic outputs.</p>
+
+  <div class="banner">
+    This page closes the routing gap by documenting the exact tuple surface used to select pipe, gates, actions, and escalation path.
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-vector-triangle"></i>Tuple Contract</div>
+    <div class="grid">
+      <div class="card">
+        <div class="lbl">Inputs (8)</div>
+        <div><span class="pill p-in">intent_type</span><span class="pill p-in">intent_state</span><span class="pill p-in">ontology_entity</span><span class="pill p-in">target_scope</span></div>
+        <div style="margin-top:6px"><span class="pill p-in">mutation_class</span><span class="pill p-in">risk_level</span><span class="pill p-in">evidence_state</span><span class="pill p-in">actor_mode</span></div>
+      </div>
+      <div class="card">
+        <div class="lbl">Outputs (6)</div>
+        <div><span class="pill p-out">primary_pipe</span><span class="pill p-out">applicable_rules</span><span class="pill p-out">required_gates</span></div>
+        <div style="margin-top:6px"><span class="pill p-out">allowed_actions</span><span class="pill p-out">verification_requirements</span><span class="pill p-out">fallback_or_escalation</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-table"></i>Field Semantics</div>
+    <table class="tbl">
+      <thead><tr><th>Field</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">intent_type</td><td class="mono">exec|fix|exception|maintain</td><td>Controls default pipe family and policy branch.</td></tr>
+        <tr><td class="mono">intent_state</td><td class="mono">DRAFT|PROPOSED|VERIFIED|EXECUTED|COMMITTED</td><td>Ontology lifecycle state used by guard checks.</td></tr>
+        <tr><td class="mono">ontology_entity</td><td class="mono">Tenant|Subscription|...|Evidence</td><td>Selects entity-specific validators and rule subsets.</td></tr>
+        <tr><td class="mono">target_scope</td><td class="mono">docs|code|graph|multi</td><td>Enables scope-specific restrictions and gate bundles.</td></tr>
+        <tr><td class="mono">mutation_class</td><td class="mono">none|textual|structural|destructive</td><td>Primary risk axis for escalation.</td></tr>
+        <tr><td class="mono">risk_level</td><td class="mono">low|medium|high|critical</td><td>Derived or explicit; drives severity policy.</td></tr>
+        <tr><td class="mono">evidence_state</td><td class="mono">none|partial|sufficient|conflicting</td><td>Feeds G-EVIDENCE-SUFFICIENCY and human-gate triggers.</td></tr>
+        <tr><td class="mono">actor_mode</td><td class="mono">human|copilot|mixed</td><td>Human override and approval requirements differ by mode.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-route-2"></i>Resolution Example</div>
+    <div class="code">input:
+  intent_type=exec
+  intent_state=PROPOSED
+  ontology_entity=Policy
+  target_scope=docs
+  mutation_class=textual
+  risk_level=medium
+  evidence_state=partial
+  actor_mode=mixed
+
+output:
+  primary_pipe=PipeDocsFast
+  applicable_rules=[M-*, V-*, PR-*, WF-*]
+  required_gates=[G-ENUM-VALIDATION, G-EVIDENCE-SUFFICIENCY, G-THREE-LAYER-TRACE]
+  allowed_actions=[normalize, patch, stage]
+  verification_requirements=[meaning-diff, frontmatter-valid, source-of-truth-link]
+  fallback_or_escalation=HumanGateRequired(reason=evidence_partial)</div>
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-link"></i>Linked References</div>
+    <div class="card">
+      <div>- <code>template/15-governance/dispatch-decision-tuple.md</code></div>
+      <div>- <code>template/15-governance/action-dispatch-contract.md</code></div>
+      <div>- <code>template/15-governance/rule-selector-contract.md</code></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

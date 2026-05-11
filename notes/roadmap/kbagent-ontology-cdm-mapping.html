@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent — Ontology and CDM Mapping</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0c0c0c;--bg1:#141414;--bg2:#1a1a1a;--bd:#2b2b2b;--t0:#f0ede8;--t1:#c8c4bc;--t2:#888480;--bt:#68a8dc;--gt:#5ed498;--at:#e0b030;--mono:'JetBrains Mono',monospace;--sans:'IBM Plex Sans',sans-serif}
+html,body{background:var(--bg);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.65}
+.page{max-width:1040px;margin:0 auto;padding:30px 24px 56px}
+h1{font-size:24px;font-weight:500;margin-bottom:6px}
+.sub{font-size:13px;color:var(--t2);margin-bottom:24px}
+.section{margin-bottom:28px}
+.h{font-size:15px;font-weight:500;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bd);display:flex;gap:8px;align-items:center}
+.h i{color:var(--t2)}
+.banner{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--bt);padding:12px 14px;border-radius:5px;margin-bottom:20px;color:var(--t1)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;text-align:left}
+.tbl td{padding:8px;border-top:1px solid var(--bd);vertical-align:top;color:var(--t1)}
+.mono{font-family:var(--mono);font-size:11px}
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:12px 14px;margin-bottom:10px}
+code{font-family:var(--mono);font-size:11px;background:var(--bg1);padding:1px 5px;border-radius:2px;color:var(--bt)}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>KBAgent — Ontology and CDM mapping</h1>
+  <p class="sub">Canonical entity model aligned to Microsoft CDM with explicit downstream extension rules.</p>
+
+  <div class="banner">This page closes ontology mismatch by documenting the 10 canonical entities, CDM mapping, and how SaaS-specific extensions map without breaking core contracts.</div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-schema"></i>Canonical Entity Set (10)</div>
+    <table class="tbl">
+      <thead><tr><th>Entity</th><th>Primary Meaning</th><th>Microsoft CDM Mapping</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Tenant</td><td>Owning organization boundary</td><td class="mono">Account</td><td>Partition root for multi-tenant scoping.</td></tr>
+        <tr><td class="mono">Subscription</td><td>Plan and billing envelope</td><td class="mono">Subscription</td><td>Lifecycle and entitlements.</td></tr>
+        <tr><td class="mono">ServicePrincipal</td><td>Machine identity and access</td><td class="mono">ServicePrincipal</td><td>Credential and permission actor.</td></tr>
+        <tr><td class="mono">Project</td><td>Work delivery boundary</td><td class="mono">Project</td><td>Maps KB intents and release grouping.</td></tr>
+        <tr><td class="mono">Module</td><td>Code/feature component</td><td class="mono">Product / Component</td><td>Dependency and impact hub.</td></tr>
+        <tr><td class="mono">Config</td><td>Configuration surface</td><td class="mono">Configuration</td><td>Policy and runtime toggles.</td></tr>
+        <tr><td class="mono">Intent</td><td>Execution unit</td><td class="mono">WorkItem</td><td>Lifecycle guarded by tuple + gates.</td></tr>
+        <tr><td class="mono">Policy</td><td>Rule/policy artifact</td><td class="mono">Policy</td><td>Runtime-checkable constraints.</td></tr>
+        <tr><td class="mono">CLICommand</td><td>Deterministic action surface</td><td class="mono">Operation</td><td>Auditable gate entry points.</td></tr>
+        <tr><td class="mono">Evidence</td><td>Justification/audit artifact</td><td class="mono">Evidence</td><td>Mandatory for trusted writes.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-layers-subtract"></i>SaaS Extension Mapping (Non-breaking)</div>
+    <div class="card">
+      <div>- <code>Goal</code> maps to <code>Policy + Project</code> aggregate view.</div>
+      <div>- <code>KBDoc</code> maps to <code>Module + Evidence</code> documentation edges.</div>
+      <div>- <code>Signal</code> maps to <code>Evidence</code> with event severity metadata.</div>
+      <div>- <code>Lesson</code> maps to <code>Evidence</code> linked to <code>Intent</code> retrospectives.</div>
+      <div style="margin-top:8px;color:var(--t2)">Rule: extensions may exist in downstream views, but export/import contracts remain anchored on the 10 canonical entities.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-clock"></i>Bi-temporal Documentation Model</div>
+    <div class="card">
+      <div>Required frontmatter fields for KBDoc records:</div>
+      <div class="mono" style="margin-top:8px">time_state: as_is | to_be</div>
+      <div class="mono">last_updated: YYYY-MM-DD</div>
+      <div class="mono">last_verified: YYYY-MM-DD</div>
+      <div class="mono">verification: unverified | design-only | code-verified</div>
+      <div style="margin-top:8px;color:var(--t2)">This closes the temporal gap by distinguishing observed current state from target-state intent and verification confidence.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -117,6 +117,6 @@ Exit gate:
 ## Immediate Next Session Checklist
 
 1. Reconcile `svfactory/focus.md` with current branch reality and active roadmap priority.
-2. Prepare a small update pass for `notes/roadmap/kbagent-roadmap.html` to add deterministic command-gate references.
+2. Lock Phase 1 shell decision with a deterministic rationale record.
 3. Create a phase-by-phase evidence table template for runtime verification.
-4. Keep all roadmap updates attached to `v2-9-kbagent-observability-graph` until Phase 1 gate is passed.
+4. Keep all ongoing roadmap updates attached to `v2-10-v2-10-kbagent-roadmap-gap-p0-alignment` until Phase 1 gate is passed.

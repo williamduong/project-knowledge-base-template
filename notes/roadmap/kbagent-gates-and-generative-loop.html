@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KBAgent — Gates and Generative Loop Contract</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0c0c0c;--bg1:#141414;--bg2:#1a1a1a;--bd:#2b2b2b;--t0:#f0ede8;--t1:#c8c4bc;--t2:#888480;--bt:#68a8dc;--gt:#5ed498;--at:#e0b030;--rt:#d07070;--mono:'JetBrains Mono',monospace;--sans:'IBM Plex Sans',sans-serif}
+html,body{background:var(--bg);color:var(--t0);font-family:var(--sans);font-size:13px;line-height:1.65}
+.page{max-width:1080px;margin:0 auto;padding:30px 24px 56px}
+h1{font-size:24px;font-weight:500;margin-bottom:6px}
+.sub{font-size:13px;color:var(--t2);margin-bottom:24px}
+.section{margin-bottom:28px}
+.h{font-size:15px;font-weight:500;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bd);display:flex;gap:8px;align-items:center}
+.h i{color:var(--t2)}
+.banner{background:var(--bg2);border:1px solid var(--bd);border-left:3px solid var(--bt);padding:12px 14px;border-radius:5px;margin-bottom:20px;color:var(--t1)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;text-align:left}
+.tbl td{padding:8px;border-top:1px solid var(--bd);vertical-align:top;color:var(--t1)}
+.mono{font-family:var(--mono);font-size:11px}
+.card{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:12px 14px;margin-bottom:10px}
+.code{background:var(--bg1);border:1px solid var(--bd);border-radius:5px;padding:10px 12px;font-family:var(--mono);font-size:11px;line-height:1.8;white-space:pre-wrap}
+code{font-family:var(--mono);font-size:11px;background:var(--bg1);padding:1px 5px;border-radius:2px;color:var(--bt)}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>KBAgent — Gates and generative loop contract</h1>
+  <p class="sub">Named gate catalog, severity promotion rules, human-gate triggers, and retry/escalation policy.</p>
+
+  <div class="banner">This page closes gate and loop gaps by making verification policy explicit and deterministic.</div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-shield-check"></i>Named Gate Catalog (10)</div>
+    <table class="tbl">
+      <thead><tr><th>Gate</th><th>Purpose</th><th>Default Severity</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">G-ENUM-VALIDATION</td><td>Tuple/state enum correctness</td><td class="mono">hard-fail</td></tr>
+        <tr><td class="mono">G-EVIDENCE-SUFFICIENCY</td><td>Evidence completeness and trustability</td><td class="mono">hard-fail</td></tr>
+        <tr><td class="mono">G-BACKWARD-COMPAT</td><td>Minor-version compatibility guarantees</td><td class="mono">hard-fail</td></tr>
+        <tr><td class="mono">G-STORAGE-CONTEXT</td><td>Path/contentRoot correctness and write boundaries</td><td class="mono">hard-fail</td></tr>
+        <tr><td class="mono">G-INTENT-UNIQUENESS</td><td>Single active intent policy per branch</td><td class="mono">hard-fail</td></tr>
+        <tr><td class="mono">G-CHAOS-ESTIMATE</td><td>Risk threshold and maintain-first policy</td><td class="mono">warn</td></tr>
+        <tr><td class="mono">G-HUMAN-GATE-RECORD</td><td>Approval trace and escalation record</td><td class="mono">hard-fail</td></tr>
+        <tr><td class="mono">G-DOWNSTREAM-ACCEPTANCE</td><td>Boundary between maintainer and downstream UX</td><td class="mono">warn</td></tr>
+        <tr><td class="mono">G-DETERMINISTIC-PLACEMENT</td><td>No non-deterministic logic in runtime gate</td><td class="mono">hard-fail</td></tr>
+        <tr><td class="mono">G-THREE-LAYER-TRACE</td><td>Intake → Runtime → Completion traceability</td><td class="mono">info</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-alert-circle"></i>Severity Policy</div>
+    <div class="card">
+      <div><code>hard-fail</code>: immediate exit 1, no auto-retry.</div>
+      <div><code>warn</code>: command may proceed, but warning is logged and counted.</div>
+      <div><code>info</code>: advisory signal only, still recorded for trend analysis.</div>
+      <div style="margin-top:8px">Promotion rule: repeated warnings for the same gate and scope can be promoted to <code>hard-fail</code> by policy configuration.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-user-shield"></i>HumanGateRequired Triggers</div>
+    <div class="card">
+      <div>Escalate to human gate when any high-risk trigger is present (examples):</div>
+      <div class="mono" style="margin-top:8px">- destructive mutation_class with medium+ risk</div>
+      <div class="mono">- evidence_state = none or conflicting</div>
+      <div class="mono">- cross-tenant or wide target_scope</div>
+      <div class="mono">- backward-compat uncertainty in minor bump</div>
+      <div class="mono">- repeated failed attempts in generative loop</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-repeat"></i>Generative Loop Contract</div>
+    <div class="code">attempt_0:
+  run selected pipe and required gates
+  if pass -> continue workflow
+  if fail -> classify failure and propose fix
+
+attempt_1:
+  apply bounded correction within same mutation_class
+  re-run required gates
+
+attempt_2:
+  one final bounded retry with explicit evidence update
+  re-run required gates
+
+after attempt_2 failure:
+  escalate = HumanGateRequired
+  emit fallback_or_escalation with deterministic reason
+
+constraints:
+  - max attempts: 3 (0,1,2)
+  - no unbounded loops
+  - no mutation class widening without human approval
+  - idempotency required for repeated apply</div>
+  </div>
+
+  <div class="section">
+    <div class="h"><i class="ti ti-ban"></i>Axiom Coverage (Previously Deferred)</div>
+    <div class="card">
+      <div><strong>Axiom 4 — checkpoint-driven audit:</strong> no daemons/watchers in gate path. Evaluations happen at deterministic checkpoints only.</div>
+      <div style="margin-top:6px"><strong>Axiom 5 — end-user invisibility boundary:</strong> maintainer-only surfaces remain isolated from downstream KBAgent UX.</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
