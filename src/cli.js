@@ -39,6 +39,7 @@ const { runRules } = require('./commands/rules');
 const { runDispatch } = require('./commands/dispatch');
 const { runInspect } = require('./commands/inspect');
 const { runApply } = require('./commands/apply');
+const { runGate } = require('./commands/gate');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -233,6 +234,11 @@ async function run(argv) {
 
   if (command === 'apply') {
     await runApply({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'gate') {
+    await runGate({ args: rest, cwd: process.cwd() });
     return;
   }
 

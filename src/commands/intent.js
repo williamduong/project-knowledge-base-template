@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
+const { spawnSync } = require('child_process');
 
 const { resolveExistingState } = require('../lib/context');
 const { getGitMetadata } = require('../lib/git');
@@ -30,6 +31,7 @@ const {
   resolveIntentRecord,
   listStagedFilesFromWorkspace,
   deriveIntentStatus,
+  writeIntentFrontmatter,
 } = require('../lib/intent');
 const { analyzeIntentConflicts, suggestApplyOrder, generateLessonCandidates } = require('../lib/intent-intelligence');
 const { runRelease } = require('./release');
@@ -61,6 +63,8 @@ function parseArgs(args) {
     stale: false,
     aged: false,
     checkpointNote: null,
+    goals: [],
+    stageState: null,
   };
 
   const setListScope = (scope) => {
@@ -120,6 +124,15 @@ function parseArgs(args) {
     }
     if (arg.startsWith('--note=')) {
       options.checkpointNote = arg.slice('--note='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--goal=')) {
+      const goal = arg.slice('--goal='.length).trim();
+      if (goal) options.goals.push(goal);
+      continue;
+    }
+    if (arg.startsWith('--state=')) {
+      options.stageState = arg.slice('--state='.length).trim();
       continue;
     }
     if (arg.startsWith('--release=')) {
@@ -228,8 +241,34 @@ function parseArgs(args) {
     if (rest.length >= 2) {
       options.intentId = rest[1];
     }
+  } else if (options.sub === 'align') {
+    if (rest.length < 2) {
+      throw new Error('kbx intent align requires an intent ID.');
+    }
+    options.intentId = rest[1];
+    if (!options.goals || options.goals.length === 0) {
+      throw new Error('kbx intent align requires at least one --goal="...".');
+    }
+  } else if (options.sub === 'approve') {
+    if (rest.length < 2) {
+      throw new Error('kbx intent approve requires an intent ID.');
+    }
+    options.intentId = rest[1];
+  } else if (options.sub === 'stage') {
+    if (rest.length < 2) {
+      throw new Error('kbx intent stage requires an intent ID.');
+    }
+    options.intentId = rest[1];
+    if (options.stageState && !['staged', 'ready'].includes(options.stageState)) {
+      throw new Error('kbx intent stage --state supports only: staged|ready');
+    }
+  } else if (options.sub === 'retro') {
+    if (rest.length < 2) {
+      throw new Error('kbx intent retro requires an intent ID.');
+    }
+    options.intentId = rest[1];
   } else {
-    throw new Error(`kbx intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, cleanup, close, cancel, archive, apply, suggest-lessons, extract, checkpoint`);
+    throw new Error(`kbx intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, align, approve, stage, retro, cleanup, close, cancel, archive, apply, suggest-lessons, extract, checkpoint`);
   }
 
   return options;
@@ -983,6 +1022,155 @@ async function runFocus(ctx, options) {
   console.log(`Path: ${metaPath}`);
 }
 
+function updateIntentRecordMeta(record, updater) {
+  if (!record || !record.metaPath) {
+    throw new Error('Intent record metadata path not found.');
+  }
+  const meta = { ...(record.meta || {}) };
+  const next = updater(meta) || meta;
+  writeIntentFrontmatter(record.metaPath, next);
+  return next;
+}
+
+async function runAlign(ctx, options) {
+  const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
+  if (!record || !record.metaPath) {
+    throw new Error(`Intent "${options.intentId}" not found across backlog, active, closed, or archive state.`);
+  }
+  if (record.scope !== 'active' && record.scope !== 'backlog') {
+    throw new Error(`kbx intent align requires an active/backlog intent. Current scope: ${record.scope}`);
+  }
+
+  const goals = Array.from(new Set((options.goals || []).map((g) => String(g).trim()).filter(Boolean)));
+  if (goals.length === 0) {
+    throw new Error('kbx intent align requires at least one non-empty goal.');
+  }
+
+  const updated = updateIntentRecordMeta(record, (meta) => {
+    meta.linked_goals = goals;
+    meta.alignment_checked_at = new Date().toISOString();
+    return meta;
+  });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx intent align',
+      intent_id: record.id,
+      linked_goals: updated.linked_goals,
+      alignment_checked_at: updated.alignment_checked_at,
+      status: 'aligned',
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Intent "${record.id}" aligned to ${goals.length} goal(s).`);
+}
+
+async function runApprove(ctx, options) {
+  const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
+  if (!record || !record.metaPath) {
+    throw new Error(`Intent "${options.intentId}" not found across backlog, active, closed, or archive state.`);
+  }
+  if (record.scope !== 'active') {
+    throw new Error(`kbx intent approve requires an active intent. Current scope: ${record.scope}`);
+  }
+
+  const approvedAt = new Date().toISOString();
+  const updated = updateIntentRecordMeta(record, (meta) => {
+    meta.approved = true;
+    meta.approved_at = approvedAt;
+    if (options.checkpointNote) {
+      meta.approval_note = options.checkpointNote;
+    }
+    meta.state = 'approved';
+    return meta;
+  });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx intent approve',
+      intent_id: record.id,
+      approved: Boolean(updated.approved),
+      approved_at: updated.approved_at,
+      status: 'approved',
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Intent "${record.id}" approved.`);
+}
+
+async function runStage(ctx, options) {
+  const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
+  if (!record || !record.metaPath) {
+    throw new Error(`Intent "${options.intentId}" not found across backlog, active, closed, or archive state.`);
+  }
+  if (record.scope !== 'active') {
+    throw new Error(`kbx intent stage requires an active intent. Current scope: ${record.scope}`);
+  }
+
+  const meta = record.meta || {};
+  if (meta.approved !== true) {
+    throw new Error('kbx intent stage requires prior approval. Run: kbx intent approve <id>');
+  }
+
+  const stagedAt = new Date().toISOString();
+  const nextState = options.stageState || 'staged';
+  const updated = updateIntentRecordMeta(record, (nextMeta) => {
+    nextMeta.state = nextState;
+    nextMeta.staged_at = stagedAt;
+    return nextMeta;
+  });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx intent stage',
+      intent_id: record.id,
+      state: updated.state,
+      staged_at: updated.staged_at,
+      status: 'staged',
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Intent "${record.id}" staged (${nextState}).`);
+}
+
+async function runRetro(ctx, options) {
+  const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
+  if (!record || !record.metaPath) {
+    throw new Error(`Intent "${options.intentId}" not found across backlog, active, closed, or archive state.`);
+  }
+
+  let note = options.checkpointNote || '';
+  if (!note) {
+    note = await promptInput('Retro note: ');
+  }
+
+  const completedAt = new Date().toISOString();
+  const updated = updateIntentRecordMeta(record, (meta) => {
+    meta.retro_completed = true;
+    meta.retro_completed_at = completedAt;
+    if (note) {
+      meta.retro_note = note;
+    }
+    return meta;
+  });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx intent retro',
+      intent_id: record.id,
+      retro_completed: Boolean(updated.retro_completed),
+      retro_completed_at: updated.retro_completed_at,
+      status: 'retro-completed',
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Retro completed for "${record.id}".`);
+}
+
 async function runArchive(ctx, options) {
   const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
   if (!record) {
@@ -1097,6 +1285,46 @@ async function runApply(ctx, options, cwd) {
     console.warn(`WARNING: decision_summary is empty in intent "${intentId}". Fill it in intent.md before applying.`);
   }
 
+  // P004 hard gate: full-mode intents must pass impact pre-check before apply.
+  const wsPath = intentWorkspacePath(ctx.contentRoot, intentId);
+  if (meta.mode === 'full') {
+    const impactDocPath = path.join(wsPath, 'impact.md');
+    if (!fs.existsSync(impactDocPath)) {
+      throw new Error(
+        `P004 violation: full-mode intent "${intentId}" is missing impact.md. ` +
+        'Run impact assessment before apply.'
+      );
+    }
+
+    const cliPath = path.resolve(__dirname, '..', '..', 'bin', 'kbx.js');
+    const impactFailures = [];
+    for (const file of staged) {
+      const result = spawnSync(process.execPath, [cliPath, 'impact', file, '--json'], {
+        cwd,
+        stdio: ['ignore', 'pipe', 'pipe'],
+        encoding: 'utf8',
+      });
+      if ((result.status || 0) !== 0) {
+        impactFailures.push({
+          file,
+          status: result.status,
+          stderr: (result.stderr || '').trim(),
+        });
+      }
+    }
+
+    if (impactFailures.length > 0) {
+      const lines = impactFailures
+        .slice(0, 8)
+        .map((f) => `  - ${f.file}: ${f.stderr || `impact exit ${f.status}`}`)
+        .join('\n');
+      throw new Error(
+        `P004 violation: impact pre-apply gate failed for ${impactFailures.length} file(s).\n${lines}\n` +
+        'Fix impact issues before applying.'
+      );
+    }
+  }
+
   // v2.0 Phase 1 primitive: advanced conflict context (warn, non-blocking)
   let conflictSummary = null;
   try {
@@ -1156,8 +1384,6 @@ async function runApply(ctx, options, cwd) {
   const appliedAt = new Date().toISOString();
   const record = buildApplyRecord({ meta, stagedFiles: staged, appliedAt });
   const applyRecordPath = writeApplyRecord(ctx.contentRoot, intentId, record);
-  const wsPath = intentWorkspacePath(ctx.contentRoot, intentId);
-
   // 5. Write AI decision transparency record into the active workspace.
   if (conflictSummary) {
     const { suggestApplyOrder: _suggestApplyOrder } = require('../lib/intent-intelligence');
@@ -1414,6 +1640,14 @@ async function runIntent({ args, cwd }) {
     await runList(ctx, options);
   } else if (options.sub === 'focus') {
     await runFocus(ctx, options);
+  } else if (options.sub === 'align') {
+    await runAlign(ctx, options);
+  } else if (options.sub === 'approve') {
+    await runApprove(ctx, options);
+  } else if (options.sub === 'stage') {
+    await runStage(ctx, options);
+  } else if (options.sub === 'retro') {
+    await runRetro(ctx, options);
   } else if (options.sub === 'close') {
     await runClose(ctx, options);
   } else if (options.sub === 'cancel') {
@@ -1443,6 +1677,10 @@ function printHelp() {
   console.log('  kbx intent status [<id-or-slug>] [--json]');
   console.log('  kbx intent list [--backlog|--closed|--archived|--all] [--json]');
   console.log('  kbx intent focus <id> [--current="..."] [--next="..."] [--date=YYYY-MM-DD] [--json]');
+  console.log('  kbx intent align <id> --goal="..." [--goal="..."] [--json]');
+  console.log('  kbx intent approve <id> [--note="..."] [--json]');
+  console.log('  kbx intent stage <id> [--state=staged|ready] [--json]');
+  console.log('  kbx intent retro <id> [--note="..."] [--json]');
   console.log('  kbx intent cleanup [--stale] [--aged] [--json]');
   console.log('  kbx intent apply <id> [--release] [--yes] [--json]');
   console.log('  kbx intent close <id> --type=released --release=vX.Y.Z [--json]');
@@ -1466,6 +1704,10 @@ function printHelp() {
   console.log('  list            List intents by scope. Default scope is active only.');
   console.log('                  Flags: --backlog, --closed, --archived, --all');
   console.log('  focus           Update focus block fields on an active intent.');
+  console.log('  align           Attach one or more linked goals to intent metadata (P003 alignment).');
+  console.log('  approve         Mark an active intent as approved and timestamp approval.');
+  console.log('  stage           Transition an approved intent into staged/ready state.');
+  console.log('  retro           Record retro completion; required before archive (P006).');
   console.log('  cleanup         Advisory scan — reports stale/missing-focus active intents and aged closed intents.');
   console.log('                  --stale  Focus on active intents with stale/missing focus (default: 14 day threshold).');
   console.log('                  --aged   Focus on closed intents eligible for archive (default: 30 day threshold).');

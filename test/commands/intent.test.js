@@ -203,6 +203,34 @@ test('intent parseArgs: archive with id', () => {
   assert.equal(o.intentId, 'my-intent');
 });
 
+test('intent parseArgs: align with goals', () => {
+  const o = parseArgs(['align', 'my-intent', '--goal=GOAL-001', '--goal=GOAL-002']);
+  assert.equal(o.sub, 'align');
+  assert.equal(o.intentId, 'my-intent');
+  assert.deepEqual(o.goals, ['GOAL-001', 'GOAL-002']);
+});
+
+test('intent parseArgs: approve with note', () => {
+  const o = parseArgs(['approve', 'my-intent', '--note=ship it']);
+  assert.equal(o.sub, 'approve');
+  assert.equal(o.intentId, 'my-intent');
+  assert.equal(o.checkpointNote, 'ship it');
+});
+
+test('intent parseArgs: stage supports state', () => {
+  const o = parseArgs(['stage', 'my-intent', '--state=ready']);
+  assert.equal(o.sub, 'stage');
+  assert.equal(o.intentId, 'my-intent');
+  assert.equal(o.stageState, 'ready');
+});
+
+test('intent parseArgs: retro with note', () => {
+  const o = parseArgs(['retro', 'my-intent', '--note=retro done']);
+  assert.equal(o.sub, 'retro');
+  assert.equal(o.intentId, 'my-intent');
+  assert.equal(o.checkpointNote, 'retro done');
+});
+
 test('intent parseArgs: close validates release and drop modes', () => {
   const released = parseArgs(['close', 'my-intent', '--type=released', '--release=v2.4.0']);
   assert.equal(released.closeType, 'released');
@@ -1063,6 +1091,26 @@ test('runIntent archive: enforces P006 retro_completed before archive', async ()
   const captured = await captureConsole(() => runIntent({ args: ['archive', 'needs-retro', '--json'], cwd: root }));
   const parsed = JSON.parse(captured.stdout);
   assert.equal(parsed.status, 'archived');
+});
+
+test('runIntent align/approve/stage/retro: transitions intent workflow metadata', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'workflow-intent', mode: 'quick', changeType: 'docs' });
+
+  await captureConsole(() => runIntent({ args: ['align', 'workflow-intent', '--goal=GOAL-001', '--goal=GOAL-002'], cwd: root }));
+  await captureConsole(() => runIntent({ args: ['approve', 'workflow-intent', '--note=approved'], cwd: root }));
+  await captureConsole(() => runIntent({ args: ['stage', 'workflow-intent', '--state=ready'], cwd: root }));
+  await captureConsole(() => runIntent({ args: ['retro', 'workflow-intent', '--note=retro complete'], cwd: root }));
+
+  const meta = readIntentMeta(contentRoot, 'workflow-intent');
+  const linkedGoals = Array.isArray(meta.linked_goals)
+    ? meta.linked_goals
+    : JSON.parse(meta.linked_goals || '[]');
+  assert.deepEqual(linkedGoals, ['GOAL-001', 'GOAL-002']);
+  assert.equal(meta.approved, true);
+  assert.equal(meta.state, 'ready');
+  assert.equal(meta.retro_completed, true);
 });
 
 test('runIntent list: respects v2.4 scope flags', async () => {
