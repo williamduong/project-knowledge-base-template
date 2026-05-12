@@ -984,6 +984,20 @@ async function runFocus(ctx, options) {
 }
 
 async function runArchive(ctx, options) {
+  const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
+  if (!record) {
+    throw new Error(`Intent "${options.intentId}" not found across backlog, active, closed, or archive state.`);
+  }
+  if (record.scope === 'active' || record.scope === 'closed') {
+    const meta = record.meta || {};
+    if (meta.retro_completed !== true) {
+      throw new Error(
+        `P006 violation: intent "${options.intentId}" cannot be archived before retro is completed. ` +
+        'Set frontmatter `retro_completed: true` after running retro.'
+      );
+    }
+  }
+
   const archivePath = archiveIntent(ctx.contentRoot, options.intentId, new Date().toISOString());
   if (options.json) {
     console.log(JSON.stringify({

@@ -83,8 +83,8 @@ function validateLaneArtifact(kbPath, lane) {
   return { ok: true };
 }
 
-const AX003_DETERMINISTIC_BLOCK_ALIGNMENT = {
-  id: 'KBX-AX003',
+const GV001_DETERMINISTIC_BLOCK_ALIGNMENT = {
+  id: 'KBX-GV001',
   title: 'Deterministic block contract alignment',
   description: 'Deterministic block contract must be present in KBAgent contract docs.',
   severity: SEVERITY.WARN,
@@ -233,8 +233,8 @@ const KA103_NL_TRIGGER_ALIGNMENT = {
   },
 };
 
-const AX004_CLI_FIRST_GATE_ALIGNMENT = {
-  id: 'KBX-AX004',
+const GV002_CLI_FIRST_GATE_ALIGNMENT = {
+  id: 'KBX-GV002',
   title: 'CLI-first gate alignment',
   description: 'CLI-first deterministic gate markers must exist across SVFactory and KBAgent contracts.',
   severity: SEVERITY.WARN,
@@ -365,8 +365,8 @@ const KA104_SESSION_CHOOSER_ALIGNMENT = {
   },
 };
 
-const AX005_GRAPH_INGEST_LANE_GATE = {
-  id: 'KBX-AX005',
+const GV003_GRAPH_INGEST_LANE_GATE = {
+  id: 'KBX-GV003',
   title: 'Graph-ingest lane artifact acceptance gate',
   description: 'When v2.8 rule-catalog hardening intent is active, required lane artifacts must exist and be valid.',
   severity: SEVERITY.ERROR,
@@ -396,9 +396,9 @@ const AX005_GRAPH_INGEST_LANE_GATE = {
 };
 
 registerRules([
-  AX003_DETERMINISTIC_BLOCK_ALIGNMENT,
-  AX004_CLI_FIRST_GATE_ALIGNMENT,
-  AX005_GRAPH_INGEST_LANE_GATE,
+  GV001_DETERMINISTIC_BLOCK_ALIGNMENT,
+  GV002_CLI_FIRST_GATE_ALIGNMENT,
+  GV003_GRAPH_INGEST_LANE_GATE,
   PR025_THREE_LAYER_ALIGNMENT,
   PR026_SESSION_HOOK_BOUNDARY_ALIGNMENT,
   WF008_INTENT_GATE_ALIGNMENT,
@@ -408,9 +408,9 @@ registerRules([
 ]);
 
 module.exports = [
-  AX003_DETERMINISTIC_BLOCK_ALIGNMENT,
-  AX004_CLI_FIRST_GATE_ALIGNMENT,
-  AX005_GRAPH_INGEST_LANE_GATE,
+  GV001_DETERMINISTIC_BLOCK_ALIGNMENT,
+  GV002_CLI_FIRST_GATE_ALIGNMENT,
+  GV003_GRAPH_INGEST_LANE_GATE,
   PR025_THREE_LAYER_ALIGNMENT,
   PR026_SESSION_HOOK_BOUNDARY_ALIGNMENT,
   WF008_INTENT_GATE_ALIGNMENT,

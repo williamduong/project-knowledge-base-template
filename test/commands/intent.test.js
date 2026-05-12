@@ -437,6 +437,8 @@ test('activateBacklogIntent: promotes backlog file into active workspace', () =>
   const root = tmpRoot();
   const contentRoot = path.join(root, 'knowledge-base');
   createBacklogIntent(contentRoot, { slug: 'intent-governance', title: 'Intent Governance', description: 'Upgrade flow', wave: 'v2.4' });
+  fs.mkdirSync(path.join(contentRoot, '.kb', 'graph'), { recursive: true });
+  fs.writeFileSync(path.join(contentRoot, '.kb', 'graph', 'seed-goals.json'), '[{"id":"GOAL-001"}]\n', 'utf8');
 
   const wsPath = activateBacklogIntent(contentRoot, {
     slug: 'intent-governance',
@@ -452,6 +454,51 @@ test('activateBacklogIntent: promotes backlog file into active workspace', () =>
   assert.equal(meta.lifecycle, 'active');
   assert.equal(meta.slug, 'intent-governance');
   assert.equal(meta.architecture_position.wave, 'v2.4');
+});
+
+test('activateBacklogIntent: enforces P001 single active intent', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  createBacklogIntent(contentRoot, { slug: 'one', title: 'One', description: 'x', wave: 'v2.4' });
+  createBacklogIntent(contentRoot, { slug: 'two', title: 'Two', description: 'y', wave: 'v2.4' });
+  fs.mkdirSync(path.join(contentRoot, '.kb', 'graph'), { recursive: true });
+  fs.writeFileSync(path.join(contentRoot, '.kb', 'graph', 'seed-goals.json'), '[{"id":"GOAL-001"}]\n', 'utf8');
+
+  activateBacklogIntent(contentRoot, {
+    slug: 'one',
+    intentId: 'v2-4-one',
+    mode: 'quick',
+    changeType: 'docs',
+    wave: 'v2.4',
+  });
+
+  assert.throws(
+    () => activateBacklogIntent(contentRoot, {
+      slug: 'two',
+      intentId: 'v2-4-two',
+      mode: 'quick',
+      changeType: 'docs',
+      wave: 'v2.4',
+    }),
+    /P001 violation/
+  );
+});
+
+test('activateBacklogIntent: enforces P003 goal alignment', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  createBacklogIntent(contentRoot, { slug: 'no-goal', title: 'No Goal', description: 'x', wave: 'v2.4' });
+
+  assert.throws(
+    () => activateBacklogIntent(contentRoot, {
+      slug: 'no-goal',
+      intentId: 'v2-4-no-goal',
+      mode: 'quick',
+      changeType: 'docs',
+      wave: 'v2.4',
+    }),
+    /P003 violation/
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -997,6 +1044,27 @@ test('runIntent status: resolves backlog, closed, and archived refs', async () =
   assert.equal(parsed.status, 'closed');
 });
 
+test('runIntent archive: enforces P006 retro_completed before archive', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+
+  createIntentWorkspace(contentRoot, { intentId: 'needs-retro', mode: 'quick', changeType: 'docs' });
+
+  await assert.rejects(
+    () => runIntent({ args: ['archive', 'needs-retro', '--json'], cwd: root }),
+    /P006 violation/
+  );
+
+  const metaPath = path.join(contentRoot, 'intents', '_active', 'needs-retro', 'intent.md');
+  const text = fs.readFileSync(metaPath, 'utf8');
+  const updated = text.replace('schema_version:', 'retro_completed: true\nschema_version:');
+  fs.writeFileSync(metaPath, updated, 'utf8');
+
+  const captured = await captureConsole(() => runIntent({ args: ['archive', 'needs-retro', '--json'], cwd: root }));
+  const parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.status, 'archived');
+});
+
 test('runIntent list: respects v2.4 scope flags', async () => {
   const root = tmpRoot();
   const contentRoot = initTrackedWorkspace(root);
@@ -1067,7 +1135,7 @@ test('runIntent cleanup: reports critical when focus.current is empty', async ()
 
   const captured = await captureConsole(() => runIntent({ args: ['cleanup', '--json'], cwd: root }));
   const parsed = JSON.parse(captured.stdout);
-  assert.equal(parsed.command, 'kb intent cleanup');
+  assert.equal(parsed.command, 'kbx intent cleanup');
   assert.ok(parsed.critical > 0 || parsed.warning > 0);
   const finding = parsed.findings.find((f) => f.intent_id === 'v2-4-no-focus');
   assert.ok(finding, 'should have a finding for v2-4-no-focus');
@@ -1157,6 +1225,8 @@ test('T-G3: backlog activate preserves schema_version', () => {
   const root = tmpRoot();
   const contentRoot = initTrackedWorkspace(root);
   createBacklogIntent(contentRoot, { slug: 'test-backlog', title: 'Test Backlog', description: 'Test', wave: null });
+  fs.mkdirSync(path.join(contentRoot, '.kb', 'graph'), { recursive: true });
+  fs.writeFileSync(path.join(contentRoot, '.kb', 'graph', 'seed-goals.json'), '[{"id":"GOAL-001"}]\n', 'utf8');
 
   activateBacklogIntent(contentRoot, { slug: 'test-backlog', intentId: 'activated-intent', mode: 'quick', changeType: 'feature', wave: null });
 

@@ -518,11 +518,11 @@ const RULE_FAMILIES = {
   V: ['KBX-V001', 'KBX-V002'],
   I: ['KBX-I001', 'KBX-I002'],
   GB: ['KBX-GB001', 'KBX-GB002'],
-  AXPR: ['KBX-AX003', 'KBX-AX004', 'KBX-AX005', 'KBX-PR025', 'KBX-PR026'],
+  AXPR: ['KBX-GV001', 'KBX-GV002', 'KBX-GV003', 'KBX-PR025', 'KBX-PR026'],
   WFKA: ['KBX-WF008', 'KBX-WF011', 'KBX-KA103', 'KBX-KA104'],
 };
 
-const RULE_ORDER_PREFIX = ['KBX-M', 'KBX-V', 'KBX-I', 'KBX-GB', 'KBX-AX', 'KBX-PR', 'KBX-WF', 'KBX-KA'];
+const RULE_ORDER_PREFIX = ['KBX-M', 'KBX-V', 'KBX-I', 'KBX-GB', 'KBX-AX', 'KBX-GV', 'KBX-P', 'KBX-PR', 'KBX-WF', 'KBX-KA'];
 
 function orderRules(rules) {
   const dedup = Array.from(new Set(rules.map((r) => String(r))));
@@ -608,14 +608,14 @@ function resolveSelectorPolicy(mode) {
 }
 
 const PRINCIPLE_BINDINGS = {
-  P0: { gate: 'G-DETERMINISTIC-PLACEMENT', rules: ['KBX-AX005', 'KBX-PG-000'], defaultSeverity: 'hard-fail' },
+  P0: { gate: 'G-DETERMINISTIC-PLACEMENT', rules: ['KBX-GV003', 'KBX-PG-000'], defaultSeverity: 'hard-fail' },
   P2: { gate: 'G-EVIDENCE-SUFFICIENCY', rules: ['KBX-V001', 'KBX-V002', 'KBX-PG-002'], defaultSeverity: 'hard-fail' },
   P3: { gate: 'G-BACKWARD-COMPAT', rules: ['KBX-M001', 'KBX-WF008', 'KBX-PG-003'], defaultSeverity: 'hard-fail' },
   P7: { gate: 'G-STORAGE-CONTEXT', rules: ['KBX-GB001', 'KBX-GB002', 'KBX-PG-007'], defaultSeverity: 'hard-fail' },
   P18: { gate: 'G-INTENT-UNIQUENESS', rules: ['KBX-I001', 'KBX-I002', 'KBX-PG-018'], defaultSeverity: 'hard-fail' },
   P19: { gate: 'G-CHAOS-ESTIMATE', rules: ['KBX-WF008', 'KBX-KA103', 'KBX-PG-019'], defaultSeverity: 'warn' },
   P20: { gate: 'G-HUMAN-GATE-RECORD', rules: ['KBX-KA104', 'KBX-PG-020'], defaultSeverity: 'hard-fail' },
-  P21: { gate: 'G-DOWNSTREAM-ACCEPTANCE', rules: ['KBX-AX003', 'KBX-PR026', 'KBX-PG-021'], defaultSeverity: 'warn' },
+  P21: { gate: 'G-DOWNSTREAM-ACCEPTANCE', rules: ['KBX-GV001', 'KBX-PR026', 'KBX-PG-021'], defaultSeverity: 'warn' },
   P24: { gate: 'G-THREE-LAYER-TRACE', rules: ['KBX-KA103', 'KBX-KA104', 'KBX-PG-024'], defaultSeverity: 'hard-fail' },
   P25: { gate: 'G-THREE-LAYER-TRACE', rules: ['KBX-WF011', 'KBX-PR025', 'KBX-PG-025'], defaultSeverity: 'warn' },
 };
@@ -1069,7 +1069,7 @@ function resolveOutput(tuple) {
   if (branch.primary_pipe === 'PipeReadOnly') {
     const applicable = ['KBX-M001', 'KBX-M002', 'KBX-M003', 'KBX-M004'];
     if (docsScope) {
-      applicable.push('KBX-AX003', 'KBX-PR025');
+      applicable.push('KBX-GV001', 'KBX-PR025');
     }
 
     return sortOutput({
@@ -1085,7 +1085,7 @@ function resolveOutput(tuple) {
   if (branch.primary_pipe === 'PipeDocsFast') {
     const applicable = ['KBX-M001', 'KBX-M002', 'KBX-M003', 'KBX-M004', 'KBX-GB001'];
     if (docsScope) {
-      applicable.push('KBX-AX003', 'KBX-PR025');
+      applicable.push('KBX-GV001', 'KBX-PR025');
     }
 
     const action = tuple.target_scope === 'template' ? 'update-index' : 'update-link';

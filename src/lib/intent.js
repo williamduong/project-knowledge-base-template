@@ -320,14 +320,59 @@ function createBacklogIntent(contentRoot, { slug, title, description, wave }) {
   return filePath;
 }
 
+function hasGoalAlignment(contentRoot, backlogMeta) {
+  if (!backlogMeta || typeof backlogMeta !== 'object') return false;
+
+  if (Array.isArray(backlogMeta.linked_goals) && backlogMeta.linked_goals.length > 0) {
+    return true;
+  }
+  if (Array.isArray(backlogMeta.goals) && backlogMeta.goals.length > 0) {
+    return true;
+  }
+  if (typeof backlogMeta.goal === 'string' && backlogMeta.goal.trim().length > 0) {
+    return true;
+  }
+
+  // Fallback: if seed goals already exist in KB, allow activation.
+  const seedGoalsPath = path.join(contentRoot, '.kb', 'graph', 'seed-goals.json');
+  if (fs.existsSync(seedGoalsPath)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(seedGoalsPath, 'utf8'));
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return true;
+      }
+    } catch {
+      // Ignore parse errors; explicit backlog alignment fields are then required.
+    }
+  }
+
+  return false;
+}
+
 function activateBacklogIntent(contentRoot, { slug, intentId, mode, changeType, wave }) {
   const sourcePath = backlogIntentPath(contentRoot, slug);
   if (!fs.existsSync(sourcePath)) {
     throw new Error(`Backlog intent "${slug}" not found. Expected: ${sourcePath}`);
   }
 
+  // P001: one active intent per branch/workspace at a time.
+  const activeIds = listActiveIntentIds(contentRoot);
+  if (activeIds.length > 0) {
+    throw new Error(
+      `P001 violation: cannot activate "${slug}" while active intent(s) exist: ${activeIds.join(', ')}.`
+    );
+  }
+
   const text = fs.readFileSync(sourcePath, 'utf8');
   const backlogMeta = parseIntentFrontmatter(text);
+
+  // P003: backlog item must be goal-aligned before activation.
+  if (!hasGoalAlignment(contentRoot, backlogMeta)) {
+    throw new Error(
+      `P003 violation: backlog intent "${slug}" is not goal-aligned. Add one of: linked_goals[], goals[], goal, or initialize seed goals in .kb/graph/seed-goals.json.`
+    );
+  }
+
   const wsPath = createIntentWorkspace(contentRoot, { intentId, mode, changeType });
   const metaPath = intentMetaPath(contentRoot, intentId);
   const activeMeta = readIntentMeta(contentRoot, intentId);
