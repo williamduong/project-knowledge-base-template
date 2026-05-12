@@ -51,10 +51,36 @@ Immediate conclusion:
 - **Section 8: Master rules** — AX/P document semantics are not enforced 1:1 in runtime; some IDs collide with different meanings.
 - **Section 9: Foundation** — onboarding form/generator exists only as HTML prototype, not as real `kbx init` runtime behavior.
 
-### Step 3 — Practical Refactor Order
+### Step 3 — Gaps Fix Order (Dependency Chain)
+
+**Phase A: UI Refactor (immediate)**
 1. Refactor UI around current runtime truth: intents, status, chaos, doctor, existing mutations, and current bridge responses.
 2. Keep roadmap-only features visually separated as "planned" or remove them from operator-facing flows for now.
-3. After UI parity with runtime, open separate implementation intents for foundation generator, pipeline normalization, rule taxonomy normalization, and seed-data onboarding.
+
+**Phase B: Gaps Fix (sequential, one per intent)**
+1. **Gap 1 → Section 9: Foundation** (onboarding form generator)
+   - Blocker: All subsequent KB instances must bootstrap correctly
+   - Dependency: None (gating function)
+   - Work: Implement real `kbx init` interview pipeline → generate seed-goals.json, seed-rules.json, system-map.md
+
+2. **Gap 2 → Section 8: Master Rules** (AX collision, P-rule enforcement)
+   - Blocker: Governance framework must be consistent before exposing rule system
+   - Dependency: Section 9 complete (foundation in place to store rule definitions)
+   - Work: Rename governance verification rules (KBX-GV001-003), implement P001-P009 guards
+
+3. **Gap 3 → Section 6: Pipelines** (CLI parity)
+   - Blocker: Command surface must match declared pipeline contract
+   - Dependency: Section 8 complete (rules available to gate pipeline stages)
+   - Work: Fill command gaps (mutation.js, gate.js, hazard.js) to match P1/P2/P3/P4 contract
+
+4. **Gap 4 → Section 5: Default Data** (SaaS seed bundle)
+   - Blocker: Content layer depends on all infrastructure stable
+   - Dependency: Sections 9, 8, 6 complete
+   - Work: Package SaaS-specific seed data → bundle into `kbx init --preset=saas`
+
+**Phase C: Then UI Parity** (after all gaps fixed)
+- Re-audit UI coverage against new runtime surfaces
+- Expose newly stable features in operator flows
 
 ## Plan
 
