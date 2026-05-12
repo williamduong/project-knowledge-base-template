@@ -53,7 +53,7 @@ See `impact.md` for full details.
 - [x] **Section 3: Components** — reviewed (⚠️ partial)
 - [x] **Section 4: Data architecture** — reviewed (⚠️ partial)
 - [x] **Section 5: Default data** — reviewed (❌ major gap)
-- [ ] **Section 6: Pipelines** — 4 main + 6 sub pipelines
+- [x] **Section 6: Pipelines** — reviewed (❌ major gap)
 - [ ] **Section 7: Rules (D+O)** — domain + operational rules
 - [ ] **Section 8: Master rules** — AX (immutable) + P (process)
 - [ ] **Section 9: Foundation** — setup template, editable form
@@ -150,6 +150,27 @@ See `impact.md` for full details.
 - Block any UI feature that assumes seeded SaaS goals/intents/rules until either:
   1. Seed data is implemented in template/init pipeline, or
   2. Document is downgraded/rewritten to reflect current generic template reality.
+
+### Section 6 — Pipelines (❌ major gap)
+
+**Matched evidence (✅):**
+- CLI command surface includes core families that map to major flow areas: `init`, `intent`, `maintain`, `release`, `chaos`, `graph`, `impact`, `ontology`, `apply`.
+- `kbx intent` supports practical lifecycle operations (`create`, `draft`, `activate`, `apply`, `close`, `archive`, `checkpoint`) with active/backlog/closed/archive folders.
+- `kbx maintain` includes deterministic maintenance loop pieces (`sync`, optional `doc:gate`, `test`, `doctor`, observation gates, optional fix-intent proposal/creation).
+- `kbx release` includes pipeline-style execution (`plan`/`run`/`init-pipeline`) and release catalog handling.
+- Sub-pipeline primitives exist in some form: `ontology validate`, `impact` command, `chaos` command, update workflow command family.
+
+**Gaps vs document (❌):**
+- Documented P1 contract requires explicit commands/states not present in current intent surface: `kbx intent align`, `kbx intent approve`, `kbx intent stage`, `kbx gate`, `kbx intent retro`.
+- Document says `impact:check` auto-runs before every apply; current `kbx intent apply` implementation does not enforce/auto-call `kbx impact` as a hard pre-apply gate.
+- Document defines gate step as deterministic bundle (`doc:gate + ontology:validate + tests`) via `kbx gate`; current repo has no dedicated `kbx gate` command.
+- Document defines retro as only graph writer (`retro:write`) and lifecycle bridge to ontology `COMMITTED`; no explicit public `retro` command path is implemented in current surface.
+- P3 onboarding in doc includes `init --retrofit`, interview/scan branching, seeded goals/rules, and starter-intent suggestions; current init pipeline does not expose this full contract.
+- P4 release in doc requires explicit release-gate semantics (`kbx gate --release`, chaos threshold) and graph write edges (`:Release`, `:INCLUDED_IN`) as hard pipeline steps; current release implementation is pipeline-capable but not 1:1 with this declared contract.
+
+**Decision:**
+- Treat Section 6 as major documentation-vs-implementation drift.
+- For downstream UI/review work, use current command surface as runtime truth and treat roadmap pipeline page as target-state architecture until command parity is implemented.
 
 ## Staged Files
 
