@@ -72,6 +72,7 @@ Exit gate:
 
 Observed evidence:
 - `npm --prefix ./site/kbx-ui run build` passed.
+- `npm --prefix ./site/kbx-ui run test` passed (`3/3` pass) for Phase 2 gate evaluation logic.
 - `GET http://localhost:4174/api/version` returned `{ ok: true, stdout: "2.7.0-beta.2" }`.
 - `GET http://localhost:4174/api/status` returned parseable JSON payload from `kbx status --json`.
 - `GET http://localhost:4174/api/phase2-bridge` returned gate summary with explicit severity mapping and block/warn evaluation.
@@ -126,7 +127,7 @@ Exit gate:
 
 ## Immediate Next Session Checklist
 
-1. Add wrapper tests for bridge command success/fail paths and gate summary behavior.
-2. Record test evidence in `notes/roadmap/kbagent-phase1-proof-state.md` and this execution plan.
-3. Start Phase 3 read-only tab expansion (workspace/system/documents/rules) using CLI-backed endpoints.
+1. Extend tests from gate logic to HTTP endpoint payload contract checks.
+2. Start Phase 3 read-only tab expansion (workspace/system/documents/rules) using CLI-backed endpoints.
+3. Keep evidence synchronized in `notes/roadmap/kbagent-phase1-proof-state.md` and this execution plan.
 4. Keep roadmap updates attached to active intent chain while preparing P0 close and P1 activation.

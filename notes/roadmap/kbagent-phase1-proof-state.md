@@ -45,17 +45,33 @@ Expected behavior:
 - `/api/status` returns parsed status JSON from `kbx status --json`.
 - `/api/phase2-bridge` returns gate summary with severity policy (`hard-fail`, `warn`, `info`) and block/warn evaluation.
 
+## Test Evidence (Phase 2 Bridge)
+
+Command:
+
+```bash
+npm --prefix ./site/kbx-ui run test
+```
+
+Result:
+
+- `pass 3`, `fail 0`
+- Covered behaviors:
+  - hard-fail summary marks bridge as blocked
+  - success path with unique active intent
+  - fail path when active intent uniqueness is violated
+
 ## Phase Assessment
 
 - Phase 0: complete (naming/lifecycle/principles-vs-rules closure).
 - Phase 1: complete (Option B shell decision + executable proof).
 - Phase 1.5: complete (status endpoint + runtime error handling + gate evaluation endpoint).
-- Phase 2: in progress (typed wrappers present; test coverage still pending).
+- Phase 2: in progress (typed wrappers present; core gate evaluation tests now passing).
 
 ## Next Gate To Close
 
 Phase 2 exit criteria still open:
 
-1. Add wrapper tests for success and fail paths.
+1. Expand wrapper tests from gate logic to endpoint contract assertions.
 2. Keep endpoint payload contracts stable.
-3. Attach test evidence to roadmap execution plan.
+3. Continue Phase 3 read-only tab delivery against CLI-backed endpoints.
