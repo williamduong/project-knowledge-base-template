@@ -143,6 +143,16 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Phase 4 mutation state
+  const [createFormData, setCreateFormData] = useState({
+    title: '',
+    focus: '',
+    next_action: '',
+    decision_summary: '',
+  });
+  const [createResult, setCreateResult] = useState<{ok: boolean; result?: any; error?: string} | null>(null);
+  const [createLoading, setCreateLoading] = useState(false);
+
   async function loadAll() {
     setError(null);
 
@@ -191,6 +201,60 @@ export default function App() {
       setError(loadError instanceof Error ? loadError.message : String(loadError));
     } finally {
       setRefreshing(false);
+    }
+  }
+
+  async function onCreateIntent() {
+    if (!createFormData.title.trim()) {
+      setCreateResult({ ok: false, error: 'Title required' });
+      return;
+    }
+
+    setCreateLoading(true);
+    try {
+      const response = await fetch('/api/intents/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: createFormData.title.trim(),
+          focus: createFormData.focus.trim() || undefined,
+          next_action: createFormData.next_action.trim() || undefined,
+          decision_summary: createFormData.decision_summary.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json() as {ok: boolean; error?: string};
+        setCreateResult({
+          ok: false,
+          error: data.error || `HTTP ${response.status}`,
+        });
+        return;
+      }
+
+      const data = await response.json() as {ok: boolean; result?: any};
+      setCreateResult({
+        ok: true,
+        result: data.result,
+      });
+
+      // Clear form on success
+      setCreateFormData({
+        title: '',
+        focus: '',
+        next_action: '',
+        decision_summary: '',
+      });
+
+      // Reload intents list
+      await loadAll();
+    } catch (err) {
+      setCreateResult({
+        ok: false,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setCreateLoading(false);
     }
   }
 
@@ -369,6 +433,79 @@ export default function App() {
               <pre>{documentsSnapshot.summary ? JSON.stringify(documentsSnapshot.summary, null, 2) : 'No data'}</pre>
             </>
           )}
+        </article>
+
+        <article className="panel panel-wide">
+          <p className="panel-label">Phase 4 mutations</p>
+          <h2>Create intent (CLI-backed mutation)</h2>
+          <div className="mutation-form">
+            <div className="form-field">
+              <label htmlFor="create-title">Title *</label>
+              <input
+                id="create-title"
+                type="text"
+                placeholder="Intent title (min 3 chars)"
+                value={createFormData.title}
+                onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
+                disabled={createLoading}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="create-focus">Focus</label>
+              <input
+                id="create-focus"
+                type="text"
+                placeholder="Focus domain (optional)"
+                value={createFormData.focus}
+                onChange={(e) => setCreateFormData({ ...createFormData, focus: e.target.value })}
+                disabled={createLoading}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="create-action">Next action</label>
+              <input
+                id="create-action"
+                type="text"
+                placeholder="Next action (optional)"
+                value={createFormData.next_action}
+                onChange={(e) => setCreateFormData({ ...createFormData, next_action: e.target.value })}
+                disabled={createLoading}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="create-summary">Decision summary</label>
+              <textarea
+                id="create-summary"
+                placeholder="Why this intent exists (optional)"
+                rows={3}
+                value={createFormData.decision_summary}
+                onChange={(e) => setCreateFormData({ ...createFormData, decision_summary: e.target.value })}
+                disabled={createLoading}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={onCreateIntent}
+              disabled={createLoading || !createFormData.title.trim()}
+              className="submit-btn"
+            >
+              {createLoading ? 'Creating...' : 'Create Intent'}
+            </button>
+
+            {createResult && (
+              <div className={`form-result ${createResult.ok ? 'ok' : 'error'}`}>
+                <p>
+                  {createResult.ok
+                    ? `✓ Intent created: ${createResult.result?.id || 'unknown'}`
+                    : `✗ Error: ${createResult.error}`}
+                </p>
+              </div>
+            )}
+          </div>
         </article>
       </section>
 

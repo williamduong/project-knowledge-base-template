@@ -118,6 +118,87 @@ function mockRunner(command) {
     });
   }
 
+  // Phase 4 mutation commands
+  if (command.includes('intent create')) {
+    return Promise.resolve({
+      command,
+      ok: true,
+      exitCode: 0,
+      parsed: {
+        id: 'v2-11-test-intent',
+        title: 'Test Intent',
+        lifecycle: 'draft',
+        created_at: '2025-01-15T10:00:00Z',
+      },
+      stdout: '',
+      stderr: '',
+    });
+  }
+
+  if (command.includes('intent update')) {
+    return Promise.resolve({
+      command,
+      ok: true,
+      exitCode: 0,
+      parsed: {
+        id: 'v2-11-test-intent',
+        title: 'Updated Intent',
+        lifecycle: 'draft',
+        updated_at: '2025-01-15T10:01:00Z',
+      },
+      stdout: '',
+      stderr: '',
+    });
+  }
+
+  if (command.includes('intent approve')) {
+    return Promise.resolve({
+      command,
+      ok: true,
+      exitCode: 0,
+      parsed: {
+        id: 'v2-11-test-intent',
+        lifecycle: 'staged',
+        approved_at: '2025-01-15T10:02:00Z',
+      },
+      stdout: '',
+      stderr: '',
+    });
+  }
+
+  if (command.includes('apply-preview')) {
+    return Promise.resolve({
+      command,
+      ok: true,
+      exitCode: 0,
+      parsed: {
+        diff: [
+          '+ new file: .kb/intents/v2-11-test-intent.md',
+          'M modified: .kb/catalog.json',
+        ],
+        warnings: ['Ensure catalog.json is valid'],
+      },
+      stdout: '',
+      stderr: '',
+    });
+  }
+
+  if (command.includes('intent apply')) {
+    return Promise.resolve({
+      command,
+      ok: true,
+      exitCode: 0,
+      parsed: {
+        id: 'v2-11-test-intent',
+        lifecycle: 'active',
+        applied_at: '2025-01-15T10:03:00Z',
+        changes: 2,
+      },
+      stdout: '',
+      stderr: '',
+    });
+  }
+
   return Promise.resolve({
     command,
     ok: false,
@@ -265,5 +346,170 @@ test('GET /api/documents returns error on command fail', async () => {
     const payload = await response.json();
     assert.equal(payload.ok, false);
     assert.equal(payload.error, 'documents command failed');
+  });
+});
+
+// Phase 4 Mutation Tests
+
+test('POST /api/intents/create creates intent with valid title', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/intents/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Test Intent',
+        focus: 'Phase 4',
+        next_action: 'Implement forms',
+      }),
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.result.id, 'v2-11-test-intent');
+    assert.ok(Array.isArray(payload.trace));
+  });
+});
+
+test('POST /api/intents/create rejects empty title', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/intents/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: '',
+      }),
+    });
+
+    assert.equal(response.status, 400);
+    const payload = await response.json();
+    assert.equal(payload.ok, false);
+    assert.equal(typeof payload.error, 'string');
+  });
+});
+
+test('PATCH /api/intents/{id} updates intent fields', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/intents/v2-11-test-intent`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Updated Intent',
+        focus: 'Phase 4 Complete',
+      }),
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.result.title, 'Updated Intent');
+    assert.ok(Array.isArray(payload.trace));
+  });
+});
+
+test('PATCH /api/intents/{id} rejects missing id', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/intents/`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'Update' }),
+    });
+
+    assert.equal(response.status, 404);
+  });
+});
+
+test('POST /api/intents/{id}/approve transitions to staged', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/intents/v2-11-test-intent/approve`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        approval_note: 'Looks good',
+      }),
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.result.lifecycle, 'staged');
+    assert.ok(Array.isArray(payload.trace));
+  });
+});
+
+test('GET /api/intents/{id}/apply-preview returns diff and warnings', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/intents/v2-11-test-intent/apply-preview`);
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.ok(typeof payload.diff === 'object');
+    assert.ok(Array.isArray(payload.warnings));
+  });
+});
+
+test('POST /api/intents/{id}/apply applies intent with confirmed flag', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/intents/v2-11-test-intent/apply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        confirmed: true,
+      }),
+    });
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.ok, true);
+    assert.equal(payload.result.lifecycle, 'active');
+    assert.ok(Array.isArray(payload.trace));
+  });
+});
+
+test('POST /api/intents/{id}/apply rejects unconfirmed apply', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/intents/v2-11-test-intent/apply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        confirmed: false,
+      }),
+    });
+
+    assert.equal(response.status, 400);
+    const payload = await response.json();
+    assert.equal(payload.ok, false);
+  });
+});
+
+test('POST /api/intents/create handles CLI command failure', async () => {
+  const failRunner = (command) => {
+    if (command.includes('intent create')) {
+      return Promise.resolve({
+        command,
+        ok: false,
+        exitCode: 1,
+        parsed: null,
+        stdout: '',
+        stderr: 'intent creation failed',
+      });
+    }
+    return mockRunner(command);
+  };
+
+  await withServer(failRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/intents/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Failed Intent',
+      }),
+    });
+
+    assert.equal(response.status, 500);
+    const payload = await response.json();
+    assert.equal(payload.ok, false);
+    assert.equal(typeof payload.error, 'string');
   });
 });
