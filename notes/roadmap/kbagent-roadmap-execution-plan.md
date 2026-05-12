@@ -76,6 +76,8 @@ Observed evidence:
 - `GET http://localhost:4174/api/version` returned `{ ok: true, stdout: "2.7.0-beta.2" }`.
 - `GET http://localhost:4174/api/status` returned parseable JSON payload from `kbx status --json`.
 - `GET http://localhost:4174/api/phase2-bridge` returned gate summary with explicit severity mapping and block/warn evaluation.
+- `GET http://localhost:4174/api/rules` returned `ok=true`, `parsed.count=19` from `kbx rules list --json`.
+- `GET http://localhost:4174/api/intents` returned `ok=true`, `parsed.count=63` from `kbx intent list --all --json`.
 
 ### Phase 2 - CLI Bridge Implementation
 
@@ -100,6 +102,10 @@ Entry gate:
 Exit gate:
 - All primary tabs render real runtime data.
 - File changes in KB are reflected via refresh/watch behavior.
+
+Current evidence:
+- Rules tab snapshot is CLI-backed via `/api/rules`.
+- Intents tab snapshot is CLI-backed via `/api/intents`.
 
 ### Phase 4 - Interactive UI Delivery
 
@@ -127,7 +133,7 @@ Exit gate:
 
 ## Immediate Next Session Checklist
 
-1. Extend tests from gate logic to HTTP endpoint payload contract checks.
-2. Start Phase 3 read-only tab expansion (workspace/system/documents/rules) using CLI-backed endpoints.
+1. Extend tests from gate logic to HTTP endpoint payload contract checks (`/api/rules`, `/api/intents`, `/api/phase2-bridge`).
+2. Continue Phase 3 read-only expansion for workspace/system/documents views using CLI-backed endpoints.
 3. Keep evidence synchronized in `notes/roadmap/kbagent-phase1-proof-state.md` and this execution plan.
 4. Keep roadmap updates attached to active intent chain while preparing P0 close and P1 activation.

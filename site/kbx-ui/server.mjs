@@ -127,6 +127,22 @@ app.get('/api/status', async (_req, res) => {
   res.status(response.ok ? 200 : 500).json(response);
 });
 
+app.get('/api/rules', async (_req, res) => {
+  const response = await executeBridgeCommand('kbx rules list --json', ['rules', 'list', '--json'], {
+    expectJson: true,
+    timeoutMs: 15000,
+  });
+  res.status(response.ok ? 200 : 500).json(response);
+});
+
+app.get('/api/intents', async (_req, res) => {
+  const response = await executeBridgeCommand('kbx intent list --all --json', ['intent', 'list', '--all', '--json'], {
+    expectJson: true,
+    timeoutMs: 20000,
+  });
+  res.status(response.ok ? 200 : 500).json(response);
+});
+
 app.get('/api/phase2-bridge', async (_req, res) => {
   const [statusResult, doctorResult, chaosResult] = await Promise.all([
     executeBridgeCommand('kbx status --json', ['status', '--json'], {

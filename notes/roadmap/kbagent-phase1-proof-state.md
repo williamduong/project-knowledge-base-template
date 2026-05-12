@@ -2,12 +2,12 @@
 
 ## Scope
 
-This document records deterministic evidence that Phase 1 (Option B shell decision + bootstrap) is complete and that Phase 2 bridge hardening has started.
+This document records deterministic evidence that Phase 1 (Option B shell decision + bootstrap) is complete, Phase 2 bridge hardening is test-backed, and Phase 3 read-only delivery has started.
 
 ## Checkpoint
 
 - Branch: `intent/v2-8-2-principal-grounding-contract`
-- Head: `ea2eb26`
+- Head: `9495673`
 - Verified at: `2026-05-12`
 
 ## Decision Evidence
@@ -38,12 +38,21 @@ Expected endpoints (bridge server at `http://localhost:4174`):
 - `GET /api/version`
 - `GET /api/status`
 - `GET /api/phase2-bridge`
+- `GET /api/rules`
+- `GET /api/intents`
 
 Expected behavior:
 
 - `/api/version` returns `ok=true` and CLI version output.
 - `/api/status` returns parsed status JSON from `kbx status --json`.
 - `/api/phase2-bridge` returns gate summary with severity policy (`hard-fail`, `warn`, `info`) and block/warn evaluation.
+- `/api/rules` returns parsed rule catalog JSON from `kbx rules list --json`.
+- `/api/intents` returns parsed intent registry JSON from `kbx intent list --all --json`.
+
+Observed endpoint evidence:
+
+- `/api/rules`: `ok=true`, `parsed.count=19`, `command="kbx rules list --json"`
+- `/api/intents`: `ok=true`, `parsed.count=63`, `command="kbx intent list --all --json"`
 
 ## Test Evidence (Phase 2 Bridge)
 
@@ -66,12 +75,13 @@ Result:
 - Phase 0: complete (naming/lifecycle/principles-vs-rules closure).
 - Phase 1: complete (Option B shell decision + executable proof).
 - Phase 1.5: complete (status endpoint + runtime error handling + gate evaluation endpoint).
-- Phase 2: in progress (typed wrappers present; core gate evaluation tests now passing).
+- Phase 2: complete for gate-evaluation baseline (typed wrappers + core gate tests passing).
+- Phase 3: in progress (read-only rules + intents panels are live from CLI-backed endpoints).
 
 ## Next Gate To Close
 
-Phase 2 exit criteria still open:
+Phase 3 exit criteria now open:
 
-1. Expand wrapper tests from gate logic to endpoint contract assertions.
-2. Keep endpoint payload contracts stable.
-3. Continue Phase 3 read-only tab delivery against CLI-backed endpoints.
+1. Expand read-only coverage beyond rules/intents to workspace/system/documents tabs.
+2. Add endpoint contract tests for `/api/rules` and `/api/intents`.
+3. Keep endpoint payload contracts stable while growing the read model.

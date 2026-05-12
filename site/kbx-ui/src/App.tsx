@@ -31,6 +31,38 @@ type InteractionModel = {
   writePath: string;
 };
 
+type RulesResponse = {
+  command: string;
+  ok: boolean;
+  exitCode: number;
+  parsed: {
+    count?: number;
+    rules?: Array<{
+      id?: string;
+      severity?: string;
+      title?: string;
+    }>;
+  } | null;
+  stdout: string;
+  stderr: string;
+};
+
+type IntentsResponse = {
+  command: string;
+  ok: boolean;
+  exitCode: number;
+  parsed: {
+    count?: number;
+    intents?: Array<{
+      id?: string;
+      lifecycle?: string;
+      mode?: string;
+    }>;
+  } | null;
+  stdout: string;
+  stderr: string;
+};
+
 type GateSeverity = 'hard-fail' | 'warn' | 'info';
 
 type Phase2Gate = {
@@ -58,6 +90,8 @@ export default function App() {
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [interaction, setInteraction] = useState<InteractionModel | null>(null);
   const [phase2, setPhase2] = useState<Phase2BridgeResponse | null>(null);
+  const [rules, setRules] = useState<RulesResponse | null>(null);
+  const [intents, setIntents] = useState<IntentsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -65,17 +99,21 @@ export default function App() {
   async function loadAll() {
     setError(null);
 
-    const [versionResponse, statusResponse, interactionResponse, phase2Response] = await Promise.all([
+    const [versionResponse, statusResponse, interactionResponse, phase2Response, rulesResponse, intentsResponse] = await Promise.all([
       fetch('/api/version').then((response) => response.json() as Promise<VersionResponse>),
       fetch('/api/status').then((response) => response.json() as Promise<StatusResponse>),
       fetch('/api/interaction-model').then((response) => response.json() as Promise<InteractionModel>),
       fetch('/api/phase2-bridge').then((response) => response.json() as Promise<Phase2BridgeResponse>),
+      fetch('/api/rules').then((response) => response.json() as Promise<RulesResponse>),
+      fetch('/api/intents').then((response) => response.json() as Promise<IntentsResponse>),
     ]);
 
     setVersion(versionResponse);
     setStatus(statusResponse);
     setInteraction(interactionResponse);
     setPhase2(phase2Response);
+    setRules(rulesResponse);
+    setIntents(intentsResponse);
   }
 
   async function initialLoad() {
@@ -194,6 +232,46 @@ export default function App() {
                   </div>
                 ))}
               </div>
+            </>
+          )}
+        </article>
+
+        <article className="panel">
+          <p className="panel-label">Phase 3 read-only</p>
+          <h2>Rules catalog snapshot</h2>
+          {loading && <p className="muted">Loading rules...</p>}
+          {!loading && rules && (
+            <>
+              <p className={rules.ok ? 'status ok' : 'status error'}>
+                {rules.ok ? 'Rules payload loaded' : 'Rules payload failed'}
+              </p>
+              <p className="meta">{rules.command} · exit {rules.exitCode}</p>
+              <p className="muted">count: {rules.parsed?.count ?? 0}</p>
+              <pre>
+                {rules.parsed?.rules?.slice(0, 5).map((rule) => `${rule.id} · ${rule.severity} · ${rule.title}`).join('\n')
+                  || rules.stdout
+                  || rules.stderr}
+              </pre>
+            </>
+          )}
+        </article>
+
+        <article className="panel">
+          <p className="panel-label">Phase 3 read-only</p>
+          <h2>Intent registry snapshot</h2>
+          {loading && <p className="muted">Loading intents...</p>}
+          {!loading && intents && (
+            <>
+              <p className={intents.ok ? 'status ok' : 'status error'}>
+                {intents.ok ? 'Intent payload loaded' : 'Intent payload failed'}
+              </p>
+              <p className="meta">{intents.command} · exit {intents.exitCode}</p>
+              <p className="muted">count: {intents.parsed?.count ?? 0}</p>
+              <pre>
+                {intents.parsed?.intents?.slice(0, 8).map((intent) => `${intent.id} · ${intent.lifecycle} · ${intent.mode}`).join('\n')
+                  || intents.stdout
+                  || intents.stderr}
+              </pre>
             </>
           )}
         </article>
