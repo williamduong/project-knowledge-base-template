@@ -64,12 +64,9 @@ type IntentsResponse = {
 };
 
 type WorkspaceSnapshotResponse = {
-  source: {
-    command: string;
-    ok: boolean;
-    exitCode: number;
-  };
-  summary: {
+  ok: boolean;
+  error?: string;
+  summary?: {
     activeIntentCount: number | null;
     activeIntentId: string | null;
     releaseCurrent: string | null;
@@ -79,12 +76,9 @@ type WorkspaceSnapshotResponse = {
 };
 
 type SystemSnapshotResponse = {
-  source: {
-    command: string;
-    ok: boolean;
-    exitCode: number;
-  };
-  summary: {
+  ok: boolean;
+  error?: string;
+  summary?: {
     result: string | null;
     nodeVersion: string | null;
     workspaceRoot: string | null;
@@ -98,12 +92,9 @@ type SystemSnapshotResponse = {
 };
 
 type DocumentsSnapshotResponse = {
-  source: {
-    command: string;
-    ok: boolean;
-    exitCode: number;
-  };
-  summary: {
+  ok: boolean;
+  error?: string;
+  summary?: {
     entityCount: number | null;
     relationCount: number | null;
     issueCount: number;
@@ -344,11 +335,10 @@ export default function App() {
           {loading && <p className="muted">Loading workspace summary...</p>}
           {!loading && workspaceSnapshot && (
             <>
-              <p className={workspaceSnapshot.source.ok ? 'status ok' : 'status error'}>
-                {workspaceSnapshot.source.ok ? 'Workspace payload loaded' : 'Workspace payload failed'}
+              <p className={workspaceSnapshot.ok ? 'status ok' : 'status error'}>
+                {workspaceSnapshot.ok ? 'Workspace summary loaded' : `Failed: ${workspaceSnapshot.error}`}
               </p>
-              <p className="meta">{workspaceSnapshot.source.command} · exit {workspaceSnapshot.source.exitCode}</p>
-              <pre>{JSON.stringify(workspaceSnapshot.summary, null, 2)}</pre>
+              <pre>{workspaceSnapshot.summary ? JSON.stringify(workspaceSnapshot.summary, null, 2) : 'No data'}</pre>
             </>
           )}
         </article>
@@ -359,11 +349,10 @@ export default function App() {
           {loading && <p className="muted">Loading system checks...</p>}
           {!loading && systemSnapshot && (
             <>
-              <p className={systemSnapshot.source.ok ? 'status ok' : 'status error'}>
-                {systemSnapshot.source.ok ? 'System payload loaded' : 'System payload failed'}
+              <p className={systemSnapshot.ok ? 'status ok' : 'status error'}>
+                {systemSnapshot.ok ? 'System summary loaded' : `Failed: ${systemSnapshot.error}`}
               </p>
-              <p className="meta">{systemSnapshot.source.command} · exit {systemSnapshot.source.exitCode}</p>
-              <pre>{JSON.stringify(systemSnapshot.summary, null, 2)}</pre>
+              <pre>{systemSnapshot.summary ? JSON.stringify(systemSnapshot.summary, null, 2) : 'No data'}</pre>
             </>
           )}
         </article>
@@ -374,11 +363,10 @@ export default function App() {
           {loading && <p className="muted">Loading documents graph checks...</p>}
           {!loading && documentsSnapshot && (
             <>
-              <p className={documentsSnapshot.source.ok ? 'status ok' : 'status error'}>
-                {documentsSnapshot.source.ok ? 'Documents payload loaded' : 'Documents payload failed'}
+              <p className={documentsSnapshot.ok ? 'status ok' : 'status error'}>
+                {documentsSnapshot.ok ? 'Documents summary loaded' : `Failed: ${documentsSnapshot.error}`}
               </p>
-              <p className="meta">{documentsSnapshot.source.command} · exit {documentsSnapshot.source.exitCode}</p>
-              <pre>{JSON.stringify(documentsSnapshot.summary, null, 2)}</pre>
+              <pre>{documentsSnapshot.summary ? JSON.stringify(documentsSnapshot.summary, null, 2) : 'No data'}</pre>
             </>
           )}
         </article>

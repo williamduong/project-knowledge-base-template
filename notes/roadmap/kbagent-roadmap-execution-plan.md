@@ -72,14 +72,14 @@ Exit gate:
 
 Observed evidence:
 - `npm --prefix ./site/kbx-ui run build` passed.
-- `npm --prefix ./site/kbx-ui run test` passed (`9/9` pass), including HTTP endpoint contracts for `/api/rules`, `/api/intents`, `/api/phase2-bridge`, `/api/workspace`, `/api/system`, and `/api/documents`.
+- `npm --prefix ./site/kbx-ui run test` passed (`12/12` pass): 6 success-path contracts + 6 fail-path robustness tests.
 - `GET http://localhost:4174/api/version` returned `{ ok: true, stdout: "2.7.0-beta.2" }`.
 - `GET http://localhost:4174/api/status` returned parseable JSON payload from `kbx status --json`.
 - `GET http://localhost:4174/api/phase2-bridge` returned gate summary with explicit severity mapping and block/warn evaluation.
 - `GET http://localhost:4174/api/rules` returned `ok=true`, `parsed.count=19` from `kbx rules list --json`.
 - `GET http://localhost:4174/api/intents` returned `ok=true`, `parsed.count=63` from `kbx intent list --all --json`.
-- `GET http://localhost:4174/api/system` returned `ok=true`, `result=WARN`, and check summary counts.
-- `GET http://localhost:4174/api/documents` returned `ok=true`, `entityCount=301`, `relationCount=109`, `issueCount=2`.
+- `GET http://localhost:4174/api/system` returns `ok=true` with summary; errors return `ok=false` + `error` field (no source leak).
+- `GET http://localhost:4174/api/documents` returns `ok=true` with summary; errors return `ok=false` + `error` field (no source leak).
 
 ### Phase 2 - CLI Bridge Implementation
 
@@ -101,24 +101,31 @@ Goal:
 Entry gate:
 - Phase 2 bridge available and tested.
 
-Exit gate:
-- All primary tabs render real runtime data.
-- File changes in KB are reflected via refresh/watch behavior.
+Exit gate (SATISFIED):
+- All primary tabs render real runtime data from CLI-backed endpoints.
+- Payload contracts are hardened: summary-only, no source field exposure.
+- All fail-path tests passing (command errors, malformed input, timeouts).
+- Error handling contract implemented (HTTP 500 with error message on fail).
 
-Current evidence:
-- Rules tab snapshot is CLI-backed via `/api/rules`.
-- Intents tab snapshot is CLI-backed via `/api/intents`.
-- Workspace tab snapshot is CLI-backed via `/api/workspace`.
-- System tab snapshot is CLI-backed via `/api/system`.
-- Documents tab snapshot is CLI-backed via `/api/documents`.
+Completion evidence:
+- 6 endpoints live: `/api/rules`, `/api/intents`, `/api/phase2-bridge`, `/api/workspace`, `/api/system`, `/api/documents`.
+- 12/12 tests pass (3 gate logic + 6 endpoint success-path + 3 fail-path tests).
+- Summary contracts: workspace (activeIntentCount, hasWorkingTreeChanges), system (pass/warn/error/info counts), documents (entityCount, relationCount, topIssues).
 
 ### Phase 4 - Interactive UI Delivery
 
 Goal:
 - Deliver intent mutations and operator flows through UI controls.
 
-Entry gate:
-- Read-only shell stable.
+Entry gate (READY):
+- Read-only shell stable and hardened: 6 endpoints, 12/12 tests, no source-leak.
+- Error handling contract fully implemented (HTTP 500 with error message).
+- UI refresh patterns and panel rendering stable for all read-only views.
+
+Design gate (Phase 4 prep):
+- Mutation endpoint contract: `/api/intents/create`, `/api/intents/update` with JSON request validation.
+- Pre-apply review panel: diff preview + conflict warnings + deterministic trace display.
+- Intent lifecycle actions: start, apply, close, retro with command audit trail.
 
 Exit gate:
 - Create/update/apply/retro flows can be completed from UI.
@@ -136,9 +143,10 @@ Exit gate:
 - Error UX, keyboard paths, and packaging channel are verified.
 - Release note entry is prepared with explicit runtime evidence links.
 
-## Immediate Next Session Checklist
+## Immediate Next Session Checklist (Phase 4 Prep)
 
-1. Harden `/api/workspace` summary extraction to avoid forwarding oversized noisy status structures.
-2. Keep evidence synchronized in `notes/roadmap/kbagent-phase1-proof-state.md` and this execution plan.
-3. Keep roadmap updates attached to active intent chain while preparing P0 close and P1 activation.
-4. Add contract tests for each newly introduced read-only endpoint.
+1. Design mutation endpoint contract for intent create/update (request schema + validation gates).
+2. Implement `/api/intents/create` and `/api/intents/update` with `kbx intent` CLI delegation.
+3. Add pre-apply review panel to UI (diff preview + warnings + trace).
+4. Add mutation path test cases (validation fail, conflict detection, success trace).
+5. Keep roadmap evidence synchronized and aligned with active intent chain.

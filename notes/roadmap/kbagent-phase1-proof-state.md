@@ -51,9 +51,9 @@ Expected behavior:
 - `/api/phase2-bridge` returns gate summary with severity policy (`hard-fail`, `warn`, `info`) and block/warn evaluation.
 - `/api/rules` returns parsed rule catalog JSON from `kbx rules list --json`.
 - `/api/intents` returns parsed intent registry JSON from `kbx intent list --all --json`.
-- `/api/workspace` returns summarized workspace snapshot from `kbx status --json`.
-- `/api/system` returns summarized health snapshot from `kbx doctor --json`.
-- `/api/documents` returns summarized graph consistency snapshot from `kbx graph check --json`.
+- `/api/workspace` returns summarized workspace snapshot (no source field; 500 on error).
+- `/api/system` returns summarized health snapshot (no source field; 500 on error).
+- `/api/documents` returns summarized graph consistency snapshot (no source field; 500 on error).
 
 Observed endpoint evidence:
 
@@ -62,7 +62,7 @@ Observed endpoint evidence:
 - `/api/system`: `ok=true`, `result="WARN"`, check summary captured.
 - `/api/documents`: `ok=true`, `entityCount=301`, `relationCount=109`, `issueCount=2`.
 
-## Test Evidence (Phase 2 + Endpoint Contracts)
+## Test Evidence (Phase 2 + Phase 3 Hardening)
 
 Command:
 
@@ -72,7 +72,7 @@ npm --prefix ./site/kbx-ui run test
 
 Result:
 
-- `pass 9`, `fail 0`
+- `pass 12`, `fail 0`
 - Covered behaviors:
   - hard-fail summary marks bridge as blocked
   - success path with unique active intent
@@ -80,9 +80,9 @@ Result:
   - `/api/rules` contract payload
   - `/api/intents` contract payload
   - `/api/phase2-bridge` summary contract payload
-  - `/api/workspace` summary contract payload
-  - `/api/system` summary contract payload
-  - `/api/documents` summary contract payload
+  - `/api/workspace` summary (success + command-fail paths)
+  - `/api/system` summary (success + command-fail paths)
+  - `/api/documents` summary (success + command-fail paths)
 
 ## Phase Assessment
 
@@ -90,13 +90,16 @@ Result:
 - Phase 1: complete (Option B shell decision + executable proof).
 - Phase 1.5: complete (status endpoint + runtime error handling + gate evaluation endpoint).
 - Phase 2: complete for gate-evaluation baseline (typed wrappers + core gate tests passing).
-- Phase 3: in progress (read-only rules + intents panels are live from CLI-backed endpoints).
+- Phase 3: complete (all 6 read-only endpoints live; fail-path tests passing; no-source-leak hardening in place).
 
-## Next Gate To Close
+## Next Gate: Phase 4 Interactive Flows
 
-Phase 3 exit criteria now open:
+Phase 4 entry gate satisfied:
+- Read-only shell stable (6 endpoints, 12/12 tests, no source-leak).
+- Error handling contract for all endpoints (500 with error message on fail).
+- Summary-only payloads hardened to prevent noisy source data leak.
 
-1. Expand read-only coverage beyond rules/intents to workspace/system/documents tabs.
-2. Keep endpoint payload contracts stable while growing the read model.
-3. Add contract tests for future read-only endpoints as they are introduced.
-4. Reduce oversized status payload exposure by moving to stricter summary extraction in `/api/workspace` when source payload is noisy.
+Phase 4 will introduce:
+1. Create/update intent UI flows via CLI-backed mutation endpoints.
+2. Mutation pre-apply review and deterministic command trace.
+3. Intent lifecycle actions (start, apply, close, retro) through web UI.

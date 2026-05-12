@@ -177,9 +177,29 @@ test('GET /api/workspace returns summary contract', async () => {
     assert.equal(response.status, 200);
 
     const payload = await response.json();
-    assert.equal(payload.source.command, 'kbx status --json');
+    assert.equal(payload.ok, true);
     assert.equal(payload.summary.activeIntentCount, 1);
     assert.equal(typeof payload.summary.hasWorkingTreeChanges, 'boolean');
+  });
+});
+
+test('GET /api/workspace returns error on command fail', async () => {
+  const failRunner = () => Promise.resolve({
+    command: 'kbx status --json',
+    ok: false,
+    exitCode: 1,
+    parsed: null,
+    stdout: '',
+    stderr: 'command failed',
+  });
+
+  await withServer(failRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/workspace`);
+    assert.equal(response.status, 500);
+
+    const payload = await response.json();
+    assert.equal(payload.ok, false);
+    assert.equal(payload.error, 'workspace command failed');
   });
 });
 
@@ -189,9 +209,29 @@ test('GET /api/system returns summary contract', async () => {
     assert.equal(response.status, 200);
 
     const payload = await response.json();
-    assert.equal(payload.source.command, 'kbx doctor --json');
+    assert.equal(payload.ok, true);
     assert.equal(payload.summary.checkSummary.pass >= 1, true);
     assert.equal(payload.summary.result, null);
+  });
+});
+
+test('GET /api/system returns error on command fail', async () => {
+  const failRunner = () => Promise.resolve({
+    command: 'kbx doctor --json',
+    ok: false,
+    exitCode: 1,
+    parsed: null,
+    stdout: '',
+    stderr: 'doctor check failed',
+  });
+
+  await withServer(failRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/system`);
+    assert.equal(response.status, 500);
+
+    const payload = await response.json();
+    assert.equal(payload.ok, false);
+    assert.equal(payload.error, 'system command failed');
   });
 });
 
@@ -201,9 +241,29 @@ test('GET /api/documents returns summary contract', async () => {
     assert.equal(response.status, 200);
 
     const payload = await response.json();
-    assert.equal(payload.source.command, 'kbx graph check --json');
+    assert.equal(payload.ok, true);
     assert.equal(payload.summary.entityCount, 10);
     assert.equal(payload.summary.issueCount, 1);
     assert.equal(payload.summary.topIssues[0].checkId, 'missing-node-reference');
+  });
+});
+
+test('GET /api/documents returns error on command fail', async () => {
+  const failRunner = () => Promise.resolve({
+    command: 'kbx graph check --json',
+    ok: false,
+    exitCode: 1,
+    parsed: null,
+    stdout: '',
+    stderr: 'graph check failed',
+  });
+
+  await withServer(failRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/documents`);
+    assert.equal(response.status, 500);
+
+    const payload = await response.json();
+    assert.equal(payload.ok, false);
+    assert.equal(payload.error, 'documents command failed');
   });
 });

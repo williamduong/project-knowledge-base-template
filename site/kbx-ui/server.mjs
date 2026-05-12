@@ -209,8 +209,13 @@ export function createApp(commandRunner = executeBridgeCommand) {
       timeoutMs: 20000,
     });
 
-    res.status(statusResult.ok ? 200 : 500).json({
-      source: statusResult,
+    if (!statusResult.ok) {
+      res.status(500).json({ ok: false, error: 'workspace command failed', stderr: statusResult.stderr });
+      return;
+    }
+
+    res.status(200).json({
+      ok: true,
       summary: summarizeWorkspace(statusResult),
     });
   });
@@ -221,8 +226,13 @@ export function createApp(commandRunner = executeBridgeCommand) {
       timeoutMs: 20000,
     });
 
-    res.status(doctorResult.ok ? 200 : 500).json({
-      source: doctorResult,
+    if (!doctorResult.ok) {
+      res.status(500).json({ ok: false, error: 'system command failed', stderr: doctorResult.stderr });
+      return;
+    }
+
+    res.status(200).json({
+      ok: true,
       summary: summarizeSystem(doctorResult),
     });
   });
@@ -233,8 +243,13 @@ export function createApp(commandRunner = executeBridgeCommand) {
       timeoutMs: 20000,
     });
 
-    res.status(graphCheckResult.ok ? 200 : 500).json({
-      source: graphCheckResult,
+    if (!graphCheckResult.ok) {
+      res.status(500).json({ ok: false, error: 'documents command failed', stderr: graphCheckResult.stderr });
+      return;
+    }
+
+    res.status(200).json({
+      ok: true,
       summary: summarizeDocuments(graphCheckResult),
     });
   });
