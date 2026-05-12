@@ -55,7 +55,7 @@ See `impact.md` for full details.
 - [x] **Section 5: Default data** — reviewed (❌ major gap)
 - [x] **Section 6: Pipelines** — reviewed (❌ major gap)
 - [x] **Section 7: Rules (D+O)** — reviewed (⚠️ partial — engine exists, content absent)
-- [ ] **Section 8: Master rules** — AX (immutable) + P (process)
+- [x] **Section 8: Master rules** — reviewed (❌ major gap — AX ID collision, P rules unenforced)
 - [ ] **Section 9: Foundation** — setup template, editable form
 
 ## Section Review Log
@@ -190,6 +190,29 @@ See `impact.md` for full details.
 **Decision:**
 - Treat Section 7 as partial alignment: framework/engine is real, but the documented SaaS domain content layer is not yet in source code.
 - Rule engine is safe to expose in UI read-only mode (list registered rules, show violations); SaaS domain rule authoring/enforcement is a separate implementation scope.
+
+### Section 8 — Master Rules AX + P (❌ major gap — AX ID collision, P rules unenforced)
+
+**Matched evidence (✅):**
+- Source has 3 implemented AX-prefixed rules: `KBX-AX003`, `KBX-AX004`, `KBX-AX005` in `src/lib/rules/contract-alignment.js`. These are enforcement rules that verify governance markers exist in contract docs.
+- Source AX003 (deterministic block contract check) conceptually links to doc AX003 (deterministic gate principle).
+- `kbx intent activate` exists; `kbx intent archive` exists; `kbx intent status` and `kbx intent list` all exist in CLI.
+- `src/commands/impact.js` implements impact check; `kbx doctor` checks doc coverage — loosely aligning with doc P004, P005, P008.
+
+**Gaps vs document (❌):**
+- **AX ID collision**: Source `KBX-AX003/AX004/AX005` describe doc-alignment verification rules; doc's `KBX-AX003/AX004/AX005` describe behavioral axioms (deterministic gate, single graph write, human approval). Same IDs, different semantics.
+- Doc AX001 (separation of powers), AX002 (domain agnosticism), AX006 (evidence on every node), AX007 (goals never auto-close) → no corresponding runtime enforcement rules in source.
+- **P rules namespace missing entirely**: No `KBX-P` domain exists in rule engine (registry and rule modules). Source has `KBX-PR` (Principle Alignment) which is a different domain.
+- Doc P001 (one active intent per branch, `verified`) → `activateBacklogIntent` in `src/lib/intent.js` does NOT check existing active intents before activation — no enforcement guard.
+- Doc P003 (goal alignment before activation, `verified`) → no goal-align check in `activateBacklogIntent` or `runActivate`.
+- Doc P006 (retro mandatory before archive, `verified`) → `retro_completed` field not checked in archive flow (no match found in search).
+- Doc P007 (release gate chaos ≤ 50, `planned`) → not implemented.
+- Doc P009 (NL patch normalize, `planned`) → not implemented.
+
+**Decision:**
+- ❌ Major gap: the document's AX/P behavioral rules are architectural principles documented as `verified`, but actual CLI enforcement for most of them is absent or partial.
+- Source AX rules serve a different purpose (contract-doc alignment verification, not behavioral axioms) — naming convergence with document IDs is misleading and should be flagged for v2.9 normalization.
+- Before UI exposes "rule compliance" view, enforce boundary: show only which rules exist in runtime engine; do not imply AX001..AX007 or P001..P009 are all enforced by CLI.
 
 ## Staged Files
 
