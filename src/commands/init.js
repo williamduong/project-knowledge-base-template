@@ -10,6 +10,7 @@ const { generateAdapterFiles, detectIDE } = require('../lib/adapters');
 const { runBootstrap } = require('./bootstrap');
 const { runIndex } = require('./index');
 const { discoverProjects } = require('../lib/project-resolver');
+const { runInterview, getSaasPreset, generateSeedGoals, generateSeedRules, renderSystemMap } = require('../lib/init-interview');
 
 function parseArgs(args) {
   const options = {
@@ -22,6 +23,9 @@ function parseArgs(args) {
     skipBootstrap: false,
     skipIndex: false,
     yes: false,
+    retrofit: false,
+    preset: null, // 'saas' or null
+    skipInterview: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -72,6 +76,19 @@ function parseArgs(args) {
     if (current === '--project') {
       options.projectId = args[index + 1];
       index += 1;
+      continue;
+    }
+    if (current === '--retrofit') {
+      options.retrofit = true;
+      continue;
+    }
+    if (current === '--preset') {
+      options.preset = args[index + 1];
+      index += 1;
+      continue;
+    }
+    if (current === '--skip-interview') {
+      options.skipInterview = true;
       continue;
     }
     throw new Error(`Unknown init option \"${current}\".`);
@@ -172,6 +189,60 @@ function createAgentAndPromptFiles({ workspaceRoot, repoRoot, overwrite = false 
   return created;
 }
 
+/**
+ * Run the onboarding interview (or apply preset) and write seed artifacts:
+ * - contentRoot/.kb/graph/seed-goals.json
+ * - contentRoot/.kb/graph/seed-rules.json
+ * - contentRoot/00-start-here/system-map.md (overwrite placeholder)
+ */
+async function writeOnboardingArtifacts({ contentRoot, projectName, preset, skipInterview, isTTY }) {
+  let answers;
+
+  if (preset === 'saas') {
+    console.log('\nPreset: saas — using SaaS defaults (skipping interview).');
+    answers = getSaasPreset({ projectName });
+  } else if (skipInterview || !isTTY) {
+    // Non-interactive: write minimal seeds with project name only
+    console.log('\nNon-interactive mode: writing minimal seed files (use --preset=saas for full defaults).');
+    answers = {
+      projectName,
+      description: `Knowledge base for ${projectName}.`,
+      team: 'engineering',
+      stack: 'Unknown',
+      infra: 'cloud',
+      goals: [],
+      rules: [],
+    };
+  } else {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    try {
+      answers = await runInterview({ rl, defaults: { projectName } });
+    } finally {
+      rl.close();
+    }
+  }
+
+  // Write seed files
+  const graphDir = path.join(contentRoot, '.kb', 'graph');
+  fs.mkdirSync(graphDir, { recursive: true });
+
+  const goalsPath = path.join(graphDir, 'seed-goals.json');
+  const rulesPath = path.join(graphDir, 'seed-rules.json');
+  fs.writeFileSync(goalsPath, JSON.stringify(generateSeedGoals(answers), null, 2) + '\n', 'utf8');
+  fs.writeFileSync(rulesPath, JSON.stringify(generateSeedRules(answers), null, 2) + '\n', 'utf8');
+  console.log(`Seed goals: ${path.relative(process.cwd(), goalsPath)}`);
+  console.log(`Seed rules: ${path.relative(process.cwd(), rulesPath)}`);
+
+  // Overwrite system-map.md placeholder
+  const systemMapPath = path.join(contentRoot, '00-start-here', 'system-map.md');
+  if (fs.existsSync(systemMapPath)) {
+    fs.writeFileSync(systemMapPath, renderSystemMap(answers), 'utf8');
+    console.log(`System map: ${path.relative(process.cwd(), systemMapPath)}`);
+  }
+
+  return answers;
+}
+
 function printHandoffPrompt({ workspaceRoot, visibleMountPath, detectedIDE, mode }) {
   const adapterFile = detectedIDE === 'vscode' ? 'AGENTS.md' : (detectedIDE.charAt(0).toUpperCase() + detectedIDE.slice(1) + ' adapter');
   console.log('');
@@ -188,6 +259,12 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
   const options = parseArgs(args);
   const workspaceRoot = path.resolve(cwd, options.target);
   const modeProvided = Boolean(options.mode);
+
+  // --retrofit: skip template copy, run interview on existing repo
+  if (options.retrofit) {
+    options.skipBootstrap = true;
+    options.skipIndex = true;
+  }
 
   // Auto-detect mode if not provided
   if (!options.mode) {
@@ -218,7 +295,7 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     }
   }
 
-  if (!isRerun) {
+  if (!isRerun && !options.retrofit) {
     fs.mkdirSync(storagePaths.contentRoot, { recursive: true });
     copyTemplateContent({ sourceRoot: repoRoot, destinationRoot: storagePaths.contentRoot });
 
@@ -228,6 +305,11 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     if (fs.existsSync(nestedGithubPath)) {
       fs.rmSync(nestedGithubPath, { recursive: true, force: true });
     }
+  } else if (options.retrofit) {
+    if (!fs.existsSync(storagePaths.contentRoot)) {
+      throw new Error(`--retrofit requires an existing KB at ${storagePaths.contentRoot}. Run without --retrofit to initialize first.`);
+    }
+    console.log(`Retrofit mode: running onboarding interview on existing KB at ${storagePaths.contentRoot}.`);
   } else {
     console.log('KB content already exists. Running init in refresh mode (no template copy).');
   }
@@ -265,6 +347,20 @@ async function runInit({ args, packageJson, cwd, repoRoot }) {
     renderedRevisionStatePath: storagePaths.renderedRevisionStatePath,
     state,
   });
+
+  // Run onboarding interview on fresh init or --retrofit.
+  // Skip when --yes + no preset (non-interactive CI) or --skip-interview.
+  const shouldInterview = !isRerun || options.retrofit;
+  if (shouldInterview) {
+    const isTTY = Boolean(process.stdin.isTTY && process.stdout.isTTY);
+    await writeOnboardingArtifacts({
+      contentRoot: storagePaths.contentRoot,
+      projectName: options.brand || path.basename(workspaceRoot),
+      preset: options.preset || null,
+      skipInterview: options.skipInterview || options.yes,
+      isTTY,
+    });
+  }
 
   // Write .kbx/project.yaml if not already present (KB-012 deterministic resolution).
   // project_id defaults to --project flag, then --brand, then folder name.
