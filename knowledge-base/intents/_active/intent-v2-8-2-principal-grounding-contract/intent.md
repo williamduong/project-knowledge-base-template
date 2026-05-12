@@ -53,11 +53,7 @@ Immediate conclusion:
 
 ### Step 3 — Gaps Fix Order (Dependency Chain)
 
-**Phase A: UI Refactor (immediate)**
-1. Refactor UI around current runtime truth: intents, status, chaos, doctor, existing mutations, and current bridge responses.
-2. Keep roadmap-only features visually separated as "planned" or remove them from operator-facing flows for now.
-
-**Phase B: Gaps Fix (sequential, one per intent)**
+**Phase A: Gaps Fix (sequential, one intent each — UI depends on this data)**
 1. **Gap 1 → Section 9: Foundation** (onboarding form generator)
    - Blocker: All subsequent KB instances must bootstrap correctly
    - Dependency: None (gating function)
@@ -78,9 +74,9 @@ Immediate conclusion:
    - Dependency: Sections 9, 8, 6 complete
    - Work: Package SaaS-specific seed data → bundle into `kbx init --preset=saas`
 
-**Phase C: Then UI Parity** (after all gaps fixed)
-- Re-audit UI coverage against new runtime surfaces
-- Expose newly stable features in operator flows
+**Phase B: UI Refactor** (after all gaps fixed — data layer is now correct)
+- Refactor UI around runtime truth: intents, status, chaos, doctor, mutations, bridge responses
+- All data displayed reflects real runtime behavior, not placeholder/prototype
 
 ## Plan
 
