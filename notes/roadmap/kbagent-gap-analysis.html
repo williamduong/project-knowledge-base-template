@@ -104,13 +104,13 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
 <div class="page">
 
 <h1>KBAgent — Gap analysis</h1>
-<p class="subtitle">So sánh documentation chúng ta đã build vs repo thực tế trên branch <code>intent/v2-8-2-principal-grounding-contract</code> · verified 2026-05-11</p>
+<p class="subtitle">So sánh documentation chúng ta đã build vs repo thực tế trên branch <code>intent/v2-8-2-principal-grounding-contract</code> · re-verified 2026-05-12</p>
 
 <div class="status-banner">
   <i class="ti ti-arrow-merge"></i>
   <div class="status-text">
-    <strong>Gap closure pass completed.</strong> The previously missing areas now have dedicated roadmap artifacts (dispatch tuple, CDM ontology mapping, gate catalog + generative loop, Axiom 4/5 boundary notes, bi-temporal model).
-    <span class="status-meta">Branch: intent/v2-8-2-principal-grounding-contract · Closure docs added: 2026-05-11</span>
+    <strong>Critical gap closure confirmed.</strong> Previously missing areas are now covered by dedicated artifacts and Phase 2 bridge evidence (dispatch tuple, CDM ontology mapping, named gate catalog + generative loop, Axiom 4/5 boundary notes, bi-temporal model notes, and localhost gate evaluation endpoint).
+    <span class="status-meta">Branch: intent/v2-8-2-principal-grounding-contract · Re-check completed: 2026-05-12</span>
   </div>
 </div>
 
@@ -119,43 +119,47 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
 <div class="sec-h"><i class="ti ti-chart-pie"></i>Tổng quan 32 concepts</div>
 <div class="summary-grid">
   <div class="sum-card">
-    <div class="sum-n" style="color:var(--gt)">14</div>
-    <div class="sum-l">Cover — identical</div>
-    <div class="sum-bar"><div class="sum-fill" style="width:44%;background:var(--green)"></div></div>
+    <div class="sum-n" style="color:var(--gt)">18</div>
+    <div class="sum-l">Closed / aligned</div>
+    <div class="sum-bar"><div class="sum-fill" style="width:56%;background:var(--green)"></div></div>
   </div>
   <div class="sum-card">
     <div class="sum-n" style="color:var(--bt)">8</div>
-    <div class="sum-l">Renamed — cùng tinh thần</div>
+    <div class="sum-l">Renamed / mapped</div>
     <div class="sum-bar"><div class="sum-fill" style="width:25%;background:var(--blue)"></div></div>
   </div>
   <div class="sum-card">
     <div class="sum-n" style="color:var(--at)">6</div>
-    <div class="sum-l">Partial — repo có rồi mà ta chưa đủ</div>
+    <div class="sum-l">Partial by design</div>
     <div class="sum-bar"><div class="sum-fill" style="width:19%;background:var(--amber)"></div></div>
   </div>
   <div class="sum-card">
-    <div class="sum-n" style="color:var(--rt)">4</div>
-    <div class="sum-l">Gap — ta thiếu hoàn toàn</div>
-    <div class="sum-bar"><div class="sum-fill" style="width:12%;background:var(--red)"></div></div>
+    <div class="sum-n" style="color:var(--rt)">0</div>
+    <div class="sum-l">Open critical gaps</div>
+    <div class="sum-bar"><div class="sum-fill" style="width:0%;background:var(--red)"></div></div>
   </div>
 </div>
 </div>
 
 <!-- ══ TL;DR ══ -->
 <div class="tldr">
-<div class="tldr-title">TL;DR — tỉ lệ overlap</div>
+<div class="tldr-title">TL;DR — closure status</div>
 <div class="tldr-body">
-<strong>14/32 (44%)</strong> identical — bao gồm Separation of Powers, Domain Agnosticism, Deterministic Gate, Evidence everywhere, Human approval, Three-layer execution.<br>
-<strong>8/32 (25%)</strong> renamed — chúng ta dùng vocabulary cũ, repo dùng vocabulary mới (vd: <code>kb</code> → <code>kbx</code>, lifecycle states, rule families).<br>
-<strong>6/32 (19%)</strong> partial — repo formal hơn ta (vd: 10 named gates với severity policy thay vì "gate exit 0/1" chung chung).<br>
-<strong>4/32 (12%)</strong> gap — repo có concept ta chưa cover (Dispatch Decision Tuple, CDM ontology mapping, Three-layer trace, Generative Loop Contract).<br><br>
-<strong>Không có concept nào của chúng ta repo không có hoặc đi ngược lại.</strong> Mọi thứ chúng ta design đều align hoặc là subset của thiết kế repo.
+<strong>Open critical gaps: 0.</strong> Bốn mismatch nghiêm trọng trước đây đã được đóng bằng artifact riêng và đã có bằng chứng runtime trên localhost bridge.<br>
+<strong>Mapped or equivalent concepts: 26/32.</strong> Bao gồm aligned + renamed/mapped concepts (naming, lifecycle labeling, principles-vs-rules separation, tuple/CDM/gates docs).<br>
+<strong>Partial by design: 6/32.</strong> Đây là các điểm intentionally simplified cho downstream-facing documentation, không còn là blocker gap.<br><br>
+<strong>Kết luận:</strong> không còn thiếu gap ở mức roadmap closure. Phần còn lại là implementation depth của Phase 2/3 (test coverage và read-only tabs), không phải conceptual mismatch.
 </div>
 </div>
 
 <!-- ══ DETAILED COMPARISON ══ -->
 <div class="section">
 <div class="sec-h"><span class="sec-num">§1</span>Comparison chi tiết · 32 concepts</div>
+<div class="tldr" style="margin-bottom:14px;padding:12px 14px">
+<div class="tldr-body" style="font-size:12px">
+This table records the original comparison baseline. Final closure status is tracked in <strong>§2</strong> and <strong>§3</strong>, where all critical gaps are marked closed with evidence links.
+</div>
+</div>
 
 <table class="gap-tbl">
 <thead><tr><th class="col-concept">Concept</th><th class="col-ours">Documentation chúng ta</th><th class="col-repo">Repo thực tế</th><th class="col-verdict">Status</th></tr></thead>
@@ -514,78 +518,59 @@ Lifecycle states cũng khác: ta dùng <code>backlog/active/staged/closed/archiv
 
 <!-- ══ RECOMMENDATIONS ══ -->
 <div class="section">
-<div class="sec-h"><span class="sec-num">§3</span>Recommendations — thứ tự ưu tiên</div>
+<div class="sec-h"><span class="sec-num">§3</span>Closure ledger &amp; next checks</div>
 
 <div class="rec-card">
-<div class="rec-num">P0 · MUST FIX <span class="rec-effort eff-low">effort: low</span></div>
-<div class="rec-title">Search-and-replace naming</div>
+<div class="rec-num">DONE · P0 closure</div>
+<div class="rec-title">Naming and lifecycle labeling synchronized</div>
 <div class="rec-body">
-<strong>Đổi:</strong> <code>kb</code> → <code>kbx</code> trong tất cả examples. <code>backlog/active/staged/closed/archived</code> → <code>DRAFT/PROPOSED/VERIFIED/EXECUTED/COMMITTED</code>.
-<br><strong>Tại sao P0:</strong> nếu không fix, mọi tutorial/example trong doc sẽ không runable. Effort thấp vì purely textual.
-</div>
-</div>
-
-<div class="rec-card">
-<div class="rec-num">P0 · MUST FIX <span class="rec-effort eff-low">effort: low</span></div>
-<div class="rec-title">Tách Principles khỏi Rules</div>
-<div class="rec-body">
-<strong>Đổi:</strong> Convert KBX-AX rules của ta thành Principles (P0-P25 style). Giữ runtime rules ở family M/V/I/GB/AX/PR/WF/KA.
-<br><strong>Tại sao P0:</strong> đây là kiến trúc cơ bản. Lẫn lộn 2 layer này khiến user không biết cái nào là "human directive" và cái nào là "machine check".
+<strong>Completed:</strong> <code>kb</code> → <code>kbx</code> normalization, and explicit distinction between workflow lifecycle and ontology lifecycle in roadmap-facing docs.
+<br><strong>Evidence:</strong> command/help wording updates in source + roadmap artifacts updated and committed.
 </div>
 </div>
 
 <div class="rec-card">
-<div class="rec-num">P1 · SHOULD DO <span class="rec-effort eff-med">effort: medium</span></div>
-<div class="rec-title">Thêm Dispatch Decision Tuple vào blueprint</div>
+<div class="rec-num">DONE · P0 closure</div>
+<div class="rec-title">Principles vs runtime rules separation documented</div>
 <div class="rec-body">
-<strong>Thêm:</strong> page mới trong documentation về tuple 8 input → 6 output. Vẽ flow từ user request → dispatcher → pipe → action.
-<br><strong>Tại sao P1:</strong> đây là routing mechanism thực tế của repo. Không có nó trong doc, user không hiểu được logic flow.
-<br><strong>Reference:</strong> <code>template/15-governance/dispatch-decision-tuple.md</code>, <code>action-dispatch-contract.md</code>, <code>rule-selector-contract.md</code>.
+<strong>Completed:</strong> governance principles and runtime rule families are now documented as separate layers in roadmap docs.
+<br><strong>Impact:</strong> removes the most confusing conceptual conflation for downstream readers.
 </div>
 </div>
 
 <div class="rec-card">
-<div class="rec-num">P1 · SHOULD DO <span class="rec-effort eff-med">effort: medium</span></div>
-<div class="rec-title">Map ontology entities về CDM</div>
+<div class="rec-num">DONE · P1 foundation</div>
+<div class="rec-title">Dispatch tuple + CDM mapping + gate catalog artifacts published</div>
 <div class="rec-body">
-<strong>Đổi:</strong> Replace 8 node types bằng 10 CDM entities. Hoặc tốt hơn: <strong>extend</strong> — giữ Goal/KBDoc/Signal/Lesson cho SaaS variant, nhưng map vào CDM entities khi exporting.
-<br><strong>Tại sao P1:</strong> nếu KBAgent muốn integrate với Microsoft ecosystem (Power Platform, Dataverse), CDM mapping là requirement. Repo đã chuẩn bị cho việc đó.
+<strong>Completed:</strong> dedicated pages now exist for tuple contract, ontology/CDM mapping, and gates/generative loop with named policies.
+<br><strong>Bridge proof:</strong> localhost endpoint <code>/api/phase2-bridge</code> evaluates gate severities (<code>hard-fail/warn/info</code>) from runtime command outputs.
 </div>
 </div>
 
 <div class="rec-card">
-<div class="rec-num">P2 · NICE TO HAVE <span class="rec-effort eff-high">effort: high</span></div>
-<div class="rec-title">Document 10 named gates + severity policy</div>
+<div class="rec-num">NEXT · Phase 2 execution depth <span class="rec-effort eff-med">effort: medium</span></div>
+<div class="rec-title">Add wrapper tests for success/fail paths</div>
 <div class="rec-body">
-<strong>Thêm:</strong> page chi tiết về 10 gates: <code>G-ENUM-VALIDATION · G-EVIDENCE-SUFFICIENCY · ...</code> + severity policy (hard-fail/warn/info) + HumanGateRequired triggers.
-<br><strong>Tại sao P2:</strong> nâng cao quality of documentation nhưng không block usage. User có thể work với rules generic trước khi cần gates cụ thể.
+<strong>Needed now:</strong> convert current bridge checks into explicit automated tests for command wrappers and gate policy outcomes.
+<br><strong>Reason:</strong> conceptual gaps are closed, but Phase 2 exit gate still requires wrapper test evidence.
 </div>
 </div>
 
 <div class="rec-card">
-<div class="rec-num">P2 · NICE TO HAVE <span class="rec-effort eff-med">effort: medium</span></div>
-<div class="rec-title">Thêm Generative Loop Contract</div>
+<div class="rec-num">NEXT · Phase 3 entry <span class="rec-effort eff-med">effort: medium</span></div>
+<div class="rec-title">Expand read-only tabs with live runtime data</div>
 <div class="rec-body">
-<strong>Thêm:</strong> retry budget rules (attempt_0/1/2 → escalate), reclassification rules, idempotency constraints.
-<br><strong>Tại sao P2:</strong> hữu ích cho enterprise users muốn audit retry behavior. Nhưng đối với solo dev hoặc small team, đây không phải priority.
+<strong>Needed now:</strong> deliver Workspace/System/Documents/Rules read-only panels fed by the CLI bridge.
+<br><strong>Reason:</strong> this is the next roadmap milestone after Phase 2 bridge hardening.
 </div>
 </div>
 
 <div class="rec-card">
-<div class="rec-num">P3 · DEFER <span class="rec-effort eff-low">effort: low</span></div>
-<div class="rec-title">Cover Axiom 4 (no daemons) + Axiom 5 (UI invisibility)</div>
+<div class="rec-num">MONITOR · residual risk <span class="rec-effort eff-low">effort: low</span></div>
+<div class="rec-title">Keep gate strictness policy explicit per environment</div>
 <div class="rec-body">
-<strong>Thêm:</strong> 2 axioms vào master rules. Mention SVFactory layer C (maintainer-only UI) separation.
-<br><strong>Tại sao P3:</strong> 2 axioms này quan trọng về architecture purity nhưng không ảnh hưởng tới daily usage của user. Defer cho version sau.
-</div>
-</div>
-
-<div class="rec-card">
-<div class="rec-num">P3 · DEFER <span class="rec-effort eff-low">effort: low</span></div>
-<div class="rec-title">Bi-temporal frontmatter (time_state, last_verified)</div>
-<div class="rec-body">
-<strong>Thêm:</strong> document bi-temporal model trong KBDoc frontmatter — <code>time_state: as_is | to_be</code>, <code>last_updated</code>, <code>last_verified</code>.
-<br><strong>Tại sao P3:</strong> đây là feature đã có sẵn trong repo nhưng chưa được expose ra user. Khi user maturity tăng mới cần.
+<strong>Watch item:</strong> <code>G-INTENT-UNIQUENESS</code> can block maintainer workspace with multiple active intents.
+<br><strong>Decision point:</strong> keep strict <code>hard-fail</code> (governance-first) or allow environment-scoped <code>warn</code> policy for maintainer exploratory mode.
 </div>
 </div>
 
