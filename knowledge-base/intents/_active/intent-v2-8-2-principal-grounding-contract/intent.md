@@ -4,13 +4,13 @@ mode: full
 lifecycle: active
 created_at: 2026-05-12T07:55:23.898Z
 focus:
-  current: "Review 9 sections of kbagent-complete-doc.html against source code"
+  current: "Convert the 9-section verification into a sequential runtime-vs-target-state execution order"
   last_updated: 2026-05-12
-  next_action: "Complete all 9 verification tasks, document gaps, then refactor UI using HTML design as base"
+  next_action: "Use the final verdict to split immediate UI refactor scope from future-state onboarding/pipeline/rules work"
 change_type: governance
 change_scope: ["knowledge-base/", "site/kbx-ui/src/", "bin/kbx.js"]
 impact_signals: []
-decision_summary: "Establish single source of truth: kbagent-complete-doc.html is the contract. All implementation must match documented architecture before UI refactor. Prevents divergence and ensures design-code alignment."
+decision_summary: "The 9-section review is complete. Sections 1-4 and parts of 7 are usable as runtime-truth inputs for the next UI refactor slice; Sections 5, 6, 8, and 9 remain target-state architecture and must not be presented as implemented behavior."
 review_after: null
 schema_version: 2.7.0-beta.2
 # v1.8+ reserve fields:
@@ -25,18 +25,36 @@ promote_decision_ref: null
 **Goal:** Verify kbagent-complete-doc.html (9 sections) against source code before refactoring giao diện.  
 **Owner:** SVFactory (maintainer gate)  
 **Scope:** Documentation audit + source code validation  
-**Status:**🔄 In progress (verification phase)
+**Status:** ✅ Verification complete; ready for scope split
 
-## Summary
+## Final Verdict
 
-Document-first verification workflow:
-1. Read kbagent-complete-doc.html (9 sections)
-2. Check each section against source code (bridge server, React component, KB docs)
-3. Document findings: ✅ (matches), ⚠️ (partial), ❌ (missing/wrong)
-4. Create checklist of required fixes before UI refactor
-5. Establish truth: HTML document IS the contract
+The 9-section review is complete. The roadmap document remains the design contract, but the runtime truth is materially narrower than the HTML suggests.
 
-**Why:** User detected UI diverged from design. Dangerous to code without confirming what's actually implemented vs what's planned. This prevents more wasted work.
+Immediate conclusion:
+1. Use Sections 1-4 as the base for near-term UI refactor, but only against the currently implemented file-based KB, bridge, and CLI surfaces.
+2. Use Section 7 only in read-only/runtime-engine terms; do not expose SaaS rule content as implemented.
+3. Treat Sections 5, 6, 8, and 9 as target-state architecture until command/runtime parity exists.
+
+## Ordered Execution View
+
+### Step 1 — Safe To Use Now
+- **Section 1: Blueprint** — partial but usable as high-level runtime framing.
+- **Section 2: User flows** — partial but usable if UI follows actual CLI lifecycle, not the HTML lifecycle wording.
+- **Section 3: Components** — partial but usable for surfaces already evidenced in bridge/UI/CLI.
+- **Section 4: Data architecture** — partial but usable only if the UI targets the current mini graph + file store, not Kuzu.
+- **Section 7: Rules (D+O)** — usable only for runtime rule-engine visibility; not for SaaS/domain-rule authoring claims.
+
+### Step 2 — Hold As Target-State
+- **Section 5: Default data** — no shipped SaaS seed bundle.
+- **Section 6: Pipelines** — documented pipeline contract is ahead of the real command surface.
+- **Section 8: Master rules** — AX/P document semantics are not enforced 1:1 in runtime; some IDs collide with different meanings.
+- **Section 9: Foundation** — onboarding form/generator exists only as HTML prototype, not as real `kbx init` runtime behavior.
+
+### Step 3 — Practical Refactor Order
+1. Refactor UI around current runtime truth: intents, status, chaos, doctor, existing mutations, and current bridge responses.
+2. Keep roadmap-only features visually separated as "planned" or remove them from operator-facing flows for now.
+3. After UI parity with runtime, open separate implementation intents for foundation generator, pipeline normalization, rule taxonomy normalization, and seed-data onboarding.
 
 ## Plan
 
