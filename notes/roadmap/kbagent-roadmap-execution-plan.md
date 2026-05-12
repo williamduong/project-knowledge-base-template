@@ -17,6 +17,7 @@ Primary objective:
 - Phase 0 closeout in progress: CLI naming normalization is complete, and roadmap wording now distinguishes workflow lifecycle vs ontology lifecycle plus Principles vs runtime rules. Remaining work is to keep the other roadmap artifacts consistent.
 - Phase 1 bootstrap evidence exists: Option B localhost shell scaffolded at `site/kbx-ui/`; bridge endpoint `/api/version` successfully executes `kbx --version` and returns `2.7.0-beta.2`.
 - Phase 1.5 bridge hardening evidence exists: `/api/status` returns parsed `kbx status --json`, and `/api/phase2-bridge` evaluates deterministic gate policy (`hard-fail/warn/info`) from runtime command outputs.
+- Proof state artifact is published at `notes/roadmap/kbagent-phase1-proof-state.md`.
 
 ## Target State
 
@@ -125,7 +126,7 @@ Exit gate:
 
 ## Immediate Next Session Checklist
 
-1. Reconcile `svfactory/focus.md` with current branch reality and active roadmap priority.
-2. Lock Phase 1 shell decision with a deterministic rationale record.
-3. Create a phase-by-phase evidence table template for runtime verification.
-4. Keep all ongoing roadmap updates attached to `v2-10-v2-10-kbagent-roadmap-gap-p0-alignment` until Phase 1 gate is passed.
+1. Add wrapper tests for bridge command success/fail paths and gate summary behavior.
+2. Record test evidence in `notes/roadmap/kbagent-phase1-proof-state.md` and this execution plan.
+3. Start Phase 3 read-only tab expansion (workspace/system/documents/rules) using CLI-backed endpoints.
+4. Keep roadmap updates attached to active intent chain while preparing P0 close and P1 activation.
