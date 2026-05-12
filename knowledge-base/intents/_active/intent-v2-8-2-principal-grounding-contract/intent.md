@@ -53,30 +53,199 @@ Immediate conclusion:
 
 ### Step 3 — Gaps Fix Order (Dependency Chain)
 
-**Phase A: Gaps Fix (sequential, one intent each — UI depends on this data)**
-1. **Gap 1 → Section 9: Foundation** (onboarding form generator)
-   - Blocker: All subsequent KB instances must bootstrap correctly
-   - Dependency: None (gating function)
-   - Work: Implement real `kbx init` interview pipeline → generate seed-goals.json, seed-rules.json, system-map.md
+**Full gap execution order — sequential, one intent per phase. UI must wait until all phases complete.**
 
-2. **Gap 2 → Section 8: Master Rules** (AX collision, P-rule enforcement)
-   - Blocker: Governance framework must be consistent before exposing rule system
-   - Dependency: Section 9 complete (foundation in place to store rule definitions)
-   - Work: Rename governance verification rules (KBX-GV001-003), implement P001-P009 guards
+---
 
-3. **Gap 3 → Section 6: Pipelines** (CLI parity)
-   - Blocker: Command surface must match declared pipeline contract
-   - Dependency: Section 8 complete (rules available to gate pipeline stages)
-   - Work: Fill command gaps (mutation.js, gate.js, hazard.js) to match P1/P2/P3/P4 contract
+### Phase A — Foundation: Init Interview + Seed Generators
+**Source:** Section 9  
+**Severity:** ❌ major gap  
+**Blocks:** All phases below — every KB instance must bootstrap correctly from init  
+**Depends on:** Nothing (this is the gating function for everything else)
 
-4. **Gap 4 → Section 5: Default Data** (SaaS seed bundle)
-   - Blocker: Content layer depends on all infrastructure stable
-   - Dependency: Sections 9, 8, 6 complete
-   - Work: Package SaaS-specific seed data → bundle into `kbx init --preset=saas`
+Gaps to fix:
+- `kbx init` performs template copy only; no interview pipeline collects project identity, infra stack, goals, rules
+- `src/commands/init.js → runInit()` never calls any prompt/input flow
+- No `seed-goals.json` or `seed-rules.json` generated from user input
+- `knowledge-base/00-start-here/system-map.md` remains generic placeholder post-init
+- `kbx init --retrofit` option is entirely absent
 
-**Phase B: UI Refactor** (after all gaps fixed — data layer is now correct)
-- Refactor UI around runtime truth: intents, status, chaos, doctor, mutations, bridge responses
-- All data displayed reflects real runtime behavior, not placeholder/prototype
+Work:
+- Implement interactive interview in `runInit()`: project name, team, stack, infra, initial goals (x3), initial rules (x3)
+- Generate `.kb/graph/seed-goals.json` and `.kb/graph/seed-rules.json` from interview answers
+- Populate `knowledge-base/00-start-here/system-map.md` with actual answers, not placeholder text
+- Add `--retrofit` flag that skips template copy and runs interview on existing repo
+- Add `--preset=saas` shortcut that pre-fills SaaS-defaults and skips generic questions
+
+---
+
+### Phase B — Rule Taxonomy: AX Collision Fix + P-Rule Enforcement
+**Source:** Section 8  
+**Severity:** ❌ major gap  
+**Blocks:** Phase C (pipeline gate semantics depend on correct rule IDs), Phase G (SaaS rules must not collide)  
+**Depends on:** Phase A complete (foundation stores rule definitions correctly after init)
+
+Gaps to fix:
+- **AX ID collision**: Source `KBX-AX003/AX004/AX005` in `contract-alignment.js` are governance verification rules (check doc markers); but doc AX003/AX004/AX005 are behavioral axioms (deterministic gate, single write point, human approval) — same IDs, different semantics
+- Doc AX001 (separation of powers), AX002 (domain agnosticism), AX006 (evidence on every node), AX007 (goals never auto-close) → zero corresponding enforcement rules in source
+- No `KBX-P` domain exists in registry (`registry.js` defines M/V/I/GB/AX/PR/WF/KA only)
+- `KBX-PR` (Principle Alignment domain) exists but is unrelated to the documented P-rule namespace
+- Doc P001 (one active intent per branch, marked `verified`) → `activateBacklogIntent()` in `src/lib/intent.js` does NOT check for existing active intents before activation
+- Doc P003 (goal alignment before activation, marked `verified`) → no goal-align check anywhere in `runActivate` path
+- Doc P006 (retro mandatory before archive, marked `verified`) → `retro_completed` field not checked in archive flow
+- Doc P007 (release gate chaos ≤ 50), P009 (NL patch normalize) → both marked `planned`, neither implemented
+
+Work:
+- Rename source governance verification rules: `KBX-AX003/AX004/AX005` → `KBX-GV001/GV002/GV003` (add GV domain to registry)
+- Register `KBX-P` domain in `registry.js`
+- Implement P001 guard in `activateBacklogIntent()`: reject activation if another active intent exists on current branch
+- Implement P003 guard: check at least one goal linked before activation is allowed
+- Implement P006 guard: block archive unless `retro_completed: true` is set on intent frontmatter
+- Implement AX001/AX002/AX006/AX007 as new enforcement rules in appropriate rule module
+- Add P007 gate in release flow: block release if chaos score > 50
+- P009 can remain `planned` (NLP scope, defer)
+
+---
+
+### Phase C — Pipeline: CLI Command Parity
+**Source:** Section 6  
+**Severity:** ❌ major gap  
+**Blocks:** Phase D (seed bundle init preset needs `--retrofit` and gate commands to work), Phase E (Retro writer is part of pipeline)  
+**Depends on:** Phase B complete (gate semantics and P-rule guards must be in place before pipeline can enforce them)
+
+Gaps to fix:
+- `kbx intent align` — not in `src/commands/intent.js` subcommands
+- `kbx intent approve` — not in `src/commands/intent.js` (bridge calls it but CLI doesn't expose it)
+- `kbx intent stage` — not in CLI (doc uses `stage` transition; runtime uses `apply` + close/archive, not 1:1)
+- `kbx gate` — no dedicated command; doc defines it as deterministic bundle: `doc:gate + ontology:validate + tests`
+- `kbx intent retro` — no public CLI command; retro as explicit lifecycle step does not exist
+- `kbx impact` is not auto-called as hard pre-apply gate (doc says `impact:check` runs before every apply)
+- `kbx init --retrofit` — absent (also in Phase A, but pipeline contract depends on it too)
+- P4 release gate: `kbx gate --release` with chaos threshold check not implemented; `:Release`/`:INCLUDED_IN` graph edges not written by release flow
+- Bridge mutation calls `intent update`, `intent approve`, `intent apply-preview` — these routes exist in bridge but the CLI subcommands they proxy are not confirmed in `src/commands/intent.js`
+
+Work:
+- Add `kbx intent align`, `approve`, `stage` subcommands to `src/commands/intent.js`
+- Implement `kbx gate` command: runs `doc:gate`, `ontology:validate`, test suite in sequence; exits non-zero if any fail
+- Implement `kbx intent retro` subcommand: prompts for retro notes, sets `retro_completed: true` on intent frontmatter, writes retro record
+- Wire `kbx impact` as mandatory pre-apply check in `runApply()`: reject apply if impact check fails
+- Add `kbx gate --release` flag: runs standard gate + chaos score check (block if > 50)
+- Verify/fix bridge proxy routes (`intent update`, `approve`, `apply-preview`) against actual CLI subcommand surface
+- Coordinate with Phase A to add `--retrofit` as shared init option
+
+---
+
+### Phase D — Seed Bundle: SaaS Defaults + Preset
+**Source:** Section 5  
+**Severity:** ❌ major gap  
+**Blocks:** Phase G (SaaS domain rules need their seed goals/intents as fixtures), Phase H UI (goal/intent overview depends on populated seed data)  
+**Depends on:** Phase A (init pipeline must exist to receive preset flag), Phase B (rule IDs must be normalized before writing seed rule IDs), Phase C (pipeline commands must exist to process seed intents)
+
+Gaps to fix:
+- No SaaS seed goals (`GOAL-001..004`) shipped in template
+- No SaaS seed intents (`INT-SAAS-001`, `INT-SAAS-002`) shipped in template
+- No SaaS default rule IDs in template (doc claims specific KBX-S/B/T/D/O IDs as defaults)
+- Template ships generic `unverified`/`design-only` placeholders, not populated SaaS objects
+- `kbx init --retrofit` + scan-based starter-intent suggestion not implemented
+
+Work:
+- Author `template/seed/saas/goals.json`: GOAL-001 (ops visibility), GOAL-002 (change safety), GOAL-003 (onboarding), GOAL-004 (tech debt)
+- Author `template/seed/saas/intents.json`: INT-SAAS-001 (init intent), INT-SAAS-002 (first retro intent)
+- Author `template/seed/saas/rules.json`: KBX-S001/S002/S003, KBX-B001/B002, KBX-T001 (stubs referencing Phase G for full implementation)
+- Wire `kbx init --preset=saas` to copy seed bundle into `.kb/graph/` on init
+- Implement starter-intent suggestion in `--retrofit` path: scan repo, suggest INT-SAAS-001 if no active intent found
+
+---
+
+### Phase E — Data Architecture: Graph Tier 2, Retro Writer, Evidence Metadata
+**Source:** Sections 1, 3, 4  
+**Severity:** ⚠️ partial (engine exists, architecture is behind)  
+**Blocks:** Phase G (SaaS rules KBX-O003/O004 need `:Code.fan_in` and `:IMPLEMENTS` edges), Phase H UI (graph view needs real node types)  
+**Depends on:** Phase C complete (Retro writer is part of pipeline; needs `kbx intent retro` to exist first)
+
+Gaps to fix:
+- Current graph (`src/lib/graph.js`) is mini file-based model with 3 entity kinds: `doc`, `intent`, `release-entry`; doc expects Kuzu Tier 2 with 8 node types and 8 edge types
+- Missing node types: `:Goal`, `:Rule`, `:Code`, `:Signal`, `:Release`, `:Lesson` (only `:KBDoc` and `:Intent` partially present)
+- Missing edge types: `:IMPLEMENTS`, `:INCLUDED_IN`, `:TRIGGERED_BY`, `:CLOSES`, `:LESSONS_FROM`, `:ALIGNED_TO`
+- Evidence metadata contract (`source`, `confidence`, `timestamp`, `linked_intent_id`, `version`, `repo_origin`) not uniformly applied to graph nodes/edges
+- Retro as exclusive graph writer (`retro:write`) has no explicit runtime module; no separation from CLI lifecycle commands
+- `chaos-history.ndjson` expected by doc; runtime uses `chaos-history.md` (Markdown append, not NDJSON)
+- No confirmed `checkpoints.json` store (checkpoint events flow through focus/state, no standalone file)
+- Goals engine, signal bus, infra adapter, LLM adapter — not implemented as dedicated runtime modules
+
+Work (pragmatic scope, not full Kuzu migration):
+- Extend `src/lib/graph.js` node schema to include `:Goal`, `:Rule`, `:Code`, `:Lesson`, `:Signal`, `:Release` node kinds
+- Extend edge schema with `:IMPLEMENTS`, `:ALIGNED_TO`, `:CLOSES`, `:INCLUDED_IN`, `:TRIGGERED_BY`, `:LESSONS_FROM`
+- Add `evidence` metadata block (source, confidence, timestamp, linked_intent_id, version) to node/edge write contracts
+- Implement `retro:write` as explicit graph write step inside `kbx intent retro` (Phase C): writes `:Lesson` node + `:LESSONS_FROM` edge
+- Migrate `chaos-history.md` append to `chaos-history.ndjson` NDJSON format; write migration script for existing `.md` entries
+- Add `checkpoints.json` as checkpoint event store; wire `kbx intent checkpoint` to append to it
+- Goal engine, signal bus, LLM adapter: stub modules with no-op implementations to establish module boundary; mark `status: planned`
+
+---
+
+### Phase F — CLI Surface: Bridge Command Mismatch + Impact Hard Gate
+**Source:** Section 2  
+**Severity:** ⚠️ partial  
+**Blocks:** Phase H UI (bridge must proxy real commands or UI shows phantom behavior)  
+**Depends on:** Phase C complete (bridge proxies must point to real CLI subcommands added in Phase C), Phase E (graph nodes must exist so impact check can evaluate them)
+
+Gaps to fix:
+- Bridge calls `intent update`, `intent approve`, `intent apply-preview` but these are not confirmed as CLI subcommands in `src/commands/intent.js`
+- `kbx intent apply` does not enforce `impact:check` as hard pre-apply gate (implemented in Phase C as well, but bridge proxy behavior must be verified)
+- Documented F3 operator UX (dashboard prompt-copy + Copilot handoff) not implemented in localhost UI
+- Flow wording: doc uses `stage` transition; CLI uses `apply + close/archive`; bridge may be using doc-semantics while CLI uses runtime-semantics
+- `kbx init --retrofit` (also in Phase A/C, but bridge must expose it too)
+
+Work:
+- Audit all bridge proxy calls in `site/kbx-ui/server.mjs` against actual CLI subcommands (post Phase C additions)
+- Fix or remove any bridge routes that proxy non-existent CLI commands
+- Verify `apply-preview` route correctly calls a dry-run path; implement dry-run if absent
+- Add bridge route for `kbx gate` (added in Phase C)
+- Add bridge route for `kbx intent retro` (added in Phase C)
+- F3 Copilot handoff UX: implement prompt-copy button in dashboard that formats current intent state as a Copilot prompt block
+
+---
+
+### Phase G — SaaS Domain Rules: KBX-S/B/T/D/O Content Layer
+**Source:** Section 7  
+**Severity:** ⚠️ partial (engine works; SaaS rule content entirely absent)  
+**Blocks:** Phase H UI (rule compliance view needs real SaaS rules to display)  
+**Depends on:** Phase B (rule ID namespace must be clean), Phase D (seed goals/intents that rules reference must exist), Phase E (KBX-O003/O004 require `:Code.fan_in` and `:IMPLEMENTS` graph tracking)
+
+Gaps to fix:
+- All 9 SaaS domain rules (KBX-S001..S003, KBX-B001..B002, KBX-T001, KBX-D001..D002) exist only in HTML doc with status `planned`/`draft`; no runtime module
+- KBX-O001 (lesson→rule promotion after 3× pattern): needs retro:write pipeline + rule lifecycle (draft→active→retired); neither exists
+- KBX-O002 (chaos spike → suggest fix intent): partial — `buildMaintainIntentProposal` exists in `maintain.js` but fires on debt/entropy index, not single-dimension spike > 8 as documented
+- KBX-O003 (fan_in > 30 → structural review intent): requires `:Code.fan_in` graph node attribute; not in current graph
+- KBX-O004 (stale SOT doc → review intent): requires `:IMPLEMENTS` edge age tracking; not in current graph
+
+Work:
+- Register KBX-S domain in `registry.js`; register KBX-B, KBX-T, KBX-D domains
+- Implement `src/lib/rules/saas-domain.js` rule module with KBX-S001/S002/S003, KBX-B001/B002, KBX-T001, KBX-D001/D002 as stub rules with correct IDs and metadata; mark `status: draft`
+- Fix KBX-O002 trigger condition: change from debt/entropy index to single-dimension spike detection (delta > 8 between last two `chaos-history.ndjson` snapshots)
+- Implement KBX-O001 promotion trigger: after 3 lessons with same `pattern_id` tag in `chaos-history.ndjson`, auto-propose rule draft via `kbx intent create --type=rule-promotion`
+- Implement KBX-O003: add `fan_in` tracking to `:Code` node in graph (Phase E dependency); write rule that checks threshold
+- Implement KBX-O004: add edge age tracking for `:IMPLEMENTS`; write rule that detects stale SOT docs
+
+---
+
+### Phase H — UI Refactor (Unblock After All Phases Complete)
+**Source:** Sections 1–4, 7 (runtime-safe parts)  
+**Severity:** N/A — this is the consuming layer  
+**Blocks:** Nothing (final deliverable)  
+**Depends on:** Phases A–G complete (all data, commands, rules, and bridge routes must be real before UI consumes them)
+
+Work:
+- Replace all placeholder/prototype UI sections with views backed by real bridge endpoints
+- Goals view: backed by `.kb/graph/seed-goals.json` + goal nodes in graph
+- Intent lifecycle view: backed by real `intent align/approve/stage/retro` subcommands (Phase C)
+- Rule compliance view: backed by runtime rule engine with KBX-GV + KBX-P + KBX-S/B/T/D/O domains (Phases B + G)
+- Graph explorer view: backed by extended node/edge schema (Phase E)
+- Foundation/onboarding page: remove HTML prototype; replace with `kbx init` interview output preview
+- Chaos history view: backed by `chaos-history.ndjson` (Phase E migration)
+- Retro view: backed by `kbx intent retro` command + `:Lesson` graph nodes (Phases C + E)
+- F3 Copilot handoff: prompt-copy button backed by bridge route (Phase F)
 
 ## Plan
 
