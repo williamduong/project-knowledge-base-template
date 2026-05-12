@@ -65,6 +65,11 @@ function parseArgs(args) {
     checkpointNote: null,
     goals: [],
     stageState: null,
+    title: null,
+    focusValue: null,
+    nextActionValue: null,
+    decisionSummaryValue: null,
+    stateValue: null,
   };
 
   const setListScope = (scope) => {
@@ -94,7 +99,41 @@ function parseArgs(args) {
       continue;
     }
     if (arg.startsWith('--title=')) {
-      options.extractTitle = arg.slice('--title='.length).trim();
+      options.title = arg.slice('--title='.length).trim();
+      options.extractTitle = options.title;
+      continue;
+    }
+    if (arg === '--title') {
+      options.title = String(args[i + 1] || '').trim();
+      options.extractTitle = options.title;
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--focus=')) {
+      options.focusValue = arg.slice('--focus='.length).trim();
+      continue;
+    }
+    if (arg === '--focus') {
+      options.focusValue = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--next-action=')) {
+      options.nextActionValue = arg.slice('--next-action='.length).trim();
+      continue;
+    }
+    if (arg === '--next-action') {
+      options.nextActionValue = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--decision-summary=')) {
+      options.decisionSummaryValue = arg.slice('--decision-summary='.length).trim();
+      continue;
+    }
+    if (arg === '--decision-summary') {
+      options.decisionSummaryValue = String(args[i + 1] || '').trim();
+      i += 1;
       continue;
     }
     if (arg.startsWith('--type=')) {
@@ -132,7 +171,12 @@ function parseArgs(args) {
       continue;
     }
     if (arg.startsWith('--state=')) {
-      options.stageState = arg.slice('--state='.length).trim();
+      options.stateValue = arg.slice('--state='.length).trim();
+      continue;
+    }
+    if (arg === '--state') {
+      options.stateValue = String(args[i + 1] || '').trim();
+      i += 1;
       continue;
     }
     if (arg.startsWith('--release=')) {
@@ -225,6 +269,26 @@ function parseArgs(args) {
     }
     options.intentId = rest[1];
     if (args && args.includes('--release')) options.release = true;
+  } else if (options.sub === 'apply-preview') {
+    if (rest.length < 2) {
+      throw new Error('kbx intent apply-preview requires an intent ID.');
+    }
+    options.intentId = rest[1];
+  } else if (options.sub === 'update') {
+    if (rest.length < 2) {
+      throw new Error('kbx intent update requires an intent ID.');
+    }
+    options.intentId = rest[1];
+    const hasAnyField = [
+      options.title,
+      options.focusValue,
+      options.nextActionValue,
+      options.decisionSummaryValue,
+      options.stateValue,
+    ].some((value) => typeof value === 'string' && value.trim().length > 0);
+    if (!hasAnyField) {
+      throw new Error('kbx intent update requires at least one of: --title, --focus, --next-action, --decision-summary, --state.');
+    }
   } else if (options.sub === 'help') {
     // no-op here, handled in runIntent
   } else if (options.sub === 'suggest-lessons') {
@@ -259,6 +323,7 @@ function parseArgs(args) {
       throw new Error('kbx intent stage requires an intent ID.');
     }
     options.intentId = rest[1];
+    options.stageState = options.stateValue;
     if (options.stageState && !['staged', 'ready'].includes(options.stageState)) {
       throw new Error('kbx intent stage --state supports only: staged|ready');
     }
@@ -268,7 +333,7 @@ function parseArgs(args) {
     }
     options.intentId = rest[1];
   } else {
-    throw new Error(`kbx intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, align, approve, stage, retro, cleanup, close, cancel, archive, apply, suggest-lessons, extract, checkpoint`);
+    throw new Error(`kbx intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, update, align, approve, stage, retro, cleanup, close, cancel, archive, apply, apply-preview, suggest-lessons, extract, checkpoint`);
   }
 
   return options;
@@ -1171,6 +1236,134 @@ async function runRetro(ctx, options) {
   console.log(`Retro completed for "${record.id}".`);
 }
 
+async function runUpdate(ctx, options) {
+  const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
+  if (!record || !record.metaPath) {
+    throw new Error(`Intent "${options.intentId}" not found across backlog, active, closed, or archive state.`);
+  }
+  if (record.scope !== 'active') {
+    throw new Error(`kbx intent update requires an active intent. Current scope: ${record.scope}`);
+  }
+
+  const updatedFields = [];
+  const updated = updateIntentRecordMeta(record, (meta) => {
+    if (options.title) {
+      meta.title = options.title;
+      updatedFields.push('title');
+    }
+
+    const hasFocusUpdate = Boolean(options.focusValue) || Boolean(options.nextActionValue);
+    if (hasFocusUpdate) {
+      const focus = meta.focus && typeof meta.focus === 'object' ? { ...meta.focus } : {};
+      if (options.focusValue) {
+        focus.current = options.focusValue;
+        updatedFields.push('focus');
+      }
+      if (options.nextActionValue) {
+        focus.next_action = options.nextActionValue;
+        updatedFields.push('next_action');
+      }
+      focus.last_updated = new Date().toISOString().slice(0, 10);
+      meta.focus = focus;
+    }
+
+    if (options.decisionSummaryValue) {
+      meta.decision_summary = options.decisionSummaryValue;
+      updatedFields.push('decision_summary');
+    }
+
+    if (options.stateValue) {
+      meta.state = options.stateValue;
+      updatedFields.push('state');
+    }
+
+    meta.updated_at = new Date().toISOString();
+    return meta;
+  });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kbx intent update',
+      intent_id: record.id,
+      updated_fields: updatedFields,
+      state: updated.state || null,
+      status: 'updated',
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Intent "${record.id}" updated: ${updatedFields.join(', ') || 'metadata'}.`);
+}
+
+async function runApplyPreview(ctx, options) {
+  const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
+  if (!record || !record.metaPath) {
+    throw new Error(`Intent "${options.intentId}" not found across backlog, active, closed, or archive state.`);
+  }
+  if (record.scope !== 'active') {
+    throw new Error(`kbx intent apply-preview requires an active intent. Current scope: ${record.scope}`);
+  }
+
+  const intentId = record.id;
+  const meta = readIntentMeta(ctx.contentRoot, intentId);
+  const staged = listStagedFiles(ctx.contentRoot, intentId);
+  const pathIssues = validateStagedFilePaths(staged);
+  const classified = staged.map((file) => ({
+    file,
+    op: classifyStagedFile(ctx.contentRoot, intentId, file),
+  }));
+
+  let conflictSummary = null;
+  try {
+    conflictSummary = analyzeIntentConflicts(ctx.contentRoot, intentId);
+  } catch {
+    conflictSummary = null;
+  }
+
+  const warnings = [];
+  if (!meta.decision_summary || meta.decision_summary === '') {
+    warnings.push({ level: 'warn', message: 'decision_summary is empty.' });
+  }
+  for (const issue of pathIssues) {
+    warnings.push({ level: 'warn', message: `${issue.file}: ${issue.issue}` });
+  }
+  if (conflictSummary && conflictSummary.conflict_count > 0) {
+    warnings.push({
+      level: 'warn',
+      message: `${conflictSummary.conflict_count} potential overlap(s) detected with other active intents.`,
+    });
+  }
+
+  const payload = {
+    command: 'kbx intent apply-preview',
+    intent_id: intentId,
+    files_changed: classified.length,
+    insertions: 0,
+    deletions: 0,
+    files: classified,
+    warnings,
+    conflict_summary: conflictSummary,
+    status: 'preview',
+  };
+
+  if (options.json) {
+    console.log(JSON.stringify(payload, null, 2));
+    return;
+  }
+
+  console.log(`Apply preview for "${intentId}": ${classified.length} file(s).`);
+  for (const file of classified) {
+    const prefix = file.op === 'new' ? '+' : '~';
+    console.log(`  ${prefix} ${file.file}`);
+  }
+  if (warnings.length > 0) {
+    console.log('Warnings:');
+    for (const w of warnings) {
+      console.log(`  - ${w.message}`);
+    }
+  }
+}
+
 async function runArchive(ctx, options) {
   const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
   if (!record) {
@@ -1640,6 +1833,8 @@ async function runIntent({ args, cwd }) {
     await runList(ctx, options);
   } else if (options.sub === 'focus') {
     await runFocus(ctx, options);
+  } else if (options.sub === 'update') {
+    await runUpdate(ctx, options);
   } else if (options.sub === 'align') {
     await runAlign(ctx, options);
   } else if (options.sub === 'approve') {
@@ -1656,6 +1851,8 @@ async function runIntent({ args, cwd }) {
     await runArchive(ctx, options);
   } else if (options.sub === 'apply') {
     await runApply(ctx, options, cwd);
+  } else if (options.sub === 'apply-preview') {
+    await runApplyPreview(ctx, options);
   } else if (options.sub === 'suggest-lessons') {
     await runSuggestLessons(ctx, options);
   } else if (options.sub === 'cleanup') {
@@ -1677,12 +1874,14 @@ function printHelp() {
   console.log('  kbx intent status [<id-or-slug>] [--json]');
   console.log('  kbx intent list [--backlog|--closed|--archived|--all] [--json]');
   console.log('  kbx intent focus <id> [--current="..."] [--next="..."] [--date=YYYY-MM-DD] [--json]');
+  console.log('  kbx intent update <id> [--title="..."] [--focus="..."] [--next-action="..."] [--decision-summary="..."] [--state="..."] [--json]');
   console.log('  kbx intent align <id> --goal="..." [--goal="..."] [--json]');
   console.log('  kbx intent approve <id> [--note="..."] [--json]');
   console.log('  kbx intent stage <id> [--state=staged|ready] [--json]');
   console.log('  kbx intent retro <id> [--note="..."] [--json]');
   console.log('  kbx intent cleanup [--stale] [--aged] [--json]');
   console.log('  kbx intent apply <id> [--release] [--yes] [--json]');
+  console.log('  kbx intent apply-preview <id> [--json]');
   console.log('  kbx intent close <id> --type=released --release=vX.Y.Z [--json]');
   console.log('  kbx intent close <id> --type=dropped --reason="..." [--json]');
   console.log('  kbx intent cancel <id> [--yes] [--json]');
@@ -1704,6 +1903,7 @@ function printHelp() {
   console.log('  list            List intents by scope. Default scope is active only.');
   console.log('                  Flags: --backlog, --closed, --archived, --all');
   console.log('  focus           Update focus block fields on an active intent.');
+  console.log('  update          Update active intent metadata fields used by bridge mutation endpoints.');
   console.log('  align           Attach one or more linked goals to intent metadata (P003 alignment).');
   console.log('  approve         Mark an active intent as approved and timestamp approval.');
   console.log('  stage           Transition an approved intent into staged/ready state.');
@@ -1716,6 +1916,7 @@ function printHelp() {
   console.log('                  Builds apply-record.json and keeps the intent active until explicit close.');
   console.log('                  --release  Trigger release pipeline after apply (apply must complete first).');
   console.log('                  --yes      Skip confirmation prompt.');
+  console.log('  apply-preview   Show dry-run summary for staged files and warnings; no mutations.');
   console.log('  close           Move an active intent into _closed/released or _closed/dropped.');
   console.log('  cancel          Deprecated alias for close --type=dropped. Keeps history instead of deleting.');
   console.log('  archive         Move an active or closed intent workspace into _archive/.');

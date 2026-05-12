@@ -1040,6 +1040,30 @@ test('intent parseArgs: apply with --release flag', () => {
   assert.equal(o.release, true);
 });
 
+test('intent parseArgs: update accepts bridge mutation flags', () => {
+  const o = parseArgs([
+    'update', 'my-intent',
+    '--title', 'New title',
+    '--focus', 'Current focus',
+    '--next-action', 'Next action',
+    '--decision-summary', 'Decision summary',
+    '--state', 'staged',
+  ]);
+  assert.equal(o.sub, 'update');
+  assert.equal(o.intentId, 'my-intent');
+  assert.equal(o.title, 'New title');
+  assert.equal(o.focusValue, 'Current focus');
+  assert.equal(o.nextActionValue, 'Next action');
+  assert.equal(o.decisionSummaryValue, 'Decision summary');
+  assert.equal(o.stateValue, 'staged');
+});
+
+test('intent parseArgs: apply-preview with id', () => {
+  const o = parseArgs(['apply-preview', 'my-intent']);
+  assert.equal(o.sub, 'apply-preview');
+  assert.equal(o.intentId, 'my-intent');
+});
+
 test('intent parseArgs: apply without id throws', () => {
   assert.throws(() => parseArgs(['apply']), /requires an intent ID/);
 });
@@ -1111,6 +1135,56 @@ test('runIntent align/approve/stage/retro: transitions intent workflow metadata'
   assert.equal(meta.approved, true);
   assert.equal(meta.state, 'ready');
   assert.equal(meta.retro_completed, true);
+});
+
+test('runIntent update: updates bridge-facing fields in active intent', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'update-intent', mode: 'quick', changeType: 'docs' });
+
+  await captureConsole(() => runIntent({
+    args: [
+      'update',
+      'update-intent',
+      '--title', 'Updated Title',
+      '--focus', 'Focus Value',
+      '--next-action', 'Next Value',
+      '--decision-summary', 'Decision Value',
+      '--state', 'staged',
+      '--json',
+    ],
+    cwd: root,
+  }));
+
+  const meta = readIntentMeta(contentRoot, 'update-intent');
+  assert.equal(meta.title, 'Updated Title');
+  assert.equal(meta.focus.current, 'Focus Value');
+  assert.equal(meta.focus.next_action, 'Next Value');
+  assert.equal(meta.decision_summary, 'Decision Value');
+  assert.equal(meta.state, 'staged');
+});
+
+test('runIntent apply-preview: returns preview structure for staged files', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'preview-intent', mode: 'quick', changeType: 'docs' });
+
+  const pcDir = proposedChangesPath(contentRoot, 'preview-intent');
+  const fileDir = path.join(pcDir, 'template', '15-governance');
+  fs.mkdirSync(fileDir, { recursive: true });
+  fs.writeFileSync(path.join(fileDir, 'preview.md'), '# Preview\n', 'utf8');
+
+  const captured = await captureConsole(() => runIntent({
+    args: ['apply-preview', 'preview-intent', '--json'],
+    cwd: root,
+  }));
+
+  const parsed = JSON.parse(captured.stdout);
+  assert.equal(parsed.command, 'kbx intent apply-preview');
+  assert.equal(parsed.intent_id, 'preview-intent');
+  assert.equal(parsed.files_changed, 1);
+  assert.ok(Array.isArray(parsed.files));
+  assert.ok(Array.isArray(parsed.warnings));
 });
 
 test('runIntent list: respects v2.4 scope flags', async () => {
