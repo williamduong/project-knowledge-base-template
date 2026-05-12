@@ -254,3 +254,39 @@ debtPressure: 15
 coverageGap: 0
 cognitiveLoad: 15
 instability: 0
+
+---
+score: 63.4
+level: unstable
+structural_reduction: 0
+coverage_reduction: 0
+testing_reduction: 15
+intent_reduction: 6
+release_reduction: 10
+cognitive_reduction: 5.6
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-12T01:32:02.576Z
+structural: 0
+debtPressure: 15
+coverageGap: 0
+cognitiveLoad: 6
+instability: 10
+
+---
+score: 64.2
+level: unstable
+structural_reduction: 0
+coverage_reduction: 0
+testing_reduction: 15
+intent_reduction: 6
+release_reduction: 10
+cognitive_reduction: 4.8
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-12T01:35:34.792Z
+structural: 0
+debtPressure: 15
+coverageGap: 0
+cognitiveLoad: 6
+instability: 10

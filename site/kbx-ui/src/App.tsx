@@ -31,34 +31,77 @@ type InteractionModel = {
   writePath: string;
 };
 
+type GateSeverity = 'hard-fail' | 'warn' | 'info';
+
+type Phase2Gate = {
+  gate: string;
+  severity: GateSeverity;
+  command: string;
+  ok: boolean;
+  detail: string;
+};
+
+type Phase2BridgeResponse = {
+  phase: string;
+  checkedAt: string;
+  summary: {
+    pass: number;
+    warn: number;
+    fail: number;
+    blocked: boolean;
+  };
+  gates: Phase2Gate[];
+};
+
 export default function App() {
   const [version, setVersion] = useState<VersionResponse | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [interaction, setInteraction] = useState<InteractionModel | null>(null);
+  const [phase2, setPhase2] = useState<Phase2BridgeResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [versionResponse, statusResponse, interactionResponse] = await Promise.all([
-          fetch('/api/version').then((response) => response.json() as Promise<VersionResponse>),
-          fetch('/api/status').then((response) => response.json() as Promise<StatusResponse>),
-          fetch('/api/interaction-model').then((response) => response.json() as Promise<InteractionModel>),
-        ]);
+  async function loadAll() {
+    setError(null);
 
-        setVersion(versionResponse);
-        setStatus(statusResponse);
-        setInteraction(interactionResponse);
-      } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : String(loadError));
-      } finally {
-        setLoading(false);
-      }
+    const [versionResponse, statusResponse, interactionResponse, phase2Response] = await Promise.all([
+      fetch('/api/version').then((response) => response.json() as Promise<VersionResponse>),
+      fetch('/api/status').then((response) => response.json() as Promise<StatusResponse>),
+      fetch('/api/interaction-model').then((response) => response.json() as Promise<InteractionModel>),
+      fetch('/api/phase2-bridge').then((response) => response.json() as Promise<Phase2BridgeResponse>),
+    ]);
+
+    setVersion(versionResponse);
+    setStatus(statusResponse);
+    setInteraction(interactionResponse);
+    setPhase2(phase2Response);
+  }
+
+  async function initialLoad() {
+    try {
+      await loadAll();
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : String(loadError));
+    } finally {
+      setLoading(false);
     }
+  }
 
-    void load();
+  useEffect(() => {
+    void initialLoad();
   }, []);
+
+  async function onRefresh() {
+    setRefreshing(true);
+    try {
+      await loadAll();
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : String(loadError));
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   return (
     <main className="app-shell">
@@ -111,6 +154,47 @@ export default function App() {
               <li><strong>Web:</strong> {interaction.web}</li>
               <li><strong>Write path:</strong> {interaction.writePath}</li>
             </ul>
+          )}
+        </article>
+
+        <article className="panel panel-wide">
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">Phase 2 gate evaluation</p>
+              <h2>Deterministic bridge gates</h2>
+            </div>
+            <button className="refresh-btn" type="button" onClick={onRefresh} disabled={refreshing || loading}>
+              {refreshing ? 'Refreshing...' : 'Refresh gates'}
+            </button>
+          </div>
+
+          {loading && <p className="muted">Evaluating gate policy...</p>}
+
+          {!loading && phase2 && (
+            <>
+              <p className={phase2.summary.blocked ? 'status error' : 'status ok'}>
+                {phase2.summary.blocked ? 'Blocked by hard-fail gate' : 'Phase 2 gates pass'}
+              </p>
+
+              <p className="meta gate-summary">
+                pass {phase2.summary.pass} · warn {phase2.summary.warn} · fail {phase2.summary.fail}
+                {' '}· checked {new Date(phase2.checkedAt).toLocaleString()}
+              </p>
+
+              <div className="gate-list">
+                {phase2.gates.map((gate) => (
+                  <div className="gate-row" key={gate.gate}>
+                    <div className="gate-head">
+                      <strong>{gate.gate}</strong>
+                      <span className={`gate-severity ${gate.severity}`}>{gate.severity}</span>
+                      <span className={`gate-result ${gate.ok ? 'ok' : 'fail'}`}>{gate.ok ? 'PASS' : 'FAIL'}</span>
+                    </div>
+                    <p>{gate.detail}</p>
+                    <p className="meta">{gate.command}</p>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </article>
       </section>
