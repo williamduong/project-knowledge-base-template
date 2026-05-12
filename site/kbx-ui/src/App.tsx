@@ -129,6 +129,24 @@ type Phase2BridgeResponse = {
   gates: Phase2Gate[];
 };
 
+type MutationResult = {
+  ok: boolean;
+  result?: unknown;
+  error?: string;
+};
+
+type ApplyPreviewResult = {
+  ok: boolean;
+  diff?: {
+    files_changed?: number;
+    insertions?: number;
+    deletions?: number;
+    files?: string[];
+  };
+  warnings?: Array<{ level?: string; message?: string }>;
+  error?: string;
+};
+
 export default function App() {
   const [version, setVersion] = useState<VersionResponse | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -144,14 +162,32 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   // Phase 4 mutation state
+  const [selectedIntentId, setSelectedIntentId] = useState('');
   const [createFormData, setCreateFormData] = useState({
     title: '',
     focus: '',
     next_action: '',
     decision_summary: '',
   });
-  const [createResult, setCreateResult] = useState<{ok: boolean; result?: any; error?: string} | null>(null);
+  const [updateFormData, setUpdateFormData] = useState({
+    title: '',
+    focus: '',
+    next_action: '',
+    decision_summary: '',
+    state: 'draft',
+  });
+  const [approveNote, setApproveNote] = useState('');
+  const [applyConfirmed, setApplyConfirmed] = useState(false);
+  const [createResult, setCreateResult] = useState<MutationResult | null>(null);
+  const [updateResult, setUpdateResult] = useState<MutationResult | null>(null);
+  const [approveResult, setApproveResult] = useState<MutationResult | null>(null);
+  const [previewResult, setPreviewResult] = useState<ApplyPreviewResult | null>(null);
+  const [applyResult, setApplyResult] = useState<MutationResult | null>(null);
   const [createLoading, setCreateLoading] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [applyLoading, setApplyLoading] = useState(false);
 
   async function loadAll() {
     setError(null);
@@ -193,6 +229,13 @@ export default function App() {
     void initialLoad();
   }, []);
 
+  useEffect(() => {
+    const firstIntentId = intents?.parsed?.intents?.[0]?.id ?? '';
+    if (!selectedIntentId && firstIntentId) {
+      setSelectedIntentId(firstIntentId);
+    }
+  }, [intents, selectedIntentId]);
+
   async function onRefresh() {
     setRefreshing(true);
     try {
@@ -223,8 +266,8 @@ export default function App() {
         }),
       });
 
-      if (!response.ok) {
-        const data = await response.json() as {ok: boolean; error?: string};
+      const data = (await response.json()) as MutationResult;
+      if (!response.ok || !data.ok) {
         setCreateResult({
           ok: false,
           error: data.error || `HTTP ${response.status}`,
@@ -232,13 +275,11 @@ export default function App() {
         return;
       }
 
-      const data = await response.json() as {ok: boolean; result?: any};
       setCreateResult({
         ok: true,
         result: data.result,
       });
 
-      // Clear form on success
       setCreateFormData({
         title: '',
         focus: '',
@@ -246,7 +287,6 @@ export default function App() {
         decision_summary: '',
       });
 
-      // Reload intents list
       await loadAll();
     } catch (err) {
       setCreateResult({
@@ -257,6 +297,143 @@ export default function App() {
       setCreateLoading(false);
     }
   }
+
+  async function onUpdateIntent() {
+    if (!selectedIntentId.trim()) {
+      setUpdateResult({ ok: false, error: 'Select an intent first' });
+      return;
+    }
+
+    const payload: Record<string, string | undefined> = {};
+    const title = updateFormData.title.trim();
+    const focus = updateFormData.focus.trim();
+    const nextAction = updateFormData.next_action.trim();
+    const decisionSummary = updateFormData.decision_summary.trim();
+    const state = updateFormData.state.trim();
+
+    if (title) payload.title = title;
+    if (focus) payload.focus = focus;
+    if (nextAction) payload.next_action = nextAction;
+    if (decisionSummary) payload.decision_summary = decisionSummary;
+    if (state) payload.state = state;
+
+    if (Object.keys(payload).length === 0) {
+      setUpdateResult({ ok: false, error: 'Provide at least one field to update' });
+      return;
+    }
+
+    setUpdateLoading(true);
+    try {
+      const response = await fetch(`/api/intents/${encodeURIComponent(selectedIntentId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = (await response.json()) as MutationResult;
+      if (!response.ok || !data.ok) {
+        setUpdateResult({ ok: false, error: data.error || `HTTP ${response.status}` });
+        return;
+      }
+
+      setUpdateResult({ ok: true, result: data.result });
+      await loadAll();
+    } catch (err) {
+      setUpdateResult({ ok: false, error: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setUpdateLoading(false);
+    }
+  }
+
+  async function onApproveIntent() {
+    if (!selectedIntentId.trim()) {
+      setApproveResult({ ok: false, error: 'Select an intent first' });
+      return;
+    }
+
+    setApproveLoading(true);
+    try {
+      const response = await fetch(`/api/intents/${encodeURIComponent(selectedIntentId)}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approval_note: approveNote.trim() || undefined }),
+      });
+
+      const data = (await response.json()) as MutationResult;
+      if (!response.ok || !data.ok) {
+        setApproveResult({ ok: false, error: data.error || `HTTP ${response.status}` });
+        return;
+      }
+
+      setApproveResult({ ok: true, result: data.result });
+      await loadAll();
+    } catch (err) {
+      setApproveResult({ ok: false, error: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setApproveLoading(false);
+    }
+  }
+
+  async function onPreviewApply() {
+    if (!selectedIntentId.trim()) {
+      setPreviewResult({ ok: false, error: 'Select an intent first' });
+      return;
+    }
+
+    setPreviewLoading(true);
+    try {
+      const response = await fetch(`/api/intents/${encodeURIComponent(selectedIntentId)}/apply-preview`);
+      const data = (await response.json()) as ApplyPreviewResult;
+      if (!response.ok || !data.ok) {
+        setPreviewResult({ ok: false, error: data.error || `HTTP ${response.status}` });
+        return;
+      }
+
+      setPreviewResult({ ok: true, diff: data.diff, warnings: data.warnings ?? [] });
+    } catch (err) {
+      setPreviewResult({ ok: false, error: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
+  async function onApplyIntent() {
+    if (!selectedIntentId.trim()) {
+      setApplyResult({ ok: false, error: 'Select an intent first' });
+      return;
+    }
+
+    if (!applyConfirmed) {
+      setApplyResult({ ok: false, error: 'Confirm apply before running the mutation' });
+      return;
+    }
+
+    setApplyLoading(true);
+    try {
+      const response = await fetch(`/api/intents/${encodeURIComponent(selectedIntentId)}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmed: true }),
+      });
+
+      const data = (await response.json()) as MutationResult;
+      if (!response.ok || !data.ok) {
+        setApplyResult({ ok: false, error: data.error || `HTTP ${response.status}` });
+        return;
+      }
+
+      setApplyResult({ ok: true, result: data.result });
+      setApplyConfirmed(false);
+      await loadAll();
+    } catch (err) {
+      setApplyResult({ ok: false, error: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setApplyLoading(false);
+    }
+  }
+
+  const intentOptions = intents?.parsed?.intents ?? [];
+  const selectedIntent = intentOptions.find((intent) => intent.id === selectedIntentId) ?? null;
 
   return (
     <main className="app-shell">
@@ -500,11 +677,119 @@ export default function App() {
               <div className={`form-result ${createResult.ok ? 'ok' : 'error'}`}>
                 <p>
                   {createResult.ok
-                    ? `✓ Intent created: ${createResult.result?.id || 'unknown'}`
+                    ? `✓ Intent created: ${createResult.result instanceof Object ? (createResult.result as { id?: string }).id || 'unknown' : 'unknown'}`
                     : `✗ Error: ${createResult.error}`}
                 </p>
               </div>
             )}
+          </div>
+        </article>
+
+        <article className="panel panel-wide">
+          <p className="panel-label">Phase 4 mutations</p>
+          <div className="panel-header-row">
+            <div>
+              <h2>Update, approve, and apply</h2>
+              <p className="muted">Select an intent, then use the CLI-backed actions below.</p>
+            </div>
+            <button className="refresh-btn" type="button" onClick={onRefresh} disabled={refreshing || loading}>
+              {refreshing ? 'Refreshing...' : 'Reload intents'}
+            </button>
+          </div>
+
+          <div className="mutation-grid">
+            <div className="mutation-card">
+              <div className="form-field">
+                <label htmlFor="intent-picker">Intent</label>
+                <select
+                  id="intent-picker"
+                  className="mutation-select"
+                  value={selectedIntentId}
+                  onChange={(e) => setSelectedIntentId(e.target.value)}
+                >
+                  <option value="">Select an intent</option>
+                  {intentOptions.map((intent, index) => (
+                    <option key={`${intent.id}-${index}`} value={intent.id}>
+                      {intent.id} · {intent.lifecycle} · {intent.mode}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <p className="meta">Selected: {selectedIntent ? `${selectedIntent.id} · ${selectedIntent.lifecycle}` : 'none'}</p>
+              <pre>{selectedIntent ? JSON.stringify(selectedIntent, null, 2) : 'Pick an intent to edit, approve, or apply.'}</pre>
+            </div>
+
+            <div className="mutation-card">
+              <h3>Update intent</h3>
+              <div className="mutation-form">
+                <div className="form-field">
+                  <label htmlFor="update-title">Title</label>
+                  <input id="update-title" type="text" value={updateFormData.title} onChange={(e) => setUpdateFormData({ ...updateFormData, title: e.target.value })} disabled={updateLoading} />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="update-focus">Focus</label>
+                  <input id="update-focus" type="text" value={updateFormData.focus} onChange={(e) => setUpdateFormData({ ...updateFormData, focus: e.target.value })} disabled={updateLoading} />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="update-action">Next action</label>
+                  <input id="update-action" type="text" value={updateFormData.next_action} onChange={(e) => setUpdateFormData({ ...updateFormData, next_action: e.target.value })} disabled={updateLoading} />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="update-state">State</label>
+                  <select id="update-state" className="mutation-select" value={updateFormData.state} onChange={(e) => setUpdateFormData({ ...updateFormData, state: e.target.value })} disabled={updateLoading}>
+                    <option value="draft">draft</option>
+                    <option value="staged">staged</option>
+                    <option value="active">active</option>
+                    <option value="closed">closed</option>
+                  </select>
+                </div>
+                <div className="form-field">
+                  <label htmlFor="update-summary">Decision summary</label>
+                  <textarea id="update-summary" rows={3} value={updateFormData.decision_summary} onChange={(e) => setUpdateFormData({ ...updateFormData, decision_summary: e.target.value })} disabled={updateLoading} />
+                </div>
+                <button type="button" onClick={onUpdateIntent} disabled={updateLoading || !selectedIntentId.trim()} className="submit-btn">{updateLoading ? 'Updating...' : 'Update intent'}</button>
+                {updateResult && <div className={`form-result ${updateResult.ok ? 'ok' : 'error'}`}><p>{updateResult.ok ? '✓ Intent updated' : `✗ Error: ${updateResult.error}`}</p></div>}
+              </div>
+            </div>
+
+            <div className="mutation-card">
+              <h3>Approve / apply</h3>
+              <div className="mutation-form">
+                <div className="form-field">
+                  <label htmlFor="approve-note">Approval note</label>
+                  <textarea id="approve-note" rows={3} value={approveNote} onChange={(e) => setApproveNote(e.target.value)} disabled={approveLoading} placeholder="Optional approval note" />
+                </div>
+                <button type="button" onClick={onApproveIntent} disabled={approveLoading || !selectedIntentId.trim()} className="submit-btn">{approveLoading ? 'Approving...' : 'Approve intent'}</button>
+                {approveResult && <div className={`form-result ${approveResult.ok ? 'ok' : 'error'}`}><p>{approveResult.ok ? '✓ Intent approved' : `✗ Error: ${approveResult.error}`}</p></div>}
+                <div className="divider" />
+                <button type="button" onClick={onPreviewApply} disabled={previewLoading || !selectedIntentId.trim()} className="secondary-btn">{previewLoading ? 'Loading preview...' : 'Preview apply'}</button>
+                {previewResult && (
+                  <div className={`form-result ${previewResult.ok ? 'ok' : 'error'}`}>
+                    <p>{previewResult.ok ? '✓ Preview ready' : `✗ Error: ${previewResult.error}`}</p>
+                    {previewResult.ok && (
+                      <>
+                        <p className="meta">Files changed: {previewResult.diff?.files_changed ?? 0} · +{previewResult.diff?.insertions ?? 0} / -{previewResult.diff?.deletions ?? 0}</p>
+                        <pre>{JSON.stringify(previewResult.diff, null, 2)}</pre>
+                        {previewResult.warnings && previewResult.warnings.length > 0 && (
+                          <ul className="warning-list">
+                            {previewResult.warnings.map((warning, index) => (
+                              <li key={`${warning.message ?? 'warning'}-${index}`}>{warning.level ?? 'info'} · {warning.message ?? 'No message'}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+                <label className="confirm-row">
+                  <input type="checkbox" checked={applyConfirmed} onChange={(e) => setApplyConfirmed(e.target.checked)} />
+                  <span>I understand this will apply the selected intent</span>
+                </label>
+                <button type="button" onClick={onApplyIntent} disabled={applyLoading || !selectedIntentId.trim()} className="submit-btn">{applyLoading ? 'Applying...' : 'Apply intent'}</button>
+                {applyResult && <div className={`form-result ${applyResult.ok ? 'ok' : 'error'}`}><p>{applyResult.ok ? '✓ Intent applied' : `✗ Error: ${applyResult.error}`}</p></div>}
+              </div>
+            </div>
           </div>
         </article>
       </section>

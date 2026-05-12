@@ -326,3 +326,111 @@ debtPressure: 15
 coverageGap: 0
 cognitiveLoad: 6
 instability: 10
+
+---
+score: 66.6
+level: unstable
+structural_reduction: 0
+coverage_reduction: 0
+testing_reduction: 15
+intent_reduction: 6
+release_reduction: 10
+cognitive_reduction: 2.4
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-12T07:31:45.874Z
+structural: 0
+debtPressure: 15
+coverageGap: 0
+cognitiveLoad: 6
+instability: 10
+
+---
+score: 66.6
+level: unstable
+structural_reduction: 0
+coverage_reduction: 0
+testing_reduction: 15
+intent_reduction: 6
+release_reduction: 10
+cognitive_reduction: 2.4
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-12T07:31:53.685Z
+structural: 0
+debtPressure: 15
+coverageGap: 0
+cognitiveLoad: 6
+instability: 10
+
+---
+score: 67.4
+level: unstable
+structural_reduction: 0
+coverage_reduction: 0
+testing_reduction: 15
+intent_reduction: 6
+release_reduction: 10
+cognitive_reduction: 1.6
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-12T07:38:59.243Z
+structural: 0
+debtPressure: 15
+coverageGap: 0
+cognitiveLoad: 6
+instability: 10
+
+---
+score: 68.2
+level: unstable
+structural_reduction: 0
+coverage_reduction: 0
+testing_reduction: 15
+intent_reduction: 6
+release_reduction: 10
+cognitive_reduction: 0.8
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-12T07:39:52.418Z
+structural: 0
+debtPressure: 15
+coverageGap: 0
+cognitiveLoad: 6
+instability: 10
+
+---
+score: 69
+level: unstable
+structural_reduction: 0
+coverage_reduction: 0
+testing_reduction: 15
+intent_reduction: 6
+release_reduction: 10
+cognitive_reduction: 0
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-12T07:40:10.185Z
+structural: 0
+debtPressure: 15
+coverageGap: 0
+cognitiveLoad: 6
+instability: 10
+
+---
+score: 69
+level: unstable
+structural_reduction: 0
+coverage_reduction: 0
+testing_reduction: 15
+intent_reduction: 6
+release_reduction: 10
+cognitive_reduction: 0
+formula_version: subtractive-v2
+topDriverIds: 
+measuredAt: 2026-05-12T07:42:04.295Z
+structural: 0
+debtPressure: 15
+coverageGap: 0
+cognitiveLoad: 6
+instability: 10

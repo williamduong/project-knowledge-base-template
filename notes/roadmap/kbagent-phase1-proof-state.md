@@ -7,7 +7,7 @@ This document records deterministic evidence that Phase 1 (Option B shell decisi
 ## Checkpoint
 
 - Branch: `intent/v2-8-2-principal-grounding-contract`
-- Head: `8256961`
+- Head: `7426557`
 - Verified at: `2026-05-12`
 
 ## Decision Evidence
@@ -84,6 +84,33 @@ Result:
   - `/api/system` summary (success + command-fail paths)
   - `/api/documents` summary (success + command-fail paths)
 
+## Phase 4 Mutation Contract Checkpoint
+
+Command:
+
+```bash
+npm --prefix ./site/kbx-ui run test
+npm --prefix ./site/kbx-ui run build
+```
+
+Result:
+
+- `pass 21`, `fail 0`
+- `tsc -b && vite build` passed.
+- Mutation endpoints implemented and contract-tested:
+  - `POST /api/intents/create`
+  - `PATCH /api/intents/:id`
+  - `POST /api/intents/:id/approve`
+  - `GET /api/intents/:id/apply-preview`
+  - `POST /api/intents/:id/apply`
+
+Observed behavior:
+
+- Create intent form is wired to the bridge and reloads intents on success.
+- Patch/approve/apply flows validate request payloads before calling the CLI.
+- Apply-preview returns structured diff + warnings, and apply requires `confirmed=true`.
+- No source payload leak reintroduced in workspace/system/documents endpoints.
+
 ## Phase Assessment
 
 - Phase 0: complete (naming/lifecycle/principles-vs-rules closure).
@@ -91,15 +118,16 @@ Result:
 - Phase 1.5: complete (status endpoint + runtime error handling + gate evaluation endpoint).
 - Phase 2: complete for gate-evaluation baseline (typed wrappers + core gate tests passing).
 - Phase 3: complete (all 6 read-only endpoints live; fail-path tests passing; no-source-leak hardening in place).
+- Phase 4: mutation-contract checkpoint complete (endpoints + create form + contract tests + build).
 
-## Next Gate: Phase 4 Interactive Flows
+## Next Gate: Remaining Phase 4 Interactive Flows
 
-Phase 4 entry gate satisfied:
-- Read-only shell stable (6 endpoints, 12/12 tests, no source-leak).
-- Error handling contract for all endpoints (500 with error message on fail).
-- Summary-only payloads hardened to prevent noisy source data leak.
+Phase 4 mutation checkpoint satisfied:
+- Mutation endpoints are live and contract-tested.
+- Create form is wired to the bridge.
+- Build and test validation passed on the current checkpoint.
 
-Phase 4 will introduce:
-1. Create/update intent UI flows via CLI-backed mutation endpoints.
-2. Mutation pre-apply review and deterministic command trace.
-3. Intent lifecycle actions (start, apply, close, retro) through web UI.
+Remaining Phase 4 work:
+1. Add update / approve / apply UI surfaces.
+2. Add pre-apply review UI with diff and warnings.
+3. Extend intent lifecycle actions beyond create.

@@ -593,7 +593,7 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
     <div class="phase-num next">P4</div>
     <div class="phase-title-wrap">
       <div class="phase-title">Full feature parity với CLI</div>
-      <div class="phase-sub">create, edit, approve — tất cả qua UI</div>
+      <div class="phase-sub">mutation contract checkpoint shipped · create, edit, approve — tất cả qua UI</div>
     </div>
     <span class="phase-time t-next">2-3 tuần</span>
   </div>
@@ -662,6 +662,13 @@ code{font-family:var(--mono);font-size:11px;background:var(--bg3);padding:1px 5p
           <div class="task-desc">Save current state (intent + branch + step) qua UI. Load checkpoint → restore. History list with diff between checkpoints.</div>
         </div>
         <span class="task-effort e-med">medium</span>
+      </div>
+    </div>
+
+    <div class="deliverable">
+      <div class="del-label">Checkpoint shipped</div>
+      <div class="del-body">
+        Mutation bridge is live at <code>site/kbx-ui/server.mjs</code> with <code>create</code>, <code>update</code>, <code>approve</code>, <code>apply-preview</code>, and <code>apply</code> routes. The React shell already has the create form wired up, and the contract suite passes <code>21/21</code> tests after build validation.
       </div>
     </div>
 

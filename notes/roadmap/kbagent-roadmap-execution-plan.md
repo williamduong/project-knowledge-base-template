@@ -17,6 +17,7 @@ Primary objective:
 - Phase 0 closeout in progress: CLI naming normalization is complete, and roadmap wording now distinguishes workflow lifecycle vs ontology lifecycle plus Principles vs runtime rules. Remaining work is to keep the other roadmap artifacts consistent.
 - Phase 1 bootstrap evidence exists: Option B localhost shell scaffolded at `site/kbx-ui/`; bridge endpoint `/api/version` successfully executes `kbx --version` and returns `2.7.0-beta.2`.
 - Phase 1.5 bridge hardening evidence exists: `/api/status` returns parsed `kbx status --json`, and `/api/phase2-bridge` evaluates deterministic gate policy (`hard-fail/warn/info`) from runtime command outputs.
+- Phase 4 mutation bridge checkpoint exists: `server.mjs` exposes create/update/approve/apply-preview/apply endpoints, `App.tsx` has the create intent form wired up, and `npm --prefix ./site/kbx-ui run test` / `npm --prefix ./site/kbx-ui run build` both pass (`21/21` tests).
 - Proof state artifact is published at `notes/roadmap/kbagent-phase1-proof-state.md`.
 
 ## Target State
@@ -121,15 +122,26 @@ Entry gate (READY):
 - Read-only shell stable and hardened: 6 endpoints, 12/12 tests, no source-leak.
 - Error handling contract fully implemented (HTTP 500 with error message).
 - UI refresh patterns and panel rendering stable for all read-only views.
+- Mutation bridge checkpoint landed: intent create/update/approve/apply-preview/apply routes are live and covered by contract tests.
 
 Design gate (Phase 4 prep):
-- Mutation endpoint contract: `/api/intents/create`, `/api/intents/update` with JSON request validation.
-- Pre-apply review panel: diff preview + conflict warnings + deterministic trace display.
-- Intent lifecycle actions: start, apply, close, retro with command audit trail.
+- Mutation endpoint contract: `/api/intents/create`, `/api/intents/:id`, `/api/intents/:id/approve`, `/api/intents/:id/apply-preview`, `/api/intents/:id/apply` with JSON request validation.
+- Pre-apply review panel: diff preview + warnings + deterministic trace display.
+- Intent lifecycle actions: create, approve, apply with command audit trail.
 
 Exit gate:
-- Create/update/apply/retro flows can be completed from UI.
+- Create/update/approve/apply flows can be completed from UI.
 - Mutation paths include pre-apply review and deterministic command trace.
+- Build and contract tests pass on the shipped bridge checkpoint.
+
+Checkpoint evidence:
+- `POST /api/intents/create` validates title and writes through the CLI bridge.
+- `PATCH /api/intents/:id` accepts flat fields and preserves backward compatibility.
+- `POST /api/intents/:id/approve` transitions an intent to staged.
+- `GET /api/intents/:id/apply-preview` returns structured diff plus warnings.
+- `POST /api/intents/:id/apply` requires `confirmed=true` before executing.
+- React create form reloads intent data after successful submit.
+- Contract tests and build validation both pass (`21/21`).
 
 ### Phase 5 - Hardening and Release
 
@@ -145,8 +157,7 @@ Exit gate:
 
 ## Immediate Next Session Checklist (Phase 4 Prep)
 
-1. Design mutation endpoint contract for intent create/update (request schema + validation gates).
-2. Implement `/api/intents/create` and `/api/intents/update` with `kbx intent` CLI delegation.
-3. Add pre-apply review panel to UI (diff preview + warnings + trace).
-4. Add mutation path test cases (validation fail, conflict detection, success trace).
-5. Keep roadmap evidence synchronized and aligned with active intent chain.
+1. Add the remaining UI controls for update, approve, and apply.
+2. Add pre-apply review presentation in the UI using the apply-preview payload.
+3. Extend contract coverage for the remaining mutation UI paths.
+4. Keep roadmap evidence synchronized with the shipped mutation checkpoint.
