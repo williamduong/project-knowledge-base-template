@@ -63,6 +63,59 @@ type IntentsResponse = {
   stderr: string;
 };
 
+type WorkspaceSnapshotResponse = {
+  source: {
+    command: string;
+    ok: boolean;
+    exitCode: number;
+  };
+  summary: {
+    activeIntentCount: number | null;
+    activeIntentId: string | null;
+    releaseCurrent: string | null;
+    releaseLatest: string | null;
+    hasWorkingTreeChanges: boolean;
+  };
+};
+
+type SystemSnapshotResponse = {
+  source: {
+    command: string;
+    ok: boolean;
+    exitCode: number;
+  };
+  summary: {
+    result: string | null;
+    nodeVersion: string | null;
+    workspaceRoot: string | null;
+    checkSummary: {
+      pass: number;
+      warn: number;
+      error: number;
+      info: number;
+    };
+  };
+};
+
+type DocumentsSnapshotResponse = {
+  source: {
+    command: string;
+    ok: boolean;
+    exitCode: number;
+  };
+  summary: {
+    entityCount: number | null;
+    relationCount: number | null;
+    issueCount: number;
+    topIssues: Array<{
+      checkId: string | null;
+      severity: string | null;
+      message: string | null;
+      evidencePath: string | null;
+    }>;
+  };
+};
+
 type GateSeverity = 'hard-fail' | 'warn' | 'info';
 
 type Phase2Gate = {
@@ -92,6 +145,9 @@ export default function App() {
   const [phase2, setPhase2] = useState<Phase2BridgeResponse | null>(null);
   const [rules, setRules] = useState<RulesResponse | null>(null);
   const [intents, setIntents] = useState<IntentsResponse | null>(null);
+  const [workspaceSnapshot, setWorkspaceSnapshot] = useState<WorkspaceSnapshotResponse | null>(null);
+  const [systemSnapshot, setSystemSnapshot] = useState<SystemSnapshotResponse | null>(null);
+  const [documentsSnapshot, setDocumentsSnapshot] = useState<DocumentsSnapshotResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -99,13 +155,16 @@ export default function App() {
   async function loadAll() {
     setError(null);
 
-    const [versionResponse, statusResponse, interactionResponse, phase2Response, rulesResponse, intentsResponse] = await Promise.all([
+    const [versionResponse, statusResponse, interactionResponse, phase2Response, rulesResponse, intentsResponse, workspaceResponse, systemResponse, documentsResponse] = await Promise.all([
       fetch('/api/version').then((response) => response.json() as Promise<VersionResponse>),
       fetch('/api/status').then((response) => response.json() as Promise<StatusResponse>),
       fetch('/api/interaction-model').then((response) => response.json() as Promise<InteractionModel>),
       fetch('/api/phase2-bridge').then((response) => response.json() as Promise<Phase2BridgeResponse>),
       fetch('/api/rules').then((response) => response.json() as Promise<RulesResponse>),
       fetch('/api/intents').then((response) => response.json() as Promise<IntentsResponse>),
+      fetch('/api/workspace').then((response) => response.json() as Promise<WorkspaceSnapshotResponse>),
+      fetch('/api/system').then((response) => response.json() as Promise<SystemSnapshotResponse>),
+      fetch('/api/documents').then((response) => response.json() as Promise<DocumentsSnapshotResponse>),
     ]);
 
     setVersion(versionResponse);
@@ -114,6 +173,9 @@ export default function App() {
     setPhase2(phase2Response);
     setRules(rulesResponse);
     setIntents(intentsResponse);
+    setWorkspaceSnapshot(workspaceResponse);
+    setSystemSnapshot(systemResponse);
+    setDocumentsSnapshot(documentsResponse);
   }
 
   async function initialLoad() {
@@ -272,6 +334,51 @@ export default function App() {
                   || intents.stdout
                   || intents.stderr}
               </pre>
+            </>
+          )}
+        </article>
+
+        <article className="panel">
+          <p className="panel-label">Phase 3 read-only</p>
+          <h2>Workspace snapshot</h2>
+          {loading && <p className="muted">Loading workspace summary...</p>}
+          {!loading && workspaceSnapshot && (
+            <>
+              <p className={workspaceSnapshot.source.ok ? 'status ok' : 'status error'}>
+                {workspaceSnapshot.source.ok ? 'Workspace payload loaded' : 'Workspace payload failed'}
+              </p>
+              <p className="meta">{workspaceSnapshot.source.command} · exit {workspaceSnapshot.source.exitCode}</p>
+              <pre>{JSON.stringify(workspaceSnapshot.summary, null, 2)}</pre>
+            </>
+          )}
+        </article>
+
+        <article className="panel">
+          <p className="panel-label">Phase 3 read-only</p>
+          <h2>System snapshot</h2>
+          {loading && <p className="muted">Loading system checks...</p>}
+          {!loading && systemSnapshot && (
+            <>
+              <p className={systemSnapshot.source.ok ? 'status ok' : 'status error'}>
+                {systemSnapshot.source.ok ? 'System payload loaded' : 'System payload failed'}
+              </p>
+              <p className="meta">{systemSnapshot.source.command} · exit {systemSnapshot.source.exitCode}</p>
+              <pre>{JSON.stringify(systemSnapshot.summary, null, 2)}</pre>
+            </>
+          )}
+        </article>
+
+        <article className="panel panel-wide">
+          <p className="panel-label">Phase 3 read-only</p>
+          <h2>Documents graph snapshot</h2>
+          {loading && <p className="muted">Loading documents graph checks...</p>}
+          {!loading && documentsSnapshot && (
+            <>
+              <p className={documentsSnapshot.source.ok ? 'status ok' : 'status error'}>
+                {documentsSnapshot.source.ok ? 'Documents payload loaded' : 'Documents payload failed'}
+              </p>
+              <p className="meta">{documentsSnapshot.source.command} · exit {documentsSnapshot.source.exitCode}</p>
+              <pre>{JSON.stringify(documentsSnapshot.summary, null, 2)}</pre>
             </>
           )}
         </article>

@@ -95,6 +95,29 @@ function mockRunner(command) {
     });
   }
 
+  if (command === 'kbx graph check --json') {
+    return Promise.resolve({
+      command,
+      ok: true,
+      exitCode: 0,
+      parsed: {
+        entity_count: 10,
+        relation_count: 4,
+        issue_count: 1,
+        issues: [
+          {
+            check_id: 'missing-node-reference',
+            severity: 'error',
+            message: 'missing node relation detected',
+            evidence_path: '.kb/catalog.json',
+          },
+        ],
+      },
+      stdout: '',
+      stderr: '',
+    });
+  }
+
   return Promise.resolve({
     command,
     ok: false,
@@ -145,5 +168,42 @@ test('GET /api/phase2-bridge returns gate summary contract', async () => {
     assert.ok(Array.isArray(payload.gates));
     assert.equal(payload.gates.length > 0, true);
     assert.equal(payload.commands.status.command, 'kbx status --json');
+  });
+});
+
+test('GET /api/workspace returns summary contract', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/workspace`);
+    assert.equal(response.status, 200);
+
+    const payload = await response.json();
+    assert.equal(payload.source.command, 'kbx status --json');
+    assert.equal(payload.summary.activeIntentCount, 1);
+    assert.equal(typeof payload.summary.hasWorkingTreeChanges, 'boolean');
+  });
+});
+
+test('GET /api/system returns summary contract', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/system`);
+    assert.equal(response.status, 200);
+
+    const payload = await response.json();
+    assert.equal(payload.source.command, 'kbx doctor --json');
+    assert.equal(payload.summary.checkSummary.pass >= 1, true);
+    assert.equal(payload.summary.result, null);
+  });
+});
+
+test('GET /api/documents returns summary contract', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/documents`);
+    assert.equal(response.status, 200);
+
+    const payload = await response.json();
+    assert.equal(payload.source.command, 'kbx graph check --json');
+    assert.equal(payload.summary.entityCount, 10);
+    assert.equal(payload.summary.issueCount, 1);
+    assert.equal(payload.summary.topIssues[0].checkId, 'missing-node-reference');
   });
 });

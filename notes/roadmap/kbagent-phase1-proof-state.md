@@ -7,7 +7,7 @@ This document records deterministic evidence that Phase 1 (Option B shell decisi
 ## Checkpoint
 
 - Branch: `intent/v2-8-2-principal-grounding-contract`
-- Head: `e5568ec`
+- Head: `8256961`
 - Verified at: `2026-05-12`
 
 ## Decision Evidence
@@ -40,6 +40,9 @@ Expected endpoints (bridge server at `http://localhost:4174`):
 - `GET /api/phase2-bridge`
 - `GET /api/rules`
 - `GET /api/intents`
+- `GET /api/workspace`
+- `GET /api/system`
+- `GET /api/documents`
 
 Expected behavior:
 
@@ -48,11 +51,16 @@ Expected behavior:
 - `/api/phase2-bridge` returns gate summary with severity policy (`hard-fail`, `warn`, `info`) and block/warn evaluation.
 - `/api/rules` returns parsed rule catalog JSON from `kbx rules list --json`.
 - `/api/intents` returns parsed intent registry JSON from `kbx intent list --all --json`.
+- `/api/workspace` returns summarized workspace snapshot from `kbx status --json`.
+- `/api/system` returns summarized health snapshot from `kbx doctor --json`.
+- `/api/documents` returns summarized graph consistency snapshot from `kbx graph check --json`.
 
 Observed endpoint evidence:
 
 - `/api/rules`: `ok=true`, `parsed.count=19`, `command="kbx rules list --json"`
 - `/api/intents`: `ok=true`, `parsed.count=63`, `command="kbx intent list --all --json"`
+- `/api/system`: `ok=true`, `result="WARN"`, check summary captured.
+- `/api/documents`: `ok=true`, `entityCount=301`, `relationCount=109`, `issueCount=2`.
 
 ## Test Evidence (Phase 2 + Endpoint Contracts)
 
@@ -64,7 +72,7 @@ npm --prefix ./site/kbx-ui run test
 
 Result:
 
-- `pass 6`, `fail 0`
+- `pass 9`, `fail 0`
 - Covered behaviors:
   - hard-fail summary marks bridge as blocked
   - success path with unique active intent
@@ -72,6 +80,9 @@ Result:
   - `/api/rules` contract payload
   - `/api/intents` contract payload
   - `/api/phase2-bridge` summary contract payload
+  - `/api/workspace` summary contract payload
+  - `/api/system` summary contract payload
+  - `/api/documents` summary contract payload
 
 ## Phase Assessment
 
@@ -88,3 +99,4 @@ Phase 3 exit criteria now open:
 1. Expand read-only coverage beyond rules/intents to workspace/system/documents tabs.
 2. Keep endpoint payload contracts stable while growing the read model.
 3. Add contract tests for future read-only endpoints as they are introduced.
+4. Reduce oversized status payload exposure by moving to stricter summary extraction in `/api/workspace` when source payload is noisy.

@@ -72,12 +72,14 @@ Exit gate:
 
 Observed evidence:
 - `npm --prefix ./site/kbx-ui run build` passed.
-- `npm --prefix ./site/kbx-ui run test` passed (`6/6` pass), including HTTP endpoint contracts for `/api/rules`, `/api/intents`, and `/api/phase2-bridge`.
+- `npm --prefix ./site/kbx-ui run test` passed (`9/9` pass), including HTTP endpoint contracts for `/api/rules`, `/api/intents`, `/api/phase2-bridge`, `/api/workspace`, `/api/system`, and `/api/documents`.
 - `GET http://localhost:4174/api/version` returned `{ ok: true, stdout: "2.7.0-beta.2" }`.
 - `GET http://localhost:4174/api/status` returned parseable JSON payload from `kbx status --json`.
 - `GET http://localhost:4174/api/phase2-bridge` returned gate summary with explicit severity mapping and block/warn evaluation.
 - `GET http://localhost:4174/api/rules` returned `ok=true`, `parsed.count=19` from `kbx rules list --json`.
 - `GET http://localhost:4174/api/intents` returned `ok=true`, `parsed.count=63` from `kbx intent list --all --json`.
+- `GET http://localhost:4174/api/system` returned `ok=true`, `result=WARN`, and check summary counts.
+- `GET http://localhost:4174/api/documents` returned `ok=true`, `entityCount=301`, `relationCount=109`, `issueCount=2`.
 
 ### Phase 2 - CLI Bridge Implementation
 
@@ -106,6 +108,9 @@ Exit gate:
 Current evidence:
 - Rules tab snapshot is CLI-backed via `/api/rules`.
 - Intents tab snapshot is CLI-backed via `/api/intents`.
+- Workspace tab snapshot is CLI-backed via `/api/workspace`.
+- System tab snapshot is CLI-backed via `/api/system`.
+- Documents tab snapshot is CLI-backed via `/api/documents`.
 
 ### Phase 4 - Interactive UI Delivery
 
@@ -133,7 +138,7 @@ Exit gate:
 
 ## Immediate Next Session Checklist
 
-1. Continue Phase 3 read-only expansion for workspace/system/documents views using CLI-backed endpoints.
+1. Harden `/api/workspace` summary extraction to avoid forwarding oversized noisy status structures.
 2. Keep evidence synchronized in `notes/roadmap/kbagent-phase1-proof-state.md` and this execution plan.
 3. Keep roadmap updates attached to active intent chain while preparing P0 close and P1 activation.
 4. Add contract tests for each newly introduced read-only endpoint.

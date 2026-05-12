@@ -101,6 +101,68 @@ async function executeBridgeCommand(command, args, options = {}) {
   }
 }
 
+function summarizeWorkspace(statusResult) {
+  const parsed = statusResult.parsed || {};
+  const activeIntents = parsed.activeIntents || {};
+  const release = parsed.release || {};
+  const workingTree = parsed.workingTree || {};
+
+  return {
+    activeIntentCount: activeIntents.count ?? null,
+    activeIntentId: activeIntents.id ?? null,
+    releaseCurrent: release.current ?? null,
+    releaseLatest: release.latest ?? null,
+    hasWorkingTreeChanges: workingTree.clean === true ? false : true,
+  };
+}
+
+function summarizeSystem(doctorResult) {
+  const checks = Array.isArray(doctorResult.parsed?.checks) ? doctorResult.parsed.checks : [];
+  const summary = {
+    pass: 0,
+    warn: 0,
+    error: 0,
+    info: 0,
+  };
+
+  for (const check of checks) {
+    const status = String(check?.status || '').toUpperCase();
+    if (status === 'PASS') {
+      summary.pass += 1;
+    } else if (status === 'WARN') {
+      summary.warn += 1;
+    } else if (status === 'ERROR') {
+      summary.error += 1;
+    } else if (status === 'INFO') {
+      summary.info += 1;
+    }
+  }
+
+  return {
+    result: doctorResult.parsed?.result ?? null,
+    nodeVersion: doctorResult.parsed?.nodeVersion ?? null,
+    workspaceRoot: doctorResult.parsed?.workspaceRoot ?? null,
+    checkSummary: summary,
+  };
+}
+
+function summarizeDocuments(graphCheckResult) {
+  const parsed = graphCheckResult.parsed || {};
+  const issues = Array.isArray(parsed.issues) ? parsed.issues : [];
+
+  return {
+    entityCount: parsed.entity_count ?? null,
+    relationCount: parsed.relation_count ?? null,
+    issueCount: parsed.issue_count ?? issues.length,
+    topIssues: issues.slice(0, 5).map((issue) => ({
+      checkId: issue.check_id ?? null,
+      severity: issue.severity ?? null,
+      message: issue.message ?? null,
+      evidencePath: issue.evidence_path ?? null,
+    })),
+  };
+}
+
 export function createApp(commandRunner = executeBridgeCommand) {
   const app = express();
 
@@ -139,6 +201,42 @@ export function createApp(commandRunner = executeBridgeCommand) {
       timeoutMs: 20000,
     });
     res.status(response.ok ? 200 : 500).json(response);
+  });
+
+  app.get('/api/workspace', async (_req, res) => {
+    const statusResult = await commandRunner('kbx status --json', ['status', '--json'], {
+      expectJson: true,
+      timeoutMs: 20000,
+    });
+
+    res.status(statusResult.ok ? 200 : 500).json({
+      source: statusResult,
+      summary: summarizeWorkspace(statusResult),
+    });
+  });
+
+  app.get('/api/system', async (_req, res) => {
+    const doctorResult = await commandRunner('kbx doctor --json', ['doctor', '--json'], {
+      expectJson: true,
+      timeoutMs: 20000,
+    });
+
+    res.status(doctorResult.ok ? 200 : 500).json({
+      source: doctorResult,
+      summary: summarizeSystem(doctorResult),
+    });
+  });
+
+  app.get('/api/documents', async (_req, res) => {
+    const graphCheckResult = await commandRunner('kbx graph check --json', ['graph', 'check', '--json'], {
+      expectJson: true,
+      timeoutMs: 20000,
+    });
+
+    res.status(graphCheckResult.ok ? 200 : 500).json({
+      source: graphCheckResult,
+      summary: summarizeDocuments(graphCheckResult),
+    });
   });
 
   app.get('/api/phase2-bridge', async (_req, res) => {
