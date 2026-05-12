@@ -7,7 +7,7 @@ This document records deterministic evidence that Phase 1 (Option B shell decisi
 ## Checkpoint
 
 - Branch: `intent/v2-8-2-principal-grounding-contract`
-- Head: `9495673`
+- Head: `e5568ec`
 - Verified at: `2026-05-12`
 
 ## Decision Evidence
@@ -54,7 +54,7 @@ Observed endpoint evidence:
 - `/api/rules`: `ok=true`, `parsed.count=19`, `command="kbx rules list --json"`
 - `/api/intents`: `ok=true`, `parsed.count=63`, `command="kbx intent list --all --json"`
 
-## Test Evidence (Phase 2 Bridge)
+## Test Evidence (Phase 2 + Endpoint Contracts)
 
 Command:
 
@@ -64,11 +64,14 @@ npm --prefix ./site/kbx-ui run test
 
 Result:
 
-- `pass 3`, `fail 0`
+- `pass 6`, `fail 0`
 - Covered behaviors:
   - hard-fail summary marks bridge as blocked
   - success path with unique active intent
   - fail path when active intent uniqueness is violated
+  - `/api/rules` contract payload
+  - `/api/intents` contract payload
+  - `/api/phase2-bridge` summary contract payload
 
 ## Phase Assessment
 
@@ -83,5 +86,5 @@ Result:
 Phase 3 exit criteria now open:
 
 1. Expand read-only coverage beyond rules/intents to workspace/system/documents tabs.
-2. Add endpoint contract tests for `/api/rules` and `/api/intents`.
-3. Keep endpoint payload contracts stable while growing the read model.
+2. Keep endpoint payload contracts stable while growing the read model.
+3. Add contract tests for future read-only endpoints as they are introduced.

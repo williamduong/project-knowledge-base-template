@@ -9,7 +9,6 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..', '..');
 const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 
-const app = express();
 const port = 4174;
 
 function runKbx(args, timeoutMs = 15000) {
@@ -102,79 +101,88 @@ async function executeBridgeCommand(command, args, options = {}) {
   }
 }
 
-app.get('/api/version', async (_req, res) => {
-  const response = await executeBridgeCommand('kbx --version', ['--version']);
-  res.status(response.ok ? 200 : 500).json(response);
-});
+export function createApp(commandRunner = executeBridgeCommand) {
+  const app = express();
 
-app.get('/api/interaction-model', (_req, res) => {
-  res.json({
-    chat: 'Copilot Chat with KBAgent proposes actions and prompts inside VS Code.',
-    web: 'Localhost UI reads runtime state and triggers CLI-backed actions.',
-    writePath: 'CLI is the only deterministic mutation path.',
+  app.get('/api/version', async (_req, res) => {
+    const response = await commandRunner('kbx --version', ['--version']);
+    res.status(response.ok ? 200 : 500).json(response);
   });
-});
 
-app.listen(port, () => {
-  console.log(`kbx-ui bridge listening on http://localhost:${port}`);
-});
-
-app.get('/api/status', async (_req, res) => {
-  const response = await executeBridgeCommand('kbx status --json', ['status', '--json'], {
-    expectJson: true,
-    timeoutMs: 20000,
+  app.get('/api/interaction-model', (_req, res) => {
+    res.json({
+      chat: 'Copilot Chat with KBAgent proposes actions and prompts inside VS Code.',
+      web: 'Localhost UI reads runtime state and triggers CLI-backed actions.',
+      writePath: 'CLI is the only deterministic mutation path.',
+    });
   });
-  res.status(response.ok ? 200 : 500).json(response);
-});
 
-app.get('/api/rules', async (_req, res) => {
-  const response = await executeBridgeCommand('kbx rules list --json', ['rules', 'list', '--json'], {
-    expectJson: true,
-    timeoutMs: 15000,
-  });
-  res.status(response.ok ? 200 : 500).json(response);
-});
-
-app.get('/api/intents', async (_req, res) => {
-  const response = await executeBridgeCommand('kbx intent list --all --json', ['intent', 'list', '--all', '--json'], {
-    expectJson: true,
-    timeoutMs: 20000,
-  });
-  res.status(response.ok ? 200 : 500).json(response);
-});
-
-app.get('/api/phase2-bridge', async (_req, res) => {
-  const [statusResult, doctorResult, chaosResult] = await Promise.all([
-    executeBridgeCommand('kbx status --json', ['status', '--json'], {
+  app.get('/api/status', async (_req, res) => {
+    const response = await commandRunner('kbx status --json', ['status', '--json'], {
       expectJson: true,
       timeoutMs: 20000,
-    }),
-    executeBridgeCommand('kbx doctor --json', ['doctor', '--json'], {
-      expectJson: true,
-      timeoutMs: 15000,
-    }),
-    executeBridgeCommand('kbx chaos --estimate', ['chaos', '--estimate'], {
-      timeoutMs: 15000,
-    }),
-  ]);
-
-  const { gateItems, summary } = evaluatePhase2Gates({
-    statusResult,
-    doctorResult,
-    chaosResult,
+    });
+    res.status(response.ok ? 200 : 500).json(response);
   });
 
-  const payload = {
-    phase: 'phase-2-cli-bridge',
-    checkedAt: new Date().toISOString(),
-    summary,
-    gates: gateItems,
-    commands: {
-      status: statusResult,
-      doctor: doctorResult,
-      chaos: chaosResult,
-    },
-  };
+  app.get('/api/rules', async (_req, res) => {
+    const response = await commandRunner('kbx rules list --json', ['rules', 'list', '--json'], {
+      expectJson: true,
+      timeoutMs: 15000,
+    });
+    res.status(response.ok ? 200 : 500).json(response);
+  });
 
-  res.status(summary.blocked ? 500 : 200).json(payload);
-});
+  app.get('/api/intents', async (_req, res) => {
+    const response = await commandRunner('kbx intent list --all --json', ['intent', 'list', '--all', '--json'], {
+      expectJson: true,
+      timeoutMs: 20000,
+    });
+    res.status(response.ok ? 200 : 500).json(response);
+  });
+
+  app.get('/api/phase2-bridge', async (_req, res) => {
+    const [statusResult, doctorResult, chaosResult] = await Promise.all([
+      commandRunner('kbx status --json', ['status', '--json'], {
+        expectJson: true,
+        timeoutMs: 20000,
+      }),
+      commandRunner('kbx doctor --json', ['doctor', '--json'], {
+        expectJson: true,
+        timeoutMs: 15000,
+      }),
+      commandRunner('kbx chaos --estimate', ['chaos', '--estimate'], {
+        timeoutMs: 15000,
+      }),
+    ]);
+
+    const { gateItems, summary } = evaluatePhase2Gates({
+      statusResult,
+      doctorResult,
+      chaosResult,
+    });
+
+    const payload = {
+      phase: 'phase-2-cli-bridge',
+      checkedAt: new Date().toISOString(),
+      summary,
+      gates: gateItems,
+      commands: {
+        status: statusResult,
+        doctor: doctorResult,
+        chaos: chaosResult,
+      },
+    };
+
+    res.status(summary.blocked ? 500 : 200).json(payload);
+  });
+
+  return app;
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+  const app = createApp();
+  app.listen(port, () => {
+    console.log(`kbx-ui bridge listening on http://localhost:${port}`);
+  });
+}
