@@ -56,7 +56,7 @@ See `impact.md` for full details.
 - [x] **Section 6: Pipelines** — reviewed (❌ major gap)
 - [x] **Section 7: Rules (D+O)** — reviewed (⚠️ partial — engine exists, content absent)
 - [x] **Section 8: Master rules** — reviewed (❌ major gap — AX ID collision, P rules unenforced)
-- [ ] **Section 9: Foundation** — setup template, editable form
+- [x] **Section 9: Foundation** — reviewed (❌ major gap — form/generator not implemented in runtime)
 
 ## Section Review Log
 
@@ -213,6 +213,25 @@ See `impact.md` for full details.
 - ❌ Major gap: the document's AX/P behavioral rules are architectural principles documented as `verified`, but actual CLI enforcement for most of them is absent or partial.
 - Source AX rules serve a different purpose (contract-doc alignment verification, not behavioral axioms) — naming convergence with document IDs is misleading and should be flagged for v2.9 normalization.
 - Before UI exposes "rule compliance" view, enforce boundary: show only which rules exist in runtime engine; do not imply AX001..AX007 or P001..P009 are all enforced by CLI.
+
+### Section 9 — Foundation (❌ major gap — form/generator not implemented in runtime)
+
+**Matched evidence (✅):**
+- Runtime has `kbx init`, and the command does create KB state plus scaffold content by copying the shipped `template/` tree into the target content root.
+- Foundation artifacts exist only as generic placeholders after init, for example `knowledge-base/00-start-here/system-map.md` is present in the template and gets copied during initialization.
+- The HTML roadmap page does contain a working in-browser prototype for editing foundation fields and generating copyable outputs (`system-map.md`, goals JSON, rules JSON) via `livePreview()` and copy helpers.
+
+**Gaps vs document (❌):**
+- `kbx init` does **not** run the documented onboarding interview that asks for project identity, infra, stack, goals, and rules to generate populated foundation files.
+- Source `runInit` in `src/commands/init.js` performs template copy + state/bootstrap/index steps; it does not generate `seed-goals.json` or `seed-rules.json` from user input.
+- The shipped `knowledge-base/00-start-here/system-map.md` remains a generic placeholder template, not a populated output derived from onboarding answers.
+- No runtime files were found at the documented destinations for generated foundation seeds such as `.kb/graph/seed-goals.json` and `.kb/graph/seed-rules.json`.
+- The Section 9 behavior currently lives only inside the HTML/JS document prototype, not in CLI/runtime code or the localhost UI bridge.
+
+**Decision:**
+- Treat Section 9 as a major documentation-vs-implementation gap.
+- For UI refactor and onboarding scope, treat the Foundation page as target-state product design, not current runtime truth.
+- If this onboarding flow is needed, it should be implemented as a real `kbx init` interview/generator pipeline rather than inferred from the HTML prototype.
 
 ## Staged Files
 
