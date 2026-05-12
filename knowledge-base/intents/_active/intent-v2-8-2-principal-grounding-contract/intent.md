@@ -54,7 +54,7 @@ See `impact.md` for full details.
 - [x] **Section 4: Data architecture** — reviewed (⚠️ partial)
 - [x] **Section 5: Default data** — reviewed (❌ major gap)
 - [x] **Section 6: Pipelines** — reviewed (❌ major gap)
-- [ ] **Section 7: Rules (D+O)** — domain + operational rules
+- [x] **Section 7: Rules (D+O)** — reviewed (⚠️ partial — engine exists, content absent)
 - [ ] **Section 8: Master rules** — AX (immutable) + P (process)
 - [ ] **Section 9: Foundation** — setup template, editable form
 
@@ -171,6 +171,25 @@ See `impact.md` for full details.
 **Decision:**
 - Treat Section 6 as major documentation-vs-implementation drift.
 - For downstream UI/review work, use current command surface as runtime truth and treat roadmap pipeline page as target-state architecture until command parity is implemented.
+
+### Section 7 — Rules D+O (⚠️ partial — engine exists, SaaS content absent)
+
+**Matched evidence (✅):**
+- Rule engine infrastructure is implemented and functional: `src/lib/rule-engine.js` with `registerRules`, `loadRules`, `runRules`, `runRule`.
+- Five built-in KB-maintenance rule modules are registered: `metadata`, `verification`, `intent`, `git-binding`, `contract-alignment`.
+- Rule ID format (`KBX-<DOMAIN><NUMBER>`) and registry contract (`registry.js`) are operational, supporting domains M/V/I/GB/AX/PR/WF/KA.
+- KBX-O002 (chaos spike → auto-suggest fix intent) is marked `implemented` in document and is partially present: `buildMaintainIntentProposal` in `src/commands/maintain.js` proposes fix intents when debt/entropy gates trigger.
+
+**Gaps vs document (⚠️/❌):**
+- All 9 SaaS domain rules documented in Section 7 (KBX-S001..S003, KBX-B001..B002, KBX-T001, KBX-D001..D002) are **not implemented** in any rule module file — they exist only in the HTML doc with status `planned`/`draft`.
+- Implemented rule domains (M/V/I/GB/AX/PR/WF/KA) serve KB maintenance checks, not SaaS application domain enforcement described in Section 7.
+- KBX-O002 in implementation is debt/entropy index–driven, not a direct single-chaos-dimension-spike detector as documented (">8 points between snapshots").
+- KBX-O001 (lesson→rule promotion after 3× pattern) requires retro:write pipeline and rule lifecycle (draft→active→retired); neither is fully implemented.
+- KBX-O003 (fan_in > 30 → structural review intent) and KBX-O004 (stale SOT doc → review intent) require graph tracking of `:Code.fan_in` and `:IMPLEMENTS` age — neither is confirmed in current runtime.
+
+**Decision:**
+- Treat Section 7 as partial alignment: framework/engine is real, but the documented SaaS domain content layer is not yet in source code.
+- Rule engine is safe to expose in UI read-only mode (list registered rules, show violations); SaaS domain rule authoring/enforcement is a separate implementation scope.
 
 ## Staged Files
 
