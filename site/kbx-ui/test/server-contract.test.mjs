@@ -259,6 +259,19 @@ test('GET /api/phase2-bridge returns gate summary contract', async () => {
   });
 });
 
+test('GET / returns bridge landing page', async () => {
+  await withServer(mockRunner, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type')?.includes('text/html'), true);
+
+    const body = await response.text();
+    assert.equal(body.includes('KBAgent Bridge'), true);
+    assert.equal(body.includes('http://localhost:4174'), true);
+    assert.equal(body.includes('http://localhost:4173'), true);
+  });
+});
+
 test('GET /api/workspace returns summary contract', async () => {
   await withServer(mockRunner, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/workspace`);

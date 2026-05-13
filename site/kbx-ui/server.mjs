@@ -169,6 +169,34 @@ export function createApp(commandRunner = executeBridgeCommand) {
   // Middleware
   app.use(express.json());
 
+  app.get('/', (_req, res) => {
+    res.type('html').send(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KBAgent Bridge</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; background: #0f172a; color: #e2e8f0; }
+      main { max-width: 720px; margin: 0 auto; }
+      .card { background: rgba(15, 23, 42, 0.72); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 16px; padding: 1.5rem; }
+      a { color: #7dd3fc; }
+      code { background: rgba(30, 41, 59, 0.9); padding: 0.2rem 0.4rem; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="card">
+        <h1>KBAgent Bridge</h1>
+        <p>CLI-backed bridge server is running on <code>http://localhost:4174</code>.</p>
+        <p>Open the local UI at <a href="http://localhost:4173/">http://localhost:4173/</a>.</p>
+        <p>Health and runtime data are available under <code>/api/*</code>.</p>
+      </div>
+    </main>
+  </body>
+</html>`);
+  });
+
   app.get('/api/version', async (_req, res) => {
     const response = await commandRunner('kbx --version', ['--version']);
     res.status(response.ok ? 200 : 500).json(response);
