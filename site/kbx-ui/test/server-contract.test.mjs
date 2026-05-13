@@ -253,6 +253,7 @@ test('GET /api/phase2-bridge returns gate summary contract', async () => {
     assert.equal(payload.phase, 'phase-2-cli-bridge');
     assert.equal(typeof payload.checkedAt, 'string');
     assert.equal(payload.summary.blocked, false);
+    assert.equal(payload.ok, true);
     assert.ok(Array.isArray(payload.gates));
     assert.equal(payload.gates.length > 0, true);
     assert.equal(payload.commands.status.command, 'kbx status --json');
@@ -296,7 +297,7 @@ test('GET /api/workspace returns error on command fail', async () => {
 
   await withServer(failRunner, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/workspace`);
-    assert.equal(response.status, 500);
+    assert.equal(response.status, 200);
 
     const payload = await response.json();
     assert.equal(payload.ok, false);
@@ -328,7 +329,7 @@ test('GET /api/system returns error on command fail', async () => {
 
   await withServer(failRunner, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/system`);
-    assert.equal(response.status, 500);
+    assert.equal(response.status, 200);
 
     const payload = await response.json();
     assert.equal(payload.ok, false);

@@ -215,7 +215,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
       expectJson: true,
       timeoutMs: 20000,
     });
-    res.status(response.ok ? 200 : 500).json(response);
+    res.status(200).json(response);
   });
 
   app.get('/api/rules', async (_req, res) => {
@@ -241,7 +241,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
     });
 
     if (!statusResult.ok) {
-      res.status(500).json({ ok: false, error: 'workspace command failed', stderr: statusResult.stderr });
+      res.status(200).json({ ok: false, error: 'workspace command failed', stderr: statusResult.stderr });
       return;
     }
 
@@ -258,7 +258,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
     });
 
     if (!doctorResult.ok) {
-      res.status(500).json({ ok: false, error: 'system command failed', stderr: doctorResult.stderr });
+      res.status(200).json({ ok: false, error: 'system command failed', stderr: doctorResult.stderr });
       return;
     }
 
@@ -318,7 +318,10 @@ export function createApp(commandRunner = executeBridgeCommand) {
       },
     };
 
-    res.status(summary.blocked ? 500 : 200).json(payload);
+    res.status(200).json({
+      ...payload,
+      ok: !summary.blocked,
+    });
   });
 
   // ═══ PHASE 4: MUTATION ENDPOINTS ═══
