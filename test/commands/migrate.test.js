@@ -168,7 +168,7 @@ test('runMigrate: dry-run JSON preview stays read-only', async () => {
   const after = fs.readFileSync(metaPath, 'utf8');
 
   const parsed = JSON.parse(output);
-  assert.equal(parsed.command, 'kb migrate');
+  assert.equal(parsed.command, 'kbx migrate');
   assert.equal(parsed.dry_run, true);
   assert.equal(parsed.target_version, 'v2.4.0');
   assert.equal(parsed.legacy_count, 1);

@@ -57,6 +57,15 @@ For detailed flows (optional): See [Agent Operating Manual — Appendix](./agent
 
 ## Three-Layer Vibe Flow (SVFactory + KBAgent)
 
+Canonical boundary statement:
+- SVFactory is the meta-factory that defines governance contracts, templates, workflows, schemas, prompts, and deterministic gates.
+- KBAgent is a downstream agent family instantiated from that contract to help users operate and evolve a reference-accurate knowledge base.
+- kbx CLI is the deterministic enforcement bridge between SVFactory and KBAgent.
+
+Claim scope guard:
+- Default claim scope is governed KB/agent software instances.
+- Do not generalize from governed KB/agent software instances to all software instances without explicit non-KB evidence.
+
 When users interact in natural language, execution follows this layered flow:
 
 1. **Layer 1: Intake & Normalize**

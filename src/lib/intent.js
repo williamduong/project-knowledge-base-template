@@ -993,7 +993,7 @@ function loadForwardEstimatesFromBacklog(contentRoot) {
 
   for (const id of backlogIds) {
     try {
-      const meta = readIntentMeta(contentRoot, id);
+      const meta = readIntentMetaFile(backlogIntentPath(contentRoot, id));
       if (!meta.estimate_factors || Object.keys(meta.estimate_factors).length === 0) {
         continue; // Skip intents without estimate_factors
       }
