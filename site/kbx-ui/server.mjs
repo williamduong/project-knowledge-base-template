@@ -9,7 +9,9 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..', '..');
 const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 
-const port = 4174;
+const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
+const uiPort = Number(process.env.KBX_UI_PORT || 4173);
+const port = Number(process.env.KBX_BRIDGE_PORT || 4174);
 
 function runKbx(args, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
@@ -188,8 +190,8 @@ export function createApp(commandRunner = executeBridgeCommand) {
     <main>
       <div class="card">
         <h1>KBAgent Bridge</h1>
-        <p>CLI-backed bridge server is running on <code>http://localhost:4174</code>.</p>
-        <p>Open the local UI at <a href="http://localhost:4173/">http://localhost:4173/</a>.</p>
+        <p>CLI-backed bridge server is running on <code>http://${uiHost}:${port}</code>.</p>
+        <p>Open the local UI at <a href="http://${uiHost}:${uiPort}/">http://${uiHost}:${uiPort}/</a>.</p>
         <p>Health and runtime data are available under <code>/api/*</code>.</p>
       </div>
     </main>
@@ -613,6 +615,6 @@ export function createApp(commandRunner = executeBridgeCommand) {
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
   const app = createApp();
   app.listen(port, () => {
-    console.log(`kbx-ui bridge listening on http://localhost:${port}`);
+    console.log(`kbx-ui bridge listening on http://${uiHost}:${port}`);
   });
 }
