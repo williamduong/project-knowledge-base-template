@@ -330,8 +330,10 @@ function runStatus({ args, cwd, packageJson }) {
       releasePipeline,
       activeIntents,
       observation: observationSummary,
-      verdict,    }, null, 2));
-    if (verdict.code !== 0) process.exit(verdict.code);
+      verdict,
+    }, null, 2));
+    // Luôn exit 0 nếu JSON trả về hợp lệ
+    process.exit(0);
     return;
   }
 
