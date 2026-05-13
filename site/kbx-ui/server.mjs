@@ -296,7 +296,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
   // ═══ PHASE 4: MUTATION ENDPOINTS ═══
 
   app.post('/api/intents/create', async (req, res) => {
-    const { title, focus, next_action, decision_summary } = req.body;
+    const { title, focus, next_action, decision_summary, intent_id, id } = req.body;
 
     // Validate
     if (!title || String(title).trim().length < 3) {
@@ -306,8 +306,10 @@ export function createApp(commandRunner = executeBridgeCommand) {
       });
     }
 
+    const requestedIntentId = String(intent_id || id || '').trim();
     const args = [
       'intent', 'create',
+      ...(requestedIntentId ? [requestedIntentId] : []),
       '--title', String(title).trim(),
       ...(focus ? ['--focus', String(focus).trim()] : []),
       ...(next_action ? ['--next-action', String(next_action).trim()] : []),

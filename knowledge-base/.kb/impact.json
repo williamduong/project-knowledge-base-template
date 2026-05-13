@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "scanned_at": "2026-05-12T07:42:04.092Z",
+  "scanned_at": "2026-05-13T13:44:31.655Z",
   "baseline": "e157d9c61caf325f5816cff25d4987a27b294909",
-  "head": "2e9f189170e1f8e56ace766979d4643dc57a4a2f",
+  "head": "80fc5c174d504fa180b5be925e61e5a03cce8ac7",
   "storage_mode": "tracked",
   "impacted": [],
   "self_edits": [
@@ -609,6 +609,18 @@
     {
       "status": "A",
       "path": "knowledge-base/TEMPLATE_CHANGELOG.md"
+    },
+    {
+      "status": "A",
+      "path": "knowledge-base/intents/_active/intent-v2-8-2-principal-grounding-contract/impact.md"
+    },
+    {
+      "status": "A",
+      "path": "knowledge-base/intents/_active/intent-v2-8-2-principal-grounding-contract/intent.md"
+    },
+    {
+      "status": "A",
+      "path": "knowledge-base/intents/_active/intent-v2-8-2-principal-grounding-contract/plan.md"
     },
     {
       "status": "A",
@@ -1400,6 +1412,7 @@
     "src/commands/dispatch.js",
     "src/commands/doctor.js",
     "src/commands/extract.js",
+    "src/commands/gate.js",
     "src/commands/graph.js",
     "src/commands/help.js",
     "src/commands/ide.js",
@@ -1430,6 +1443,7 @@
     "src/lib/context.js",
     "src/lib/ide-detect.js",
     "src/lib/ide-inject.js",
+    "src/lib/init-interview.js",
     "src/lib/intent-checkpoint.js",
     "src/lib/intent.js",
     "src/lib/kb-presence.js",
@@ -1545,6 +1559,7 @@
     "test/commands/chaos.test.js",
     "test/commands/dispatch.test.js",
     "test/commands/doctor.test.js",
+    "test/commands/gate.test.js",
     "test/commands/graph-lane-export.test.js",
     "test/commands/help-ontology.test.js",
     "test/commands/inspect.test.js",
