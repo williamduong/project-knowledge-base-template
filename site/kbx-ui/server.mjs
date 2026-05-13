@@ -400,12 +400,17 @@ export function createApp(commandRunner = executeBridgeCommand) {
       });
     }
 
+    const parsed = result.parsed || {};
+    const updatedFields = Array.isArray(parsed.updated_fields) ? parsed.updated_fields : updateFields;
+
     res.status(200).json({
       ok: true,
       result: {
-        id,
-        updated_fields: updateFields,
-        ...result.parsed,
+        id: parsed.intent_id || parsed.id || id,
+        updated_fields: updatedFields,
+        state: parsed.state ?? null,
+        status: parsed.status || 'updated',
+        ...parsed,
       },
       command: result.command,
       trace: [
@@ -472,7 +477,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
       });
     }
 
-    // Call kbx to get diff preview (if command exists)
+    // Call kbx to get diff preview from CLI contract.
     const result = await commandRunner('kbx intent apply-preview --json', 
       ['intent', 'apply-preview', id, '--json'], 
       {
@@ -498,15 +503,22 @@ export function createApp(commandRunner = executeBridgeCommand) {
     }
 
     const parsed = result.parsed || {};
+    const files = Array.isArray(parsed.files) ? parsed.files : [];
+    const warnings = Array.isArray(parsed.warnings) ? parsed.warnings : [];
+
     res.status(200).json({
       ok: true,
       diff: {
         files_changed: parsed.files_changed ?? 0,
         insertions: parsed.insertions ?? 0,
         deletions: parsed.deletions ?? 0,
-        files: Array.isArray(parsed.files) ? parsed.files : [],
+        files,
       },
-      warnings: Array.isArray(parsed.warnings) ? parsed.warnings : [],
+      warnings,
+      intent_id: parsed.intent_id ?? id,
+      status: parsed.status || 'preview',
+      conflict_summary: parsed.conflict_summary ?? null,
+      command: result.command,
     });
   });
 

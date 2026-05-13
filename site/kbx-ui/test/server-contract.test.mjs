@@ -141,10 +141,11 @@ function mockRunner(command) {
       ok: true,
       exitCode: 0,
       parsed: {
-        id: 'v2-11-test-intent',
-        title: 'Updated Intent',
-        lifecycle: 'draft',
-        updated_at: '2025-01-15T10:01:00Z',
+        command: 'kbx intent update',
+        intent_id: 'v2-11-test-intent',
+        updated_fields: ['title', 'focus'],
+        state: 'draft',
+        status: 'updated',
       },
       stdout: '',
       stderr: '',
@@ -172,11 +173,17 @@ function mockRunner(command) {
       ok: true,
       exitCode: 0,
       parsed: {
-        diff: [
-          '+ new file: .kb/intents/v2-11-test-intent.md',
-          'M modified: .kb/catalog.json',
+        command: 'kbx intent apply-preview',
+        intent_id: 'v2-11-test-intent',
+        files_changed: 2,
+        insertions: 0,
+        deletions: 0,
+        files: [
+          { file: 'knowledge-base/15-governance/example.md', op: 'modified' },
+          { file: 'knowledge-base/12-ai-skills/extra.md', op: 'new' },
         ],
-        warnings: ['Ensure catalog.json is valid'],
+        warnings: [{ level: 'warn', message: 'Ensure catalog.json is valid' }],
+        status: 'preview',
       },
       stdout: '',
       stderr: '',
@@ -402,7 +409,9 @@ test('PATCH /api/intents/{id} updates intent fields', async () => {
     assert.equal(response.status, 200);
     const payload = await response.json();
     assert.equal(payload.ok, true);
-    assert.equal(payload.result.title, 'Updated Intent');
+    assert.equal(payload.result.id, 'v2-11-test-intent');
+    assert.deepEqual(payload.result.updated_fields, ['title', 'focus']);
+    assert.equal(payload.result.status, 'updated');
     assert.ok(Array.isArray(payload.trace));
   });
 });
@@ -444,7 +453,10 @@ test('GET /api/intents/{id}/apply-preview returns diff and warnings', async () =
     assert.equal(response.status, 200);
     const payload = await response.json();
     assert.equal(payload.ok, true);
-    assert.ok(typeof payload.diff === 'object');
+    assert.equal(payload.intent_id, 'v2-11-test-intent');
+    assert.equal(payload.status, 'preview');
+    assert.equal(payload.diff.files_changed, 2);
+    assert.ok(Array.isArray(payload.diff.files));
     assert.ok(Array.isArray(payload.warnings));
   });
 });
