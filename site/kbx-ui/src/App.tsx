@@ -201,7 +201,7 @@ type ApplyPreviewResult = {
   error?: string;
 };
 
-type TabId = 'workspace' | 'system' | 'documents' | 'search';
+type TabId = 'overview' | 'workspace' | 'documents' | 'search';
 type IntentDetailTabId = 'overview' | 'tasks' | 'actions' | 'raw';
 type TaskFilterId = 'all' | 'running' | 'blocked' | 'done';
 type TaskSortId = 'runtime' | 'title';
@@ -229,7 +229,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabId>('workspace');
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [intentDetailTab, setIntentDetailTab] = useState<IntentDetailTabId>('overview');
   const [showCreateIntent, setShowCreateIntent] = useState(false);
   const [taskFilter, setTaskFilter] = useState<TaskFilterId>('all');
@@ -718,21 +718,21 @@ export default function App() {
         <div className="tabs" role="tablist" aria-label="Main views">
           <button
             type="button"
+            className={`tab ${activeTab === 'overview' ? 'on' : ''}`}
+            role="tab"
+            aria-selected={activeTab === 'overview'}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button
+            type="button"
             className={`tab ${activeTab === 'workspace' ? 'on' : ''}`}
             role="tab"
             aria-selected={activeTab === 'workspace'}
             onClick={() => setActiveTab('workspace')}
           >
             Workspace
-          </button>
-          <button
-            type="button"
-            className={`tab ${activeTab === 'system' ? 'on' : ''}`}
-            role="tab"
-            aria-selected={activeTab === 'system'}
-            onClick={() => setActiveTab('system')}
-          >
-            System
           </button>
           <button
             type="button"
@@ -784,9 +784,11 @@ export default function App() {
         </div>
       </section>
 
-      <section className={`page ${activeTab === 'workspace' ? 'on' : ''}`} role="tabpanel">
+      <section className={`page ${(activeTab === 'overview' || activeTab === 'workspace') ? 'on' : ''}`} role="tabpanel">
         <div className="scroll">
           <section className="workspace-cockpit">
+            {activeTab === 'overview' && (
+              <>
             <article className="panel panel-wide workspace-section">
               <div className="panel-header-row">
                 <div>
@@ -961,6 +963,87 @@ export default function App() {
             </>
           )}
         </article>
+
+        <article className="panel panel-wide workspace-section">
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">System Overview</p>
+              <h2>Current architecture truth</h2>
+            </div>
+            <div className="section-chip-row">
+              <span className="chip cb">dev management</span>
+              <span className="chip cgr">overview only</span>
+            </div>
+          </div>
+          <div className="system-stat-grid">
+            <div className="stat-card-ui">
+              <span className="stat-num">{systemSnapshot?.summary?.nodeVersion ?? '--'}</span>
+              <span className="stat-label">node</span>
+            </div>
+            <div className="stat-card-ui">
+              <span className="stat-num">{documentsSnapshot?.summary?.entityCount ?? '--'}</span>
+              <span className="stat-label">entities</span>
+            </div>
+            <div className="stat-card-ui">
+              <span className="stat-num">{documentsSnapshot?.summary?.relationCount ?? '--'}</span>
+              <span className="stat-label">relations</span>
+            </div>
+            <div className="stat-card-ui">
+              <span className="stat-num">{documentsSnapshot?.summary?.issueCount ?? '--'}</span>
+              <span className="stat-label">doc issues</span>
+            </div>
+          </div>
+        </article>
+
+        <article className="panel">
+          <p className="panel-label">System Overview</p>
+          <h2>Workspace snapshot</h2>
+          {loading && <p className="muted">Loading workspace summary...</p>}
+          {!loading && workspaceSnapshot && (
+            <>
+              <p className={workspaceSnapshot.ok ? 'status ok' : 'status error'}>
+                {workspaceSnapshot.ok ? 'Workspace summary loaded' : `Failed: ${workspaceSnapshot.error}`}
+              </p>
+              <pre>{workspaceSnapshot.summary ? JSON.stringify(workspaceSnapshot.summary, null, 2) : 'No data'}</pre>
+            </>
+          )}
+        </article>
+
+        <article className="panel">
+          <p className="panel-label">System Overview</p>
+          <h2>System snapshot</h2>
+          {loading && <p className="muted">Loading system checks...</p>}
+          {!loading && systemSnapshot && (
+            <>
+              <p className={systemSnapshot.ok ? 'status ok' : 'status error'}>
+                {systemSnapshot.ok ? 'System summary loaded' : `Failed: ${systemSnapshot.error}`}
+              </p>
+              <pre>{systemSnapshot.summary ? JSON.stringify(systemSnapshot.summary, null, 2) : 'No data'}</pre>
+            </>
+          )}
+        </article>
+
+        <article className="panel panel-wide">
+          <p className="panel-label">System Overview</p>
+          <h2>Documents graph snapshot</h2>
+          {loading && <p className="muted">Loading documents graph checks...</p>}
+          {!loading && documentsSnapshot && (
+            <>
+              <p className={documentsSnapshot.ok ? 'status ok' : 'status error'}>
+                {documentsSnapshot.ok ? 'Documents summary loaded' : `Failed: ${documentsSnapshot.error}`}
+              </p>
+              <pre>{documentsSnapshot.summary ? JSON.stringify(documentsSnapshot.summary, null, 2) : 'No data'}</pre>
+            </>
+          )}
+        </article>
+
+          </section>
+              </>
+            )}
+
+            {activeTab === 'workspace' && (
+              <>
+          <section className="grid">
 
         <article className="panel panel-wide workspace-section">
           <div className="panel-header-row">
@@ -1563,87 +1646,8 @@ export default function App() {
               )}
             </article>
           </section>
-          </section>
-        </div>
-      </section>
-
-      <section className={`page ${activeTab === 'system' ? 'on' : ''}`} role="tabpanel">
-        <div className="scroll">
-          <section className="grid">
-
-        <article className="panel panel-wide workspace-section">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Graph · infra · runtime</p>
-              <h2>Current architecture truth</h2>
-            </div>
-            <div className="section-chip-row">
-              <span className="chip cb">runtime-backed</span>
-              <span className="chip ca">graph partial</span>
-            </div>
-          </div>
-          <div className="system-stat-grid">
-            <div className="stat-card-ui">
-              <span className="stat-num">{systemSnapshot?.summary?.nodeVersion ?? '--'}</span>
-              <span className="stat-label">node</span>
-            </div>
-            <div className="stat-card-ui">
-              <span className="stat-num">{documentsSnapshot?.summary?.entityCount ?? '--'}</span>
-              <span className="stat-label">entities</span>
-            </div>
-            <div className="stat-card-ui">
-              <span className="stat-num">{documentsSnapshot?.summary?.relationCount ?? '--'}</span>
-              <span className="stat-label">relations</span>
-            </div>
-            <div className="stat-card-ui">
-              <span className="stat-num">{documentsSnapshot?.summary?.issueCount ?? '--'}</span>
-              <span className="stat-label">doc issues</span>
-            </div>
-          </div>
-        </article>
-
-        <article className="panel">
-          <p className="panel-label">Workspace</p>
-          <h2>Workspace snapshot</h2>
-          {loading && <p className="muted">Loading workspace summary...</p>}
-          {!loading && workspaceSnapshot && (
-            <>
-              <p className={workspaceSnapshot.ok ? 'status ok' : 'status error'}>
-                {workspaceSnapshot.ok ? 'Workspace summary loaded' : `Failed: ${workspaceSnapshot.error}`}
-              </p>
-              <pre>{workspaceSnapshot.summary ? JSON.stringify(workspaceSnapshot.summary, null, 2) : 'No data'}</pre>
-            </>
-          )}
-        </article>
-
-        <article className="panel">
-          <p className="panel-label">System</p>
-          <h2>System snapshot</h2>
-          {loading && <p className="muted">Loading system checks...</p>}
-          {!loading && systemSnapshot && (
-            <>
-              <p className={systemSnapshot.ok ? 'status ok' : 'status error'}>
-                {systemSnapshot.ok ? 'System summary loaded' : `Failed: ${systemSnapshot.error}`}
-              </p>
-              <pre>{systemSnapshot.summary ? JSON.stringify(systemSnapshot.summary, null, 2) : 'No data'}</pre>
-            </>
-          )}
-        </article>
-
-        <article className="panel panel-wide">
-          <p className="panel-label">Documents graph</p>
-          <h2>Documents graph snapshot</h2>
-          {loading && <p className="muted">Loading documents graph checks...</p>}
-          {!loading && documentsSnapshot && (
-            <>
-              <p className={documentsSnapshot.ok ? 'status ok' : 'status error'}>
-                {documentsSnapshot.ok ? 'Documents summary loaded' : `Failed: ${documentsSnapshot.error}`}
-              </p>
-              <pre>{documentsSnapshot.summary ? JSON.stringify(documentsSnapshot.summary, null, 2) : 'No data'}</pre>
-            </>
-          )}
-        </article>
-
+              </>
+            )}
           </section>
         </div>
       </section>
