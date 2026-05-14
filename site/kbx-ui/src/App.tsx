@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type SVGProps } from 'react';
 
 type VersionResponse = {
   command: string;
@@ -41,6 +41,12 @@ type RulesResponse = {
       id?: string;
       severity?: string;
       title?: string;
+      description?: string;
+      owner_layer?: string;
+      enforceability?: string;
+      runtime_status?: string;
+      since_version?: string;
+      source_doc?: string | null;
     }>;
   } | null;
   stdout: string;
@@ -202,17 +208,141 @@ type ApplyPreviewResult = {
 };
 
 type TabId = 'overview' | 'workspace' | 'documents' | 'search';
-type IntentDetailTabId = 'overview' | 'tasks' | 'actions' | 'raw';
-type TaskFilterId = 'all' | 'running' | 'blocked' | 'done';
+type IntentDetailTabId = 'tasks' | 'edit';
+type TaskFilterId = 'all' | 'backlog' | 'active' | 'close';
 type TaskSortId = 'runtime' | 'title';
 
 type IntentTask = NonNullable<NonNullable<IntentDetailResponse['detail']>['tasks'][number]>;
 type TaskViewModel = IntentTask & {
   runtimeState: 'running' | 'blocked' | 'done' | 'review' | 'open';
+  taskState: 'backlog' | 'active' | 'close';
+  taskId: string;
   sectionLabel: string;
   sourceLabel: string;
   summaryTags: string[];
+  runtimeLabel: string;
+  detailDescription: string;
+  closeCondition: string;
+  nextStepLabel: string;
+  dependency: {
+    taskId: string;
+    title: string;
+    relation: string;
+  } | null;
+  actionItems: Array<{
+    label: string;
+    description: string;
+    prompt: string;
+    Icon: (props: SVGProps<SVGSVGElement>) => JSX.Element;
+  }>;
 };
+
+type TaskLifecycleStep = {
+  key: 'draft' | 'active' | 'review' | 'close';
+  label: string;
+  status: 'done' | 'current' | 'todo';
+};
+
+type RegisteredRule = NonNullable<NonNullable<RulesResponse['parsed']>['rules']>[number];
+
+const RULE_DOMAIN_COPY: Record<string, { label: string; summary: string }> = {
+  M: {
+    label: 'Metadata rules',
+    summary: 'Giữ frontmatter và trường metadata đúng schema để KB không bị hỏng nền dữ liệu.',
+  },
+  V: {
+    label: 'Verification rules',
+    summary: 'Kiểm soát mối quan hệ giữa verification và time_state để claim có thể kiểm chứng được.',
+  },
+  I: {
+    label: 'Intent rules',
+    summary: 'Giữ intent đủ ngữ cảnh vận hành, đặc biệt là next action và change scope.',
+  },
+  GB: {
+    label: 'Git binding rules',
+    summary: 'Ràng buộc intent và checkpoint với dấu vết git để truy vết được thay đổi.',
+  },
+  AX: {
+    label: 'Axiom rules',
+    summary: 'Các rule hành vi nền tảng để agent không lệch khỏi contract gốc.',
+  },
+  GV: {
+    label: 'Governance verification rules',
+    summary: 'Kiểm tra những chỗ contract quản trị bắt buộc phải tồn tại và còn đồng bộ.',
+  },
+  P: {
+    label: 'Pipeline rules',
+    summary: 'Ràng buộc các bước pipeline và lane vận hành khi shell phát triển thêm.',
+  },
+  PR: {
+    label: 'Principle alignment rules',
+    summary: 'Giữ các nguyên tắc cốt lõi giữa SVFactory và KBAgent không bị drift.',
+  },
+  WF: {
+    label: 'Workflow alignment rules',
+    summary: 'Kiểm tra workflow thực thi có còn khớp với contract và lane làm việc hay không.',
+  },
+  KA: {
+    label: 'Knowledge alignment rules',
+    summary: 'Giữ KBAgent nói đúng runtime truth, đúng guidance và đúng knowledge contract.',
+  },
+  UNKNOWN: {
+    label: 'Unknown domain',
+    summary: 'Rule chưa map được vào domain đã biết.',
+  },
+};
+
+function UiIcon({ children, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      {children}
+    </svg>
+  );
+}
+
+function DraftIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><path d="M4 20h4l10-10-4-4L4 16v4Z" /><path d="m12 6 4 4" /></UiIcon>;
+}
+
+function BacklogIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><rect x="4" y="5" width="16" height="14" rx="2" /><path d="M8 9h8M8 13h8M8 17h5" /></UiIcon>;
+}
+
+function ActiveIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><path d="M12 3v18" /><path d="m5 10 7-7 7 7" /></UiIcon>;
+}
+
+function ClosedIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><circle cx="12" cy="12" r="8" /><path d="m9 12 2 2 4-4" /></UiIcon>;
+}
+
+function ApproveIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><path d="M5 12.5 9.5 17 19 7.5" /></UiIcon>;
+}
+
+function PreviewIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" /><circle cx="12" cy="12" r="2.5" /></UiIcon>;
+}
+
+function ApplyIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><path d="M12 3v12" /><path d="m7 10 5 5 5-5" /><path d="M5 20h14" /></UiIcon>;
+}
+
+function RetroIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><path d="M4 12a8 8 0 1 0 3-6.2" /><path d="M4 4v4h4" /></UiIcon>;
+}
+
+function ImpactIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><path d="M12 3 4 7v5c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V7l-8-4Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></UiIcon>;
+}
+
+function ArchiveIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><rect x="4" y="5" width="16" height="4" rx="1" /><path d="M6 9h12v9a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9Z" /><path d="M10 13h4" /></UiIcon>;
+}
+
+function ChevronIcon(props: SVGProps<SVGSVGElement>) {
+  return <UiIcon {...props}><path d="m6 9 6 6 6-6" /></UiIcon>;
+}
 
 export default function App() {
   const [version, setVersion] = useState<VersionResponse | null>(null);
@@ -230,11 +360,13 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
-  const [intentDetailTab, setIntentDetailTab] = useState<IntentDetailTabId>('overview');
+  const [intentDetailTab, setIntentDetailTab] = useState<IntentDetailTabId>('tasks');
   const [showCreateIntent, setShowCreateIntent] = useState(false);
+  const [copyToast, setCopyToast] = useState<{ kind: 'success' | 'error'; message: string } | null>(null);
   const [taskFilter, setTaskFilter] = useState<TaskFilterId>('all');
   const [taskSort, setTaskSort] = useState<TaskSortId>('runtime');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedRuleDomains, setExpandedRuleDomains] = useState<string[]>([]);
 
   // Phase 4 mutation state
   const [selectedIntentId, setSelectedIntentId] = useState('');
@@ -252,7 +384,6 @@ export default function App() {
     state: 'draft',
   });
   const [approveNote, setApproveNote] = useState('');
-  const [applyConfirmed, setApplyConfirmed] = useState(false);
   const [createResult, setCreateResult] = useState<MutationResult | null>(null);
   const [updateResult, setUpdateResult] = useState<MutationResult | null>(null);
   const [approveResult, setApproveResult] = useState<MutationResult | null>(null);
@@ -528,11 +659,6 @@ export default function App() {
       return;
     }
 
-    if (!applyConfirmed) {
-      setApplyResult({ ok: false, error: 'Confirm apply before running the mutation' });
-      return;
-    }
-
     setApplyLoading(true);
     try {
       const response = await fetch(`/api/intents/${encodeURIComponent(selectedIntentId)}/apply`, {
@@ -548,7 +674,6 @@ export default function App() {
       }
 
       setApplyResult({ ok: true, result: data.result });
-      setApplyConfirmed(false);
       await loadAll();
     } catch (err) {
       setApplyResult({ ok: false, error: err instanceof Error ? err.message : String(err) });
@@ -557,7 +682,29 @@ export default function App() {
     }
   }
 
-  const intentOptions = intents?.parsed?.intents ?? [];
+  function showCopyToast(kind: 'success' | 'error', message: string) {
+    setCopyToast({ kind, message });
+    window.setTimeout(() => {
+      setCopyToast((current) => (current?.message === message ? null : current));
+    }, 2200);
+  }
+
+  async function copyToClipboard(value: string, successMessage: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      showCopyToast('success', successMessage);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      showCopyToast('error', 'Không sao chép được vào clipboard');
+    }
+  }
+
+  async function copyCopilotPrompt(prompt: string, label: string) {
+    await copyToClipboard(prompt, `Đã sao chép: ${label}`);
+  }
+
+  const intentOptions = Array.from(new Map((intents?.parsed?.intents ?? []).filter((intent) => intent.id).map((intent) => [intent.id, intent])).values());
   const selectedIntent = intentOptions.find((intent) => intent.id === selectedIntentId) ?? null;
   const activeIntents = intentOptions.filter((intent) => intent.lifecycle === 'active');
   const backlogIntents = intentOptions.filter((intent) => intent.lifecycle === 'backlog');
@@ -567,6 +714,7 @@ export default function App() {
   const sessionIntentId = sessionContext?.summary?.sessionIntentId ?? null;
   const sessionIntentSource = sessionContext?.summary?.sessionIntentSource ?? null;
   const sessionLabel = sessionContext?.summary?.sessionLabel ?? null;
+  const currentSessionLabel = sessionLabel?.trim() || 'Kiểm tra intent và làm sạch';
   const checkpointTimestamp = sessionContext?.summary?.checkpointTimestamp
     ? new Date(sessionContext.summary.checkpointTimestamp).toLocaleString()
     : null;
@@ -582,13 +730,74 @@ export default function App() {
           : selectedIntent.lifecycle === 'closed'
             ? 'closed'
             : selectedIntent.lifecycle ?? 'unknown';
-  const lifecycleLaneStep = selectedIntent?.lifecycle === 'closed'
-    ? 3
-    : selectedIntent?.lifecycle === 'active'
-      ? 2
-      : selectedIntent?.lifecycle === 'backlog'
-        ? 1
-        : 0;
+  function getLifecycleLaneStep(lifecycle?: string | null) {
+    if (lifecycle === 'closed') return 3;
+    if (lifecycle === 'active') return 2;
+    if (lifecycle === 'backlog') return 1;
+    return 0;
+  }
+
+  const lifecycleLaneStep = getLifecycleLaneStep(selectedIntent?.lifecycle);
+
+  function getIntentVersion(id?: string | null) {
+    if (!id) return 'v?.?';
+    const match = id.match(/^v(\d+)-(\d+)/i);
+    return match ? `v${match[1]}.${match[2]}` : 'v?.?';
+  }
+
+  function getLifecycleTone(lifecycle?: string | null) {
+    if (lifecycle === 'active') return 'cg';
+    if (lifecycle === 'backlog') return 'cb';
+    if (lifecycle === 'closed') return 'cgr';
+    if (lifecycle === 'staged') return 'ca';
+    return 'ca';
+  }
+
+  function formatLifecycleLabel(lifecycle?: string | null) {
+    if (lifecycle === 'active') return 'Đang làm';
+    if (lifecycle === 'backlog') return 'Hàng chờ';
+    if (lifecycle === 'closed') return 'Đã đóng';
+    if (lifecycle === 'staged') return 'Tạm chốt';
+    return lifecycle ?? 'Không rõ';
+  }
+
+  function formatScopeLabel(scope?: string | null) {
+    if (scope === 'active') return 'Bản đang dùng';
+    if (scope === 'backlog') return 'Bản backlog';
+    if (scope === 'closed') return 'Bản đã đóng';
+    return scope ?? 'Không rõ nguồn';
+  }
+
+  async function updateIntentLifecycle(nextState: string) {
+    setUpdateFormData((current) => ({ ...current, state: nextState }));
+    setUpdateLoading(true);
+    try {
+      const response = await fetch(`/api/intents/${encodeURIComponent(selectedIntentId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: updateFormData.title.trim() || undefined,
+          focus: updateFormData.focus.trim() || undefined,
+          next_action: updateFormData.next_action.trim() || undefined,
+          decision_summary: updateFormData.decision_summary.trim() || undefined,
+          state: nextState,
+        }),
+      });
+
+      const data = (await response.json()) as MutationResult;
+      if (!response.ok || !data.ok) {
+        setUpdateResult({ ok: false, error: data.error || `HTTP ${response.status}` });
+        return;
+      }
+
+      setUpdateResult({ ok: true, result: data.result });
+      await loadAll();
+    } catch (err) {
+      setUpdateResult({ ok: false, error: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setUpdateLoading(false);
+    }
+  }
 
   function getTaskRuntimeState(task: IntentTask): TaskViewModel['runtimeState'] {
     if (task.status === 'blocked') {
@@ -620,23 +829,236 @@ export default function App() {
     return source;
   }
 
-  const taskView = (selectedIntentDetail?.tasks ?? []).map((task) => {
+  function formatTaskRuntimeLabel(runtimeState: TaskViewModel['runtimeState']) {
+    if (runtimeState === 'running') return 'Đang xử lý';
+    if (runtimeState === 'blocked') return 'Đang bị chặn';
+    if (runtimeState === 'review') return 'Chờ soát';
+    if (runtimeState === 'done') return 'Đã xong';
+    return 'Chưa xử lý';
+  }
+
+  function getTaskState(runtimeState: TaskViewModel['runtimeState']): TaskViewModel['taskState'] {
+    if (runtimeState === 'done') return 'close';
+    if (runtimeState === 'running' || runtimeState === 'review') return 'active';
+    return 'backlog';
+  }
+
+  function formatTaskStateLabel(taskState: TaskViewModel['taskState']) {
+    if (taskState === 'active') return 'Active';
+    if (taskState === 'close') return 'Close';
+    return 'Backlog';
+  }
+
+  function getRuleDomain(ruleId?: string) {
+    const match = String(ruleId || '').match(/^KBX-([A-Z]+)\d{3}$/);
+    return match?.[1] ?? 'UNKNOWN';
+  }
+
+  function getRuleDomainMeta(domain: string) {
+    return RULE_DOMAIN_COPY[domain] ?? RULE_DOMAIN_COPY.UNKNOWN;
+  }
+
+  function formatOwnerLayer(ownerLayer?: string) {
+    if (ownerLayer === 'svfactory') return 'SVFactory';
+    if (ownerLayer === 'kbagent') return 'KBAgent';
+    if (ownerLayer === 'shared') return 'Shared';
+    return ownerLayer || 'Unknown';
+  }
+
+  function formatRuleSeverity(severity?: string) {
+    if (severity === 'error') return 'Hard fail';
+    if (severity === 'warn') return 'Warning';
+    if (severity === 'info') return 'Soft guidance';
+    return severity || 'Unknown';
+  }
+
+  function formatEnforceability(enforceability?: string) {
+    if (enforceability === 'auto') return 'Auto check';
+    if (enforceability === 'semi') return 'Mixed: runtime + reviewer';
+    if (enforceability === 'human') return 'Human review only';
+    return enforceability || 'Unknown';
+  }
+
+  function formatRuntimeStatus(runtimeStatus?: string) {
+    if (runtimeStatus === 'implemented') return 'Live in runtime';
+    if (runtimeStatus === 'planned') return 'Planned only';
+    return runtimeStatus || 'Unknown';
+  }
+
+  function getRuleTone(severity?: string) {
+    if (severity === 'error') return 'cr';
+    if (severity === 'warn') return 'ca';
+    if (severity === 'info') return 'cg';
+    return 'cgr';
+  }
+
+  function toggleRuleDomain(domain: string) {
+    setExpandedRuleDomains((current) => (
+      current.includes(domain)
+        ? current.filter((item) => item !== domain)
+        : [...current, domain]
+    ));
+  }
+
+  function getTaskLifecycleSteps(task: TaskViewModel): TaskLifecycleStep[] {
+    const currentKey: TaskLifecycleStep['key'] = task.runtimeState === 'done'
+      ? 'close'
+      : task.runtimeState === 'review'
+        ? 'review'
+        : task.runtimeState === 'running' || task.runtimeState === 'blocked'
+          ? 'active'
+          : 'draft';
+    const order: TaskLifecycleStep['key'][] = ['draft', 'active', 'review', 'close'];
+    const labels: Record<TaskLifecycleStep['key'], string> = {
+      draft: 'Draft',
+      active: 'Active',
+      review: 'Review',
+      close: 'Close',
+    };
+    const currentIndex = order.indexOf(currentKey);
+
+    return order.map((key, index) => ({
+      key,
+      label: labels[key],
+      status: index < currentIndex ? 'done' : index === currentIndex ? 'current' : 'todo',
+    }));
+  }
+
+  function buildTaskDescription(task: IntentTask, sourceLabel: string, sectionLabel: string) {
+    if (task.description?.trim()) {
+      return task.description.trim();
+    }
+
+    if (/verification/i.test(sectionLabel)) {
+      return `Task kiểm chứng lấy từ ${sourceLabel}. Cần đối chiếu runtime, tài liệu hoặc evidence để xác nhận kết luận.`;
+    }
+
+    if (sourceLabel === 'Plan doc') {
+      return 'Task này đến từ plan, thường là việc triển khai hoặc đồng bộ trạng thái giữa kế hoạch và intent.';
+    }
+
+    if (task.tags.includes('partial')) {
+      return 'Task đang ở trạng thái một phần. Có tín hiệu đã làm nhưng chưa đủ bằng chứng để kết luận hoàn tất.';
+    }
+
+    return `Task lấy từ ${sourceLabel} trong section ${sectionLabel}. Cần làm rõ đầu ra mong đợi trước khi đóng.`;
+  }
+
+  function buildTaskCloseCondition(task: IntentTask, runtimeState: TaskViewModel['runtimeState'], sourceLabel: string) {
+    if (runtimeState === 'done') {
+      return 'Chỉ giữ trạng thái đóng khi checklist đã được đánh dấu xong và evidence liên quan vẫn còn hợp lệ.';
+    }
+
+    if (runtimeState === 'blocked') {
+      return 'Chỉ được đóng khi blocker được gỡ, có đường xử lý rõ ràng, và kết quả được cập nhật lại vào intent hoặc plan.';
+    }
+
+    if (task.tags.includes('partial') || runtimeState === 'review') {
+      return 'Chỉ đóng khi bỏ được trạng thái partial, có kết luận review rõ ràng, và không còn điểm mơ hồ trong evidence.';
+    }
+
+    if (sourceLabel === 'Intent doc') {
+      return 'Chỉ đóng khi intent.md phản ánh kết quả cuối cùng và các commit hoặc bằng chứng liên quan đã đủ để kiểm chứng.';
+    }
+
+    return 'Chỉ đóng khi đầu ra của task đã hoàn tất, trạng thái được cập nhật lại trong plan, và còn có thể truy vết bằng evidence hoặc commit.';
+  }
+
+  function buildTaskNextStepLabel(task: IntentTask, runtimeState: TaskViewModel['runtimeState']) {
+    if (runtimeState === 'blocked') return 'Gỡ blocker trước';
+    if (runtimeState === 'review') return 'Soát lại evidence';
+    if (runtimeState === 'running') return 'Hoàn tất phần còn lại';
+    if (task.tags.includes('partial')) return 'Chốt phần còn thiếu';
+    if (runtimeState === 'done') return 'Giữ nguyên và theo dõi';
+    return 'Làm rõ đầu ra cần đạt';
+  }
+
+  function buildTaskDependency(tasks: IntentTask[], currentIndex: number, taskState: TaskViewModel['taskState']) {
+    if (taskState === 'close') {
+      return null;
+    }
+
+    const currentTask = tasks[currentIndex];
+    const sameSectionCandidate = [...tasks]
+      .slice(0, currentIndex)
+      .reverse()
+      .find((task) => (task.section || 'General') === (currentTask.section || 'General') && task.status !== 'done');
+
+    const fallbackCandidate = [...tasks]
+      .slice(0, currentIndex)
+      .reverse()
+      .find((task) => task.status !== 'done');
+
+    const dependencyTask = sameSectionCandidate || fallbackCandidate;
+    if (!dependencyTask) {
+      return null;
+    }
+
+    const dependencyIndex = tasks.indexOf(dependencyTask);
+    return {
+      taskId: `T-${String(dependencyIndex + 1).padStart(3, '0')}`,
+      title: dependencyTask.title,
+      relation: sameSectionCandidate ? 'Phụ thuộc task trước trong cùng section' : 'Phụ thuộc task chưa đóng gần nhất',
+    };
+  }
+
+  function buildTaskActionItems(task: IntentTask, taskId: string, runtimeLabel: string, closeCondition: string, detailDescription: string) {
+    return [
+      {
+        label: 'Làm rõ task',
+        description: 'Tóm tắt mục tiêu và đầu ra',
+        Icon: PreviewIcon,
+        prompt: `Explain task ${taskId} in Vietnamese. Current runtime state: ${runtimeLabel}. Raw title: ${task.title}. Description: ${detailDescription}. Tell me what this task means, what output is expected, and what file or evidence I should inspect first.`,
+      },
+      {
+        label: 'Điều kiện đóng',
+        description: 'Kiểm tra tiêu chí hoàn tất',
+        Icon: ApproveIcon,
+        prompt: `Review close criteria for task ${taskId}. Current task text: ${task.text}. Proposed close condition: ${closeCondition}. Tell me whether this is enough to close, what evidence is still missing, and what exact proof should be added before marking done.`,
+      },
+      {
+        label: 'Hướng xử lý',
+        description: 'Đề xuất bước tiếp theo',
+        Icon: ImpactIcon,
+        prompt: `Give the next action plan for task ${taskId}. Runtime state: ${runtimeLabel}. Tags: ${task.tags.join(', ') || 'none'}. Related commits: ${task.relatedCommits.map((commit) => commit.sha).join(', ') || 'none'}. Return 3 concrete next steps in Vietnamese, ordered from safest to most direct.`,
+      },
+    ];
+  }
+
+  const taskView = (selectedIntentDetail?.tasks ?? []).map((task, index, tasks) => {
     const runtimeState = getTaskRuntimeState(task);
+    const taskState = getTaskState(runtimeState);
     const sectionLabel = task.section || 'General';
+    const sourceLabel = formatTaskSourceLabel(task.source);
     const summaryTags = task.tags.filter((tag) => tag !== 'reviewed');
+    const runtimeLabel = formatTaskRuntimeLabel(runtimeState);
+    const detailDescription = buildTaskDescription(task, sourceLabel, sectionLabel);
+    const closeCondition = buildTaskCloseCondition(task, runtimeState, sourceLabel);
+    const nextStepLabel = buildTaskNextStepLabel(task, runtimeState);
+    const taskId = `T-${String(index + 1).padStart(3, '0')}`;
+    const dependency = buildTaskDependency(tasks, index, taskState);
+    const actionItems = buildTaskActionItems(task, taskId, runtimeLabel, closeCondition, detailDescription);
 
     return {
       ...task,
       runtimeState,
+      taskState,
+      taskId,
       sectionLabel,
-      sourceLabel: formatTaskSourceLabel(task.source),
+      sourceLabel,
       summaryTags,
+      runtimeLabel,
+      detailDescription,
+      closeCondition,
+      nextStepLabel,
+      dependency,
+      actionItems,
     } satisfies TaskViewModel;
   });
 
   const filteredTasks = taskView.filter((task) => {
     if (taskFilter === 'all') return true;
-    return task.runtimeState === taskFilter;
+    return task.taskState === taskFilter;
   });
 
   const runtimePriority: Record<TaskViewModel['runtimeState'], number> = {
@@ -656,18 +1078,75 @@ export default function App() {
       || left.sectionLabel.localeCompare(right.sectionLabel)
       || left.title.localeCompare(right.title);
   });
+  const pipelinePrinciples = [
+    {
+      id: 'P1',
+      name: 'Intent lifecycle',
+      summary: 'Mở intent theo draft/backlog, kích hoạt khi đủ điều kiện, apply qua CLI, rồi close hoặc archive.',
+      flow: 'draft -> activate -> apply -> close/archive',
+      status: 'runtime-backed',
+    },
+    {
+      id: 'P2',
+      name: 'Task lifecycle',
+      summary: 'Task phải đi qua trạng thái rõ ràng từ draft đến close; không để review partial treo mãi trong parent intent.',
+      flow: 'draft -> active -> review -> close',
+      status: 'ui-derived',
+    },
+    {
+      id: 'P3',
+      name: 'Checkpoint and maintain',
+      summary: 'Checkpoint ghi focus hiện tại, còn maintain chạy vòng kiểm tra sức khỏe để giữ shell và evidence nhất quán.',
+      flow: 'focus/checkpoint -> maintain -> verify',
+      status: 'runtime-backed',
+    },
+    {
+      id: 'P4',
+      name: 'Release gate',
+      summary: 'Release KB là pipeline riêng: plan/run/init-pipeline, nhưng contract release-gate đầy đủ vẫn còn drift so với roadmap.',
+      flow: 'plan -> validate -> run -> catalog',
+      status: 'partial',
+    },
+  ];
 
-  const groupedTasks = sortedTasks.reduce<Record<string, TaskViewModel[]>>((groups, task) => {
-    const key = task.sectionLabel;
-    if (!groups[key]) {
-      groups[key] = [];
-    }
-    groups[key].push(task);
-    return groups;
-  }, {});
-
-  const taskGroups = Object.entries(groupedTasks);
   const topRules = rules?.parsed?.rules?.slice(0, 8) ?? [];
+  const registeredRules = rules?.parsed?.rules ?? [];
+  const ruleLandscape = Object.values(
+    registeredRules.reduce<Record<string, {
+      domain: string;
+      label: string;
+      summary: string;
+      count: number;
+      severities: Set<string>;
+      enforceabilities: Set<string>;
+      runtimeStatuses: Set<string>;
+      ownerLayers: Set<string>;
+      rules: RegisteredRule[];
+    }>>((accumulator, rule) => {
+      const domain = getRuleDomain(rule.id);
+      const domainMeta = getRuleDomainMeta(domain);
+      if (!accumulator[domain]) {
+        accumulator[domain] = {
+          domain,
+          label: domainMeta.label,
+          summary: domainMeta.summary,
+          count: 0,
+          severities: new Set<string>(),
+          enforceabilities: new Set<string>(),
+          runtimeStatuses: new Set<string>(),
+          ownerLayers: new Set<string>(),
+          rules: [],
+        };
+      }
+      accumulator[domain].count += 1;
+      if (rule.severity) accumulator[domain].severities.add(rule.severity);
+      if (rule.enforceability) accumulator[domain].enforceabilities.add(rule.enforceability);
+      if (rule.runtime_status) accumulator[domain].runtimeStatuses.add(rule.runtime_status);
+      if (rule.owner_layer) accumulator[domain].ownerLayers.add(rule.owner_layer);
+      accumulator[domain].rules.push(rule);
+      return accumulator;
+    }, {}),
+  ).sort((left, right) => left.label.localeCompare(right.label));
   const topIssues = documentsSnapshot?.summary?.topIssues ?? [];
   const workspaceMilestones = [
     { version: 'v2.6', name: 'Evidence loop', progress: 100, state: 'done' as const },
@@ -676,13 +1155,118 @@ export default function App() {
     { version: 'v2.9', name: 'Graph loop', progress: 20, state: 'planned' as const },
     { version: 'v3.0', name: 'Reasoning loop', progress: 0, state: 'planned' as const },
   ];
-  const loopSteps = [
-    { label: 'Goal', sublabel: selectedIntentDetail?.goal ? 'aligned' : 'pending', state: selectedIntentDetail?.goal ? 'done' : 'todo' },
-    { label: 'Checkpoint', sublabel: selectedIntentDetail?.focusCurrent ? 'loaded' : 'missing', state: selectedIntentDetail?.focusCurrent ? 'current' : 'todo' },
-    { label: 'Tasks', sublabel: `${selectedIntentDetail?.tasks?.length ?? 0} items`, state: (selectedIntentDetail?.tasks?.length ?? 0) > 0 ? 'done' : 'todo' },
-    { label: 'Mutations', sublabel: selectedIntentRuntimeStatus ?? 'idle', state: selectedIntentRuntimeStatus === 'running' ? 'current' : selectedIntentDetail ? 'done' : 'todo' },
+  const workspaceIntents = [...intentOptions].sort((left, right) => {
+    const leftPriority = left.id === sessionIntentId ? 0 : left.lifecycle === 'active' ? 1 : left.lifecycle === 'backlog' ? 2 : left.lifecycle === 'closed' ? 3 : 4;
+    const rightPriority = right.id === sessionIntentId ? 0 : right.lifecycle === 'active' ? 1 : right.lifecycle === 'backlog' ? 2 : right.lifecycle === 'closed' ? 3 : 4;
+    return leftPriority - rightPriority || (left.id ?? '').localeCompare(right.id ?? '');
+  });
+  const selectedIntentTaskCount = selectedIntentDetail?.tasks?.length ?? 0;
+  const totalTasks = selectedIntentDetail?.tasks?.length ?? selectedIntentTaskCount;
+  const completedTasks = (selectedIntentDetail?.tasks ?? []).filter((task) => task.status === 'done').length;
+  const remainingTasks = Math.max(totalTasks - completedTasks, 0);
+  const intentProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const lifecyclePercent = selectedIntent?.lifecycle === 'closed'
+    ? 100
+    : totalTasks > 0
+      ? intentProgress
+      : selectedIntent?.lifecycle === 'active'
+        ? 70
+        : selectedIntent?.lifecycle === 'backlog'
+          ? 35
+          : 10;
+  const intentPriority = selectedIntent?.id === sessionIntentId ? 'P1' : selectedIntent?.lifecycle === 'active' ? 'P1' : selectedIntent?.lifecycle === 'backlog' ? 'P2' : 'P3';
+  const closeCriteria = selectedIntentDetail?.focusNextAction || 'Hoàn tất checklist, chốt bằng chứng kiểm chứng, rồi mới đóng hoặc lưu trữ intent.';
+  const lifecycleSteps = [
+    {
+      label: 'Phác thảo',
+      shortLabel: 'Draft',
+      state: lifecycleLaneStep > 0 ? 'done' : lifecycleLaneStep === 0 ? 'current' : 'todo',
+      percent: lifecycleLaneStep > 0 ? 100 : lifecycleLaneStep === 0 ? lifecyclePercent : 0,
+      Icon: DraftIcon,
+    },
+    {
+      label: 'Hàng chờ',
+      shortLabel: 'Backlog',
+      state: lifecycleLaneStep > 1 ? 'done' : lifecycleLaneStep === 1 ? 'current' : 'todo',
+      percent: lifecycleLaneStep > 1 ? 100 : lifecycleLaneStep === 1 ? lifecyclePercent : 0,
+      Icon: BacklogIcon,
+    },
+    {
+      label: 'Đang làm',
+      shortLabel: 'Active',
+      state: lifecycleLaneStep > 2 ? 'done' : lifecycleLaneStep === 2 ? 'current' : 'todo',
+      percent: lifecycleLaneStep > 2 ? 100 : lifecycleLaneStep === 2 ? lifecyclePercent : 0,
+      Icon: ActiveIcon,
+    },
+    {
+      label: 'Hoàn tất',
+      shortLabel: 'Closed',
+      state: lifecycleLaneStep === 3 ? 'current' : 'todo',
+      percent: lifecycleLaneStep === 3 ? 100 : 0,
+      Icon: ClosedIcon,
+    },
   ] as const;
-  const cockpitTasks = sortedTasks.slice(0, 6);
+  function formatLifecycleStepStatus(step: typeof lifecycleSteps[number]) {
+    if (step.shortLabel === 'Closed' && step.state !== 'current') {
+      return 'chưa đóng';
+    }
+
+    if (step.state === 'done') {
+      return 'đã qua';
+    }
+
+    if (step.state === 'current') {
+      return 'đang active';
+    }
+
+    return 'chưa tới';
+  }
+  const insightActions = selectedIntent ? [
+    {
+      label: 'Retrospective',
+      description: 'Nhìn lại thay đổi',
+      kind: 'copy' as const,
+      Icon: RetroIcon,
+      prompt: `Start a retrospective for intent ${selectedIntent.id}. Summarize what changed, what is still risky, and what should happen next based on the current task states and decision summary.`,
+    },
+    {
+      label: 'Impact',
+      description: 'Đánh giá ảnh hưởng',
+      kind: 'copy' as const,
+      Icon: ImpactIcon,
+      prompt: `Run an impact check for intent ${selectedIntent.id}. Identify affected contracts, likely regressions, validation gaps, and the safest next verification steps.`,
+    },
+  ] : [];
+  const lifecycleActionColumns = selectedIntent ? [
+    {
+      stage: 'Phác thảo',
+      actions: [
+        ...(selectedIntent.lifecycle !== 'backlog' ? [{ label: 'Đưa vào backlog', description: 'Chốt hướng xử lý', kind: 'state' as const, state: 'backlog', Icon: BacklogIcon }] : []),
+      ],
+    },
+    {
+      stage: 'Hàng chờ',
+      actions: [
+        ...(selectedIntent.lifecycle !== 'active' ? [{ label: 'Kích hoạt', description: 'Bắt đầu thực thi', kind: 'state' as const, state: 'active', Icon: ActiveIcon }] : []),
+        { label: 'Phê duyệt', description: 'Mở quyền triển khai', kind: 'approve' as const, Icon: ApproveIcon },
+      ],
+    },
+    {
+      stage: 'Đang làm',
+      actions: [
+        { label: 'Xem trước', description: 'Soát thay đổi dự kiến', kind: 'preview' as const, Icon: PreviewIcon },
+        { label: 'Áp dụng', description: 'Chạy mutation', kind: 'apply' as const, Icon: ApplyIcon },
+      ],
+    },
+    {
+      stage: 'Hoàn tất',
+      actions: [
+        ...(selectedIntent.lifecycle !== 'closed' ? [{ label: 'Đóng intent', description: 'Kết thúc vòng đời', kind: 'state' as const, state: 'closed', Icon: ClosedIcon }] : []),
+        { label: 'Lưu trữ', description: 'Giữ làm bằng chứng', kind: 'state' as const, state: 'closed', Icon: ArchiveIcon },
+        ...insightActions,
+      ],
+    },
+  ] : [];
   const intentOverviewItems = [
     { label: 'active', value: activeIntents.length, tone: 'cg' },
     { label: 'backlog', value: backlogIntents.length, tone: 'cb' },
@@ -737,12 +1321,8 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="hd">
-        <div className="logo">
-          <div className="logo-ico">KB</div>
-          <div>
-            <div className="logo-txt">KBAgent Control Plane</div>
-            <div className="logo-ver">localhost</div>
-          </div>
+        <div className="project-head">
+          <div className="project-head-title">project-knowledge-base-template</div>
         </div>
 
         <div className="tabs" role="tablist" aria-label="Main views">
@@ -790,28 +1370,10 @@ export default function App() {
             <span className="chaos-l">{chaosResult?.level ?? 'unknown'}</span>
           </div>
           <button className="hbtn hbtn-p" type="button" onClick={onRefresh} disabled={refreshing || loading}>
-            {refreshing ? 'Refreshing...' : 'Refresh'}
+            {refreshing ? 'Refreshing...' : 'Refresh All page'}
           </button>
         </div>
       </header>
-
-      <section className="found">
-        <div className="found-top">
-          <div className="found-ico">◆</div>
-          <div>
-            <h1 className="found-title">project-knowledge-base-template</h1>
-            <p className="found-desc">
-              Foundation note: localhost webapp is the observability surface, chat proposes actions, and CLI remains the deterministic write path.
-            </p>
-          </div>
-        </div>
-        <div className="found-meta">
-          <span className="chip cb">checked {phase2CheckedAt}</span>
-          {phase2 && <span className="chip cgr">pass {phase2.summary.pass} · warn {phase2.summary.warn} · fail {phase2.summary.fail}</span>}
-          {phase2 && <span className={`chip ${phase2.summary.blocked ? 'cr' : 'cg'}`}>{phase2.summary.blocked ? 'blocked' : 'unblocked'}</span>}
-          {sessionIntentId && <span className="chip ca">session intent {sessionIntentId}</span>}
-        </div>
-      </section>
 
       <section className={`page ${(activeTab === 'overview' || activeTab === 'workspace') ? 'on' : ''}`} role="tabpanel">
         <div className="scroll">
@@ -835,8 +1397,13 @@ export default function App() {
                   {sessionIntentSource || 'unknown-source'}
                   {checkpointTimestamp ? ` · ${checkpointTimestamp}` : ''}
                 </p>
+                <p className="muted">Foundation note: localhost webapp is the observability surface, chat proposes actions, and CLI remains the deterministic write path.</p>
                 <p className="muted">{selectedIntentDetail?.focusCurrent || 'No checkpoint summary loaded yet.'}</p>
                 <div className="section-chip-row">
+                  <span className="chip cb">checked {phase2CheckedAt}</span>
+                  {phase2 && <span className="chip cgr">pass {phase2.summary.pass} · warn {phase2.summary.warn} · fail {phase2.summary.fail}</span>}
+                  {phase2 && <span className={`chip ${phase2.summary.blocked ? 'cr' : 'cg'}`}>{phase2.summary.blocked ? 'blocked' : 'unblocked'}</span>}
+                  {sessionIntentId && <span className="chip ca">session intent {sessionIntentId}</span>}
                   {sessionContext?.summary?.focusFile && <span className="chip cgr">{sessionContext.summary.focusFile}</span>}
                   {selectedIntentDetail?.focusNextAction && <span className="chip cb">next: {selectedIntentDetail.focusNextAction}</span>}
                 </div>
@@ -950,6 +1517,76 @@ export default function App() {
           </div>
         </article>
 
+        <article className="panel panel-wide workspace-section">
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">Rule Landscape</p>
+              <h2>What is enforcing what</h2>
+            </div>
+            <div className="section-chip-row">
+              <span className="chip cb">{registeredRules.length} rules</span>
+              <span className="chip cgr">runtime catalog</span>
+            </div>
+          </div>
+          <p className="muted rule-landscape-intro">
+            Mỗi nhóm bên dưới cho biết nó đang canh phần nào của hệ thống, đang là hard gate hay soft guidance,
+            và bên trong có những rule cụ thể nào đang chạy thật trong runtime.
+          </p>
+          <div className="overview-list rule-landscape-list">
+            {ruleLandscape.map((group) => (
+              <div key={group.domain} className="overview-list-item rule-landscape-item">
+                <div className="rule-group-header">
+                  <div className="rule-group-title-wrap">
+                    <div className="pipeline-item-head">
+                      <strong>{group.label}</strong>
+                      <span className="chip cgr">{group.domain}</span>
+                    </div>
+                    <span className="pipeline-item-copy">{group.summary}</span>
+                  </div>
+                  <div className="rule-group-actions">
+                    <span className="chip cb">{group.count} rules</span>
+                    <button
+                      type="button"
+                      className="rule-toggle-btn"
+                      onClick={() => toggleRuleDomain(group.domain)}
+                      aria-label={expandedRuleDomains.includes(group.domain) ? `Thu gọn ${group.label}` : `Mở ${group.label}`}
+                    >
+                      <ChevronIcon className={`collapse-icon ${expandedRuleDomains.includes(group.domain) ? 'up' : ''}`} />
+                    </button>
+                  </div>
+                </div>
+                <div className="rule-group-meta-row">
+                  <span className="chip ca">{[...group.severities].map(formatRuleSeverity).join(' · ') || 'Unknown severity'}</span>
+                  <span className="chip cb">{[...group.enforceabilities].map(formatEnforceability).join(' · ') || 'Unknown enforceability'}</span>
+                  <span className="chip cg">{[...group.runtimeStatuses].map(formatRuntimeStatus).join(' · ') || 'Unknown status'}</span>
+                </div>
+                <span className="meta">Owner layer: {[...group.ownerLayers].map(formatOwnerLayer).join(', ') || 'Unknown'}</span>
+                {expandedRuleDomains.includes(group.domain) ? (
+                  <div className="rule-detail-list">
+                    {group.rules
+                      .slice()
+                      .sort((left, right) => (left.id ?? '').localeCompare(right.id ?? ''))
+                      .map((rule) => (
+                        <div key={rule.id} className="rule-detail-card">
+                          <div className="rule-detail-head">
+                            <strong>{rule.id}</strong>
+                            <div className="section-chip-row">
+                              <span className={`chip ${getRuleTone(rule.severity)}`}>{formatRuleSeverity(rule.severity)}</span>
+                              <span className="chip cgr">{formatEnforceability(rule.enforceability)}</span>
+                            </div>
+                          </div>
+                          <span className="rule-detail-title">{rule.title || 'Untitled rule'}</span>
+                          <span className="pipeline-item-copy">{rule.description || 'No description available.'}</span>
+                          <span className="meta">Status: {formatRuntimeStatus(rule.runtime_status)}{rule.source_doc ? ` · Source: ${rule.source_doc}` : ''}</span>
+                        </div>
+                      ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </article>
+
         <article className="panel workspace-section">
           <div className="panel-header-row">
             <div>
@@ -1007,6 +1644,34 @@ export default function App() {
           </div>
         </article>
 
+        <article className="panel workspace-section">
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">Pipeline principles</p>
+              <h2>Operational pipelines</h2>
+            </div>
+            <div className="section-chip-row">
+              <span className="chip cb">4 principles</span>
+              <span className="chip cgr">runtime + target</span>
+            </div>
+          </div>
+          <div className="overview-list pipeline-list">
+            {pipelinePrinciples.map((pipeline) => (
+              <div key={pipeline.id} className="overview-list-item pipeline-item principle-item">
+                <div className="pipeline-item-head">
+                  <strong>{pipeline.id}</strong>
+                  <span className={`chip ${pipeline.status === 'runtime-backed' ? 'cg' : pipeline.status === 'partial' ? 'ca' : 'cb'}`}>
+                    {pipeline.status}
+                  </span>
+                </div>
+                <strong>{pipeline.name}</strong>
+                <span className="meta">{pipeline.flow}</span>
+                <span className="pipeline-item-copy">{pipeline.summary}</span>
+              </div>
+            ))}
+          </div>
+        </article>
+
         <article className="panel panel-wide">
           <div className="panel-header-row">
             <div>
@@ -1031,29 +1696,26 @@ export default function App() {
 
             {activeTab === 'workspace' && (
               <>
-          <section className="workspace-grid">
+          <section className="workspace-grid workspace-grid-shell">
             <aside className="workspace-lane workspace-lane-rail">
-              <article className="panel workspace-section">
-                <p className="panel-label">Workspace</p>
+              <article className="panel workspace-section workspace-sidebar-panel">
                 <div className="panel-header-row">
                   <div>
-                    <h2>Intent rail</h2>
-                    <p className="muted">Choose the active workstream, then operate inside the current workspace lane.</p>
-                  </div>
-                  <div className="intent-toolbar">
-                    <button
-                      className={`secondary-btn ${showCreateIntent ? 'is-open' : ''}`}
-                      type="button"
-                      onClick={() => setShowCreateIntent((current) => !current)}
-                    >
-                      {showCreateIntent ? 'Hide draft intent' : 'Create draft intent'}
-                    </button>
+                    <p className="panel-label">Workspace</p>
+                    <h2>All intents</h2>
                   </div>
                 </div>
-                <div className="intent-kpis">
-                  <span className="chip cg">active {activeIntents.length}</span>
-                  <span className="chip cb">backlog {backlogIntents.length}</span>
-                  <span className="chip cgr">closed {closedIntents.length}</span>
+                <div className="intent-toolbar intent-sidebar-actions">
+                  <button
+                    className={`secondary-btn ${showCreateIntent ? 'is-open' : ''}`}
+                    type="button"
+                    onClick={() => setShowCreateIntent((current) => !current)}
+                  >
+                    <span className="collapse-trigger-inline">
+                      <ChevronIcon className={`collapse-icon ${showCreateIntent ? 'up' : ''}`} />
+                      <span>{showCreateIntent ? 'Hide draft intent' : 'Create draft intent'}</span>
+                    </span>
+                  </button>
                 </div>
 
                 {showCreateIntent && (
@@ -1091,455 +1753,356 @@ export default function App() {
                     </div>
                   </div>
                 )}
-              </article>
 
-              <article className="panel workspace-section workspace-rail-panel">
-              <aside className="intent-rail" aria-label="Intent list">
-                <div className="intent-rail-group">
-                  <p className="panel-label">Active</p>
-                  {activeIntents.length === 0 && <p className="muted">No active intents</p>}
-                  {activeIntents.map((intent) => (
-                    <button
-                      key={`active-${intent.id}`}
-                      type="button"
-                      className={`intent-item ${selectedIntentId === intent.id ? 'on' : ''} ${sessionIntentId === intent.id ? 'session' : ''}`}
-                      onClick={() => setSelectedIntentId(intent.id ?? '')}
-                    >
-                      <span className="intent-item-title">{intent.id}</span>
-                      <span className="intent-item-meta">{intent.lifecycle} · {intent.mode}</span>
-                      <span className={`intent-item-badge ${sessionIntentId === intent.id ? 'running' : 'idle'}`}>
-                        {sessionIntentId === intent.id ? 'running' : 'idle'}
-                      </span>
-                    </button>
-                  ))}
+                <div className="intent-sidebar-list" role="list" aria-label="All intents">
+                  {workspaceIntents.map((intent) => {
+                    const intentStep = getLifecycleLaneStep(intent.lifecycle);
+                    return (
+                      <button
+                        key={intent.id}
+                        type="button"
+                        role="listitem"
+                        className={`intent-card ${selectedIntentId === intent.id ? 'on' : ''} ${sessionIntentId === intent.id ? 'session' : ''}`}
+                        onClick={() => setSelectedIntentId(intent.id ?? '')}
+                      >
+                        <div className="intent-card-topline">
+                          <span className="intent-card-version">{getIntentVersion(intent.id)}</span>
+                          <span className="intent-card-title">{intent.id}</span>
+                        </div>
+                        <div className="intent-card-meta">
+                          <span className={`chip ${getLifecycleTone(intent.lifecycle)}`}>{formatLifecycleLabel(intent.lifecycle)}</span>
+                          {sessionIntentId === intent.id && <span className="chip ca">session</span>}
+                        </div>
+                        <div className="intent-card-dots" aria-hidden="true">
+                          {[0, 1, 2, 3].map((dotIndex) => (
+                            <span
+                              key={`${intent.id}-${dotIndex}`}
+                              className={`intent-card-dot ${dotIndex < intentStep ? 'done' : dotIndex === intentStep ? 'current' : 'todo'}`}
+                            />
+                          ))}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-
-                <div className="intent-rail-group">
-                  <p className="panel-label">Backlog</p>
-                  {backlogIntents.slice(0, 12).map((intent) => (
-                    <button
-                      key={`backlog-${intent.id}`}
-                      type="button"
-                      className={`intent-item ${selectedIntentId === intent.id ? 'on' : ''} ${sessionIntentId === intent.id ? 'session' : ''}`}
-                      onClick={() => setSelectedIntentId(intent.id ?? '')}
-                    >
-                      <span className="intent-item-title">{intent.id}</span>
-                      <span className="intent-item-meta">{intent.lifecycle} · {intent.mode}</span>
-                      <span className="intent-item-badge queued">queued</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="intent-rail-group">
-                  <p className="panel-label">Closed (recent)</p>
-                  {closedIntents.slice(0, 8).map((intent) => (
-                    <button
-                      key={`closed-${intent.id}`}
-                      type="button"
-                      className={`intent-item ${selectedIntentId === intent.id ? 'on' : ''} ${sessionIntentId === intent.id ? 'session' : ''}`}
-                      onClick={() => setSelectedIntentId(intent.id ?? '')}
-                    >
-                      <span className="intent-item-title">{intent.id}</span>
-                      <span className="intent-item-meta">{intent.lifecycle} · {intent.mode}</span>
-                      <span className="intent-item-badge closed">closed</span>
-                    </button>
-                  ))}
-                </div>
-              </aside>
               </article>
             </aside>
 
-            <section className="workspace-lane workspace-lane-cockpit">
-              <article className="panel workspace-section">
-                <div className="panel-header-row">
-                  <div>
-                    <p className="panel-label">Workspace</p>
-                    <h2>Intent cockpit</h2>
-                  </div>
-                  <div className="section-chip-row">
-                    {selectedIntent && <span className="chip ca">selected {selectedIntent.id}</span>}
-                    {selectedIntentRuntimeStatus && <span className={`intent-runtime runtime-${selectedIntentRuntimeStatus}`}>{selectedIntentRuntimeStatus}</span>}
-                  </div>
-                </div>
-                <div className="loop-bar-ui" role="list" aria-label="Intent loop">
-                  {loopSteps.map((step, index) => (
-                    <div key={`${step.label}-${index}`} className={`loop-step ${step.state}`} role="listitem">
-                      <span className="loop-step-num">0{index + 1}</span>
-                      <span className="loop-step-label">{step.label}</span>
-                      <span className="loop-step-sub">{step.sublabel}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="quick-actions-ui">
-                  <span className="quick-actions-label">Quick actions</span>
-                  <button className="secondary-btn" type="button" onClick={() => sessionIntentId && setSelectedIntentId(sessionIntentId)} disabled={!sessionIntentId}>Load checkpoint</button>
-                  <button className="secondary-btn" type="button" onClick={() => setIntentDetailTab('tasks')} disabled={!selectedIntent}>Open tasks</button>
-                  <button className="secondary-btn" type="button" onClick={() => setIntentDetailTab('actions')} disabled={!selectedIntent}>Open mutations</button>
-                  <button className="refresh-btn" type="button" onClick={onRefresh} disabled={refreshing || loading}>{refreshing ? 'Refreshing...' : 'Reload intents'}</button>
-                </div>
-                <div className="workspace-task-table-wrap">
-                  <table className="workspace-task-table">
-                    <thead>
-                      <tr>
-                        <th>State</th>
-                        <th>Task</th>
-                        <th>Section</th>
-                        <th>Source</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cockpitTasks.length === 0 && <tr><td colSpan={4} className="workspace-task-empty">Select an intent with tasks to populate the cockpit table.</td></tr>}
-                      {cockpitTasks.map((task, index) => (
-                        <tr key={`${task.title}-${index}`}>
-                          <td><span className={`intent-task-state ${task.runtimeState}`}>{task.runtimeState}</span></td>
-                          <td>{task.title}</td>
-                          <td>{task.sectionLabel}</td>
-                          <td>{task.sourceLabel}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </article>
-            </section>
+            <article className="panel workspace-section intent-main-panel">
+              <div className="intent-main intent-main-modern">
+                {!selectedIntent && <p className="muted">Chọn một intent ở cột trái để xem chi tiết và thao tác.</p>}
 
-            <section className="workspace-lane workspace-lane-detail">
-              <article className="panel workspace-section intent-main-panel">
-                <div className="intent-main">
-                <div className="intent-focus">
-                  <div className="intent-focus-head">
-                    <div>
-                      <h3>Selected Intent</h3>
-                      {selectedIntent && (
-                        <p className="muted session-copy">
-                          {selectedIntent.id === sessionIntentId ? 'Running in current session' : 'Inspecting selected intent'}
-                        </p>
-                      )}
-                    </div>
-                    <select
-                      id="intent-picker"
-                      className="mutation-select"
-                      value={selectedIntentId}
-                      onChange={(e) => setSelectedIntentId(e.target.value)}
-                    >
-                      <option value="">Select an intent</option>
-                      {intentOptions.map((intent, index) => (
-                        <option key={`${intent.id}-${index}`} value={intent.id}>
-                          {intent.id} · {intent.lifecycle} · {intent.mode}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="intent-lane" role="list" aria-label="Intent lifecycle lane">
-                    <div className={`intent-step ${lifecycleLaneStep >= 0 ? 'done' : ''}`}>Draft</div>
-                    <div className={`intent-step ${lifecycleLaneStep >= 1 ? 'done' : ''}`}>Backlog</div>
-                    <div className={`intent-step ${lifecycleLaneStep >= 2 ? 'done' : ''}`}>Active</div>
-                    <div className={`intent-step ${lifecycleLaneStep >= 3 ? 'done' : ''}`}>Closed</div>
-                  </div>
-
-                  {!selectedIntent && <p className="muted">Pick an intent from left rail to inspect its goal and action context.</p>}
-
-                  {selectedIntent && (
-                    <div className="intent-detail-stack">
-                      <div className="intent-detail-card">
-                        <div className="intent-detail-head">
-                          <div>
-                            <h4>{selectedIntentDetail?.title || selectedIntent.id}</h4>
-                            <p className="meta">{selectedIntent.id}</p>
+                {selectedIntent && (
+                  <>
+                    <section className="intent-hero-card">
+                      <div className="intent-hero-head">
+                        <div>
+                          <div className="intent-hero-meta">
+                            <span className={`chip ${getLifecycleTone(selectedIntent.lifecycle)}`}>{formatLifecycleLabel(selectedIntent.lifecycle)}</span>
+                            <span className="chip cb">{selectedIntentTaskCount} việc</span>
+                            {selectedIntentDetail?.scope && <span className="chip cg">{formatScopeLabel(selectedIntentDetail.scope)}</span>}
+                            {selectedIntent.id === sessionIntentId && <span className="chip ca">{currentSessionLabel}</span>}
                           </div>
-                          {selectedIntentRuntimeStatus && <span className={`intent-runtime runtime-${selectedIntentRuntimeStatus}`}>{selectedIntentRuntimeStatus}</span>}
+                          <h3>{selectedIntentDetail?.title || selectedIntent.id}</h3>
+                          {selectedIntentDetail?.sourceFile && <p className="muted">Nguồn đang hiển thị: {selectedIntentDetail.sourceFile}</p>}
                         </div>
-                        <p className="intent-goal">
-                          {selectedIntentDetail?.goal || selectedIntentDetail?.decisionSummary || selectedIntentDetail?.focusCurrent || 'No goal captured yet for this intent.'}
-                        </p>
+                        <div className="intent-hero-actions">
+                          <button type="button" className="secondary-btn" onClick={() => setIntentDetailTab('edit')}>Edit</button>
+                        </div>
                       </div>
 
-                      <div className="intent-subtabs" role="tablist" aria-label="Intent detail views">
-                        <button type="button" className={`intent-subtab ${intentDetailTab === 'overview' ? 'on' : ''}`} onClick={() => setIntentDetailTab('overview')}>Overview</button>
-                        <button type="button" className={`intent-subtab ${intentDetailTab === 'tasks' ? 'on' : ''}`} onClick={() => setIntentDetailTab('tasks')}>Tasks</button>
-                        <button type="button" className={`intent-subtab ${intentDetailTab === 'actions' ? 'on' : ''}`} onClick={() => setIntentDetailTab('actions')}>Actions</button>
-                        <button type="button" className={`intent-subtab ${intentDetailTab === 'raw' ? 'on' : ''}`} onClick={() => setIntentDetailTab('raw')}>Raw</button>
+                      <div className="loop-bar-ui process-status-lane lifecycle-lane lifecycle-lane-compact lifecycle-lane-full" role="list" aria-label="Tiến độ intent">
+                        {lifecycleSteps.map((step, index) => (
+                          <div key={`${step.label}-${index}`} className={`loop-step ${step.state}`} role="listitem">
+                            <span className="loop-step-num"><step.Icon className="loop-step-icon" />0{index + 1}</span>
+                            <span className="loop-step-label">{step.shortLabel}</span>
+                            <span className="loop-step-sub">{step.percent}% · {formatLifecycleStepStatus(step)}</span>
+                          </div>
+                        ))}
                       </div>
 
-                      {selectedIntent.id === sessionIntentId && (
-                        <details className="intent-detail-card session-detail-card intent-collapsible" open>
-                          <summary className="intent-section-head">
-                            <div className="intent-detail-head">
-                              <div>
-                                <p className="panel-label">Session</p>
-                                <h4>{sessionLabel || 'Unnamed session'}</h4>
-                              </div>
-                              <span className="intent-runtime runtime-running">running</span>
+                      <div className="intent-action-grid">
+                        {lifecycleActionColumns.map((column) => (
+                          <div key={column.stage} className="intent-action-column">
+                            <p className="panel-label">{column.stage}</p>
+                            <div className="intent-action-stack">
+                              {column.actions.map((action) => (
+                                <button
+                                  key={action.label}
+                                  type="button"
+                                  className={`intent-action-btn ${action.kind === 'apply' ? 'submit-btn' : 'secondary-btn'}`}
+                                  onClick={() => {
+                                    if (action.kind === 'approve') {
+                                      void onApproveIntent();
+                                      return;
+                                    }
+                                    if (action.kind === 'preview') {
+                                      void onPreviewApply();
+                                      return;
+                                    }
+                                    if (action.kind === 'apply') {
+                                      void onApplyIntent();
+                                      return;
+                                    }
+                                    if (action.kind === 'copy') {
+                                      void copyCopilotPrompt(action.prompt, action.label);
+                                      return;
+                                    }
+                                    void updateIntentLifecycle(action.state);
+                                  }}
+                                  disabled={
+                                    !selectedIntentId.trim()
+                                    || updateLoading
+                                    || (action.kind === 'approve' && approveLoading)
+                                    || (action.kind === 'preview' && previewLoading)
+                                    || (action.kind === 'apply' && applyLoading)
+                                  }
+                                >
+                                  <span className="intent-action-btn-main">
+                                    <action.Icon className="intent-action-icon" />
+                                    <span>{action.label}</span>
+                                  </span>
+                                  {'description' in action && action.description ? <span className="intent-action-btn-sub">{action.description}</span> : null}
+                                </button>
+                              ))}
                             </div>
-                          </summary>
-                          <p className="muted session-copy">
-                            {sessionIntentSource ? `source ${sessionIntentSource}` : 'source unavailable'}
-                            {checkpointTimestamp ? ` · checkpoint ${checkpointTimestamp}` : ''}
-                          </p>
-                          {sessionContext?.summary?.focusFile && <p className="meta">focus file: {sessionContext.summary.focusFile}</p>}
-                        </details>
-                      )}
+                          </div>
+                        ))}
+                      </div>
 
-                      {intentDetailTab === 'overview' && (
-                        <div className="intent-detail-grid">
-                          <details className="intent-detail-card intent-collapsible" open>
-                            <summary className="intent-section-head">
-                              <div>
-                                <p className="panel-label">Goal</p>
-                                <h4>Intent goal</h4>
-                              </div>
-                            </summary>
-                            <p>{selectedIntentDetail?.goal || 'No explicit Goal section found in intent.md.'}</p>
-                          </details>
-                          <details className="intent-detail-card intent-collapsible" open>
-                            <summary className="intent-section-head">
-                              <div>
-                                <p className="panel-label">Next action</p>
-                                <h4>Execution next step</h4>
-                              </div>
-                            </summary>
-                            <p>{selectedIntentDetail?.focusNextAction || 'No next action recorded.'}</p>
-                          </details>
-                          <details className="intent-detail-card intent-collapsible" open>
-                            <summary className="intent-section-head">
-                              <div>
-                                <p className="panel-label">Current focus</p>
-                                <h4>Current checkpoint</h4>
-                              </div>
-                            </summary>
-                            <p>{selectedIntentDetail?.focusCurrent || 'No current focus recorded.'}</p>
-                          </details>
-                          <details className="intent-detail-card intent-collapsible" open>
-                            <summary className="intent-section-head">
-                              <div>
-                                <p className="panel-label">Decision summary</p>
-                                <h4>Why this intent exists</h4>
-                              </div>
-                            </summary>
-                            <p>{selectedIntentDetail?.decisionSummary || selectedIntentDetail?.summary || 'No summary recorded.'}</p>
-                          </details>
-                          {!!selectedIntentDetail?.stagedFiles?.length && (
-                            <details className="intent-detail-card intent-collapsible intent-detail-span" open>
-                              <summary className="intent-section-head">
-                                <div>
-                                  <p className="panel-label">Staged files</p>
-                                  <h4>{selectedIntentDetail.stagedFiles.length} tracked paths</h4>
-                                </div>
-                              </summary>
-                              <div className="intent-chip-row">
-                                {selectedIntentDetail.stagedFiles.map((file) => (
-                                  <span key={file} className="intent-path-chip">{file}</span>
-                                ))}
-                              </div>
-                            </details>
-                          )}
+                      <details className="intent-detail-card intent-collapsible overview-collapse" open>
+                        <summary className="intent-section-head">
+                          <div>
+                            <p className="panel-label">Tổng quan</p>
+                            <h4>Tóm tắt intent</h4>
+                          </div>
+                          <span className="collapse-icon-shell" aria-hidden="true">
+                            <ChevronIcon className="collapse-icon" />
+                          </span>
+                        </summary>
+                        <div className="intent-overview-grid">
+                          <div className="overview-metric">
+                            <span>Mục tiêu</span>
+                            <strong>{selectedIntentDetail?.goal ? 'đã bám mục tiêu' : 'chưa rõ mục tiêu'}</strong>
+                          </div>
+                          <div className="overview-metric">
+                            <span>Tiến độ</span>
+                            <strong>{intentProgress}% hoàn thành</strong>
+                          </div>
+                          <div className="overview-metric">
+                            <span>Công việc</span>
+                            <strong>{remainingTasks} còn lại / {totalTasks} tổng</strong>
+                          </div>
+                          <div className="overview-metric">
+                            <span>Priority</span>
+                            <strong>{intentPriority}</strong>
+                          </div>
+                          <div className="overview-metric">
+                            <span>Current focus</span>
+                            <strong>{selectedIntentDetail?.focusCurrent || 'No current focus recorded.'}</strong>
+                          </div>
+                          <div className="overview-metric">
+                            <span>Close condition</span>
+                            <strong>{closeCriteria}</strong>
+                          </div>
+                          <div className="overview-metric overview-metric-span">
+                            <span>Decision summary</span>
+                            <strong>{selectedIntentDetail?.decisionSummary || selectedIntentDetail?.summary || 'No summary recorded.'}</strong>
+                          </div>
                         </div>
-                      )}
+                      </details>
 
-                      {intentDetailTab === 'tasks' && (
-                        <details className="intent-detail-card intent-collapsible" open>
-                          <summary className="intent-section-head">
-                            <div>
-                              <p className="panel-label">Tasks</p>
-                              <h4>{selectedIntentDetail?.tasks?.length ?? 0} items</h4>
+                      <div className="intent-action-feedback">
+                        {approveResult && <div className={`form-result ${approveResult.ok ? 'ok' : 'error'}`}><p>{approveResult.ok ? '✓ Intent approved' : `✗ Error: ${approveResult.error}`}</p></div>}
+                        {previewResult && (
+                          <div className={`form-result ${previewResult.ok ? 'ok' : 'error'}`}>
+                            <p>{previewResult.ok ? '✓ Preview ready' : `✗ Error: ${previewResult.error}`}</p>
+                            {previewResult.ok && <p className="meta">Files changed: {previewResult.diff?.files_changed ?? 0} · +{previewResult.diff?.insertions ?? 0} / -{previewResult.diff?.deletions ?? 0}</p>}
+                          </div>
+                        )}
+                        {applyResult && <div className={`form-result ${applyResult.ok ? 'ok' : 'error'}`}><p>{applyResult.ok ? '✓ Intent applied' : `✗ Error: ${applyResult.error}`}</p></div>}
+                      </div>
+
+                    </section>
+
+                    <div className="workspace-detail-tabs" role="tablist" aria-label="Intent detail tabs">
+                      <button type="button" className={`workspace-detail-tab ${intentDetailTab === 'tasks' ? 'on' : ''}`} onClick={() => setIntentDetailTab('tasks')}>Tasks</button>
+                      <button type="button" className={`workspace-detail-tab ${intentDetailTab === 'edit' ? 'on' : ''}`} onClick={() => setIntentDetailTab('edit')}>Edit</button>
+                    </div>
+
+                    {intentDetailTab === 'tasks' && (
+                      <section className="intent-detail-card task-board-card">
+                        <div className="intent-section-head task-board-headline">
+                          <div>
+                            <p className="panel-label">Công việc</p>
+                            <h4>{selectedIntentTaskCount} task</h4>
+                          </div>
+                          <div className="task-board-controls">
+                            <div className="intent-filter-group" role="tablist" aria-label="Task filters">
+                              {(['all', 'backlog', 'active', 'close'] as TaskFilterId[]).map((filterId) => (
+                                <button
+                                  key={filterId}
+                                  type="button"
+                                  className={`intent-filter-chip ${taskFilter === filterId ? 'on' : ''}`}
+                                  onClick={() => setTaskFilter(filterId)}
+                                >
+                                  {filterId === 'all' ? 'tất cả' : filterId}
+                                </button>
+                              ))}
                             </div>
-                            <div className="intent-chip-row">
-                              {selectedIntentRuntimeStatus === 'running' && <span className="intent-runtime runtime-running">intent running</span>}
-                              <span className="chip cgr">UI heuristic, not CLI-native task state</span>
-                            </div>
-                          </summary>
-                          {selectedIntentDetail?.tasks && selectedIntentDetail.tasks.length > 0 ? (
-                            <div className="intent-task-stack">
-                              <div className="intent-task-toolbar">
-                                <div className="intent-filter-group" role="tablist" aria-label="Task filters">
-                                  {(['all', 'running', 'blocked', 'done'] as TaskFilterId[]).map((filterId) => (
-                                    <button
-                                      key={filterId}
-                                      type="button"
-                                      className={`intent-filter-chip ${taskFilter === filterId ? 'on' : ''}`}
-                                      onClick={() => setTaskFilter(filterId)}
-                                    >
-                                      {filterId}
-                                    </button>
-                                  ))}
-                                </div>
-                                <label className="task-sort-label">
-                                  <span>Sort</span>
-                                  <select className="mutation-select task-sort-select" value={taskSort} onChange={(e) => setTaskSort(e.target.value as TaskSortId)}>
-                                    <option value="runtime">runtime</option>
-                                    <option value="title">title</option>
-                                  </select>
-                                </label>
-                              </div>
+                            <label className="task-sort-label">
+                              <span>Sắp xếp</span>
+                              <select className="mutation-select task-sort-select" value={taskSort} onChange={(e) => setTaskSort(e.target.value as TaskSortId)}>
+                                <option value="runtime">trạng thái</option>
+                                <option value="title">tiêu đề</option>
+                              </select>
+                            </label>
+                          </div>
+                        </div>
 
-                              <div className="intent-task-legend">
-                                <span className="chip ca">running = candidate current work</span>
-                                <span className="chip cr">blocked = gap or hard issue</span>
-                                <span className="chip cg">done = explicitly complete</span>
-                                <span className="chip cb">review = reviewed or partial evidence</span>
-                              </div>
-
-                              <div className="intent-task-groups">
-                                {taskGroups.map(([section, tasks]) => (
-                                  <details key={section} className="intent-task-group" open>
-                                    <summary className="intent-task-group-head">
-                                      <div>
-                                        <p className="panel-label">Section</p>
-                                        <h4>{section}</h4>
+                        <div className="task-board-table">
+                          <div className="task-board-header-row">
+                            <span />
+                            <span>ID</span>
+                            <span>Task</span>
+                            <span>Trạng thái</span>
+                          </div>
+                          {sortedTasks.length === 0 && <div className="task-board-empty">Không có task phù hợp với bộ lọc hiện tại, hoặc chưa tìm thấy checklist trong intent.md / plan.md.</div>}
+                          {sortedTasks.map((task, index) => {
+                            return (
+                              <details key={`${task.source}-${task.section ?? 'none'}-${index}`} className={`task-board-row ${task.runtimeState === 'running' ? 'is-running' : ''}`}>
+                                <summary className="task-board-summary">
+                                  <span className="collapse-icon-shell task-board-expander" aria-hidden="true">
+                                    <ChevronIcon className="collapse-icon" />
+                                  </span>
+                                  <span className="task-board-id">{task.taskId}</span>
+                                  <span className="task-board-title">{task.title}</span>
+                                  <span className={`intent-task-state ${task.taskState}`}>{formatTaskStateLabel(task.taskState)}</span>
+                                </summary>
+                                <div className="task-board-detail">
+                                  <div className="task-detail-grid">
+                                    <div className="task-detail-card task-detail-card-primary">
+                                      <span className="task-detail-label">Task meaning</span>
+                                      <p className="intent-task-description">{task.detailDescription}</p>
+                                      <div className="task-next-step-row">
+                                        <span className="chip cb">Ưu tiên: {task.nextStepLabel}</span>
+                                        <span className={`chip ${task.taskState === 'close' ? 'cg' : task.taskState === 'active' ? 'cb' : 'ca'}`}>Runtime: {task.runtimeLabel}</span>
                                       </div>
-                                      <span className="chip cgr">{tasks.length} tasks</span>
-                                    </summary>
-                                    <div className="intent-task-list compact">
-                                      {tasks.map((task, index) => (
-                                        <details className={`intent-task-row intent-task-card ${task.runtimeState === 'running' ? 'is-running' : ''}`} key={`${task.source}-${task.section ?? 'none'}-${index}`}>
-                                          <summary className="intent-task-summary compact">
-                                            <span className={`intent-task-state ${task.runtimeState}`}>{task.runtimeState}</span>
-                                            <div className="intent-task-copy">
-                                              <p>{task.title}</p>
-                                              <div className="intent-task-inline-meta">
-                                                <span className="intent-task-meta-chip">{task.sourceLabel}</span>
-                                                {task.summaryTags.slice(0, 2).map((tag) => (
-                                                  <span key={`${task.title}-${tag}`} className="intent-task-meta-chip tag">{tag}</span>
-                                                ))}
-                                                {task.relatedCommits[0] && <span className="intent-task-meta-chip commit">{task.relatedCommits[0].sha}</span>}
-                                              </div>
-                                            </div>
-                                          </summary>
-                                          <div className="intent-task-body">
-                                            {task.description && <p className="intent-task-description">{task.description}</p>}
-                                            <div className="intent-chip-row detail-meta-row">
-                                              <span className="intent-path-chip">section: {task.sectionLabel}</span>
-                                              <span className="intent-path-chip">source: {task.sourceLabel}</span>
-                                            </div>
-                                            {task.tags.length > 0 && (
-                                              <div className="intent-task-tags">
-                                                {task.tags.map((tag) => (
-                                                  <span key={tag} className="intent-task-tag">{tag}</span>
-                                                ))}
-                                              </div>
-                                            )}
-                                            {task.relatedCommits.length > 0 && (
-                                              <div className="intent-task-commits">
-                                                {task.relatedCommits.map((commit) => (
-                                                  <div key={`${task.title}-${commit.sha}`} className="intent-task-commit">
-                                                    <span className="intent-task-sha">{commit.sha}</span>
-                                                    <span>{commit.subject}</span>
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            )}
+                                    </div>
+                                    <div className="task-detail-card subdued">
+                                      <span className="task-detail-label">Task lifecycle</span>
+                                      <div className="task-lifecycle-strip" role="list" aria-label={`Task lifecycle ${task.taskId}`}>
+                                        {getTaskLifecycleSteps(task).map((step) => (
+                                          <div key={`${task.taskId}-${step.key}`} className={`task-lifecycle-step ${step.status}`} role="listitem">
+                                            <span className="task-lifecycle-dot" />
+                                            <span>{step.label}</span>
                                           </div>
-                                        </details>
+                                        ))}
+                                      </div>
+                                      <p className="intent-task-description">{task.closeCondition}</p>
+                                    </div>
+                                  </div>
+                                  <div className="task-context-panel">
+                                    <div className="task-context-group">
+                                      <span className="task-detail-label">Context</span>
+                                      <div className="intent-chip-row detail-meta-row">
+                                        <span className="intent-path-chip">section: {task.sectionLabel}</span>
+                                        <span className="intent-path-chip">source: {task.sourceLabel}</span>
+                                        {task.dependency && <span className="intent-path-chip">depends on {task.dependency.taskId} · {task.dependency.title}</span>}
+                                      </div>
+                                    </div>
+                                    {task.summaryTags.length > 0 && (
+                                      <div className="task-context-group">
+                                        <span className="task-detail-label">Signals</span>
+                                        <div className="intent-chip-row detail-meta-row">
+                                          {task.summaryTags.map((tag) => (
+                                            <span key={`${task.title}-${tag}`} className="intent-task-tag">{tag}</span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="task-action-block">
+                                    <span className="task-detail-label">Action prompts</span>
+                                    <div className="task-action-strip">
+                                      {task.actionItems.map((action) => (
+                                        <button
+                                          key={`${task.taskId}-${action.label}`}
+                                          type="button"
+                                          className="secondary-btn task-action-btn"
+                                          onClick={() => void copyCopilotPrompt(action.prompt, `${task.taskId} · ${action.label}`)}
+                                        >
+                                          <span className="intent-action-btn-main">
+                                            <action.Icon className="intent-action-icon" />
+                                            <span>{action.label}</span>
+                                          </span>
+                                        </button>
                                       ))}
                                     </div>
-                                  </details>
-                                ))}
-                              </div>
-                            </div>
-                          ) : (
-                            <p>No tasks match the current filter, or no checklist was found in intent.md / plan.md.</p>
-                          )}
-                        </details>
-                      )}
-
-                      {intentDetailTab === 'actions' && (
-                        <div className="intent-detail-stack">
-                          <details className="intent-detail-card intent-collapsible" open>
-                            <summary className="intent-section-head">
-                              <div>
-                                <p className="panel-label">Update</p>
-                                <h4>Update intent</h4>
-                              </div>
-                              <span className="intent-runtime runtime-idle">selected intent</span>
-                            </summary>
-                            <div className="mutation-form compact-form">
-                              <div className="form-field">
-                                <label htmlFor="update-title">Title</label>
-                                <input id="update-title" type="text" value={updateFormData.title} onChange={(e) => setUpdateFormData({ ...updateFormData, title: e.target.value })} disabled={updateLoading} />
-                              </div>
-                              <div className="form-field">
-                                <label htmlFor="update-focus">Focus</label>
-                                <input id="update-focus" type="text" value={updateFormData.focus} onChange={(e) => setUpdateFormData({ ...updateFormData, focus: e.target.value })} disabled={updateLoading} />
-                              </div>
-                              <div className="form-field">
-                                <label htmlFor="update-action">Next action</label>
-                                <input id="update-action" type="text" value={updateFormData.next_action} onChange={(e) => setUpdateFormData({ ...updateFormData, next_action: e.target.value })} disabled={updateLoading} />
-                              </div>
-                              <div className="form-field">
-                                <label htmlFor="update-state">State</label>
-                                <select id="update-state" className="mutation-select" value={updateFormData.state} onChange={(e) => setUpdateFormData({ ...updateFormData, state: e.target.value })} disabled={updateLoading}>
-                                  <option value="draft">draft</option>
-                                  <option value="staged">staged</option>
-                                  <option value="active">active</option>
-                                  <option value="closed">closed</option>
-                                </select>
-                              </div>
-                              <div className="form-field intent-detail-span">
-                                <label htmlFor="update-summary">Decision summary</label>
-                                <textarea id="update-summary" rows={3} value={updateFormData.decision_summary} onChange={(e) => setUpdateFormData({ ...updateFormData, decision_summary: e.target.value })} disabled={updateLoading} />
-                              </div>
-                              <div className="intent-action-row intent-detail-span">
-                                <button type="button" onClick={onUpdateIntent} disabled={updateLoading || !selectedIntentId.trim()} className="submit-btn">{updateLoading ? 'Updating...' : 'Update intent'}</button>
-                              </div>
-                              {updateResult && <div className={`form-result ${updateResult.ok ? 'ok' : 'error'} intent-detail-span`}><p>{updateResult.ok ? '✓ Intent updated' : `✗ Error: ${updateResult.error}`}</p></div>}
-                            </div>
-                          </details>
-
-                          <details className="intent-detail-card intent-collapsible" open>
-                            <summary className="intent-section-head">
-                              <div>
-                                <p className="panel-label">Approve and apply</p>
-                                <h4>Mutation gate</h4>
-                              </div>
-                              {selectedIntentRuntimeStatus && <span className={`intent-runtime runtime-${selectedIntentRuntimeStatus}`}>{selectedIntentRuntimeStatus}</span>}
-                            </summary>
-                            <div className="mutation-form">
-                              <div className="form-field">
-                                <label htmlFor="approve-note">Approval note</label>
-                                <textarea id="approve-note" rows={3} value={approveNote} onChange={(e) => setApproveNote(e.target.value)} disabled={approveLoading} placeholder="Optional approval note" />
-                              </div>
-                              <div className="intent-action-row">
-                                <button type="button" onClick={onApproveIntent} disabled={approveLoading || !selectedIntentId.trim()} className="submit-btn">{approveLoading ? 'Approving...' : 'Approve intent'}</button>
-                                <button type="button" onClick={onPreviewApply} disabled={previewLoading || !selectedIntentId.trim()} className="secondary-btn">{previewLoading ? 'Loading preview...' : 'Preview apply'}</button>
-                              </div>
-                              {approveResult && <div className={`form-result ${approveResult.ok ? 'ok' : 'error'}`}><p>{approveResult.ok ? '✓ Intent approved' : `✗ Error: ${approveResult.error}`}</p></div>}
-                              {previewResult && (
-                                <div className={`form-result ${previewResult.ok ? 'ok' : 'error'}`}>
-                                  <p>{previewResult.ok ? '✓ Preview ready' : `✗ Error: ${previewResult.error}`}</p>
-                                  {previewResult.ok && (
-                                    <>
-                                      <p className="meta">Files changed: {previewResult.diff?.files_changed ?? 0} · +{previewResult.diff?.insertions ?? 0} / -{previewResult.diff?.deletions ?? 0}</p>
-                                      <pre>{JSON.stringify(previewResult.diff, null, 2)}</pre>
-                                      {previewResult.warnings && previewResult.warnings.length > 0 && (
-                                        <ul className="warning-list">
-                                          {previewResult.warnings.map((warning, index) => (
-                                            <li key={`${warning.message ?? 'warning'}-${index}`}>{warning.level ?? 'info'} · {warning.message ?? 'No message'}</li>
-                                          ))}
-                                        </ul>
-                                      )}
-                                    </>
+                                  </div>
+                                  {task.relatedCommits.length > 0 && (
+                                    <div className="intent-task-commits">
+                                      {task.relatedCommits.map((commit) => (
+                                        <div key={`${task.title}-${commit.sha}`} className="intent-task-commit">
+                                          <span className="intent-task-sha">{commit.sha}</span>
+                                          <span>{commit.subject}</span>
+                                        </div>
+                                      ))}
+                                    </div>
                                   )}
                                 </div>
-                              )}
-                              <label className="confirm-row">
-                                <input type="checkbox" checked={applyConfirmed} onChange={(e) => setApplyConfirmed(e.target.checked)} />
-                                <span>I understand this will apply the selected intent</span>
-                              </label>
-                              <button type="button" onClick={onApplyIntent} disabled={applyLoading || !selectedIntentId.trim()} className="submit-btn">{applyLoading ? 'Applying...' : 'Apply intent'}</button>
-                              {applyResult && <div className={`form-result ${applyResult.ok ? 'ok' : 'error'}`}><p>{applyResult.ok ? '✓ Intent applied' : `✗ Error: ${applyResult.error}`}</p></div>}
-                            </div>
-                          </details>
+                              </details>
+                            );
+                          })}
                         </div>
-                      )}
+                      </section>
+                    )}
 
-                      {intentDetailTab === 'raw' && <pre>{selectedIntentDetail ? JSON.stringify(selectedIntentDetail, null, 2) : JSON.stringify(selectedIntent, null, 2)}</pre>}
-                    </div>
-                  )}
-                </div>
-                </div>
-              </article>
-            </section>
+                    {intentDetailTab === 'edit' && (
+                      <section className="intent-detail-card">
+                        <div className="intent-section-head">
+                          <div>
+                            <p className="panel-label">Edit</p>
+                            <h4>Intent metadata</h4>
+                          </div>
+                        </div>
+                        <div className="mutation-form compact-form">
+                          <div className="form-field">
+                            <label htmlFor="update-title">Title</label>
+                            <input id="update-title" type="text" value={updateFormData.title} onChange={(e) => setUpdateFormData({ ...updateFormData, title: e.target.value })} disabled={updateLoading} />
+                          </div>
+                          <div className="form-field">
+                            <label htmlFor="update-focus">Focus</label>
+                            <input id="update-focus" type="text" value={updateFormData.focus} onChange={(e) => setUpdateFormData({ ...updateFormData, focus: e.target.value })} disabled={updateLoading} />
+                          </div>
+                          <div className="form-field">
+                            <label htmlFor="update-action">Next action</label>
+                            <input id="update-action" type="text" value={updateFormData.next_action} onChange={(e) => setUpdateFormData({ ...updateFormData, next_action: e.target.value })} disabled={updateLoading} />
+                          </div>
+                          <div className="form-field">
+                            <label htmlFor="update-state">State</label>
+                            <select id="update-state" className="mutation-select" value={updateFormData.state} onChange={(e) => setUpdateFormData({ ...updateFormData, state: e.target.value })} disabled={updateLoading}>
+                              <option value="draft">draft</option>
+                              <option value="staged">staged</option>
+                              <option value="active">active</option>
+                              <option value="closed">closed</option>
+                            </select>
+                          </div>
+                          <div className="form-field intent-detail-span">
+                            <label htmlFor="update-summary">Decision summary</label>
+                            <textarea id="update-summary" rows={3} value={updateFormData.decision_summary} onChange={(e) => setUpdateFormData({ ...updateFormData, decision_summary: e.target.value })} disabled={updateLoading} />
+                          </div>
+                          <div className="intent-action-row intent-detail-span intent-actions-right">
+                            <button type="button" onClick={onUpdateIntent} disabled={updateLoading || !selectedIntentId.trim()} className="submit-btn">{updateLoading ? 'Updating...' : 'Save intent changes'}</button>
+                          </div>
+                          {updateResult && <div className={`form-result ${updateResult.ok ? 'ok' : 'error'} intent-detail-span`}><p>{updateResult.ok ? '✓ Intent updated' : `✗ Error: ${updateResult.error}`}</p></div>}
+                        </div>
+                      </section>
+                    )}
+                  </>
+                )}
+              </div>
+            </article>
           </section>
               </>
             )}
@@ -1629,6 +2192,13 @@ export default function App() {
         <section className="error-banner">
           <p><strong>Load error:</strong> {error}</p>
         </section>
+      )}
+
+      {copyToast && (
+        <div className={`copy-toast ${copyToast.kind === 'error' ? 'error' : 'success'}`} role="status" aria-live="polite">
+          <span className="copy-toast-dot" aria-hidden="true" />
+          <span>{copyToast.message}</span>
+        </div>
       )}
     </main>
   );

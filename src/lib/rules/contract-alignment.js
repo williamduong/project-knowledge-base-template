@@ -365,6 +365,42 @@ const KA104_SESSION_CHOOSER_ALIGNMENT = {
   },
 };
 
+const KA105_SOFT_OPERATOR_GUIDANCE_ALIGNMENT = {
+  id: 'KBX-KA105',
+  title: 'Soft operator guidance alignment',
+  description: 'KBAgent contract should keep explicit guidance markers that help the agent explain runtime truth and next actions to the operator.',
+  severity: SEVERITY.INFO,
+  owner_layer: OWNER_LAYER.KBAGENT,
+  enforceability: ENFORCEABILITY.SEMI,
+  runtime_status: RUNTIME_STATUS.IMPLEMENTED,
+  since_version: '2.8.0',
+  source_doc: ALIGNMENT_DOC,
+  check({ kbPath }) {
+    const violations = [];
+    const files = [
+      path.join(kbPath, 'template', '.github', 'agents', 'kbx.agent.template.md'),
+      path.join(kbPath, 'template', '12-ai-skills', 'agent-operating-manual.md'),
+    ];
+
+    for (const file of files) {
+      const text = readIfExists(file);
+      if (!text) continue;
+      const ok = containsAll(text, [
+        'runtime truth',
+        'next action',
+      ]);
+      if (!ok) {
+        violations.push({
+          file: joinRel(kbPath, file),
+          message: 'Missing soft operator-guidance markers (runtime truth + next action).',
+        });
+      }
+    }
+
+    return violations;
+  },
+};
+
 const GV003_GRAPH_INGEST_LANE_GATE = {
   id: 'KBX-GV003',
   title: 'Graph-ingest lane artifact acceptance gate',
@@ -405,6 +441,7 @@ registerRules([
   WF011_THREE_LAYER_WORKFLOW_ALIGNMENT,
   KA103_NL_TRIGGER_ALIGNMENT,
   KA104_SESSION_CHOOSER_ALIGNMENT,
+  KA105_SOFT_OPERATOR_GUIDANCE_ALIGNMENT,
 ]);
 
 module.exports = [
@@ -417,4 +454,5 @@ module.exports = [
   WF011_THREE_LAYER_WORKFLOW_ALIGNMENT,
   KA103_NL_TRIGGER_ALIGNMENT,
   KA104_SESSION_CHOOSER_ALIGNMENT,
+  KA105_SOFT_OPERATOR_GUIDANCE_ALIGNMENT,
 ];
