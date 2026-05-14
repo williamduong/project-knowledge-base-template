@@ -188,7 +188,7 @@ function buildIntentMeta({ intentId, mode, changeType }) {
   return lines.join('\n') + '\n';
 }
 
-function buildBacklogIntentMeta({ slug, title, description, wave }) {
+function buildBacklogIntentMeta({ slug, title, description, wave, focus, nextAction, decisionSummary }) {
   const now = new Date().toISOString();
   const pkgVersion = require('../../package.json').version;
   const lines = [
@@ -199,10 +199,13 @@ function buildBacklogIntentMeta({ slug, title, description, wave }) {
     'lifecycle: backlog',
     `created_at: ${now}`,
     'focus:',
-    '  current: ""',
+    `  current: "${focus || ''}"`,
     `  last_updated: ${now.slice(0, 10)}`,
-    '  next_action: ""',
+    `  next_action: "${nextAction || ''}"`,
   ];
+  if (decisionSummary) {
+    lines.push(`decision_summary: "${decisionSummary}"`);
+  }
   if (wave) {
     lines.push('architecture_position:');
     lines.push(`  wave: ${wave}`);
@@ -310,13 +313,13 @@ function createIntentWorkspace(contentRoot, { intentId, mode, changeType }) {
   return wsPath;
 }
 
-function createBacklogIntent(contentRoot, { slug, title, description, wave }) {
+function createBacklogIntent(contentRoot, { slug, title, description, wave, focus, nextAction, decisionSummary }) {
   const filePath = backlogIntentPath(contentRoot, slug);
   if (fs.existsSync(filePath)) {
     throw new Error(`Backlog intent "${slug}" already exists at:\n  ${filePath}`);
   }
   fs.mkdirSync(backlogIntentsRoot(contentRoot), { recursive: true });
-  fs.writeFileSync(filePath, buildBacklogIntentMeta({ slug, title, description, wave }), 'utf8');
+  fs.writeFileSync(filePath, buildBacklogIntentMeta({ slug, title, description, wave, focus, nextAction, decisionSummary }), 'utf8');
   return filePath;
 }
 

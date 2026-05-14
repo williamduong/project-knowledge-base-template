@@ -529,7 +529,15 @@ async function runDraft(ctx, options) {
   if (!slug) {
     throw new Error(`Invalid backlog slug "${options.intentId}".`);
   }
-  const filePath = createBacklogIntent(ctx.contentRoot, { slug, title: slug, description: '' });
+  const filePath = createBacklogIntent(ctx.contentRoot, {
+    slug,
+    title: options.title || slug,
+    description: options.decisionSummaryValue || '',
+    focus: options.focusValue || '',
+    nextAction: options.nextActionValue || '',
+    decisionSummary: options.decisionSummaryValue || '',
+    wave: options.wave,
+  });
   if (options.json) {
     console.log(JSON.stringify({
       command: 'kbx intent draft',

@@ -1,5 +1,7 @@
 import express from 'express';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { evaluatePhase2Gates } from './bridge-gates.mjs';
@@ -7,7 +9,10 @@ import { evaluatePhase2Gates } from './bridge-gates.mjs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..', '..');
+const kbRoot = path.join(repoRoot, 'knowledge-base');
 const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
+const require = createRequire(import.meta.url);
+const { resolveIntentRecord } = require(path.join(repoRoot, 'src', 'lib', 'intent.js'));
 
 const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
 const uiPort = Number(process.env.KBX_UI_PORT || 4173);
@@ -108,13 +113,325 @@ function summarizeWorkspace(statusResult) {
   const activeIntents = parsed.activeIntents || {};
   const release = parsed.release || {};
   const workingTree = parsed.workingTree || {};
+  const activeIntentItems = Array.isArray(activeIntents.intents) ? activeIntents.intents : [];
+  const activeIntentId = activeIntents.id ?? activeIntentItems[0]?.id ?? null;
 
   return {
     activeIntentCount: activeIntents.count ?? null,
-    activeIntentId: activeIntents.id ?? null,
+    activeIntentId,
     releaseCurrent: release.current ?? null,
     releaseLatest: release.latest ?? null,
     hasWorkingTreeChanges: workingTree.clean === true ? false : true,
+  };
+}
+
+function resolveFocusFile() {
+  const candidates = [
+    path.join(repoRoot, 'svfactory', 'focus.md'),
+    path.join(repoRoot, 'kb-root', 'focus.md'),
+  ];
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+}
+
+function parseCheckpointLine(line) {
+  const trimmed = String(line || '').trim();
+  if (!trimmed.startsWith('- ')) {
+    return null;
+  }
+
+  const parts = trimmed.slice(2).split(' | ').map((part) => part.trim()).filter(Boolean);
+  if (parts.length === 0) {
+    return null;
+  }
+
+  const entry = { timestamp: parts[0] };
+  for (const part of parts.slice(1)) {
+    const [key, ...rest] = part.split('=');
+    if (!key || rest.length === 0) continue;
+    entry[key] = rest.join('=').trim();
+  }
+
+  return entry;
+}
+
+function normalizeIntentId(value) {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = String(value).trim();
+  return normalized.startsWith('intent-') ? normalized.slice('intent-'.length) : normalized;
+}
+
+function sanitizeDraftSlug(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+}
+
+function extractIntentNarrative(text) {
+  if (!text) {
+    return { goal: null, summary: null };
+  }
+
+  const sections = String(text).split(/^---\s*$/m);
+  const body = sections.length >= 3 ? sections.slice(2).join('---').trim() : String(text).trim();
+  const goalMatch = body.match(/^\*\*Goal:\*\*\s*(.+)$/im);
+  const summaryMatch = body.match(/^## Summary\s+([\s\S]*?)(?:\n## |$)/m);
+
+  return {
+    goal: goalMatch?.[1]?.trim() ?? null,
+    summary: summaryMatch?.[1]?.replace(/^[>\s]+/gm, '').trim() || null,
+  };
+}
+
+function extractIntentTasks(text, source) {
+  if (!text) {
+    return [];
+  }
+
+  const lines = String(text).split(/\r?\n/);
+  const tasks = [];
+  let currentSection = null;
+  let inTaskSection = false;
+
+  function parseTaskText(rawText, fallbackDone = false) {
+    const text = String(rawText || '').trim();
+    const commitMatches = [...text.matchAll(/commit\s+([0-9a-f]{7,40})/gi)].map((match) => match[1]);
+    const titleDescMatch = text.match(/^(?:\*\*)?(.+?)(?:\*\*)?\s+[—-]\s+(.+)$/);
+    const title = (titleDescMatch?.[1] ?? text).trim();
+    const description = titleDescMatch?.[2]?.trim() ?? null;
+    const tags = [];
+
+    if (/partial/i.test(text)) tags.push('partial');
+    if (/major gap/i.test(text)) tags.push('major-gap');
+    if (/engine exists/i.test(text)) tags.push('engine-exists');
+    if (/planned/i.test(text)) tags.push('planned');
+    if (/draft/i.test(text)) tags.push('draft');
+    if (/reviewed/i.test(text)) tags.push('reviewed');
+
+    const iconStatus = /✅/.test(text)
+      ? 'done'
+      : /❌/.test(text)
+        ? 'blocked'
+        : /⚠️|⚠/.test(text)
+          ? 'warning'
+          : fallbackDone
+            ? 'done'
+            : 'open';
+
+    return {
+      title,
+      description,
+      text,
+      done: iconStatus === 'done',
+      status: iconStatus,
+      tags,
+      explicitCommits: commitMatches,
+    };
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    const headingMatch = line.match(/^(#{2,4})\s+(.+)$/);
+    if (headingMatch) {
+      currentSection = headingMatch[2].trim();
+      inTaskSection = /plan|task|checklist|verification/i.test(currentSection);
+      continue;
+    }
+
+    const checkboxMatch = line.match(/^[-*]\s+\[(x| )\]\s+(.+)$/i);
+    if (checkboxMatch) {
+      const parsed = parseTaskText(checkboxMatch[2], checkboxMatch[1].toLowerCase() === 'x');
+      tasks.push({
+        ...parsed,
+        section: currentSection,
+        source,
+      });
+      continue;
+    }
+
+    const numberedMatch = line.match(/^\d+\.\s+(.+)$/);
+    if (numberedMatch && /summary|plan|task|checklist|verification/i.test(currentSection || '')) {
+      const parsed = parseTaskText(numberedMatch[1], false);
+      tasks.push({
+        ...parsed,
+        section: currentSection,
+        source,
+      });
+      continue;
+    }
+
+    if (!inTaskSection) {
+      continue;
+    }
+
+    const bulletMatch = line.match(/^[-*]\s+(.+)$/);
+    if (bulletMatch) {
+      const parsed = parseTaskText(bulletMatch[1], false);
+      tasks.push({
+        ...parsed,
+        section: currentSection,
+        source,
+      });
+    }
+  }
+
+  return tasks;
+}
+
+function extractStagedFiles(text) {
+  if (!text) {
+    return [];
+  }
+
+  const lines = String(text).split(/\r?\n/);
+  const stagedFiles = [];
+  let inStagedFiles = false;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (/^##\s+Staged Files/i.test(line)) {
+      inStagedFiles = true;
+      continue;
+    }
+    if (inStagedFiles && /^##\s+/.test(line)) {
+      break;
+    }
+    if (!inStagedFiles) {
+      continue;
+    }
+    const fileMatch = line.match(/^[-*]\s+`?([^`]+?)`?$/);
+    if (fileMatch && /\//.test(fileMatch[1])) {
+      stagedFiles.push(fileMatch[1].trim());
+    }
+  }
+
+  return stagedFiles;
+}
+
+function lookupRecentCommit(relativePath) {
+  if (!relativePath) {
+    return null;
+  }
+
+  const result = spawnSync('git', ['log', '-1', '--format=%h|%s', '--', relativePath], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    timeout: 3000,
+  });
+
+  if (result.status !== 0 || !result.stdout.trim()) {
+    return null;
+  }
+
+  const [sha, subject] = result.stdout.trim().split('|');
+  if (!sha) {
+    return null;
+  }
+
+  return {
+    sha: sha.trim(),
+    subject: (subject || '').trim(),
+    path: relativePath,
+  };
+}
+
+function enrichTasksWithGit(tasks, candidatePaths) {
+  const relatedCommits = candidatePaths
+    .map((relativePath) => lookupRecentCommit(relativePath))
+    .filter(Boolean)
+    .filter((commit, index, commits) => commits.findIndex((item) => item.sha === commit.sha) === index)
+    .slice(0, 3);
+
+  return tasks.map((task) => ({
+    ...task,
+    relatedCommits: task.explicitCommits.length > 0
+      ? task.explicitCommits.map((sha) => ({ sha, subject: 'Referenced in intent text', path: null }))
+      : relatedCommits,
+  }));
+}
+
+function summarizeIntentDetail(intentId) {
+  const record = resolveIntentRecord(kbRoot, intentId);
+  if (!record) {
+    return null;
+  }
+
+  const intentText = fs.existsSync(record.metaPath) ? fs.readFileSync(record.metaPath, 'utf8') : '';
+  const narrative = extractIntentNarrative(intentText);
+  const planPath = record.workspacePath ? path.join(record.workspacePath, 'plan.md') : null;
+  const planText = planPath && fs.existsSync(planPath) ? fs.readFileSync(planPath, 'utf8') : '';
+  const focus = record.meta?.focus && typeof record.meta.focus === 'object' ? record.meta.focus : {};
+  const rawTasks = [
+    ...extractIntentTasks(intentText, 'intent.md'),
+    ...extractIntentTasks(planText, 'plan.md'),
+  ];
+  const stagedFiles = extractStagedFiles(intentText);
+  const candidatePaths = [
+    ...stagedFiles,
+    path.relative(repoRoot, record.metaPath).replace(/\\/g, '/'),
+  ].filter(Boolean);
+  const tasks = enrichTasksWithGit(rawTasks, candidatePaths);
+
+  return {
+    id: record.id ?? intentId,
+    title: record.meta?.title ?? null,
+    slug: record.slug ?? null,
+    scope: record.scope ?? null,
+    lifecycle: record.meta?.lifecycle ?? record.lifecycle ?? null,
+    status: record.meta?.status ?? null,
+    mode: record.meta?.mode ?? null,
+    changeType: record.meta?.change_type ?? null,
+    decisionSummary: record.meta?.decision_summary ?? null,
+    goal: narrative.goal,
+    summary: narrative.summary,
+    focusCurrent: focus.current ?? null,
+    focusNextAction: focus.next_action ?? null,
+    focusUpdatedAt: focus.last_updated ?? null,
+    tasks,
+    stagedFiles,
+    workspacePath: record.workspacePath ? path.relative(repoRoot, record.workspacePath).replace(/\\/g, '/') : null,
+    sourceFile: record.metaPath ? path.relative(repoRoot, record.metaPath).replace(/\\/g, '/') : null,
+  };
+}
+
+function summarizeSessionContext(statusResult) {
+  const parsed = statusResult.parsed || {};
+  const activeIntents = Array.isArray(parsed.activeIntents?.intents) ? parsed.activeIntents.intents : [];
+  const activeIntentIds = activeIntents.map((intent) => normalizeIntentId(intent?.id)).filter(Boolean);
+  const focusPath = resolveFocusFile();
+  let latestCheckpoint = null;
+
+  if (focusPath) {
+    const content = fs.readFileSync(focusPath, 'utf8');
+    const checkpointSection = content.split('## Intent Checkpoints')[1] || '';
+    const checkpointLines = checkpointSection
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith('- '));
+
+    latestCheckpoint = checkpointLines.length > 0 ? parseCheckpointLine(checkpointLines[0]) : null;
+  }
+
+  const checkpointIntentId = normalizeIntentId(latestCheckpoint?.intent ?? null);
+  const activeIntentId = normalizeIntentId(parsed.activeIntents?.id ?? null) ?? activeIntentIds[0] ?? null;
+  const sessionIntentId = checkpointIntentId && activeIntentIds.includes(checkpointIntentId)
+    ? checkpointIntentId
+    : activeIntentId;
+
+  return {
+    sessionIntentId,
+    sessionIntentSource: checkpointIntentId && activeIntentIds.includes(checkpointIntentId) ? 'checkpoint' : activeIntentId ? 'active-intent' : 'none',
+    sessionLabel: latestCheckpoint?.branch ?? 'unknown-session',
+    checkpointEvent: latestCheckpoint?.event ?? null,
+    checkpointIntentId,
+    checkpointTimestamp: latestCheckpoint?.timestamp ?? null,
+    focusFile: focusPath ? path.relative(repoRoot, focusPath).replace(/\\/g, '/') : null,
+    activeIntentIds,
   };
 }
 
@@ -236,6 +553,29 @@ export function createApp(commandRunner = executeBridgeCommand) {
     res.status(response.ok ? 200 : 500).json(response);
   });
 
+  app.get('/api/intents/:id/detail', async (req, res) => {
+    const intentId = String(req.params.id || '').trim();
+    if (!intentId) {
+      res.status(400).json({ ok: false, error: 'Intent id required' });
+      return;
+    }
+
+    try {
+      const detail = summarizeIntentDetail(intentId);
+      if (!detail) {
+        res.status(404).json({ ok: false, error: `Intent not found: ${intentId}` });
+        return;
+      }
+
+      res.status(200).json({ ok: true, detail });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
   app.get('/api/workspace', async (_req, res) => {
     const statusResult = await commandRunner('kbx status --json', ['status', '--json'], {
       expectJson: true,
@@ -250,6 +590,23 @@ export function createApp(commandRunner = executeBridgeCommand) {
     res.status(200).json({
       ok: true,
       summary: summarizeWorkspace(statusResult),
+    });
+  });
+
+  app.get('/api/session-context', async (_req, res) => {
+    const statusResult = await commandRunner('kbx status --json', ['status', '--json'], {
+      expectJson: true,
+      timeoutMs: 20000,
+    });
+
+    if (!statusResult.ok) {
+      res.status(200).json({ ok: false, error: 'session context command failed', stderr: statusResult.stderr });
+      return;
+    }
+
+    res.status(200).json({
+      ok: true,
+      summary: summarizeSessionContext(statusResult),
     });
   });
 
@@ -340,9 +697,17 @@ export function createApp(commandRunner = executeBridgeCommand) {
     }
 
     const requestedIntentId = String(intent_id || id || '').trim();
+    const draftSlug = sanitizeDraftSlug(requestedIntentId || title);
+    if (!draftSlug || draftSlug.length < 3) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Draft slug required (min 3 characters after normalization)',
+      });
+    }
+
     const args = [
-      'intent', 'create',
-      ...(requestedIntentId ? [requestedIntentId] : []),
+      'intent', 'draft',
+      draftSlug,
       '--title', String(title).trim(),
       ...(focus ? ['--focus', String(focus).trim()] : []),
       ...(next_action ? ['--next-action', String(next_action).trim()] : []),
@@ -350,7 +715,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
       '--json'
     ];
 
-    const result = await commandRunner('kbx intent create --json', args, {
+    const result = await commandRunner('kbx intent draft --json', args, {
       expectJson: true,
       timeoutMs: 15000,
     });
@@ -358,7 +723,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
     if (!result.ok) {
       return res.status(500).json({
         ok: false,
-        error: 'Create intent failed',
+        error: 'Create draft intent failed',
         stderr: result.stderr,
         exitCode: result.exitCode,
       });
@@ -371,7 +736,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
       stdout: result.stdout,
       trace: [
         { timestamp: new Date().toISOString(), step: 'validate_args', status: 'pass' },
-        { timestamp: new Date().toISOString(), step: 'create_intent', status: 'pass' },
+        { timestamp: new Date().toISOString(), step: 'create_draft_intent', status: 'pass' },
       ],
     });
   });
