@@ -70,6 +70,9 @@ function parseArgs(args) {
     nextActionValue: null,
     decisionSummaryValue: null,
     stateValue: null,
+    intentType: null,
+    strategicMode: null,
+    urgency: null,
   };
 
   const setListScope = (scope) => {
@@ -137,8 +140,22 @@ function parseArgs(args) {
       continue;
     }
     if (arg.startsWith('--type=')) {
-      options.extractType = arg.slice('--type='.length).trim();
-      options.closeType = arg.slice('--type='.length).trim();
+      const value = arg.slice('--type='.length).trim();
+      options.extractType = value;
+      options.closeType = value;
+      options.intentType = value;
+      continue;
+    }
+    if (arg.startsWith('--intent-type=')) {
+      options.intentType = arg.slice('--intent-type='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--strategic-mode=')) {
+      options.strategicMode = arg.slice('--strategic-mode='.length).trim();
+      continue;
+    }
+    if (arg.startsWith('--urgency=')) {
+      options.urgency = arg.slice('--urgency='.length).trim();
       continue;
     }
     if (arg.startsWith('--wave=')) {
@@ -285,9 +302,13 @@ function parseArgs(args) {
       options.nextActionValue,
       options.decisionSummaryValue,
       options.stateValue,
+      options.intentType,
+      options.strategicMode,
+      options.urgency,
+      options.wave,
     ].some((value) => typeof value === 'string' && value.trim().length > 0);
     if (!hasAnyField) {
-      throw new Error('kbx intent update requires at least one of: --title, --focus, --next-action, --decision-summary, --state.');
+      throw new Error('kbx intent update requires at least one of: --title, --focus, --next-action, --decision-summary, --state, --intent-type/--type, --strategic-mode, --urgency, --wave.');
     }
   } else if (options.sub === 'help') {
     // no-op here, handled in runIntent
@@ -1246,6 +1267,32 @@ async function runUpdate(ctx, options) {
   }
 
   const updatedFields = [];
+
+  const strategicModeAllowList = new Set([
+    'Survival',
+    'Creation',
+    'Optimization',
+    'Exploration',
+    'Investigation',
+    'Simplification',
+  ]);
+  const urgencyAllowList = new Set([
+    'Immediate',
+    'Time-Sensitive',
+    'Scheduled',
+    'Opportunistic',
+  ]);
+
+  if (options.strategicMode && !strategicModeAllowList.has(options.strategicMode)) {
+    throw new Error(`Invalid strategic mode "${options.strategicMode}". Allowed: ${Array.from(strategicModeAllowList).join(', ')}`);
+  }
+  if (options.urgency && !urgencyAllowList.has(options.urgency)) {
+    throw new Error(`Invalid urgency "${options.urgency}". Allowed: ${Array.from(urgencyAllowList).join(', ')}`);
+  }
+  if (options.wave && !/^v?\d+(?:\.\d+){0,2}$/i.test(options.wave)) {
+    throw new Error(`Invalid wave "${options.wave}". Expected vX, vX.Y, or vX.Y.Z.`);
+  }
+
   const updated = updateIntentRecordMeta(record, (meta) => {
     if (options.title) {
       meta.title = options.title;
@@ -1275,6 +1322,30 @@ async function runUpdate(ctx, options) {
     if (options.stateValue) {
       meta.state = options.stateValue;
       updatedFields.push('state');
+    }
+
+    if (options.intentType) {
+      meta.type = options.intentType;
+      updatedFields.push('type');
+    }
+
+    if (options.strategicMode) {
+      meta.strategic_mode = options.strategicMode;
+      updatedFields.push('strategic_mode');
+    }
+
+    if (options.urgency) {
+      meta.urgency = options.urgency;
+      updatedFields.push('urgency');
+    }
+
+    if (options.wave) {
+      const architecturePosition = meta.architecture_position && typeof meta.architecture_position === 'object'
+        ? { ...meta.architecture_position }
+        : {};
+      architecturePosition.wave = options.wave.startsWith('v') ? options.wave : `v${options.wave}`;
+      meta.architecture_position = architecturePosition;
+      updatedFields.push('architecture_position.wave');
     }
 
     meta.updated_at = new Date().toISOString();

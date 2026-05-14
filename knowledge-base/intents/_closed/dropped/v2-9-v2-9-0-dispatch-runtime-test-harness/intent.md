@@ -1,29 +1,18 @@
 ---
 id: v2-9-v2-9-0-dispatch-runtime-test-harness
 mode: quick
-lifecycle: active
+lifecycle: closed
 created_at: "2026-05-10T15:40:44.483Z"
 focus:
   current: "Runtime harness verification pass completed and accepted for beta scope."
   last_updated: 2026-05-11
   next_action: "Close released intent and hand off to graph observability intent."
 change_type: docs
+type: docs
+strategic_mode: Optimization
+urgency: Time-Sensitive
 change_scope:
-  - src/commands/dispatch.js
-  - src/commands/inspect.js
-  - src/commands/plan.js
-  - src/commands/apply.js
-  - src/commands/help.js
-  - src/cli.js
-  - test/commands/dispatch.test.js
-  - test/commands/inspect.test.js
-  - test/commands/plan.test.js
-  - test/commands/apply.test.js
-  - knowledge-base/.kb/catalog.json
 impact_signals:
-  - deterministic-dispatch-runtime-proof
-  - inspect-plan-apply-controlled-surface
-  - beta-release-catalog-updated
 decision_summary: "Runtime harness objectives are satisfied for beta scope: dispatch/inspect/plan/apply command surfaces verified, safety gate behavior confirmed, and beta tag/catalog evidence recorded."
 review_after: null
 schema_version: 2.7.0-beta.2
@@ -33,6 +22,10 @@ description: "Build deterministic runtime validation harness that executes fixtu
 activated_at: "2026-05-10T15:40:44.487Z"
 architecture_position:
   wave: v2.9
+close_type: dropped
+closed_at: "2026-05-14T05:03:47.685Z"
+drop_reason: "duplicate active residue already captured in closed/released"
+release_ref: null
 ---
 
 # Intent: v2-9-v2-9-0-dispatch-runtime-test-harness

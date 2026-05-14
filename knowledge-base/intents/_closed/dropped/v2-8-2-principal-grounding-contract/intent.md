@@ -1,23 +1,31 @@
 ---
-id: intent-v2-8-2-principal-grounding-contract
+id: v2-8-2-principal-grounding-contract
 mode: full
-lifecycle: active
-created_at: 2026-05-12T07:55:23.898Z
+lifecycle: closed
+created_at: "2026-05-12T07:55:23.898Z"
 focus:
   current: "Convert the 9-section verification into a sequential runtime-vs-target-state execution order"
   last_updated: 2026-05-12
   next_action: "Use the final verdict to split immediate UI refactor scope from future-state onboarding/pipeline/rules work"
 change_type: governance
-change_scope: ["knowledge-base/", "site/kbx-ui/src/", "bin/kbx.js"]
+type: governance
+strategic_mode: Investigation
+urgency: Scheduled
+change_scope: "[\"knowledge-base/\", \"site/kbx-ui/src/\", \"bin/kbx.js\"]"
 impact_signals: []
 decision_summary: "The 9-section review is complete. Sections 1-4 and parts of 7 are usable as runtime-truth inputs for the next UI refactor slice; Sections 5, 6, 8, and 9 remain target-state architecture and must not be presented as implemented behavior."
 review_after: null
 schema_version: 2.7.0-beta.2
-# v1.8+ reserve fields:
 lesson_id: null
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
+architecture_position:
+  wave: v2.8.2
+close_type: dropped
+closed_at: "2026-05-14T05:03:57.529Z"
+drop_reason: "superseded by v2-9-kbagent-observability-graph"
+release_ref: null
 ---
 
 # Intent: Phase 4 UI — Document verification & source alignment

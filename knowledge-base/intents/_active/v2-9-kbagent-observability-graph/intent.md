@@ -8,6 +8,9 @@ focus:
   last_updated: 2026-05-11
   next_action: "Complete P0 roadmap-gap alignment pass and prepare activation-ready backlog intents for P1 and P2 follow-up work."
 change_type: feature
+type: feature
+strategic_mode: Exploration
+urgency: Scheduled
 change_scope:
   - notes/roadmap/kbagent-roadmap.html
   - notes/roadmap/kbagent-gap-analysis.html
@@ -17,6 +20,8 @@ impact_signals: []
 decision_summary: "Keep this active intent as the single execution anchor for roadmap-gap handling. Start with P0 alignment (naming, lifecycle wording, principles-vs-rules separation), then hand off to prepared backlog intents for Dispatch/CDM and gate-loop contract work."
 review_after: null
 schema_version: 2.7.0-beta.2
+architecture_position:
+  wave: v2.9
 ---
 
 # Intent: v2-9-kbagent-observability-graph

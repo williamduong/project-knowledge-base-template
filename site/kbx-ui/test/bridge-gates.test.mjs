@@ -25,6 +25,12 @@ test('evaluatePhase2Gates passes when status+doctor are valid and active intent 
         activeIntents: {
           count: 1,
         },
+        observation: {
+          chaosResult: {
+            score: 50,
+            level: 'manageable',
+          },
+        },
       },
       stdout: 'stable',
       stderr: '',
@@ -39,7 +45,7 @@ test('evaluatePhase2Gates passes when status+doctor are valid and active intent 
     },
     chaosResult: {
       ok: true,
-      stdout: 'Forward estimates: STABLE',
+      stdout: 'Forward estimates: UNSTABLE',
       stderr: '',
     },
   });
@@ -57,6 +63,12 @@ test('evaluatePhase2Gates blocks when multiple active intents are detected', () 
       parsed: {
         activeIntents: {
           count: 3,
+        },
+        observation: {
+          chaosResult: {
+            score: 50,
+            level: 'manageable',
+          },
         },
       },
       stdout: 'ok',

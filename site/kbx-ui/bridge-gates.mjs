@@ -71,8 +71,27 @@ export const phase2GatePolicy = [
   {
     gate: 'G-CHAOS-ESTIMATE',
     severity: 'warn',
-    command: 'kbx chaos --estimate',
-    evaluate: ({ chaosResult }) => {
+    command: 'kbx status --json (observation.chaosResult)',
+    evaluate: ({ statusResult, chaosResult }) => {
+      const level = String(statusResult?.parsed?.observation?.chaosResult?.level || '').toLowerCase();
+      const score = Number(statusResult?.parsed?.observation?.chaosResult?.score);
+
+      // Prefer deterministic chaos snapshot already embedded in kbx status payload.
+      if (level) {
+        if (level === 'chaotic') {
+          return {
+            ok: false,
+            detail: `chaos snapshot is chaotic (${Number.isFinite(score) ? score : 'n/a'})`,
+          };
+        }
+
+        return {
+          ok: true,
+          detail: `chaos snapshot level ${level}${Number.isFinite(score) ? ` (${score})` : ''}`,
+        };
+      }
+
+      // Fallback for older status payloads where chaos snapshot is absent.
       if (!chaosResult.ok) {
         return {
           ok: false,
@@ -81,16 +100,16 @@ export const phase2GatePolicy = [
       }
 
       const summary = chaosResult.stdout || chaosResult.stderr;
-      if (/UNSTABLE|RISK|WARNING/i.test(summary)) {
+      if (/CHAOTIC/i.test(summary)) {
         return {
           ok: false,
-          detail: 'chaos estimate reports elevated risk signals',
+          detail: 'chaos estimate reports chaotic risk signals',
         };
       }
 
       return {
         ok: true,
-        detail: 'chaos estimate does not show unstable markers',
+        detail: 'chaos estimate does not show chaotic markers',
       };
     },
   },

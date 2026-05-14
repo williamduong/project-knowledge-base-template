@@ -1,13 +1,16 @@
 ---
 id: v2-10-v2-10-intent-lifecycle-domain-separation
 mode: quick
-lifecycle: active
+lifecycle: closed
 created_at: "2026-05-11T06:33:17.983Z"
 focus:
   current: "Implemented graph lane lifecycle domain separation with explicit workflow_lifecycle and ontology_lifecycle fields."
   last_updated: 2026-05-11
   next_action: "Review payload compatibility impact and decide migration path for any legacy lifecycle consumers."
 change_type: refactor
+type: refactor
+strategic_mode: Optimization
+urgency: Scheduled
 change_scope: []
 impact_signals: []
 decision_summary: "Prevent lifecycle semantic collision by making graph intent nodes domain-explicit and enforcing hard-fail validation for mixed or legacy lifecycle fields."
@@ -19,6 +22,10 @@ description: "Resolve semantic collision between ontology Intent lifecycle (DRAF
 activated_at: "2026-05-11T06:33:17.990Z"
 architecture_position:
   wave: 2.10
+close_type: dropped
+closed_at: "2026-05-14T05:03:46.320Z"
+drop_reason: "duplicate active residue already captured in closed/released"
+release_ref: null
 ---
 
 # Intent: v2-10-v2-10-intent-lifecycle-domain-separation
