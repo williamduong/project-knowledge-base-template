@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode, type SVGProps } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type SVGProps } from 'react';
 
 type VersionResponse = {
   command: string;
@@ -101,6 +101,13 @@ type DocumentsSnapshotResponse = {
   ok: boolean;
   error?: string;
   summary?: {
+    totalDocuments: number;
+    markdownCount: number;
+    htmlCount: number;
+    verifiedCount: number;
+    provisionalCount: number;
+    staleCount: number;
+    folderCount: number;
     entityCount: number | null;
     relationCount: number | null;
     issueCount: number;
@@ -110,7 +117,49 @@ type DocumentsSnapshotResponse = {
       message: string | null;
       evidencePath: string | null;
     }>;
+    topFolders: Array<{
+      path: string;
+      count: number;
+      warningCount: number;
+    }>;
   };
+  tree?: Array<DocumentsTreeNode>;
+  selected?: DocumentDetail | null;
+};
+
+type DocumentsTreeNode = {
+  kind: 'folder' | 'document';
+  name: string;
+  path: string;
+  children?: DocumentsTreeNode[];
+  format?: 'md' | 'html';
+  title?: string | null;
+  summary?: string | null;
+  statusTone?: 'ok' | 'warn' | 'info';
+};
+
+type DocumentDetail = {
+  path: string;
+  format: 'md' | 'html';
+  title: string | null;
+  content: string;
+  summary: string | null;
+  metadata: {
+    title?: string | null;
+    type?: string | null;
+    status?: string | null;
+    owner?: string | null;
+    verification?: string | null;
+    time_state?: string | null;
+    last_updated?: string | null;
+    last_verified?: string | null;
+    tags?: string[];
+  };
+  toc: Array<{
+    id: string;
+    label: string;
+    level: number;
+  }>;
 };
 
 type SessionContextResponse = {
@@ -373,6 +422,100 @@ function CollapsiblePanel({ className = '', label, title, actions, defaultOpen =
   );
 }
 
+function slugifyDocumentHeading(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/<[^>]+>/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function stripMarkdownFrontmatter(value: string) {
+  return value.replace(/^---\s*\r?\n[\s\S]*?\r?\n---\s*\r?\n?/, '');
+}
+
+function renderMarkdownToHtml(markdown: string) {
+  const body = stripMarkdownFrontmatter(markdown);
+  const lines = body.split(/\r?\n/);
+  const html: string[] = [];
+  let inList = false;
+  let inCode = false;
+  let codeLines: string[] = [];
+
+  const flushList = () => {
+    if (inList) {
+      html.push('</ul>');
+      inList = false;
+    }
+  };
+
+  const flushCode = () => {
+    if (inCode) {
+      html.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
+      codeLines = [];
+      inCode = false;
+    }
+  };
+
+  for (const line of lines) {
+    if (line.trim().startsWith('```')) {
+      flushList();
+      if (inCode) {
+        flushCode();
+      } else {
+        inCode = true;
+      }
+      continue;
+    }
+
+    if (inCode) {
+      codeLines.push(line);
+      continue;
+    }
+
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      flushList();
+      const level = headingMatch[1].length;
+      const label = headingMatch[2].trim();
+      html.push(`<h${level} id="doc-section-${slugifyDocumentHeading(label)}">${escapeHtml(label)}</h${level}>`);
+      continue;
+    }
+
+    const listMatch = line.match(/^[-*]\s+(.+)$/);
+    if (listMatch) {
+      if (!inList) {
+        html.push('<ul>');
+        inList = true;
+      }
+      html.push(`<li>${escapeHtml(listMatch[1].trim())}</li>`);
+      continue;
+    }
+
+    if (!line.trim()) {
+      flushList();
+      continue;
+    }
+
+    flushList();
+    html.push(`<p>${escapeHtml(line.trim())}</p>`);
+  }
+
+  flushList();
+  flushCode();
+  return html.join('');
+}
+
 export default function App() {
   const [version, setVersion] = useState<VersionResponse | null>(null);
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -396,6 +539,11 @@ export default function App() {
   const [taskSort, setTaskSort] = useState<TaskSortId>('runtime');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedRuleDomains, setExpandedRuleDomains] = useState<string[]>([]);
+  const [selectedDocumentPath, setSelectedDocumentPath] = useState('');
+  const [expandedDocFolders, setExpandedDocFolders] = useState<Set<string>>(new Set(['00-start-here']));
+  const [documentsNavCollapsed, setDocumentsNavCollapsed] = useState(false);
+  const [documentsMetaCollapsed, setDocumentsMetaCollapsed] = useState(false);
+  const documentContentRef = useRef<HTMLDivElement | null>(null);
 
   // Phase 4 mutation state
   const [selectedIntentId, setSelectedIntentId] = useState('');
@@ -424,6 +572,17 @@ export default function App() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [applyLoading, setApplyLoading] = useState(false);
 
+  async function loadDocuments(pathValue?: string) {
+    const target = pathValue ? `/api/documents?path=${encodeURIComponent(pathValue)}` : '/api/documents';
+    const response = await fetch(target);
+    const payload = (await response.json()) as DocumentsSnapshotResponse;
+    setDocumentsSnapshot(payload);
+    if (payload.selected?.path) {
+      setSelectedDocumentPath(payload.selected.path);
+    }
+    return payload;
+  }
+
   async function loadAll() {
     setError(null);
 
@@ -449,6 +608,9 @@ export default function App() {
     setWorkspaceSnapshot(workspaceResponse);
     setSystemSnapshot(systemResponse);
     setDocumentsSnapshot(documentsResponse);
+    if (documentsResponse.selected?.path) {
+      setSelectedDocumentPath(documentsResponse.selected.path);
+    }
     setSessionContext(sessionContextResponse);
   }
 
@@ -504,6 +666,19 @@ export default function App() {
 
     void loadIntentDetail();
   }, [selectedIntentId]);
+
+  useEffect(() => {
+    if (!documentsSnapshot?.selected || documentsSnapshot.selected.format !== 'html' || !documentContentRef.current) {
+      return;
+    }
+
+    const headings = documentContentRef.current.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    headings.forEach((heading) => {
+      if (!heading.id) {
+        heading.id = `doc-section-${slugifyDocumentHeading(heading.textContent || '')}`;
+      }
+    });
+  }, [documentsSnapshot]);
 
   useEffect(() => {
     const detail = intentDetail?.ok ? intentDetail.detail ?? null : null;
@@ -1177,6 +1352,27 @@ export default function App() {
     }, {}),
   ).sort((left, right) => left.label.localeCompare(right.label));
   const topIssues = documentsSnapshot?.summary?.topIssues ?? [];
+  const topFolders = documentsSnapshot?.summary?.topFolders ?? [];
+  const documentsTree = documentsSnapshot?.tree ?? [];
+  const selectedDocument = documentsSnapshot?.selected ?? null;
+  const documentSummaryBlocks = [
+    { label: 'Documents', value: documentsSnapshot?.summary?.totalDocuments ?? '--', tone: 'cb' },
+    { label: 'Folders', value: documentsSnapshot?.summary?.folderCount ?? '--', tone: 'cgr' },
+    { label: 'Markdown', value: documentsSnapshot?.summary?.markdownCount ?? '--', tone: 'cg' },
+    { label: 'HTML', value: documentsSnapshot?.summary?.htmlCount ?? '--', tone: 'cb' },
+    { label: 'Verified', value: documentsSnapshot?.summary?.verifiedCount ?? '--', tone: 'cg' },
+    { label: 'Needs attention', value: (documentsSnapshot?.summary?.provisionalCount ?? 0) + (documentsSnapshot?.summary?.staleCount ?? 0), tone: 'ca' },
+  ];
+  const selectedDocumentMetadata = selectedDocument ? [
+    { label: 'Path', value: selectedDocument.path },
+    { label: 'Format', value: selectedDocument.format.toUpperCase() },
+    { label: 'Verification', value: selectedDocument.metadata.verification || 'n/a' },
+    { label: 'Time state', value: selectedDocument.metadata.time_state || 'n/a' },
+    { label: 'Status', value: selectedDocument.metadata.status || 'n/a' },
+    { label: 'Owner', value: selectedDocument.metadata.owner || 'n/a' },
+    { label: 'Last updated', value: selectedDocument.metadata.last_updated || 'n/a' },
+    { label: 'Last verified', value: selectedDocument.metadata.last_verified || 'n/a' },
+  ] : [];
   const workspaceMilestones = [
     { version: 'v2.6', name: 'Evidence loop', progress: 100, state: 'done' as const },
     { version: 'v2.7', name: 'Supervision loop', progress: 100, state: 'done' as const },
@@ -1345,7 +1541,85 @@ export default function App() {
           title: issue.message ?? 'Unnamed issue',
           subtitle: `${issue.severity ?? 'unknown'} · ${issue.evidencePath ?? 'no evidence path'}`,
         })),
+        ...topFolders.map((folder) => ({
+          kind: 'document-folder',
+          title: folder.path,
+          subtitle: `${folder.count} docs · ${folder.warningCount} warnings`,
+        })),
       ].filter((item) => `${item.title} ${item.subtitle}`.toLowerCase().includes(searchNeedle));
+
+  function renderDocumentTree(nodes: DocumentsTreeNode[], depth = 0): ReactNode {
+    return nodes.map((node) => {
+      if (node.kind === 'folder') {
+        const isExpanded = expandedDocFolders.has(node.path);
+        const hasChildren = node.children?.length ?? 0 > 0;
+        return (
+          <div key={node.path}>
+            <button
+              type="button"
+              className="docs-tree-folder"
+              style={{ paddingLeft: `${depth * 16}px` }}
+              onClick={() => {
+                setExpandedDocFolders((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(node.path)) {
+                    next.delete(node.path);
+                  } else {
+                    next.add(node.path);
+                  }
+                  return next;
+                });
+              }}
+            >
+              <span className="docs-tree-arrow">{hasChildren ? (isExpanded ? '▼ ' : '▶ ') : '  '}</span>
+              <span>{node.name}</span>
+            </button>
+            {hasChildren && isExpanded ? renderDocumentTree(node.children!, depth + 1) : null}
+          </div>
+        );
+      }
+
+      const isSelected = selectedDocumentPath === node.path;
+      const statusTone = node.statusTone || 'info';
+      
+      let statusBadgeClass = 'status-badge status-info';
+      let statusIcon = '◯';
+      let statusLabel = 'info';
+      
+      if (statusTone === 'ok') {
+        statusBadgeClass = 'status-badge status-verified';
+        statusIcon = '✓';
+        statusLabel = 'verified';
+      } else if (statusTone === 'warn') {
+        statusBadgeClass = 'status-badge status-unverified';
+        statusIcon = '○';
+        statusLabel = 'needs attention';
+      }
+
+      return (
+        <button
+          key={node.path}
+          type="button"
+          className={`docs-tree-item ${isSelected ? 'on' : ''}`}
+          style={{ paddingLeft: `${depth * 16 + 20}px` }}
+          onClick={() => {
+            void loadDocuments(node.path);
+          }}
+          title={`${node.name} - ${statusLabel}`}
+        >
+          <span className="docs-tree-item-name">{node.name}</span>
+          <span className={statusBadgeClass} title={statusLabel}>{statusIcon}</span>
+        </button>
+      );
+    });
+  }
+
+  function scrollToDocumentSection(sectionId: string) {
+    const target = document.getElementById(`doc-section-${sectionId}`);
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   return (
     <main className="app-shell">
@@ -2139,18 +2413,118 @@ export default function App() {
                 </>
               )}
             >
-              <div className="docs-shell">
-                <aside className="docs-list">
-                  <button type="button" className="docs-item on">system-map.md</button>
-                  <button type="button" className="docs-item">focus.md</button>
-                  <button type="button" className="docs-item">intent registry</button>
-                  <button type="button" className="docs-item">rules catalog</button>
+              <div className="docs-dashboard-strip">
+                {documentSummaryBlocks.map((block) => (
+                  <div key={block.label} className="docs-dashboard-card">
+                    <span className="stat-label">{block.label}</span>
+                    <strong className="stat-num">{block.value}</strong>
+                    <span className={`chip ${block.tone}`}>live</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className={`docs-workspace${documentsNavCollapsed ? ' nav-collapsed' : ''}${documentsMetaCollapsed ? ' meta-collapsed' : ''}`}>
+                <aside className={`docs-sidebar docs-sidebar-left ${documentsNavCollapsed ? 'is-collapsed' : ''}`}>
+                  <div className={`docs-sidebar-head ${documentsNavCollapsed ? 'is-collapsed' : ''}`}>
+                    <div className={`docs-sidebar-head-copy ${documentsNavCollapsed ? 'is-hidden' : ''}`}>
+                      <p className="panel-label">Navigator</p>
+                      <h3>Knowledge-base tree</h3>
+                    </div>
+                    <button
+                      type="button"
+                      className={`secondary-btn docs-sidebar-toggle ${documentsNavCollapsed ? 'is-collapsed' : ''}`}
+                      onClick={() => setDocumentsNavCollapsed((value) => !value)}
+                      aria-label={documentsNavCollapsed ? 'Expand navigator sidebar' : 'Collapse navigator sidebar'}
+                      title={documentsNavCollapsed ? 'Expand navigator' : 'Collapse navigator'}
+                    >
+                      {documentsNavCollapsed ? 'Open nav' : 'Collapse'}
+                    </button>
+                  </div>
+                  {!documentsNavCollapsed ? <div className="docs-sidebar-scroll">{renderDocumentTree(documentsTree)}</div> : null}
                 </aside>
-                <div className="docs-detail">
-                  <h3>system-map.md</h3>
-                  <p className="muted">The target cockpit model keeps shared goals above project-specific intents, with graph and system state exposed underneath.</p>
-                  <pre>{`Current observed runtime\n- Goals are visible through gates, focus, and rules\n- Intents are project-specific and session-aware\n- Ontology is ahead of the graph runtime\n- Documents graph remains a partial export surface`}</pre>
+
+                <div className="docs-reader-shell">
+                  <div className="docs-reader-topbar">
+                    <div>
+                      <p className="panel-label">Reader</p>
+                      <h3>{selectedDocument?.title || 'No document selected'}</h3>
+                    </div>
+                    <div className="section-chip-row">
+                      {selectedDocument ? <span className="chip cb">{selectedDocument.format.toUpperCase()}</span> : null}
+                      {selectedDocument?.metadata.verification ? <span className="chip cgr">{selectedDocument.metadata.verification}</span> : null}
+                      {selectedDocument?.metadata.time_state ? <span className="chip ca">{selectedDocument.metadata.time_state}</span> : null}
+                    </div>
+                  </div>
+                  {selectedDocument?.summary ? <p className="muted docs-reader-summary">{selectedDocument.summary}</p> : null}
+                  <div className="docs-reader-body" ref={documentContentRef}>
+                    {selectedDocument ? (
+                      selectedDocument.format === 'html' ? (
+                        <article className="docs-rendered-html" dangerouslySetInnerHTML={{ __html: selectedDocument.content }} />
+                      ) : (
+                        <article className="docs-rendered-markdown" dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(selectedDocument.content) }} />
+                      )
+                    ) : (
+                      <div className="docs-empty-state">Select a document from the knowledge-base tree.</div>
+                    )}
+                  </div>
                 </div>
+
+                <aside className={`docs-sidebar docs-sidebar-right ${documentsMetaCollapsed ? 'is-collapsed' : ''}`}>
+                  <div className={`docs-sidebar-head ${documentsMetaCollapsed ? 'is-collapsed' : ''}`}>
+                    <div className={`docs-sidebar-head-copy ${documentsMetaCollapsed ? 'is-hidden' : ''}`}>
+                      <p className="panel-label">Context</p>
+                      <h3>Metadata & nav</h3>
+                    </div>
+                    <button
+                      type="button"
+                      className={`secondary-btn docs-sidebar-toggle ${documentsMetaCollapsed ? 'is-collapsed' : ''}`}
+                      onClick={() => setDocumentsMetaCollapsed((value) => !value)}
+                      aria-label={documentsMetaCollapsed ? 'Expand metadata sidebar' : 'Collapse metadata sidebar'}
+                      title={documentsMetaCollapsed ? 'Expand metadata' : 'Collapse metadata'}
+                    >
+                      {documentsMetaCollapsed ? 'Open meta' : 'Collapse'}
+                    </button>
+                  </div>
+                  {!documentsMetaCollapsed ? (
+                    <div className="docs-sidebar-scroll docs-meta-stack">
+                      <div className="docs-meta-card">
+                        <p className="panel-label">Document properties</p>
+                        <div className="docs-meta-list">
+                          {selectedDocumentMetadata.map((item) => (
+                            <div key={item.label} className="docs-meta-row">
+                              <span>{item.label}</span>
+                              <strong>{item.value}</strong>
+                            </div>
+                          ))}
+                        </div>
+                        {selectedDocument?.metadata.tags?.length ? <p className="meta">Tags: {selectedDocument.metadata.tags.join(', ')}</p> : null}
+                      </div>
+
+                      <div className="docs-meta-card">
+                        <p className="panel-label">Table of contents</p>
+                        <div className="docs-toc-list">
+                          {selectedDocument?.toc?.length ? selectedDocument.toc.map((item) => (
+                            <button key={`${item.id}-${item.level}`} type="button" className="docs-toc-item" style={{ paddingLeft: `${(item.level - 1) * 12 + 10}px` }} onClick={() => scrollToDocumentSection(item.id)}>
+                              {item.label}
+                            </button>
+                          )) : <p className="muted">No heading structure available.</p>}
+                        </div>
+                      </div>
+
+                      <div className="docs-meta-card">
+                        <p className="panel-label">Hot folders</p>
+                        <div className="docs-folder-list">
+                          {topFolders.length ? topFolders.map((folder) => (
+                            <div key={folder.path} className="docs-folder-row">
+                              <strong>{folder.path}</strong>
+                              <span className="meta">{folder.count} docs · {folder.warningCount} warnings</span>
+                            </div>
+                          )) : <p className="muted">No folder hotspots.</p>}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </aside>
               </div>
             </CollapsiblePanel>
 

@@ -482,6 +482,303 @@ function summarizeDocuments(graphCheckResult) {
   };
 }
 
+function toPosixPath(value) {
+  return String(value || '').replace(/\\/g, '/');
+}
+
+function isSupportedDocumentFile(fileName) {
+  return /\.(md|html?)$/i.test(String(fileName || ''));
+}
+
+function parseFrontmatter(text) {
+  const normalized = String(text || '');
+  if (!normalized.startsWith('---\n') && !normalized.startsWith('---\r\n')) {
+    return { metadata: {}, body: normalized };
+  }
+
+  const match = normalized.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/);
+  if (!match) {
+    return { metadata: {}, body: normalized };
+  }
+
+  const metadata = {};
+  for (const rawLine of match[1].split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || /^#/.test(line)) continue;
+    const fieldMatch = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (!fieldMatch) continue;
+    const [, key, rawValue] = fieldMatch;
+    metadata[key] = rawValue.replace(/^"|"$/g, '').trim();
+  }
+
+  return {
+    metadata,
+    body: match[2] || '',
+  };
+}
+
+function slugifyHeading(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/<[^>]+>/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+function extractMarkdownToc(body) {
+  const items = [];
+  for (const rawLine of String(body || '').split(/\r?\n/)) {
+    const match = rawLine.match(/^(#{1,6})\s+(.+)$/);
+    if (!match) continue;
+    const label = match[2].trim();
+    items.push({
+      id: slugifyHeading(label),
+      label,
+      level: match[1].length,
+    });
+  }
+  return items;
+}
+
+function extractHtmlToc(text) {
+  const items = [];
+  const regex = /<h([1-6])(?:\s+[^>]*)?>([\s\S]*?)<\/h\1>/gi;
+  for (const match of String(text || '').matchAll(regex)) {
+    const level = Number(match[1]);
+    const label = String(match[2] || '').replace(/<[^>]+>/g, '').trim();
+    if (!label) continue;
+    items.push({
+      id: slugifyHeading(label),
+      label,
+      level,
+    });
+  }
+  return items;
+}
+
+function extractDocumentSummary(format, body) {
+  if (format === 'html') {
+    const plain = String(body || '').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return plain.slice(0, 220) || null;
+  }
+
+  for (const rawBlock of String(body || '').split(/\r?\n\s*\r?\n/)) {
+    const clean = rawBlock
+      .replace(/^#+\s+/gm, '')
+      .replace(/^[-*]\s+/gm, '')
+      .replace(/^>\s+/gm, '')
+      .trim();
+    if (clean) {
+      return clean.slice(0, 220);
+    }
+  }
+  return null;
+}
+
+function formatDocumentTone(metadata) {
+  const verification = String(metadata.verification || '').toLowerCase();
+  const timeState = String(metadata.time_state || '').toLowerCase();
+  if (verification === 'code-verified' || verification === 'self-referential') {
+    return 'ok';
+  }
+  if (verification === 'unverified' || verification === 'design-only' || timeState === 'stale') {
+    return 'warn';
+  }
+  return 'info';
+}
+
+function buildDocumentDetail(absPath, relPath) {
+  const content = fs.readFileSync(absPath, 'utf8');
+  const format = /\.html?$/i.test(absPath) ? 'html' : 'md';
+  const parsed = format === 'md'
+    ? parseFrontmatter(content)
+    : { metadata: {}, body: content };
+  const metadata = parsed.metadata || {};
+  const title = metadata.title || (format === 'html'
+    ? String(content.match(/<title>([\s\S]*?)<\/title>/i)?.[1] || '').trim()
+    : String(parsed.body.match(/^#\s+(.+)$/m)?.[1] || '').trim()) || path.basename(absPath);
+  const toc = format === 'html' ? extractHtmlToc(content) : extractMarkdownToc(parsed.body);
+  const summary = extractDocumentSummary(format, parsed.body || content);
+
+  return {
+    path: relPath,
+    format,
+    title,
+    content,
+    summary,
+    metadata: {
+      title: metadata.title || null,
+      type: metadata.type || null,
+      status: metadata.status || null,
+      owner: metadata.owner || null,
+      verification: metadata.verification || null,
+      time_state: metadata.time_state || null,
+      last_updated: metadata.last_updated || null,
+      last_verified: metadata.last_verified || null,
+      tags: metadata.tags ? [String(metadata.tags)] : [],
+    },
+    toc,
+  };
+}
+
+function listKnowledgeBaseDocuments(rootDir) {
+  const folders = new Map();
+  const documents = [];
+
+  function ensureFolder(folderPath) {
+    const key = toPosixPath(folderPath || '');
+    if (!folders.has(key)) {
+      folders.set(key, {
+        kind: 'folder',
+        name: key ? path.posix.basename(key) : 'knowledge-base',
+        path: key,
+        children: [],
+      });
+    }
+    return folders.get(key);
+  }
+
+  ensureFolder('');
+
+  function walk(currentDir, relativeDir = '') {
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true })
+      .filter((entry) => !entry.name.startsWith('.'))
+      .sort((left, right) => Number(right.isDirectory()) - Number(left.isDirectory()) || left.name.localeCompare(right.name));
+
+    for (const entry of entries) {
+      const absPath = path.join(currentDir, entry.name);
+      const relPath = toPosixPath(path.posix.join(relativeDir, entry.name));
+      if (entry.isDirectory()) {
+        ensureFolder(relPath);
+        walk(absPath, relPath);
+        continue;
+      }
+      if (!isSupportedDocumentFile(entry.name)) {
+        continue;
+      }
+      const detail = buildDocumentDetail(absPath, relPath);
+      documents.push(detail);
+    }
+  }
+
+  walk(rootDir, '');
+
+  const folderPaths = [...folders.keys()].sort((left, right) => left.localeCompare(right));
+  for (const folderPath of folderPaths) {
+    const folder = folders.get(folderPath);
+    const parentPath = folderPath.includes('/') ? folderPath.slice(0, folderPath.lastIndexOf('/')) : '';
+    if (folderPath) {
+      ensureFolder(parentPath).children.push(folder);
+    }
+  }
+
+  for (const detail of documents) {
+    const docPath = toPosixPath(detail.path);
+    const parentPath = docPath.includes('/') ? docPath.slice(0, docPath.lastIndexOf('/')) : '';
+    ensureFolder(parentPath).children.push({
+      kind: 'document',
+      name: path.posix.basename(docPath),
+      path: docPath,
+      format: detail.format,
+      title: detail.title,
+      summary: detail.summary,
+      statusTone: formatDocumentTone(detail.metadata),
+    });
+  }
+
+  for (const folder of folders.values()) {
+    folder.children.sort((left, right) => {
+      if (left.kind !== right.kind) {
+        return left.kind === 'folder' ? -1 : 1;
+      }
+      return String(left.name || '').localeCompare(String(right.name || ''));
+    });
+  }
+
+  return {
+    tree: folders.get('')?.children || [],
+    documents,
+  };
+}
+
+function summarizeDocumentWorkspace(documents) {
+  const folderStats = new Map();
+  const topIssues = [];
+  let markdownCount = 0;
+  let htmlCount = 0;
+  let verifiedCount = 0;
+  let provisionalCount = 0;
+  let staleCount = 0;
+
+  for (const doc of documents) {
+    if (doc.format === 'html') htmlCount += 1;
+    else markdownCount += 1;
+
+    const verification = String(doc.metadata.verification || '').toLowerCase();
+    const timeState = String(doc.metadata.time_state || '').toLowerCase();
+    if (verification === 'code-verified' || verification === 'self-referential') {
+      verifiedCount += 1;
+    }
+    if (verification === 'unverified' || verification === 'design-only') {
+      provisionalCount += 1;
+      topIssues.push({
+        checkId: 'doc-verification',
+        severity: 'warn',
+        message: `${doc.title || doc.path} is ${verification || 'unverified'}`,
+        evidencePath: doc.path,
+      });
+    }
+    if (timeState && timeState !== 'current') {
+      staleCount += 1;
+      topIssues.push({
+        checkId: 'doc-time-state',
+        severity: 'info',
+        message: `${doc.title || doc.path} is ${timeState}`,
+        evidencePath: doc.path,
+      });
+    }
+
+    const parentPath = doc.path.includes('/') ? doc.path.slice(0, doc.path.lastIndexOf('/')) : '';
+    if (!folderStats.has(parentPath)) {
+      folderStats.set(parentPath, { path: parentPath || 'knowledge-base', count: 0, warningCount: 0 });
+    }
+    const entry = folderStats.get(parentPath);
+    entry.count += 1;
+    if (formatDocumentTone(doc.metadata) === 'warn') {
+      entry.warningCount += 1;
+    }
+  }
+
+  return {
+    totalDocuments: documents.length,
+    markdownCount,
+    htmlCount,
+    verifiedCount,
+    provisionalCount,
+    staleCount,
+    folderCount: folderStats.size,
+    entityCount: documents.length,
+    relationCount: folderStats.size,
+    issueCount: topIssues.length,
+    topIssues: topIssues.slice(0, 5),
+    topFolders: [...folderStats.values()]
+      .sort((left, right) => right.warningCount - left.warningCount || right.count - left.count || left.path.localeCompare(right.path))
+      .slice(0, 5),
+  };
+}
+
+function buildDocumentsWorkspace(selectedPath) {
+  const { tree, documents } = listKnowledgeBaseDocuments(kbRoot);
+  const normalizedSelectedPath = toPosixPath(String(selectedPath || '').trim());
+  const selected = documents.find((doc) => doc.path === normalizedSelectedPath) || documents[0] || null;
+  return {
+    summary: summarizeDocumentWorkspace(documents),
+    tree,
+    selected,
+  };
+}
+
 export function createApp(commandRunner = executeBridgeCommand) {
   const app = express();
   
@@ -627,21 +924,19 @@ export function createApp(commandRunner = executeBridgeCommand) {
     });
   });
 
-  app.get('/api/documents', async (_req, res) => {
-    const graphCheckResult = await commandRunner('kbx graph check --json', ['graph', 'check', '--json'], {
-      expectJson: true,
-      timeoutMs: 20000,
-    });
-
-    if (!graphCheckResult.ok) {
-      res.status(500).json({ ok: false, error: 'documents command failed', stderr: graphCheckResult.stderr });
-      return;
+  app.get('/api/documents', async (req, res) => {
+    try {
+      const workspace = buildDocumentsWorkspace(req.query.path);
+      res.status(200).json({
+        ok: true,
+        ...workspace,
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : 'documents query failed',
+      });
     }
-
-    res.status(200).json({
-      ok: true,
-      summary: summarizeDocuments(graphCheckResult),
-    });
   });
 
   app.get('/api/phase2-bridge', async (_req, res) => {
