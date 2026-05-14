@@ -1,4 +1,4 @@
-import { useEffect, useState, type SVGProps } from 'react';
+import { useEffect, useState, type ReactNode, type SVGProps } from 'react';
 
 type VersionResponse = {
   command: string;
@@ -342,6 +342,35 @@ function ArchiveIcon(props: SVGProps<SVGSVGElement>) {
 
 function ChevronIcon(props: SVGProps<SVGSVGElement>) {
   return <UiIcon {...props}><path d="m6 9 6 6 6-6" /></UiIcon>;
+}
+
+type CollapsiblePanelProps = {
+  className?: string;
+  label: string;
+  title: string;
+  actions?: ReactNode;
+  defaultOpen?: boolean;
+  children: ReactNode;
+};
+
+function CollapsiblePanel({ className = '', label, title, actions, defaultOpen = true, children }: CollapsiblePanelProps) {
+  return (
+    <details className={`panel intent-collapsible collapsible-panel ${className}`.trim()} open={defaultOpen}>
+      <summary className="panel-header-row collapsible-panel-summary">
+        <div>
+          <p className="panel-label">{label}</p>
+          <h2>{title}</h2>
+        </div>
+        <div className="section-chip-row collapsible-panel-actions">
+          {actions}
+          <span className="collapse-icon-shell" aria-hidden="true">
+            <ChevronIcon className="collapse-icon" />
+          </span>
+        </div>
+      </summary>
+      {children}
+    </details>
+  );
 }
 
 export default function App() {
@@ -1380,17 +1409,20 @@ export default function App() {
           <section className="workspace-cockpit">
             {activeTab === 'overview' && (
               <>
-            <article className="panel panel-wide workspace-section">
-              <div className="panel-header-row">
-                <div>
-                  <p className="panel-label">Checkpoint / Focus</p>
-                  <h2>Current focus</h2>
-                </div>
-                <div className="section-chip-row">
+            <CollapsiblePanel
+              className="panel-wide workspace-section"
+              label="Checkpoint / Focus"
+              title="Current focus"
+              actions={(
+                <>
                   {sessionIntentId && <span className="chip ca">focus {sessionIntentId}</span>}
-                  <button className="secondary-btn" type="button" onClick={() => setActiveTab('workspace')}>Open workspace</button>
-                </div>
-              </div>
+                  <button className="secondary-btn" type="button" onClick={(event) => {
+                    event.preventDefault();
+                    setActiveTab('workspace');
+                  }}>Open workspace</button>
+                </>
+              )}
+            >
               <div className="checkpoint-card-ui">
                 <h3>{sessionLabel || 'No active session label'}</h3>
                 <p className="meta">
@@ -1408,18 +1440,21 @@ export default function App() {
                   {selectedIntentDetail?.focusNextAction && <span className="chip cb">next: {selectedIntentDetail.focusNextAction}</span>}
                 </div>
               </div>
-            </article>
+            </CollapsiblePanel>
 
-            <article className="panel panel-wide workspace-section">
-              <div className="panel-header-row">
-                <div>
-                  <p className="panel-label">Milestone</p>
-                  <h2>Milestones</h2>
-                </div>
-                <button className="secondary-btn" type="button" onClick={() => setActiveTab('search')}>
+            <CollapsiblePanel
+              className="panel-wide workspace-section"
+              label="Milestone"
+              title="Milestones"
+              actions={(
+                <button className="secondary-btn" type="button" onClick={(event) => {
+                  event.preventDefault();
+                  setActiveTab('search');
+                }}>
                   Search KB
                 </button>
-              </div>
+              )}
+            >
               <div className="milestone-strip">
                 {workspaceMilestones.map((milestone) => (
                   <div key={milestone.version} className={`milestone-card ${milestone.state}`}>
@@ -1430,20 +1465,20 @@ export default function App() {
                   </div>
                 ))}
               </div>
-            </article>
+            </CollapsiblePanel>
 
           <section className="grid">
-        <article className="panel panel-wide workspace-section">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Goals & criteria</p>
-              <h2>Workspace goals</h2>
-            </div>
-            <div className="section-chip-row">
+        <CollapsiblePanel
+          className="panel-wide workspace-section"
+          label="Goals & criteria"
+          title="Workspace goals"
+          actions={(
+            <>
               <span className="chip cg">shared goals</span>
               <span className="chip cb">runtime partial</span>
-            </div>
-          </div>
+            </>
+          )}
+        >
           <div className="goal-list">
             <article className="goal-card-ui">
               <div className="goal-card-head">
@@ -1480,15 +1515,9 @@ export default function App() {
               </div>
             </article>
           </div>
-        </article>
+        </CollapsiblePanel>
 
-        <article className="panel workspace-section">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Intent Overview</p>
-              <h2>Intent state summary</h2>
-            </div>
-          </div>
+        <CollapsiblePanel className="workspace-section" label="Intent Overview" title="Intent state summary">
           <div className="overview-stat-list">
             {intentOverviewItems.map((item) => (
               <div key={item.label} className="overview-stat-row">
@@ -1497,15 +1526,9 @@ export default function App() {
               </div>
             ))}
           </div>
-        </article>
+        </CollapsiblePanel>
 
-        <article className="panel workspace-section">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Git Repositories</p>
-              <h2>Repository overview</h2>
-            </div>
-          </div>
+        <CollapsiblePanel className="workspace-section" label="Git Repositories" title="Repository overview">
           <div className="overview-list">
             {gitOverviewItems.map((item) => (
               <div key={item.name} className="overview-list-item">
@@ -1515,19 +1538,19 @@ export default function App() {
               </div>
             ))}
           </div>
-        </article>
+        </CollapsiblePanel>
 
-        <article className="panel panel-wide workspace-section">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Rule Landscape</p>
-              <h2>What is enforcing what</h2>
-            </div>
-            <div className="section-chip-row">
+        <CollapsiblePanel
+          className="panel-wide workspace-section"
+          label="Rule Landscape"
+          title="What is enforcing what"
+          actions={(
+            <>
               <span className="chip cb">{registeredRules.length} rules</span>
               <span className="chip cgr">runtime catalog</span>
-            </div>
-          </div>
+            </>
+          )}
+        >
           <p className="muted rule-landscape-intro">
             Mỗi nhóm bên dưới cho biết nó đang canh phần nào của hệ thống, đang là hard gate hay soft guidance,
             và bên trong có những rule cụ thể nào đang chạy thật trong runtime.
@@ -1585,18 +1608,14 @@ export default function App() {
               </div>
             ))}
           </div>
-        </article>
+        </CollapsiblePanel>
 
-        <article className="panel workspace-section">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Signals & alerts</p>
-              <h2>Attention queue</h2>
-            </div>
-            <div className="section-chip-row">
-              <span className="chip ca">{signalItems.length} signals</span>
-            </div>
-          </div>
+        <CollapsiblePanel
+          className="workspace-section"
+          label="Signals & alerts"
+          title="Attention queue"
+          actions={<span className="chip ca">{signalItems.length} signals</span>}
+        >
           <div className="overview-list">
             {(signalItems.length > 0 ? signalItems : ['No major signals at the moment.']).map((item) => (
               <div key={item} className="overview-list-item compact">
@@ -1604,11 +1623,9 @@ export default function App() {
               </div>
             ))}
           </div>
-        </article>
+        </CollapsiblePanel>
 
-        <article className="panel">
-          <p className="panel-label">Chaos score</p>
-          <h2>Trend</h2>
+        <CollapsiblePanel label="Chaos score" title="Trend">
           <div className="overview-stat-list">
             <div className="overview-stat-row">
               <span>score</span>
@@ -1623,11 +1640,9 @@ export default function App() {
               <span className={`chip ${phase2?.summary.blocked ? 'cr' : 'cg'}`}>{phase2?.summary.blocked ? 'blocked' : 'ok'}</span>
             </div>
           </div>
-        </article>
+        </CollapsiblePanel>
 
-        <article className="panel">
-          <p className="panel-label">Knowledge Graph Overview</p>
-          <h2>Graph status</h2>
+        <CollapsiblePanel label="Knowledge Graph Overview" title="Graph status">
           <div className="overview-stat-list">
             <div className="overview-stat-row">
               <span>entities</span>
@@ -1642,19 +1657,19 @@ export default function App() {
               <span className={`chip ${(documentsSnapshot?.summary?.issueCount ?? 0) > 0 ? 'ca' : 'cg'}`}>{documentsSnapshot?.summary?.issueCount ?? '--'}</span>
             </div>
           </div>
-        </article>
+        </CollapsiblePanel>
 
-        <article className="panel workspace-section">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Pipeline principles</p>
-              <h2>Operational pipelines</h2>
-            </div>
-            <div className="section-chip-row">
+        <CollapsiblePanel
+          className="workspace-section"
+          label="Pipeline principles"
+          title="Operational pipelines"
+          actions={(
+            <>
               <span className="chip cb">4 principles</span>
               <span className="chip cgr">runtime + target</span>
-            </div>
-          </div>
+            </>
+          )}
+        >
           <div className="overview-list pipeline-list">
             {pipelinePrinciples.map((pipeline) => (
               <div key={pipeline.id} className="overview-list-item pipeline-item principle-item">
@@ -1670,15 +1685,9 @@ export default function App() {
               </div>
             ))}
           </div>
-        </article>
+        </CollapsiblePanel>
 
-        <article className="panel panel-wide">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Infrastructure and environments list overview</p>
-              <h2>Runtime surfaces</h2>
-            </div>
-          </div>
+        <CollapsiblePanel className="panel-wide" label="Infrastructure and environments list overview" title="Runtime surfaces">
           <div className="overview-list">
             {infrastructureItems.map((item) => (
               <div key={item.name} className="overview-list-item">
@@ -1688,7 +1697,7 @@ export default function App() {
               </div>
             ))}
           </div>
-        </article>
+        </CollapsiblePanel>
 
           </section>
               </>
@@ -1698,13 +1707,7 @@ export default function App() {
               <>
           <section className="workspace-grid workspace-grid-shell">
             <aside className="workspace-lane workspace-lane-rail">
-              <article className="panel workspace-section workspace-sidebar-panel">
-                <div className="panel-header-row">
-                  <div>
-                    <p className="panel-label">Workspace</p>
-                    <h2>All intents</h2>
-                  </div>
-                </div>
+              <CollapsiblePanel className="workspace-section workspace-sidebar-panel" label="Workspace" title="All intents">
                 <div className="intent-toolbar intent-sidebar-actions">
                   <button
                     className={`secondary-btn ${showCreateIntent ? 'is-open' : ''}`}
@@ -1785,10 +1788,15 @@ export default function App() {
                     );
                   })}
                 </div>
-              </article>
+              </CollapsiblePanel>
             </aside>
 
-            <article className="panel workspace-section intent-main-panel">
+            <CollapsiblePanel
+              className="workspace-section intent-main-panel"
+              label="Intent Workspace"
+              title={selectedIntent ? (selectedIntentDetail?.title || selectedIntent.id || 'Selected intent') : 'Selected intent'}
+              actions={selectedIntent ? <span className={`chip ${getLifecycleTone(selectedIntent.lifecycle)}`}>{formatLifecycleLabel(selectedIntent.lifecycle)}</span> : undefined}
+            >
               <div className="intent-main intent-main-modern">
                 {!selectedIntent && <p className="muted">Chọn một intent ở cột trái để xem chi tiết và thao tác.</p>}
 
@@ -1931,33 +1939,37 @@ export default function App() {
                     </div>
 
                     {intentDetailTab === 'tasks' && (
-                      <section className="intent-detail-card task-board-card">
-                        <div className="intent-section-head task-board-headline">
+                      <details className="intent-detail-card intent-collapsible task-board-card" open>
+                        <summary className="intent-section-head task-board-headline">
                           <div>
                             <p className="panel-label">Công việc</p>
                             <h4>{selectedIntentTaskCount} task</h4>
                           </div>
-                          <div className="task-board-controls">
-                            <div className="intent-filter-group" role="tablist" aria-label="Task filters">
-                              {(['all', 'backlog', 'active', 'close'] as TaskFilterId[]).map((filterId) => (
-                                <button
-                                  key={filterId}
-                                  type="button"
-                                  className={`intent-filter-chip ${taskFilter === filterId ? 'on' : ''}`}
-                                  onClick={() => setTaskFilter(filterId)}
-                                >
-                                  {filterId === 'all' ? 'tất cả' : filterId}
-                                </button>
-                              ))}
-                            </div>
-                            <label className="task-sort-label">
-                              <span>Sắp xếp</span>
-                              <select className="mutation-select task-sort-select" value={taskSort} onChange={(e) => setTaskSort(e.target.value as TaskSortId)}>
-                                <option value="runtime">trạng thái</option>
-                                <option value="title">tiêu đề</option>
-                              </select>
-                            </label>
+                          <span className="collapse-icon-shell" aria-hidden="true">
+                            <ChevronIcon className="collapse-icon" />
+                          </span>
+                        </summary>
+
+                        <div className="task-board-controls">
+                          <div className="intent-filter-group" role="tablist" aria-label="Task filters">
+                            {(['all', 'backlog', 'active', 'close'] as TaskFilterId[]).map((filterId) => (
+                              <button
+                                key={filterId}
+                                type="button"
+                                className={`intent-filter-chip ${taskFilter === filterId ? 'on' : ''}`}
+                                onClick={() => setTaskFilter(filterId)}
+                              >
+                                {filterId === 'all' ? 'tất cả' : filterId}
+                              </button>
+                            ))}
                           </div>
+                          <label className="task-sort-label">
+                            <span>Sắp xếp</span>
+                            <select className="mutation-select task-sort-select" value={taskSort} onChange={(e) => setTaskSort(e.target.value as TaskSortId)}>
+                              <option value="runtime">trạng thái</option>
+                              <option value="title">tiêu đề</option>
+                            </select>
+                          </label>
                         </div>
 
                         <div className="task-board-table">
@@ -2055,17 +2067,20 @@ export default function App() {
                             );
                           })}
                         </div>
-                      </section>
+                      </details>
                     )}
 
                     {intentDetailTab === 'edit' && (
-                      <section className="intent-detail-card">
-                        <div className="intent-section-head">
+                      <details className="intent-detail-card intent-collapsible" open>
+                        <summary className="intent-section-head">
                           <div>
                             <p className="panel-label">Edit</p>
                             <h4>Intent metadata</h4>
                           </div>
-                        </div>
+                          <span className="collapse-icon-shell" aria-hidden="true">
+                            <ChevronIcon className="collapse-icon" />
+                          </span>
+                        </summary>
                         <div className="mutation-form compact-form">
                           <div className="form-field">
                             <label htmlFor="update-title">Title</label>
@@ -2097,12 +2112,12 @@ export default function App() {
                           </div>
                           {updateResult && <div className={`form-result ${updateResult.ok ? 'ok' : 'error'} intent-detail-span`}><p>{updateResult.ok ? '✓ Intent updated' : `✗ Error: ${updateResult.error}`}</p></div>}
                         </div>
-                      </section>
+                      </details>
                     )}
                   </>
                 )}
               </div>
-            </article>
+            </CollapsiblePanel>
           </section>
               </>
             )}
@@ -2113,17 +2128,17 @@ export default function App() {
       <section className={`page ${activeTab === 'documents' ? 'on' : ''}`} role="tabpanel">
         <div className="scroll">
           <section className="grid">
-            <article className="panel panel-wide workspace-section">
-              <div className="panel-header-row">
-                <div>
-                  <p className="panel-label">Documents</p>
-                  <h2>Knowledge-base surface</h2>
-                </div>
-                <div className="section-chip-row">
+            <CollapsiblePanel
+              className="panel-wide workspace-section"
+              label="Documents"
+              title="Knowledge-base surface"
+              actions={(
+                <>
                   <span className="chip cb">design-aligned shell</span>
                   <span className="chip cgr">runtime partial</span>
-                </div>
-              </div>
+                </>
+              )}
+            >
               <div className="docs-shell">
                 <aside className="docs-list">
                   <button type="button" className="docs-item on">system-map.md</button>
@@ -2137,19 +2152,15 @@ export default function App() {
                   <pre>{`Current observed runtime\n- Goals are visible through gates, focus, and rules\n- Intents are project-specific and session-aware\n- Ontology is ahead of the graph runtime\n- Documents graph remains a partial export surface`}</pre>
                 </div>
               </div>
-            </article>
+            </CollapsiblePanel>
 
-            <article className="panel">
-              <p className="panel-label">Rules</p>
-              <h2>Registered rules</h2>
+            <CollapsiblePanel label="Rules" title="Registered rules">
               <pre>{topRules.map((rule) => `${rule.id} · ${rule.severity} · ${rule.title}`).join('\n') || 'No rules loaded'}</pre>
-            </article>
+            </CollapsiblePanel>
 
-            <article className="panel">
-              <p className="panel-label">Issues</p>
-              <h2>Top document issues</h2>
+            <CollapsiblePanel label="Issues" title="Top document issues">
               <pre>{topIssues.map((issue) => `${issue.severity} · ${issue.message} · ${issue.evidencePath}`).join('\n') || 'No issues loaded'}</pre>
-            </article>
+            </CollapsiblePanel>
           </section>
         </div>
       </section>
@@ -2157,13 +2168,7 @@ export default function App() {
       <section className={`page ${activeTab === 'search' ? 'on' : ''}`} role="tabpanel">
         <div className="scroll">
           <section className="grid">
-            <article className="panel panel-wide workspace-section">
-              <div className="panel-header-row">
-                <div>
-                  <p className="panel-label">Search KB</p>
-                  <h2>Cross-surface search</h2>
-                </div>
-              </div>
+            <CollapsiblePanel className="panel-wide workspace-section" label="Search KB" title="Cross-surface search">
               <div className="search-shell">
                 <input
                   className="search-input"
@@ -2183,7 +2188,7 @@ export default function App() {
                   ))}
                 </div>
               </div>
-            </article>
+            </CollapsiblePanel>
           </section>
         </div>
       </section>

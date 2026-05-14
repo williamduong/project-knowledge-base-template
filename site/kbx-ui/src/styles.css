@@ -1330,6 +1330,24 @@ pre {
   transform: rotate(180deg);
 }
 
+.collapsible-panel-summary {
+  list-style: none;
+  cursor: pointer;
+  margin: -2px 0 10px;
+}
+
+.collapsible-panel-summary::-webkit-details-marker {
+  display: none;
+}
+
+.intent-collapsible[open] .collapsible-panel-summary .collapse-icon {
+  transform: rotate(180deg);
+}
+
+.collapsible-panel-actions {
+  justify-content: flex-end;
+}
+
 .intent-section-head {
   display: flex;
   justify-content: space-between;
@@ -1446,6 +1464,7 @@ pre {
   justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+  margin-bottom: 14px;
 }
 
 .task-board-table {
