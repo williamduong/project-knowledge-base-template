@@ -326,10 +326,17 @@ kbx intent status
 # List all active intent IDs
 kbx intent list
 
-# Apply: write staged files to KB core, archive workspace
+# Apply: write staged files to KB core after deterministic gates
 kbx intent apply <id> --yes
 # Apply then run release pipeline in one command
 kbx intent apply <id> --release --yes
+
+# Close finished non-release work
+kbx intent close <id> --type=completed
+# Close shipped work
+kbx intent close <id> --type=released --release=vX.Y.Z
+# Archive after retro + close
+kbx intent archive <id>
 
 # Discard intent (irreversible)
 kbx intent cancel <id>
@@ -348,7 +355,10 @@ Mode examples:
 **After apply:**
 - Staged files are written to the KB content root.
 - An `apply-record.json` is written with evidence fields (change_scope, impact_signals, decision_summary).
-- The intent workspace is moved to `knowledge-base/intents/_archive/<id>-<timestamp>/`.
+- The intent remains active until it is explicitly closed.
+- Recommended deterministic close path: `approve -> stage -> apply (if staged) -> retro -> close -> archive`.
+- Finished non-release work should close as `--type=completed`; released work should close as `--type=released --release=vX.Y.Z`.
+- The intent workspace is moved to `knowledge-base/intents/_archive/<id>-<timestamp>/` only after `kbx intent archive <id>`.
 - Applied intents are recorded in the release ledger entry (`intents_applied[]`) when `kbx release tag` is run.
 
 For Recorder role responsibilities and doctrine, see [`../15-governance/self-evolution-doctrine.md`](../15-governance/self-evolution-doctrine.md).

@@ -27,6 +27,10 @@ function releasedIntentsRoot(contentRoot) {
   return path.join(closedIntentsRoot(contentRoot), 'released');
 }
 
+function completedIntentsRoot(contentRoot) {
+  return path.join(closedIntentsRoot(contentRoot), 'completed');
+}
+
 function droppedIntentsRoot(contentRoot) {
   return path.join(closedIntentsRoot(contentRoot), 'dropped');
 }
@@ -50,7 +54,11 @@ function backlogIntentPath(contentRoot, slug) {
 }
 
 function closedIntentWorkspacePath(contentRoot, intentId, closeType) {
-  const root = closeType === 'released' ? releasedIntentsRoot(contentRoot) : droppedIntentsRoot(contentRoot);
+  const root = closeType === 'released'
+    ? releasedIntentsRoot(contentRoot)
+    : closeType === 'completed'
+      ? completedIntentsRoot(contentRoot)
+      : droppedIntentsRoot(contentRoot);
   return path.join(root, intentId);
 }
 
@@ -76,6 +84,7 @@ function findIntentWorkspace(contentRoot, intentId) {
   const candidates = [
     intentWorkspacePath(contentRoot, intentId),
     closedIntentWorkspacePath(contentRoot, intentId, 'released'),
+    closedIntentWorkspacePath(contentRoot, intentId, 'completed'),
     closedIntentWorkspacePath(contentRoot, intentId, 'dropped'),
   ];
   for (const candidate of candidates) {
@@ -512,8 +521,12 @@ function listActiveIntentIds(contentRoot) {
 
 function listClosedIntentRecords(contentRoot) {
   const results = [];
-  for (const closeType of ['released', 'dropped']) {
-    const root = closeType === 'released' ? releasedIntentsRoot(contentRoot) : droppedIntentsRoot(contentRoot);
+  for (const closeType of ['released', 'completed', 'dropped']) {
+    const root = closeType === 'released'
+      ? releasedIntentsRoot(contentRoot)
+      : closeType === 'completed'
+        ? completedIntentsRoot(contentRoot)
+        : droppedIntentsRoot(contentRoot);
     if (!fs.existsSync(root)) continue;
     for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
@@ -640,6 +653,43 @@ function listIntentRecords(contentRoot, { includeBacklog = true, includeActive =
   return records;
 }
 
+function extractArchiveTimestamp(folderName) {
+  const match = String(folderName || '').match(/-(\d{14})$/);
+  return match ? match[1] : '';
+}
+
+function intentRecordTimestamp(record) {
+  if (!record) return '';
+  if (record.scope === 'archived') {
+    const archiveTs = extractArchiveTimestamp(record.folderName);
+    if (archiveTs) return archiveTs;
+  }
+
+  const meta = record.meta || {};
+  for (const key of ['archived_at', 'closed_at', 'retro_completed_at', 'approved_at', 'created_at']) {
+    const value = meta[key];
+    if (value) {
+      const normalized = String(value).replace(/[^0-9]/g, '').slice(0, 14);
+      if (normalized) return normalized;
+    }
+  }
+  return '';
+}
+
+function compareIntentRecordRecency(left, right) {
+  const leftTs = intentRecordTimestamp(left);
+  const rightTs = intentRecordTimestamp(right);
+  if (leftTs !== rightTs) {
+    return String(rightTs).localeCompare(String(leftTs));
+  }
+
+  const lifecycleRank = { archived: 0, closed: 1, active: 2, backlog: 3 };
+  const lifecycleDiff = (lifecycleRank[left.scope] ?? 99) - (lifecycleRank[right.scope] ?? 99);
+  if (lifecycleDiff !== 0) return lifecycleDiff;
+
+  return String(right.folderName || '').localeCompare(String(left.folderName || ''));
+}
+
 function resolveIntentRecord(contentRoot, ref) {
   const records = listIntentRecords(contentRoot);
   const matches = records.filter((record) => {
@@ -651,6 +701,32 @@ function resolveIntentRecord(contentRoot, ref) {
   });
 
   if (matches.length === 0) return null;
+
+  const exactFolderMatch = matches.find((record) => record.folderName === ref);
+  if (exactFolderMatch) {
+    const isArchiveFolderRef = /-\d{14}$/.test(String(ref));
+    if (exactFolderMatch.scope === 'active' || exactFolderMatch.scope === 'backlog' || isArchiveFolderRef) {
+      return exactFolderMatch;
+    }
+  }
+
+  const activeMatches = matches.filter((record) => record.scope === 'active');
+  if (activeMatches.length > 0) {
+    activeMatches.sort(compareIntentRecordRecency);
+    return activeMatches[0];
+  }
+
+  const backlogMatches = matches.filter((record) => record.scope === 'backlog');
+  if (backlogMatches.length > 0) {
+    backlogMatches.sort(compareIntentRecordRecency);
+    return backlogMatches[0];
+  }
+
+  const historicalMatches = matches.filter((record) => record.scope === 'closed' || record.scope === 'archived');
+  if (historicalMatches.length > 0) {
+    historicalMatches.sort(compareIntentRecordRecency);
+    return historicalMatches[0];
+  }
 
   const scopeRank = { active: 0, closed: 1, backlog: 2, archived: 3 };
   matches.sort((left, right) => {
@@ -760,13 +836,15 @@ function updateIntentFocus(contentRoot, intentId, { current, nextAction, lastUpd
 }
 
 function closeIntent(contentRoot, intentId, { closeType, releaseRef, dropReason, timestamp }) {
-  const srcPath = intentWorkspacePath(contentRoot, intentId);
-  if (!fs.existsSync(srcPath)) {
-    throw new Error(`Intent "${intentId}" not found. Expected: ${srcPath}`);
+  const record = resolveIntentRecord(contentRoot, intentId);
+  if (!record || record.scope !== 'active' || !record.workspacePath || !record.metaPath) {
+    const expectedPath = intentWorkspacePath(contentRoot, intentId);
+    throw new Error(`Intent "${intentId}" not found. Expected: ${expectedPath}`);
   }
+  const srcPath = record.workspacePath;
   const closedAt = timestamp || new Date().toISOString();
-  const metaPath = intentMetaPath(contentRoot, intentId);
-  const meta = readIntentMeta(contentRoot, intentId);
+  const metaPath = record.metaPath;
+  const meta = readIntentMetaFile(metaPath);
   meta.lifecycle = 'closed';
   if (Object.prototype.hasOwnProperty.call(meta, 'status')) {
     if (!Object.prototype.hasOwnProperty.call(meta, 'legacy_status')) {
@@ -779,17 +857,27 @@ function closeIntent(contentRoot, intentId, { closeType, releaseRef, dropReason,
   if (closeType === 'released') {
     if (!releaseRef) throw new Error('Released close requires releaseRef.');
     meta.release_ref = releaseRef;
+    meta.completion_note = null;
+    meta.drop_reason = null;
+  } else if (closeType === 'completed') {
+    meta.release_ref = null;
+    meta.completion_note = null;
     meta.drop_reason = null;
   } else {
     if (!dropReason) throw new Error('Dropped close requires dropReason.');
     meta.drop_reason = dropReason;
     meta.release_ref = null;
+    meta.completion_note = null;
   }
   writeIntentFrontmatter(metaPath, meta);
 
-  const destRoot = closeType === 'released' ? releasedIntentsRoot(contentRoot) : droppedIntentsRoot(contentRoot);
+  const destRoot = closeType === 'released'
+    ? releasedIntentsRoot(contentRoot)
+    : closeType === 'completed'
+      ? completedIntentsRoot(contentRoot)
+      : droppedIntentsRoot(contentRoot);
   fs.mkdirSync(destRoot, { recursive: true });
-  const destPath = path.join(destRoot, intentId);
+  const destPath = path.join(destRoot, path.basename(srcPath));
   if (fs.existsSync(destPath)) {
     throw new Error(`Closed intent destination already exists: ${destPath}`);
   }
@@ -813,10 +901,11 @@ function archiveFolderName(intentId, timestamp) {
  * Returns the archive workspace path.
  */
 function archiveIntent(contentRoot, intentId, timestamp) {
-  const srcPath = findIntentWorkspace(contentRoot, intentId);
-  if (!srcPath) {
+  const record = resolveIntentRecord(contentRoot, intentId);
+  if (!record || !record.workspacePath) {
     throw new Error(`Intent "${intentId}" not found.`);
   }
+  const srcPath = record.workspacePath;
   const archiveRoot = archiveIntentsRoot(contentRoot);
   fs.mkdirSync(archiveRoot, { recursive: true });
   const destName = archiveFolderName(intentId, timestamp);
@@ -1039,6 +1128,7 @@ module.exports = {
   backlogIntentsRoot,
   closedIntentsRoot,
   releasedIntentsRoot,
+  completedIntentsRoot,
   droppedIntentsRoot,
   archiveIntentsRoot,
   intentWorkspacePath,

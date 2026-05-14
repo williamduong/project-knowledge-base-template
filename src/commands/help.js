@@ -264,8 +264,12 @@ function runHelp({ packageJson, args }) {
   console.log('                               Without <id>: summary list of all active intents.');
   console.log('             list             List active intents with status/mode/staged count as a table.');
   console.log('                               Pager activates automatically when output exceeds terminal height.');
-  console.log('             apply <id>       Write staged files to KB core, archive workspace, optionally run release.');
+  console.log('             apply <id>       Write staged files to KB core after deterministic gates approve + stage.');
+  console.log('                               Keeps the intent active; use close + archive as explicit follow-up steps.');
   console.log('                               --release  Trigger release pipeline after apply (apply first, then release).');
+  console.log('             close <id>       Close active intent as released, completed, or dropped.');
+  console.log('                               completed = finished non-release work; released requires --release=vX.Y.Z.');
+  console.log('             archive <id>     Archive an active/closed intent after retro + close flow is complete.');
   console.log('                               --yes      Skip confirmation prompt.');
   console.log('             cancel <id>      Delete an active intent workspace (irreversible; --yes to skip confirm).');
   console.log('  extract    Generate a documentation extraction prompt for a source file.');

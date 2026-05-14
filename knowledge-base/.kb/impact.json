@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "scanned_at": "2026-05-13T13:44:31.655Z",
+  "scanned_at": "2026-05-14T18:59:38.525Z",
   "baseline": "e157d9c61caf325f5816cff25d4987a27b294909",
-  "head": "80fc5c174d504fa180b5be925e61e5a03cce8ac7",
+  "head": "61d7c2cc3d5c5b0441b28eb1a83f3537054c6a5d",
   "storage_mode": "tracked",
   "impacted": [],
   "self_edits": [
@@ -612,23 +612,7 @@
     },
     {
       "status": "A",
-      "path": "knowledge-base/intents/_active/intent-v2-8-2-principal-grounding-contract/impact.md"
-    },
-    {
-      "status": "A",
       "path": "knowledge-base/intents/_active/intent-v2-8-2-principal-grounding-contract/intent.md"
-    },
-    {
-      "status": "A",
-      "path": "knowledge-base/intents/_active/intent-v2-8-2-principal-grounding-contract/plan.md"
-    },
-    {
-      "status": "A",
-      "path": "knowledge-base/intents/_active/v2-10-v2-10-intent-lifecycle-domain-separation/intent.md"
-    },
-    {
-      "status": "A",
-      "path": "knowledge-base/intents/_active/v2-10-v2-10-kbagent-roadmap-gap-p0-alignment/intent.md"
     },
     {
       "status": "A",
@@ -641,10 +625,6 @@
     {
       "status": "A",
       "path": "knowledge-base/intents/_active/v2-9-kbagent-observability-graph/proposed-changes/notes/roadmap/kbagent-roadmap-execution-plan.md"
-    },
-    {
-      "status": "A",
-      "path": "knowledge-base/intents/_active/v2-9-v2-9-0-dispatch-runtime-test-harness/intent.md"
     },
     {
       "status": "A",
@@ -912,6 +892,10 @@
     },
     {
       "status": "A",
+      "path": "knowledge-base/intents/_backlog/v2-10-kbx-ui-draft-to-backlog-and-runtime-task-contract.md"
+    },
+    {
+      "status": "A",
       "path": "knowledge-base/intents/_backlog/v2-10-research-driven-kb-intelligence.md"
     },
     {
@@ -973,6 +957,26 @@
     {
       "status": "A",
       "path": "knowledge-base/intents/_backlog/v2-9-rules-lifecycle-graphdb-multi-lane.md"
+    },
+    {
+      "status": "A",
+      "path": "knowledge-base/intents/_closed/dropped/v2-10-v2-10-intent-lifecycle-domain-separation/intent.md"
+    },
+    {
+      "status": "A",
+      "path": "knowledge-base/intents/_closed/dropped/v2-10-v2-10-kbagent-roadmap-gap-p0-alignment/intent.md"
+    },
+    {
+      "status": "A",
+      "path": "knowledge-base/intents/_closed/dropped/v2-8-2-principal-grounding-contract/impact.md"
+    },
+    {
+      "status": "A",
+      "path": "knowledge-base/intents/_closed/dropped/v2-8-2-principal-grounding-contract/intent.md"
+    },
+    {
+      "status": "A",
+      "path": "knowledge-base/intents/_closed/dropped/v2-8-2-principal-grounding-contract/plan.md"
     },
     {
       "status": "A",
@@ -1073,6 +1077,10 @@
     {
       "status": "A",
       "path": "knowledge-base/intents/_closed/dropped/v2-9-kbagent-observability-graph/proposed-changes/notes/roadmap/kbagent-roadmap-execution-plan.md"
+    },
+    {
+      "status": "A",
+      "path": "knowledge-base/intents/_closed/dropped/v2-9-v2-9-0-dispatch-runtime-test-harness/intent.md"
     },
     {
       "status": "A",
@@ -1399,6 +1407,7 @@
     "site/kbx-ui/src/styles.css",
     "site/kbx-ui/test/bridge-gates.test.mjs",
     "site/kbx-ui/test/server-contract.test.mjs",
+    "site/kbx-ui/test/server-live-integration.live.mjs",
     "site/kbx-ui/tsconfig.json",
     "site/kbx-ui/vite.config.ts",
     "site/test-cases.html",

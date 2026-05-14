@@ -72,6 +72,14 @@
       5. Kiểm tra không có SV Factory content rớt xuống downstream (`svfactory/`, maintainer-only rules, `CONSTITUTION.md` references)
     - Intent **KHÔNG được close** cho đến khi gate này pass hoặc có explicit defer với gate record rõ lý do.
     - Nếu chưa thể chạy downstream ngay: tạo gate record trong `gates.md` của intent (actor: `human`, blocking: true).
+10.1. **Deterministic Intent Close Gate** (bắt buộc cho mọi intent dùng CLI workflow):
+   - Không dùng AI chat như coordinator chính để tự quyết close path nếu CLI đã có command tương ứng.
+   - Pipeline chuẩn phải là: `approve -> stage -> apply (nếu có staged files) -> retro -> close -> archive`.
+   - `kbx intent apply` chỉ write staged files + apply record; không được coi là đã close/archive intent.
+   - `kbx intent close --type=completed` dùng cho finished non-release work.
+   - `kbx intent close --type=released --release=vX.Y.Z` dùng cho shipped work.
+   - `kbx intent close --type=dropped --reason="..."` chỉ dùng cho abandoned/cancelled scope, không dùng thay cho completed.
+   - `archive` chỉ là bước cuối để move workspace sau khi retro + close đã xong.
 11. **Nếu còn hạng mục chưa verify được bằng tool**: ghi checklist `Manual follow-up` (task + command + expected result) trong output cuối để user chạy tiếp
 12. **Update CHANGELOG.md** của agent: ghi 1 dòng "v1.3 Phase N: <summary>"
 

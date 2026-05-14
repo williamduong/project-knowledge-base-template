@@ -231,8 +231,17 @@ Execute all non-blocking tasks in sequence within the same session. **Only pause
 
 **Batch compatible tasks.** Do not stop after each small action. A session that does three doc-fills and a status check should not ask the user to re-invoke between each.
 
-### Step 5 — Apply and Archive
-When all tasks complete, run `kbx intent apply <id>` to write staged files to KB core and archive the intent with full evidence trail.
+### Step 5 — Deterministic Close Pipeline
+When all tasks complete, use the runtime close pipeline instead of collapsing everything into one AI-driven step:
+
+1. `kbx intent approve <id>`
+2. `kbx intent stage <id>`
+3. `kbx intent apply <id>` only when staged files exist
+4. `kbx intent retro <id>`
+5. `kbx intent close <id> --type=completed` for finished non-release work, or `--type=released --release=vX.Y.Z` for shipped work
+6. `kbx intent archive <id>`
+
+`kbx intent apply` writes staged files and apply evidence, but it does **not** archive the intent anymore.
 
 ### Step 6 — Completion Report
 ```

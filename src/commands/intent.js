@@ -271,8 +271,8 @@ function parseArgs(args) {
       throw new Error('kbx intent close requires an intent ID.');
     }
     options.intentId = rest[1];
-    if (options.closeType !== 'released' && options.closeType !== 'dropped') {
-      throw new Error('kbx intent close requires --type=released|dropped.');
+    if (!['released', 'completed', 'dropped'].includes(options.closeType)) {
+      throw new Error('kbx intent close requires --type=released|completed|dropped.');
     }
     if (options.closeType === 'released' && !options.release) {
       throw new Error('kbx intent close --type=released requires --release=vX.Y.Z.');
@@ -1473,7 +1473,54 @@ async function runArchive(ctx, options) {
 }
 
 async function runClose(ctx, options) {
+  const record = resolveIntentRecord(ctx.contentRoot, options.intentId);
+  if (!record || !record.metaPath) {
+    throw new Error(`Intent "${options.intentId}" not found across backlog, active, closed, or archive state.`);
+  }
+  if (record.scope !== 'active') {
+    throw new Error(`kbx intent close requires an active intent. Current scope: ${record.scope}`);
+  }
+
   const closeType = options.closeType;
+  const meta = record.meta || {};
+  const staged = listStagedFilesFromWorkspace(record.workspacePath);
+  const hasApplyRecord = fs.existsSync(path.join(record.workspacePath, 'apply-record.json'));
+
+  if (closeType === 'released') {
+    if (!hasApplyRecord) {
+      throw new Error(
+        `Released close requires prior apply evidence for intent "${options.intentId}". ` +
+        'Run kbx intent apply <id> before closing as released.'
+      );
+    }
+  }
+
+  if (closeType === 'completed') {
+    if (staged.length > 0) {
+      throw new Error(
+        `Completed close is blocked: intent "${options.intentId}" still has ${staged.length} staged file(s). ` +
+        'Apply or drop staged changes before closing as completed.'
+      );
+    }
+    if (meta.mode === 'full' && !hasApplyRecord) {
+      const hasPlan = fs.existsSync(path.join(record.workspacePath, 'plan.md'));
+      const hasImpact = fs.existsSync(path.join(record.workspacePath, 'impact.md'));
+      if (!hasPlan || !hasImpact) {
+        throw new Error(
+          `Completed close is blocked: full-mode intent "${options.intentId}" is missing required evidence ` +
+          `(${!hasPlan ? 'plan.md' : ''}${!hasPlan && !hasImpact ? ' and ' : ''}${!hasImpact ? 'impact.md' : ''}).`
+        );
+      }
+    }
+  }
+
+  if (closeType !== 'dropped' && meta.retro_completed !== true) {
+    throw new Error(
+      `Close is blocked by P006: intent "${options.intentId}" must complete retro before ${closeType} close. ` +
+      'Run kbx intent retro <id> first.'
+    );
+  }
+
   const closedPath = closeIntent(ctx.contentRoot, options.intentId, {
     closeType,
     releaseRef: closeType === 'released' ? options.release : null,
@@ -1543,6 +1590,14 @@ async function runApply(ctx, options, cwd) {
 
   if (staged.length === 0) {
     throw new Error(`Intent "${intentId}" has no staged files in proposed-changes/. Nothing to apply.`);
+  }
+
+  if (meta.approved !== true) {
+    throw new Error(`kbx intent apply requires prior approval. Run: kbx intent approve ${intentId}`);
+  }
+
+  if (!['staged', 'ready'].includes(String(meta.state || ''))) {
+    throw new Error(`kbx intent apply requires intent state staged|ready. Run: kbx intent stage ${intentId}`);
   }
 
   // Path validation: reject if any file is directly under proposed-changes/ root (I1)
@@ -1962,6 +2017,7 @@ function printHelp() {
   console.log('  kbx intent apply <id> [--release] [--yes] [--json]');
   console.log('  kbx intent apply-preview <id> [--json]');
   console.log('  kbx intent close <id> --type=released --release=vX.Y.Z [--json]');
+  console.log('  kbx intent close <id> --type=completed [--json]');
   console.log('  kbx intent close <id> --type=dropped --reason="..." [--json]');
   console.log('  kbx intent cancel <id> [--yes] [--json]');
   console.log('  kbx intent archive <id> [--json]');
@@ -1992,13 +2048,15 @@ function printHelp() {
   console.log('                  --aged   Focus on closed intents eligible for archive (default: 30 day threshold).');
   console.log('                  --json   Machine-readable output. Never auto-mutates.');
   console.log('  apply           Write staged files from proposed-changes/ to the KB content root.');
-  console.log('                  Builds apply-record.json and keeps the intent active until explicit close.');
+  console.log('                  Requires prior approve + stage. Builds apply-record.json and keeps the intent active until explicit close.');
   console.log('                  --release  Trigger release pipeline after apply (apply must complete first).');
   console.log('                  --yes      Skip confirmation prompt.');
   console.log('  apply-preview   Show dry-run summary for staged files and warnings; no mutations.');
-  console.log('  close           Move an active intent into _closed/released or _closed/dropped.');
+  console.log('  close           Move an active intent into _closed/released, _closed/completed, or _closed/dropped.');
+  console.log('                  completed = finished non-release work; released = shipped with release ref; dropped = abandoned/cancelled.');
   console.log('  cancel          Deprecated alias for close --type=dropped. Keeps history instead of deleting.');
   console.log('  archive         Move an active or closed intent workspace into _archive/.');
+  console.log('                  Recommended flow: apply (if staged) -> retro -> close -> archive.');
   console.log('  suggest-lessons Scan archived intents for recurring patterns and suggest lesson candidates.');
   console.log('                  Candidates are human-reviewable; none are written automatically.');
   console.log('                  --json  Output candidates as JSON.');

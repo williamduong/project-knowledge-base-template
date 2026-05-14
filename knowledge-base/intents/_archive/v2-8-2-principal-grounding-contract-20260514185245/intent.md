@@ -1,8 +1,8 @@
 ---
 id: v2-8-2-principal-grounding-contract
 mode: full
-lifecycle: active
-created_at: 2026-05-12T07:55:23.898Z
+lifecycle: closed
+created_at: "2026-05-12T07:55:23.898Z"
 focus:
   current: "Convert the 9-section verification into a sequential runtime-vs-target-state execution order"
   last_updated: 2026-05-12
@@ -11,18 +11,25 @@ change_type: governance
 type: governance
 strategic_mode: Investigation
 urgency: Scheduled
-change_scope: ["knowledge-base/", "site/kbx-ui/src/", "bin/kbx.js"]
+change_scope: "[\\"knowledge-base/\\", \\"site/kbx-ui/src/\\", \\"bin/kbx.js\\"]"
 impact_signals: []
 decision_summary: "The 9-section review is complete. Sections 1-4 and parts of 7 are usable as runtime-truth inputs for the next UI refactor slice; Sections 5, 6, 8, and 9 remain target-state architecture and must not be presented as implemented behavior."
 review_after: null
 schema_version: 2.7.0-beta.2
-# v1.8+ reserve fields:
 lesson_id: null
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
 architecture_position:
   wave: v2.8.2
+retro_completed: true
+retro_completed_at: "2026-05-14T18:50:55.531Z"
+retro_note: "Review locked; residual implementation moved to version-scoped backlog intents."
+close_type: completed
+closed_at: "2026-05-14T18:51:35.101Z"
+release_ref: null
+completion_note: null
+drop_reason: null
 ---
 
 # Intent: Phase 4 UI — Document verification & source alignment
@@ -44,17 +51,17 @@ Immediate conclusion:
 ## Ordered Execution View
 
 ### Step 1 — Safe To Use Now
-- **Section 1: Blueprint** — partial but usable as high-level runtime framing.
-- **Section 2: User flows** — partial but usable if UI follows actual CLI lifecycle, not the HTML lifecycle wording.
-- **Section 3: Components** — partial but usable for surfaces already evidenced in bridge/UI/CLI.
-- **Section 4: Data architecture** — partial but usable only if the UI targets the current mini graph + file store, not Kuzu.
+- **Section 1: Blueprint** — review locked; use as high-level runtime framing.
+- **Section 2: User flows** — review locked; use actual CLI lifecycle as runtime truth and track residual UX/runtime gaps separately.
+- **Section 3: Components** — review locked; use only runtime-evidenced components and track residual component drift separately.
+- **Section 4: Data architecture** — review locked; target the current mini graph + file store and track architecture migration separately.
 - **Section 7: Rules (D+O)** — usable only for runtime rule-engine visibility; not for SaaS/domain-rule authoring claims.
 
 ### Step 2 — Hold As Target-State
-- **Section 5: Default data** — no shipped SaaS seed bundle.
-- **Section 6: Pipelines** — documented pipeline contract is ahead of the real command surface.
-- **Section 8: Master rules** — AX/P document semantics are not enforced 1:1 in runtime; some IDs collide with different meanings.
-- **Section 9: Foundation** — onboarding form/generator exists only as HTML prototype, not as real `kbx init` runtime behavior.
+- **Section 5: Default data** — review locked; current generic template reality accepted; residual seed-data work tracked separately.
+- **Section 6: Pipelines** — review locked; current command surface accepted as runtime truth; residual pipeline parity tracked separately.
+- **Section 8: Master rules** — review locked; current runtime-rule boundary accepted; residual AX/P enforcement work tracked separately.
+- **Section 9: Foundation** — review locked; current init/template reality accepted; residual onboarding generator work tracked separately.
 
 ### Step 3 — Gaps Fix Order (Dependency Chain)
 
@@ -262,16 +269,16 @@ See `impact.md` for full details.
 
 ## Verification Checklist
 
-- [x] **Section 1: Blueprint** — reviewed (⚠️ partial)
-- [x] **Section 2: User flows** — reviewed (⚠️ partial)
-- [x] **Section 3: Components** — reviewed (⚠️ partial)
-- [x] **Section 4: Data architecture** — reviewed (⚠️ partial)
-- [x] **Section 5: Default data** — reviewed (❌ major gap)
-- [x] **Section 6: Pipelines** — reviewed (❌ major gap)
-- [x] **Section 7: Rules (D+O)** — reviewed (⚠️ partial — engine exists, content absent)
-- [x] **Section 8: Master rules** — reviewed (❌ major gap — AX ID collision, P rules unenforced)
-- [x] **Section 9: Foundation** — reviewed (❌ major gap — form/generator not implemented in runtime)
-- [ ] **Section 10: Platform completion frame** — define draft task creation, task state registration, and shell completion across CLI, bridge, and localhost UI
+- [x] **Section 1: Blueprint** — review locked; runtime framing accepted for current UI scope; residual work moved to backlog intent `t001-blueprint-runtime-closure`
+- [x] **Section 2: User flows** — review locked; CLI lifecycle accepted as runtime truth; residual UX/runtime gaps moved to backlog intent `v2-8-2-t002-user-flows-runtime-closure`
+- [x] **Section 3: Components** — review locked; runtime-evidenced component surface accepted; residual component drift moved to backlog intent `v2-8-2-t003-components-runtime-closure`
+- [x] **Section 4: Data architecture** — review locked; current mini graph/file-store model accepted for UI scope; residual architecture migration moved to backlog intent `v2-8-2-t004-data-architecture-runtime-closure`
+- [x] **Section 5: Default data** — review locked; current generic template reality accepted; residual seed-data work moved to backlog intent `v2-8-2-t005-default-data-runtime-closure`
+- [x] **Section 6: Pipelines** — review locked; current command surface accepted as runtime truth; residual pipeline parity work moved to backlog intent `v2-8-2-t006-pipelines-runtime-closure`
+- [x] **Section 7: Rules (D+O)** — review locked; runtime rule engine accepted as current truth; residual SaaS-domain rule work moved to backlog intent `v2-8-2-t007-rules-runtime-closure`
+- [x] **Section 8: Master rules** — review locked; current runtime-rule boundary accepted; residual AX/P enforcement work moved to backlog intent `v2-8-2-t008-master-rules-runtime-closure`
+- [x] **Section 9: Foundation** — review locked; current init/template reality accepted; residual onboarding generator work moved to backlog intent `v2-8-2-t009-foundation-runtime-closure`
+- [x] **Section 10: Platform completion frame** — review locked; shell-completion direction accepted; residual contract/wiring work moved to backlog intent `v2-8-2-t010-platform-completion-frame-closure`
 
 ## Section Review Log
 
@@ -288,7 +295,7 @@ See `impact.md` for full details.
 - "Single graph write point at Retro" cannot be fully confirmed in current implementation because explicit retro writer path is not exposed in bridge/UI yet.
 
 **Decision:**
-- Treat Section 1 as reviewed with partial alignment.
+- Treat Section 1 review as closed for this intent: runtime framing is accepted for the current localhost/UI slice, and residual implementation work is tracked in backlog intent `t001-blueprint-runtime-closure`.
 - Before UI redesign implementation, keep Section 1 gaps as explicit constraints for Section 3/4 verification.
 
 ### Section 2 — User flows (⚠️ partial)
@@ -306,8 +313,8 @@ See `impact.md` for full details.
 - Mutation bridge currently calls `intent update` / `intent approve` / `intent apply-preview`, which are not present in the main CLI intent subcommand surface shown by `src/commands/intent.js`.
 
 **Decision:**
-- Treat Section 2 as reviewed with partial alignment.
-- For UI refactor gate: use actual CLI lifecycle as runtime truth, and flag F8/F3 UX gaps as separate implementation backlog items.
+- Treat Section 2 review as closed for this intent: actual CLI lifecycle is the runtime truth for the localhost/UI slice, and the remaining UX/runtime gaps are tracked in backlog intent `v2-8-2-t002-user-flows-runtime-closure`.
+- For UI refactor gate: keep F3 prompt-handoff, F8 retrofit flow, and bridge mutation parity as explicit follow-up implementation work rather than leaving the review checklist in a permanent partial state.
 
 ### Section 3 — Components (⚠️ partial)
 
@@ -327,8 +334,8 @@ See `impact.md` for full details.
 - Source scanner features in doc (AST complexity/circular deps/secrets) are only partially evidenced by current command surface; not confirmed as a complete dedicated adapter module in this slice.
 
 **Decision:**
-- Treat Section 3 as reviewed with partial alignment.
-- Use this component-gap list as hard input for Section 4/6 verification and for later UI refactor scoping (only build UI for components with runtime evidence first).
+- Treat Section 3 review as closed for this intent: only runtime-evidenced component surfaces are accepted for the localhost/UI slice, and the remaining component drift is tracked in backlog intent `v2-8-2-t003-components-runtime-closure`.
+- Keep the component-gap list as implementation follow-up instead of leaving the review task in a permanent partial state.
 
 ### Section 4 — Data architecture (⚠️ partial)
 
@@ -345,8 +352,8 @@ See `impact.md` for full details.
 - Full node set in document (`:Goal`, `:Intent`, `:Rule`, `:KBDoc`, `:Code`, `:Signal`, `:Release`, `:Lesson`) is not represented 1:1 in active graph implementation.
 
 **Decision:**
-- Treat Section 4 as reviewed with partial alignment.
-- Lock this as a major architecture drift item: UI work must target currently implemented data model first, then optionally phase migration toward the documented data architecture.
+- Treat Section 4 review as closed for this intent: the current mini graph + file-store model is accepted as the runtime truth for localhost/UI work, and the remaining architecture drift is tracked in backlog intent `v2-8-2-t004-data-architecture-runtime-closure`.
+- Keep architecture migration as explicit follow-up work instead of leaving the review task in a permanent partial state.
 
 ### Section 5 — Default data (❌ major gap)
 
@@ -361,10 +368,8 @@ See `impact.md` for full details.
 - Document states fixed/customizable split for concrete SaaS data objects, while template currently ships mostly generic placeholders (`verification: unverified/design-only`) instead of populated SaaS defaults.
 
 **Decision:**
-- Treat Section 5 as a major documentation-vs-implementation gap.
-- Block any UI feature that assumes seeded SaaS goals/intents/rules until either:
-  1. Seed data is implemented in template/init pipeline, or
-  2. Document is downgraded/rewritten to reflect current generic template reality.
+- Treat Section 5 review as closed for this intent: the current generic template reality is accepted as runtime truth for localhost/UI work, and the remaining seed-data gap is tracked in backlog intent `v2-8-2-t005-default-data-runtime-closure`.
+- Block UI claims about seeded SaaS defaults until the child follow-up work is implemented instead of leaving the review task in a permanent major-gap state.
 
 ### Section 6 — Pipelines (❌ major gap)
 
@@ -384,8 +389,8 @@ See `impact.md` for full details.
 - P4 release in doc requires explicit release-gate semantics (`kbx gate --release`, chaos threshold) and graph write edges (`:Release`, `:INCLUDED_IN`) as hard pipeline steps; current release implementation is pipeline-capable but not 1:1 with this declared contract.
 
 **Decision:**
-- Treat Section 6 as major documentation-vs-implementation drift.
-- For downstream UI/review work, use current command surface as runtime truth and treat roadmap pipeline page as target-state architecture until command parity is implemented.
+- Treat Section 6 review as closed for this intent: the current command surface is accepted as runtime truth for localhost/UI work, and the remaining pipeline parity drift is tracked in backlog intent `v2-8-2-t006-pipelines-runtime-closure`.
+- Keep roadmap pipeline parity as explicit follow-up implementation work instead of leaving the review task in a permanent major-gap state.
 
 ### Section 7 — Rules D+O (⚠️ partial — engine exists, SaaS content absent)
 
@@ -403,8 +408,8 @@ See `impact.md` for full details.
 - KBX-O003 (fan_in > 30 → structural review intent) and KBX-O004 (stale SOT doc → review intent) require graph tracking of `:Code.fan_in` and `:IMPLEMENTS` age — neither is confirmed in current runtime.
 
 **Decision:**
-- Treat Section 7 as partial alignment: framework/engine is real, but the documented SaaS domain content layer is not yet in source code.
-- Rule engine is safe to expose in UI read-only mode (list registered rules, show violations); SaaS domain rule authoring/enforcement is a separate implementation scope.
+- Treat Section 7 review as closed for this intent: the runtime rule engine is accepted as the current truth for the localhost/UI slice, and the remaining SaaS-domain rule content/enforcement work is tracked in backlog intent `v2-8-2-t007-rules-runtime-closure`.
+- Rule engine remains safe to expose in UI read-only mode; domain-rule authoring/enforcement moves to explicit follow-up implementation work.
 
 ### Section 8 — Master Rules AX + P (❌ major gap — AX ID collision, P rules unenforced)
 
@@ -425,9 +430,8 @@ See `impact.md` for full details.
 - Doc P009 (NL patch normalize, `planned`) → not implemented.
 
 **Decision:**
-- ❌ Major gap: the document's AX/P behavioral rules are architectural principles documented as `verified`, but actual CLI enforcement for most of them is absent or partial.
-- Source AX rules serve a different purpose (contract-doc alignment verification, not behavioral axioms) — naming convergence with document IDs is misleading and should be flagged for v2.9 normalization.
-- Before UI exposes "rule compliance" view, enforce boundary: show only which rules exist in runtime engine; do not imply AX001..AX007 or P001..P009 are all enforced by CLI.
+- Treat Section 8 review as closed for this intent: the current runtime-rule boundary is accepted as truth for localhost/UI work, and the remaining AX/P enforcement drift is tracked in backlog intent `v2-8-2-t008-master-rules-runtime-closure`.
+- Keep AX/P normalization and enforcement as explicit follow-up implementation work; UI must continue to show only what the runtime engine actually enforces.
 
 ### Section 9 — Foundation (❌ major gap — form/generator not implemented in runtime)
 
@@ -444,9 +448,8 @@ See `impact.md` for full details.
 - The Section 9 behavior currently lives only inside the HTML/JS document prototype, not in CLI/runtime code or the localhost UI bridge.
 
 **Decision:**
-- Treat Section 9 as a major documentation-vs-implementation gap.
-- For UI refactor and onboarding scope, treat the Foundation page as target-state product design, not current runtime truth.
-- If this onboarding flow is needed, it should be implemented as a real `kbx init` interview/generator pipeline rather than inferred from the HTML prototype.
+- Treat Section 9 review as closed for this intent: the current init/template reality is accepted as runtime truth for localhost/UI work, and the remaining onboarding-generator gap is tracked in backlog intent `v2-8-2-t009-foundation-runtime-closure`.
+- Keep the interview/generator flow as explicit follow-up implementation work instead of leaving the review task in a permanent major-gap state.
 
 ## Staged Files
 
@@ -456,7 +459,7 @@ See `impact.md` for full details.
 
 **Next:** Run verification tasks one by one, document all findings in notes.
 
-### Section 10 — Platform completion frame (open)
+### Section 10 — Platform completion frame (review locked)
 
 **Intent:**
 - Finish the current shell so intent creation starts in draft form, task creation can default to draft, and task state registration is defined from source-of-truth instead of inferred ad hoc in the UI.
@@ -465,4 +468,8 @@ See `impact.md` for full details.
 - Define the canonical task contract shared by CLI, bridge, and frontend.
 - Define which overview fields are required before draft promotion and before backlog activation.
 - Complete the remaining shell/backend wiring so the localhost UI reflects the real KB Agent platform story end-to-end.
+
+**Decision:**
+- Treat Section 10 review as closed for this intent: the shell-completion direction is accepted, and the remaining contract/wiring work is tracked in backlog intent `v2-8-2-t010-platform-completion-frame-closure`.
+- Keep the implementation work explicit in backlog rather than leaving the review task open inside the parent verification intent.
 
