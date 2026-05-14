@@ -683,6 +683,36 @@ export default function App() {
     { label: 'Mutations', sublabel: selectedIntentRuntimeStatus ?? 'idle', state: selectedIntentRuntimeStatus === 'running' ? 'current' : selectedIntentDetail ? 'done' : 'todo' },
   ] as const;
   const cockpitTasks = sortedTasks.slice(0, 6);
+  const intentOverviewItems = [
+    { label: 'active', value: activeIntents.length, tone: 'cg' },
+    { label: 'backlog', value: backlogIntents.length, tone: 'cb' },
+    { label: 'closed', value: closedIntents.length, tone: 'cgr' },
+    { label: 'session', value: sessionIntentId ? 1 : 0, tone: 'ca' },
+  ];
+  const signalItems = [
+    phase2 && phase2.summary.fail > 0 ? `Phase 2 has ${phase2.summary.fail} failing gate(s)` : null,
+    topIssues[0]?.message ? `Doc issue: ${topIssues[0].message}` : null,
+    selectedIntentRuntimeStatus === 'running' ? `Session intent ${sessionIntentId} is running` : null,
+    workspaceSnapshot?.summary?.hasWorkingTreeChanges ? 'Working tree has local changes' : null,
+  ].filter(Boolean) as string[];
+  const gitOverviewItems = [
+    {
+      name: 'project-knowledge-base-template',
+      detail: workspaceSnapshot?.summary?.hasWorkingTreeChanges ? 'working tree changed' : 'working tree clean/unknown',
+      tone: workspaceSnapshot?.summary?.hasWorkingTreeChanges ? 'ca' : 'cg',
+    },
+    {
+      name: 'active session intent',
+      detail: sessionIntentId ?? 'no session intent',
+      tone: sessionIntentId ? 'cb' : 'cgr',
+    },
+  ];
+  const infrastructureItems = [
+    { name: 'Local UI', value: 'http://localhost:4173/', tone: 'cg' },
+    { name: 'CLI bridge', value: interaction?.web ?? 'localhost bridge', tone: 'cb' },
+    { name: 'Node runtime', value: systemSnapshot?.summary?.nodeVersion ?? '--', tone: 'cgr' },
+    { name: 'Workspace root', value: systemSnapshot?.summary?.workspaceRoot ?? '--', tone: 'cgr' },
+  ];
   const searchNeedle = searchQuery.trim().toLowerCase();
   const searchResults = searchNeedle.length === 0
     ? []
@@ -769,10 +799,9 @@ export default function App() {
         <div className="found-top">
           <div className="found-ico">◆</div>
           <div>
-            <h1 className="found-title">Phase 2 deterministic gate cockpit</h1>
+            <h1 className="found-title">project-knowledge-base-template</h1>
             <p className="found-desc">
-              Localhost webapp runs beside VS Code. Chat proposes actions, web visualizes state,
-              CLI remains the deterministic write path.
+              Foundation note: localhost webapp is the observability surface, chat proposes actions, and CLI remains the deterministic write path.
             </p>
           </div>
         </div>
@@ -792,7 +821,32 @@ export default function App() {
             <article className="panel panel-wide workspace-section">
               <div className="panel-header-row">
                 <div>
-                  <p className="panel-label">Foundation</p>
+                  <p className="panel-label">Checkpoint / Focus</p>
+                  <h2>Current focus</h2>
+                </div>
+                <div className="section-chip-row">
+                  {sessionIntentId && <span className="chip ca">focus {sessionIntentId}</span>}
+                  <button className="secondary-btn" type="button" onClick={() => setActiveTab('workspace')}>Open workspace</button>
+                </div>
+              </div>
+              <div className="checkpoint-card-ui">
+                <h3>{sessionLabel || 'No active session label'}</h3>
+                <p className="meta">
+                  {sessionIntentSource || 'unknown-source'}
+                  {checkpointTimestamp ? ` · ${checkpointTimestamp}` : ''}
+                </p>
+                <p className="muted">{selectedIntentDetail?.focusCurrent || 'No checkpoint summary loaded yet.'}</p>
+                <div className="section-chip-row">
+                  {sessionContext?.summary?.focusFile && <span className="chip cgr">{sessionContext.summary.focusFile}</span>}
+                  {selectedIntentDetail?.focusNextAction && <span className="chip cb">next: {selectedIntentDetail.focusNextAction}</span>}
+                </div>
+              </div>
+            </article>
+
+            <article className="panel panel-wide workspace-section">
+              <div className="panel-header-row">
+                <div>
+                  <p className="panel-label">Milestone</p>
                   <h2>Milestones</h2>
                 </div>
                 <button className="secondary-btn" type="button" onClick={() => setActiveTab('search')}>
@@ -812,53 +866,6 @@ export default function App() {
             </article>
 
           <section className="grid">
-        <article className="panel workspace-section">
-          <p className="panel-label">Foundation</p>
-          <h2>kbx version</h2>
-          {loading && <p className="muted">Loading version from CLI bridge...</p>}
-          {!loading && version && (
-            <>
-              <p className={version.ok ? 'status ok' : 'status error'}>
-                {version.ok ? 'CLI bridge reachable' : 'CLI bridge failed'}
-              </p>
-              <pre>{version.stdout || version.stderr}</pre>
-              <p className="meta">{version.command} · exit {version.exitCode}</p>
-            </>
-          )}
-        </article>
-
-        <article className="panel workspace-section">
-          <p className="panel-label">Foundation</p>
-          <h2>Runtime status</h2>
-          {loading && <p className="muted">Loading runtime status...</p>}
-          {!loading && status && (
-            <>
-              <p className={status.ok ? 'status ok' : 'status error'}>
-                {status.ok ? 'Runtime status readable' : 'Runtime status failed'}
-              </p>
-              <pre>{status.parsed ? JSON.stringify(status.parsed, null, 2) : status.stdout || status.stderr}</pre>
-              <p className="meta">{status.command} · exit {status.exitCode}</p>
-            </>
-          )}
-        </article>
-
-        <article className="panel workspace-section">
-          <p className="panel-label">Checkpoint</p>
-          <h2>Current focus</h2>
-          <div className="checkpoint-card-ui">
-            <h3>{sessionLabel || 'No active session label'}</h3>
-            <p className="meta">
-              {sessionIntentSource || 'unknown-source'}
-              {checkpointTimestamp ? ` · ${checkpointTimestamp}` : ''}
-            </p>
-            <p className="muted">{selectedIntentDetail?.focusCurrent || 'No checkpoint summary loaded yet.'}</p>
-            <div className="section-chip-row">
-              {sessionIntentId && <span className="chip ca">intent {sessionIntentId}</span>}
-              {sessionContext?.summary?.focusFile && <span className="chip cgr">{sessionContext.summary.focusFile}</span>}
-            </div>
-          </div>
-        </article>
-
         <article className="panel panel-wide workspace-section">
           <div className="panel-header-row">
             <div>
@@ -908,133 +915,114 @@ export default function App() {
           </div>
         </article>
 
-        <article className="panel panel-wide workspace-section">
+        <article className="panel workspace-section">
           <div className="panel-header-row">
             <div>
-              <p className="panel-label">Interaction boundary</p>
-              <h2>Chat, web, CLI</h2>
+              <p className="panel-label">Intent Overview</p>
+              <h2>Intent state summary</h2>
             </div>
           </div>
-          {interaction && (
-            <ul className="boundary-list">
-              <li><strong>Chat:</strong> {interaction.chat}</li>
-              <li><strong>Web:</strong> {interaction.web}</li>
-              <li><strong>Write path:</strong> {interaction.writePath}</li>
-            </ul>
-          )}
-        </article>
-
-        <article className="panel panel-wide workspace-section">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Phase 2 gate evaluation</p>
-              <h2>Deterministic bridge gates</h2>
-            </div>
-            <button className="refresh-btn" type="button" onClick={onRefresh} disabled={refreshing || loading}>
-              {refreshing ? 'Refreshing...' : 'Refresh gates'}
-            </button>
-          </div>
-          {loading && <p className="muted">Evaluating gate policy...</p>}
-
-          {!loading && phase2 && (
-            <>
-              <p className={phase2.summary.blocked ? 'status error' : 'status ok'}>
-                {phase2.summary.blocked ? 'Blocked by hard-fail gate' : 'Phase 2 gates pass'}
-              </p>
-
-              <p className="meta gate-summary">
-                pass {phase2.summary.pass} · warn {phase2.summary.warn} · fail {phase2.summary.fail}
-                {' '}· checked {new Date(phase2.checkedAt).toLocaleString()}
-              </p>
-
-              <div className="gate-list">
-                {phase2.gates.map((gate) => (
-                  <div className="gate-row" key={gate.gate}>
-                    <div className="gate-head">
-                      <strong>{gate.gate}</strong>
-                      <span className={`gate-severity ${gate.severity}`}>{gate.severity}</span>
-                      <span className={`gate-result ${gate.ok ? 'ok' : 'fail'}`}>{gate.ok ? 'PASS' : 'FAIL'}</span>
-                    </div>
-                    <p>{gate.detail}</p>
-                    <p className="meta">{gate.command}</p>
-                  </div>
-                ))}
+          <div className="overview-stat-list">
+            {intentOverviewItems.map((item) => (
+              <div key={item.label} className="overview-stat-row">
+                <span>{item.label}</span>
+                <span className={`chip ${item.tone}`}>{item.value}</span>
               </div>
-            </>
-          )}
+            ))}
+          </div>
         </article>
 
-        <article className="panel panel-wide workspace-section">
+        <article className="panel workspace-section">
           <div className="panel-header-row">
             <div>
-              <p className="panel-label">System Overview</p>
-              <h2>Current architecture truth</h2>
+              <p className="panel-label">Git Repositories</p>
+              <h2>Repository overview</h2>
+            </div>
+          </div>
+          <div className="overview-list">
+            {gitOverviewItems.map((item) => (
+              <div key={item.name} className="overview-list-item">
+                <strong>{item.name}</strong>
+                <span className="meta">{item.detail}</span>
+                <span className={`chip ${item.tone}`}>{item.tone === 'cg' ? 'ok' : item.tone === 'ca' ? 'attention' : 'tracked'}</span>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel workspace-section">
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">Signals & alerts</p>
+              <h2>Attention queue</h2>
             </div>
             <div className="section-chip-row">
-              <span className="chip cb">dev management</span>
-              <span className="chip cgr">overview only</span>
+              <span className="chip ca">{signalItems.length} signals</span>
             </div>
           </div>
-          <div className="system-stat-grid">
-            <div className="stat-card-ui">
-              <span className="stat-num">{systemSnapshot?.summary?.nodeVersion ?? '--'}</span>
-              <span className="stat-label">node</span>
+          <div className="overview-list">
+            {(signalItems.length > 0 ? signalItems : ['No major signals at the moment.']).map((item) => (
+              <div key={item} className="overview-list-item compact">
+                <strong>{item}</strong>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel">
+          <p className="panel-label">Chaos score</p>
+          <h2>Trend</h2>
+          <div className="overview-stat-list">
+            <div className="overview-stat-row">
+              <span>score</span>
+              <span className="chip cg">{chaosResult?.score ?? '--'}</span>
             </div>
-            <div className="stat-card-ui">
-              <span className="stat-num">{documentsSnapshot?.summary?.entityCount ?? '--'}</span>
-              <span className="stat-label">entities</span>
+            <div className="overview-stat-row">
+              <span>level</span>
+              <span className="chip cb">{chaosResult?.level ?? 'unknown'}</span>
             </div>
-            <div className="stat-card-ui">
-              <span className="stat-num">{documentsSnapshot?.summary?.relationCount ?? '--'}</span>
-              <span className="stat-label">relations</span>
-            </div>
-            <div className="stat-card-ui">
-              <span className="stat-num">{documentsSnapshot?.summary?.issueCount ?? '--'}</span>
-              <span className="stat-label">doc issues</span>
+            <div className="overview-stat-row">
+              <span>gate health</span>
+              <span className={`chip ${phase2?.summary.blocked ? 'cr' : 'cg'}`}>{phase2?.summary.blocked ? 'blocked' : 'ok'}</span>
             </div>
           </div>
         </article>
 
         <article className="panel">
-          <p className="panel-label">System Overview</p>
-          <h2>Workspace snapshot</h2>
-          {loading && <p className="muted">Loading workspace summary...</p>}
-          {!loading && workspaceSnapshot && (
-            <>
-              <p className={workspaceSnapshot.ok ? 'status ok' : 'status error'}>
-                {workspaceSnapshot.ok ? 'Workspace summary loaded' : `Failed: ${workspaceSnapshot.error}`}
-              </p>
-              <pre>{workspaceSnapshot.summary ? JSON.stringify(workspaceSnapshot.summary, null, 2) : 'No data'}</pre>
-            </>
-          )}
-        </article>
-
-        <article className="panel">
-          <p className="panel-label">System Overview</p>
-          <h2>System snapshot</h2>
-          {loading && <p className="muted">Loading system checks...</p>}
-          {!loading && systemSnapshot && (
-            <>
-              <p className={systemSnapshot.ok ? 'status ok' : 'status error'}>
-                {systemSnapshot.ok ? 'System summary loaded' : `Failed: ${systemSnapshot.error}`}
-              </p>
-              <pre>{systemSnapshot.summary ? JSON.stringify(systemSnapshot.summary, null, 2) : 'No data'}</pre>
-            </>
-          )}
+          <p className="panel-label">Knowledge Graph Overview</p>
+          <h2>Graph status</h2>
+          <div className="overview-stat-list">
+            <div className="overview-stat-row">
+              <span>entities</span>
+              <span className="chip cb">{documentsSnapshot?.summary?.entityCount ?? '--'}</span>
+            </div>
+            <div className="overview-stat-row">
+              <span>relations</span>
+              <span className="chip cb">{documentsSnapshot?.summary?.relationCount ?? '--'}</span>
+            </div>
+            <div className="overview-stat-row">
+              <span>issues</span>
+              <span className={`chip ${(documentsSnapshot?.summary?.issueCount ?? 0) > 0 ? 'ca' : 'cg'}`}>{documentsSnapshot?.summary?.issueCount ?? '--'}</span>
+            </div>
+          </div>
         </article>
 
         <article className="panel panel-wide">
-          <p className="panel-label">System Overview</p>
-          <h2>Documents graph snapshot</h2>
-          {loading && <p className="muted">Loading documents graph checks...</p>}
-          {!loading && documentsSnapshot && (
-            <>
-              <p className={documentsSnapshot.ok ? 'status ok' : 'status error'}>
-                {documentsSnapshot.ok ? 'Documents summary loaded' : `Failed: ${documentsSnapshot.error}`}
-              </p>
-              <pre>{documentsSnapshot.summary ? JSON.stringify(documentsSnapshot.summary, null, 2) : 'No data'}</pre>
-            </>
-          )}
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">Infrastructure and environments list overview</p>
+              <h2>Runtime surfaces</h2>
+            </div>
+          </div>
+          <div className="overview-list">
+            {infrastructureItems.map((item) => (
+              <div key={item.name} className="overview-list-item">
+                <strong>{item.name}</strong>
+                <span className="meta">{item.value}</span>
+                <span className={`chip ${item.tone}`}>tracked</span>
+              </div>
+            ))}
+          </div>
         </article>
 
           </section>

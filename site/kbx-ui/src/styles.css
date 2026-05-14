@@ -1423,6 +1423,38 @@ pre {
   gap: 6px;
 }
 
+.overview-stat-list,
+.overview-list {
+  display: grid;
+  gap: 10px;
+}
+
+.overview-stat-row,
+.overview-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--bd2);
+  border-radius: 6px;
+  background: #191919;
+}
+
+.overview-list-item {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.overview-list-item.compact {
+  align-items: center;
+}
+
+.overview-list-item strong,
+.overview-stat-row span:first-child {
+  color: var(--txt0);
+}
+
 @media (max-width: 960px) {
   .goal-list,
   .system-stat-grid,
