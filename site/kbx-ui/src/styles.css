@@ -276,11 +276,91 @@ pre {
   grid-column: 1 / -1;
 }
 
+.workspace-section {
+  background: linear-gradient(180deg, #1b1b1b, #171717);
+}
+
+.workspace-cockpit {
+  display: grid;
+  gap: 14px;
+}
+
+.milestone-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.milestone-card {
+  min-width: 170px;
+  padding: 12px;
+  border: 1px solid var(--bd2);
+  border-radius: 6px;
+  background: #1a1a1a;
+  display: grid;
+  gap: 8px;
+}
+
+.milestone-card.current {
+  border-color: #4f789a;
+  background: linear-gradient(180deg, #1b3041, #171717);
+}
+
+.milestone-card.done {
+  opacity: 0.72;
+}
+
+.milestone-version,
+.milestone-meta,
+.loop-step-num,
+.loop-step-sub,
+.quick-actions-label,
+.workspace-task-table th {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.milestone-version {
+  font-size: 11px;
+  color: var(--blue);
+}
+
+.milestone-name {
+  font-size: 13px;
+  color: var(--txt0);
+  font-weight: 500;
+}
+
+.milestone-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: #343434;
+  overflow: hidden;
+}
+
+.milestone-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #72b4e4, #70d4a0);
+}
+
+.milestone-meta {
+  font-size: 10px;
+  color: var(--txt2);
+}
+
 .panel-header-row {
   display: flex;
   justify-content: space-between;
   gap: 10px;
   align-items: flex-start;
+}
+
+.section-chip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .panel-label {
@@ -348,6 +428,79 @@ pre {
   color: var(--txt1);
 }
 
+.checkpoint-card-ui,
+.goal-card-ui,
+.stat-card-ui,
+.docs-detail,
+.search-result-item {
+  border: 1px solid var(--bd2);
+  border-radius: 6px;
+  background: #1a1a1a;
+}
+
+.checkpoint-card-ui {
+  padding: 14px;
+}
+
+.checkpoint-card-ui h3,
+.goal-card-ui h3,
+.docs-detail h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.goal-list,
+.system-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.goal-card-ui {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.goal-card-ui.warning {
+  background: linear-gradient(180deg, #221d14, #1a1a1a);
+}
+
+.goal-card-head,
+.goal-metric-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.goal-metric-row {
+  color: var(--txt1);
+  font-size: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--bd);
+}
+
+.stat-card-ui {
+  padding: 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  color: var(--txt0);
+}
+
+.stat-label {
+  color: var(--txt2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .refresh-btn,
 .secondary-btn,
 .submit-btn {
@@ -384,6 +537,107 @@ pre {
 .gate-list {
   display: grid;
   gap: 9px;
+}
+
+.loop-bar-ui {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--bd2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.loop-step {
+  padding: 12px 10px;
+  background: #171717;
+  border-right: 1px solid var(--bd2);
+  display: grid;
+  gap: 2px;
+}
+
+.loop-step:last-child {
+  border-right: 0;
+}
+
+.loop-step.done {
+  background: #18281f;
+}
+
+.loop-step.current {
+  background: #1b3041;
+}
+
+.loop-step-num {
+  font-size: 10px;
+  color: var(--txt2);
+}
+
+.loop-step-label {
+  font-size: 13px;
+  color: var(--txt0);
+  font-weight: 500;
+}
+
+.loop-step-sub {
+  font-size: 10px;
+  color: var(--txt2);
+}
+
+.quick-actions-ui {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border: 1px solid var(--bd2);
+  border-radius: 6px;
+  background: #191919;
+}
+
+.quick-actions-label {
+  font-size: 10px;
+  color: var(--txt2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-right: 4px;
+}
+
+.workspace-task-table-wrap {
+  border: 1px solid var(--bd2);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #171717;
+}
+
+.workspace-task-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.workspace-task-table th {
+  text-align: left;
+  padding: 12px 14px 10px;
+  font-size: 10px;
+  color: var(--txt2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: #1f1f1f;
+}
+
+.workspace-task-table td {
+  padding: 12px 14px;
+  border-top: 1px solid var(--bd);
+  color: var(--txt1);
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.workspace-task-table tbody tr:hover td {
+  background: #1d1d1d;
+}
+
+.workspace-task-empty {
+  color: var(--txt2);
 }
 
 .gate-row {
@@ -474,6 +728,10 @@ pre {
   grid-template-columns: 320px 1fr;
   gap: 14px;
   align-items: start;
+}
+
+.workspace-lower {
+  border-top: 1px solid var(--bd);
 }
 
 .intent-rail {
@@ -1099,6 +1357,83 @@ pre {
 
 .form-result p {
   margin: 0;
+}
+
+.docs-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 14px;
+}
+
+.docs-list {
+  display: grid;
+  gap: 8px;
+}
+
+.docs-item {
+  text-align: left;
+  border: 1px solid var(--bd2);
+  border-radius: 6px;
+  background: #171717;
+  color: var(--txt1);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.docs-item.on {
+  border-color: #4f789a;
+  background: #1b3041;
+  color: var(--txt0);
+}
+
+.docs-detail {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.search-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.search-input {
+  width: 100%;
+  border: 1px solid var(--bd2);
+  border-radius: 6px;
+  background: #131313;
+  color: var(--txt0);
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4f789a;
+}
+
+.search-results {
+  display: grid;
+  gap: 10px;
+}
+
+.search-result-item {
+  padding: 12px 14px;
+  display: grid;
+  gap: 6px;
+}
+
+@media (max-width: 960px) {
+  .goal-list,
+  .system-stat-grid,
+  .docs-shell,
+  .intent-layout,
+  .mutation-grid,
+  .intent-detail-grid,
+  .grid,
+  .loop-bar-ui {
+    grid-template-columns: 1fr;
+  }
 }
 
 .divider {

@@ -201,7 +201,7 @@ type ApplyPreviewResult = {
   error?: string;
 };
 
-type TabId = 'overview' | 'intents' | 'system';
+type TabId = 'workspace' | 'system' | 'documents' | 'search';
 type IntentDetailTabId = 'overview' | 'tasks' | 'actions' | 'raw';
 type TaskFilterId = 'all' | 'running' | 'blocked' | 'done';
 type TaskSortId = 'runtime' | 'title';
@@ -229,11 +229,12 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabId>('overview');
+  const [activeTab, setActiveTab] = useState<TabId>('workspace');
   const [intentDetailTab, setIntentDetailTab] = useState<IntentDetailTabId>('overview');
   const [showCreateIntent, setShowCreateIntent] = useState(false);
   const [taskFilter, setTaskFilter] = useState<TaskFilterId>('all');
   const [taskSort, setTaskSort] = useState<TaskSortId>('runtime');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Phase 4 mutation state
   const [selectedIntentId, setSelectedIntentId] = useState('');
@@ -666,6 +667,42 @@ export default function App() {
   }, {});
 
   const taskGroups = Object.entries(groupedTasks);
+  const topRules = rules?.parsed?.rules?.slice(0, 8) ?? [];
+  const topIssues = documentsSnapshot?.summary?.topIssues ?? [];
+  const workspaceMilestones = [
+    { version: 'v2.6', name: 'Evidence loop', progress: 100, state: 'done' as const },
+    { version: 'v2.7', name: 'Supervision loop', progress: 100, state: 'done' as const },
+    { version: 'v2.8', name: 'Principal grounding', progress: selectedIntentDetail ? 70 : 45, state: 'current' as const },
+    { version: 'v2.9', name: 'Graph loop', progress: 20, state: 'planned' as const },
+    { version: 'v3.0', name: 'Reasoning loop', progress: 0, state: 'planned' as const },
+  ];
+  const loopSteps = [
+    { label: 'Goal', sublabel: selectedIntentDetail?.goal ? 'aligned' : 'pending', state: selectedIntentDetail?.goal ? 'done' : 'todo' },
+    { label: 'Checkpoint', sublabel: selectedIntentDetail?.focusCurrent ? 'loaded' : 'missing', state: selectedIntentDetail?.focusCurrent ? 'current' : 'todo' },
+    { label: 'Tasks', sublabel: `${selectedIntentDetail?.tasks?.length ?? 0} items`, state: (selectedIntentDetail?.tasks?.length ?? 0) > 0 ? 'done' : 'todo' },
+    { label: 'Mutations', sublabel: selectedIntentRuntimeStatus ?? 'idle', state: selectedIntentRuntimeStatus === 'running' ? 'current' : selectedIntentDetail ? 'done' : 'todo' },
+  ] as const;
+  const cockpitTasks = sortedTasks.slice(0, 6);
+  const searchNeedle = searchQuery.trim().toLowerCase();
+  const searchResults = searchNeedle.length === 0
+    ? []
+    : [
+        ...intentOptions.map((intent) => ({
+          kind: 'intent',
+          title: intent.id ?? 'Unknown intent',
+          subtitle: `${intent.lifecycle ?? 'unknown'} · ${intent.mode ?? 'unknown'}`,
+        })),
+        ...topRules.map((rule) => ({
+          kind: 'rule',
+          title: rule.id ?? 'Unknown rule',
+          subtitle: `${rule.severity ?? 'unknown'} · ${rule.title ?? 'Untitled rule'}`,
+        })),
+        ...topIssues.map((issue) => ({
+          kind: 'issue',
+          title: issue.message ?? 'Unnamed issue',
+          subtitle: `${issue.severity ?? 'unknown'} · ${issue.evidencePath ?? 'no evidence path'}`,
+        })),
+      ].filter((item) => `${item.title} ${item.subtitle}`.toLowerCase().includes(searchNeedle));
 
   return (
     <main className="app-shell">
@@ -681,21 +718,12 @@ export default function App() {
         <div className="tabs" role="tablist" aria-label="Main views">
           <button
             type="button"
-            className={`tab ${activeTab === 'overview' ? 'on' : ''}`}
+            className={`tab ${activeTab === 'workspace' ? 'on' : ''}`}
             role="tab"
-            aria-selected={activeTab === 'overview'}
-            onClick={() => setActiveTab('overview')}
+            aria-selected={activeTab === 'workspace'}
+            onClick={() => setActiveTab('workspace')}
           >
-            Overview
-          </button>
-          <button
-            type="button"
-            className={`tab ${activeTab === 'intents' ? 'on' : ''}`}
-            role="tab"
-            aria-selected={activeTab === 'intents'}
-            onClick={() => setActiveTab('intents')}
-          >
-            Intents
+            Workspace
           </button>
           <button
             type="button"
@@ -705,6 +733,24 @@ export default function App() {
             onClick={() => setActiveTab('system')}
           >
             System
+          </button>
+          <button
+            type="button"
+            className={`tab ${activeTab === 'documents' ? 'on' : ''}`}
+            role="tab"
+            aria-selected={activeTab === 'documents'}
+            onClick={() => setActiveTab('documents')}
+          >
+            Documents
+          </button>
+          <button
+            type="button"
+            className={`tab ${activeTab === 'search' ? 'on' : ''}`}
+            role="tab"
+            aria-selected={activeTab === 'search'}
+            onClick={() => setActiveTab('search')}
+          >
+            Search KB
           </button>
         </div>
 
@@ -738,11 +784,34 @@ export default function App() {
         </div>
       </section>
 
-      <section className={`page ${activeTab === 'overview' ? 'on' : ''}`} role="tabpanel">
+      <section className={`page ${activeTab === 'workspace' ? 'on' : ''}`} role="tabpanel">
         <div className="scroll">
+          <section className="workspace-cockpit">
+            <article className="panel panel-wide workspace-section">
+              <div className="panel-header-row">
+                <div>
+                  <p className="panel-label">Foundation</p>
+                  <h2>Milestones</h2>
+                </div>
+                <button className="secondary-btn" type="button" onClick={() => setActiveTab('search')}>
+                  Search KB
+                </button>
+              </div>
+              <div className="milestone-strip">
+                {workspaceMilestones.map((milestone) => (
+                  <div key={milestone.version} className={`milestone-card ${milestone.state}`}>
+                    <div className="milestone-version">{milestone.version}</div>
+                    <div className="milestone-name">{milestone.name}</div>
+                    <div className="milestone-bar"><div className="milestone-fill" style={{ width: `${milestone.progress}%` }} /></div>
+                    <div className="milestone-meta">{milestone.progress}% {milestone.state === 'done' ? 'complete' : milestone.state === 'current' ? 'current' : 'planned'}</div>
+                  </div>
+                ))}
+              </div>
+            </article>
+
           <section className="grid">
-        <article className="panel">
-          <p className="panel-label">Bridge proof</p>
+        <article className="panel workspace-section">
+          <p className="panel-label">Foundation</p>
           <h2>kbx version</h2>
           {loading && <p className="muted">Loading version from CLI bridge...</p>}
           {!loading && version && (
@@ -756,9 +825,9 @@ export default function App() {
           )}
         </article>
 
-        <article className="panel">
-          <p className="panel-label">Next bridge step</p>
-          <h2>kbx status --json</h2>
+        <article className="panel workspace-section">
+          <p className="panel-label">Foundation</p>
+          <h2>Runtime status</h2>
           {loading && <p className="muted">Loading runtime status...</p>}
           {!loading && status && (
             <>
@@ -771,9 +840,79 @@ export default function App() {
           )}
         </article>
 
-        <article className="panel">
-          <p className="panel-label">Interaction boundary</p>
-          <h2>Chat, web, CLI</h2>
+        <article className="panel workspace-section">
+          <p className="panel-label">Checkpoint</p>
+          <h2>Current focus</h2>
+          <div className="checkpoint-card-ui">
+            <h3>{sessionLabel || 'No active session label'}</h3>
+            <p className="meta">
+              {sessionIntentSource || 'unknown-source'}
+              {checkpointTimestamp ? ` · ${checkpointTimestamp}` : ''}
+            </p>
+            <p className="muted">{selectedIntentDetail?.focusCurrent || 'No checkpoint summary loaded yet.'}</p>
+            <div className="section-chip-row">
+              {sessionIntentId && <span className="chip ca">intent {sessionIntentId}</span>}
+              {sessionContext?.summary?.focusFile && <span className="chip cgr">{sessionContext.summary.focusFile}</span>}
+            </div>
+          </div>
+        </article>
+
+        <article className="panel panel-wide workspace-section">
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">Goals & criteria</p>
+              <h2>Workspace goals</h2>
+            </div>
+            <div className="section-chip-row">
+              <span className="chip cg">shared goals</span>
+              <span className="chip cb">runtime partial</span>
+            </div>
+          </div>
+          <div className="goal-list">
+            <article className="goal-card-ui">
+              <div className="goal-card-head">
+                <div>
+                  <h3>Deterministic write path integrity</h3>
+                  <p className="muted">Chat proposes, web observes, CLI remains the write gate.</p>
+                </div>
+                <span className="chip cg">active</span>
+              </div>
+              <div className="goal-metric-row">
+                <span>Phase 2 gates</span>
+                <span>{phase2 ? `${phase2.summary.pass} pass / ${phase2.summary.fail} fail` : '--'}</span>
+              </div>
+              <div className="goal-metric-row">
+                <span>Working tree</span>
+                <span>{workspaceSnapshot?.summary?.hasWorkingTreeChanges ? 'changed' : 'clean or unknown'}</span>
+              </div>
+            </article>
+            <article className="goal-card-ui warning">
+              <div className="goal-card-head">
+                <div>
+                  <h3>Ontology and graph convergence</h3>
+                  <p className="muted">Ontology already acts like a contract layer; graph runtime is still a smaller export surface.</p>
+                </div>
+                <span className="chip ca">gap exposed</span>
+              </div>
+              <div className="goal-metric-row">
+                <span>Entities</span>
+                <span>{documentsSnapshot?.summary?.entityCount ?? '--'}</span>
+              </div>
+              <div className="goal-metric-row">
+                <span>Relations</span>
+                <span>{documentsSnapshot?.summary?.relationCount ?? '--'}</span>
+              </div>
+            </article>
+          </div>
+        </article>
+
+        <article className="panel panel-wide workspace-section">
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">Interaction boundary</p>
+              <h2>Chat, web, CLI</h2>
+            </div>
+          </div>
           {interaction && (
             <ul className="boundary-list">
               <li><strong>Chat:</strong> {interaction.chat}</li>
@@ -783,7 +922,7 @@ export default function App() {
           )}
         </article>
 
-        <article className="panel panel-wide">
+        <article className="panel panel-wide workspace-section">
           <div className="panel-header-row">
             <div>
               <p className="panel-label">Phase 2 gate evaluation</p>
@@ -793,7 +932,6 @@ export default function App() {
               {refreshing ? 'Refreshing...' : 'Refresh gates'}
             </button>
           </div>
-
           {loading && <p className="muted">Evaluating gate policy...</p>}
 
           {!loading && phase2 && (
@@ -823,127 +961,179 @@ export default function App() {
             </>
           )}
         </article>
-          </section>
-        </div>
-      </section>
 
-      <section className={`page ${activeTab === 'intents' ? 'on' : ''}`} role="tabpanel">
-        <div className="scroll">
-          <section className="grid">
-            <article className="panel panel-wide">
-              <p className="panel-label">Intent operations</p>
-              <div className="panel-header-row">
-                <div>
-                  <h2>Intent Command Center</h2>
-                  <p className="muted">Create from the top when needed. Inspect, update, approve, and apply inside the selected intent so command context stays local.</p>
-                </div>
-                <div className="intent-toolbar">
-                  <button
-                    className={`secondary-btn ${showCreateIntent ? 'is-open' : ''}`}
-                    type="button"
-                    onClick={() => setShowCreateIntent((current) => !current)}
-                  >
-                    {showCreateIntent ? 'Hide draft intent' : 'Create draft intent'}
-                  </button>
-                  <button className="refresh-btn" type="button" onClick={onRefresh} disabled={refreshing || loading}>
-                    {refreshing ? 'Refreshing...' : 'Reload intents'}
-                  </button>
-                </div>
+        <article className="panel panel-wide workspace-section">
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">Intents</p>
+              <h2>Intent cockpit</h2>
+            </div>
+            <div className="section-chip-row">
+              {selectedIntent && <span className="chip ca">selected {selectedIntent.id}</span>}
+              {selectedIntentRuntimeStatus && <span className={`intent-runtime runtime-${selectedIntentRuntimeStatus}`}>{selectedIntentRuntimeStatus}</span>}
+            </div>
+          </div>
+
+          <div className="loop-bar-ui" role="list" aria-label="Intent loop">
+            {loopSteps.map((step, index) => (
+              <div key={`${step.label}-${index}`} className={`loop-step ${step.state}`} role="listitem">
+                <span className="loop-step-num">0{index + 1}</span>
+                <span className="loop-step-label">{step.label}</span>
+                <span className="loop-step-sub">{step.sublabel}</span>
               </div>
-              <div className="intent-kpis">
-                <span className="chip cg">active {activeIntents.length}</span>
-                <span className="chip cb">backlog {backlogIntents.length}</span>
-                <span className="chip cgr">closed {closedIntents.length}</span>
-                {selectedIntent && <span className="chip ca">selected {selectedIntent.id}</span>}
-              </div>
+            ))}
+          </div>
 
-              {showCreateIntent && (
-                <div className="create-intent-inline">
-                  <div className="mutation-card">
-                    <div className="intent-section-head">
-                      <div>
-                        <p className="panel-label">Create</p>
-                        <h3>Create draft intent</h3>
-                      </div>
-                    </div>
-                    <div className="mutation-form">
-                      <div className="form-field">
-                        <label htmlFor="create-title">Title *</label>
-                        <input
-                          id="create-title"
-                          type="text"
-                          placeholder="Draft intent title (min 3 chars)"
-                          value={createFormData.title}
-                          onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
-                          disabled={createLoading}
-                        />
-                      </div>
+          <div className="quick-actions-ui">
+            <span className="quick-actions-label">Quick actions</span>
+            <button className="secondary-btn" type="button" onClick={() => sessionIntentId && setSelectedIntentId(sessionIntentId)} disabled={!sessionIntentId}>Load checkpoint</button>
+            <button className="secondary-btn" type="button" onClick={() => setIntentDetailTab('tasks')} disabled={!selectedIntent}>Open tasks</button>
+            <button className="secondary-btn" type="button" onClick={() => setIntentDetailTab('actions')} disabled={!selectedIntent}>Open mutations</button>
+            <button className="secondary-btn" type="button" onClick={() => setShowCreateIntent((current) => !current)}>Create draft</button>
+          </div>
 
-                      <div className="form-field">
-                        <label htmlFor="create-focus">Focus</label>
-                        <input
-                          id="create-focus"
-                          type="text"
-                          placeholder="Focus domain (optional)"
-                          value={createFormData.focus}
-                          onChange={(e) => setCreateFormData({ ...createFormData, focus: e.target.value })}
-                          disabled={createLoading}
-                        />
-                      </div>
+          <div className="workspace-task-table-wrap">
+            <table className="workspace-task-table">
+              <thead>
+                <tr>
+                  <th>State</th>
+                  <th>Task</th>
+                  <th>Section</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cockpitTasks.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="workspace-task-empty">Select an intent with tasks to populate the cockpit table.</td>
+                  </tr>
+                )}
+                {cockpitTasks.map((task, index) => (
+                  <tr key={`${task.title}-${index}`}>
+                    <td><span className={`intent-task-state ${task.runtimeState}`}>{task.runtimeState}</span></td>
+                    <td>{task.title}</td>
+                    <td>{task.sectionLabel}</td>
+                    <td>{task.sourceLabel}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </article>
 
-                      <div className="form-field">
-                        <label htmlFor="create-action">Next action</label>
-                        <input
-                          id="create-action"
-                          type="text"
-                          placeholder="Next action (optional)"
-                          value={createFormData.next_action}
-                          onChange={(e) => setCreateFormData({ ...createFormData, next_action: e.target.value })}
-                          disabled={createLoading}
-                        />
-                      </div>
+        <article className="panel panel-wide">
+          <p className="panel-label">Intents</p>
+          <div className="panel-header-row">
+            <div>
+              <h2>Intent Command Center</h2>
+              <p className="muted">Create from the top when needed. Inspect, update, approve, and apply inside the selected intent so command context stays local.</p>
+            </div>
+            <div className="intent-toolbar">
+              <button
+                className={`secondary-btn ${showCreateIntent ? 'is-open' : ''}`}
+                type="button"
+                onClick={() => setShowCreateIntent((current) => !current)}
+              >
+                {showCreateIntent ? 'Hide draft intent' : 'Create draft intent'}
+              </button>
+              <button className="refresh-btn" type="button" onClick={onRefresh} disabled={refreshing || loading}>
+                {refreshing ? 'Refreshing...' : 'Reload intents'}
+              </button>
+            </div>
+          </div>
+          <div className="intent-kpis">
+            <span className="chip cg">active {activeIntents.length}</span>
+            <span className="chip cb">backlog {backlogIntents.length}</span>
+            <span className="chip cgr">closed {closedIntents.length}</span>
+            {selectedIntent && <span className="chip ca">selected {selectedIntent.id}</span>}
+          </div>
 
-                      <div className="form-field">
-                        <label htmlFor="create-summary">Decision summary</label>
-                        <textarea
-                          id="create-summary"
-                          placeholder="Why this intent exists (optional)"
-                          rows={3}
-                          value={createFormData.decision_summary}
-                          onChange={(e) => setCreateFormData({ ...createFormData, decision_summary: e.target.value })}
-                          disabled={createLoading}
-                        />
-                      </div>
-
-                      <div className="intent-action-row">
-                        <button
-                          type="button"
-                          onClick={onCreateIntent}
-                          disabled={createLoading || !createFormData.title.trim()}
-                          className="submit-btn"
-                        >
-                          {createLoading ? 'Creating...' : 'Create draft'}
-                        </button>
-                        <button type="button" className="secondary-btn" onClick={() => setShowCreateIntent(false)}>
-                          Close
-                        </button>
-                      </div>
-
-                      {createResult && (
-                        <div className={`form-result ${createResult.ok ? 'ok' : 'error'}`}>
-                          <p>
-                            {createResult.ok
-                              ? `✓ Intent created: ${createResult.result instanceof Object ? (createResult.result as { id?: string }).id || 'unknown' : 'unknown'}`
-                              : `✗ Error: ${createResult.error}`}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+          {showCreateIntent && (
+            <div className="create-intent-inline">
+              <div className="mutation-card">
+                <div className="intent-section-head">
+                  <div>
+                    <p className="panel-label">Create</p>
+                    <h3>Create draft intent</h3>
                   </div>
                 </div>
-              )}
-            </article>
+                <div className="mutation-form">
+                  <div className="form-field">
+                    <label htmlFor="create-title">Title *</label>
+                    <input
+                      id="create-title"
+                      type="text"
+                      placeholder="Draft intent title (min 3 chars)"
+                      value={createFormData.title}
+                      onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
+                      disabled={createLoading}
+                    />
+                  </div>
 
+                  <div className="form-field">
+                    <label htmlFor="create-focus">Focus</label>
+                    <input
+                      id="create-focus"
+                      type="text"
+                      placeholder="Focus domain (optional)"
+                      value={createFormData.focus}
+                      onChange={(e) => setCreateFormData({ ...createFormData, focus: e.target.value })}
+                      disabled={createLoading}
+                    />
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="create-action">Next action</label>
+                    <input
+                      id="create-action"
+                      type="text"
+                      placeholder="Next action (optional)"
+                      value={createFormData.next_action}
+                      onChange={(e) => setCreateFormData({ ...createFormData, next_action: e.target.value })}
+                      disabled={createLoading}
+                    />
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="create-summary">Decision summary</label>
+                    <textarea
+                      id="create-summary"
+                      placeholder="Why this intent exists (optional)"
+                      rows={3}
+                      value={createFormData.decision_summary}
+                      onChange={(e) => setCreateFormData({ ...createFormData, decision_summary: e.target.value })}
+                      disabled={createLoading}
+                    />
+                  </div>
+
+                  <div className="intent-action-row">
+                    <button
+                      type="button"
+                      onClick={onCreateIntent}
+                      disabled={createLoading || !createFormData.title.trim()}
+                      className="submit-btn"
+                    >
+                      {createLoading ? 'Creating...' : 'Create draft'}
+                    </button>
+                    <button type="button" className="secondary-btn" onClick={() => setShowCreateIntent(false)}>
+                      Close
+                    </button>
+                  </div>
+
+                  {createResult && (
+                    <div className={`form-result ${createResult.ok ? 'ok' : 'error'}`}>
+                      <p>
+                        {createResult.ok
+                          ? `✓ Intent created: ${createResult.result instanceof Object ? (createResult.result as { id?: string }).id || 'unknown' : 'unknown'}`
+                          : `✗ Error: ${createResult.error}`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </article>
             <article className="panel panel-wide intent-layout">
               <aside className="intent-rail" aria-label="Intent list">
                 <div className="intent-rail-group">
@@ -1373,6 +1563,7 @@ export default function App() {
               )}
             </article>
           </section>
+          </section>
         </div>
       </section>
 
@@ -1380,8 +1571,39 @@ export default function App() {
         <div className="scroll">
           <section className="grid">
 
+        <article className="panel panel-wide workspace-section">
+          <div className="panel-header-row">
+            <div>
+              <p className="panel-label">Graph · infra · runtime</p>
+              <h2>Current architecture truth</h2>
+            </div>
+            <div className="section-chip-row">
+              <span className="chip cb">runtime-backed</span>
+              <span className="chip ca">graph partial</span>
+            </div>
+          </div>
+          <div className="system-stat-grid">
+            <div className="stat-card-ui">
+              <span className="stat-num">{systemSnapshot?.summary?.nodeVersion ?? '--'}</span>
+              <span className="stat-label">node</span>
+            </div>
+            <div className="stat-card-ui">
+              <span className="stat-num">{documentsSnapshot?.summary?.entityCount ?? '--'}</span>
+              <span className="stat-label">entities</span>
+            </div>
+            <div className="stat-card-ui">
+              <span className="stat-num">{documentsSnapshot?.summary?.relationCount ?? '--'}</span>
+              <span className="stat-label">relations</span>
+            </div>
+            <div className="stat-card-ui">
+              <span className="stat-num">{documentsSnapshot?.summary?.issueCount ?? '--'}</span>
+              <span className="stat-label">doc issues</span>
+            </div>
+          </div>
+        </article>
+
         <article className="panel">
-          <p className="panel-label">Phase 3 read-only</p>
+          <p className="panel-label">Workspace</p>
           <h2>Workspace snapshot</h2>
           {loading && <p className="muted">Loading workspace summary...</p>}
           {!loading && workspaceSnapshot && (
@@ -1395,7 +1617,7 @@ export default function App() {
         </article>
 
         <article className="panel">
-          <p className="panel-label">Phase 3 read-only</p>
+          <p className="panel-label">System</p>
           <h2>System snapshot</h2>
           {loading && <p className="muted">Loading system checks...</p>}
           {!loading && systemSnapshot && (
@@ -1409,7 +1631,7 @@ export default function App() {
         </article>
 
         <article className="panel panel-wide">
-          <p className="panel-label">Phase 3 read-only</p>
+          <p className="panel-label">Documents graph</p>
           <h2>Documents graph snapshot</h2>
           {loading && <p className="muted">Loading documents graph checks...</p>}
           {!loading && documentsSnapshot && (
@@ -1422,6 +1644,84 @@ export default function App() {
           )}
         </article>
 
+          </section>
+        </div>
+      </section>
+
+      <section className={`page ${activeTab === 'documents' ? 'on' : ''}`} role="tabpanel">
+        <div className="scroll">
+          <section className="grid">
+            <article className="panel panel-wide workspace-section">
+              <div className="panel-header-row">
+                <div>
+                  <p className="panel-label">Documents</p>
+                  <h2>Knowledge-base surface</h2>
+                </div>
+                <div className="section-chip-row">
+                  <span className="chip cb">design-aligned shell</span>
+                  <span className="chip cgr">runtime partial</span>
+                </div>
+              </div>
+              <div className="docs-shell">
+                <aside className="docs-list">
+                  <button type="button" className="docs-item on">system-map.md</button>
+                  <button type="button" className="docs-item">focus.md</button>
+                  <button type="button" className="docs-item">intent registry</button>
+                  <button type="button" className="docs-item">rules catalog</button>
+                </aside>
+                <div className="docs-detail">
+                  <h3>system-map.md</h3>
+                  <p className="muted">The target cockpit model keeps shared goals above project-specific intents, with graph and system state exposed underneath.</p>
+                  <pre>{`Current observed runtime\n- Goals are visible through gates, focus, and rules\n- Intents are project-specific and session-aware\n- Ontology is ahead of the graph runtime\n- Documents graph remains a partial export surface`}</pre>
+                </div>
+              </div>
+            </article>
+
+            <article className="panel">
+              <p className="panel-label">Rules</p>
+              <h2>Registered rules</h2>
+              <pre>{topRules.map((rule) => `${rule.id} · ${rule.severity} · ${rule.title}`).join('\n') || 'No rules loaded'}</pre>
+            </article>
+
+            <article className="panel">
+              <p className="panel-label">Issues</p>
+              <h2>Top document issues</h2>
+              <pre>{topIssues.map((issue) => `${issue.severity} · ${issue.message} · ${issue.evidencePath}`).join('\n') || 'No issues loaded'}</pre>
+            </article>
+          </section>
+        </div>
+      </section>
+
+      <section className={`page ${activeTab === 'search' ? 'on' : ''}`} role="tabpanel">
+        <div className="scroll">
+          <section className="grid">
+            <article className="panel panel-wide workspace-section">
+              <div className="panel-header-row">
+                <div>
+                  <p className="panel-label">Search KB</p>
+                  <h2>Cross-surface search</h2>
+                </div>
+              </div>
+              <div className="search-shell">
+                <input
+                  className="search-input"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search intents, rules, issues..."
+                />
+                <div className="search-results">
+                  {searchNeedle.length === 0 && <p className="muted">Type to search current runtime-backed surfaces.</p>}
+                  {searchNeedle.length > 0 && searchResults.length === 0 && <p className="muted">No matches.</p>}
+                  {searchResults.map((result, index) => (
+                    <div key={`${result.kind}-${result.title}-${index}`} className="search-result-item">
+                      <strong>{result.title}</strong>
+                      <span className="meta">{result.kind} · {result.subtitle}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </article>
           </section>
         </div>
       </section>
