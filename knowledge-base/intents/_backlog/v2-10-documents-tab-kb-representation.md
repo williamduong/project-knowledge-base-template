@@ -62,3 +62,7 @@ The Documents tab should answer these runtime questions directly:
 
 - Activate after the current active anchor is narrowed enough that UI/document-surface work can proceed without splitting attention again.
 - Prefer activation alongside or immediately after moduleization/query-layer groundwork so the tab can be backed by explicit document queries instead of one-off UI logic.
+
+## Detailed plan reference
+
+- See `notes/upgrade-v2.10-documents-tab-kb-representation-plan.md` for the implementation-ready phase plan, query contract, layout model, and verification matrix.
