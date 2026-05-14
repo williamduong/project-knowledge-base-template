@@ -325,3 +325,5 @@ None remaining for v2.7 ship. Decision blocker: v2.7 GA timeline (extended beta 
 - 2026-05-14T05:03:38.803Z | event=intent.list | branch=intent/v2-8-2-principal-grounding-contract | note=Intent list inspected (scope: active)
 
 - 2026-05-14T05:03:46.374Z | event=intent.close | branch=intent/v2-8-2-principal-grounding-contract | intent=v2-10-v2-10-intent-lifecycle-domain-separation | note=Intent closed as dropped
+
+- 2026-05-14T05:03:47.217Z | event=intent.close | branch=intent/v2-8-2-principal-grounding-contract | intent=v2-10-v2-10-kbagent-roadmap-gap-p0-alignment | note=Intent closed as dropped
