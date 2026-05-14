@@ -730,6 +730,40 @@ pre {
   align-items: start;
 }
 
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) minmax(320px, 0.95fr) minmax(420px, 1.35fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.workspace-lane {
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.workspace-lane-rail,
+.workspace-lane-cockpit,
+.workspace-lane-detail {
+  align-content: start;
+}
+
+.workspace-rail-panel,
+.intent-main-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.workspace-rail-panel .intent-rail {
+  border: 0;
+  border-radius: 0;
+}
+
+.intent-main-panel .intent-main {
+  padding: 16px;
+}
+
 .workspace-lower {
   border-top: 1px solid var(--bd);
 }
@@ -1460,6 +1494,7 @@ pre {
   .system-stat-grid,
   .docs-shell,
   .intent-layout,
+  .workspace-grid,
   .mutation-grid,
   .intent-detail-grid,
   .grid,

@@ -1031,181 +1031,69 @@ export default function App() {
 
             {activeTab === 'workspace' && (
               <>
-          <section className="grid">
-
-        <article className="panel panel-wide workspace-section">
-          <div className="panel-header-row">
-            <div>
-              <p className="panel-label">Intents</p>
-              <h2>Intent cockpit</h2>
-            </div>
-            <div className="section-chip-row">
-              {selectedIntent && <span className="chip ca">selected {selectedIntent.id}</span>}
-              {selectedIntentRuntimeStatus && <span className={`intent-runtime runtime-${selectedIntentRuntimeStatus}`}>{selectedIntentRuntimeStatus}</span>}
-            </div>
-          </div>
-
-          <div className="loop-bar-ui" role="list" aria-label="Intent loop">
-            {loopSteps.map((step, index) => (
-              <div key={`${step.label}-${index}`} className={`loop-step ${step.state}`} role="listitem">
-                <span className="loop-step-num">0{index + 1}</span>
-                <span className="loop-step-label">{step.label}</span>
-                <span className="loop-step-sub">{step.sublabel}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="quick-actions-ui">
-            <span className="quick-actions-label">Quick actions</span>
-            <button className="secondary-btn" type="button" onClick={() => sessionIntentId && setSelectedIntentId(sessionIntentId)} disabled={!sessionIntentId}>Load checkpoint</button>
-            <button className="secondary-btn" type="button" onClick={() => setIntentDetailTab('tasks')} disabled={!selectedIntent}>Open tasks</button>
-            <button className="secondary-btn" type="button" onClick={() => setIntentDetailTab('actions')} disabled={!selectedIntent}>Open mutations</button>
-            <button className="secondary-btn" type="button" onClick={() => setShowCreateIntent((current) => !current)}>Create draft</button>
-          </div>
-
-          <div className="workspace-task-table-wrap">
-            <table className="workspace-task-table">
-              <thead>
-                <tr>
-                  <th>State</th>
-                  <th>Task</th>
-                  <th>Section</th>
-                  <th>Source</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cockpitTasks.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="workspace-task-empty">Select an intent with tasks to populate the cockpit table.</td>
-                  </tr>
-                )}
-                {cockpitTasks.map((task, index) => (
-                  <tr key={`${task.title}-${index}`}>
-                    <td><span className={`intent-task-state ${task.runtimeState}`}>{task.runtimeState}</span></td>
-                    <td>{task.title}</td>
-                    <td>{task.sectionLabel}</td>
-                    <td>{task.sourceLabel}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
-
-        <article className="panel panel-wide">
-          <p className="panel-label">Intents</p>
-          <div className="panel-header-row">
-            <div>
-              <h2>Intent Command Center</h2>
-              <p className="muted">Create from the top when needed. Inspect, update, approve, and apply inside the selected intent so command context stays local.</p>
-            </div>
-            <div className="intent-toolbar">
-              <button
-                className={`secondary-btn ${showCreateIntent ? 'is-open' : ''}`}
-                type="button"
-                onClick={() => setShowCreateIntent((current) => !current)}
-              >
-                {showCreateIntent ? 'Hide draft intent' : 'Create draft intent'}
-              </button>
-              <button className="refresh-btn" type="button" onClick={onRefresh} disabled={refreshing || loading}>
-                {refreshing ? 'Refreshing...' : 'Reload intents'}
-              </button>
-            </div>
-          </div>
-          <div className="intent-kpis">
-            <span className="chip cg">active {activeIntents.length}</span>
-            <span className="chip cb">backlog {backlogIntents.length}</span>
-            <span className="chip cgr">closed {closedIntents.length}</span>
-            {selectedIntent && <span className="chip ca">selected {selectedIntent.id}</span>}
-          </div>
-
-          {showCreateIntent && (
-            <div className="create-intent-inline">
-              <div className="mutation-card">
-                <div className="intent-section-head">
+          <section className="workspace-grid">
+            <aside className="workspace-lane workspace-lane-rail">
+              <article className="panel workspace-section">
+                <p className="panel-label">Workspace</p>
+                <div className="panel-header-row">
                   <div>
-                    <p className="panel-label">Create</p>
-                    <h3>Create draft intent</h3>
+                    <h2>Intent rail</h2>
+                    <p className="muted">Choose the active workstream, then operate inside the current workspace lane.</p>
                   </div>
-                </div>
-                <div className="mutation-form">
-                  <div className="form-field">
-                    <label htmlFor="create-title">Title *</label>
-                    <input
-                      id="create-title"
-                      type="text"
-                      placeholder="Draft intent title (min 3 chars)"
-                      value={createFormData.title}
-                      onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
-                      disabled={createLoading}
-                    />
-                  </div>
-
-                  <div className="form-field">
-                    <label htmlFor="create-focus">Focus</label>
-                    <input
-                      id="create-focus"
-                      type="text"
-                      placeholder="Focus domain (optional)"
-                      value={createFormData.focus}
-                      onChange={(e) => setCreateFormData({ ...createFormData, focus: e.target.value })}
-                      disabled={createLoading}
-                    />
-                  </div>
-
-                  <div className="form-field">
-                    <label htmlFor="create-action">Next action</label>
-                    <input
-                      id="create-action"
-                      type="text"
-                      placeholder="Next action (optional)"
-                      value={createFormData.next_action}
-                      onChange={(e) => setCreateFormData({ ...createFormData, next_action: e.target.value })}
-                      disabled={createLoading}
-                    />
-                  </div>
-
-                  <div className="form-field">
-                    <label htmlFor="create-summary">Decision summary</label>
-                    <textarea
-                      id="create-summary"
-                      placeholder="Why this intent exists (optional)"
-                      rows={3}
-                      value={createFormData.decision_summary}
-                      onChange={(e) => setCreateFormData({ ...createFormData, decision_summary: e.target.value })}
-                      disabled={createLoading}
-                    />
-                  </div>
-
-                  <div className="intent-action-row">
+                  <div className="intent-toolbar">
                     <button
+                      className={`secondary-btn ${showCreateIntent ? 'is-open' : ''}`}
                       type="button"
-                      onClick={onCreateIntent}
-                      disabled={createLoading || !createFormData.title.trim()}
-                      className="submit-btn"
+                      onClick={() => setShowCreateIntent((current) => !current)}
                     >
-                      {createLoading ? 'Creating...' : 'Create draft'}
-                    </button>
-                    <button type="button" className="secondary-btn" onClick={() => setShowCreateIntent(false)}>
-                      Close
+                      {showCreateIntent ? 'Hide draft intent' : 'Create draft intent'}
                     </button>
                   </div>
-
-                  {createResult && (
-                    <div className={`form-result ${createResult.ok ? 'ok' : 'error'}`}>
-                      <p>
-                        {createResult.ok
-                          ? `✓ Intent created: ${createResult.result instanceof Object ? (createResult.result as { id?: string }).id || 'unknown' : 'unknown'}`
-                          : `✗ Error: ${createResult.error}`}
-                      </p>
-                    </div>
-                  )}
                 </div>
-              </div>
-            </div>
-          )}
-        </article>
-            <article className="panel panel-wide intent-layout">
+                <div className="intent-kpis">
+                  <span className="chip cg">active {activeIntents.length}</span>
+                  <span className="chip cb">backlog {backlogIntents.length}</span>
+                  <span className="chip cgr">closed {closedIntents.length}</span>
+                </div>
+
+                {showCreateIntent && (
+                  <div className="create-intent-inline">
+                    <div className="mutation-card">
+                      <div className="intent-section-head">
+                        <div>
+                          <p className="panel-label">Create</p>
+                          <h3>Create draft intent</h3>
+                        </div>
+                      </div>
+                      <div className="mutation-form">
+                        <div className="form-field">
+                          <label htmlFor="create-title">Title *</label>
+                          <input id="create-title" type="text" placeholder="Draft intent title (min 3 chars)" value={createFormData.title} onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })} disabled={createLoading} />
+                        </div>
+                        <div className="form-field">
+                          <label htmlFor="create-focus">Focus</label>
+                          <input id="create-focus" type="text" placeholder="Focus domain (optional)" value={createFormData.focus} onChange={(e) => setCreateFormData({ ...createFormData, focus: e.target.value })} disabled={createLoading} />
+                        </div>
+                        <div className="form-field">
+                          <label htmlFor="create-action">Next action</label>
+                          <input id="create-action" type="text" placeholder="Next action (optional)" value={createFormData.next_action} onChange={(e) => setCreateFormData({ ...createFormData, next_action: e.target.value })} disabled={createLoading} />
+                        </div>
+                        <div className="form-field">
+                          <label htmlFor="create-summary">Decision summary</label>
+                          <textarea id="create-summary" placeholder="Why this intent exists (optional)" rows={3} value={createFormData.decision_summary} onChange={(e) => setCreateFormData({ ...createFormData, decision_summary: e.target.value })} disabled={createLoading} />
+                        </div>
+                        <div className="intent-action-row">
+                          <button type="button" onClick={onCreateIntent} disabled={createLoading || !createFormData.title.trim()} className="submit-btn">{createLoading ? 'Creating...' : 'Create draft'}</button>
+                          <button type="button" className="secondary-btn" onClick={() => setShowCreateIntent(false)}>Close</button>
+                        </div>
+                        {createResult && <div className={`form-result ${createResult.ok ? 'ok' : 'error'}`}><p>{createResult.ok ? `✓ Intent created: ${createResult.result instanceof Object ? (createResult.result as { id?: string }).id || 'unknown' : 'unknown'}` : `✗ Error: ${createResult.error}`}</p></div>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </article>
+
+              <article className="panel workspace-section workspace-rail-panel">
               <aside className="intent-rail" aria-label="Intent list">
                 <div className="intent-rail-group">
                   <p className="panel-label">Active</p>
@@ -1258,8 +1146,66 @@ export default function App() {
                   ))}
                 </div>
               </aside>
+              </article>
+            </aside>
 
-              <div className="intent-main">
+            <section className="workspace-lane workspace-lane-cockpit">
+              <article className="panel workspace-section">
+                <div className="panel-header-row">
+                  <div>
+                    <p className="panel-label">Workspace</p>
+                    <h2>Intent cockpit</h2>
+                  </div>
+                  <div className="section-chip-row">
+                    {selectedIntent && <span className="chip ca">selected {selectedIntent.id}</span>}
+                    {selectedIntentRuntimeStatus && <span className={`intent-runtime runtime-${selectedIntentRuntimeStatus}`}>{selectedIntentRuntimeStatus}</span>}
+                  </div>
+                </div>
+                <div className="loop-bar-ui" role="list" aria-label="Intent loop">
+                  {loopSteps.map((step, index) => (
+                    <div key={`${step.label}-${index}`} className={`loop-step ${step.state}`} role="listitem">
+                      <span className="loop-step-num">0{index + 1}</span>
+                      <span className="loop-step-label">{step.label}</span>
+                      <span className="loop-step-sub">{step.sublabel}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="quick-actions-ui">
+                  <span className="quick-actions-label">Quick actions</span>
+                  <button className="secondary-btn" type="button" onClick={() => sessionIntentId && setSelectedIntentId(sessionIntentId)} disabled={!sessionIntentId}>Load checkpoint</button>
+                  <button className="secondary-btn" type="button" onClick={() => setIntentDetailTab('tasks')} disabled={!selectedIntent}>Open tasks</button>
+                  <button className="secondary-btn" type="button" onClick={() => setIntentDetailTab('actions')} disabled={!selectedIntent}>Open mutations</button>
+                  <button className="refresh-btn" type="button" onClick={onRefresh} disabled={refreshing || loading}>{refreshing ? 'Refreshing...' : 'Reload intents'}</button>
+                </div>
+                <div className="workspace-task-table-wrap">
+                  <table className="workspace-task-table">
+                    <thead>
+                      <tr>
+                        <th>State</th>
+                        <th>Task</th>
+                        <th>Section</th>
+                        <th>Source</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cockpitTasks.length === 0 && <tr><td colSpan={4} className="workspace-task-empty">Select an intent with tasks to populate the cockpit table.</td></tr>}
+                      {cockpitTasks.map((task, index) => (
+                        <tr key={`${task.title}-${index}`}>
+                          <td><span className={`intent-task-state ${task.runtimeState}`}>{task.runtimeState}</span></td>
+                          <td>{task.title}</td>
+                          <td>{task.sectionLabel}</td>
+                          <td>{task.sourceLabel}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+            </section>
+
+            <section className="workspace-lane workspace-lane-detail">
+              <article className="panel workspace-section intent-main-panel">
+                <div className="intent-main">
                 <div className="intent-focus">
                   <div className="intent-focus-head">
                     <div>
@@ -1591,48 +1537,9 @@ export default function App() {
                     </div>
                   )}
                 </div>
-              </div>
-            </article>
-
-            <article className="panel">
-              <p className="panel-label">Rules context</p>
-              <h2>Rules catalog snapshot</h2>
-              {loading && <p className="muted">Loading rules...</p>}
-              {!loading && rules && (
-                <>
-                  <p className={rules.ok ? 'status ok' : 'status error'}>
-                    {rules.ok ? 'Rules payload loaded' : 'Rules payload failed'}
-                  </p>
-                  <p className="meta">{rules.command} · exit {rules.exitCode}</p>
-                  <p className="muted">count: {rules.parsed?.count ?? 0}</p>
-                  <pre>
-                    {rules.parsed?.rules?.slice(0, 5).map((rule) => `${rule.id} · ${rule.severity} · ${rule.title}`).join('\n')
-                      || rules.stdout
-                      || rules.stderr}
-                  </pre>
-                </>
-              )}
-            </article>
-
-            <article className="panel">
-              <p className="panel-label">Intent registry</p>
-              <h2>Registry snapshot</h2>
-              {loading && <p className="muted">Loading intents...</p>}
-              {!loading && intents && (
-                <>
-                  <p className={intents.ok ? 'status ok' : 'status error'}>
-                    {intents.ok ? 'Intent payload loaded' : 'Intent payload failed'}
-                  </p>
-                  <p className="meta">{intents.command} · exit {intents.exitCode}</p>
-                  <p className="muted">count: {intents.parsed?.count ?? 0}</p>
-                  <pre>
-                    {intents.parsed?.intents?.slice(0, 8).map((intent) => `${intent.id} · ${intent.lifecycle} · ${intent.mode}`).join('\n')
-                      || intents.stdout
-                      || intents.stderr}
-                  </pre>
-                </>
-              )}
-            </article>
+                </div>
+              </article>
+            </section>
           </section>
               </>
             )}
