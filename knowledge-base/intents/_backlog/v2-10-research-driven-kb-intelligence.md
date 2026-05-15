@@ -3,6 +3,10 @@ slug: v2-10-research-driven-kb-intelligence
 title: "KBAgent research-driven KB intelligence — auto-scan repos + persist findings to GraphDB"
 description: "Enable KBAgent to autonomously research a repository's real content, infer KB structure and layered architecture, and persist the resulting knowledge graph to GraphDB for queryable visualization."
 lifecycle: backlog
+priority: "2.5"
+blocks: v2-10-kbagent-roadmap-gap-p2-gate-loop-contract
+priority: "2.5"
+blocks: "v2-10-kbagent-roadmap-gap-p2-gate-loop-contract"
 created_at: 2026-05-09T17:30:00.000Z
 focus:
   current: "Design-only backlog item pending v2.9 DB+UI bundle completion"
@@ -416,3 +420,6 @@ app.get('/api/research/sections/:sectionKey', async (req, res) => {
 - Over-research: AI loops forever → mitigated by max 5 iterations + confidence gate
 - DB bloat: too many evidence records → mitigated by deduplication + evidence linking strategy
 - Repository change detection: KB becomes stale → mitigated by `kbx research update` manual trigger (auto-update is future)
+
+
+

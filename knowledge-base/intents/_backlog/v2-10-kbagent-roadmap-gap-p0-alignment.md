@@ -3,6 +3,8 @@ slug: v2-10-kbagent-roadmap-gap-p0-alignment
 title: "KBAgent roadmap-gap P0 alignment"
 description: "Apply P0 corrections from gap analysis: naming normalization, lifecycle wording alignment, and principles-vs-rules separation in roadmap-facing artifacts."
 lifecycle: backlog
+priority: "1.0"
+blocks: null
 created_at: 2026-05-11T15:11:34.555Z
 focus:
   current: "Queued after active intent anchor completes kickoff alignment and execution framing."
@@ -33,4 +35,6 @@ Out of scope:
 1. Dispatch tuple deep model documentation.
 2. CDM ontology mapping updates.
 3. Gate-loop contract formalization.
+
+
 

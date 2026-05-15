@@ -3,6 +3,8 @@ slug: v2-8-2-t008-master-rules-runtime-closure
 title: "T008 master rules runtime closure"
 description: "Section 8 is a review-and-runtime-boundary task. The child intent records remaining AX/P enforcement drift after the review is locked."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
 created_at: 2026-05-14T17:53:14.563Z
 focus:
   current: "Lock Section 8 Master rules as a runtime-boundary review result and move residual AX/P enforcement work into a child intent."
@@ -30,4 +32,6 @@ Why it matters:
 
 Activation trigger:
 - Activate this backlog item only after the current active parent intent is closed or explicitly split, and only when Section 8 residuals are ready to become implementation work rather than review work.
+
+
 

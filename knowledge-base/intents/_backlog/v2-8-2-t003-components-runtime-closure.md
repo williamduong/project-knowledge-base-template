@@ -3,6 +3,8 @@ slug: v2-8-2-t003-components-runtime-closure
 title: "T003 components runtime closure"
 description: "Section 3 is a review-and-runtime-boundary task. The child intent records remaining component drift after the review is locked."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
 created_at: 2026-05-14T17:46:43.202Z
 focus:
   current: "Lock Section 3 Components as a runtime-evidence review result and move residual component work into a child intent."
@@ -30,4 +32,6 @@ Why it matters:
 
 Activation trigger:
 - Activate this backlog item only after the current active parent intent is closed or explicitly split, and only when Section 3 residuals are ready to become implementation work rather than review work.
+
+
 

@@ -4,5 +4,7 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"terminal.integrated.cwd": "D:/Source/template/project-knowledge-base-template"
+	}
 }

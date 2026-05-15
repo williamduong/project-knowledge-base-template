@@ -3,6 +3,10 @@ slug: v2-10-kbagent-roadmap-gap-p1-dispatch-cdm
 title: "KBAgent roadmap-gap P1 dispatch tuple and CDM alignment"
 description: "Close the two largest conceptual gaps by documenting Dispatch Decision Tuple semantics and ontology/CDM mapping strategy in roadmap references."
 lifecycle: backlog
+priority: "2.0"
+blocks: v2-10-kbagent-roadmap-gap-p0-alignment
+priority: "2.0"
+blocks: "v2-10-kbagent-roadmap-gap-p0-alignment"
 created_at: 2026-05-11T15:11:34.905Z
 focus:
   current: "Prepared as next-phase follow-up after P0 alignment completes."
@@ -35,4 +39,6 @@ Out of scope:
 1. Implementing new runtime command behavior.
 2. Severity promotion policy details for all gates.
 3. Generative loop retry/escalation contracts.
+
+
 

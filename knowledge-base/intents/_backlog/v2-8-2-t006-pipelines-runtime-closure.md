@@ -3,6 +3,8 @@ slug: v2-8-2-t006-pipelines-runtime-closure
 title: "T006 pipelines runtime closure"
 description: "Section 6 is a review-and-runtime-truth task. The child intent records remaining pipeline-parity drift after the review is locked."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
 created_at: 2026-05-14T17:53:13.299Z
 focus:
   current: "Lock Section 6 Pipelines as a runtime-truth review result and move residual pipeline-parity work into a child intent."
@@ -30,4 +32,6 @@ Why it matters:
 
 Activation trigger:
 - Activate this backlog item only after the current active parent intent is closed or explicitly split, and only when Section 6 residuals are ready to become implementation work rather than review work.
+
+
 

@@ -3,6 +3,8 @@ slug: v2-10-documents-tab-kb-representation
 title: "Documents tab as runtime representation of the KBAgent knowledge base"
 description: "Refactor the localhost Documents tab so, in SVFactory mode, it becomes a truthful runtime view over the full KBAgent knowledge-base folder rather than a narrow issue/snapshot panel."
 lifecycle: backlog
+priority: "1.5"
+blocks: null
 created_at: 2026-05-15T00:00:00.000Z
 goal: "Make the Documents tab reflect the real structure, health, and document inventory of `knowledge-base/` for KBAgent while preserving the SVFactory self-host boundary."
 focus:
@@ -65,4 +67,6 @@ The Documents tab should answer these runtime questions directly:
 
 ## Detailed plan reference
 
-- See `notes/upgrade-v2.10-documents-tab-kb-representation-plan.md` for the implementation-ready phase plan, query contract, layout model, and verification matrix.
+- See 
+otes/upgrade-v2.10-documents-tab-kb-representation-plan.md` for the implementation-ready phase plan, query contract, layout model, and verification matrix.
+

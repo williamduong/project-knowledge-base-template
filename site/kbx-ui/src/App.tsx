@@ -61,8 +61,12 @@ type IntentsResponse = {
     count?: number;
     intents?: Array<{
       id?: string;
+      title?: string;
       lifecycle?: string;
       mode?: string;
+      priority?: string | null;
+      blocks?: string | null;
+      strategic_mode?: string | null;
     }>;
   } | null;
   stdout: string;
@@ -1381,9 +1385,28 @@ export default function App() {
     { version: 'v3.0', name: 'Reasoning loop', progress: 0, state: 'planned' as const },
   ];
   const workspaceIntents = [...intentOptions].sort((left, right) => {
-    const leftPriority = left.id === sessionIntentId ? 0 : left.lifecycle === 'active' ? 1 : left.lifecycle === 'backlog' ? 2 : left.lifecycle === 'closed' ? 3 : 4;
-    const rightPriority = right.id === sessionIntentId ? 0 : right.lifecycle === 'active' ? 1 : right.lifecycle === 'backlog' ? 2 : right.lifecycle === 'closed' ? 3 : 4;
-    return leftPriority - rightPriority || (left.id ?? '').localeCompare(right.id ?? '');
+    // Priority 1: Session intent
+    const leftSessionPrio = left.id === sessionIntentId ? 0 : 1;
+    const rightSessionPrio = right.id === sessionIntentId ? 0 : 1;
+    if (leftSessionPrio !== rightSessionPrio) return leftSessionPrio - rightSessionPrio;
+
+    // Priority 2: Sort by priority field (lexicographic, handles semantic versions like 1.0, 1.2.1, etc)
+    const leftHasPriority = !!(left.priority ?? '');
+    const rightHasPriority = !!(right.priority ?? '');
+    if (leftHasPriority && !rightHasPriority) return -1;
+    if (!leftHasPriority && rightHasPriority) return 1;
+    if (leftHasPriority && rightHasPriority) {
+      const priorityCompare = String(left.priority).localeCompare(String(right.priority), undefined, { numeric: true });
+      if (priorityCompare !== 0) return priorityCompare;
+    }
+
+    // Priority 3: Fallback to lifecycle
+    const leftLifecyclePrio = left.lifecycle === 'active' ? 1 : left.lifecycle === 'backlog' ? 2 : left.lifecycle === 'closed' ? 3 : 4;
+    const rightLifecyclePrio = right.lifecycle === 'active' ? 1 : right.lifecycle === 'backlog' ? 2 : right.lifecycle === 'closed' ? 3 : 4;
+    if (leftLifecyclePrio !== rightLifecyclePrio) return leftLifecyclePrio - rightLifecyclePrio;
+
+    // Priority 4: Alphabetical
+    return (left.id ?? '').localeCompare(right.id ?? '');
   });
   const selectedIntentTaskCount = selectedIntentDetail?.tasks?.length ?? 0;
   const totalTasks = selectedIntentDetail?.tasks?.length ?? selectedIntentTaskCount;
@@ -1678,11 +1701,9 @@ export default function App() {
         </div>
       </header>
 
-      <section className={`page ${(activeTab === 'overview' || activeTab === 'workspace') ? 'on' : ''}`} role="tabpanel">
+      <section className={`page ${activeTab === 'overview' ? 'on' : ''}`} role="tabpanel">
         <div className="scroll">
           <section className="workspace-cockpit">
-            {activeTab === 'overview' && (
-              <>
             <CollapsiblePanel
               className="panel-wide workspace-section"
               label="Checkpoint / Focus"
@@ -1974,12 +1995,14 @@ export default function App() {
         </CollapsiblePanel>
 
           </section>
-              </>
-            )}
+          </section>
+        </div>
+      </section>
 
-            {activeTab === 'workspace' && (
-              <>
-          <section className="workspace-grid workspace-grid-shell">
+      <section className={`page ${activeTab === 'workspace' ? 'on' : ''}`} role="tabpanel">
+        <div className="scroll">
+          <section className="workspace-cockpit">
+            <section className="workspace-grid workspace-grid-shell">
             <aside className="workspace-lane workspace-lane-rail">
               <CollapsiblePanel className="workspace-section workspace-sidebar-panel" label="Workspace" title="All intents">
                 <div className="intent-toolbar intent-sidebar-actions">
@@ -2034,20 +2057,24 @@ export default function App() {
                 <div className="intent-sidebar-list" role="list" aria-label="All intents">
                   {workspaceIntents.map((intent) => {
                     const intentStep = getLifecycleLaneStep(intent.lifecycle);
+                    const blocks = intent.blocks ? String(intent.blocks).split(',').map((id) => id.trim()).filter(Boolean) : [];
                     return (
                       <button
                         key={intent.id}
                         type="button"
                         role="listitem"
-                        className={`intent-card ${selectedIntentId === intent.id ? 'on' : ''} ${sessionIntentId === intent.id ? 'session' : ''}`}
+                        className={`intent-card ${selectedIntentId === intent.id ? 'on' : ''} ${sessionIntentId === intent.id ? 'session' : ''} ${blocks.length > 0 ? 'is-blocked' : ''}`}
                         onClick={() => setSelectedIntentId(intent.id ?? '')}
+                        title={blocks.length > 0 ? `Blocked by: ${blocks.join(', ')}` : undefined}
                       >
                         <div className="intent-card-topline">
-                          <span className="intent-card-version">{getIntentVersion(intent.id)}</span>
+                          <span className="intent-card-version">{intent.priority ? `#${intent.priority}` : getIntentVersion(intent.id)}</span>
                           <span className="intent-card-title">{intent.id}</span>
                         </div>
                         <div className="intent-card-meta">
                           <span className={`chip ${getLifecycleTone(intent.lifecycle)}`}>{formatLifecycleLabel(intent.lifecycle)}</span>
+                          {intent.priority && <span className="chip cgr">priority {intent.priority}</span>}
+                          {blocks.length > 0 && <span className="chip ca" title={`Blocked by: ${blocks.join(', ')}`}>block: {blocks.slice(0, 1).join(',')}</span>}
                           {sessionIntentId === intent.id && <span className="chip ca">session</span>}
                         </div>
                         <div className="intent-card-dots" aria-hidden="true">
@@ -2085,7 +2112,6 @@ export default function App() {
                             {selectedIntentDetail?.scope && <span className="chip cg">{formatScopeLabel(selectedIntentDetail.scope)}</span>}
                             {selectedIntent.id === sessionIntentId && <span className="chip ca">{currentSessionLabel}</span>}
                           </div>
-                          <h3>{selectedIntentDetail?.title || selectedIntent.id}</h3>
                           {selectedIntentDetail?.sourceFile && <p className="muted">Nguồn đang hiển thị: {selectedIntentDetail.sourceFile}</p>}
                         </div>
                         <div className="intent-hero-actions">
@@ -2392,10 +2418,8 @@ export default function App() {
                 )}
               </div>
             </CollapsiblePanel>
-          </section>
-              </>
-            )}
-          </section>
+            </section>
+            </section>
         </div>
       </section>
 

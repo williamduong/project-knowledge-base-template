@@ -3,6 +3,10 @@ slug: v2-10-kbx-ui-draft-to-backlog-and-runtime-task-contract
 title: "Draft-first intent flow + KBX UI runtime task contract"
 description: "Close the gap between draft/backlog/active lifecycle expectations and current implementation, while finishing the intent UI shell with a canonical task contract across CLI, bridge, and frontend."
 lifecycle: backlog
+priority: "2.0"
+blocks: null
+priority: "2.0"
+blocks: null
 created_at: 2026-05-14T07:40:07.103Z
 goal: "Establish a canonical draft -> backlog -> active progression and a task-state contract that the CLI, bridge, and UI all share."
 focus:
@@ -56,4 +60,7 @@ This intent covers the end-to-end completion path for the KBX intent control pla
 
 - Activate this intent only after the draft/backlog progression rule is agreed and the canonical overview fields for promotion are explicit.
 - Activation requires goal alignment plus a concrete plan for CLI, bridge, and UI changes in one slice.
+
+
+
 

@@ -3,6 +3,10 @@ slug: v2-8-kbagent-minimal-db-schema
 title: "KBAgent minimal DB schema proposal for intent/document/rule/audit tracking"
 description: "Define a minimal, non-breaking database schema for KBAgent tracking tables (intents, documents, rule_results, audit_events) and decide backend strategy."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
+priority: "5.0"
+blocks: null
 created_at: 2026-05-09T13:30:00.000Z
 focus:
   current: "Design-only backlog item pending outcome of structured-store spike"
@@ -154,3 +158,6 @@ Rationale:
 
 - Main risk: accidental dual-write complexity.
 - Mitigation: single-write to files, derived-write to DB/index in this phase.
+
+
+

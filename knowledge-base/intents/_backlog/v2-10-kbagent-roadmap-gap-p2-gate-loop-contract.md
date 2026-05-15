@@ -3,7 +3,9 @@ slug: v2-10-kbagent-roadmap-gap-p2-gate-loop-contract
 title: "KBAgent roadmap-gap P2 gate loop and contract closure"
 description: "Define gate severity transitions, generative retry/escalation contracts, and close-loop integration points for deterministic roadmap execution."
 lifecycle: backlog
-created_at: 2026-05-11T15:11:35.265Z
+priority: "3.0"
+blocks: v2-10-kbagent-roadmap-gap-p1-dispatch-cdmpriority: "3.0"
+blocks: "v2-10-kbagent-roadmap-gap-p1-dispatch-cdm"created_at: 2026-05-11T15:11:35.265Z
 focus:
   current: "Prepared as a final follow-up after P1 architecture clarifications are complete."
   last_updated: 2026-05-11
@@ -35,4 +37,6 @@ Out of scope:
 1. UI implementation or visualization behavior.
 2. New package exports or CLI command additions.
 3. Post-v2.10 roadmap expansion topics.
+
+
 

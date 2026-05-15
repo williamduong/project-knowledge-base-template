@@ -3,6 +3,8 @@ slug: v2-10-intent-lifecycle-domain-separation
 title: "Intent lifecycle domain separation and canonical mapping"
 description: "Resume the lifecycle-domain separation work after current anchor scopes are narrowed, keeping explicit workflow_lifecycle versus ontology_lifecycle boundaries and compatibility migration planning in one deferred backlog item."
 lifecycle: backlog
+priority: "2.0"
+blocks: "v2-10-kbagent-roadmap-gap-p0-alignment"
 created_at: 2026-05-15T00:00:00.000Z
 focus:
   current: "Deferred from active work so the roadmap/observability anchor and moduleization foundation can narrow the execution path first."
@@ -36,3 +38,4 @@ This backlog intent preserves the lifecycle domain-separation refactor without k
 ## Reactivation trigger
 
 - Activate after the active anchor is narrowed and the moduleization foundation identifies where lifecycle mapping belongs in the new domain structure.
+

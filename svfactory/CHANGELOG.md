@@ -6,6 +6,7 @@
 
 ## 2026-05-10
 
+- **Workspace root lock added**: SVFactory now explicitly locks default execution root to `D:/Source/template/project-knowledge-base-template` for multi-root sessions to prevent cross-repo command drift.
 - **v2.7 Phase 4 Complete**: Template docs updated with rule IDs (KBX-M001..M004, KBX-V001..V002). Comprehensive "Governance Rules" section added to agent-operating-manual.md with all 9 rule IDs, CLI commands, and usage patterns. v2.7 fully complete across all 4 phases. 710/710 tests passing.
 - **v2.7 Phase 3 Verified**: CLI commands (kbx rules lint|check|list|help) all working, doctor integration confirmed, 9 rules accessible via CLI.
 - **v2.7 Phase 2 Complete**: Registry contract, verification/intent/git-binding rules, nested YAML parser. 710/710 tests passing.

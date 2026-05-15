@@ -1,150 +1,162 @@
 ---
-slug: v2-9-db-and-intent-web-ui
-title: "KBAgent DB implementation + Intent Web UI (inseparable bundle)"
-description: "Implement the minimal DB layer from v2.8 schema design and ship the intent management web UI as an inseparable bundle. Neither ships without the other."
+slug: v2-8-svfactory-rule-catalog-hardening
+title: "SVFactory rule catalog hardening: deterministic registry contract"
+description: "Define a deterministic, testable rule catalog contract for SVFactory so governance rules become machine-addressable before runtime execution wiring."
 lifecycle: backlog
-created_at: 2026-05-09T14:00:00.000Z
+priority: "5.0"
+blocks: null
+priority: "5.0"
+blocks: null
+created_at: 2026-05-09T12:50:53.054Z
 focus:
-  current: "Waiting for v2.8 DB schema and rule catalog to stabilize before implementation begins; init flow now targets an empty .kb workspace, not prebuilt template files"
+  current: "Scanned baseline complete (2026-05-10). Ready to activate for full SVFactory+KBAgent rule catalog sweep and refactor plan."
   last_updated: 2026-05-09
-  next_action: "Activate after v2-8-kbagent-minimal-db-schema is closed and accepted; then wire /research views alongside intent views"
+  next_action: "Activate intent, run full rule inventory sweep, then implement catalog hardening phases A-D"
 schema_version: 2.5.1-beta.1
-estimate_factors:
-  newUncoveredModules: 4
-  addedUncoveredLOC: 2200
-  addedHighCoupling: 3
-  addedTests: 40
 ---
 
-# Backlog Intent: v2-9-db-and-intent-web-ui
+# Backlog Intent: v2-8-svfactory-rule-catalog-hardening
 
 ## Summary
 
-This intent ships two features as an inseparable bundle:
+v2.7 established the direction "natural-language rules -> deterministic CLI checks". The remaining risk is catalog drift: rules can still be added ad hoc, with inconsistent IDs or unclear ownership.
 
-1. **DB layer implementation** — SQLite adapter, migrations, and seed logic based on the schema
-   finalized in `v2-8-kbagent-minimal-db-schema`. Replaces the spike/design from v2.8 with
-   a production-grade, feature-flagged implementation.
-
-2. **Intent Web UI** — A local web surface for visualizing and managing intents, chaos scores,
-  rule results, audit events, and later research findings without requiring CLI commands for routine inspection.
-
-**Bundle constraint:** The web UI is only meaningful if the DB layer is queryable. The DB layer
-is only worth shipping to production if the web UI makes it usable. They are locked to the same
-version and released as a unit. Separating them creates a half-shipped feature on either side.
-
-**Surfaces shipped:**
-- `kbx serve [--port N] [--open]` — KBAgent downstream user surface (downstream workspaces).
-- `svfactory/tools/governance-ui/` — SVFactory maintainer-only governance view (Layer C, not
-  shipped via npm; reads `svfactory/` artifacts and KBAgent DB directly).
-- `kbx init` creates an empty `.kb/` workspace plus config, not a generated template tree.
+This intent hardens the legislative layer by defining one canonical rule catalog contract in SVFactory terms before expanding KBAgent runtime usage.
 
 Activation trigger:
-- `v2-8-kbagent-minimal-db-schema` is closed with an accepted backend decision (SQLite primary).
-- `v2-8-svfactory-rule-catalog-hardening` has stable rule IDs (needed for `rule_results` table).
+- v2-7 Phase 1.0 scaffold has landed and no behavioral regression is detected in existing commands.
 
 ## Goal
 
-1. Implement the SQLite-based DB adapter from v2.8 schema under a feature flag.
-2. Bootstrap DB from existing filesystem artifacts (one-way, non-destructive).
-3. Ship `kbx serve` as the KBAgent intent management web surface.
-4. Ship a maintainer-only SVFactory governance view (Axiom 5 Layer C).
-5. Provide `kbx db rebuild` as the safe recovery command.
-6. Add `kbx serve /research` views for future research findings from GraphDB.
+Create a deterministic, auditable rule catalog contract that answers:
+1. What is a valid rule ID and namespace?
+2. Which source document authorizes each rule?
+3. Who owns lifecycle decisions for each rule?
+4. Which rules are auto-enforceable vs human-only?
 
 ## Scope
 
-### 1. DB Layer Implementation (KBAgent)
+1. Rule metadata contract
+  - Rule ID format and namespace strategy (example: `META-001`, `INTENT-003`, `VERIFY-002`).
+  - Required metadata: `id`, `title`, `severity`, `enforceability`, `source_doc`, `owner`, `since_version`.
+  - Optional metadata: `replaced_by`, `deprecated_at`, 
+otes`.
 
-- SQLite adapter: initialize, seed from files, insert/update/query for the 4 tables.
-- Tables: `intents`, `documents`, `rule_results`, `audit_events` (schema from v2.8 intent).
-- Migration tooling: bootstrap from filesystem → DB, safe rebuild path.
-- Feature flag: `kbx.config.json > features.db: true|false`.
-- DB remains additive; files stay canonical source of truth when DB disabled.
-- `kbx db rebuild` command: wipe and re-seed DB from filesystem without touching user content.
-- JSON query API: `kbx intent list --json`, `kbx status --json` outputs back to DB reads when
-  feature flag is ON.
+2. Canonical registry surface
+  - Single registration entrypoint for rule definitions (no implicit discovery in this phase).
+  - Deterministic load order and duplicate-ID rejection.
 
-### 2. KBAgent Intent Web UI (`kbx serve`)
+3. Catalog governance
+  - Rule lifecycle states: `draft`, `active`, `deprecated`, `retired`.
+  - Deprecation and replacement policy for existing IDs without breaking old outputs.
 
-- `kbx serve [--port 4040] [--open]` — serves a local single-page view.
-- Reads DB (when DB flag ON) or filesystem directly (when DB flag OFF, degraded mode).
-- Pages / views:
-  - Intent list with lifecycle state, mode, change type, chaos score.
-  - Intent detail: phases, acceptance criteria, evidence links.
-  - Rule results: last run per rule ID, pass/fail, severity.
-  - Audit events: append-only timeline for an intent or document.
-  - Research views: section/fact drill-downs, evidence trails, confidence summary.
-  - DB health: rebuild trigger, last bootstrap timestamp.
-- Zero external runtime deps (no cloud, no auth needed for local dev).
-- Bundle: pre-built static HTML+JS into `src/web/dist/`, served by `kbx serve` via Node http.
-- `kbx export --html [path]` — generates standalone offline HTML snapshot (no server needed).
-
-### 3. SVFactory Governance View (Layer C — maintainer-only)
-
-- Lives in `svfactory/tools/governance-ui/`.
-- Static HTML (zero framework required if scope is simple enough).
-- Reads `svfactory/focus.md`, `svfactory/principles.md`, intent wave state, and KBAgent DB.
-- Displays: active version focus, principle list, blocker status, intent wave progress.
-- Not shipped via npm — excluded from `package.json#files` and `.npmignore`.
-- Guarded by CONSTITUTION Axiom 5 Layer C exception (amended 2026-05-09).
-
-### 4. `kbx export --html`
-
-- Offline snapshot mode — no server required.
-- Output: single self-contained HTML file with embedded data.
-- Use case: share read-only KB digest with non-technical stakeholders.
-- Redaction: apply `kbx.config.json > export.redact[]` rules before generating.
-- Replaces and absorbs KB-013 scope (optional HTML KB view).
-- Prepares the UI surface needed by `v2-10-research-driven-kb-intelligence`.
+4. Deterministic validation tests
+  - Fail on duplicate IDs.
+  - Fail on missing `source_doc`.
+  - Fail on invalid severity/enforceability value.
+  - Fail when `source_doc` path is missing in workspace.
 
 ## Non-Scope
 
-- GraphDB: deferred to v3.0 as pluggable backend with evidence gate.
-- Auth / multi-user: not in scope. This is a local single-user developer tool.
-- Cloud hosting / public deployment of web UI.
-- Persistent server / daemon mode: `kbx serve` is a dev-convenience command, not a production server.
-- Replacing any existing CLI command output (CLI remains primary runtime interface).
-
-## Axiom Compliance Notes
-
-- **Axiom 1:** `kbx serve` is an Executive (KBAgent) command. DB adapter lives in KBAgent layer.
-  SVFactory governance view reads SVFactory artifacts — Legislative layer output only.
-- **Axiom 4:** SVFactory governance view is triggered on-demand (checkpoint), not a background daemon.
-- **Axiom 5 (amended 2026-05-09):** KBAgent user-facing UI (`kbx serve`) lives in KBAgent layer.
-  SVFactory Layer C governance view is permitted for maintainer use; not shipped via npm.
+- No runtime mutation of `doctor`, `intent`, `status`, or `migrate` behavior.
+- No GraphDB deployment, no ontology storage backend decision.
+- No user-facing prompt behavior changes.
 
 ## Acceptance Criteria
 
-1. `kbx serve` starts and renders intent list from DB (when `features.db: true`).
-2. `kbx serve` degrades gracefully from filesystem when `features.db: false` (no crash, reduced query surface).
-3. `kbx db rebuild` completes without modifying any file under `<contentRoot>` (DB-only operation).
-4. `kbx export --html` generates a standalone offline HTML file that opens without a server.
-5. SVFactory governance view renders `focus.md` and intent wave status correctly in maintainer workspace.
-6. `node_modules/.bin/kbx serve` does NOT expose any SVFactory governance view content to downstream users.
-7. npm `files` whitelist does not include `svfactory/tools/` or `svfactory/ui/`.
-8. Feature flag `features.db: false` restores full current behavior (DB-off regression suite PASS).
-9. Existing `kbx intent`, `kbx status`, `kbx chaos` commands produce identical output with and without DB enabled.
+1. Catalog schema is documented and referenced by v2.7 plan/runtime files.
+2. A deterministic registry exists with one canonical add/update flow.
+3. Unit tests block invalid catalog entries (duplicate IDs, bad enums, missing source docs).
+4. Existing CLI behavior remains unchanged in this intent.
+5. A short maintainer runbook exists: "How to add a rule safely".
 
-## Dependencies
+## Dependencies and Order
 
-- `v2-8-kbagent-minimal-db-schema` — must be CLOSED with accepted schema. This is the hard gate.
-- `v2-8-svfactory-rule-catalog-hardening` — stable rule IDs required for `rule_results` table.
-- `v2-8-kbagent-structured-store-spike` — adapter architecture decision required before full implementation.
-- `v2-10-research-driven-kb-intelligence` — research findings UI depends on the GraphDB model and query surface.
+- Depends on: `v2-7-nl-rules-to-cli-logic` Phase 1.0 (scaffold complete).
+- Should run before: KBAgent structured persistence adoption and DB-backed rule result history.
 
-## Version Lock
+## Scan Baseline (Completed: 2026-05-10)
 
-| Version | DB status | Web UI status |
-|---|---|---|
-| v2.8 | Design + spike only — no shipped code | No web UI |
-| **v2.9** | **Full SQLite implementation — feature-flagged** | **`kbx serve` + SVFactory governance view + /research route scaffolding** |
-| v3.0 | GraphDB optional backend candidate with evidence gate | Web UI inherits DB improvements and research views |
+### Runtime catalog (CLI rules list)
+
+- Command evidence: `kbx rules list --json`
+- Current deterministic runtime rules: **10 rules**
+  - Git-binding: `KBX-GB001`, `KBX-GB002`
+  - Intent: `KBX-I001`, `KBX-I002`
+  - Metadata: `KBX-M001`..`KBX-M004`
+  - Verification: `KBX-V001`, `KBX-V002`
+
+### Coverage gap findings
+
+1. SVFactory principles/process constraints are not fully represented in machine catalog metadata.
+2. KBAgent contract rules exist in prompt/manual docs but are only partially mapped into runtime-enforced IDs.
+3. Source-doc mapping has inconsistent granularity:
+  - Some runtime rules map to specific governance docs (`template/15-governance/...`)
+  - Some intent rules map to broad folder descriptors (`knowledge-base/intents directories ...`)
+4. No single cross-surface matrix currently answers: `doc rule` -> `runtime rule id` -> `owner` -> `enforceability`.
+
+### Conclusion from scan
+
+- v2.7 solved core runtime enforcement scaffold and initial domains.
+- Full "scan all SVFactory + KBAgent rules and refactor consistently" is **not complete yet**.
+- This backlog intent remains the correct owner for that work.
+
+## Execution Plan (Proposed)
+
+### Phase A — Rule Inventory Sweep (read-only, deterministic)
+
+1. Enumerate all rule-like statements from:
+  - `svfactory/principles.md`
+  - `svfactory/process.md`
+  - `template/15-governance/*.md`
+  - `template/.github/agents/kbx.agent.template.md`
+  - `template/12-ai-skills/agent-operating-manual.md`
+2. Classify each statement:
+  - `auto-enforceable` (CLI/runtime now)
+  - `semi-enforceable` (needs partial runtime primitive)
+  - `human-only` (documentation/governance only)
+3. Build mapping matrix: `source statement` -> `rule_id (existing/new)` -> `owner` -> `target layer`.
+
+### Phase B — Catalog Contract Hardening
+
+1. Extend canonical rule metadata to include:
+  - `owner_layer` (`SVFactory` | `KBAgent`)
+  - `enforceability` (`auto` | `semi` | `human`)
+  - `runtime_status` (`implemented` | `planned`)
+2. Reject invalid catalog entries via tests:
+  - duplicate id
+  - missing source_doc
+  - invalid owner/enforceability enum
+  - source_doc not found
+
+### Phase C — Deterministic Refactor Wiring
+
+1. Normalize existing rule sources to canonical paths (remove broad descriptors where possible).
+2. Add missing runtime rules for high-value auto-enforceable constraints.
+3. Keep behavior backward-compatible for current CLI outputs.
+
+### Phase D — Publish Contract + Migration Notes
+
+1. Update governance docs with catalog matrix references.
+2. Add maintainer runbook: "how to add/refactor a rule safely".
+3. Add rollout checklist for downstream prompt/runtime sync.
+
+## Should We Start Immediately?
+
+Recommendation: **Yes, start now in planning/scan-to-catalog mode** (Phase A + Phase B), because:
+- v2.7 runtime scaffold is already present and stable.
+- This reduces drift before adding more v2.8 ontology/backend complexity.
+- It is additive and low-risk when done with deterministic tests first.
+
+Guardrails:
+- Keep scope to catalog + test hardening first.
+- Defer broad runtime behavior changes until mapping matrix is reviewed.
 
 ## Risk Notes
 
-- UI bundle adds build tooling dependency (Vite or esbuild). Scope: small, keep bundle < 50KB gzipped.
-- SQLite native bindings may need `better-sqlite3`; verify cross-platform (win/mac/linux) before shipping.
-- Offline HTML snapshot must apply redaction correctly — sensitive KB paths must not leak.
-- SVFactory governance view reading KBAgent DB creates a cross-layer read dependency; acceptable as
-  read-only from Layer C but must not write to KBAgent DB.
+- Primary risk: over-designing rule metadata before real runtime usage data.
+- Mitigation: keep contract minimal, add fields only with failing test/evidence.
+
+
+
+

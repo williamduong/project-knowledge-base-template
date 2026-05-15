@@ -3,6 +3,10 @@ slug: v2-8-1-dispatch-fixtures-expansion-to-30
 title: "Expand dispatch fixtures from 15 to 30+ after Session 1 approval"
 description: "Increase fixture coverage only after schema + seed fixture review passes, preserving deterministic tuple routing and human-gate semantics."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
+priority: "5.0"
+blocks: null
 created_at: 2026-05-10T18:35:00.000Z
 focus:
   current: "Expansion completed: fixture set is now 30 with deterministic checks passing."
@@ -49,3 +53,6 @@ Fixture expansion to 30+ must happen only after explicit review approval.
 - Total fixtures: 30
 - Deterministic scan: pass (mode/outcome/explainability/determinism)
 - Replay pair check: pass (`dispatch-029` and `dispatch-030`)
+
+
+

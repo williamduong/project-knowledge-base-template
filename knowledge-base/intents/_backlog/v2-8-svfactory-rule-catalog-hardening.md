@@ -3,6 +3,10 @@ slug: v2-8-svfactory-rule-catalog-hardening
 title: "SVFactory rule catalog hardening: deterministic registry contract"
 description: "Define a deterministic, testable rule catalog contract for SVFactory so governance rules become machine-addressable before runtime execution wiring."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
+priority: "5.0"
+blocks: null
 created_at: 2026-05-09T12:50:53.054Z
 focus:
   current: "Scanned baseline complete (2026-05-10). Ready to activate for full SVFactory+KBAgent rule catalog sweep and refactor plan."
@@ -35,7 +39,8 @@ Create a deterministic, auditable rule catalog contract that answers:
 1. Rule metadata contract
   - Rule ID format and namespace strategy (example: `META-001`, `INTENT-003`, `VERIFY-002`).
   - Required metadata: `id`, `title`, `severity`, `enforceability`, `source_doc`, `owner`, `since_version`.
-  - Optional metadata: `replaced_by`, `deprecated_at`, `notes`.
+  - Optional metadata: `replaced_by`, `deprecated_at`, 
+otes`.
 
 2. Canonical registry surface
   - Single registration entrypoint for rule definitions (no implicit discovery in this phase).
@@ -151,4 +156,7 @@ Guardrails:
 
 - Primary risk: over-designing rule metadata before real runtime usage data.
 - Mitigation: keep contract minimal, add fields only with failing test/evidence.
+
+
+
 

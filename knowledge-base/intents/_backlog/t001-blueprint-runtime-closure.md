@@ -3,6 +3,10 @@ slug: t001-blueprint-runtime-closure
 title: "T001 blueprint runtime closure"
 description: "Section 1 is not a full implementation task; it is a review-and-boundary task. The child intent records residual work after the review is locked."
 lifecycle: backlog
+priority: "1.5"
+blocks: null
+priority: "1.5"
+blocks: null
 created_at: 2026-05-14T17:32:41.615Z
 focus:
   current: "Lock Section 1 Blueprint as a runtime-framing review result and move residual implementation work into a child intent."
@@ -30,4 +34,7 @@ Why it matters:
 
 Activation trigger:
 - Activate this backlog item only after the current active parent intent is closed or explicitly split, and only when Section 1 residuals are ready to become implementation work rather than review work.
+
+
+
 

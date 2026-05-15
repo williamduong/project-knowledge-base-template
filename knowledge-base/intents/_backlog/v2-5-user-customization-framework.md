@@ -3,6 +3,8 @@ slug: v2-5-user-customization-framework
 title: "User customization framework: config layer, override log, configurable defaults"
 description: "Allow users to override KB Agent opinionated defaults via .kb/config.yml, with overrides logged to .kb/governance/customizations.log so kb migrate can preserve them."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
 created_at: 2026-05-07T06:25:48.969Z
 focus:
   current: ""
@@ -58,5 +60,6 @@ Status update (2026-05-10):
 - Agent persona config (v3.0)
 - Multi-project config inheritance (separate intent)
 - Config schema validation UI (v3.0)
+
 
 

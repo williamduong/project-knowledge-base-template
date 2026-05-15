@@ -3,6 +3,8 @@ slug: v2-8-2-t004-data-architecture-runtime-closure
 title: "T004 data architecture runtime closure"
 description: "Section 4 is a review-and-runtime-boundary task. The child intent records remaining data-architecture drift after the review is locked."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
 created_at: 2026-05-14T17:46:44.427Z
 focus:
   current: "Lock Section 4 Data architecture as a runtime-evidence review result and move residual migration work into a child intent."
@@ -30,4 +32,6 @@ Why it matters:
 
 Activation trigger:
 - Activate this backlog item only after the current active parent intent is closed or explicitly split, and only when Section 4 residuals are ready to become implementation work rather than review work.
+
+
 

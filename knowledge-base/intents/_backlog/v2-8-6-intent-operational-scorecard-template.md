@@ -3,6 +3,10 @@ slug: v2-8-6-intent-operational-scorecard-template
 title: "Intent operational scorecard template"
 description: "Create a reusable per-intent operational scorecard template based on dispatch retrospective metrics."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
+priority: "5.0"
+blocks: null
 created_at: 2026-05-10T21:05:00.000Z
 focus:
   current: "Recorded only. Await explicit approval before implementation."
@@ -44,3 +48,6 @@ Scorecard usage is recurring operational work and should be standardized as a re
 - Any fixture edits.
 - Any dispatch runtime implementation.
 - Any test harness/runtime execution changes.
+
+
+

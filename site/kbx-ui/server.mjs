@@ -834,6 +834,87 @@ export function createApp(commandRunner = executeBridgeCommand) {
     res.status(200).json(response);
   });
 
+  // Helper function to list intents with priority from filesystem
+  function listIntentsWithPriority() {
+    const intentsRoot = path.join(kbRoot, 'intents');
+    if (!fs.existsSync(intentsRoot)) {
+      return { intents: [], ok: true };
+    }
+
+    const intents = [];
+    const lifecycles = ['_active', '_backlog', '_archive', '_closed'];
+
+    for (const lifecycle of lifecycles) {
+      const lifecyclePath = path.join(intentsRoot, lifecycle);
+      if (!fs.existsSync(lifecyclePath)) continue;
+
+      const entries = fs.readdirSync(lifecyclePath, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory() && !entry.isFile()) continue;
+
+        let contentPath;
+        let id;
+
+        // For folders like _active/v2-9-..., read intent.md
+        if (entry.isDirectory()) {
+          contentPath = path.join(lifecyclePath, entry.name, 'intent.md');
+          id = entry.name;
+        } else if (entry.name.endsWith('.md')) {
+          // For backlog files like v2-10-....md
+          contentPath = path.join(lifecyclePath, entry.name);
+          id = entry.name.replace(/\.md$/, '');
+        } else {
+          continue;
+        }
+
+        if (!fs.existsSync(contentPath)) continue;
+
+        try {
+          const content = fs.readFileSync(contentPath, 'utf8');
+          const sections = content.split(/^---\s*$/m);
+          let frontmatter = {};
+
+          // Parse YAML frontmatter
+          if (sections.length >= 2) {
+            const yamlText = sections[1];
+            const lines = yamlText.split('\n');
+            for (const line of lines) {
+              const match = line.match(/^(\w+):\s*(.+)$/);
+              if (match) {
+                const [, key, value] = match;
+                frontmatter[key] = value.trim();
+              }
+            }
+          }
+
+          intents.push({
+            id: normalizeIntentId(frontmatter.id || id),
+            title: frontmatter.title || id,
+            lifecycle: lifecycle.replace(/^_/, ''),
+            priority: frontmatter.priority || null,
+            blocks: frontmatter.blocks || null,
+            mode: frontmatter.mode || 'normal',
+            strategic_mode: frontmatter.strategic_mode || null,
+          });
+        } catch (err) {
+          console.error(`Error reading intent ${id}:`, err.message);
+        }
+      }
+    }
+
+    // Sort by priority (lexicographic sort works for semantic versions)
+    intents.sort((a, b) => {
+      if ((a.priority ?? '') && !(b.priority ?? '')) return -1;
+      if (!(a.priority ?? '') && (b.priority ?? '')) return 1;
+      if ((a.priority ?? '') && (b.priority ?? '')) {
+        return String(a.priority).localeCompare(String(b.priority), undefined, { numeric: true });
+      }
+      return String(a.id || '').localeCompare(String(b.id || ''));
+    });
+
+    return { intents, ok: true };
+  }
+
   app.get('/api/rules', async (_req, res) => {
     const response = await commandRunner('kbx rules list --json', ['rules', 'list', '--json'], {
       expectJson: true,
@@ -843,11 +924,30 @@ export function createApp(commandRunner = executeBridgeCommand) {
   });
 
   app.get('/api/intents', async (_req, res) => {
-    const response = await commandRunner('kbx intent list --all --json', ['intent', 'list', '--all', '--json'], {
-      expectJson: true,
-      timeoutMs: 20000,
-    });
-    res.status(response.ok ? 200 : 500).json(response);
+    try {
+      const data = listIntentsWithPriority();
+      res.status(200).json({
+        ok: data.ok,
+        parsed: {
+          count: data.intents.length,
+          intents: data.intents,
+        },
+        command: 'kbx intent list (with priority)',
+        exitCode: 0,
+        stdout: '',
+        stderr: '',
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+        parsed: null,
+        command: 'kbx intent list',
+        exitCode: 1,
+        stdout: '',
+        stderr: String(error),
+      });
+    }
   });
 
   app.get('/api/intents/:id/detail', async (req, res) => {

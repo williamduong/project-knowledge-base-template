@@ -3,6 +3,8 @@ slug: v2-8-2-t010-platform-completion-frame-closure
 title: "T010 platform completion frame closure"
 description: "Section 10 is a review-and-shell-direction task. The child intent records remaining platform contract and wiring work after the review is locked."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
 created_at: 2026-05-14T17:46:47.000Z
 focus:
   current: "Lock Section 10 Platform completion frame as a shell-direction review result and move residual contract/wiring work into a child intent."
@@ -30,4 +32,6 @@ Why it matters:
 
 Activation trigger:
 - Activate this backlog item only after the current active parent intent is closed or explicitly split, and only when Section 10 residuals are ready to become implementation work rather than review work.
+
+
 

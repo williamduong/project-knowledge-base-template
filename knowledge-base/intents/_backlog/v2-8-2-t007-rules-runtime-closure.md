@@ -3,6 +3,8 @@ slug: v2-8-2-t007-rules-runtime-closure
 title: "T007 rules runtime closure"
 description: "Section 7 is a review-and-runtime-truth task. The child intent records remaining domain-rule drift after the review is locked."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
 created_at: 2026-05-14T17:46:45.669Z
 focus:
   current: "Lock Section 7 Rules as a runtime-truth review result and move residual domain-rule work into a child intent."
@@ -30,4 +32,6 @@ Why it matters:
 
 Activation trigger:
 - Activate this backlog item only after the current active parent intent is closed or explicitly split, and only when Section 7 residuals are ready to become implementation work rather than review work.
+
+
 

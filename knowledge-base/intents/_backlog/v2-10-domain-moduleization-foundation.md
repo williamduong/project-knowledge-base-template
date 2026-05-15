@@ -3,6 +3,8 @@ slug: v2-10-domain-moduleization-foundation
 title: "Domain moduleization foundation before ontology and graphdb"
 description: "Define the canonical module boundaries, storage policy, and pipeline contracts for intent, task, rule, goal, milestone, version, and system-profile domains before expanding into ontology or graph-backed execution."
 lifecycle: backlog
+priority: "2.5"
+blocks: null
 created_at: 2026-05-15T00:00:00.000Z
 goal: "Move KBX from feature-centric runtime logic toward domain-centric modules with explicit models, repositories, services, and pipeline boundaries while keeping file-backed storage as the current source of truth."
 focus:
@@ -72,3 +74,4 @@ Produce an implementation-ready refactor blueprint that standardizes how KBX mod
 - Implementing graphdb storage itself.
 - Final ontology schema design.
 - Large UI redesign beyond adding runtime-backed module visibility.
+

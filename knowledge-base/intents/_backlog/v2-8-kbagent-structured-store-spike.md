@@ -3,6 +3,10 @@ slug: v2-8-kbagent-structured-store-spike
 title: "KBAgent structured store spike: queryable state without behavior break"
 description: "Design and validate a minimal structured persistence layer for KBAgent analytics and retrieval while preserving current file-based behavior."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
+priority: "5.0"
+blocks: null
 created_at: 2026-05-09T12:50:53.205Z
 focus:
   current: "Discovery-ready after SVFactory rule catalog contract is stable"
@@ -68,4 +72,7 @@ Prove a minimal, low-risk structured store approach that improves queryability a
 
 - Primary risk: introducing a second source of truth.
 - Mitigation: file outputs remain canonical; store is derived/indexed data only in this phase.
+
+
+
 

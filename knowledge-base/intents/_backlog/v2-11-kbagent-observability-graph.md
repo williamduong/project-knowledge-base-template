@@ -3,6 +3,8 @@ slug: v2-11-kbagent-observability-graph
 title: "v2.11 KBAgent observability graph and rules lifecycle lanes"
 description: "Design and implement deterministic observability graph lanes for intent state transitions, rule evaluation results, and audit events. Activate after gap-analysis P0/P1/P2 sequencing is complete and foundational lane architecture is stable."
 lifecycle: backlog
+priority: "4.0"
+blocks: "v2-10-kbagent-roadmap-gap-p2-gate-loop-contract, v2-10-documents-tab-kb-representation"
 created_at: 2026-05-11T15:32:20.053Z
 focus:
   current: "Backlog item — moved from v2-9 dropped intent (scope drift recovery). Ready for activation after gap work closes."

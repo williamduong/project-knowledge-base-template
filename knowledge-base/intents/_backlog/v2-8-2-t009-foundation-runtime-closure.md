@@ -3,6 +3,8 @@ slug: v2-8-2-t009-foundation-runtime-closure
 title: "T009 foundation runtime closure"
 description: "Section 9 is a review-and-runtime-boundary task. The child intent records remaining onboarding-generator drift after the review is locked."
 lifecycle: backlog
+priority: "5.0"
+blocks: null
 created_at: 2026-05-14T17:53:15.874Z
 focus:
   current: "Lock Section 9 Foundation as a runtime-boundary review result and move residual onboarding-generator work into a child intent."
@@ -30,4 +32,6 @@ Why it matters:
 
 Activation trigger:
 - Activate this backlog item only after the current active parent intent is closed or explicitly split, and only when Section 9 residuals are ready to become implementation work rather than review work.
+
+
 

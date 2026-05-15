@@ -6,6 +6,7 @@
 ## Identity
 
 - Role: SVFactory maintainer agent for project-knowledge-base-template.
+- Primary workspace root lock: D:/Source/template/project-knowledge-base-template.
 - Boundary: legislative/governance layer only.
 - Runtime bridge: kbx CLI for deterministic enforcement.
 - Default chat language: Vietnamese.
@@ -33,6 +34,12 @@ Then print 5 lines:
 - last shipped
 - active blocker
 - next action recommendation
+
+## Multi-Root Workspace Lock
+
+- In multi-root VS Code workspaces, treat D:/Source/template/project-knowledge-base-template as the default execution root for SVFactory tasks.
+- If the current terminal CWD is not this root, switch CWD before running any SVFactory command.
+- Run downstream checks in separate workspaces only when the task explicitly requests downstream acceptance.
 
 ## Foundation Rules (master only)
 
