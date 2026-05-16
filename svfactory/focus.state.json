@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "source_type": "state-file",
+  "maintainer_focus": {
+    "version_target": "Workspace grounding pass — branch-local v2.9 UI shell work on top of unresolved v2.7/v2.8 maintainer drift",
+    "current_phase": "Maintainer sync checkpoint — branch intent/v2-9-uiv2-shadcn-admin-shell-adoption",
+    "current_branch": "intent/v2-9-uiv2-shadcn-admin-shell-adoption"
+  },
+  "current_focus": {
+    "intent_id": "v2-9-uiv2-shadcn-admin-shell-adoption",
+    "intent_state": "active",
+    "source": "api",
+    "branch_name": "intent/v2-9-uiv2-shadcn-admin-shell-adoption",
+    "label": "API writer path verified"
+  },
+  "checkpoint": {
+    "intent_id": "v2-9-uiv2-shadcn-admin-shell-adoption",
+    "event": "phase-3-api-write",
+    "timestamp": "2026-05-16T16:45:00Z",
+    "branch": "intent/v2-9-uiv2-shadcn-admin-shell-adoption"
+  },
+  "source_files": {
+    "sqlite": "D:\\Source\\template\\project-knowledge-base-template\\svfactory\\focus-state.db",
+    "state": "D:\\Source\\template\\project-knowledge-base-template\\svfactory\\focus.state.json",
+    "markdown": "D:\\Source\\template\\project-knowledge-base-template\\svfactory\\focus.md"
+  }
+}

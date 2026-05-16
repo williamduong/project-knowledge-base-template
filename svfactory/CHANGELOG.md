@@ -11,6 +11,12 @@
 - **v2.7 Phase 2 Complete**: Registry contract, verification/intent/git-binding rules, nested YAML parser. 710/710 tests passing.
 - **v2.7 Phase 1.0 Complete**: Rule engine scaffold, metadata rules, kbx rules command integrated into CLI. 690/690 tests passing.
 
+## 2026-05-16
+
+- **Grounding sync**: Reconciled `focus.md` with verified git/CLI reality (branch `intent/v2-9-uiv2-shadcn-admin-shell-adoption`, package `2.7.0-beta.1`, chaos `64.8 / unstable`, 3 stale active intents, unresolved drift) and recorded Codex bridge setup in `AGENTS.md`.
+- **Focus contract extraction**: Added `svfactory/focus.state.json` + `svfactory/focus-state.schema.json` and centralized runtime focus resolution in `src/lib/focus-state.js` so bridge/UI stop parsing `focus.md` directly.
+- **Phase 4 write-through sync**: Routed `kbx intent create|activate|focus|apply|close|cancel|archive` through the centralized focus-state writer so CLI mutations now update SQLite/JSON/markdown projection in one path and runtime focus no longer depends on post-hoc heuristics.
+
 ## 2026-05-05
 
 - **Intent `INT-2-3-6-upgrade-foundation-and-direction` created**: Conceptual foundation.md added to svfactory (v2.4+ model without scope lock). KB layers (Core/Operators/Backends) defined abstract; operator/backend examples marked as "e.g." not constraints. Entity model & axioms locked; implementations vary. D16 (foundation scope policy) appended to knowledge.md.

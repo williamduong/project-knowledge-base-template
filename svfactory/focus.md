@@ -7,64 +7,99 @@
 
 ## Active Version Target
 
-v2.7 — NL Rules → CLI Hard Logic (rule engine)
+Workspace grounding pass — branch-local `v2.9` UI shell work on top of unresolved `v2.7`/`v2.8` maintainer drift
 
 ## Current Phase
 
-**Version:** v2.8 Phase 0 — Boundary Lock & Testing Strategy
+**Version:** Maintainer sync checkpoint — branch `intent/v2-9-uiv2-shadcn-admin-shell-adoption`
 
-**Chaos snapshot (2026-05-16):** 68 / unstable
+**Chaos snapshot (2026-05-16):** 64.8 / unstable (`kbx chaos --json --scan-src src`)
 
-**Session State (2026-05-16, Operator sync):**
-- v2.7.0-beta.2 published: 2 bugs fixed in cross-source validation ✅
-  - Bug #1 (missing import update.js): FIXED ✅ — VipePix legacy update succeeds
-  - Bug #2 (missing baseline guidance init): FIXED ✅ — platform-control-plane tracked-mode UX clear
-  - Bug #3 (legacy noise): marked MEDIUM, not fixed (no chaos reduction benefit)
-- All 3 source repos tested WARN-only, chaos stable, no regressions
-- `kbx chaos --json` now reports 68 / unstable with active-intent pressure and repo drift still unresolved
-- Operator rule restored: session focus must be exactly one intent or none
+**Session State (2026-05-16, Grounding pass):**
+- Package/runtime line in source is `@williamduong/kbx@2.7.0-beta.1` (`package.json`)
+- Current branch is `intent/v2-9-uiv2-shadcn-admin-shell-adoption`
+- Latest verified commits are UI/rules workspace work, not v2.7 closeout:
+  - `8e7e2c6` Add new prototype styles and overlays
+  - `c85bebd` add prototype catalog and rules workspace controls
+  - `05d6915` resolve rules lint remediation clusters
+- Active intents recorded by CLI remain:
+  - `v2-7-nl-rules-to-cli-logic`
+  - `v2-8-downstream-agent-and-ontology`
+  - `v2-8-kbx-beta-bug-hunt`
+- All 3 active intents have `staged_count = 0`; `kbx intent cleanup --json` reports 12 warnings for missing `wave`, `type`, `strategic_mode`, and `urgency`
+- `kbx status --json` still reports:
+  - tracked KB state at template/CLI `v2.3.2`
+  - drift status `drift-detected`
+  - verdict `attention`
+  - `192` unbound changes
+- `kbx doctor --json` is `WARN`, not `PASS`
 
 **Focus intent:**
-- v2-7-nl-rules-to-cli-logic (READY TO CLOSE — manual tests complete, estimated chaos delta -6)
+- None safely locked yet. Branch intent, active-intent registry, and focus state are out of sync.
 
 **Tracked parallel intents:**
-- v2-8-downstream-agent-and-ontology (Phase 0 locked, not execution focus, estimated chaos delta +8 if expanded without split)
-- v2-8-kbx-beta-bug-hunt (supporting validation thread, estimated chaos delta 0)
+- `v2-7-nl-rules-to-cli-logic` — active in registry, estimated chaos delta `-6`
+- `v2-8-downstream-agent-and-ontology` — active in registry, estimated chaos delta `+8` (`spike` risk band)
+- `v2-8-kbx-beta-bug-hunt` — active in registry, estimated chaos delta `0`
+- Branch-local UI stream `v2-9-uiv2-shadcn-admin-shell-adoption` exists in git/UI mocks but has no matching active intent record
 
 **Next action:**
-  1. Review v2.7.0-beta.2 with 2 bugs fixed — prepare GA decision memo
-  2. Close or explicitly re-scope non-focus intents so `_active` stops representing parked work
-  3. Decide timeline: extended beta soak vs. immediate v2.7 GA promotion
+  1. Reconcile branch vs intent registry: either create/register the `v2.9` UI intent or move the branch back under an existing tracked intent
+  2. Resolve the 3 stale active intents explicitly (close, archive, merge, or keep-active with rationale) so session focus can become exactly one intent or none
+  3. Decide whether runtime priority is still `v2.7` beta stabilization or has moved to `v2.9` UI/operator work; update plan surface to match that decision
+  4. Run a real baseline reconciliation/update pass before trusting KB freshness claims beyond this checkpoint
 
 ## Active Blockers
 
-None remaining for v2.7 ship. Decision blocker: v2.7 GA timeline (extended beta soak vs. immediate promotion).
+1. Branch/intents mismatch: active branch names a `v2.9` intent that is not registered under `knowledge-base/intents/_active/`.
+2. Focus mismatch: `focus.md` previously pointed at `v2.8 Phase 0` while git HEAD is on recent UI shell work.
+3. Drift remains unresolved: `repository-revision-state.md` and `state.json` still point to `v2.3.2` / baseline `e157d9c...`.
+4. Active-intent hygiene is degraded: 3 active intents, 0 staged files each, 12 cleanup warnings total.
+
 ## Recent Decisions (last 5)
 
 1. Release rule: tag AFTER publish, không push trước khi npm publish thành công.
 2. Intent archive thủ công nếu `intent.md` bị mất (CLI cancel không chạy được).
 3. RC/beta không promote `latest` — chờ GA stable mới promote.
 4. CONSTITUTION.md = Supreme Law, không ship qua npm (svfactory/ only, không trong package.json#files).
+5. Maintainer grounding must trust git/CLI state over stale `focus.md` snapshots when branch, active intents, and runtime state diverge.
+
+## Roadmap Status
+
+| Version | Status | Notes |
 |---|---|---|
 | v2.3.7 | Shipped 2026-05-06 | Hotfix: `intent list` fallback for missing `mode/status` in legacy intents |
 | v2.6.x | Active | Ontology foundation: NL -> glossary -> ontology lifecycle (no GraphDB) |
-| v2.7.x | Planned/Started | NL governance rules -> deterministic CLI rule engine |
+| v2.7.x | Beta line in source | `package.json` currently reports `2.7.0-beta.1`; closeout status not yet reconciled in maintainer focus |
+| v2.8.x | Planning drift | Active intents exist, but no single focus is locked cleanly |
+| v2.9.x | Branch-local active work | Current branch and recent commits target UIV2/operator shell work |
 | v3.0 | Long-term | Monorepo split packages/svfactory + packages/kb-agent (KB-015) |
 
 - `kbx` không cài global — dùng `node ./bin/kbx.js` trong workspace này hoặc `npx @williamduong/kbx` cho downstream.
-- npm dist-tag: `beta → 2.7.0-beta.2`, `latest → 2.4.0`.
+- Current verified package version in source: `2.7.0-beta.1`.
 - CONSTITUTION.md nằm ở gốc repo, maintainer-only, không ship qua npm.
-- focus.md phải được update cuối mỗi session trước khi kết thúc — đây là nguồn truth duy nhất cho bootstrap.
+- `svfactory/focus.state.json` is the machine-readable focus contract for runtime/bridge.
+- `svfactory/focus.md` remains the maintainer-readable projection and still needs end-of-session sync.
 
 ## Last Session Summary
 
-**Date:** 2026-05-08
-**Task:** Full rename kb→kbx + KBRoot→SV Factory; release v2.4.0 stable
+**Date:** 2026-05-16
+**Task:** Repository grounding pass for Codex/SVFactory alignment
 **Output:**
-- All KBRoot/kbroot tokens eliminated from full tracked repo (content + filenames).
-- Self-host agent surface: SVFactory.agent.md + svfactory-*.prompt.md created.
-- Release tooling fixed (pack-smoke.js, generate-template-changelog.js).
-- 548/548 unit tests pass, release:dry gate pass.
-- v2.4.0 published npm latest. Tag v2.4.0 pushed.
-- Intent v2-4-svfactory-rename archived to _closed/released/.
-- focus.md updated.
+- Verified current branch, recent commits, package version, active intents, status, doctor, and chaos runtime signals.
+- Updated `AGENTS.md` so Codex/generic agents bridge into the SVFactory maintainer contract.
+- Synced `focus.md` away from stale `v2.8 Phase 0` claims and toward the verified branch/intents/drift state.
+- Confirmed current chaos snapshot as `64.8 / unstable` with full `src` scan and unresolved intent pressure.
+
+## Runtime Focus Projection
+
+<!-- FOCUS_STATE_AUTO_START -->
+- Intent: `v2-9-uiv2-shadcn-admin-shell-adoption`
+- State: `active`
+- Source: `api`
+- Branch: `intent/v2-9-uiv2-shadcn-admin-shell-adoption`
+- Checkpoint Intent: `v2-9-uiv2-shadcn-admin-shell-adoption`
+- Checkpoint Event: `phase-3-api-write`
+- Checkpoint Timestamp: `2026-05-16T16:45:00Z`
+- Maintainer Version Target: Workspace grounding pass — branch-local v2.9 UI shell work on top of unresolved v2.7/v2.8 maintainer drift
+<!-- FOCUS_STATE_AUTO_END -->

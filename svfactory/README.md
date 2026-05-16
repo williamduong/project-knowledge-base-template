@@ -40,9 +40,20 @@ Hoặc tạo VS Code custom chat mode trỏ tới `.local/kb-agent/agent.md`.
 ├── principles.md          # nguyên tắc bất biến (đổi cẩn thận)
 ├── process.md             # workflows tiêu chuẩn
 ├── knowledge.md           # tricks + risks + decisions (append-only)
-├── focus.md               # state hiện tại: version đang làm, blocker, next action
+├── focus.md               # human-readable maintainer projection
+├── focus.state.json       # machine-readable focus contract for runtime/bridge
+├── focus-state.db         # SQLite runtime store hydrated from focus.state.json
+├── focus-state.schema.json# schema for focus.state.json
 └── CHANGELOG.md           # log agent tự evolve qua thời gian
 ```
+
+## Focus Contract
+
+- `focus.state.json` is the machine-readable focus contract for runtime and bridge consumers.
+- `focus-state.db` is the SQLite-backed runtime store for Phase 2; the resolver hydrates it from `focus.state.json` when needed.
+- Phase 4 extends this contract into the CLI path: `kbx intent create|activate|focus|apply|close|cancel|archive` now write through the centralized focus-state writer instead of leaving runtime focus to be re-inferred later.
+- `focus.md` remains the maintainer-facing narrative/projection for humans.
+- Future storage backends such as SQLite should preserve the same contract shape at the resolver boundary so UI/runtime callers do not need widespread rewrites.
 
 ## Self-improvement protocol (tóm tắt)
 

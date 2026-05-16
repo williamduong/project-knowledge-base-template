@@ -48,6 +48,7 @@ const {
   deriveIntentsApplied,
   getActiveIntentsSummary,
 } = require('../../src/lib/intent');
+const { readFocusState } = require('../../src/lib/focus-state');
 
 function tmpRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'kb-intent-'));
@@ -1011,6 +1012,51 @@ test('runIntent cancel: closes active intent as dropped alias', async () => {
   assert.ok(!fs.existsSync(intentWorkspacePath(contentRoot, 'legacy-cancel')));
 });
 
+test('runIntent create: syncs runtime focus state through writer path', async () => {
+  const root = tmpRoot();
+  initTrackedWorkspace(root);
+
+  const captured = await captureConsole(() => runIntent({
+    args: ['create', 'v2-9-runtime-shell', '--yes', '--json'],
+    cwd: root,
+  }));
+  const parsed = JSON.parse(captured.stdout);
+  const state = readFocusState({ workspaceRoot: root });
+
+  assert.equal(parsed.status, 'created');
+  assert.equal(state.current_focus.intent_id, 'v2-9-runtime-shell');
+  assert.equal(state.current_focus.intent_state, 'active');
+  assert.equal(state.current_focus.source, 'intent-cli');
+  assert.equal(state.checkpoint.event, 'intent-created');
+});
+
+test('runIntent focus and close: keep runtime focus in sync with intent lifecycle', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'v2-9-focus-lifecycle', mode: 'quick', changeType: 'docs' });
+
+  await captureConsole(() => runIntent({
+    args: ['focus', 'v2-9-focus-lifecycle', '--current=Refine shell footer', '--next=Wire footer runtime state', '--json'],
+    cwd: root,
+  }));
+
+  let state = readFocusState({ workspaceRoot: root });
+  assert.equal(state.current_focus.intent_id, 'v2-9-focus-lifecycle');
+  assert.equal(state.current_focus.intent_state, 'active');
+  assert.equal(state.checkpoint.event, 'intent-focus-updated');
+  assert.match(state.current_focus.label, /Refine shell footer/);
+
+  await captureConsole(() => runIntent({
+    args: ['close', 'v2-9-focus-lifecycle', '--type=dropped', '--reason=Superseded by follow-up', '--json'],
+    cwd: root,
+  }));
+
+  state = readFocusState({ workspaceRoot: root });
+  assert.equal(state.current_focus.intent_id, null);
+  assert.equal(state.current_focus.intent_state, null);
+  assert.equal(state.checkpoint.event, 'intent-closed');
+});
+
 test('runIntent cleanup: reports critical when focus.current is empty', async () => {
   const root = tmpRoot();
   const contentRoot = initTrackedWorkspace(root);
@@ -1117,4 +1163,3 @@ test('T-G3: backlog activate preserves schema_version', () => {
   assert.ok(meta.schema_version, 'activated intent should have schema_version');
   assert.ok(/^[\d.]+/.test(meta.schema_version), `schema_version should be valid, got: ${meta.schema_version}`);
 });
-

@@ -15,6 +15,7 @@ const kbRoot = path.join(repoRoot, 'knowledge-base');
 const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 const require = createRequire(import.meta.url);
 const { resolveIntentRecord } = require(path.join(repoRoot, 'src', 'lib', 'intent.js'));
+const { readFocusState, writeFocusState } = require(path.join(repoRoot, 'src', 'lib', 'focus-state.js'));
 const { readPipeline } = require(path.join(repoRoot, 'src', 'lib', 'pipeline.js'));
 
 const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
@@ -22,6 +23,7 @@ const uiPort = Number(process.env.KBX_UI_PORT || 4173);
 const port = Number(process.env.KBX_BRIDGE_PORT || 4174);
 const runtimeServicesRegistryPath = path.join(__dirname, 'runtime-services.json');
 const runtimeServicesStatePath = path.join(__dirname, '.runtime-services-state.json');
+const ensureInFlight = new Map();
 
 function runKbx(args, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
@@ -330,6 +332,11 @@ function summarizeRuntimeServices(services) {
   };
 }
 
+function resolveLocalViteBin(serviceCwd) {
+  const viteBinPath = path.join(repoRoot, serviceCwd, 'node_modules', 'vite', 'bin', 'vite.js');
+  return fs.existsSync(viteBinPath) ? viteBinPath : null;
+}
+
 function runtimeBridgeStatus(summary) {
   if (!summary || summary.registeredCount === 0) {
     return 'offline';
@@ -354,11 +361,13 @@ const runtimeServicesCron = createRuntimeServicesCron({
 });
 
 function resolveManagedSpawn(service, targetPort) {
+  const localViteBin = resolveLocalViteBin(service.cwd);
+
   if (service.kind === 'vite-dev') {
-    if (process.platform === 'win32') {
+    if (localViteBin) {
       return {
-        command: 'cmd.exe',
-        args: ['/d', '/s', '/c', `npx vite --host ${service.host || '127.0.0.1'} --port ${targetPort}`],
+        command: process.execPath,
+        args: [localViteBin, '--host', service.host || '127.0.0.1', '--port', String(targetPort)],
         cwd: path.join(repoRoot, service.cwd),
       };
     }
@@ -371,10 +380,10 @@ function resolveManagedSpawn(service, targetPort) {
   }
 
   if (service.kind === 'vite-preview') {
-    if (process.platform === 'win32') {
+    if (localViteBin) {
       return {
-        command: 'cmd.exe',
-        args: ['/d', '/s', '/c', `npx vite preview --host ${service.host || '127.0.0.1'} --port ${targetPort}`],
+        command: process.execPath,
+        args: [localViteBin, 'preview', '--host', service.host || '127.0.0.1', '--port', String(targetPort)],
         cwd: path.join(repoRoot, service.cwd),
       };
     }
@@ -390,6 +399,11 @@ function resolveManagedSpawn(service, targetPort) {
 }
 
 async function ensureRuntimeService(serviceId) {
+  if (ensureInFlight.has(serviceId)) {
+    return ensureInFlight.get(serviceId);
+  }
+
+  const ensurePromise = (async () => {
   try {
     const registry = loadRuntimeServiceRegistry();
     const service = registry.find((item) => item.id === serviceId);
@@ -478,6 +492,14 @@ async function ensureRuntimeService(serviceId) {
       error: error instanceof Error ? error.message : String(error),
     };
   }
+  })();
+
+  ensureInFlight.set(serviceId, ensurePromise);
+  try {
+    return await ensurePromise;
+  } finally {
+    ensureInFlight.delete(serviceId);
+  }
 }
 
 async function executeBridgeCommand(command, args, options = {}) {
@@ -525,34 +547,19 @@ function summarizeWorkspace(statusResult) {
   };
 }
 
-function resolveFocusFile() {
-  const candidates = [
-    path.join(repoRoot, 'svfactory', 'focus.md'),
-    path.join(repoRoot, 'kb-root', 'focus.md'),
-  ];
+function readCurrentBranchName() {
+  const result = spawnSync('git', ['branch', '--show-current'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    timeout: 3000,
+  });
 
-  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
-}
-
-function parseCheckpointLine(line) {
-  const trimmed = String(line || '').trim();
-  if (!trimmed.startsWith('- ')) {
+  if (result.status !== 0) {
     return null;
   }
 
-  const parts = trimmed.slice(2).split(' | ').map((part) => part.trim()).filter(Boolean);
-  if (parts.length === 0) {
-    return null;
-  }
-
-  const entry = { timestamp: parts[0] };
-  for (const part of parts.slice(1)) {
-    const [key, ...rest] = part.split('=');
-    if (!key || rest.length === 0) continue;
-    entry[key] = rest.join('=').trim();
-  }
-
-  return entry;
+  const branch = result.stdout.trim();
+  return branch || null;
 }
 
 function normalizeIntentId(value) {
@@ -562,6 +569,20 @@ function normalizeIntentId(value) {
 
   const normalized = String(value).trim();
   return normalized.startsWith('intent-') ? normalized.slice('intent-'.length) : normalized;
+}
+
+function intentIdFromBranchName(branchName) {
+  const branch = String(branchName || '').trim();
+  if (!branch) {
+    return null;
+  }
+
+  const directIntentMatch = branch.match(/^intent\/(.+)$/i);
+  if (directIntentMatch?.[1]) {
+    return normalizeIntentId(directIntentMatch[1]);
+  }
+
+  return null;
 }
 
 function sanitizeDraftSlug(value) {
@@ -827,35 +848,68 @@ function summarizeSessionContext(statusResult) {
   const parsed = statusResult.parsed || {};
   const activeIntents = Array.isArray(parsed.activeIntents?.intents) ? parsed.activeIntents.intents : [];
   const activeIntentIds = activeIntents.map((intent) => normalizeIntentId(intent?.id)).filter(Boolean);
-  const focusPath = resolveFocusFile();
-  let latestCheckpoint = null;
+  const branchName = readCurrentBranchName();
+  const branchIntentId = intentIdFromBranchName(branchName);
+  const focusState = readFocusState({ workspaceRoot: repoRoot, branchName });
+  const focusFile = focusState.source_files?.state ?? focusState.source_files?.markdown ?? null;
+  const checkpointIntentId = normalizeIntentId(focusState.checkpoint?.intent_id ?? null);
+  const stateFocusIntentId = normalizeIntentId(focusState.current_focus?.intent_id ?? null);
+  const singleActiveIntentId = activeIntentIds.length === 1
+    ? activeIntentIds[0]
+    : normalizeIntentId(parsed.activeIntents?.id ?? null);
 
-  if (focusPath) {
-    const content = fs.readFileSync(focusPath, 'utf8');
-    const checkpointSection = content.split('## Intent Checkpoints')[1] || '';
-    const checkpointLines = checkpointSection
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith('- '));
+  const sessionIntentId = stateFocusIntentId
+    ?? checkpointIntentId
+    ?? branchIntentId
+    ?? singleActiveIntentId
+    ?? null;
 
-    latestCheckpoint = checkpointLines.length > 0 ? parseCheckpointLine(checkpointLines[0]) : null;
+  let sessionIntentSource = 'none';
+  if (focusState.current_focus?.source) {
+    sessionIntentSource = focusState.current_focus.source;
+  } else if (checkpointIntentId) {
+    sessionIntentSource = activeIntentIds.includes(checkpointIntentId) ? 'checkpoint' : 'checkpoint-untracked';
+  } else if (branchIntentId) {
+    sessionIntentSource = activeIntentIds.includes(branchIntentId) ? 'branch' : 'branch-untracked';
+  } else if (singleActiveIntentId) {
+    sessionIntentSource = 'active-intent';
   }
 
-  const checkpointIntentId = normalizeIntentId(latestCheckpoint?.intent ?? null);
-  const activeIntentId = normalizeIntentId(parsed.activeIntents?.id ?? null) ?? activeIntentIds[0] ?? null;
-  const sessionIntentId = checkpointIntentId && activeIntentIds.includes(checkpointIntentId)
-    ? checkpointIntentId
-    : activeIntentId;
+  let sessionIntentState = typeof focusState.current_focus?.intent_state === 'string'
+    ? focusState.current_focus.intent_state
+    : null;
+  if (sessionIntentId) {
+    if (!sessionIntentState && activeIntentIds.includes(sessionIntentId)) {
+      sessionIntentState = 'active';
+    } else if (!sessionIntentState && (sessionIntentSource === 'branch-untracked' || sessionIntentSource === 'checkpoint-untracked')) {
+      sessionIntentState = 'branch-local';
+    }
+  }
 
   return {
     sessionIntentId,
-    sessionIntentSource: checkpointIntentId && activeIntentIds.includes(checkpointIntentId) ? 'checkpoint' : activeIntentId ? 'active-intent' : 'none',
-    sessionLabel: latestCheckpoint?.branch ?? 'unknown-session',
-    checkpointEvent: latestCheckpoint?.event ?? null,
+    sessionIntentSource,
+    sessionIntentState,
+    sessionLabel: focusState.checkpoint?.branch ?? branchName ?? 'unknown-session',
+    checkpointEvent: focusState.checkpoint?.event ?? null,
     checkpointIntentId,
-    checkpointTimestamp: latestCheckpoint?.timestamp ?? null,
-    focusFile: focusPath ? path.relative(repoRoot, focusPath).replace(/\\/g, '/') : null,
+    checkpointTimestamp: focusState.checkpoint?.timestamp ?? null,
+    focusFile: focusFile ? path.relative(repoRoot, focusFile).replace(/\\/g, '/') : null,
     activeIntentIds,
+    branchName,
+    branchIntentId,
+    focusState,
+  };
+}
+
+function summarizeWorkspaceFocus(statusResult) {
+  const session = summarizeSessionContext(statusResult);
+
+  return {
+    intentId: session.sessionIntentId,
+    intentState: session.sessionIntentState,
+    source: session.sessionIntentSource,
+    branch: session.branchName,
   };
 }
 
@@ -873,7 +927,17 @@ function buildSessionFocus(statusResult) {
   if (!detail) {
     return {
       ...session,
-      intent: null,
+      intent: {
+        id: session.sessionIntentId,
+        title: null,
+        goal: null,
+        summary: null,
+        lifecycle: session.sessionIntentState ?? null,
+        status: session.sessionIntentState ?? null,
+        focusCurrent: null,
+        focusNextAction: null,
+        chaosEstimate: null,
+      },
       currentTask: null,
     };
   }
@@ -1483,7 +1547,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
         expectJson: true,
         timeoutMs: 20000,
       }),
-      runtimeServicesCron.refresh('api-status'),
+      runtimeServicesCron.read('api-status'),
     ]);
     const runtimeSummary = runtimeSnapshot.summary;
 
@@ -1518,7 +1582,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
   });
 
   app.get('/api/runtime-services', async (_req, res) => {
-    const snapshot = await runtimeServicesCron.refresh('api-runtime-services');
+    const snapshot = await runtimeServicesCron.read('api-runtime-services');
     res.status(200).json({
       ok: !snapshot.lastError,
       summary: snapshot.summary,
@@ -1537,7 +1601,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
       return res.status(400).json(result);
     }
 
-    await runtimeServicesCron.refresh('ensure');
+    await runtimeServicesCron.read('ensure');
 
     return res.status(200).json(result);
   });
@@ -1717,6 +1781,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
     res.status(200).json({
       ok: statusResult.ok,
       summary: summarizeWorkspace(statusResult),
+      currentFocus: summarizeWorkspaceFocus(statusResult),
       stderr: statusResult.stderr,
     });
   });
@@ -1737,6 +1802,43 @@ export function createApp(commandRunner = executeBridgeCommand) {
       summary: buildSessionFocus(statusResult),
       stderr: statusResult.stderr,
     });
+  });
+
+  app.get('/api/focus-state', async (_req, res) => {
+    try {
+      const branchName = readCurrentBranchName();
+      const state = readFocusState({ workspaceRoot: repoRoot, branchName });
+      res.status(200).json({
+        ok: true,
+        state,
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.post('/api/focus-state', express.json(), async (req, res) => {
+    try {
+      const branchName = readCurrentBranchName();
+      const nextState = writeFocusState({
+        workspaceRoot: repoRoot,
+        branchName,
+        state: req.body && typeof req.body === 'object' ? req.body : {},
+        syncMarkdown: true,
+      });
+      res.status(200).json({
+        ok: true,
+        state: nextState,
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   });
 
   app.get('/api/system', async (_req, res) => {
@@ -1762,7 +1864,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
         expectJson: true,
         timeoutMs: 20000,
       }),
-      runtimeServicesCron.refresh('api-home-summary'),
+      runtimeServicesCron.read('api-home-summary'),
       commandRunner('kbx rules list --json', ['rules', 'list', '--json'], {
         expectJson: true,
         timeoutMs: 15000,

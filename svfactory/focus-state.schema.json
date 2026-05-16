@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://williamduong.github.io/project-knowledge-base-template/schemas/svfactory/focus-state.schema.json",
+  "title": "SVFactory Focus State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_type",
+    "maintainer_focus",
+    "current_focus"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "state-file",
+        "markdown-fallback",
+        "sqlite-projection",
+        "db-projection"
+      ]
+    },
+    "maintainer_focus": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version_target": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "current_phase": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "current_branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "current_focus": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "intent_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "intent_state": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "checkpoint": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "intent_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "event": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

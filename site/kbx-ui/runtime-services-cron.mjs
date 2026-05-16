@@ -1,6 +1,7 @@
 export function createRuntimeServicesCron(options) {
   const intervalMs = options.intervalMs ?? 60_000;
   let timer = null;
+  let refreshInFlight = null;
 
   function buildSchedules(reason, refreshedAt, nextRunAt, lastError) {
     const scheduleState = lastError ? 'failed' : timer ? 'running' : 'off'
@@ -44,12 +45,14 @@ export function createRuntimeServicesCron(options) {
     lastError: null,
   };
 
-  async function refresh(reason = 'interval') {
+  async function performRefresh(reason = 'interval', refreshOptions = {}) {
+    const allowAutoStart = refreshOptions.allowAutoStart !== false;
+
     try {
       const services = await options.collectStatuses();
       let autoStartError = null;
 
-      if (typeof options.ensureService === 'function') {
+      if (allowAutoStart && typeof options.ensureService === 'function') {
         for (const service of services) {
           if (service.autoStart === true && service.running === false && !service.pid) {
             // eslint-disable-next-line no-await-in-loop
@@ -86,6 +89,19 @@ export function createRuntimeServicesCron(options) {
     }
   }
 
+  async function refresh(reason = 'interval', refreshOptions = {}) {
+    if (refreshInFlight) {
+      return refreshInFlight;
+    }
+
+    refreshInFlight = performRefresh(reason, refreshOptions)
+      .finally(() => {
+        refreshInFlight = null;
+      });
+
+    return refreshInFlight;
+  }
+
   return {
     start() {
       if (timer) {
@@ -93,9 +109,9 @@ export function createRuntimeServicesCron(options) {
       }
 
       timer = setInterval(() => {
-        refresh('interval');
+        refresh('interval', { allowAutoStart: true });
       }, intervalMs);
-      refresh('startup');
+      refresh('startup', { allowAutoStart: true });
     },
     stop() {
       if (!timer) {
@@ -107,6 +123,9 @@ export function createRuntimeServicesCron(options) {
     },
     getSnapshot() {
       return lastSnapshot;
+    },
+    async read(reason = 'read') {
+      return refresh(reason, { allowAutoStart: false });
     },
     refresh,
   };

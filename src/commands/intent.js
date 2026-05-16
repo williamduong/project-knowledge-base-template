@@ -32,6 +32,7 @@ const {
   deriveIntentStatus,
 } = require('../lib/intent');
 const { analyzeIntentConflicts, suggestApplyOrder, generateLessonCandidates } = require('../lib/intent-intelligence');
+const { readFocusState, writeFocusState } = require('../lib/focus-state');
 const { runRelease } = require('./release');
 
 // ---------------------------------------------------------------------------
@@ -317,6 +318,120 @@ function enforceIntentVersionProgression(contentRoot, nextIntentId) {
   return { ok: true, reason: 'strictly-increasing' };
 }
 
+function deriveVersionTarget(intentId) {
+  if (!intentId || typeof intentId !== 'string') return null;
+  const match = intentId.match(/^(v\d+(?:-\d+)*)/i);
+  return match ? match[1] : null;
+}
+
+function deriveIntentIdFromBranch(branchName) {
+  if (!branchName || typeof branchName !== 'string') return null;
+  const match = branchName.trim().match(/^intent\/(.+)$/i);
+  if (!match || !match[1]) return null;
+  return sanitizeId(match[1]) || match[1].trim();
+}
+
+function buildRuntimeFocusLabel({ intentId, summary, nextAction, fallback }) {
+  const parts = [summary, nextAction]
+    .filter((value) => typeof value === 'string' && value.trim())
+    .map((value) => value.trim());
+  if (parts.length > 0) {
+    return parts.join(' -> ');
+  }
+  if (typeof fallback === 'string' && fallback.trim()) {
+    return fallback.trim();
+  }
+  return intentId || null;
+}
+
+function syncRuntimeFocusAfterIntentMutation({
+  cwd,
+  intentId,
+  event,
+  intentState,
+  focusSummary = null,
+  nextAction = null,
+  fallbackLabel = null,
+  releaseCurrentFocus = false,
+}) {
+  if (!cwd || !intentId || !event) {
+    return null;
+  }
+
+  const git = getGitMetadata(cwd);
+  const branchName = git && typeof git.branch === 'string' && git.branch.trim() ? git.branch.trim() : null;
+  const branchIntentId = deriveIntentIdFromBranch(branchName);
+  const timestamp = new Date().toISOString();
+  const existing = readFocusState({ workspaceRoot: cwd, branchName });
+  const existingCurrentFocus = existing && existing.current_focus && typeof existing.current_focus === 'object'
+    ? existing.current_focus
+    : {};
+  const currentIntentId = typeof existingCurrentFocus.intent_id === 'string' && existingCurrentFocus.intent_id.trim()
+    ? existingCurrentFocus.intent_id.trim()
+    : null;
+
+  let nextCurrentFocus = existingCurrentFocus;
+  if (releaseCurrentFocus) {
+    if (currentIntentId === intentId || branchIntentId === intentId) {
+      if (branchIntentId === intentId) {
+        nextCurrentFocus = {
+          intent_id: branchIntentId,
+          intent_state: 'branch-local',
+          source: 'intent-cli',
+          branch_name: branchName,
+          label: buildRuntimeFocusLabel({
+            intentId,
+            summary: focusSummary,
+            nextAction,
+            fallback: fallbackLabel || 'Intent lifecycle moved; branch still open',
+          }),
+        };
+      } else {
+        nextCurrentFocus = {
+          intent_id: null,
+          intent_state: null,
+          source: null,
+          branch_name: branchName,
+          label: null,
+        };
+      }
+    }
+  } else {
+    nextCurrentFocus = {
+      intent_id: intentId,
+      intent_state: intentState || 'active',
+      source: 'intent-cli',
+      branch_name: branchName,
+      label: buildRuntimeFocusLabel({
+        intentId,
+        summary: focusSummary,
+        nextAction,
+        fallback: fallbackLabel,
+      }),
+    };
+  }
+
+  return writeFocusState({
+    workspaceRoot: cwd,
+    branchName,
+    state: {
+      source_type: 'intent-cli',
+      maintainer_focus: {
+        current_branch: branchName,
+        version_target: deriveVersionTarget(intentId)
+          || (existing && existing.maintainer_focus ? existing.maintainer_focus.version_target : null),
+      },
+      current_focus: nextCurrentFocus,
+      checkpoint: {
+        intent_id: intentId,
+        event,
+        timestamp,
+        branch: branchName,
+      },
+    },
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Subcommand: create
 // ---------------------------------------------------------------------------
@@ -356,6 +471,13 @@ async function runCreate(ctx, options, cwd) {
   }
 
   const wsPath = createIntentWorkspace(ctx.contentRoot, { intentId, mode, changeType });
+  const focusState = syncRuntimeFocusAfterIntentMutation({
+    cwd,
+    intentId,
+    event: 'intent-created',
+    intentState: 'active',
+    fallbackLabel: `Intent created (${changeType})`,
+  });
 
   if (json) {
     console.log(JSON.stringify({
@@ -365,6 +487,7 @@ async function runCreate(ctx, options, cwd) {
       change_type: changeType,
       workspace: wsPath,
       status: 'created',
+      focus_state: focusState,
     }, null, 2));
   } else {
     console.log(`Intent "${intentId}" created (mode: ${mode}).`);
@@ -401,7 +524,7 @@ async function runDraft(ctx, options) {
   console.log(`Path: ${filePath}`);
 }
 
-async function runActivate(ctx, options) {
+async function runActivate(ctx, options, cwd) {
   const slug = sanitizeId(options.intentId);
   if (!slug) {
     throw new Error(`Invalid backlog slug "${options.intentId}".`);
@@ -414,6 +537,16 @@ async function runActivate(ctx, options) {
     changeType: options.changeType,
     wave: options.wave,
   });
+  const meta = readIntentMeta(ctx.contentRoot, intentId);
+  const focusState = syncRuntimeFocusAfterIntentMutation({
+    cwd,
+    intentId,
+    event: 'intent-activated',
+    intentState: 'active',
+    focusSummary: meta.focus && meta.focus.current ? meta.focus.current : null,
+    nextAction: meta.focus && meta.focus.next_action ? meta.focus.next_action : null,
+    fallbackLabel: `Intent activated from backlog ${slug}`,
+  });
   if (options.json) {
     console.log(JSON.stringify({
       command: 'kb intent activate',
@@ -421,6 +554,7 @@ async function runActivate(ctx, options) {
       intent_id: intentId,
       workspace: wsPath,
       status: 'activated',
+      focus_state: focusState,
     }, null, 2));
     return;
   }
@@ -717,7 +851,7 @@ async function runList(ctx, options) {
 // Subcommand: cancel
 // ---------------------------------------------------------------------------
 
-async function runCancel(ctx, options) {
+async function runCancel(ctx, options, cwd) {
   const { intentId, yes, json } = options;
 
   if (!yes && !json) {
@@ -733,6 +867,13 @@ async function runCancel(ctx, options) {
   }
 
   const closedPath = cancelIntent(ctx.contentRoot, intentId);
+  const focusState = syncRuntimeFocusAfterIntentMutation({
+    cwd,
+    intentId,
+    event: 'intent-cancelled',
+    releaseCurrentFocus: true,
+    fallbackLabel: 'Intent cancelled',
+  });
 
   if (json) {
     console.log(JSON.stringify({
@@ -743,6 +884,7 @@ async function runCancel(ctx, options) {
       drop_reason: 'cancelled via legacy command',
       status: 'closed',
       path: closedPath,
+      focus_state: focusState,
     }, null, 2));
   } else {
     console.log(`Intent "${intentId}" closed as dropped via deprecated cancel alias.`);
@@ -917,11 +1059,21 @@ async function runCleanup(ctx, options) {
   }
 }
 
-async function runFocus(ctx, options) {
+async function runFocus(ctx, options, cwd) {
   const metaPath = updateIntentFocus(ctx.contentRoot, options.intentId, {
     current: options.current,
     nextAction: options.nextAction,
     lastUpdated: options.lastUpdated,
+  });
+  const meta = readIntentMeta(ctx.contentRoot, options.intentId);
+  const focusState = syncRuntimeFocusAfterIntentMutation({
+    cwd,
+    intentId: options.intentId,
+    event: 'intent-focus-updated',
+    intentState: 'active',
+    focusSummary: meta.focus && meta.focus.current ? meta.focus.current : null,
+    nextAction: meta.focus && meta.focus.next_action ? meta.focus.next_action : null,
+    fallbackLabel: 'Intent focus updated',
   });
 
   if (options.json) {
@@ -933,6 +1085,7 @@ async function runFocus(ctx, options) {
       last_updated: options.lastUpdated || new Date().toISOString().slice(0, 10),
       path: metaPath,
       status: 'updated',
+      focus_state: focusState,
     }, null, 2));
     return;
   }
@@ -941,14 +1094,22 @@ async function runFocus(ctx, options) {
   console.log(`Path: ${metaPath}`);
 }
 
-async function runArchive(ctx, options) {
+async function runArchive(ctx, options, cwd) {
   const archivePath = archiveIntent(ctx.contentRoot, options.intentId, new Date().toISOString());
+  const focusState = syncRuntimeFocusAfterIntentMutation({
+    cwd,
+    intentId: options.intentId,
+    event: 'intent-archived',
+    releaseCurrentFocus: true,
+    fallbackLabel: 'Intent archived',
+  });
   if (options.json) {
     console.log(JSON.stringify({
       command: 'kb intent archive',
       intent_id: options.intentId,
       archive_path: archivePath,
       status: 'archived',
+      focus_state: focusState,
     }, null, 2));
     return;
   }
@@ -956,12 +1117,21 @@ async function runArchive(ctx, options) {
   console.log(`Archive: ${archivePath}`);
 }
 
-async function runClose(ctx, options) {
+async function runClose(ctx, options, cwd) {
   const closeType = options.closeType;
   const closedPath = closeIntent(ctx.contentRoot, options.intentId, {
     closeType,
     releaseRef: closeType === 'released' ? options.release : null,
     dropReason: closeType === 'dropped' ? options.reason : null,
+  });
+  const focusState = syncRuntimeFocusAfterIntentMutation({
+    cwd,
+    intentId: options.intentId,
+    event: 'intent-closed',
+    releaseCurrentFocus: true,
+    fallbackLabel: closeType === 'released'
+      ? `Intent released as ${options.release}`
+      : `Intent dropped: ${options.reason}`,
   });
   if (options.json) {
     console.log(JSON.stringify({
@@ -970,6 +1140,7 @@ async function runClose(ctx, options) {
       close_type: closeType,
       path: closedPath,
       status: 'closed',
+      focus_state: focusState,
     }, null, 2));
     return;
   }
@@ -1064,6 +1235,15 @@ async function runApply(ctx, options, cwd) {
   const record = buildApplyRecord({ meta, stagedFiles: staged, appliedAt });
   const applyRecordPath = writeApplyRecord(ctx.contentRoot, intentId, record);
   const wsPath = intentWorkspacePath(ctx.contentRoot, intentId);
+  const focusState = syncRuntimeFocusAfterIntentMutation({
+    cwd,
+    intentId,
+    event: 'intent-applied',
+    intentState: 'active',
+    focusSummary: meta.focus && meta.focus.current ? meta.focus.current : null,
+    nextAction: meta.focus && meta.focus.next_action ? meta.focus.next_action : null,
+    fallbackLabel: `Intent applied (${record.change_type || 'docs'})`,
+  });
 
   // 5. Write AI decision transparency record into the active workspace.
   if (conflictSummary) {
@@ -1112,6 +1292,7 @@ async function runApply(ctx, options, cwd) {
       workspace: wsPath,
       conflict_summary: conflictSummary,
       status: 'applied',
+      focus_state: focusState,
     }, null, 2));
   } else {
     console.log(`Intent "${intentId}" applied.`);
@@ -1313,19 +1494,19 @@ async function runIntent({ args, cwd }) {
   } else if (options.sub === 'draft') {
     await runDraft(ctx, options);
   } else if (options.sub === 'activate') {
-    await runActivate(ctx, options);
+    await runActivate(ctx, options, cwd);
   } else if (options.sub === 'status') {
     await runStatus(ctx, options);
   } else if (options.sub === 'list') {
     await runList(ctx, options);
   } else if (options.sub === 'focus') {
-    await runFocus(ctx, options);
+    await runFocus(ctx, options, cwd);
   } else if (options.sub === 'close') {
-    await runClose(ctx, options);
+    await runClose(ctx, options, cwd);
   } else if (options.sub === 'cancel') {
-    await runCancel(ctx, options);
+    await runCancel(ctx, options, cwd);
   } else if (options.sub === 'archive') {
-    await runArchive(ctx, options);
+    await runArchive(ctx, options, cwd);
   } else if (options.sub === 'apply') {
     await runApply(ctx, options, cwd);
   } else if (options.sub === 'suggest-lessons') {
