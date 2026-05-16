@@ -3,7 +3,7 @@ title: Self Evolution Doctrine
 type: governance
 status: active
 owner: knowledge-management
-time_state: target
+time_state: future
 verification: design-only
 last_updated: 2026-05-02
 last_verified: 2026-05-02

@@ -3,7 +3,7 @@ title: Target State Index
 type: orientation
 status: active
 owner: knowledge-management
-time_state: to_be
+time_state: future
 verification: unverified
 last_updated: 2026-04-28
 last_verified: 2026-04-28

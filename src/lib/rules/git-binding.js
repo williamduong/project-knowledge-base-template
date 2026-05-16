@@ -66,6 +66,10 @@ function collectIntentFiles(kbPath) {
   return results;
 }
 
+function isArchivedIntent(relPath) {
+  return relPath.replace(/\\/g, '/').includes('knowledge-base/intents/_archive/');
+}
+
 /**
  * KBX-GB001: Intent IDs must follow vX-Y-slug pattern
  *
@@ -91,6 +95,7 @@ const GB001_INTENT_ID_FORMAT = {
 
     // Pattern: vX-Y-<slug> where X,Y are digits and slug is lowercase alphanumeric-dash
     const validPattern = /^v\d+-\d+-[a-z0-9]+(-[a-z0-9]+)*$/;
+    const legacyArchivedPattern = /^INT-\d+-\d+-\d+-[a-z0-9]+(-[a-z0-9]+)*$/;
 
     for (const intentPath of intentFiles) {
       let content;
@@ -100,8 +105,11 @@ const GB001_INTENT_ID_FORMAT = {
       if (!fm) continue;
 
       const intentId = fm.id;
-      if (!intentId || !validPattern.test(intentId)) {
-        const relPath = path.relative(kbPath, intentPath);
+      const relPath = path.relative(kbPath, intentPath);
+      const isValidCurrent = intentId && validPattern.test(intentId);
+      const isValidArchivedLegacy = intentId && isArchivedIntent(relPath) && legacyArchivedPattern.test(intentId);
+
+      if (!isValidCurrent && !isValidArchivedLegacy) {
         violations.push({
           file: relPath,
           message: `Intent ID "${intentId}" does not match vX-Y-slug pattern (e.g., v2-7-nl-rules-to-cli-logic)`,

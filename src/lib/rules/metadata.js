@@ -19,7 +19,7 @@ const { registerRules } = require('../rule-engine');
 const REQUIRED_FIELDS = ['title', 'type', 'status', 'owner'];
 
 const ALLOWED_STATUS = ['active', 'draft', 'deprecated', 'archived'];
-const ALLOWED_VERIFICATION = ['code-verified', 'design-only', 'unverified', 'outdated'];
+const ALLOWED_VERIFICATION = ['code-verified', 'design-only', 'unverified', 'outdated', 'self-referential'];
 const ALLOWED_TIME_STATE = ['current', 'point-in-time', 'evergreen', 'historical', '2026-current', 'future'];
 
 function usesAlternateMetadataSchema(relPath, frontmatter) {
