@@ -1,3 +1,20 @@
+export const projectName = 'project-knowledge-base-template'
+
+export const productLabel = 'Control Plane'
+
+export const shellStatusFallback = {
+  chaosScore: { value: 18, level: 'stable' },
+  focusIntent: {
+    id: 'v2-7-nl-rules-to-cli-logic',
+    state: 'READY TO CLOSE',
+  },
+  environments: [
+    { name: 'UI Local', status: 'live' },
+    { name: 'Bridge API', status: 'offline' },
+    { name: 'Downstream', status: 'offline' },
+  ],
+} as const
+
 export const tabs = [
   { label: 'Home', path: '/' },
   { label: 'Intents', path: '/intents' },

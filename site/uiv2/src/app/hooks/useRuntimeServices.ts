@@ -29,6 +29,16 @@ export type RuntimeServicesResponse = {
   refreshedAt?: string | null
   nextRunAt?: string | null
   intervalMs?: number
+  schedules?: Array<{
+    id: string
+    label: string
+    cadence: string
+    responsibility: string
+    refreshedAt?: string | null
+    nextRunAt?: string | null
+    reason?: string
+    state: string
+  }>
   reason?: string
   lastError?: string | null
 }

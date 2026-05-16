@@ -25,3 +25,5 @@ Rules:
 10. Do not preserve or extend a broad website-style shell.
 11. Split `App.tsx` early: keep `App.tsx` thin and move shell sections, routes, and domain slices into focused modules instead of growing one orchestration file again.
 12. When customizing donor visual language, prefer tighter spacing and lower border radius over glossy large-card treatment.
+13. Reuse existing backend/runtime contracts by default; do not make broad backend changes from the UI slice.
+14. If backend refactor or new bridge shape is needed, record that requirement explicitly in notes or in chat for SVFactory follow-up.

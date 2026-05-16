@@ -418,6 +418,64 @@ button {
   gap: 8px;
 }
 
+.runtime-collapsible-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(11, 16, 23, 0.72);
+}
+
+.runtime-collapsible-panel summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 12px;
+  color: var(--text);
+  font-weight: 650;
+}
+
+.runtime-collapsible-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.runtime-collapsible-body {
+  padding: 0 12px 12px;
+}
+
+.cron-schedule-table {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.cron-schedule-header,
+.cron-schedule-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.8fr) 120px 120px;
+  gap: 10px;
+  align-items: start;
+}
+
+.cron-schedule-header {
+  padding: 10px 12px;
+  background: rgba(19, 28, 41, 0.96);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cron-schedule-row {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(11, 16, 23, 0.72);
+}
+
+.cron-schedule-row:last-child {
+  border-bottom: none;
+}
+
 .runtime-compact-list {
   display: grid;
   gap: 10px;
@@ -869,11 +927,13 @@ button {
   }
 
   .intent-row,
-  .runtime-service-row {
+  .runtime-service-row,
+  .cron-schedule-row {
     grid-template-columns: 1fr;
   }
 
-  .runtime-service-header {
+  .runtime-service-header,
+  .cron-schedule-header {
     display: none;
   }
 

@@ -18,3 +18,4 @@ Rules:
 3. Execute the next pending runtime-step from `knowledge-base/.kb/runtime-plan.md` unless blocked by approval gates.
 4. Preserve non-destructive workflow and keep evidence tied to active intents under `knowledge-base/intents/_active/`.
 5. If execution requests user-experience acceptance of shipped KB Agent prompts, stop and route to downstream clean workspace matrix tests.
+6. If frontend signal work is blocked by ambiguous backend payloads, switch to `/svfactory-runtime-contract` and use the relevant runtime contract note as the contract baseline.

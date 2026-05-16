@@ -28,6 +28,7 @@ Use it as the stable read-order contract before planning, building, or reviewing
 - `kbx-ui-module-architecture-map.md` = core module model, feature map, and dependency graph
 - `kbx-ui-localhost-summary.md` = legacy runtime capability inventory and parity baseline
 - `kbx-ui-shadcn-admin-adoption.md` = donor UI adoption boundary for shell and visual primitives
+- `kbx-ui-footer-runtime-contract.md` = footer runtime contract boundary and SVFactory handoff trigger for backend normalization
 
 ## Build Rules Summary
 
@@ -46,6 +47,7 @@ Use it as the stable read-order contract before planning, building, or reviewing
 - `/uiv2-plan`
 - `/uiv2-build`
 - `/uiv2-review`
+- `/svfactory-runtime-contract` when frontend signal wiring is blocked by backend contract ambiguity
 
 ## Legacy Source Inputs
 
@@ -54,6 +56,11 @@ Use these only when the notes are insufficient:
 - `site/kbx-ui/src/App.tsx`
 - `site/kbx-ui/src/styles.css`
 - `site/kbx-ui/server.mjs`
+
+## Footer Runtime Rule
+
+- KBX UI Builder may keep wiring footer signals against existing runtime endpoints.
+- If footer data needs backend normalization, DTO cleanup, or architectural refactor, stop expanding UI heuristics and hand off with `notes/kbx-ui-footer-runtime-contract.md` plus `/svfactory-runtime-contract`.
 
 ## Working Output Expectation
 

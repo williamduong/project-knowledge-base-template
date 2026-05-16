@@ -1354,6 +1354,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
       refreshedAt: snapshot.refreshedAt,
       nextRunAt: snapshot.nextRunAt,
       intervalMs: snapshot.intervalMs,
+      schedules: snapshot.schedules,
       reason: snapshot.reason,
       lastError: snapshot.lastError,
     });

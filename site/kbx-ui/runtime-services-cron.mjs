@@ -1,10 +1,39 @@
 export function createRuntimeServicesCron(options) {
   const intervalMs = options.intervalMs ?? 60_000;
   let timer = null;
+
+  function buildSchedules(reason, refreshedAt, nextRunAt, lastError) {
+    const scheduleState = lastError ? 'failed' : timer ? 'running' : 'off'
+
+    return [
+      {
+        id: 'runtime-registry-refresh',
+        label: 'Runtime Registry Refresh',
+        cadence: `${Math.round(intervalMs / 1000)}s`,
+        responsibility: 'Collect registered service status and persist runtime snapshot.',
+        refreshedAt,
+        nextRunAt,
+        reason,
+        state: scheduleState,
+      },
+      {
+        id: 'runtime-autostart-recovery',
+        label: 'Runtime Auto-start Recovery',
+        cadence: `${Math.round(intervalMs / 1000)}s`,
+        responsibility: 'Ensure auto-start services are restarted when no live process remains.',
+        refreshedAt,
+        nextRunAt,
+        reason,
+        state: scheduleState,
+      },
+    ]
+  }
+
   let lastSnapshot = {
     refreshedAt: null,
     nextRunAt: null,
     intervalMs,
+    schedules: [],
     summary: {
       registeredCount: 0,
       runningCount: 0,
@@ -41,6 +70,7 @@ export function createRuntimeServicesCron(options) {
         lastError: autoStartError,
         reason,
       };
+      lastSnapshot.schedules = buildSchedules(reason, lastSnapshot.refreshedAt, lastSnapshot.nextRunAt, lastSnapshot.lastError)
       return lastSnapshot;
     } catch (error) {
       lastSnapshot = {
@@ -51,6 +81,7 @@ export function createRuntimeServicesCron(options) {
         lastError: error instanceof Error ? error.message : String(error),
         reason,
       };
+      lastSnapshot.schedules = buildSchedules(reason, lastSnapshot.refreshedAt, lastSnapshot.nextRunAt, lastSnapshot.lastError)
       return lastSnapshot;
     }
   }
@@ -61,10 +92,10 @@ export function createRuntimeServicesCron(options) {
         return;
       }
 
-      refresh('startup');
       timer = setInterval(() => {
         refresh('interval');
       }, intervalMs);
+      refresh('startup');
     },
     stop() {
       if (!timer) {

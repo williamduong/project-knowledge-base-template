@@ -18,12 +18,24 @@ function toneClass(service: { running: boolean; healthy: boolean }) {
   return 'status-offline'
 }
 
+function cronStateTone(state: string) {
+  if (state === 'running') {
+    return 'status-good'
+  }
+
+  if (state === 'failed') {
+    return 'status-offline'
+  }
+
+  return 'status-neutral'
+}
+
 export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   const runtimeServicesQuery = useRuntimeServices()
   const ensureRuntimeService = useEnsureRuntimeService()
   const summary = runtimeServicesQuery.data?.summary
   const services = summary?.services ?? []
-  const autoStartCount = services.filter((service) => service.autoStart).length
+  const schedules = runtimeServicesQuery.data?.schedules ?? []
 
   return (
     <section className="workspace-page">
@@ -110,24 +122,42 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
           <div className="panel-toolbar">
             <div>
               <p className="workspace-eyebrow">Runtime Cron</p>
-              <h2>Cron Control</h2>
+              <h2>Schedule List</h2>
             </div>
           </div>
-          <div className="runtime-cron-card runtime-cron-card-inline">
-            <div className="runtime-cron-grid">
-              <span className="meta-pill">Last scan {runtimeServicesQuery.data?.refreshedAt ?? 'pending'}</span>
-              <span className="meta-pill">Next scan {runtimeServicesQuery.data?.nextRunAt ?? 'pending'}</span>
-              <span className="meta-pill">Reason {runtimeServicesQuery.data?.reason ?? 'pending'}</span>
-              <span className="meta-pill">Interval {runtimeServicesQuery.data?.intervalMs ? `${Math.round(runtimeServicesQuery.data.intervalMs / 1000)}s` : 'pending'}</span>
-              <span className="meta-pill">Auto-start {autoStartCount}</span>
+          <div className="cron-schedule-table" role="table" aria-label="Runtime cron schedules">
+            <div className="cron-schedule-header" role="row">
+              <span role="columnheader">Cron</span>
+              <span role="columnheader">Cadence</span>
+              <span role="columnheader">State</span>
             </div>
+            {schedules.map((schedule) => (
+              <article key={schedule.id} className="cron-schedule-row" role="row">
+                <div role="cell">
+                  <div className="runtime-service-title-row">
+                    <h3>{schedule.label}</h3>
+                  </div>
+                  <p className="runtime-service-meta">{schedule.responsibility}</p>
+                </div>
+                <div role="cell">
+                  <p>{schedule.cadence}</p>
+                  <p className="runtime-service-meta">Next {schedule.nextRunAt ?? 'pending'}</p>
+                </div>
+                <div role="cell">
+                  <span className={`status-pill ${cronStateTone(schedule.state)}`}>
+                    {schedule.state}
+                  </span>
+                  <p className="runtime-service-meta">Last {schedule.refreshedAt ?? 'pending'}</p>
+                </div>
+              </article>
+            ))}
           </div>
           <ul className="signal-list">
-            <li>Bridge scans the runtime registry every 60 seconds and updates cached service state.</li>
+            <li>System is the only workspace that lists individual services and allows recovery actions.</li>
             <li>Ensure is a manual recovery action for a registered service that is currently down.</li>
             <li>Port values show the live resolved port, not only the preferred registry port.</li>
             <li>Health is based on TCP reachability plus HTTP health checks when defined.</li>
-            <li>Auto-start services are re-checked by cron and started automatically when absent.</li>
+            <li>Auto-start schedules only fire when there is no live PID for the managed service.</li>
           </ul>
           {runtimeServicesQuery.data?.lastError ? (
             <p className="runtime-error-text">Last cron error: {runtimeServicesQuery.data.lastError}</p>

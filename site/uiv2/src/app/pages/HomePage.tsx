@@ -1,24 +1,11 @@
 import { Link } from 'react-router-dom'
-import { useEnsureRuntimeService, useRuntimeServices } from '../hooks/useRuntimeServices'
-
-function toneLabel(running: boolean, healthy: boolean) {
-  if (running && healthy) {
-    return 'healthy'
-  }
-
-  if (running) {
-    return 'degraded'
-  }
-
-  return 'offline'
-}
+import { useRuntimeServices } from '../hooks/useRuntimeServices'
 
 export function HomePage() {
   const runtimeServicesQuery = useRuntimeServices()
-  const ensureRuntimeService = useEnsureRuntimeService()
   const summary = runtimeServicesQuery.data?.summary
-  const services = summary?.services ?? []
-  const autoStartCount = services.filter((service) => service.autoStart).length
+  const schedules = runtimeServicesQuery.data?.schedules ?? []
+  const autoStartCount = (summary?.services ?? []).filter((service) => service.autoStart).length
 
   return (
     <section className="workspace-page">
@@ -70,51 +57,25 @@ export function HomePage() {
             </div>
           </div>
 
-          <div className="runtime-cron-card">
-            <div>
-              <p className="workspace-eyebrow">Runtime Cron</p>
-              <h3>Cron Status</h3>
+          <div className="runtime-cron-card runtime-cron-card-inline">
+            <div className="panel-toolbar">
+              <div>
+                <p className="workspace-eyebrow">Runtime Cron</p>
+                <h3>Compact Summary</h3>
+              </div>
+              <Link className="tool-button" to="/system">
+                Open System Detail
+              </Link>
             </div>
             <div className="runtime-cron-grid">
+              <span className="meta-pill">Schedules {schedules.length}</span>
               <span className="meta-pill">Last scan {runtimeServicesQuery.data?.refreshedAt ?? 'pending'}</span>
               <span className="meta-pill">Next scan {runtimeServicesQuery.data?.nextRunAt ?? 'pending'}</span>
-              <span className="meta-pill">Reason {runtimeServicesQuery.data?.reason ?? 'pending'}</span>
               <span className="meta-pill">Interval {runtimeServicesQuery.data?.intervalMs ? `${Math.round(runtimeServicesQuery.data.intervalMs / 1000)}s` : 'pending'}</span>
             </div>
             {runtimeServicesQuery.data?.lastError ? (
               <p className="runtime-error-text">Last cron error: {runtimeServicesQuery.data.lastError}</p>
             ) : null}
-          </div>
-
-          <div className="runtime-compact-list">
-            {services.map((service) => {
-              const mutationPending = ensureRuntimeService.isPending && ensureRuntimeService.variables === service.id
-
-              return (
-                <article key={service.id} className="runtime-compact-item">
-                  <div>
-                    <div className="runtime-service-title-row">
-                      <h3>{service.label}</h3>
-                      <span className={`status-pill ${service.running && service.healthy ? 'status-good' : service.running ? 'status-warn' : 'status-offline'}`}>
-                        {toneLabel(service.running, service.healthy)}
-                      </span>
-                    </div>
-                    <p className="intent-id">{service.id}</p>
-                    <p className="runtime-service-meta">
-                      {service.host}:{service.port ?? 'unassigned'} · {service.source} · auto-start {service.autoStart ? 'on' : 'off'}
-                    </p>
-                  </div>
-                  <button
-                    className="tool-button"
-                    type="button"
-                    disabled={service.running || mutationPending}
-                    onClick={() => ensureRuntimeService.mutate(service.id)}
-                  >
-                    {service.running ? 'Running' : mutationPending ? 'Ensuring...' : 'Ensure'}
-                  </button>
-                </article>
-              )
-            })}
           </div>
         </section>
       </div>

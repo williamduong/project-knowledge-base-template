@@ -623,6 +623,8 @@ If runtime response shapes drift from desired UI view-models:
 
 - adapt in domain mappers
 - do not spread bridge shape assumptions into page components
+- prefer reusing the current bridge contract over changing backend behavior from KBX UI slices
+- if a UI need cannot be satisfied cleanly from the existing bridge, record a backend refactor requirement for SVFactory rather than hiding it inside frontend logic
 
 ## UI System Decision
 

@@ -39,6 +39,7 @@ Read these additional files only when needed:
 6. `site/kbx-ui/src/App.tsx` when the notes do not fully capture current runtime behavior
 7. `site/kbx-ui/src/styles.css` when legacy layout or styling behavior matters
 8. `site/kbx-ui/server.mjs` when frontend behavior depends on bridge/API details
+9. `notes/kbx-ui-footer-runtime-contract.md` when footer signal mapping hits backend contract ambiguity
 
 ## Core Build Rules
 
@@ -50,6 +51,8 @@ Read these additional files only when needed:
 - Build each module in this order: list, detail, actions, summary, aggregation.
 - Scan the current source/runtime for a module before building that module.
 - If backend/runtime concerns are still mixed together, record a backend refactor requirement instead of hiding the problem in the UI layer.
+- KBX UI Builder should reuse existing backend/runtime contracts whenever possible and should not drive broad backend changes itself.
+- If a UI slice needs backend changes, record that need explicitly in notes or in the working chat as an SVFactory follow-up instead of quietly expanding the bridge from the UI slice.
 - Preserve operator-critical capabilities from the legacy shell, but do not preserve the old layout.
 - Global navigation must remain top navigation.
 - Route state belongs to the URL.
@@ -91,6 +94,7 @@ Do not adopt it as routing foundation, state model, or global navigation contrac
 - Use `/uiv2-plan` for sequencing and slice definition.
 - Use `/uiv2-build` for focused implementation.
 - Use `/uiv2-review` for findings-first review of a built slice.
+- Use `/svfactory-runtime-contract` to hand off runtime/backend contract cleanup to SVFactory instead of widening UI heuristics.
 
 ## Completion Standard
 
