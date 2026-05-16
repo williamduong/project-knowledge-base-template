@@ -1,18 +1,65 @@
+import { Icon } from '@iconify/react'
+import chartColumn from '@iconify-icons/lucide/bar-chart-3'
+import bookOpen from '@iconify-icons/lucide/book-open'
+import bot from '@iconify-icons/lucide/bot'
+import flag from '@iconify-icons/lucide/flag'
+import gauge from '@iconify-icons/lucide/gauge'
+import network from '@iconify-icons/lucide/network'
+import refreshCw from '@iconify-icons/lucide/refresh-cw'
+import searchIcon from '@iconify-icons/lucide/search'
+import server from '@iconify-icons/lucide/server'
+import settings2 from '@iconify-icons/lucide/settings-2'
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { NavLink, Route, Routes } from 'react-router-dom'
 import { useShellStatus } from './hooks/useShellStatus'
 import { IntentsListPage } from './pages/IntentsListPage'
 import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { RuntimeServicesPage } from './pages/RuntimeServicesPage'
 import { SearchOverlay } from './SearchOverlay'
-import { productLabel, projectName, routeMeta, tabs } from './shell-data'
+import { productLabel, projectName, tabs } from './shell-data'
 
 const projectNameStorageKey = 'kbx-ui-project-name'
 
+const tabIcons = {
+  '/': gauge,
+  '/intents': flag,
+  '/kb': bookOpen,
+  '/rules': bot,
+  '/graph': chartColumn,
+  '/search': searchIcon,
+  '/system': settings2,
+} as const
+
+function statusItemIcon(key: string, label: string) {
+  if (key === 'focus-intent') {
+    return flag
+  }
+
+  if (key === 'chaos') {
+    return gauge
+  }
+
+  if (key === 'bridge-api') {
+    return network
+  }
+
+  if (key === 'workspace-runtime') {
+    return server
+  }
+
+  if (key === 'ui-local') {
+    return gauge
+  }
+
+  if (label.toLowerCase().includes('runtime')) {
+    return server
+  }
+
+  return settings2
+}
+
 export function ShellFrame() {
-  const location = useLocation()
-  const meta = routeMeta[location.pathname] ?? routeMeta['/']
   const shellStatusQuery = useShellStatus()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isEditingProjectName, setIsEditingProjectName] = useState(false)
@@ -122,6 +169,7 @@ export function ShellFrame() {
               end={tab.path === '/'}
               className={({ isActive }) => `shell-tab${isActive ? ' active' : ''}`}
             >
+              <Icon icon={tabIcons[tab.path]} aria-hidden="true" />
               {tab.label}
             </NavLink>
           ))}
@@ -134,11 +182,10 @@ export function ShellFrame() {
             aria-label="Open search"
             onClick={() => setIsSearchOpen(true)}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 0 0 0-13Zm0-2a8.5 8.5 0 1 1 5.33 15.12l4.52 4.53l-1.42 1.41l-4.52-4.52A8.5 8.5 0 0 1 10.5 2Z" />
-            </svg>
+            <Icon icon={searchIcon} aria-hidden="true" />
           </button>
           <button className="tool-button" type="button" onClick={handleRefresh}>
+            <Icon icon={refreshCw} aria-hidden="true" />
             {shellStatusQuery.isFetching ? 'Syncing...' : 'Sync Signals'}
           </button>
           {refreshFeedback ? <span className="refresh-feedback">{refreshFeedback}</span> : null}
@@ -146,31 +193,6 @@ export function ShellFrame() {
       </header>
 
       <main className="shell-main">
-        <aside className="shell-rail">
-          <section className="rail-section">
-            <p className="rail-section-title">Workspace</p>
-            <button className="rail-item rail-item-active" type="button">
-              Current Shell
-            </button>
-            <button className="rail-item" type="button">
-              Focus Queue
-            </button>
-            <button className="rail-item" type="button">
-              Runtime Flags
-            </button>
-          </section>
-
-          <section className="rail-section">
-            <p className="rail-section-title">Build Order</p>
-            <ul className="rail-list compact-rail-list">
-              <li>Compact shell frame</li>
-              <li>Intent detail</li>
-              <li>Intent actions</li>
-              <li>Task inside Intent</li>
-            </ul>
-          </section>
-        </aside>
-
         <section className="shell-content">
           <Routes>
             <Route
@@ -230,28 +252,6 @@ export function ShellFrame() {
             />
           </Routes>
         </section>
-
-        <aside className="shell-inspector">
-          <section className="inspector-section">
-            <p className="rail-section-title">Current View</p>
-            <h2>{meta.eyebrow}</h2>
-            <p>{meta.summary}</p>
-          </section>
-
-          <section className="inspector-section">
-            <p className="rail-section-title">Selection</p>
-            <p>{meta.selection}</p>
-          </section>
-
-          <section className="inspector-section">
-            <p className="rail-section-title">Source Alignment</p>
-            <ul className="signal-list compact-signal-list">
-              <li>Top navigation remains primary.</li>
-              <li>Shell is now full-height and tool-first.</li>
-              <li>Status surfaces stay visible without a page footer.</li>
-            </ul>
-          </section>
-        </aside>
       </main>
 
       <footer className={`shell-status-bar${isFooterExpanded ? ' expanded' : ''}`}>
@@ -261,11 +261,13 @@ export function ShellFrame() {
           aria-expanded={isFooterExpanded}
           onClick={() => setIsFooterExpanded((value) => !value)}
         >
+          <Icon icon={isFooterExpanded ? chartColumn : settings2} aria-hidden="true" />
           {isFooterExpanded ? 'Collapse' : 'Expand'}
         </button>
         <div className={`footer-surface-list${isFooterExpanded ? ' expanded' : ''}`}>
           {(shellStatus?.items ?? []).map((item) => (
             <span key={item.key} className={`status-item status-${item.tone}`} title={item.title ?? `${item.label}: ${item.value}`}>
+              <Icon icon={statusItemIcon(item.key, item.label)} aria-hidden="true" />
               <span className="status-label">{item.label}</span>
               <span className="status-value">{item.value}</span>
             </span>
