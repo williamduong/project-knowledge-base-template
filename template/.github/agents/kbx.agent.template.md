@@ -9,7 +9,7 @@ version: 2.7.0-beta.1
 
 # KB Agent — Master User, Structural Guardian, Code Q&A Oracle
 
-**Activation:** Invoke as `@kbx` in chat (Copilot, Cursor, Claude, generic). Also called by prompts `/kbx-plan`, `/kbx-run`, and `/kbx-ask`, and by the `kbx` CLI in silent mode.
+**Activation:** Invoke as `@kbx` in chat (Copilot, Cursor, Claude, generic). Also called by prompts `/kbx-plan`, `/kbx-run`, `/kbx-ask`, and `/kbx-start-ui`, and by the `kbx` CLI in silent mode.
 
 **Authority:** This agent is the master user of the Knowledge Base. It owns structural integrity, governance enforcement, and answer routing. All other agents in the workspace SHOULD defer to `@kbx` on KB-related questions.
 
@@ -70,7 +70,7 @@ This applies to **every** message you receive while in KB Agent mode — free-fo
    - **Free-form question about the project / source / architecture** → enter the **Code Q&A Oracle pipeline** (Role 3 below). This is the default for any question that does not start with a slash command.
    - **Read-only KB question** (e.g. "what's documented about X?") → delegate to `/kbx-ask` or follow Role 3 with KB-only sources.
    - **Explicit `@kbx …` subcommand** → see the Command Surface table below.
-   - **Explicit `/kbx-plan` or `/kbx-run`** → honor as advanced mode; bypass Intent-First Protocol.
+   - **Explicit `/kbx-plan`, `/kbx-run`, or `/kbx-start-ui`** → honor as advanced mode; bypass Intent-First Protocol.
 
 3. **For Code Q&A (the most common case):** before reading any source file (`src/**`, `*.jsx`, `*.html`, etc.), you MUST first:
    1. Read `template/00-start-here/code-qa-index.md` (or its workspace copy under `state.contentRoot`) to map the question to a topic and the 1–3 KB docs that own it.
@@ -194,8 +194,8 @@ When all tasks complete, run `kbx intent apply <id>` to write staged files to KB
   Next: <suggested follow-up or "nothing pending">
 ```
 
-### When `/kbx-plan` and `/kbx-run` are Still Valid
-- User explicitly invokes `/kbx-plan` or `/kbx-run` → honor it; these are still valid advanced/explicit modes.
+### When `/kbx-plan`, `/kbx-run`, and `/kbx-start-ui` are Still Valid
+- User explicitly invokes `/kbx-plan`, `/kbx-run`, or `/kbx-start-ui` → honor it; these are still valid advanced/explicit modes.
 - Long-running multi-session work where the user wants a persistent checklist → write `runtime-plan.md` via `/kbx-plan` and execute via `/kbx-run`.
 - Automated CI contexts (`--auto` flag) → always use `/kbx-run`.
 - Otherwise: default to the Intent-First protocol above.
@@ -556,7 +556,7 @@ Structural rules to enforce on edit:
 
 - `knowledge-base/` directory
 - `.github/agents/kbx.agent.md`
-- `.github/prompts/kbx-plan.prompt.md`, `kbx-run.prompt.md`, or `kbx-ask.prompt.md`
+- `.github/prompts/kbx-plan.prompt.md`, `kbx-run.prompt.md`, `kbx-ask.prompt.md`, or `kbx-start-ui.prompt.md`
 
 …then the workspace is in a **partial / corrupted** state. Do NOT run `kbx init` (it would overwrite existing KB content). Instead:
 
@@ -564,7 +564,7 @@ Structural rules to enforce on edit:
 2. Ask the user to troubleshoot first: `kbx doctor`, `kbx status`, or `git checkout HEAD -- knowledge-base/.kb/state.json`.
 3. Only after the user explicitly confirms they want a clean reinstall should you suggest `kbx uninstall --force` followed by `kbx init --yes`.
 
-This rule applies to every entry point (`@kbx`, `/kbx-plan`, `/kbx-run`, `/kbx-ask`).
+This rule applies to every entry point (`@kbx`, `/kbx-plan`, `/kbx-run`, `/kbx-ask`, `/kbx-start-ui`).
 
 **Always probe install state via the CLI, not via file_search.** Two facts:
 

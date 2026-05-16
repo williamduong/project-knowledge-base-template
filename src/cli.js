@@ -36,6 +36,7 @@ const { runMigrate } = require('./commands/migrate');
 const { runWorkspace } = require('./commands/workspace');
 const runOntology = require('./commands/ontology');
 const { runRules } = require('./commands/rules');
+const { runUi } = require('./commands/ui');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -218,12 +219,17 @@ async function run(argv) {
     return;
   }
 
+  if (command === 'ui') {
+    await runUi({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
   if (command === '--version' || command === '-v' || command === 'version') {
     console.log(packageJson.version);
     return;
   }
 
-  throw new Error(`Unknown command \"${command}\". Run \"kb help\" for usage.`);
+  throw new Error(`Unknown command \"${command}\". Run \"kbx help\" for usage.`);
 }
 
 module.exports = {

@@ -40,6 +40,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kbx graph check  [--json]');
     console.log('  kbx ontology <show|validate|audit|build> [options]');
     console.log('  kbx rules <lint|check|list> [options]');
+    console.log('  kbx ui start [--include <service-id>] [--json]');
     console.log('  kbx extract <source-file> [--target-doc=<path>] [--apply=<output>] [--uncovered] [--model=<hint>] [--yes] [--json]');
     console.log('  kbx ingest <source-file> [--type=auto|text|pdf|image|docx|xlsx] [--json]');
     console.log('  kbx uninstall [--keep-ai-files] [--remove-hook] [--force]');
@@ -133,6 +134,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kbx rules lint [--json]');
   console.log('  kbx rules check <rule-id> [--json]');
   console.log('  kbx rules list [--json]');
+  console.log('  kbx ui start [--include <service-id>] [--json]');
   console.log('  kbx version');
   console.log('');
   console.log('Implemented commands:');
@@ -194,6 +196,10 @@ function runHelp({ packageJson, args }) {
   console.log('  status     Report KB install state and key state.json fields.');
   console.log('             Classification: fresh | healthy | partial.');
   console.log('             --json           Machine-readable JSON.');
+  console.log('  ui         Start the local UI runtime through the bridge registry.');
+  console.log('             start           Ensure bridge first, then required registered UI services.');
+  console.log('             --include <id>  Also ensure an additional registered service ID.');
+  console.log('             --json          Machine-readable output with actions and final snapshot.');
   console.log('  impact     Recursive impact analysis (graphology in-memory).');
   console.log('             Traverses related_strong + binds_to (depth-1). related_weak displayed only.');
   console.log('             --depth=N        Override default depth (capped at impact.maxDepth).');
