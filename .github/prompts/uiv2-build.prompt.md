@@ -21,3 +21,5 @@ Rules:
 6. Do not introduce page-level direct `fetch`, route-state duplication, or a monolithic app shell.
 7. If adapting donor code from `shadcn-admin`, port only allowed shell and visual surfaces and rewrite router/nav bindings to fit KBX UI rules.
 8. Validate the touched slice with the narrowest relevant check before stopping.
+9. Treat shell work as incomplete until the UI behaves like a compact IDE-like operator frame with dense layout, fixed work surfaces, and a status bar.
+10. Do not preserve or extend a broad website-style shell.

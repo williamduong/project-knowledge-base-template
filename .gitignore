@@ -51,6 +51,13 @@ kb-test-sample/
 # Generic build outputs
 out/
 
+# UIV2 local build artifacts
+site/uiv2/dist/
+site/uiv2/node_modules/
+site/uiv2/*.tsbuildinfo
+site/uiv2/vite.config.js
+site/uiv2/vite.config.d.ts
+
 # kb orchestrator reports (legacy root outputs)
 kb-orch-report-*.json
 project-knowledge-base-template.code-workspace

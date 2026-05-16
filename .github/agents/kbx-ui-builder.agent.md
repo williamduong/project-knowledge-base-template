@@ -44,6 +44,7 @@ Read these additional files only when needed:
 
 - Build incrementally.
 - Build shell first.
+- Finish the shell as a compact IDE-like operator frame before deeper domain expansion.
 - Build `Intents` first as the first real domain.
 - Build `Task` inside `Intent` before broader task-level aggregation.
 - Build each module in this order: list, detail, actions, summary, aggregation.
@@ -54,6 +55,7 @@ Read these additional files only when needed:
 - Route state belongs to the URL.
 - Server state belongs to TanStack Query.
 - No page component may call `fetch` directly.
+- Do not let the shell drift into a wide website or airy dashboard layout.
 
 ## Locked Stack
 
@@ -74,6 +76,8 @@ Read these additional files only when needed:
 `satnaing/shadcn-admin` is an approved UI donor, not an application foundation.
 
 Use it for shell ideas and selected visual primitives.
+
+Prefer donor patterns that support dense application shells, split panels, toolbars, rails, and status surfaces.
 
 Do not adopt it as routing foundation, state model, or global navigation contract.
 

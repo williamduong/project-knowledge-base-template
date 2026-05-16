@@ -19,3 +19,5 @@ Rules:
 4. Plan shell first, then `Intents`, then `Task` inside `Intent`, then later modules.
 5. For each future module, require a source/runtime scan before implementation begins.
 6. If a module is still mixed with another module in backend/runtime behavior, surface that as a backend refactor requirement in the plan.
+7. Treat shell completion as a full compact IDE-like application frame, not merely a header plus page container.
+8. Reject plans that drift toward a wide website or airy dashboard shell.
