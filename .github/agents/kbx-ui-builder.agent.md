@@ -56,6 +56,8 @@ Read these additional files only when needed:
 - Server state belongs to TanStack Query.
 - No page component may call `fetch` directly.
 - Do not let the shell drift into a wide website or airy dashboard layout.
+- Keep `App.tsx` thin; move shell sections, routes, and domain slices into focused modules early.
+- Prefer tighter spacing and lower border radius when adapting donor shell visuals.
 
 ## Locked Stack
 

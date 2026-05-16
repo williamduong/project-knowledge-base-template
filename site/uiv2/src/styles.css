@@ -82,7 +82,7 @@ button {
   justify-content: center;
   width: 30px;
   height: 30px;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--line-strong);
   background: linear-gradient(180deg, rgba(49, 72, 99, 0.42), rgba(14, 21, 30, 0.9));
   color: var(--accent);
@@ -136,7 +136,7 @@ button {
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(17, 23, 34, 0.95), rgba(10, 14, 21, 0.95));
   color: var(--text);
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 12px;
 }
 
@@ -164,7 +164,7 @@ button {
   align-items: center;
   height: 32px;
   padding: 0 12px;
-  border-radius: 8px 8px 0 0;
+  border-radius: 6px 6px 0 0;
   border: 1px solid transparent;
   color: var(--muted);
   font-size: 12px;
@@ -203,7 +203,7 @@ button {
 .inspector-section {
   padding: 10px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 6px;
   background: linear-gradient(180deg, rgba(15, 21, 30, 0.95), rgba(10, 14, 20, 0.98));
 }
 
@@ -228,7 +228,7 @@ button {
   min-height: 32px;
   padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 5px;
   background: transparent;
   color: var(--muted);
 }
@@ -276,7 +276,7 @@ button {
   gap: 12px;
   padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 6px;
   background: linear-gradient(180deg, rgba(16, 23, 34, 0.96), rgba(10, 14, 21, 0.98));
 }
 
@@ -302,7 +302,7 @@ button {
 .surface-panel {
   min-width: 0;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 6px;
   background: linear-gradient(180deg, rgba(16, 23, 34, 0.96), rgba(10, 14, 21, 0.98));
   padding: 12px;
 }
@@ -342,7 +342,7 @@ button {
 .intent-table {
   display: grid;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 6px;
   overflow: hidden;
 }
 

@@ -192,6 +192,13 @@ Visual language rule:
 
 - hierarchy should come primarily from structure, separators, contrast, and state signals
 - not from oversized rounded cards and presentation-style whitespace
+- prefer lower border radius and tighter spacing so the shell reads as a tool, not a glossy dashboard
+
+Frontend complexity rule:
+
+- keep `App.tsx` thin from the start
+- split shell frame, route surfaces, and domain slices into focused modules early
+- do not recreate the legacy problem of one orchestration file owning the whole UI
 
 ### Final Top-Level Domains
 

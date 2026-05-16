@@ -23,3 +23,5 @@ Rules:
 8. Validate the touched slice with the narrowest relevant check before stopping.
 9. Treat shell work as incomplete until the UI behaves like a compact IDE-like operator frame with dense layout, fixed work surfaces, and a status bar.
 10. Do not preserve or extend a broad website-style shell.
+11. Split `App.tsx` early: keep `App.tsx` thin and move shell sections, routes, and domain slices into focused modules instead of growing one orchestration file again.
+12. When customizing donor visual language, prefer tighter spacing and lower border radius over glossy large-card treatment.
