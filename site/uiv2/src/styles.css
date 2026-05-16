@@ -315,8 +315,26 @@ button {
 
 .home-dashboard-grid {
   display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.home-dashboard-section {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+}
+
+.home-section-heading {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 2px;
+  padding: 2px 0;
+}
+
+.home-section-heading h2 {
+  margin: 0;
+  font-size: 14px;
 }
 
 .home-hero-panel {
@@ -331,6 +349,83 @@ button {
 .home-dashboard-copy {
   color: var(--muted);
   line-height: 1.55;
+}
+
+.home-summary-stack {
+  display: grid;
+  gap: 8px;
+}
+
+.home-inline-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.home-detail-block {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: rgba(11, 16, 23, 0.58);
+}
+
+.home-detail-value {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.home-module-list {
+  display: grid;
+  gap: 8px;
+}
+
+.home-module-list.compact {
+  gap: 6px;
+}
+
+.home-module-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.home-module-row:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.home-module-row svg {
+  width: 15px;
+  height: 15px;
+  color: var(--accent-strong);
+  margin-top: 2px;
+}
+
+.home-module-row strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 13px;
+}
+
+.home-module-row p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.compact-row {
+  padding: 6px 0;
+}
+
+@media (max-width: 960px) {
+  .home-dashboard-section {
+    grid-template-columns: 1fr;
+  }
 }
 
 .home-dashboard-card {
