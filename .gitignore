@@ -58,6 +58,9 @@ site/uiv2/*.tsbuildinfo
 site/uiv2/vite.config.js
 site/uiv2/vite.config.d.ts
 
+# Local bridge runtime state
+site/kbx-ui/.runtime-services-state.json
+
 # kb orchestrator reports (legacy root outputs)
 kb-orch-report-*.json
 project-knowledge-base-template.code-workspace

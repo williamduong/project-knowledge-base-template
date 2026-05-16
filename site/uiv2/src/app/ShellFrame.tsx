@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { useShellStatus } from './hooks/useShellStatus'
 import { IntentsListPage } from './pages/IntentsListPage'
+import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
+import { RuntimeServicesPage } from './pages/RuntimeServicesPage'
 import { SearchOverlay } from './SearchOverlay'
 import { productLabel, projectName, routeMeta, tabs } from './shell-data'
 
@@ -173,13 +175,7 @@ export function ShellFrame() {
           <Routes>
             <Route
               path="/"
-              element={
-                <PlaceholderPage
-                  title="Home"
-                  subtitle="Home remains intentionally thin until stable module surfaces exist to compose into an aggregation workspace."
-                  next="Complete the compact shell, then continue with Intent detail before any Home summary blocks."
-                />
-              }
+              element={<HomePage />}
             />
             <Route path="/intents" element={<IntentsListPage />} />
             <Route
@@ -225,10 +221,10 @@ export function ShellFrame() {
             <Route
               path="/system"
               element={
-                <PlaceholderPage
+                <RuntimeServicesPage
                   title="System"
-                  subtitle="System is an operator workspace over runtime and repository state, not a decorative diagnostics page."
-                  next="Add runtime diagnostics once shell and core intent workflows are stable."
+                  eyebrow="Operator Runtime"
+                  subtitle="System is the full runtime registry view with live ports, health state, and manual recovery actions."
                 />
               }
             />

@@ -2,9 +2,11 @@ import express from 'express';
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
+import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { evaluatePhase2Gates } from './bridge-gates.mjs';
+import { createRuntimeServicesCron } from './runtime-services-cron.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +19,8 @@ const { resolveIntentRecord } = require(path.join(repoRoot, 'src', 'lib', 'inten
 const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
 const uiPort = Number(process.env.KBX_UI_PORT || 4173);
 const port = Number(process.env.KBX_BRIDGE_PORT || 4174);
+const runtimeServicesRegistryPath = path.join(__dirname, 'runtime-services.json');
+const runtimeServicesStatePath = path.join(__dirname, '.runtime-services-state.json');
 
 function runKbx(args, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
@@ -78,6 +82,401 @@ function parseJsonLoose(value) {
   }
 
   return null;
+}
+
+function readJsonFileSafe(filePath, fallbackValue) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return fallbackValue;
+    }
+
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return fallbackValue;
+  }
+}
+
+function writeJsonFile(filePath, value) {
+  fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+}
+
+function defaultRuntimeServices() {
+  return [
+    {
+      id: 'bridge',
+      label: 'KBX Bridge',
+      kind: 'self',
+      host: '127.0.0.1',
+      preferredPort: port,
+      healthPath: '/api/version',
+    },
+    {
+      id: 'uiv2',
+      label: 'UIV2 Dev Server',
+      kind: 'vite-dev',
+      host: '127.0.0.1',
+      cwd: 'site/uiv2',
+      preferredPort: 5173,
+      portRange: [5173, 5174, 5175, 5176, 5177],
+      healthPath: '/',
+      healthMatch: '<div id="root"></div>',
+      autoStart: false,
+    },
+    {
+      id: 'legacy-ui',
+      label: 'Legacy UI Dev Server',
+      kind: 'vite-preview',
+      host: '127.0.0.1',
+      cwd: 'site/kbx-ui',
+      preferredPort: 4173,
+      portRange: [4173, 4175, 4176, 4177],
+      healthPath: '/',
+      healthMatch: '<div id="root"></div>',
+      autoStart: true,
+    },
+  ];
+}
+
+function loadRuntimeServiceRegistry() {
+  const parsed = readJsonFileSafe(runtimeServicesRegistryPath, null);
+  return Array.isArray(parsed?.services) ? parsed.services : defaultRuntimeServices();
+}
+
+function readRuntimeServiceState() {
+  const parsed = readJsonFileSafe(runtimeServicesStatePath, {});
+  return parsed && typeof parsed === 'object' ? parsed : {};
+}
+
+function writeRuntimeServiceState(state) {
+  writeJsonFile(runtimeServicesStatePath, state);
+}
+
+function isPidRunning(pid) {
+  if (!pid || typeof pid !== 'number') {
+    return false;
+  }
+
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function checkTcpPort(host, targetPort, timeoutMs = 400) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let settled = false;
+
+    const finalize = (value) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      socket.destroy();
+      resolve(value);
+    };
+
+    socket.setTimeout(timeoutMs);
+    socket.once('connect', () => finalize(true));
+    socket.once('timeout', () => finalize(false));
+    socket.once('error', () => finalize(false));
+    socket.connect(targetPort, host);
+  });
+}
+
+async function checkHttpHealth(service, targetPort) {
+  const healthPath = service.healthPath || '/';
+  const url = `http://${service.host || '127.0.0.1'}:${targetPort}${healthPath}`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1200);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return false;
+    }
+
+    if (!service.healthMatch) {
+      return true;
+    }
+
+    const body = await response.text();
+    return body.includes(service.healthMatch);
+  } catch {
+    return false;
+  }
+}
+
+async function probeServicePort(service, targetPort, stateEntry) {
+  if (!targetPort) {
+    return null;
+  }
+
+  if (!(await checkTcpPort(service.host || '127.0.0.1', targetPort))) {
+    return null;
+  }
+
+  const healthy = await checkHttpHealth(service, targetPort);
+  if (!healthy && service.kind !== 'self') {
+    return null;
+  }
+
+  return {
+    port: targetPort,
+    pid: stateEntry?.pid ?? null,
+    running: true,
+    reachable: true,
+    healthy,
+  };
+}
+
+async function resolveRuntimeServiceStatus(service, stateEntry = {}) {
+  if (service.kind === 'self') {
+    return {
+      id: service.id,
+      label: service.label,
+      kind: service.kind,
+      running: true,
+      healthy: true,
+      pid: process.pid,
+      host: service.host || '127.0.0.1',
+      port: service.preferredPort,
+      source: 'self',
+      autoStart: false,
+      healthPath: service.healthPath || '/',
+    };
+  }
+
+  const candidatePorts = Array.from(new Set([
+    stateEntry.port,
+    service.preferredPort,
+    ...(Array.isArray(service.portRange) ? service.portRange : []),
+  ].filter(Boolean)));
+
+  for (const candidatePort of candidatePorts) {
+    const result = await probeServicePort(service, candidatePort, stateEntry);
+    if (result) {
+      return {
+        id: service.id,
+        label: service.label,
+        kind: service.kind,
+        running: true,
+        healthy: result.healthy,
+        pid: isPidRunning(stateEntry?.pid) ? stateEntry.pid : null,
+        host: service.host || '127.0.0.1',
+        port: result.port,
+        source: candidatePort === stateEntry?.port ? 'state' : candidatePort === service.preferredPort ? 'preferred-port' : 'port-scan',
+        autoStart: service.autoStart === true,
+        healthPath: service.healthPath || '/',
+      };
+    }
+  }
+
+  return {
+    id: service.id,
+    label: service.label,
+    kind: service.kind,
+    running: false,
+    healthy: false,
+    pid: isPidRunning(stateEntry?.pid) ? stateEntry.pid : null,
+    host: service.host || '127.0.0.1',
+    port: stateEntry.port ?? service.preferredPort ?? null,
+    source: stateEntry.port ? 'state' : 'registry',
+    autoStart: service.autoStart === true,
+    healthPath: service.healthPath || '/',
+  };
+}
+
+async function collectRuntimeServiceStatuses() {
+  const registry = loadRuntimeServiceRegistry();
+  const state = readRuntimeServiceState();
+  const services = [];
+
+  for (const service of registry) {
+    const resolved = await resolveRuntimeServiceStatus(service, state[service.id]);
+    services.push(resolved);
+  }
+
+  const nextState = { ...state };
+  for (const service of services) {
+    nextState[service.id] = {
+      pid: service.pid,
+      port: service.port,
+      running: service.running,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  writeRuntimeServiceState(nextState);
+
+  return services;
+}
+
+function summarizeRuntimeServices(services) {
+  const registeredCount = services.length;
+  const runningCount = services.filter((service) => service.running).length;
+  const healthyCount = services.filter((service) => service.healthy).length;
+
+  return {
+    registeredCount,
+    runningCount,
+    healthyCount,
+    summaryLabel: `${runningCount}/${registeredCount} services`,
+    services,
+  };
+}
+
+function runtimeBridgeStatus(summary) {
+  if (!summary || summary.registeredCount === 0) {
+    return 'offline';
+  }
+
+  if (summary.runningCount === summary.registeredCount) {
+    return 'live';
+  }
+
+  if (summary.runningCount > 0) {
+    return 'degraded';
+  }
+
+  return 'offline';
+}
+
+const runtimeServicesCron = createRuntimeServicesCron({
+  intervalMs: 60_000,
+  collectStatuses: collectRuntimeServiceStatuses,
+  summarizeStatuses: summarizeRuntimeServices,
+  ensureService: ensureRuntimeService,
+});
+
+function resolveManagedSpawn(service, targetPort) {
+  if (service.kind === 'vite-dev') {
+    if (process.platform === 'win32') {
+      return {
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', `npx vite --host ${service.host || '127.0.0.1'} --port ${targetPort}`],
+        cwd: path.join(repoRoot, service.cwd),
+      };
+    }
+
+    return {
+      command: 'npx',
+      args: ['vite', '--host', service.host || '127.0.0.1', '--port', String(targetPort)],
+      cwd: path.join(repoRoot, service.cwd),
+    };
+  }
+
+  if (service.kind === 'vite-preview') {
+    if (process.platform === 'win32') {
+      return {
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', `npx vite preview --host ${service.host || '127.0.0.1'} --port ${targetPort}`],
+        cwd: path.join(repoRoot, service.cwd),
+      };
+    }
+
+    return {
+      command: 'npx',
+      args: ['vite', 'preview', '--host', service.host || '127.0.0.1', '--port', String(targetPort)],
+      cwd: path.join(repoRoot, service.cwd),
+    };
+  }
+
+  throw new Error(`Unsupported managed service kind: ${service.kind}`);
+}
+
+async function ensureRuntimeService(serviceId) {
+  try {
+    const registry = loadRuntimeServiceRegistry();
+    const service = registry.find((item) => item.id === serviceId);
+    if (!service) {
+      return { ok: false, error: `Unknown runtime service: ${serviceId}` };
+    }
+
+    const state = readRuntimeServiceState();
+    const existing = await resolveRuntimeServiceStatus(service, state[service.id]);
+    if (existing.running) {
+      return { ok: true, action: 'already-running', service: existing };
+    }
+
+    if (service.kind === 'self') {
+      return { ok: true, action: 'self', service: existing };
+    }
+
+    const portCandidates = Array.from(new Set([
+      service.preferredPort,
+      ...(Array.isArray(service.portRange) ? service.portRange : []),
+    ].filter(Boolean)));
+    let selectedPort = null;
+
+    for (const candidatePort of portCandidates) {
+      // eslint-disable-next-line no-await-in-loop
+      const occupied = await checkTcpPort(service.host || '127.0.0.1', candidatePort);
+      if (!occupied) {
+        selectedPort = candidatePort;
+        break;
+      }
+    }
+
+    if (!selectedPort) {
+      return { ok: false, error: `No free port available for service ${service.id}` };
+    }
+
+    const spawnConfig = resolveManagedSpawn(service, selectedPort);
+    const child = spawn(spawnConfig.command, spawnConfig.args, {
+      cwd: spawnConfig.cwd,
+      detached: true,
+      stdio: 'ignore',
+      env: { ...process.env },
+      windowsHide: true,
+    });
+    child.unref();
+
+    const nextState = { ...state };
+    nextState[service.id] = {
+      pid: child.pid ?? null,
+      port: selectedPort,
+      running: false,
+      updatedAt: new Date().toISOString(),
+    };
+    writeRuntimeServiceState(nextState);
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      // eslint-disable-next-line no-await-in-loop
+      const resolved = await resolveRuntimeServiceStatus(service, nextState[service.id]);
+      if (resolved.running) {
+        nextState[service.id] = {
+          pid: child.pid ?? null,
+          port: resolved.port,
+          running: true,
+          updatedAt: new Date().toISOString(),
+        };
+        writeRuntimeServiceState(nextState);
+        return { ok: true, action: 'started', service: resolved };
+      }
+    }
+
+    return {
+      ok: false,
+      error: `Service ${service.id} did not become healthy after start`,
+      service: {
+        id: service.id,
+        label: service.label,
+        port: selectedPort,
+        pid: child.pid ?? null,
+      },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 async function executeBridgeCommand(command, args, options = {}) {
@@ -857,7 +1256,8 @@ function buildDocumentsWorkspace(selectedPath) {
 
 export function createApp(commandRunner = executeBridgeCommand) {
   const app = express();
-  
+  runtimeServicesCron.start();
+
   // Middleware
   app.use(express.json());
 
@@ -903,7 +1303,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
   });
 
   app.get('/api/status', async (_req, res) => {
-    const [statusResult, chaosResult] = await Promise.all([
+    const [statusResult, chaosResult, runtimeSnapshot] = await Promise.all([
       commandRunner('kbx status --json', ['status', '--json'], {
         expectJson: true,
         timeoutMs: 20000,
@@ -912,14 +1312,21 @@ export function createApp(commandRunner = executeBridgeCommand) {
         expectJson: true,
         timeoutMs: 20000,
       }),
+      runtimeServicesCron.refresh('api-status'),
     ]);
+    const runtimeSummary = runtimeSnapshot.summary;
 
     const response = {
       ...statusResult,
+      ok: runtimeSummary.registeredCount > 0 && runtimeSummary.runningCount > 0 && !runtimeSnapshot.lastError,
       chaos: chaosResult,
       parsed: statusResult.parsed && typeof statusResult.parsed === 'object'
         ? {
             ...statusResult.parsed,
+            bridgeStatus: runtimeBridgeStatus(runtimeSummary),
+            runtimeServices: runtimeSummary,
+            runtimeServicesRefreshedAt: runtimeSnapshot.refreshedAt,
+            runtimeServicesNextRunAt: runtimeSnapshot.nextRunAt,
             observation: {
               ...(statusResult.parsed.observation && typeof statusResult.parsed.observation === 'object'
                 ? statusResult.parsed.observation
@@ -936,11 +1343,31 @@ export function createApp(commandRunner = executeBridgeCommand) {
         : statusResult.parsed,
     };
 
-    if (!statusResult.ok && !statusResult.parsed && chaosResult.ok) {
-      response.ok = false;
+    res.status(200).json(response);
+  });
+
+  app.get('/api/runtime-services', async (_req, res) => {
+    const snapshot = await runtimeServicesCron.refresh('api-runtime-services');
+    res.status(200).json({
+      ok: !snapshot.lastError,
+      summary: snapshot.summary,
+      refreshedAt: snapshot.refreshedAt,
+      nextRunAt: snapshot.nextRunAt,
+      intervalMs: snapshot.intervalMs,
+      reason: snapshot.reason,
+      lastError: snapshot.lastError,
+    });
+  });
+
+  app.post('/api/runtime-services/:id/ensure', async (req, res) => {
+    const result = await ensureRuntimeService(req.params.id);
+    if (!result.ok) {
+      return res.status(400).json(result);
     }
 
-    res.status(200).json(response);
+    await runtimeServicesCron.refresh('ensure');
+
+    return res.status(200).json(result);
   });
 
   // Helper function to list intents with priority from filesystem

@@ -1,0 +1,36 @@
+{
+  "services": [
+    {
+      "id": "bridge",
+      "label": "KBX Bridge",
+      "kind": "self",
+      "host": "127.0.0.1",
+      "preferredPort": 4174,
+      "healthPath": "/api/version"
+    },
+    {
+      "id": "uiv2",
+      "label": "UIV2 Dev Server",
+      "kind": "vite-dev",
+      "host": "127.0.0.1",
+      "cwd": "site/uiv2",
+      "preferredPort": 5173,
+      "portRange": [5173, 5174, 5175, 5176, 5177],
+      "healthPath": "/",
+      "healthMatch": "<div id=\"root\"></div>",
+      "autoStart": false
+    },
+    {
+      "id": "legacy-ui",
+      "label": "Legacy UI Dev Server",
+      "kind": "vite-preview",
+      "host": "127.0.0.1",
+      "cwd": "site/kbx-ui",
+      "preferredPort": 4173,
+      "portRange": [4173, 4175, 4176, 4177],
+      "healthPath": "/",
+      "healthMatch": "<div id=\"root\"></div>",
+      "autoStart": true
+    }
+  ]
+}

@@ -359,6 +359,78 @@ button {
   grid-template-columns: minmax(0, 1fr) 320px;
 }
 
+.runtime-workspace-grid {
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+}
+
+.runtime-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.runtime-overview-card,
+.runtime-cron-card,
+.runtime-compact-item {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(11, 16, 23, 0.72);
+}
+
+.runtime-overview-card {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.runtime-overview-card strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.runtime-overview-label {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.runtime-cron-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.runtime-cron-card-inline {
+  margin-bottom: 10px;
+}
+
+.runtime-cron-card h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.runtime-cron-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.runtime-compact-list {
+  display: grid;
+  gap: 10px;
+}
+
+.runtime-compact-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+}
+
 .surface-panel {
   min-width: 0;
   border: 1px solid var(--line);
@@ -404,6 +476,81 @@ button {
   border: 1px solid var(--line);
   border-radius: 6px;
   overflow: hidden;
+}
+
+.runtime-summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.runtime-service-list {
+  display: grid;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.runtime-service-header,
+.runtime-service-row {
+  display: grid;
+  grid-template-columns: minmax(280px, 2fr) 140px 100px 150px 120px;
+  gap: 10px;
+  align-items: start;
+}
+
+.runtime-service-header {
+  padding: 10px 12px;
+  background: rgba(19, 28, 41, 0.96);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.runtime-service-row {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(11, 16, 23, 0.72);
+}
+
+.runtime-service-row:last-child {
+  border-bottom: none;
+}
+
+.runtime-service-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.runtime-service-main h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.runtime-service-meta {
+  margin-top: 6px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.runtime-error-text,
+.runtime-success-text {
+  margin-top: 10px;
+  line-height: 1.45;
+}
+
+.runtime-error-text {
+  color: #f0a3a3;
+}
+
+.runtime-success-text {
+  color: var(--success);
 }
 
 .intent-table-header,
@@ -666,8 +813,13 @@ button {
     grid-template-columns: 200px minmax(0, 1fr) 260px;
   }
 
-  .intent-workspace-grid {
+  .intent-workspace-grid,
+  .runtime-workspace-grid {
     grid-template-columns: 1fr;
+  }
+
+  .runtime-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -716,7 +868,23 @@ button {
     display: none;
   }
 
-  .intent-row {
+  .intent-row,
+  .runtime-service-row {
+    grid-template-columns: 1fr;
+  }
+
+  .runtime-service-header {
+    display: none;
+  }
+
+  .runtime-compact-item {
+    flex-direction: column;
+    align-items: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .runtime-overview-grid {
     grid-template-columns: 1fr;
   }
 }

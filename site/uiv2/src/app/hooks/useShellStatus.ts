@@ -274,6 +274,10 @@ function parseEnvironmentStatus(status: unknown, system: unknown, version: unkno
   const statusRecord = isRecord(status) ? status : {}
   const systemRecord = isRecord(system) ? system : {}
   const bridgeValue = readString(findFirstString(statusRecord, ['bridgeStatus', 'apiStatus', 'status', 'presence']))
+  const runtimeServices = isRecord(statusRecord.runtimeServices) ? statusRecord.runtimeServices : undefined
+  const runtimeServiceSummary = runtimeServices
+    ? readString(findFirstString(runtimeServices, ['summaryLabel']))
+    : undefined
   const driftValue = isRecord(statusRecord.state)
     ? readString(findFirstString(statusRecord.state as UnknownRecord, ['driftStatus']))
     : undefined
@@ -286,8 +290,12 @@ function parseEnvironmentStatus(status: unknown, system: unknown, version: unkno
     buildItem(
       'bridge-api',
       'API',
-      bridgeValue && driftValue ? `${bridgeValue} · ${driftValue}` : bridgeValue ?? driftValue,
-      isRecord(status) ? (bridgeValue || driftValue ? 'live' : 'unavailable') : 'pending',
+      bridgeValue && runtimeServiceSummary
+        ? `${bridgeValue} · ${runtimeServiceSummary}`
+        : bridgeValue && driftValue
+          ? `${bridgeValue} · ${driftValue}`
+          : bridgeValue ?? runtimeServiceSummary ?? driftValue,
+      isRecord(status) ? (bridgeValue || driftValue || runtimeServiceSummary ? 'live' : 'unavailable') : 'pending',
       driftValue ? toneFromStatus(driftValue) : bridgeValue ? toneFromStatus(bridgeValue) : undefined,
       'surface'
     ),
