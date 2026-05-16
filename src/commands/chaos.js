@@ -13,7 +13,6 @@ const {
   readEntropyIndex,
   readLessonsIndex,
   computeChaosCoefficient,
-  estimateDeltaChaos,
   compareChaosSnapshots,
   buildChaosSnapshot,
   appendChaosSnapshot,
@@ -409,25 +408,6 @@ function scanModuleStats(srcDir, testDir, churnData = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Built-in forward estimate plans
-// ---------------------------------------------------------------------------
-
-const DEFAULT_FORWARD_ESTIMATES = [
-  {
-    plan: 'v1.9 add kb graph check/export (2 commands, ~600 LOC)',
-    factors: { newUncoveredModules: 0, addedUncoveredLOC: 0, addedHighCoupling: 1, addedTests: 40 },
-  },
-  {
-    plan: 'v1.8.1 refactor status.js (resolve E01 + D01)',
-    factors: { resolvedHighEntropy: 1, resolvedHighDebt: 1, addedTests: 0 },
-  },
-  {
-    plan: 'v1.8.2 add tests for bootstrap+init (resolve D03)',
-    factors: { resolvedCoverageDebt: 1, addedTests: 4 },
-  },
-];
-
-// ---------------------------------------------------------------------------
 // Args
 // ---------------------------------------------------------------------------
 
@@ -502,6 +482,10 @@ function renderDrivers(drivers) {
 function renderEstimates(baseScore, estimates) {
   const BAND_LABEL = { safe: 'SAFE', watch: 'WATCH ⚠', spike: 'SPIKE ⛔' };
   const lines = ['  Forward estimates:'];
+  if (!estimates || estimates.length === 0) {
+    lines.push('    (no active intent chaos estimates found)');
+    return lines.join('\n');
+  }
   for (const e of estimates) {
     const sign  = e.delta >= 0 ? '+' : '';
     const badge = LEVEL_BADGE[e.projectedLevel] || e.projectedLevel.toUpperCase();
@@ -509,6 +493,73 @@ function renderEstimates(baseScore, estimates) {
     lines.push(`    ${pad(e.plan, 45)}  ${sign}${e.delta.toFixed(1)}  → ${e.projected.toFixed(1)}  ${badge}  [${band}]`);
   }
   return lines.join('\n');
+}
+
+function readFiniteNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function levelForScore(score) {
+  for (const candidate of CHAOS_LEVELS) {
+    if (score <= candidate.max) return candidate;
+  }
+  return CHAOS_LEVELS[CHAOS_LEVELS.length - 1];
+}
+
+function classifyRiskBand(baseScore, delta, projected) {
+  const baseLevel = levelForScore(baseScore).level;
+  const projectedLevel = levelForScore(projected).level;
+  const order = ['stable', 'manageable', 'unstable', 'chaotic'];
+  const levelDiff = order.indexOf(projectedLevel) - order.indexOf(baseLevel);
+
+  if (projectedLevel === 'stable') return 'safe';
+  if (delta >= 10 || levelDiff >= 2 || projected >= 76) return 'spike';
+  if (levelDiff === 1 || (levelDiff === 0 && delta >= 5)) return 'watch';
+  return 'safe';
+}
+
+function buildIntentForwardEstimates(contentRoot, baseScore) {
+  const estimates = [];
+  for (const intentId of listActiveIntentIds(contentRoot)) {
+    let meta;
+    try {
+      meta = readIntentMeta(contentRoot, intentId);
+    } catch (_) {
+      continue;
+    }
+
+    const estimate = meta.chaos_estimate && typeof meta.chaos_estimate === 'object'
+      ? meta.chaos_estimate
+      : null;
+    if (!estimate) continue;
+
+    const delta = readFiniteNumber(estimate.estimated_delta);
+    if (delta === null) continue;
+
+    const projected = readFiniteNumber(estimate.projected_score);
+    const nextScore = projected === null
+      ? Math.min(100, Math.max(0, Math.round((baseScore + delta) * 10) / 10))
+      : Math.round(projected * 10) / 10;
+    const projectedLevelRaw = typeof estimate.projected_level === 'string' ? estimate.projected_level : null;
+    const projectedLevel = projectedLevelRaw || levelForScore(nextScore).level;
+
+    estimates.push({
+      intentId,
+      plan: meta.title || intentId,
+      delta: Math.round(delta * 10) / 10,
+      projected: nextScore,
+      projectedLevel,
+      riskBand: classifyRiskBand(baseScore, delta, nextScore),
+    });
+  }
+
+  estimates.sort((left, right) => left.delta - right.delta);
+  return estimates;
 }
 
 function deriveScanConfidence({ scanRequested, moduleStats }) {
@@ -752,10 +803,7 @@ function runChaos({ args, cwd, packageJson }) {
   const trend    = compareChaosSnapshots(result, previous);
 
   // Forward estimates
-  const estimates = DEFAULT_FORWARD_ESTIMATES.map(e => ({
-    plan: e.plan,
-    ...estimateDeltaChaos(result.score, e.factors),
-  }));
+  const estimates = buildIntentForwardEstimates(context.contentRoot, result.score);
 
   // Save snapshot
   let saved = false;

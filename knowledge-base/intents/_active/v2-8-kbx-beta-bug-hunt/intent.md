@@ -1,11 +1,13 @@
 ---
 id: v2-8-kbx-beta-bug-hunt
+title: "KBX Beta Bug Hunt"
 mode: full
 lifecycle: active
+status: open
 created_at: "2026-05-10T23:30:00.000Z"
 focus:
   current: "Investigate beta-release failure modes for kbx only: token burn, infinite loops, hallucination drift, rule non-adherence, and multi-project ambiguity."
-  last_updated: 2026-05-10
+  last_updated: 2026-05-16
   next_action: "Review 2 bugs fixed, plan bug #3 (legacy noise) for v2.8, decide v2.7 GA timeline"
 change_type: maintenance
 change_scope: |
@@ -46,6 +48,13 @@ lesson_id: null
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
+chaos_estimate:
+  current_score: 68
+  current_level: unstable
+  estimated_delta: 0
+  projected_score: 68
+  projected_level: unstable
+  warning: "This bug-hunt intent is expected to hold chaos flat while reducing release uncertainty and surfacing hidden blockers; most benefit is validation clarity rather than immediate score reduction."
 ---
 
 # Intent: v2-8-kbx-beta-bug-hunt

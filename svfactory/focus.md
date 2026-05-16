@@ -13,22 +13,28 @@ v2.7 — NL Rules → CLI Hard Logic (rule engine)
 
 **Version:** v2.8 Phase 0 — Boundary Lock & Testing Strategy
 
-**Session State (2026-05-10, Checkpoint 9):**
+**Chaos snapshot (2026-05-16):** 68 / unstable
+
+**Session State (2026-05-16, Operator sync):**
 - v2.7.0-beta.2 published: 2 bugs fixed in cross-source validation ✅
   - Bug #1 (missing import update.js): FIXED ✅ — VipePix legacy update succeeds
   - Bug #2 (missing baseline guidance init): FIXED ✅ — platform-control-plane tracked-mode UX clear
   - Bug #3 (legacy noise): marked MEDIUM, not fixed (no chaos reduction benefit)
 - All 3 source repos tested WARN-only, chaos stable, no regressions
-- Ready for GA decision or extended beta soak
+- `kbx chaos --json` now reports 68 / unstable with active-intent pressure and repo drift still unresolved
+- Operator rule restored: session focus must be exactly one intent or none
 
-**Active intents:**
-- v2-7-nl-rules-to-cli-logic (READY TO CLOSE — manual tests complete)
-- v2-8-downstream-agent-and-ontology (Phase 0 locked, awaiting Phase 1 kickoff)
-- v2-8-kbx-beta-bug-hunt (active — kbx-only deep failure-mode testing)
+**Focus intent:**
+- v2-7-nl-rules-to-cli-logic (READY TO CLOSE — manual tests complete, estimated chaos delta -6)
+
+**Tracked parallel intents:**
+- v2-8-downstream-agent-and-ontology (Phase 0 locked, not execution focus, estimated chaos delta +8 if expanded without split)
+- v2-8-kbx-beta-bug-hunt (supporting validation thread, estimated chaos delta 0)
 
 **Next action:**
   1. Review v2.7.0-beta.2 with 2 bugs fixed — prepare GA decision memo
-  2. Decide timeline: extended beta soak vs. immediate v2.7 GA promotion
+  2. Close or explicitly re-scope non-focus intents so `_active` stops representing parked work
+  3. Decide timeline: extended beta soak vs. immediate v2.7 GA promotion
 
 ## Active Blockers
 

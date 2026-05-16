@@ -1,48 +1,147 @@
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { useShellStatus } from './hooks/useShellStatus'
 import { IntentsListPage } from './pages/IntentsListPage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
-import { routeMeta, tabs } from './shell-data'
+import { SearchOverlay } from './SearchOverlay'
+import { productLabel, projectName, routeMeta, tabs } from './shell-data'
+
+const projectNameStorageKey = 'kbx-ui-project-name'
 
 export function ShellFrame() {
   const location = useLocation()
   const meta = routeMeta[location.pathname] ?? routeMeta['/']
+  const shellStatusQuery = useShellStatus()
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isEditingProjectName, setIsEditingProjectName] = useState(false)
+  const [editableProjectName, setEditableProjectName] = useState(projectName)
+  const [refreshFeedback, setRefreshFeedback] = useState('')
+  const [isFooterExpanded, setIsFooterExpanded] = useState(false)
+  const previousFingerprintRef = useRef<string | null>(null)
+  const shellStatus = shellStatusQuery.data
+
+  useEffect(() => {
+    if (!shellStatus?.fingerprint) {
+      return
+    }
+
+    previousFingerprintRef.current ??= shellStatus.fingerprint
+  }, [shellStatus?.fingerprint])
+
+  useEffect(() => {
+    const storedProjectName = window.localStorage.getItem(projectNameStorageKey)
+
+    if (storedProjectName) {
+      setEditableProjectName(storedProjectName)
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSearchOpen(false)
+        setIsEditingProjectName(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const handleRefresh = async () => {
+    setRefreshFeedback('Syncing...')
+
+    const previousFingerprint = previousFingerprintRef.current
+    const refetchResult = await shellStatusQuery.refetch()
+    const nextSnapshot = refetchResult.data
+
+    const nextFingerprint = nextSnapshot?.fingerprint ?? shellStatusQuery.data?.fingerprint ?? null
+
+    if (nextFingerprint && previousFingerprint && nextFingerprint !== previousFingerprint) {
+      setRefreshFeedback('Updated signals')
+    } else if (nextFingerprint) {
+      setRefreshFeedback('No signal change')
+    } else {
+      setRefreshFeedback('Signals unavailable')
+    }
+
+    if (nextFingerprint) {
+      previousFingerprintRef.current = nextFingerprint
+    }
+  }
 
   return (
     <div className="shell-root">
       <header className="shell-command-bar">
         <div className="shell-brand">
           <span className="brand-mark">KBX</span>
-          <div>
-            <strong>Operator Control Plane</strong>
-            <p>UIV2 compact shell rebuild</p>
+          <div className="brand-copy">
+            {isEditingProjectName ? (
+              <input
+                autoFocus
+                className="project-name-input"
+                type="text"
+                value={editableProjectName}
+                onChange={(event) => setEditableProjectName(event.target.value)}
+                onBlur={() => {
+                  const nextName = editableProjectName.trim() || projectName
+                  setEditableProjectName(nextName)
+                  window.localStorage.setItem(projectNameStorageKey, nextName)
+                  setIsEditingProjectName(false)
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    const nextName = editableProjectName.trim() || projectName
+                    setEditableProjectName(nextName)
+                    window.localStorage.setItem(projectNameStorageKey, nextName)
+                    setIsEditingProjectName(false)
+                  }
+                }}
+              />
+            ) : (
+              <button
+                className="project-name-button"
+                type="button"
+                title="Double click to edit project name"
+                onDoubleClick={() => setIsEditingProjectName(true)}
+              >
+                <span className="project-name-text">{editableProjectName}</span>
+              </button>
+            )}
+            <span className="brand-product-type">{productLabel}</span>
           </div>
         </div>
 
+        <nav className="shell-tab-strip" aria-label="Primary">
+          {tabs.map((tab) => (
+            <NavLink
+              key={tab.path}
+              to={tab.path}
+              end={tab.path === '/'}
+              className={({ isActive }) => `shell-tab${isActive ? ' active' : ''}`}
+            >
+              {tab.label}
+            </NavLink>
+          ))}
+        </nav>
+
         <div className="command-cluster">
-          <button className="tool-button shell-command-input" type="button">
-            Command Search
+          <button
+            className="icon-tool-button"
+            type="button"
+            aria-label="Open search"
+            onClick={() => setIsSearchOpen(true)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10.5 4a6.5 6.5 0 1 0 0 13a6.5 6.5 0 0 0 0-13Zm0-2a8.5 8.5 0 1 1 5.33 15.12l4.52 4.53l-1.42 1.41l-4.52-4.52A8.5 8.5 0 0 1 10.5 2Z" />
+            </svg>
           </button>
-          <button className="tool-button" type="button">
-            Refresh
+          <button className="tool-button" type="button" onClick={handleRefresh}>
+            {shellStatusQuery.isFetching ? 'Syncing...' : 'Sync Signals'}
           </button>
-          <button className="tool-button" type="button">
-            Theme
-          </button>
+          {refreshFeedback ? <span className="refresh-feedback">{refreshFeedback}</span> : null}
         </div>
       </header>
-
-      <nav className="shell-tab-strip" aria-label="Primary">
-        {tabs.map((tab) => (
-          <NavLink
-            key={tab.path}
-            to={tab.path}
-            end={tab.path === '/'}
-            className={({ isActive }) => `shell-tab${isActive ? ' active' : ''}`}
-          >
-            {tab.label}
-          </NavLink>
-        ))}
-      </nav>
 
       <main className="shell-main">
         <aside className="shell-rail">
@@ -159,11 +258,26 @@ export function ShellFrame() {
         </aside>
       </main>
 
-      <footer className="shell-status-bar">
-        <span>Shell Mode: Compact IDE Frame</span>
-        <span>Focus: Intent detail next</span>
-        <span>Runtime: Notes-backed shell slice</span>
+      <footer className={`shell-status-bar${isFooterExpanded ? ' expanded' : ''}`}>
+        <button
+          className="footer-toggle"
+          type="button"
+          aria-expanded={isFooterExpanded}
+          onClick={() => setIsFooterExpanded((value) => !value)}
+        >
+          {isFooterExpanded ? 'Collapse' : 'Expand'}
+        </button>
+        <div className={`footer-surface-list${isFooterExpanded ? ' expanded' : ''}`}>
+          {(shellStatus?.items ?? []).map((item) => (
+            <span key={item.key} className={`status-item status-${item.tone}`} title={item.title ?? `${item.label}: ${item.value}`}>
+              <span className="status-label">{item.label}</span>
+              <span className="status-value">{item.value}</span>
+            </span>
+          ))}
+        </div>
       </footer>
+
+      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </div>
   )
 }

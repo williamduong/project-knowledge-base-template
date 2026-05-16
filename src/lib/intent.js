@@ -414,6 +414,7 @@ function parseFrontmatterValue(raw) {
   if (raw === 'true') return true;
   if (raw === 'false') return false;
   if (raw.startsWith('"') && raw.endsWith('"')) return raw.slice(1, -1);
+  if (/^[+-]?\d+(?:\.\d+)?$/.test(raw)) return Number(raw);
   return raw;
 }
 

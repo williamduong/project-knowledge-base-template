@@ -16,6 +16,14 @@ const path = require('path');
 const { registerRules } = require('../rule-engine');
 const { SEVERITY } = require('./registry');
 
+function coerceFrontmatterValue(value) {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  if (value === 'null') return null;
+  if (/^[+-]?\d+(?:\.\d+)?$/.test(value)) return Number(value);
+  return value;
+}
+
 /**
  * Parse YAML-style frontmatter from intent.md, including nested fields.
  * Returns object with parsed fields, or null if no frontmatter.
@@ -59,9 +67,7 @@ function parseFrontmatter(content) {
           currentNested = null;
           currentNestedKey = null;
           // Type coercion
-          if (val === 'true') val = true;
-          else if (val === 'false') val = false;
-          else if (val === 'null') val = null;
+          val = coerceFrontmatterValue(val);
           fields[key] = val;
         }
       }
@@ -73,9 +79,7 @@ function parseFrontmatter(content) {
         const key = m[1];
         let val = m[2].trim().replace(/^["']|["']$/g, '');
         // Type coercion
-        if (val === 'true') val = true;
-        else if (val === 'false') val = false;
-        else if (val === 'null') val = null;
+        val = coerceFrontmatterValue(val);
         currentNested[key] = val;
       }
     }
@@ -195,9 +199,47 @@ const I002_FEATURE_HAS_CHANGE_SCOPE = {
   },
 };
 
+/**
+ * KBX-I003: Active intents must declare chaos_estimate.estimated_delta
+ */
+const I003_ACTIVE_INTENT_HAS_CHAOS_ESTIMATE = {
+  id: 'KBX-I003',
+  description: 'Active intents must have numeric chaos_estimate.estimated_delta field',
+  severity: SEVERITY.WARN,
+  source_doc: 'knowledge-base/intents directories (_active, _closed, etc.)',
+  check(context) {
+    const violations = [];
+    const { kbPath } = context;
+    const intentFiles = collectIntentFiles(kbPath);
+
+    for (const intentPath of intentFiles) {
+      let content;
+      try { content = fs.readFileSync(intentPath, 'utf8'); } catch { continue; }
+
+      const fm = parseFrontmatter(content);
+      if (!fm || fm.lifecycle !== 'active') continue;
+
+      const chaosEstimate = fm.chaos_estimate;
+      const estimatedDelta = chaosEstimate && typeof chaosEstimate === 'object'
+        ? chaosEstimate.estimated_delta
+        : null;
+
+      if (typeof estimatedDelta !== 'number' || !Number.isFinite(estimatedDelta)) {
+        const relPath = path.relative(kbPath, intentPath);
+        violations.push({
+          file: relPath,
+          message: 'Active intent missing numeric chaos_estimate.estimated_delta field',
+        });
+      }
+    }
+
+    return violations;
+  },
+};
+
 // ─── Export ─────────────────────────────────────────────────────────────────
 
-const rules = [I001_ACTIVE_INTENT_HAS_NEXT_ACTION, I002_FEATURE_HAS_CHANGE_SCOPE];
+const rules = [I001_ACTIVE_INTENT_HAS_NEXT_ACTION, I002_FEATURE_HAS_CHANGE_SCOPE, I003_ACTIVE_INTENT_HAS_CHAOS_ESTIMATE];
 
 registerRules(rules);
 

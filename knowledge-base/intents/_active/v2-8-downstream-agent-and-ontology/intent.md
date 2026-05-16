@@ -1,11 +1,13 @@
 ---
 id: v2-8-downstream-agent-and-ontology
+title: "Downstream Agent And Ontology"
 mode: full
 lifecycle: active
+status: open
 created_at: "2026-05-10T23:00:00.000Z"
 focus:
   current: "Post-v2.7 planning: deterministic rules foundation complete. v2.8 focus: downstream KB Agent behavior hardening, ontology schema evolution, multi-backend abstraction groundwork."
-  last_updated: 2026-05-10
+  last_updated: 2026-05-16
   next_action: "Phase 0: Boundary analysis and roadmap lock for 3 workstreams (KB Agent, Ontology, Backend)"
 change_type: feature
 change_scope: |
@@ -28,6 +30,13 @@ lesson_id: null
 promotion_ready: false
 linked_signals: []
 promote_decision_ref: null
+chaos_estimate:
+  current_score: 68
+  current_level: unstable
+  estimated_delta: 8
+  projected_score: 76
+  projected_level: unstable
+  warning: "This remains a broad multi-workstream planning/build intent. If activated without further split, it increases coordination load and intent pressure before delivery offsets appear."
 ---
 
 # Intent: v2-8-downstream-agent-and-ontology
