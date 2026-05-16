@@ -9,6 +9,7 @@ import refreshCw from '@iconify-icons/lucide/refresh-cw'
 import searchIcon from '@iconify-icons/lucide/search'
 import server from '@iconify-icons/lucide/server'
 import settings2 from '@iconify-icons/lucide/settings-2'
+import blocks from '@iconify-icons/lucide/blocks'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { useShellStatus } from './hooks/useShellStatus'
@@ -16,6 +17,7 @@ import { IntentsListPage } from './pages/IntentsListPage'
 import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { RuntimeServicesPage } from './pages/RuntimeServicesPage'
+import { PrototypePage } from './pages/PrototypePage'
 import { SearchOverlay } from './SearchOverlay'
 import { productLabel, projectName, tabs } from './shell-data'
 
@@ -29,6 +31,7 @@ const tabIcons = {
   '/graph': chartColumn,
   '/search': searchIcon,
   '/system': settings2,
+  '/prototype': blocks,
 } as const
 
 function statusItemIcon(key: string, label: string) {
@@ -249,6 +252,10 @@ export function ShellFrame() {
                   subtitle="System is the full runtime registry view with live ports, health state, and manual recovery actions."
                 />
               }
+            />
+            <Route
+              path="/prototype"
+              element={<PrototypePage />}
             />
           </Routes>
         </section>

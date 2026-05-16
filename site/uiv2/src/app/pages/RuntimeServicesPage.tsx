@@ -11,6 +11,80 @@ import { useRulesSummary } from '../hooks/useRulesSummary'
 import { useEnsureRuntimeService, useRuntimeServices } from '../hooks/useRuntimeServices'
 import { useState } from 'react'
 
+const RULES_PAGE_SIZE = 20
+
+type RulesWorkspaceTab = 'registry' | 'violations' | 'packs' | 'dependencies' | 'precedence' | 'tools'
+
+type RuleSourceCategory = {
+  id: string
+  label: string
+  tone: 'status-neutral' | 'status-live' | 'status-good' | 'status-warn'
+}
+
+type RegistrySortKey = 'id' | 'severity' | 'kind' | 'layer' | 'priority' | 'sourceType'
+
+function paginateItems<T>(items: T[], page: number, pageSize: number) {
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
+  const safePage = Math.min(Math.max(page, 1), totalPages)
+  const startIndex = (safePage - 1) * pageSize
+
+  return {
+    page: safePage,
+    totalPages,
+    items: items.slice(startIndex, startIndex + pageSize),
+  }
+}
+
+function tabCountLabel(count: number, singular: string, plural: string) {
+  return `${count} ${count === 1 ? singular : plural}`
+}
+
+function sortIndicator(sortKey: RegistrySortKey, activeKey: RegistrySortKey, direction: 'asc' | 'desc') {
+  if (sortKey !== activeKey) {
+    return ' ⇅'
+  }
+
+  return direction === 'asc' ? ' ↑' : ' ↓'
+}
+
+function classifyRuleSource(sourceDoc: string | null | undefined): RuleSourceCategory {
+  const normalized = String(sourceDoc || '')
+
+  if (normalized === 'template/.github/agents/kbx.agent.template.md') {
+    return { id: 'agent-contract', label: 'Agent Contract', tone: 'status-good' }
+  }
+
+  if (normalized === 'template/12-ai-skills/agent-operating-manual.md') {
+    return { id: 'agent-manual', label: 'Agent Manual', tone: 'status-live' }
+  }
+
+  if (normalized.startsWith('template/.github/prompts/')) {
+    return { id: 'prompt-template', label: 'Prompt Template', tone: 'status-neutral' }
+  }
+
+  if (normalized === 'svfactory/CONSTITUTION.md') {
+    return { id: 'constitution', label: 'Constitution', tone: 'status-warn' }
+  }
+
+  if (normalized.startsWith('template/15-governance/') || normalized.startsWith('knowledge-base/15-governance/')) {
+    return { id: 'governance', label: 'Governance', tone: 'status-neutral' }
+  }
+
+  if (normalized.startsWith('src/lib/rules/')) {
+    return { id: 'runtime-rule', label: 'Runtime Rule', tone: 'status-live' }
+  }
+
+  if (normalized.startsWith('template/')) {
+    return { id: 'template-doc', label: 'Template Doc', tone: 'status-neutral' }
+  }
+
+  if (normalized.startsWith('knowledge-base/')) {
+    return { id: 'workspace-doc', label: 'Workspace Doc', tone: 'status-neutral' }
+  }
+
+  return { id: 'other', label: 'Other Source', tone: 'status-neutral' }
+}
+
 type RuntimeServicesPageProps = {
   title: string
   eyebrow: string
@@ -69,10 +143,68 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   const [activeSection, setActiveSection] = useState<'services' | 'cron' | 'goal' | 'pipeline' | 'rules'>('services')
   const [ruleKindFilter, setRuleKindFilter] = useState<'all' | 'hard' | 'master' | 'soft'>('all')
   const [rulePackFilter, setRulePackFilter] = useState<string>('all')
+  const [ruleSourceFilter, setRuleSourceFilter] = useState<string>('all')
+  const [ruleTextFilter, setRuleTextFilter] = useState<string>('')
+  const [ruleSeverityFilter, setRuleSeverityFilter] = useState<string>('all')
+  const [ruleLayerFilter, setRuleLayerFilter] = useState<string>('all')
+  const [rulePriorityFilter, setRulePriorityFilter] = useState<string>('all')
+  const [registrySortKey, setRegistrySortKey] = useState<RegistrySortKey>('id')
+  const [registrySortDirection, setRegistrySortDirection] = useState<'asc' | 'desc'>('asc')
+  const [activeRulesTab, setActiveRulesTab] = useState<RulesWorkspaceTab>('registry')
+  const [rulePages, setRulePages] = useState<Record<RulesWorkspaceTab, number>>({
+    registry: 1,
+    violations: 1,
+    packs: 1,
+    dependencies: 1,
+    precedence: 1,
+    tools: 1,
+  })
 
   const allRules = rules?.rules ?? []
+  const allPacks = rules?.packs ?? []
+  const allViolations = rules?.violations ?? []
   const filteredRules = allRules.filter((rule) => {
+    const searchNeedle = ruleTextFilter.trim().toLowerCase()
+    const sourceCategory = classifyRuleSource(rule.sourceDoc)
+
+    if (searchNeedle) {
+      const haystack = [
+        rule.id,
+        rule.title,
+        rule.description,
+        rule.sourceDoc,
+        rule.sourceAnchor,
+        rule.kind,
+        rule.layer,
+        rule.priority,
+        sourceCategory.label,
+        ...(rule.scope ?? []),
+        ...(rule.dependsOn ?? []),
+        ...(rule.tools ?? []),
+      ].filter(Boolean).join(' ').toLowerCase()
+
+      if (!haystack.includes(searchNeedle)) {
+        return false
+      }
+    }
+
     if (ruleKindFilter !== 'all' && rule.kind !== ruleKindFilter) {
+      return false
+    }
+
+    if (ruleSeverityFilter !== 'all' && rule.severity !== ruleSeverityFilter) {
+      return false
+    }
+
+    if (ruleLayerFilter !== 'all' && rule.layer !== ruleLayerFilter) {
+      return false
+    }
+
+    if (rulePriorityFilter !== 'all' && rule.priority !== rulePriorityFilter) {
+      return false
+    }
+
+    if (ruleSourceFilter !== 'all' && sourceCategory.id !== ruleSourceFilter) {
       return false
     }
     if (rulePackFilter === 'all') {
@@ -81,10 +213,70 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
     const selectedPack = rules?.packs?.find((pack) => pack.id === rulePackFilter)
     return Boolean(selectedPack?.ruleIds.includes(rule.id ?? ''))
   })
-  const rulesWithTools = filteredRules.filter((rule) => rule.tools.length > 0)
-  const rulesWithoutTools = filteredRules.filter((rule) => rule.tools.length === 0)
-  const dependencyRows = filteredRules.filter((rule) => rule.dependsOn.length > 0)
-  const precedenceRows = [...filteredRules].sort((left, right) => (left.precedence ?? 99) - (right.precedence ?? 99) || String(left.id ?? '').localeCompare(String(right.id ?? '')))
+  const sortedRegistryRules = [...filteredRules].sort((left, right) => {
+    const leftSource = classifyRuleSource(left.sourceDoc)
+    const rightSource = classifyRuleSource(right.sourceDoc)
+    const compareMap: Record<RegistrySortKey, [string, string]> = {
+      id: [String(left.id ?? ''), String(right.id ?? '')],
+      severity: [String(left.severity ?? ''), String(right.severity ?? '')],
+      kind: [String(left.kind ?? ''), String(right.kind ?? '')],
+      layer: [String(left.layer ?? ''), String(right.layer ?? '')],
+      priority: [String(left.priority ?? ''), String(right.priority ?? '')],
+      sourceType: [leftSource.label, rightSource.label],
+    }
+
+    const [leftValue, rightValue] = compareMap[registrySortKey]
+    const direction = registrySortDirection === 'asc' ? 1 : -1
+    const primary = leftValue.localeCompare(rightValue) * direction
+
+    if (primary !== 0) {
+      return primary
+    }
+
+    return String(left.id ?? '').localeCompare(String(right.id ?? '')) * direction
+  })
+  const dependencyRows = allRules.filter((rule) => rule.dependsOn.length > 0)
+  const precedenceRows = [...allRules].sort((left, right) => (left.precedence ?? 99) - (right.precedence ?? 99) || String(left.id ?? '').localeCompare(String(right.id ?? '')))
+  const toolCoverageRows = [...allRules].sort((left, right) => String(left.id ?? '').localeCompare(String(right.id ?? '')))
+  const sourceBreakdown = allRules.reduce<Array<{ id: string; label: string; count: number; tone: RuleSourceCategory['tone'] }>>((accumulator, rule) => {
+    const category = classifyRuleSource(rule.sourceDoc)
+    const existing = accumulator.find((entry) => entry.id === category.id)
+
+    if (existing) {
+      existing.count += 1
+      return accumulator
+    }
+
+    accumulator.push({ id: category.id, label: category.label, count: 1, tone: category.tone })
+    return accumulator
+  }, []).sort((left, right) => right.count - left.count || left.label.localeCompare(right.label))
+
+  const registryPage = paginateItems(sortedRegistryRules, rulePages.registry, RULES_PAGE_SIZE)
+  const violationsPage = paginateItems(allViolations, rulePages.violations, RULES_PAGE_SIZE)
+  const packsPage = paginateItems(allPacks, rulePages.packs, RULES_PAGE_SIZE)
+  const dependenciesPage = paginateItems(dependencyRows, rulePages.dependencies, RULES_PAGE_SIZE)
+  const precedencePage = paginateItems(precedenceRows, rulePages.precedence, RULES_PAGE_SIZE)
+  const toolsPage = paginateItems(toolCoverageRows, rulePages.tools, RULES_PAGE_SIZE)
+
+  function setRulesPage(tab: RulesWorkspaceTab, page: number) {
+    setRulePages((current) => ({ ...current, [tab]: page }))
+  }
+
+  function resetRegistryPage() {
+    setRulePages((current) => ({ ...current, registry: 1 }))
+  }
+
+  function toggleRegistrySort(nextKey: RegistrySortKey) {
+    setRegistrySortDirection((currentDirection) => {
+      if (registrySortKey === nextKey) {
+        return currentDirection === 'asc' ? 'desc' : 'asc'
+      }
+
+      return 'asc'
+    })
+    setRegistrySortKey(nextKey)
+    resetRegistryPage()
+  }
 
   return (
     <section className="workspace-page">
@@ -435,202 +627,404 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                 </div>
               </div>
 
-              <div className="rules-filter-bar">
-                <div className="rules-filter-group" role="group" aria-label="Rule kind filter">
-                  <button className={`tool-button${ruleKindFilter === 'all' ? ' active' : ''}`} type="button" onClick={() => setRuleKindFilter('all')}>All</button>
-                  <button className={`tool-button${ruleKindFilter === 'hard' ? ' active' : ''}`} type="button" onClick={() => setRuleKindFilter('hard')}>Hard</button>
-                  <button className={`tool-button${ruleKindFilter === 'master' ? ' active' : ''}`} type="button" onClick={() => setRuleKindFilter('master')}>Master</button>
-                  <button className={`tool-button${ruleKindFilter === 'soft' ? ' active' : ''}`} type="button" onClick={() => setRuleKindFilter('soft')}>Soft</button>
-                </div>
-                <label className="rules-filter-select">
-                  <span>Rule Pack</span>
-                  <select value={rulePackFilter} onChange={(event) => setRulePackFilter(event.target.value)}>
-                    <option value="all">All packs</option>
-                    {(rules?.packs ?? []).map((pack) => (
-                      <option key={pack.id ?? 'pack'} value={pack.id ?? ''}>{pack.title ?? pack.id ?? 'pack'}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
               <div className="system-module-stack">
-                <article className="system-info-card">
-                  <div className="panel-toolbar compact-toolbar">
-                    <div>
-                      <p className="workspace-eyebrow">Violation Feed</p>
-                      <h3>Findings</h3>
-                    </div>
-                    <span className="count-pill">{rules?.violations?.length ?? rules?.violationCount ?? 0}</span>
+                <article className="system-info-card rules-section-shell">
+                  <div className="rules-tab-bar" role="tablist" aria-label="Rules workspace sections">
+                    <button className={`rules-tab-button${activeRulesTab === 'registry' ? ' active' : ''}`} type="button" onClick={() => setActiveRulesTab('registry')}>Registry</button>
+                    <button className={`rules-tab-button${activeRulesTab === 'violations' ? ' active' : ''}`} type="button" onClick={() => setActiveRulesTab('violations')}>Violation Feed</button>
+                    <button className={`rules-tab-button${activeRulesTab === 'packs' ? ' active' : ''}`} type="button" onClick={() => setActiveRulesTab('packs')}>Rule Packs</button>
+                    <button className={`rules-tab-button${activeRulesTab === 'dependencies' ? ' active' : ''}`} type="button" onClick={() => setActiveRulesTab('dependencies')}>Dependencies</button>
+                    <button className={`rules-tab-button${activeRulesTab === 'precedence' ? ' active' : ''}`} type="button" onClick={() => setActiveRulesTab('precedence')}>Precedence</button>
+                    <button className={`rules-tab-button${activeRulesTab === 'tools' ? ' active' : ''}`} type="button" onClick={() => setActiveRulesTab('tools')}>Tool Coverage</button>
                   </div>
-                  <div className="rules-table" role="table" aria-label="Rule violations list">
-                    <div className="rules-table-header" role="row">
-                      <span role="columnheader">Rule</span>
-                      <span role="columnheader">Severity</span>
-                      <span role="columnheader">File</span>
-                      <span role="columnheader">Message</span>
-                    </div>
-                    {(rules?.violations ?? []).map((violation, index) => (
-                      <article key={`${violation.ruleId ?? 'violation'}-${index}`} className="rules-table-row" role="row">
-                        <div role="cell">
-                          <strong>{violation.ruleId ?? 'unknown-rule'}</strong>
-                        </div>
-                        <div role="cell">
-                          <span className={`status-pill ${ruleSeverityTone(violation.severity)}`}>{violation.severity ?? 'info'}</span>
-                        </div>
-                        <div role="cell">
-                          <p className="rules-cell-copy">{violation.file ?? 'workspace'}</p>
-                        </div>
-                        <div role="cell">
-                          <p className="rules-cell-copy">{violation.message ?? 'No message'}{violation.line ? ` · line ${violation.line}` : ''}</p>
-                        </div>
-                      </article>
-                    ))}
-                    {!(rules?.violations?.length) ? (
-                      <article className="rules-table-empty" role="row">
-                        <p>No rule violations reported.</p>
-                      </article>
-                    ) : null}
-                  </div>
-                </article>
 
-                <article className="system-info-card">
-                  <div className="panel-toolbar compact-toolbar">
-                    <div>
-                      <p className="workspace-eyebrow">Registry</p>
-                      <h3>Rule Catalog</h3>
-                    </div>
-                    <span className="count-pill">{rules?.rules?.length ?? rules?.count ?? 0}</span>
-                  </div>
-                  <div className="rules-table" role="table" aria-label="Rule registry list">
-                    <div className="rules-table-header rules-registry-header" role="row">
-                      <span role="columnheader">Rule</span>
-                      <span role="columnheader">Class</span>
-                      <span role="columnheader">Source</span>
-                      <span role="columnheader">Description</span>
-                    </div>
-                    {filteredRules.map((rule) => (
-                      <article key={rule.id ?? rule.description ?? 'rule'} className="rules-table-row rules-registry-row" role="row">
-                        <div role="cell">
-                          <strong>{rule.id ?? 'unknown-rule'}</strong>
-                          <p className="rules-cell-copy">{rule.title ?? rule.id ?? 'Unknown title'}</p>
+                  {activeRulesTab === 'registry' ? (
+                    <>
+                      <div className="panel-toolbar compact-toolbar">
+                        <div>
+                          <p className="workspace-eyebrow">Registry</p>
+                          <h3>Rule Catalog</h3>
                         </div>
-                        <div role="cell">
-                          <span className={`status-pill ${ruleSeverityTone(rule.severity)}`}>{rule.kind ?? 'rule'}</span>
-                          <p className="rules-cell-copy">{rule.severity ?? 'info'} · {rule.layer ?? 'agent'}{rule.priority ? ` · ${rule.priority}` : ''}</p>
+                        <div className="panel-toolbar-meta">
+                          <span className="count-pill">{registryPage.page}/{registryPage.totalPages}</span>
+                          <span className="count-pill">{tabCountLabel(filteredRules.length, 'rule', 'rules')}</span>
                         </div>
-                        <div role="cell">
-                          <p className="rules-cell-copy">{rule.sourceDoc ?? 'n/a'}{rule.sourceAnchor ? `#${rule.sourceAnchor}` : ''}</p>
-                        </div>
-                        <div role="cell">
-                          <p className="rules-cell-copy">{rule.description ?? 'No description'}</p>
-                          <p className="rules-cell-copy">
-                            {rule.dependsOn?.length ? `Depends: ${rule.dependsOn.join(', ')}` : 'Depends: none'}
-                            {rule.overrideMode ? ` · Override: ${rule.overrideMode}` : ''}
-                            {rule.scope?.length ? ` · Scope: ${rule.scope.join(', ')}` : ''}
-                          </p>
-                        </div>
-                      </article>
-                    ))}
-                    {!filteredRules.length ? (
-                      <article className="rules-table-empty" role="row">
-                        <p>No rules match the current filters.</p>
-                      </article>
-                    ) : null}
-                  </div>
-                </article>
+                      </div>
 
-                <article className="system-info-card">
-                  <div className="panel-toolbar compact-toolbar">
-                    <div>
-                      <p className="workspace-eyebrow">Rule Packs</p>
-                      <h3>Context Packets</h3>
-                    </div>
-                    <span className="count-pill">{rules?.packs?.length ?? 0}</span>
-                  </div>
-                  <div className="rules-pack-grid">
-                    {(rules?.packs ?? []).map((pack) => (
-                      <article key={pack.id ?? 'pack'} className="rules-pack-card">
-                        <div className="rules-pack-header">
-                          <strong>{pack.title ?? pack.id ?? 'Packet'}</strong>
-                          <span className="status-pill status-neutral">{pack.context ?? 'context'}</span>
+                      <div className="rules-filter-grid">
+                        <label className="rules-filter-select rules-filter-search">
+                          <span>Search Rule Text</span>
+                          <input
+                            type="text"
+                            value={ruleTextFilter}
+                            placeholder="id, title, source, scope, tool..."
+                            onChange={(event) => { setRuleTextFilter(event.target.value); resetRegistryPage() }}
+                          />
+                        </label>
+                        <label className="rules-filter-select">
+                          <span>Severity</span>
+                          <select value={ruleSeverityFilter} onChange={(event) => { setRuleSeverityFilter(event.target.value); resetRegistryPage() }}>
+                            <option value="all">All severities</option>
+                            <option value="error">Error</option>
+                            <option value="warn">Warn</option>
+                            <option value="info">Info</option>
+                          </select>
+                        </label>
+                        <label className="rules-filter-select">
+                          <span>Kind</span>
+                          <select value={ruleKindFilter} onChange={(event) => { setRuleKindFilter(event.target.value as 'all' | 'hard' | 'master' | 'soft'); resetRegistryPage() }}>
+                            <option value="all">All kinds</option>
+                            <option value="hard">Hard</option>
+                            <option value="master">Master</option>
+                            <option value="soft">Soft</option>
+                          </select>
+                        </label>
+                        <label className="rules-filter-select">
+                          <span>Layer</span>
+                          <select value={ruleLayerFilter} onChange={(event) => { setRuleLayerFilter(event.target.value); resetRegistryPage() }}>
+                            <option value="all">All layers</option>
+                            <option value="root">Root</option>
+                            <option value="agent">Agent</option>
+                            <option value="cli">CLI</option>
+                            <option value="ui">UI</option>
+                          </select>
+                        </label>
+                        <label className="rules-filter-select">
+                          <span>Priority</span>
+                          <select value={rulePriorityFilter} onChange={(event) => { setRulePriorityFilter(event.target.value); resetRegistryPage() }}>
+                            <option value="all">All priorities</option>
+                            <option value="P0">P0</option>
+                            <option value="P1">P1</option>
+                            <option value="P2">P2</option>
+                          </select>
+                        </label>
+                        <label className="rules-filter-select">
+                          <span>Rule Pack</span>
+                          <select value={rulePackFilter} onChange={(event) => { setRulePackFilter(event.target.value); resetRegistryPage() }}>
+                            <option value="all">All packs</option>
+                            {allPacks.map((pack) => (
+                              <option key={pack.id ?? 'pack'} value={pack.id ?? ''}>{pack.title ?? pack.id ?? 'pack'}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="rules-filter-select">
+                          <span>Source Type</span>
+                          <select value={ruleSourceFilter} onChange={(event) => { setRuleSourceFilter(event.target.value); resetRegistryPage() }}>
+                            <option value="all">All sources</option>
+                            {sourceBreakdown.map((entry) => (
+                              <option key={entry.id} value={entry.id}>{entry.label} ({entry.count})</option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      <div className="rules-inline-meta">
+                        {sourceBreakdown.map((entry) => (
+                          <span key={entry.id} className={`status-pill ${entry.tone}`}>{entry.label} · {entry.count}</span>
+                        ))}
+                      </div>
+
+                      <div className="rules-table" role="table" aria-label="Rule registry list">
+                        <div className="rules-table-header rules-registry-header" role="row">
+                          <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleRegistrySort('id')}>Rule{sortIndicator('id', registrySortKey, registrySortDirection)}</button>
+                          <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleRegistrySort('severity')}>Severity{sortIndicator('severity', registrySortKey, registrySortDirection)}</button>
+                          <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleRegistrySort('kind')}>Kind{sortIndicator('kind', registrySortKey, registrySortDirection)}</button>
+                          <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleRegistrySort('layer')}>Layer{sortIndicator('layer', registrySortKey, registrySortDirection)}</button>
+                          <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleRegistrySort('priority')}>Priority{sortIndicator('priority', registrySortKey, registrySortDirection)}</button>
+                          <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleRegistrySort('sourceType')}>Source Type{sortIndicator('sourceType', registrySortKey, registrySortDirection)}</button>
+                          <span role="columnheader">Source</span>
+                          <span role="columnheader">Description</span>
                         </div>
-                        <p className="rules-cell-copy">{pack.description ?? 'No description'}</p>
-                        <p className="rules-cell-copy">Rules: {pack.stats.count} · Hard: {pack.stats.hardCount} · Master: {pack.stats.masterCount} · Soft: {pack.stats.softCount}</p>
-                        <p className="rules-cell-copy">Tool coverage: {pack.stats.toolCoverage}/{pack.stats.count}</p>
-                      </article>
-                    ))}
-                  </div>
-                </article>
+                        {registryPage.items.map((rule) => {
+                          const sourceLabel = `${rule.sourceDoc ?? 'n/a'}${rule.sourceAnchor ? `#${rule.sourceAnchor}` : ''}`
+                          const sourceCategory = classifyRuleSource(rule.sourceDoc)
 
-                <article className="system-info-card">
-                  <div className="panel-toolbar compact-toolbar">
-                    <div>
-                      <p className="workspace-eyebrow">Dependencies</p>
-                      <h3>Dependency Graph</h3>
-                    </div>
-                    <span className="count-pill">{dependencyRows.length}</span>
-                  </div>
-                  <div className="rules-graph-list">
-                    {dependencyRows.map((rule) => (
-                      <article key={`${rule.id ?? 'rule'}-dependency`} className="rules-graph-item">
-                        <strong>{rule.id ?? 'unknown-rule'}</strong>
-                        <p className="rules-cell-copy">{rule.dependsOn.join(' -> ')}{' -> '}{rule.id ?? 'unknown-rule'}</p>
-                      </article>
-                    ))}
-                    {!dependencyRows.length ? <p className="rules-cell-copy">No dependency edges in the current filtered set.</p> : null}
-                  </div>
-                </article>
+                          return (
+                            <article key={rule.id ?? rule.description ?? 'rule'} className="rules-table-row rules-registry-row" role="row">
+                              <div role="cell">
+                                <strong>{rule.id ?? 'unknown-rule'}</strong>
+                                <p className="rules-cell-copy">{rule.title ?? rule.id ?? 'Unknown title'}</p>
+                              </div>
+                              <div role="cell">
+                                <span className={`status-pill ${ruleSeverityTone(rule.severity)}`}>{rule.severity ?? 'info'}</span>
+                              </div>
+                              <div role="cell">
+                                <span className="status-pill status-neutral">{rule.kind ?? 'rule'}</span>
+                              </div>
+                              <div role="cell">
+                                <span className="status-pill status-neutral">{rule.layer ?? 'agent'}</span>
+                              </div>
+                              <div role="cell">
+                                <span className="status-pill status-neutral">{rule.priority ?? 'P?'}</span>
+                              </div>
+                              <div role="cell">
+                                <span className={`status-pill ${sourceCategory.tone}`}>{sourceCategory.label}</span>
+                              </div>
+                              <div role="cell">
+                                <p className="rules-cell-copy rules-source-copy" title={sourceLabel}>{sourceLabel}</p>
+                              </div>
+                              <div role="cell">
+                                <p className="rules-cell-copy">{rule.description ?? 'No description'}</p>
+                                <p className="rules-cell-copy">
+                                  {rule.dependsOn?.length ? `Depends: ${rule.dependsOn.join(', ')}` : 'Depends: none'}
+                                  {rule.overrideMode ? ` · Override: ${rule.overrideMode}` : ''}
+                                  {rule.scope?.length ? ` · Scope: ${rule.scope.join(', ')}` : ''}
+                                </p>
+                              </div>
+                            </article>
+                          )
+                        })}
+                        {!registryPage.items.length ? (
+                          <article className="rules-table-empty" role="row">
+                            <p>No rules match the current filters.</p>
+                          </article>
+                        ) : null}
+                      </div>
 
-                <article className="system-info-card">
-                  <div className="panel-toolbar compact-toolbar">
-                    <div>
-                      <p className="workspace-eyebrow">Precedence</p>
-                      <h3>Override Order</h3>
-                    </div>
-                    <span className="count-pill">{rules?.precedence?.length ?? 0} levels</span>
-                  </div>
-                  <div className="rules-precedence-stack">
-                    {(rules?.precedence ?? []).map((level) => (
-                      <article key={level.label} className="rules-precedence-card">
-                        <strong>{level.level}. {level.label}</strong>
-                        <p className="rules-cell-copy">{level.description}</p>
-                      </article>
-                    ))}
-                  </div>
-                  <div className="rules-graph-list">
-                    {precedenceRows.slice(0, 12).map((rule) => (
-                      <article key={`${rule.id ?? 'rule'}-precedence`} className="rules-graph-item">
-                        <strong>{rule.id ?? 'unknown-rule'}</strong>
-                        <p className="rules-cell-copy">Precedence {rule.precedence ?? 'n/a'} · {rule.kind ?? 'rule'} · Override {rule.overrideMode ?? 'none'}</p>
-                      </article>
-                    ))}
-                  </div>
-                </article>
+                      <div className="rules-pagination">
+                        <span className="rules-pagination-copy">Showing {registryPage.items.length ? `${(registryPage.page - 1) * RULES_PAGE_SIZE + 1}-${(registryPage.page - 1) * RULES_PAGE_SIZE + registryPage.items.length}` : '0'} of {filteredRules.length}</span>
+                        <div className="rules-pagination-actions">
+                          <button className="tool-button" type="button" disabled={registryPage.page <= 1} onClick={() => setRulesPage('registry', registryPage.page - 1)}>Previous</button>
+                          <span className="count-pill">Page {registryPage.page} / {registryPage.totalPages}</span>
+                          <button className="tool-button" type="button" disabled={registryPage.page >= registryPage.totalPages} onClick={() => setRulesPage('registry', registryPage.page + 1)}>Next</button>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
 
-                <article className="system-info-card">
-                  <div className="panel-toolbar compact-toolbar">
-                    <div>
-                      <p className="workspace-eyebrow">Tool Coverage</p>
-                      <h3>Execution Surfaces</h3>
-                    </div>
-                    <span className="count-pill">{rulesWithTools.length}/{filteredRules.length || 0}</span>
-                  </div>
-                  <div className="rules-tool-grid">
-                    <article className="rules-tool-card">
-                      <strong>Rules With Tools</strong>
-                      {rulesWithTools.slice(0, 10).map((rule) => (
-                        <p key={`${rule.id ?? 'rule'}-tool`} className="rules-cell-copy">{rule.id ?? 'unknown-rule'} · {rule.tools.join(', ')}</p>
-                      ))}
-                      {!rulesWithTools.length ? <p className="rules-cell-copy">No tool-backed rules in the current filtered set.</p> : null}
-                    </article>
-                    <article className="rules-tool-card">
-                      <strong>Rules Without Tools</strong>
-                      {rulesWithoutTools.slice(0, 10).map((rule) => (
-                        <p key={`${rule.id ?? 'rule'}-no-tool`} className="rules-cell-copy">{rule.id ?? 'unknown-rule'} · prompt/policy only</p>
-                      ))}
-                      {!rulesWithoutTools.length ? <p className="rules-cell-copy">Every filtered rule has explicit tool coverage.</p> : null}
-                    </article>
-                  </div>
+                  {activeRulesTab === 'violations' ? (
+                    <>
+                      <div className="panel-toolbar compact-toolbar">
+                        <div>
+                          <p className="workspace-eyebrow">Violation Feed</p>
+                          <h3>Findings</h3>
+                        </div>
+                        <div className="panel-toolbar-meta">
+                          <span className="count-pill">{violationsPage.page}/{violationsPage.totalPages}</span>
+                          <span className="count-pill">{tabCountLabel(allViolations.length, 'finding', 'findings')}</span>
+                        </div>
+                      </div>
+                      <div className="rules-table" role="table" aria-label="Rule violations list">
+                        <div className="rules-table-header" role="row">
+                          <span role="columnheader">Rule</span>
+                          <span role="columnheader">Severity</span>
+                          <span role="columnheader">File</span>
+                          <span role="columnheader">Message</span>
+                        </div>
+                        {violationsPage.items.map((violation, index) => (
+                          <article key={`${violation.ruleId ?? 'violation'}-${index}`} className="rules-table-row" role="row">
+                            <div role="cell">
+                              <strong>{violation.ruleId ?? 'unknown-rule'}</strong>
+                            </div>
+                            <div role="cell">
+                              <span className={`status-pill ${ruleSeverityTone(violation.severity)}`}>{violation.severity ?? 'info'}</span>
+                            </div>
+                            <div role="cell">
+                              <p className="rules-cell-copy">{violation.file ?? 'workspace'}</p>
+                            </div>
+                            <div role="cell">
+                              <p className="rules-cell-copy">{violation.message ?? 'No message'}{violation.line ? ` · line ${violation.line}` : ''}</p>
+                            </div>
+                          </article>
+                        ))}
+                        {!violationsPage.items.length ? (
+                          <article className="rules-table-empty" role="row">
+                            <p>No rule violations reported.</p>
+                          </article>
+                        ) : null}
+                      </div>
+                      <div className="rules-pagination">
+                        <span className="rules-pagination-copy">Showing {violationsPage.items.length ? `${(violationsPage.page - 1) * RULES_PAGE_SIZE + 1}-${(violationsPage.page - 1) * RULES_PAGE_SIZE + violationsPage.items.length}` : '0'} of {allViolations.length}</span>
+                        <div className="rules-pagination-actions">
+                          <button className="tool-button" type="button" disabled={violationsPage.page <= 1} onClick={() => setRulesPage('violations', violationsPage.page - 1)}>Previous</button>
+                          <span className="count-pill">Page {violationsPage.page} / {violationsPage.totalPages}</span>
+                          <button className="tool-button" type="button" disabled={violationsPage.page >= violationsPage.totalPages} onClick={() => setRulesPage('violations', violationsPage.page + 1)}>Next</button>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {activeRulesTab === 'packs' ? (
+                    <>
+                      <div className="panel-toolbar compact-toolbar">
+                        <div>
+                          <p className="workspace-eyebrow">Rule Packs</p>
+                          <h3>Context Packets</h3>
+                        </div>
+                        <div className="panel-toolbar-meta">
+                          <span className="count-pill">{packsPage.page}/{packsPage.totalPages}</span>
+                          <span className="count-pill">{tabCountLabel(allPacks.length, 'pack', 'packs')}</span>
+                        </div>
+                      </div>
+                      <div className="rules-pack-grid">
+                        {packsPage.items.map((pack) => (
+                          <article key={pack.id ?? 'pack'} className="rules-pack-card">
+                            <div className="rules-pack-header">
+                              <strong>{pack.title ?? pack.id ?? 'Packet'}</strong>
+                              <span className="status-pill status-neutral">{pack.context ?? 'context'}</span>
+                            </div>
+                            <p className="rules-cell-copy">{pack.description ?? 'No description'}</p>
+                            <p className="rules-cell-copy">Rules: {pack.stats.count} · Hard: {pack.stats.hardCount} · Master: {pack.stats.masterCount} · Soft: {pack.stats.softCount}</p>
+                            <p className="rules-cell-copy">Tool coverage: {pack.stats.toolCoverage}/{pack.stats.count}</p>
+                          </article>
+                        ))}
+                        {!packsPage.items.length ? <p className="rules-cell-copy">No rule packs registered.</p> : null}
+                      </div>
+                      <div className="rules-pagination">
+                        <span className="rules-pagination-copy">Showing {packsPage.items.length ? `${(packsPage.page - 1) * RULES_PAGE_SIZE + 1}-${(packsPage.page - 1) * RULES_PAGE_SIZE + packsPage.items.length}` : '0'} of {allPacks.length}</span>
+                        <div className="rules-pagination-actions">
+                          <button className="tool-button" type="button" disabled={packsPage.page <= 1} onClick={() => setRulesPage('packs', packsPage.page - 1)}>Previous</button>
+                          <span className="count-pill">Page {packsPage.page} / {packsPage.totalPages}</span>
+                          <button className="tool-button" type="button" disabled={packsPage.page >= packsPage.totalPages} onClick={() => setRulesPage('packs', packsPage.page + 1)}>Next</button>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {activeRulesTab === 'dependencies' ? (
+                    <>
+                      <div className="panel-toolbar compact-toolbar">
+                        <div>
+                          <p className="workspace-eyebrow">Dependencies</p>
+                          <h3>Dependency Graph</h3>
+                        </div>
+                        <div className="panel-toolbar-meta">
+                          <span className="count-pill">{dependenciesPage.page}/{dependenciesPage.totalPages}</span>
+                          <span className="count-pill">{tabCountLabel(dependencyRows.length, 'edge', 'edges')}</span>
+                        </div>
+                      </div>
+                      <div className="rules-graph-list">
+                        {dependenciesPage.items.map((rule) => (
+                          <article key={`${rule.id ?? 'rule'}-dependency`} className="rules-graph-item">
+                            <strong>{rule.id ?? 'unknown-rule'}</strong>
+                            <p className="rules-cell-copy">{rule.dependsOn.join(' -> ')}{' -> '}{rule.id ?? 'unknown-rule'}</p>
+                          </article>
+                        ))}
+                        {!dependenciesPage.items.length ? <p className="rules-cell-copy">No dependency edges available.</p> : null}
+                      </div>
+                      <div className="rules-pagination">
+                        <span className="rules-pagination-copy">Showing {dependenciesPage.items.length ? `${(dependenciesPage.page - 1) * RULES_PAGE_SIZE + 1}-${(dependenciesPage.page - 1) * RULES_PAGE_SIZE + dependenciesPage.items.length}` : '0'} of {dependencyRows.length}</span>
+                        <div className="rules-pagination-actions">
+                          <button className="tool-button" type="button" disabled={dependenciesPage.page <= 1} onClick={() => setRulesPage('dependencies', dependenciesPage.page - 1)}>Previous</button>
+                          <span className="count-pill">Page {dependenciesPage.page} / {dependenciesPage.totalPages}</span>
+                          <button className="tool-button" type="button" disabled={dependenciesPage.page >= dependenciesPage.totalPages} onClick={() => setRulesPage('dependencies', dependenciesPage.page + 1)}>Next</button>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {activeRulesTab === 'precedence' ? (
+                    <>
+                      <div className="panel-toolbar compact-toolbar">
+                        <div>
+                          <p className="workspace-eyebrow">Precedence</p>
+                          <h3>Override Order</h3>
+                        </div>
+                        <div className="panel-toolbar-meta">
+                          <span className="count-pill">{precedencePage.page}/{precedencePage.totalPages}</span>
+                          <span className="count-pill">{tabCountLabel(precedenceRows.length, 'rule', 'rules')}</span>
+                        </div>
+                      </div>
+                      <div className="rules-inline-meta">
+                        {(rules?.precedence ?? []).map((level) => (
+                          <span key={level.label} className="meta-pill">{level.level}. {level.label}</span>
+                        ))}
+                      </div>
+                      <div className="rules-table" role="table" aria-label="Rule precedence list">
+                        <div className="rules-table-header" role="row">
+                          <span role="columnheader">Rule</span>
+                          <span role="columnheader">Kind</span>
+                          <span role="columnheader">Precedence</span>
+                          <span role="columnheader">Override</span>
+                        </div>
+                        {precedencePage.items.map((rule) => (
+                          <article key={`${rule.id ?? 'rule'}-precedence`} className="rules-table-row" role="row">
+                            <div role="cell">
+                              <strong>{rule.id ?? 'unknown-rule'}</strong>
+                              <p className="rules-cell-copy">{rule.title ?? rule.description ?? 'No title'}</p>
+                            </div>
+                            <div role="cell">
+                              <span className={`status-pill ${ruleSeverityTone(rule.severity)}`}>{rule.kind ?? 'rule'}</span>
+                              <p className="rules-cell-copy">{rule.layer ?? 'agent'}</p>
+                            </div>
+                            <div role="cell">
+                              <p className="rules-cell-copy">{rule.precedence ?? 'n/a'}</p>
+                            </div>
+                            <div role="cell">
+                              <p className="rules-cell-copy">{rule.overrideMode ?? 'none'}</p>
+                            </div>
+                          </article>
+                        ))}
+                        {!precedencePage.items.length ? (
+                          <article className="rules-table-empty" role="row">
+                            <p>No precedence rows available.</p>
+                          </article>
+                        ) : null}
+                      </div>
+                      <div className="rules-pagination">
+                        <span className="rules-pagination-copy">Showing {precedencePage.items.length ? `${(precedencePage.page - 1) * RULES_PAGE_SIZE + 1}-${(precedencePage.page - 1) * RULES_PAGE_SIZE + precedencePage.items.length}` : '0'} of {precedenceRows.length}</span>
+                        <div className="rules-pagination-actions">
+                          <button className="tool-button" type="button" disabled={precedencePage.page <= 1} onClick={() => setRulesPage('precedence', precedencePage.page - 1)}>Previous</button>
+                          <span className="count-pill">Page {precedencePage.page} / {precedencePage.totalPages}</span>
+                          <button className="tool-button" type="button" disabled={precedencePage.page >= precedencePage.totalPages} onClick={() => setRulesPage('precedence', precedencePage.page + 1)}>Next</button>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {activeRulesTab === 'tools' ? (
+                    <>
+                      <div className="panel-toolbar compact-toolbar">
+                        <div>
+                          <p className="workspace-eyebrow">Tool Coverage</p>
+                          <h3>Execution Surfaces</h3>
+                        </div>
+                        <div className="panel-toolbar-meta">
+                          <span className="count-pill">{toolsPage.page}/{toolsPage.totalPages}</span>
+                          <span className="count-pill">{tabCountLabel(toolCoverageRows.length, 'rule', 'rules')}</span>
+                        </div>
+                      </div>
+                      <div className="rules-table" role="table" aria-label="Rule tool coverage list">
+                        <div className="rules-table-header" role="row">
+                          <span role="columnheader">Rule</span>
+                          <span role="columnheader">Kind</span>
+                          <span role="columnheader">Coverage</span>
+                          <span role="columnheader">Tools</span>
+                        </div>
+                        {toolsPage.items.map((rule) => (
+                          <article key={`${rule.id ?? 'rule'}-tool`} className="rules-table-row" role="row">
+                            <div role="cell">
+                              <strong>{rule.id ?? 'unknown-rule'}</strong>
+                              <p className="rules-cell-copy">{rule.title ?? 'No title'}</p>
+                            </div>
+                            <div role="cell">
+                              <span className={`status-pill ${ruleSeverityTone(rule.severity)}`}>{rule.kind ?? 'rule'}</span>
+                              <p className="rules-cell-copy">{rule.priority ?? 'priority n/a'}</p>
+                            </div>
+                            <div role="cell">
+                              <span className={`status-pill ${rule.tools.length > 0 ? 'status-good' : 'status-warn'}`}>{rule.tools.length > 0 ? 'tool-backed' : 'policy-only'}</span>
+                            </div>
+                            <div role="cell">
+                              <p className="rules-cell-copy">{rule.tools.length > 0 ? rule.tools.join(', ') : 'No explicit tool coverage'}</p>
+                            </div>
+                          </article>
+                        ))}
+                        {!toolsPage.items.length ? (
+                          <article className="rules-table-empty" role="row">
+                            <p>No tool coverage rows available.</p>
+                          </article>
+                        ) : null}
+                      </div>
+                      <div className="rules-pagination">
+                        <span className="rules-pagination-copy">Showing {toolsPage.items.length ? `${(toolsPage.page - 1) * RULES_PAGE_SIZE + 1}-${(toolsPage.page - 1) * RULES_PAGE_SIZE + toolsPage.items.length}` : '0'} of {toolCoverageRows.length}</span>
+                        <div className="rules-pagination-actions">
+                          <button className="tool-button" type="button" disabled={toolsPage.page <= 1} onClick={() => setRulesPage('tools', toolsPage.page - 1)}>Previous</button>
+                          <span className="count-pill">Page {toolsPage.page} / {toolsPage.totalPages}</span>
+                          <button className="tool-button" type="button" disabled={toolsPage.page >= toolsPage.totalPages} onClick={() => setRulesPage('tools', toolsPage.page + 1)}>Next</button>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
                 </article>
               </div>
 

@@ -23,6 +23,7 @@ export const tabs = [
   { label: 'Graph', path: '/graph' },
   { label: 'Search', path: '/search' },
   { label: 'System', path: '/system' },
+  { label: 'R&D Prototype', path: '/prototype' },
 ] as const
 
 export const routeMeta: Record<string, { eyebrow: string; summary: string; selection: string }> = {
@@ -60,6 +61,11 @@ export const routeMeta: Record<string, { eyebrow: string; summary: string; selec
     eyebrow: 'System Workspace',
     summary: 'Runtime and repository diagnostics will sit in a dedicated operator workspace.',
     selection: 'No runtime artifact selected.',
+  },
+  '/prototype': {
+    eyebrow: 'Prototype Sandbox',
+    summary: 'R&D route for testing shell patterns, tables, forms, and states before promoting them into production workspaces.',
+    selection: 'No production artifact selected.',
   },
 }
 
