@@ -977,20 +977,70 @@ function summarizePipeline() {
 
 function summarizeRulesResult(listResult, lintResult) {
   const listedRules = Array.isArray(listResult?.parsed?.rules) ? listResult.parsed.rules : [];
+  const listedPacks = Array.isArray(listResult?.parsed?.packs) ? listResult.parsed.packs : [];
+  const precedence = Array.isArray(listResult?.parsed?.precedence) ? listResult.parsed.precedence : [];
   const violations = Array.isArray(lintResult?.parsed?.violations) ? lintResult.parsed.violations : [];
   const errorCount = violations.filter((violation) => String(violation?.severity || '').toLowerCase() === 'error').length;
   const warnCount = violations.filter((violation) => String(violation?.severity || '').toLowerCase() === 'warn').length;
+  const hardCount = listedRules.filter((rule) => String(rule?.kind || '').toLowerCase() === 'hard').length;
+  const masterCount = listedRules.filter((rule) => String(rule?.kind || '').toLowerCase() === 'master').length;
+  const softCount = listedRules.filter((rule) => String(rule?.kind || '').toLowerCase() === 'soft').length;
 
   return {
     ok: Boolean(listResult?.ok) && Boolean(lintResult?.ok || lintResult?.parsed),
     count: listedRules.length,
+    hardCount,
+    masterCount,
+    softCount,
     linted: lintResult?.parsed?.rulesRun ?? null,
     violationCount: violations.length,
     errorCount,
     warnCount,
+    packCount: listedPacks.length,
+    rules: listedRules.map((rule) => ({
+      id: rule?.id ?? null,
+      title: rule?.title ?? rule?.id ?? null,
+      severity: rule?.severity ?? null,
+      kind: rule?.kind ?? null,
+      layer: rule?.layer ?? null,
+      scope: Array.isArray(rule?.scope) ? rule.scope : [],
+      priority: rule?.priority ?? null,
+      dependsOn: Array.isArray(rule?.dependsOn) ? rule.dependsOn : [],
+      overrideMode: rule?.overrideMode ?? null,
+      tools: Array.isArray(rule?.tools) ? rule.tools : [],
+      precedence: rule?.precedence ?? null,
+      description: rule?.description ?? null,
+      sourceDoc: rule?.source_doc ?? null,
+      sourceAnchor: rule?.source_anchor ?? null,
+    })),
+    packs: listedPacks.map((pack) => ({
+      id: pack?.id ?? null,
+      title: pack?.title ?? pack?.id ?? null,
+      context: pack?.context ?? null,
+      description: pack?.description ?? null,
+      ruleIds: Array.isArray(pack?.ruleIds) ? pack.ruleIds : [],
+      stats: {
+        count: pack?.stats?.count ?? 0,
+        hardCount: pack?.stats?.hardCount ?? 0,
+        masterCount: pack?.stats?.masterCount ?? 0,
+        softCount: pack?.stats?.softCount ?? 0,
+        toolCoverage: pack?.stats?.toolCoverage ?? 0,
+      },
+    })),
+    precedence,
+    violations: violations.map((violation) => ({
+      ruleId: violation?.rule_id ?? null,
+      severity: violation?.severity ?? null,
+      file: violation?.file ?? null,
+      line: violation?.line ?? null,
+      message: violation?.message ?? null,
+    })),
     topRules: listedRules.slice(0, 5).map((rule) => ({
       id: rule?.id ?? null,
+      title: rule?.title ?? rule?.id ?? null,
       severity: rule?.severity ?? null,
+      kind: rule?.kind ?? null,
+      precedence: rule?.precedence ?? null,
       description: rule?.description ?? null,
       sourceDoc: rule?.source_doc ?? null,
     })),
@@ -1579,6 +1629,28 @@ export function createApp(commandRunner = executeBridgeCommand) {
       timeoutMs: 15000,
     });
     res.status(response.ok ? 200 : 500).json(response);
+  });
+
+  app.get('/api/rules-summary', async (_req, res) => {
+    const [rulesListResult, rulesLintResult] = await Promise.all([
+      commandRunner('kbx rules list --json', ['rules', 'list', '--json'], {
+        expectJson: true,
+        timeoutMs: 15000,
+      }),
+      commandRunner('kbx rules lint --json', ['rules', 'lint', '--json'], {
+        expectJson: true,
+        timeoutMs: 20000,
+      }),
+    ]);
+
+    res.status(200).json({
+      ok: Boolean(rulesListResult.ok) && Boolean(rulesLintResult.ok || rulesLintResult.parsed),
+      summary: summarizeRulesResult(rulesListResult, rulesLintResult),
+      errors: {
+        list: rulesListResult.ok ? null : rulesListResult.stderr || 'rules list failed',
+        lint: rulesLintResult.ok || rulesLintResult.parsed ? null : rulesLintResult.stderr || 'rules lint failed',
+      },
+    });
   });
 
   app.get('/api/intents', async (_req, res) => {

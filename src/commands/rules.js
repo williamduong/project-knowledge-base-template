@@ -2,6 +2,7 @@
 
 const path = require('path');
 const { loadRules, runRules: engineRunRules, runRule } = require('../lib/rule-engine');
+const { listRuleCatalog, listRulePacks, listPrecedenceOrder } = require('../lib/rules/catalog');
 
 /**
  * Parse common flags: --json, --rule <id>
@@ -115,24 +116,43 @@ async function runCheck({ args = [], cwd = process.cwd() } = {}) {
  */
 function runList({ args = [] } = {}) {
   const options = parseArgs(args);
-  const rules = loadRules();
+  const rules = listRuleCatalog();
 
   if (options.json) {
     console.log(JSON.stringify({
       command: 'kbx rules list',
       count: rules.length,
+      packs: listRulePacks(),
+      precedence: listPrecedenceOrder(),
       rules: rules.map(r => ({
         id: r.id,
+        title: r.title || r.id,
         severity: r.severity,
+        kind: r.kind || null,
+        layer: r.layer || null,
+        scope: r.scope || [],
+        priority: r.priority || null,
+        dependsOn: r.dependsOn || [],
+        overrideMode: r.overrideMode || null,
+        tools: r.tools || [],
         description: r.description,
         source_doc: r.source_doc || null,
+        source_anchor: r.source_anchor || null,
       })),
     }, null, 2));
   } else {
     console.log(`Registered rules: ${rules.length}`);
     for (const r of rules) {
-      console.log(`  ${r.id}  [${r.severity}]  ${r.description}`);
+      const kindLabel = r.kind ? `/${r.kind}` : '';
+      console.log(`  ${r.id}  [${r.severity}${kindLabel}]  ${r.description}`);
       if (r.source_doc) console.log(`    source: ${r.source_doc}`);
+      if (r.dependsOn && r.dependsOn.length > 0) console.log(`    depends: ${r.dependsOn.join(', ')}`);
+    }
+    const packs = listRulePacks();
+    console.log('');
+    console.log(`Rule packs: ${packs.length}`);
+    for (const pack of packs) {
+      console.log(`  ${pack.id}  [${pack.context}]  ${pack.stats.count} rules`);
     }
   }
 }
