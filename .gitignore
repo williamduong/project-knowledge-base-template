@@ -52,6 +52,8 @@ kb-test-sample/
 
 # Generic build outputs
 out/
+site/uiv2/dist/
+site/uiv2/*.tsbuildinfo
 
 # kb orchestrator reports (legacy root outputs)
 kb-orch-report-*.json
