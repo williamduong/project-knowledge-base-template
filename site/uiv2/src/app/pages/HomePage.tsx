@@ -1,6 +1,6 @@
 import { Icon } from '@iconify/react'
+import badgeAlert from '@iconify-icons/lucide/badge-alert'
 import badgeCheck from '@iconify-icons/lucide/badge-check'
-import binary from '@iconify-icons/lucide/binary'
 import gauge from '@iconify-icons/lucide/gauge'
 import server from '@iconify-icons/lucide/server'
 import clock3 from '@iconify-icons/lucide/clock-3'
@@ -12,50 +12,35 @@ import goal from '@iconify-icons/lucide/goal'
 import listTodo from '@iconify-icons/lucide/list-todo'
 import shield from '@iconify-icons/lucide/shield'
 import { Link } from 'react-router-dom'
-import { useShellStatus } from '../hooks/useShellStatus'
-import { useRuntimeServices } from '../hooks/useRuntimeServices'
-import { intentRows } from '../shell-data'
+import { useHomeSummary } from '../hooks/useHomeSummary'
 
 export function HomePage() {
-  const runtimeServicesQuery = useRuntimeServices()
-  const shellStatusQuery = useShellStatus()
-  const summary = runtimeServicesQuery.data?.summary
-  const shellItems = shellStatusQuery.data?.items ?? []
-  const schedules = runtimeServicesQuery.data?.schedules ?? []
-  const autoStartCount = (summary?.services ?? []).filter((service) => service.autoStart).length
-  const runningSchedules = schedules.filter((schedule) => schedule.state === 'running').length
-  const activeIntent = intentRows.find((intent) => intent.state === 'active')
-  const closedIntentCount = intentRows.filter((intent) => intent.state === 'closed').length
-  const droppedIntentCount = intentRows.filter((intent) => intent.state === 'dropped').length
-  const highPriorityCount = intentRows.filter((intent) => intent.priority === 'high').length
-  const focusItem = shellItems.find((item) => item.key === 'focus-intent')
-  const chaosItem = shellItems.find((item) => item.key === 'chaos')
-  const bridgeItem = shellItems.find((item) => item.key === 'bridge')
-  const apiItem = shellItems.find((item) => item.key === 'bridge-api')
-  const runtimeItem = shellItems.find((item) => item.key === 'workspace-runtime')
-  const uiItem = shellItems.find((item) => item.key === 'ui-local')
-  const checkpointLabel = activeIntent ? activeIntent.nextAction : 'No active checkpoint recorded.'
-  const blockedCount = intentRows.filter((intent) => intent.blockReason && !intent.blockReason.toLowerCase().includes('no active blocker')).length
-  const attentionCount = shellItems.filter((item) => item.tone === 'warn' || item.tone === 'offline').length
-  const liveSurfaceCount = shellItems.filter((item) => item.category === 'surface' && item.source === 'live').length
-  const stalledScheduleCount = schedules.filter((schedule) => schedule.state !== 'running').length
-  const milestoneRows = [
-    {
-      title: bridgeItem?.value === 'connected' ? 'Bridge Connected' : 'Bridge Attention',
-      detail: apiItem?.value ?? 'Bridge API status pending.',
-      icon: badgeCheck,
-    },
-    {
-      title: summary?.healthyCount === summary?.registeredCount ? 'Runtime Stable' : 'Runtime Recovery Watch',
-      detail: runtimeItem?.value ?? `${summary?.healthyCount ?? 0}/${summary?.registeredCount ?? 0} services healthy`,
-      icon: binary,
-    },
-    {
-      title: activeIntent ? 'Intent Detail Next' : 'Intent Queue Pending',
-      detail: activeIntent?.nextAction ?? 'Awaiting active intent routing.',
-      icon: listTodo,
-    },
-  ]
+  const homeSummaryQuery = useHomeSummary()
+  const dashboard = homeSummaryQuery.data?.summary
+  const runtime = dashboard?.runtime
+  const session = dashboard?.session
+  const goalSummary = dashboard?.goal
+  const pipeline = dashboard?.pipeline
+  const rules = dashboard?.rules
+  const system = dashboard?.system
+  const milestones = dashboard?.milestones ?? []
+  const autoStartCount = (runtime?.services ?? []).filter((service) => service.autoStart).length
+  const runningSchedules = runtime?.runningCount ?? 0
+  const activeIntent = session?.intent
+  const activeIntentCount = dashboard?.workspace.activeIntentCount ?? (activeIntent?.id ? 1 : 0)
+  const closedIntentCount = session?.activeIntentIds ? Math.max(session.activeIntentIds.length - activeIntentCount, 0) : 0
+  const droppedIntentCount = rules?.errorCount ?? 0
+  const highPriorityCount = rules?.warnCount ?? 0
+  const checkpointLabel = goalSummary?.focusNextAction ?? session?.currentTask?.title ?? 'No active checkpoint recorded.'
+  const blockedCount = rules?.errorCount ?? 0
+  const attentionCount = (rules?.errorCount ?? 0) + (system?.checkSummary.warn ?? 0)
+  const liveSurfaceCount = (system?.checkSummary.pass ?? 0) + (runtime?.healthyCount ?? 0)
+  const stalledScheduleCount = Math.max((runtime?.registeredCount ?? 0) - (runtime?.healthyCount ?? 0), 0)
+  const milestoneRows = milestones.map((milestone) => ({
+    title: milestone.label,
+    detail: milestone.detail,
+    icon: milestone.status === 'warn' || milestone.status === 'pending' ? badgeAlert : badgeCheck,
+  }))
 
   return (
     <section className="workspace-page">
@@ -69,8 +54,8 @@ export function HomePage() {
           <Link className="tool-button" to="/system">
             Open System
           </Link>
-          <button className="tool-button" type="button" onClick={() => runtimeServicesQuery.refetch()}>
-            {runtimeServicesQuery.isFetching ? 'Refreshing...' : 'Refresh Runtime'}
+          <button className="tool-button" type="button" onClick={() => homeSummaryQuery.refetch()}>
+            {homeSummaryQuery.isFetching ? 'Refreshing...' : 'Refresh Runtime'}
           </button>
         </div>
       </header>
@@ -88,11 +73,11 @@ export function HomePage() {
             <p className="home-hero-copy">Use Home to spot drift fast. Use System to inspect runtime internals and recover services.</p>
           </div>
           <div className="runtime-summary-bar">
-            <span className="meta-pill">Bridge {bridgeItem?.value ?? 'pending'}</span>
-            <span className="meta-pill">Runtime {summary?.summaryLabel ?? 'pending'}</span>
-            <span className="meta-pill">Schedules {schedules.length}</span>
-            <span className="meta-pill">Focus {focusItem?.value ?? 'pending'}</span>
-            <span className="meta-pill">Next scan {runtimeServicesQuery.data?.nextRunAt ?? 'pending'}</span>
+            <span className="meta-pill">Bridge {milestones[0]?.detail ?? 'pending'}</span>
+            <span className="meta-pill">Runtime {runtime?.summaryLabel ?? 'pending'}</span>
+            <span className="meta-pill">Pipeline {pipeline?.stepCount ?? 0} steps</span>
+            <span className="meta-pill">Focus {activeIntent?.id ?? 'pending'}</span>
+            <span className="meta-pill">Next scan {runtime?.nextRunAt ?? 'pending'}</span>
           </div>
         </section>
 
@@ -121,15 +106,15 @@ export function HomePage() {
               <div className="runtime-overview-grid compact-runtime-overview-grid">
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Registered</span>
-                  <strong>{summary?.registeredCount ?? 0}</strong>
+                  <strong>{runtime?.registeredCount ?? 0}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Running</span>
-                  <strong>{summary?.runningCount ?? 0}</strong>
+                  <strong>{runtime?.runningCount ?? 0}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Healthy</span>
-                  <strong>{summary?.healthyCount ?? 0}</strong>
+                  <strong>{runtime?.healthyCount ?? 0}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Auto-start</span>
@@ -137,9 +122,9 @@ export function HomePage() {
                 </div>
               </div>
               <div className="home-inline-summary-row">
-                <span className="meta-pill">UI {uiItem?.value ?? 'pending'}</span>
-                <span className="meta-pill">API {apiItem?.value ?? 'pending'}</span>
-                <span className="meta-pill">Node {runtimeItem?.value ?? 'pending'}</span>
+                <span className="meta-pill">Doctor {system?.result ?? 'pending'}</span>
+                <span className="meta-pill">Node {system?.nodeVersion ?? 'pending'}</span>
+                <span className="meta-pill">Workspace {dashboard?.workspace.hasWorkingTreeChanges ? 'dirty' : 'clean'}</span>
               </div>
             </article>
 
@@ -161,7 +146,7 @@ export function HomePage() {
               <div className="runtime-overview-grid compact-runtime-overview-grid">
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Schedules</span>
-                  <strong>{schedules.length}</strong>
+                  <strong>{runtime?.registeredCount ?? 0}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Running</span>
@@ -169,7 +154,7 @@ export function HomePage() {
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Interval</span>
-                  <strong>{runtimeServicesQuery.data?.intervalMs ? `${Math.round(runtimeServicesQuery.data.intervalMs / 1000)}s` : 'pending'}</strong>
+                  <strong>{runtime?.refreshedAt ? 'live' : 'pending'}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Stalled</span>
@@ -177,8 +162,8 @@ export function HomePage() {
                 </div>
               </div>
               <p className="runtime-service-meta">Cron detail stays in System. Home keeps only scan rhythm and scheduler health.</p>
-              {runtimeServicesQuery.data?.lastError ? (
-                <p className="runtime-error-text">Last cron error: {runtimeServicesQuery.data.lastError}</p>
+              {runtime?.lastError ? (
+                <p className="runtime-error-text">Last cron error: {runtime.lastError}</p>
               ) : null}
             </article>
           </section>
@@ -207,7 +192,7 @@ export function HomePage() {
               <div className="runtime-overview-grid compact-runtime-overview-grid">
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Active</span>
-                  <strong>{activeIntent ? 1 : 0}</strong>
+                  <strong>{activeIntentCount}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Closed</span>
@@ -224,10 +209,10 @@ export function HomePage() {
               </div>
               <div className="home-summary-stack">
                 <div className="home-inline-summary-row">
-                  <span className="meta-pill">Current {focusItem?.value ?? activeIntent?.id ?? 'none'}</span>
-                  <span className="meta-pill">Checkpoint {chaosItem?.value ?? 'pending'}</span>
+                  <span className="meta-pill">Current {activeIntent?.id ?? 'none'}</span>
+                  <span className="meta-pill">Checkpoint {goalSummary?.checkpointEvent ?? 'pending'}</span>
                 </div>
-                <p className="home-dashboard-copy">{activeIntent?.title ?? 'Intent queue remains the first real domain slice and becomes the owning workspace for detail.'}</p>
+                <p className="home-dashboard-copy">{activeIntent?.title ?? activeIntent?.summary ?? 'Intent queue remains the first real domain slice and becomes the owning workspace for detail.'}</p>
               </div>
             </article>
 
@@ -247,12 +232,12 @@ export function HomePage() {
               <div className="home-summary-stack">
                 <div className="home-detail-block">
                   <span className="runtime-overview-label">Focus Intent</span>
-                  <strong className="home-detail-value">{focusItem?.value ?? activeIntent?.id ?? 'No active focus'}</strong>
-                  <p className="home-dashboard-copy">{focusItem?.title ?? activeIntent?.focus ?? 'Focus state is currently unavailable from the workspace snapshot.'}</p>
+                  <strong className="home-detail-value">{activeIntent?.id ?? 'No active focus'}</strong>
+                  <p className="home-dashboard-copy">{goalSummary?.focusCurrent ?? activeIntent?.summary ?? 'Focus state is currently unavailable from the workspace snapshot.'}</p>
                 </div>
                 <div className="home-detail-block">
                   <span className="runtime-overview-label">Checkpoint</span>
-                  <strong className="home-detail-value">{chaosItem?.value ?? 'pending'}</strong>
+                  <strong className="home-detail-value">{goalSummary?.checkpointEvent ?? 'pending'}</strong>
                   <p className="home-dashboard-copy">{checkpointLabel}</p>
                 </div>
               </div>
@@ -274,21 +259,22 @@ export function HomePage() {
               <div className="runtime-overview-grid compact-runtime-overview-grid">
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">In Flight</span>
-                  <strong>{activeIntent ? 1 : 0}</strong>
+                  <strong>{pipeline?.stepCount ?? 0}</strong>
+                </div>
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Confirm Steps</span>
+                  <strong>{pipeline?.confirmCount ?? 0}</strong>
+                </div>
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Guarded</span>
+                  <strong>{pipeline?.failOnNonzeroCount ?? 0}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Blocked</span>
                   <strong>{blockedCount}</strong>
                 </div>
-                <div className="runtime-overview-card">
-                  <span className="runtime-overview-label">Attention</span>
-                  <strong>{attentionCount}</strong>
-                </div>
-                <div className="runtime-overview-card">
-                  <span className="runtime-overview-label">Recovery</span>
-                  <strong>{summary?.healthyCount === summary?.registeredCount ? 'Stable' : 'Watch'}</strong>
-                </div>
               </div>
+              <p className="home-dashboard-copy">{pipeline?.steps?.[0]?.description ?? pipeline?.error ?? 'Pipeline summary unavailable.'}</p>
             </article>
           </section>
 
@@ -319,19 +305,19 @@ export function HomePage() {
                   <strong>{attentionCount}</strong>
                 </div>
                 <div className="runtime-overview-card">
-                  <span className="runtime-overview-label">Live Surfaces</span>
-                  <strong>{liveSurfaceCount}</strong>
+                  <span className="runtime-overview-label">Rules</span>
+                  <strong>{rules?.count ?? 0}</strong>
                 </div>
                 <div className="runtime-overview-card">
-                  <span className="runtime-overview-label">Blocked Intents</span>
-                  <strong>{blockedCount}</strong>
+                  <span className="runtime-overview-label">Violations</span>
+                  <strong>{rules?.violationCount ?? 0}</strong>
                 </div>
                 <div className="runtime-overview-card">
-                  <span className="runtime-overview-label">Chaos</span>
-                  <strong>{chaosItem?.value ?? 'pending'}</strong>
+                  <span className="runtime-overview-label">Errors</span>
+                  <strong>{rules?.errorCount ?? 0}</strong>
                 </div>
               </div>
-              <p className="home-dashboard-copy">Use Home to read current findings pressure quickly, then inspect full rule context in the owning Rules workspace.</p>
+              <p className="home-dashboard-copy">{rules?.topViolations?.[0]?.message ?? 'Use Home to read current findings pressure quickly, then inspect full rule context in the owning Rules workspace.'}</p>
             </article>
 
             <article className="surface-panel home-dashboard-card">
@@ -350,8 +336,8 @@ export function HomePage() {
               <div className="home-summary-stack">
                 <div className="home-detail-block">
                   <span className="runtime-overview-label">Primary Goal</span>
-                  <strong className="home-detail-value">Rebuild KBX UI as a compact domain-first operator control plane.</strong>
-                  <p className="home-dashboard-copy">{focusItem?.value ? `Current focus is ${focusItem.value}.` : 'Home should summarize operator truth quickly, then route every deeper action to the owning workspace.'}</p>
+                  <strong className="home-detail-value">{goalSummary?.text ?? activeIntent?.goal ?? 'Goal unavailable'}</strong>
+                  <p className="home-dashboard-copy">{goalSummary?.summary ?? activeIntent?.summary ?? 'Home should summarize operator truth quickly, then route every deeper action to the owning workspace.'}</p>
                 </div>
               </div>
             </article>
@@ -416,14 +402,14 @@ export function HomePage() {
                   <Icon icon={shield} aria-hidden="true" />
                   <div>
                     <strong>Rules</strong>
-                    <p>Registry and findings remain deferred until upstream contracts stabilize.</p>
+                    <p>{rules?.topRules?.[0]?.description ?? 'Registry and findings remain deferred until upstream contracts stabilize.'}</p>
                   </div>
                 </div>
                 <div className="home-module-row compact-row">
                   <Icon icon={gitBranch} aria-hidden="true" />
                   <div>
                     <strong>Graph And Search</strong>
-                    <p>Keep as entry surfaces only until their owning workspaces mature.</p>
+                    <p>{liveSurfaceCount > 0 ? `${liveSurfaceCount} live checks are already available across runtime and doctor surfaces.` : 'Keep as entry surfaces only until their owning workspaces mature.'}</p>
                   </div>
                 </div>
               </div>

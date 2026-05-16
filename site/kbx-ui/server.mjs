@@ -15,6 +15,7 @@ const kbRoot = path.join(repoRoot, 'knowledge-base');
 const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 const require = createRequire(import.meta.url);
 const { resolveIntentRecord } = require(path.join(repoRoot, 'src', 'lib', 'intent.js'));
+const { readPipeline } = require(path.join(repoRoot, 'src', 'lib', 'pipeline.js'));
 
 const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
 const uiPort = Number(process.env.KBX_UI_PORT || 4173);
@@ -894,6 +895,8 @@ function buildSessionFocus(statusResult) {
     intent: {
       id: detail.id ?? session.sessionIntentId,
       title: detail.title ?? null,
+      goal: detail.goal ?? null,
+      summary: detail.summary ?? null,
       lifecycle: detail.lifecycle ?? null,
       status: detail.status ?? null,
       focusCurrent: detail.focusCurrent ?? null,
@@ -937,6 +940,124 @@ function summarizeSystem(doctorResult) {
     nodeVersion: doctorResult.parsed?.nodeVersion ?? null,
     workspaceRoot: doctorResult.parsed?.workspaceRoot ?? null,
     checkSummary: summary,
+  };
+}
+
+function summarizePipeline() {
+  try {
+    const pipeline = readPipeline(repoRoot, { required: false });
+    const steps = Array.isArray(pipeline?.steps) ? pipeline.steps : [];
+
+    return {
+      ok: true,
+      file: pipeline ? '.kb/release-pipeline.yaml' : null,
+      stepCount: steps.length,
+      confirmCount: steps.filter((step) => step?.confirm === true).length,
+      failOnNonzeroCount: steps.filter((step) => step?.fail_on_nonzero !== false).length,
+      steps: steps.slice(0, 5).map((step, index) => ({
+        index,
+        name: step?.name ?? `step-${index + 1}`,
+        description: step?.description ?? null,
+        confirm: step?.confirm === true,
+        when: step?.when ?? null,
+      })),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      file: '.kb/release-pipeline.yaml',
+      stepCount: 0,
+      confirmCount: 0,
+      failOnNonzeroCount: 0,
+      steps: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+function summarizeRulesResult(listResult, lintResult) {
+  const listedRules = Array.isArray(listResult?.parsed?.rules) ? listResult.parsed.rules : [];
+  const violations = Array.isArray(lintResult?.parsed?.violations) ? lintResult.parsed.violations : [];
+  const errorCount = violations.filter((violation) => String(violation?.severity || '').toLowerCase() === 'error').length;
+  const warnCount = violations.filter((violation) => String(violation?.severity || '').toLowerCase() === 'warn').length;
+
+  return {
+    ok: Boolean(listResult?.ok) && Boolean(lintResult?.ok || lintResult?.parsed),
+    count: listedRules.length,
+    linted: lintResult?.parsed?.rulesRun ?? null,
+    violationCount: violations.length,
+    errorCount,
+    warnCount,
+    topRules: listedRules.slice(0, 5).map((rule) => ({
+      id: rule?.id ?? null,
+      severity: rule?.severity ?? null,
+      description: rule?.description ?? null,
+      sourceDoc: rule?.source_doc ?? null,
+    })),
+    topViolations: violations.slice(0, 5).map((violation) => ({
+      ruleId: violation?.rule_id ?? null,
+      severity: violation?.severity ?? null,
+      file: violation?.file ?? null,
+      message: violation?.message ?? null,
+    })),
+  };
+}
+
+function summarizeHomeDashboard(statusResult, runtimeSnapshot, rulesListResult, rulesLintResult, doctorResult) {
+  const workspace = summarizeWorkspace(statusResult);
+  const session = buildSessionFocus(statusResult);
+  const pipeline = summarizePipeline();
+  const rules = summarizeRulesResult(rulesListResult, rulesLintResult);
+  const system = summarizeSystem(doctorResult);
+  const runtime = runtimeSnapshot.summary;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    workspace,
+    session,
+    goal: {
+      text: session.intent?.goal ?? null,
+      summary: session.intent?.summary ?? null,
+      focusCurrent: session.intent?.focusCurrent ?? null,
+      focusNextAction: session.intent?.focusNextAction ?? null,
+      checkpointEvent: session.checkpointEvent ?? null,
+      checkpointTimestamp: session.checkpointTimestamp ?? null,
+    },
+    pipeline,
+    rules,
+    runtime: {
+      ...runtime,
+      refreshedAt: runtimeSnapshot.refreshedAt ?? null,
+      nextRunAt: runtimeSnapshot.nextRunAt ?? null,
+      lastError: runtimeSnapshot.lastError ?? null,
+    },
+    system,
+    milestones: [
+      {
+        id: 'bridge-runtime',
+        label: runtime.runningCount > 0 ? 'Bridge Runtime Live' : 'Bridge Runtime Pending',
+        detail: runtime.summaryLabel ?? 'runtime unavailable',
+        status: runtime.runningCount > 0 ? 'live' : 'pending',
+      },
+      {
+        id: 'active-intent',
+        label: session.intent?.id ? 'Active Intent Routed' : 'Active Intent Missing',
+        detail: session.intent?.title ?? session.intent?.id ?? 'no active intent',
+        status: session.intent?.id ? 'live' : 'pending',
+      },
+      {
+        id: 'rules-pressure',
+        label: rules.violationCount > 0 ? 'Rule Findings Detected' : 'Rules Clean',
+        detail: `${rules.violationCount} findings across ${rules.count} rules`,
+        status: rules.errorCount > 0 ? 'warn' : rules.violationCount > 0 ? 'live' : 'stable',
+      },
+      {
+        id: 'pipeline-ready',
+        label: pipeline.stepCount > 0 ? 'Pipeline Loaded' : 'Pipeline Missing',
+        detail: pipeline.stepCount > 0 ? `${pipeline.stepCount} steps in release pipeline` : (pipeline.error ?? 'no pipeline file'),
+        status: pipeline.stepCount > 0 ? 'live' : 'pending',
+      },
+    ],
   };
 }
 
@@ -1560,6 +1681,40 @@ export function createApp(commandRunner = executeBridgeCommand) {
     res.status(200).json({
       ok: true,
       summary: summarizeSystem(doctorResult),
+    });
+  });
+
+  app.get('/api/home-summary', async (_req, res) => {
+    const [statusResult, runtimeSnapshot, rulesListResult, rulesLintResult, doctorResult] = await Promise.all([
+      commandRunner('kbx status --json', ['status', '--json'], {
+        expectJson: true,
+        timeoutMs: 20000,
+      }),
+      runtimeServicesCron.refresh('api-home-summary'),
+      commandRunner('kbx rules list --json', ['rules', 'list', '--json'], {
+        expectJson: true,
+        timeoutMs: 15000,
+      }),
+      commandRunner('kbx rules lint --json', ['rules', 'lint', '--json'], {
+        expectJson: true,
+        timeoutMs: 20000,
+      }),
+      commandRunner('kbx doctor --json', ['doctor', '--json'], {
+        expectJson: true,
+        timeoutMs: 20000,
+      }),
+    ]);
+
+    res.status(200).json({
+      ok: Boolean(statusResult.parsed) || runtimeSnapshot.summary.registeredCount > 0,
+      summary: summarizeHomeDashboard(statusResult, runtimeSnapshot, rulesListResult, rulesLintResult, doctorResult),
+      errors: {
+        status: statusResult.ok ? null : statusResult.stderr || 'status failed',
+        rulesList: rulesListResult.ok ? null : rulesListResult.stderr || 'rules list failed',
+        rulesLint: rulesLintResult.ok || rulesLintResult.parsed ? null : rulesLintResult.stderr || 'rules lint failed',
+        doctor: doctorResult.ok ? null : doctorResult.stderr || 'doctor failed',
+        runtime: runtimeSnapshot.lastError ?? null,
+      },
     });
   });
 
