@@ -1,8 +1,9 @@
 ---
 id: impact-policy
 title: Impact Policy
+type: governance
 owner: knowledge-base
-status: stable
+status: active
 verification: design-only
 last_verified: 2026-05-01
 last_verified_commit: NOT_AVAILABLE

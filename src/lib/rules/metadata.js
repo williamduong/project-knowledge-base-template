@@ -22,6 +22,20 @@ const ALLOWED_STATUS = ['active', 'draft', 'deprecated', 'archived'];
 const ALLOWED_VERIFICATION = ['code-verified', 'design-only', 'unverified', 'outdated'];
 const ALLOWED_TIME_STATE = ['current', 'point-in-time', 'evergreen', 'historical', '2026-current', 'future'];
 
+function usesAlternateMetadataSchema(relPath, frontmatter) {
+  const normalizedPath = relPath.replace(/\\/g, '/');
+
+  if (
+    normalizedPath.includes('/.github/prompts/') ||
+    normalizedPath.includes('/.github/agents/') ||
+    normalizedPath.includes('/12-ai-skills/prompts/')
+  ) {
+    return true;
+  }
+
+  return Boolean(frontmatter.doc_id || frontmatter.instruction_file || frontmatter.applies_to || frontmatter.trigger);
+}
+
 /**
  * Parse frontmatter fields from a markdown file.
  * Returns null if no valid frontmatter block found.
@@ -84,10 +98,12 @@ registerRules([
           try { content = fs.readFileSync(file, 'utf8'); } catch { continue; }
           const fm = parseFrontmatterFields(content);
           if (!fm) continue; // no frontmatter = not a governed doc
+          const relPath = path.relative(kbPath, file).replace(/\\/g, '/');
+          if (usesAlternateMetadataSchema(relPath, fm)) continue;
           const missing = REQUIRED_FIELDS.filter(f => !fm[f]);
           if (missing.length > 0) {
             violations.push({
-              file: path.relative(kbPath, file).replace(/\\/g, '/'),
+              file: relPath,
               message: `Missing required frontmatter field(s): ${missing.join(', ')}`,
             });
           }
