@@ -19,6 +19,8 @@ Workspace grounding pass — branch-local `v2.9` UI shell work on top of unresol
 - Package/runtime line in source is `@williamduong/kbx@2.7.0-beta.1` (`package.json`)
 - Current branch is `intent/v2-9-uiv2-shadcn-admin-shell-adoption`
 - Latest verified commits are UI/rules workspace work, not v2.7 closeout:
+  - `65fb22f` Refactor system snapshot read path to cached runtime state
+  - `7f6b060` Stabilize runtime focus state and bridge service refresh
   - `8e7e2c6` Add new prototype styles and overlays
   - `c85bebd` add prototype catalog and rules workspace controls
   - `05d6915` resolve rules lint remediation clusters
@@ -83,13 +85,16 @@ Workspace grounding pass — branch-local `v2.9` UI shell work on top of unresol
 
 ## Last Session Summary
 
-**Date:** 2026-05-16
-**Task:** Repository grounding pass for Codex/SVFactory alignment
+**Date:** 2026-05-17
+**Task:** Claude Code workspace setup + bootstrap verify pass
 **Output:**
-- Verified current branch, recent commits, package version, active intents, status, doctor, and chaos runtime signals.
-- Updated `AGENTS.md` so Codex/generic agents bridge into the SVFactory maintainer contract.
-- Synced `focus.md` away from stale `v2.8 Phase 0` claims and toward the verified branch/intents/drift state.
-- Confirmed current chaos snapshot as `64.8 / unstable` with full `src` scan and unresolved intent pressure.
+- Created `CLAUDE.md` at repo root — Claude Code bridge into SVFactory maintainer contract (mirrors `AGENTS.md` for Codex).
+- Updated `.claude/settings.local.json` with allowlist for common read-only commands.
+- Added `svfactory/*.db` and `.tmp-*` to `.gitignore` (both were untracked runtime artifacts).
+- Synced `focus.md` latest verified commits to include `65fb22f` and `7f6b060` (2 commits missing from prior grounding pass).
+- Noted: P24 in `principles.md` body but absent from append history table (minor hygiene gap, not blocking).
+- Package version `2.7.0-beta.1` verified against `package.json`.
+- `knowledge-base/12-ai-skills/agent-operating-manual.md` path verified to exist.
 
 ## Runtime Focus Projection
 
