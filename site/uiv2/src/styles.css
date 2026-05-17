@@ -848,18 +848,23 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 32px;
+  min-height: 36px;
   padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: rgba(11, 16, 23, 0.72);
+  border: none;
+  background: transparent;
   color: var(--muted);
+  border-bottom: 3px solid transparent;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+}
+
+.rules-tab-button:hover {
+  color: var(--text);
 }
 
 .rules-tab-button.active {
-  border-color: rgba(69, 189, 155, 0.34);
-  background: rgba(69, 189, 155, 0.16);
   color: var(--text);
+  border-bottom-color: #6ee7b7;
 }
 
 .compact-toolbar {
