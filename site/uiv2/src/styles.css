@@ -2219,3 +2219,38 @@
 }
 .kb-meta-dl dt { color: #64748b; }
 .kb-meta-dl dd { margin: 0; color: #d4dce6; word-break: break-word; }
+
+/* KB health summary bar */
+.kb-health-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  align-items: center;
+}
+.kb-health-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.kb-health-group .runtime-overview-label { margin-right: 2px; }
+.kb-health-total { font-weight: 700; }
+.kb-health-next {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 6px;
+}
+.kb-health-next-text { color: #ebf2fa; font-size: 12.5px; }
+
+/* Account for health bar height in 3-pane shell */
+.kb-page:has(.kb-health-bar) .kb-shell { height: calc(100vh - var(--shell-chrome-h, 140px) - 56px); }

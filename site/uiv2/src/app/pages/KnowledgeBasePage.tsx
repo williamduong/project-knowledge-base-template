@@ -9,7 +9,7 @@ import xIcon from '@iconify-icons/lucide/x'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useKbTree, useKbDoc } from '../hooks/useKb'
-import type { KbDocStatus, KbDocType, KbTimeState, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
+import type { KbDocStatus, KbDocType, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
 
 type RailMode = 'expanded' | 'icon'
 
@@ -148,10 +148,86 @@ function statusShortGlyph(status: KbDocStatus, verification: KbVerification): st
   return '•'
 }
 
-function flattenFolderPaths(root: KbTreeFolderNode, out: string[]): string[] {
-  out.push(root.path)
-  for (const child of root.children) if (isFolder(child)) flattenFolderPaths(child, out)
-  return out
+type KbStats = {
+  total: number
+  byStatus: Record<KbDocStatus, number>
+  byVerification: Record<KbVerification, number>
+  amberStale: number   // >= 60 days
+  redStale: number     // >= 180 days
+  mixedTime: number
+  unknownType: number
+}
+
+function emptyStats(): KbStats {
+  return {
+    total: 0,
+    byStatus: { active: 0, draft: 0, deprecated: 0, archived: 0, unknown: 0 },
+    byVerification: { 'code-verified': 0, 'design-only': 0, unverified: 0, 'self-referential': 0, unknown: 0 },
+    amberStale: 0, redStale: 0, mixedTime: 0, unknownType: 0,
+  }
+}
+
+function walkStats(node: KbTreeNode, acc: KbStats): KbStats {
+  if (isFolder(node)) {
+    for (const c of node.children) walkStats(c, acc)
+    return acc
+  }
+  const d = node as KbTreeDocNode
+  acc.total += 1
+  acc.byStatus[d.status] = (acc.byStatus[d.status] ?? 0) + 1
+  acc.byVerification[d.verification] = (acc.byVerification[d.verification] ?? 0) + 1
+  if (d.daysSinceVerified >= 180) acc.redStale += 1
+  else if (d.daysSinceVerified >= 60) acc.amberStale += 1
+  if (d.time_state === 'mixed') acc.mixedTime += 1
+  if (d.type === 'unknown') acc.unknownType += 1
+  return acc
+}
+
+function nextActionHint(s: KbStats): string {
+  if (s.redStale > 0) return `Re-verify ${s.redStale} doc${s.redStale > 1 ? 's' : ''} stale > 180 ngày`
+  if (s.byStatus.deprecated > 0) return `Dọn ${s.byStatus.deprecated} deprecated doc`
+  if (s.byVerification.unverified > 0) return `Verify ${s.byVerification.unverified} doc còn unverified`
+  if (s.amberStale > 0) return `Re-verify ${s.amberStale} doc stale > 60 ngày`
+  if (s.byStatus.draft > 0) return `Hoàn thiện ${s.byStatus.draft} draft`
+  if (s.unknownType > 0) return `Gán type cho ${s.unknownType} doc thiếu metadata`
+  return 'Bộ tài liệu khoẻ — tiếp tục cadence verify'
+}
+
+function KbHealthBar({ stats }: { stats: KbStats }) {
+  if (stats.total === 0) return null
+  return (
+    <div className="kb-health-bar">
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Total</span>
+        <span className="count-pill kb-health-total">{stats.total} docs</span>
+      </div>
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Status</span>
+        <span className="status-pill status-good">active {stats.byStatus.active}</span>
+        {stats.byStatus.draft > 0 ? <span className="status-pill status-neutral">draft {stats.byStatus.draft}</span> : null}
+        {stats.byStatus.deprecated > 0 ? <span className="status-pill status-warn">deprecated {stats.byStatus.deprecated}</span> : null}
+        {stats.byStatus.archived > 0 ? <span className="status-pill status-offline">archived {stats.byStatus.archived}</span> : null}
+        {stats.byStatus.unknown > 0 ? <span className="status-pill status-neutral">unknown {stats.byStatus.unknown}</span> : null}
+      </div>
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Verification</span>
+        <span className="status-pill status-good">verified {stats.byVerification['code-verified']}</span>
+        {stats.byVerification.unverified > 0 ? <span className="status-pill status-warn">unverified {stats.byVerification.unverified}</span> : null}
+        {stats.byVerification['design-only'] > 0 ? <span className="status-pill status-neutral">design {stats.byVerification['design-only']}</span> : null}
+        {stats.byVerification['self-referential'] > 0 ? <span className="status-pill status-neutral">self-ref {stats.byVerification['self-referential']}</span> : null}
+      </div>
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Staleness</span>
+        {stats.amberStale > 0 ? <span className="status-pill status-warn">stale&gt;60d {stats.amberStale}</span> : <span className="status-pill status-good">none&gt;60d</span>}
+        {stats.redStale > 0 ? <span className="status-pill status-offline">stale&gt;180d {stats.redStale}</span> : null}
+        {stats.mixedTime > 0 ? <span className="meta-pill">mixed-time {stats.mixedTime}</span> : null}
+      </div>
+      <div className="kb-health-next">
+        <span className="runtime-overview-label">Next action</span>
+        <span className="kb-health-next-text">{nextActionHint(stats)}</span>
+      </div>
+    </div>
+  )
 }
 
 export function KnowledgeBasePage() {
@@ -163,9 +239,15 @@ export function KnowledgeBasePage() {
   const treeQuery = useKbTree()
   const docQuery = useKbDoc(selectedPath)
 
+  const stats = useMemo(() => {
+    if (!treeQuery.data) return null
+    return walkStats(treeQuery.data.root, emptyStats())
+  }, [treeQuery.data])
+
   const initialFolders = useMemo(() => {
     if (!treeQuery.data) return new Set<string>()
-    return new Set(flattenFolderPaths(treeQuery.data.root, []))
+    // Default: only expand root-level folders so users can scan the index.
+    return new Set([treeQuery.data.root.path, ...treeQuery.data.root.children.filter(isFolder).map((f) => f.path)])
   }, [treeQuery.data])
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(initialFolders)
@@ -198,6 +280,7 @@ export function KnowledgeBasePage() {
 
   return (
     <section className="workspace-page kb-page">
+      {stats ? <KbHealthBar stats={stats} /> : null}
       <div className="kb-shell">
         {/* LEFT RAIL */}
         <aside className={`kb-left-rail ${leftMode === 'icon' ? 'kb-rail-icon' : 'kb-rail-expanded'}`}>
