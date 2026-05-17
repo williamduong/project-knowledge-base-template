@@ -70,7 +70,7 @@ function normalizeRegistryRule(rule) {
     tools: Array.isArray(rule.tools) ? [...rule.tools] : [],
     precedence: typeof rule.precedence === 'number' ? rule.precedence : inferPrecedence(rule.kind, rule.layer),
     checkerId: rule.checkerId || null,
-    enforcementLevel: rule.enforcementLevel || null,
+    enforcement: rule.enforcement || null,
     status: rule.status || 'active',
   };
 }
@@ -123,7 +123,16 @@ function listRulePacks() {
         hardCount: rules.filter((rule) => rule.kind === RULE_KIND.HARD).length,
         masterCount: rules.filter((rule) => rule.kind === RULE_KIND.MASTER).length,
         softCount: rules.filter((rule) => rule.kind === RULE_KIND.SOFT).length,
-        toolCoverage: rules.filter((rule) => Array.isArray(rule.tools) && rule.tools.length > 0).length,
+        toolCoverage: rules.filter((rule) => {
+          // Consider a rule covered by tools when its enforcement requires tool/cli/runtime enforcement
+          if (!rule.enforcement || !rule.enforcement.level) return false;
+          const level = rule.enforcement.level;
+          if (!['check', 'validate', 'block'].includes(level)) return false;
+          const actor = rule.enforcement.actor || 'agent';
+          if (['cli', 'runtime', 'tool'].includes(actor)) return true;
+          if (Array.isArray(rule.enforcement.surface) && rule.enforcement.surface.length > 0) return true;
+          return false;
+        }).length,
       },
     };
   });

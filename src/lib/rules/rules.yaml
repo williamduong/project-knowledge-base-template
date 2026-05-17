@@ -99,7 +99,7 @@ packs:
       - KBX-S023
       - KBX-S026
       - KBX-S029
-      - KBX-S032
+      
   - id: multi-project
     title: Multi-Project Packet
     context: multi-project
@@ -125,6 +125,7 @@ packs:
       - KBX-S017
       - KBX-S025
 rules:
+  
   - id: KBX-GB001
     title: KBX-GB001
     description: Intent IDs must follow vX-Y-slug pattern (e.g., v2-7-nl-rules-to-cli-logic)
@@ -141,7 +142,8 @@ rules:
     sourceDoc: template/15-governance/git-binding-policy.md
     sourceAnchor: null
     checkerId: KBX-GB001
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active
   - id: KBX-I001
     title: KBX-I001
@@ -159,7 +161,8 @@ rules:
     sourceDoc: knowledge-base/intents directories (_active, _closed, etc.)
     sourceAnchor: null
     checkerId: KBX-I001
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active
   - id: KBX-I002
     title: KBX-I002
@@ -177,7 +180,8 @@ rules:
     sourceDoc: knowledge-base/intents directories (_active, _closed, etc.)
     sourceAnchor: null
     checkerId: KBX-I002
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active
   - id: KBX-I003
     title: KBX-I003
@@ -195,7 +199,8 @@ rules:
     sourceDoc: knowledge-base/intents directories (_active, _closed, etc.)
     sourceAnchor: null
     checkerId: KBX-I003
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active
   - id: KBX-M001
     title: KBX-M001
@@ -213,7 +218,8 @@ rules:
     sourceDoc: template/15-governance/metadata-schema.md
     sourceAnchor: null
     checkerId: KBX-M001
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active
   - id: KBX-M002
     title: KBX-M002
@@ -231,7 +237,8 @@ rules:
     sourceDoc: template/15-governance/metadata-schema.md
     sourceAnchor: null
     checkerId: KBX-M002
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active
   - id: KBX-M003
     title: KBX-M003
@@ -251,7 +258,8 @@ rules:
     sourceDoc: template/15-governance/metadata-schema.md
     sourceAnchor: null
     checkerId: KBX-M003
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active
   - id: KBX-M004
     title: KBX-M004
@@ -271,7 +279,8 @@ rules:
     sourceDoc: template/15-governance/metadata-schema.md
     sourceAnchor: null
     checkerId: KBX-M004
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active
   - id: KBX-MR001
     title: Constitutional Separation
@@ -292,7 +301,8 @@ rules:
     sourceDoc: svfactory/CONSTITUTION.md
     sourceAnchor: AXIOM 1-3
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-MR002
     title: Deterministic First
@@ -314,7 +324,8 @@ rules:
     sourceDoc: template/12-ai-skills/agent-operating-manual.md
     sourceAnchor: Deterministic-First Rule Placement
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-MR003
     title: Intent First
@@ -337,7 +348,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Behavioral Rules 15
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-MR004
     title: Verify Baseline First
@@ -358,7 +370,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Behavioral Rules 1
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S001
     title: Cite Or Abstain
@@ -378,7 +391,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Behavioral Rules 7
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S002
     title: KB Before Source
@@ -399,7 +413,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Behavioral Rules 10
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S003
     title: Register First
@@ -418,7 +433,8 @@ rules:
     sourceDoc: template/12-ai-skills/agent-operating-manual.md
     sourceAnchor: Register-First Rule For File Creation
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S004
     title: Gate Instead Of Chat Blocking
@@ -439,7 +455,8 @@ rules:
     sourceDoc: template/12-ai-skills/agent-operating-manual.md
     sourceAnchor: Human-Gate Protocol
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S005
     title: Session Continuity
@@ -457,7 +474,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Behavioral Rules 19
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S006
     title: Always Probe State Via CLI
@@ -480,7 +498,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Always probe install state via the CLI
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S007
     title: Multi-Project Mutation Guard
@@ -503,7 +522,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Multi-project mutation rule
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S008
     title: Version Capability Guard
@@ -521,7 +541,8 @@ rules:
     sourceDoc: template/12-ai-skills/agent-operating-manual.md
     sourceAnchor: Doctrine Alignment Rule
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S009
     title: Evidence Before Recommendation
@@ -543,7 +564,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: AI decision transparency
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S010
     title: Status Header First
@@ -562,7 +584,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Response Status Header Protocol
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S011
     title: Persona Aware Output
@@ -583,7 +606,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Behavioral Rules 16 and 20
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S012
     title: Advisory Metadata Autofill
@@ -603,7 +627,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Role 2 Structural Guardian
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S013
     title: No Silent Re-Init
@@ -627,7 +652,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: No silent re-init
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S014
     title: Auto Onboarding
@@ -650,7 +676,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Zero-to-Intent Onboarding Protocol
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S015
     title: Advanced Plan Boundaries
@@ -670,7 +697,8 @@ rules:
     sourceDoc: template/.github/prompts/kbx-plan.prompt.template.md
     sourceAnchor: Boundaries
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S016
     title: Batch Non-Blocking Run
@@ -693,7 +721,8 @@ rules:
     sourceDoc: template/.github/prompts/kbx-run.prompt.template.md
     sourceAnchor: Execution — Batch Non-Blocking Steps
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S017
     title: Unknown Flags Stop Flow
@@ -714,7 +743,8 @@ rules:
     sourceDoc: template/.github/prompts/kbx-run.prompt.template.md
     sourceAnchor: Boundaries
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S018
     title: Low Confidence Threshold
@@ -735,7 +765,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Cognitive grounding check T2/T3
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S019
     title: Downstream Acceptance Boundary
@@ -759,7 +790,8 @@ rules:
     sourceDoc: template/12-ai-skills/agent-operating-manual.md
     sourceAnchor: User-experience acceptance for shipped KB Agent behavior
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S020
     title: Chaos Gate Before New Intent
@@ -782,7 +814,8 @@ rules:
     sourceDoc: template/12-ai-skills/agent-operating-manual.md
     sourceAnchor: Before creating any new intent or starting work on a new version
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S021
     title: Large Intent Branch Gate
@@ -802,7 +835,8 @@ rules:
     sourceDoc: template/12-ai-skills/agent-operating-manual.md
     sourceAnchor: After the chaos estimate gate and before creating/starting a large intent
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S022
     title: Graph Work Requires Graph Context
@@ -822,7 +856,8 @@ rules:
     sourceDoc: template/12-ai-skills/agent-operating-manual.md
     sourceAnchor: When working in projects that use the Knowledge Graph tier
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S023
     title: Public CLI Only
@@ -842,7 +877,8 @@ rules:
     sourceDoc: template/.github/agents/kbx.agent.template.md
     sourceAnchor: Behavioral Rules 9
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S024
     title: Maintainer Three-Layer Separation
@@ -863,7 +899,8 @@ rules:
     sourceDoc: .github/prompts/svfactory-plan.prompt.md
     sourceAnchor: Rules 3-5
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S025
     title: Maintainer Runtime-Step Discipline
@@ -884,7 +921,8 @@ rules:
     sourceDoc: .github/prompts/svfactory-run.prompt.md
     sourceAnchor: Rules 3-4
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S026
     title: Downstream Acceptance Redirect
@@ -910,7 +948,8 @@ rules:
     sourceDoc: .github/prompts/svfactory-run.prompt.md
     sourceAnchor: Rules 5-6
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S027
     title: Phase Naming Must Be Versioned
@@ -930,7 +969,8 @@ rules:
     sourceDoc: svfactory/process.md
     sourceAnchor: Phase naming convention
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S028
     title: Phase Exit Before Next Phase
@@ -950,7 +990,8 @@ rules:
     sourceDoc: svfactory/process.md
     sourceAnchor: Workflow 2 Step 2
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S029
     title: Template Touch Requires Downstream Gate
@@ -976,7 +1017,8 @@ rules:
     sourceDoc: svfactory/process.md
     sourceAnchor: Workflow 2 Downstream Acceptance Gate
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S030
     title: Version-Prefixed Intent IDs
@@ -998,7 +1040,8 @@ rules:
     sourceDoc: svfactory/specifics.md
     sourceAnchor: Intent ID Format
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S031
     title: Wave Equals Target Release
@@ -1019,7 +1062,8 @@ rules:
     sourceDoc: svfactory/specifics.md
     sourceAnchor: Wave Field
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S032
     title: Layer C Must Not Ship
@@ -1041,7 +1085,8 @@ rules:
     sourceDoc: svfactory/specifics.md
     sourceAnchor: 'Layer: C (maintainer-only). NOT shipped via npm files whitelist'
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-S033
     title: Machine-Readable Command Output
@@ -1063,7 +1108,8 @@ rules:
     sourceDoc: svfactory/specifics.md
     sourceAnchor: Common Output Rules
     checkerId: null
-    enforcementLevel: assist
+    enforcement:
+      level: assist
     status: active
   - id: KBX-V001
     title: KBX-V001
@@ -1082,7 +1128,8 @@ rules:
     sourceDoc: template/15-governance/verification-policy.md
     sourceAnchor: null
     checkerId: KBX-V001
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active
   - id: KBX-V002
     title: KBX-V002
@@ -1093,13 +1140,13 @@ rules:
     priority: P0
     scope:
       - kb-mutation
-    dependsOn:
-      - KBX-M004
+    dependsOn: []
     overrideMode: none
     tools: []
     precedence: 2
     sourceDoc: template/15-governance/verification-policy.md
     sourceAnchor: null
     checkerId: KBX-V002
-    enforcementLevel: validate
+    enforcement:
+      level: validate
     status: active

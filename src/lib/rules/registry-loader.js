@@ -6,6 +6,7 @@ const yaml = require('js-yaml');
 
 const REGISTRY_RELATIVE_PATH = path.join('src', 'lib', 'rules', 'rules.yaml');
 const ENFORCEMENT_LEVELS = new Set(['assist', 'check', 'validate', 'block']);
+const ENFORCEMENT_ACTORS = new Set(['agent', 'cli', 'runtime', 'human', 'tool']);
 
 function getRuleRegistryPath() {
   return path.join(__dirname, 'rules.yaml');
@@ -54,8 +55,34 @@ function normalizeRule(rule, index) {
     throw new Error(`rules registry: rules[${index}].checkerId must be a string or null`);
   }
 
-  if (rule.enforcementLevel !== null && !ENFORCEMENT_LEVELS.has(rule.enforcementLevel)) {
-    throw new Error(`rules registry: rules[${index}].enforcementLevel must be one of ${[...ENFORCEMENT_LEVELS].join(', ')}`);
+  // enforcement may be null or an object with contract { level, actor?, surface?, rationale? }
+  if (rule.enforcement !== null && rule.enforcement !== undefined) {
+    if (typeof rule.enforcement !== 'object') {
+      throw new Error(`rules registry: rules[${index}].enforcement must be an object`);
+    }
+
+    if (!rule.enforcement.level || !ENFORCEMENT_LEVELS.has(rule.enforcement.level)) {
+      throw new Error(`rules registry: rules[${index}].enforcement.level must be one of ${[...ENFORCEMENT_LEVELS].join(', ')}`);
+    }
+
+    if (rule.enforcement.actor !== null && rule.enforcement.actor !== undefined) {
+      if (typeof rule.enforcement.actor !== 'string' || !ENFORCEMENT_ACTORS.has(rule.enforcement.actor)) {
+        throw new Error(`rules registry: rules[${index}].enforcement.actor must be one of ${[...ENFORCEMENT_ACTORS].join(', ')}`);
+      }
+    }
+
+    if (rule.enforcement.surface !== null && rule.enforcement.surface !== undefined) {
+      if (!Array.isArray(rule.enforcement.surface)) {
+        throw new Error(`rules registry: rules[${index}].enforcement.surface must be an array of strings`);
+      }
+      for (const s of rule.enforcement.surface) {
+        assertString(s, `rules[${index}].enforcement.surface[]`);
+      }
+    }
+
+    if (rule.enforcement.rationale !== null && rule.enforcement.rationale !== undefined) {
+      assertString(rule.enforcement.rationale, `rules[${index}].enforcement.rationale`);
+    }
   }
 
   return {
@@ -74,7 +101,7 @@ function normalizeRule(rule, index) {
     sourceDoc: rule.sourceDoc ?? null,
     sourceAnchor: rule.sourceAnchor ?? null,
     checkerId: rule.checkerId ?? null,
-    enforcementLevel: rule.enforcementLevel ?? null,
+    enforcement: rule.enforcement ?? null,
     status: rule.status,
   };
 }
@@ -169,6 +196,7 @@ function loadRuleRegistry() {
 
 module.exports = {
   ENFORCEMENT_LEVELS,
+  ENFORCEMENT_ACTORS,
   REGISTRY_RELATIVE_PATH,
   getRuleRegistryPath,
   loadRuleRegistry,
