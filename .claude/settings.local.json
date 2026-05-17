@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"D:\\\\Source\\\\template\\\\project-knowledge-base-template\" log --oneline -20)",
+      "Bash(git -C \"D:\\\\Source\\\\template\\\\project-knowledge-base-template\" status)",
+      "Bash(git -C \"D:\\\\Source\\\\template\\\\project-knowledge-base-template\" diff HEAD -- knowledge-base/.kb/impact.json knowledge-base/intents/_meta/chaos-history.md site/uiv2/src/app/pages/PrototypePage.tsx site/uiv2/src/styles.css --stat)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}
