@@ -1,0 +1,292 @@
+// Deterministic helpers for KB content: YAML frontmatter parsing, markdown
+// rendering, heading extraction, and recursive tree walk.
+//
+// L4 lib per svfactory/runtime-control-plane-architecture.md: pure, UI-agnostic,
+// HTTP-agnostic. Called from the snapshot collector (L3); never from a route
+// handler directly.
+//
+// Ported from scripts/gen-kb-mock.mjs (slice-3 mock generator) so the live
+// runtime emits the same shapes the UI was already built against.
+
+import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
+import { join, posix } from 'node:path';
+import yaml from 'js-yaml';
+
+export const ALLOWED_EXT = new Set(['.md', '.html']);
+export const SKIP_DIRS = new Set([
+  'node_modules', 'dist', 'build', '.git', '.cache', '_cacache', '_logs',
+]);
+
+const ALLOWED_TYPES = new Set([
+  'orientation', 'concept', 'architecture', 'reference', 'implementation',
+  'decision', 'guide', 'operations', 'test-strategy', 'governance',
+]);
+const ALLOWED_STATUS = new Set(['active', 'draft', 'deprecated', 'archived']);
+const ALLOWED_VERIF = new Set(['code-verified', 'design-only', 'unverified', 'self-referential']);
+const ALLOWED_TIME = new Set(['current', 'to_be', 'mixed', 'historical', 'timeless']);
+
+function normType(v)   { return ALLOWED_TYPES.has(v) ? v : 'unknown'; }
+function normStatus(v) { return ALLOWED_STATUS.has(v) ? v : 'unknown'; }
+function normVerif(v)  { return ALLOWED_VERIF.has(v)  ? v : 'unknown'; }
+function normTime(v)   { return ALLOWED_TIME.has(v)   ? v : 'unknown'; }
+function asStringArray(v) { return Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []; }
+function toPosix(p) { return p.split('\\').join('/'); }
+function daysBetween(a, b) { return Math.max(0, Math.round((b.getTime() - a.getTime()) / 86400000)); }
+
+export function parseFrontmatter(text) {
+  if (!text.startsWith('---')) return { fm: {}, body: text };
+  const end = text.indexOf('\n---', 3);
+  if (end < 0) return { fm: {}, body: text };
+  const raw = text.slice(3, end).trim();
+  const body = text.slice(end + 4).replace(/^\r?\n/, '');
+  try { return { fm: yaml.load(raw) || {}, body }; } catch { return { fm: {}, body }; }
+}
+
+function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function slug(s) { return s.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'); }
+
+function inline(s) {
+  let out = escapeHtml(s);
+  out = out.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img alt="$1" src="$2" />');
+  out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
+  out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  out = out.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  out = out.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  return out;
+}
+
+export function renderMd(md) {
+  const lines = md.split(/\r?\n/);
+  const out = [];
+  let i = 0;
+  const isTableRow = (s) => /^\s*\|.*\|\s*$/.test(s);
+  const isTableSep = (s) => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(s);
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    const fence = line.match(/^```(\w*)\s*$/);
+    if (fence) {
+      const lang = fence[1] || '';
+      const buf = [];
+      i++;
+      while (i < lines.length && !/^```\s*$/.test(lines[i])) { buf.push(lines[i]); i++; }
+      i++;
+      const langClass = lang ? ` class="language-${escapeHtml(lang)}"` : '';
+      out.push(`<pre><code${langClass}>${escapeHtml(buf.join('\n'))}</code></pre>`);
+      continue;
+    }
+
+    if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) { out.push('<hr/>'); i++; continue; }
+
+    const h = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/);
+    if (h) {
+      const lv = h[1].length, text = h[2].trim();
+      out.push(`<h${lv} id="${slug(text)}">${inline(text)}</h${lv}>`);
+      i++; continue;
+    }
+
+    if (/^>\s?/.test(line)) {
+      const buf = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) { buf.push(lines[i].replace(/^>\s?/, '')); i++; }
+      out.push(`<blockquote>${inline(buf.join(' '))}</blockquote>`);
+      continue;
+    }
+
+    if (isTableRow(line) && i + 1 < lines.length && isTableSep(lines[i + 1])) {
+      const header = line.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
+      i += 2;
+      const rows = [];
+      while (i < lines.length && isTableRow(lines[i])) {
+        rows.push(lines[i].trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
+        i++;
+      }
+      const thead = '<thead><tr>' + header.map((c) => `<th>${inline(c)}</th>`).join('') + '</tr></thead>';
+      const tbody = '<tbody>' + rows.map((r) => '<tr>' + r.map((c) => `<td>${inline(c)}</td>`).join('') + '</tr>').join('') + '</tbody>';
+      out.push(`<table>${thead}${tbody}</table>`);
+      continue;
+    }
+
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { items.push(lines[i].replace(/^\s*\d+\.\s+/, '')); i++; }
+      out.push('<ol>' + items.map((t) => `<li>${inline(t)}</li>`).join('') + '</ol>');
+      continue;
+    }
+
+    if (/^\s*[-*+]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) { items.push(lines[i].replace(/^\s*[-*+]\s+/, '')); i++; }
+      out.push('<ul>' + items.map((t) => `<li>${inline(t)}</li>`).join('') + '</ul>');
+      continue;
+    }
+
+    if (line.trim() === '') { i++; continue; }
+
+    const buf = [line]; i++;
+    while (
+      i < lines.length &&
+      lines[i].trim() !== '' &&
+      !/^#{1,6}\s+/.test(lines[i]) &&
+      !/^```/.test(lines[i]) &&
+      !/^(-{3,}|\*{3,}|_{3,})\s*$/.test(lines[i]) &&
+      !/^>\s?/.test(lines[i]) &&
+      !isTableRow(lines[i]) &&
+      !/^\s*\d+\.\s+/.test(lines[i]) &&
+      !/^\s*[-*+]\s+/.test(lines[i])
+    ) { buf.push(lines[i]); i++; }
+    out.push(`<p>${inline(buf.join(' '))}</p>`);
+  }
+  return out.join('\n');
+}
+
+export function extractHeadings(md) {
+  const headings = [];
+  let inCode = false;
+  for (const line of md.split(/\r?\n/)) {
+    if (/^```/.test(line)) { inCode = !inCode; continue; }
+    if (inCode) continue;
+    const m = line.match(/^(#{2,3})\s+(.+)$/);
+    if (m) {
+      const text = m[2].trim();
+      headings.push({ id: slug(text), level: m[1].length, text });
+    }
+  }
+  return headings;
+}
+
+function titleFromBody(body, fallback) {
+  const m = body.match(/^#\s+(.+)$/m);
+  return m ? m[1].trim() : fallback;
+}
+
+// -----------------------------------------------------------------------------
+// Tree walk + per-doc parse
+// -----------------------------------------------------------------------------
+
+function readDirSorted(dir) { return readdirSync(dir).sort((a, b) => a.localeCompare(b)); }
+
+export function parseDocFromDisk(absPath, relPath, today = new Date()) {
+  const text = readFileSync(absPath, 'utf8');
+  const isMd = relPath.endsWith('.md');
+  const isHtml = relPath.endsWith('.html');
+  const { fm, body } = isMd ? parseFrontmatter(text) : { fm: {}, body: text };
+  const todayStr = today.toISOString().slice(0, 10);
+  const last_updated = typeof fm.last_updated === 'string' ? fm.last_updated : todayStr;
+  const last_verified = typeof fm.last_verified === 'string' ? fm.last_verified : last_updated;
+  let daysSinceVerified = 0;
+  try {
+    const v = new Date(last_verified);
+    if (!Number.isNaN(v.getTime())) daysSinceVerified = daysBetween(v, today);
+  } catch {}
+
+  let html = '';
+  let headings = [];
+  if (isMd) { html = renderMd(body); headings = extractHeadings(body); }
+  else if (isHtml) { html = `<div class="kb-html-embed">${body}</div>`; }
+
+  const frontmatter = {
+    title: typeof fm.title === 'string' ? fm.title : '',
+    type: normType(fm.type),
+    status: normStatus(fm.status),
+    owner: typeof fm.owner === 'string' ? fm.owner : '',
+    time_state: normTime(fm.time_state),
+    verification: normVerif(fm.verification),
+    last_updated,
+    last_verified,
+    last_verified_commit: typeof fm.last_verified_commit === 'string' ? fm.last_verified_commit : null,
+    source_of_truth: typeof fm.source_of_truth === 'string' ? fm.source_of_truth : null,
+    related_strong: asStringArray(fm.related_strong),
+    related_weak: [...asStringArray(fm.related_weak), ...asStringArray(fm.related)],
+    released_in: typeof fm.released_in === 'string' ? fm.released_in : null,
+    tags: asStringArray(fm.tags),
+  };
+
+  return {
+    summary: {
+      path: toPosix(relPath),
+      title: typeof fm.title === 'string' ? fm.title : titleFromBody(body, relPath.split(/[\\/]/).pop()),
+      type: normType(fm.type),
+      status: normStatus(fm.status),
+      verification: normVerif(fm.verification),
+      time_state: normTime(fm.time_state),
+      owner: typeof fm.owner === 'string' ? fm.owner : '',
+      last_updated,
+      last_verified,
+      daysSinceVerified,
+      stale: daysSinceVerified >= 60,
+      tags: asStringArray(fm.tags),
+      fileKind: isMd ? 'md' : (isHtml ? 'html' : 'other'),
+    },
+    doc: {
+      path: toPosix(relPath),
+      frontmatter,
+      headings,
+      html,
+    },
+  };
+}
+
+// Walks a directory and returns { node, docCount, stalest }. Only counts files
+// matching ALLOWED_EXT. Returns null node if the directory does not exist or
+// contains no allowed files at any depth.
+export function walkRoot(absDir, relDir, today = new Date()) {
+  if (!existsSync(absDir)) return { node: null, docCount: 0, stalest: null };
+  const st = statSync(absDir);
+  if (!st.isDirectory()) return { node: null, docCount: 0, stalest: null };
+
+  const entries = readDirSorted(absDir);
+  const children = [];
+  let docCount = 0;
+  let stalest = null;
+
+  for (const name of entries) {
+    if (name.startsWith('.') && name !== '.github') continue;
+    if (SKIP_DIRS.has(name)) continue;
+    const abs = join(absDir, name);
+    const rel = posix.join(relDir, name);
+    let s;
+    try { s = statSync(abs); } catch { continue; }
+    if (s.isDirectory()) {
+      const folder = walkRoot(abs, rel, today);
+      if (!folder.node || folder.docCount === 0) continue;
+      docCount += folder.docCount;
+      if (folder.stalest && (!stalest || folder.stalest.daysSinceVerified > stalest.daysSinceVerified)) {
+        stalest = folder.stalest;
+      }
+      children.push(folder.node);
+    } else {
+      const dot = name.lastIndexOf('.');
+      const ext = dot >= 0 ? name.slice(dot).toLowerCase() : '';
+      if (!ALLOWED_EXT.has(ext)) continue;
+      const parsed = parseDocFromDisk(abs, rel, today);
+      docCount += 1;
+      if (parsed.summary.daysSinceVerified >= 60 && (!stalest || parsed.summary.daysSinceVerified > stalest.daysSinceVerified)) {
+        stalest = { path: parsed.summary.path, daysSinceVerified: parsed.summary.daysSinceVerified };
+      }
+      children.push({ kind: 'doc', ...parsed.summary });
+    }
+  }
+
+  const node = {
+    kind: 'folder',
+    path: relDir,
+    title: relDir.split('/').pop() || relDir,
+    docCount,
+    stalest,
+    children,
+  };
+  return { node, docCount, stalest };
+}
+
+// Default candidate roots — folders likely to be mounted. The L3 collector
+// uses this list to populate kb.rootCandidates. Same defaults the mock
+// generator scanned.
+export const DEFAULT_CANDIDATE_ROOTS = [
+  { path: 'knowledge-base', label: 'knowledge-base', defaultActive: true },
+  { path: 'notes',          label: 'notes',          defaultActive: false },
+  { path: 'svfactory',      label: 'svfactory',      defaultActive: false },
+  { path: 'test',           label: 'test',           defaultActive: false },
+  { path: '.github',        label: '.github',        defaultActive: false },
+];

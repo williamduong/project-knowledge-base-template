@@ -8,6 +8,11 @@ import { fileURLToPath } from 'node:url';
 import { evaluatePhase2Gates } from './bridge-gates.mjs';
 import { createRuntimeServicesCron } from './runtime-services-cron.mjs';
 import { createSystemSnapshotStore } from './system-snapshot-store.mjs';
+import {
+  DEFAULT_CANDIDATE_ROOTS as KB_CANDIDATE_ROOTS,
+  parseDocFromDisk as kbParseDocFromDisk,
+  walkRoot as kbWalkRoot,
+} from '../../src/lib/kb-content.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1872,12 +1877,108 @@ function buildDocumentsWorkspace(selectedPath) {
   };
 }
 
+// ═══ KB STORE (L3 collector for /api/kb/* endpoints) ═══
+//
+// Owns the lazy-cached representation of the KB multi-root workspace per
+// notes/kbx-ui-kb-page-runtime-contract.md. Route handlers only read from
+// this store; they do not parse the filesystem at request time. The tree is
+// populated eagerly on refresh; per-doc bodies are parsed on first hit and
+// cached until the next refresh.
+function createKbStore({ repoRoot: storeRepoRoot, candidates = KB_CANDIDATE_ROOTS }) {
+  let cache = null;
+  const docCache = new Map();
+  let refreshing = null;
+
+  function buildSnapshot(reason) {
+    const generatedAt = new Date().toISOString();
+    const today = new Date();
+    const roots = [];
+    const rootCandidates = [];
+    for (const c of candidates) {
+      const abs = path.join(storeRepoRoot, c.path);
+      const result = kbWalkRoot(abs, c.path, today);
+      if (!result.node) continue;
+      rootCandidates.push({
+        path: c.path,
+        label: c.label,
+        defaultActive: !!c.defaultActive,
+        docCount: result.docCount,
+      });
+      roots.push({
+        ...result.node,
+        label: c.label,
+        defaultActive: !!c.defaultActive,
+      });
+    }
+    return {
+      generatedAt,
+      reason: reason || 'initial',
+      tree: { generatedAt, roots },
+      rootCandidates,
+    };
+  }
+
+  function ensure(reason) {
+    if (cache) return cache;
+    cache = buildSnapshot(reason);
+    return cache;
+  }
+
+  async function refresh(reason) {
+    if (refreshing) return refreshing;
+    refreshing = Promise.resolve().then(() => {
+      cache = buildSnapshot(reason || 'refresh');
+      docCache.clear();
+      return cache;
+    });
+    try { return await refreshing; } finally { refreshing = null; }
+  }
+
+  function getTree() {
+    return ensure('lazy-init').tree;
+  }
+  function getRootCandidates() {
+    return ensure('lazy-init').rootCandidates;
+  }
+  function getMeta() {
+    const c = ensure('lazy-init');
+    return { generatedAt: c.generatedAt, reason: c.reason };
+  }
+  function getDoc(relPath) {
+    if (typeof relPath !== 'string' || !relPath) return null;
+    // Safety: must resolve inside repoRoot and end with allowed ext.
+    const safe = relPath.replace(/^[/\\]+/, '');
+    const abs = path.resolve(storeRepoRoot, safe);
+    const rel = path.relative(storeRepoRoot, abs);
+    if (rel.startsWith('..') || path.isAbsolute(rel)) return null;
+    if (!/\.(md|html)$/i.test(rel)) return null;
+    if (!fs.existsSync(abs)) return null;
+    const key = rel.split(path.sep).join('/');
+    const cached = docCache.get(key);
+    if (cached) return { ...cached, fromCache: true };
+    const parsed = kbParseDocFromDisk(abs, key, new Date());
+    const meta = getMeta();
+    const out = { ...parsed.doc, fromCache: false, snapshotAt: meta.generatedAt };
+    docCache.set(key, out);
+    return out;
+  }
+
+  return { refresh, getTree, getRootCandidates, getMeta, getDoc };
+}
+
 export function createApp(commandRunner = executeBridgeCommand) {
   const app = express();
   runtimeServicesCron.start();
+  const kbStore = createKbStore({ repoRoot });
   const systemSnapshotStore = createSystemSnapshotStore({
     ttlMs: SYSTEM_SNAPSHOT_TTL_MS,
-    collectSnapshot: (storeOptions) => collectSystemSnapshot(commandRunner, storeOptions),
+    collectSnapshot: async (storeOptions) => {
+      const snap = await collectSystemSnapshot(commandRunner, storeOptions);
+      // Invalidate KB doc cache on every full system snapshot refresh so doc
+      // bodies don't go stale relative to the rest of the snapshot.
+      kbStore.refresh(`system-snapshot:${storeOptions?.reason || 'unknown'}`).catch(() => {});
+      return snap;
+    },
     buildPendingSnapshot: () => ({
       ok: false,
       metadata: {
@@ -2346,6 +2447,70 @@ export function createApp(commandRunner = executeBridgeCommand) {
 
   app.get('/api/phase2-bridge', async (_req, res) => {
     res.status(200).json(systemSnapshotStore.read().diagnostics.phase2Bridge);
+  });
+
+  // ═══ KB ENDPOINTS (slice A — read-only, snapshot-backed) ═══
+  // Contract: notes/kbx-ui-kb-page-runtime-contract.md
+  // These endpoints never invoke kbx/git/doctor/rules/chaos. They read from
+  // kbStore (L3) which parses the filesystem lazily on first hit and caches
+  // until the next refresh.
+
+  app.get('/api/kb/tree', (_req, res) => {
+    try {
+      res.status(200).json({ ok: true, ...kbStore.getTree() });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error instanceof Error ? error.message : 'kb tree failed' });
+    }
+  });
+
+  app.get('/api/kb/roots', (_req, res) => {
+    try {
+      res.status(200).json({ ok: true, rootCandidates: kbStore.getRootCandidates() });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error instanceof Error ? error.message : 'kb roots failed' });
+    }
+  });
+
+  app.get('/api/kb/doc', (req, res) => {
+    const requested = typeof req.query.path === 'string' ? req.query.path : '';
+    const doc = kbStore.getDoc(requested);
+    if (!doc) {
+      res.status(404).json({ ok: false, error: 'document not found or path rejected', path: requested });
+      return;
+    }
+    res.status(200).json({ ok: true, ...doc });
+  });
+
+  app.get('/api/kb/impact', (req, res) => {
+    const requested = typeof req.query.path === 'string' ? req.query.path : '';
+    const impactPath = path.join(repoRoot, 'knowledge-base', '.kb', 'impact.json');
+    let impactGeneratedAt = null;
+    let edges = { incoming_strong: [], incoming_weak: [], outgoing_strong: [], outgoing_weak: [] };
+    try {
+      if (fs.existsSync(impactPath)) {
+        const data = JSON.parse(fs.readFileSync(impactPath, 'utf8'));
+        impactGeneratedAt = data?.generatedAt || null;
+        // impact.json shape varies; accept multiple known shapes gracefully.
+        const node = data?.nodes?.[requested] || data?.[requested] || null;
+        if (node && typeof node === 'object') {
+          edges = {
+            incoming_strong: Array.isArray(node.incoming_strong) ? node.incoming_strong : [],
+            incoming_weak:   Array.isArray(node.incoming_weak)   ? node.incoming_weak   : [],
+            outgoing_strong: Array.isArray(node.outgoing_strong) ? node.outgoing_strong : [],
+            outgoing_weak:   Array.isArray(node.outgoing_weak)   ? node.outgoing_weak   : [],
+          };
+        }
+      }
+    } catch {}
+    const affectedCount = edges.incoming_strong.length + edges.outgoing_strong.length;
+    res.status(200).json({ ok: true, path: requested, ...edges, affectedCount, impactGeneratedAt });
+  });
+
+  app.post('/api/kb/refresh', express.json(), async (req, res) => {
+    const targetPath = typeof req.body?.path === 'string' ? req.body.path : null;
+    // For slice A: full re-walk regardless of `path` (TODO: scoped invalidation).
+    const result = await kbStore.refresh(targetPath ? `kb-only:${targetPath}` : 'kb-only:full');
+    res.status(200).json({ ok: true, generatedAt: result.generatedAt, reason: result.reason });
   });
 
   // ═══ PHASE 4: MUTATION ENDPOINTS ═══

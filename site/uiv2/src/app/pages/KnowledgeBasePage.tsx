@@ -15,8 +15,7 @@ import xIcon from '@iconify-icons/lucide/x'
 import filterX from '@iconify-icons/lucide/filter-x'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useKbTree, useKbDoc } from '../hooks/useKb'
-import { kbRootCandidates } from '../mock/kb-data.generated'
+import { useKbTree, useKbDoc, useKbRootCandidates } from '../hooks/useKb'
 import type { KbDocStatus, KbDocType, KbRootNode, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
 
 type RailMode = 'expanded' | 'icon'
@@ -431,14 +430,21 @@ export function KnowledgeBasePage() {
 
   const treeQuery = useKbTree()
   const docQuery = useKbDoc(selectedPath)
+  const candidatesQuery = useKbRootCandidates()
 
-  // Active roots from localStorage; default to roots flagged defaultActive.
-  const [activeRoots, setActiveRoots] = useState<Set<string>>(() => {
-    const stored = readActiveRoots()
-    if (stored) return stored
-    return new Set(kbRootCandidates.filter((r) => r.defaultActive).map((r) => r.path))
-  })
+  // Active roots come from localStorage (slice A). Once the live candidate
+  // list arrives, hydrate the default set from roots flagged defaultActive
+  // if the user had no prior selection. Slice B replaces this with L5 state.
+  const [activeRoots, setActiveRoots] = useState<Set<string>>(() => readActiveRoots() ?? new Set())
+  const [hasHydratedFromServer, setHasHydratedFromServer] = useState(false)
   useEffect(() => { writeActiveRoots(activeRoots) }, [activeRoots])
+  useEffect(() => {
+    if (hasHydratedFromServer) return
+    if (!candidatesQuery.data) return
+    if (readActiveRoots() !== null) { setHasHydratedFromServer(true); return }
+    setActiveRoots(new Set(candidatesQuery.data.filter((r) => r.defaultActive).map((r) => r.path)))
+    setHasHydratedFromServer(true)
+  }, [candidatesQuery.data, hasHydratedFromServer])
 
   const [legendOpen, setLegendOpen] = useState(false)
   const [rootsDialogOpen, setRootsDialogOpen] = useState(false)

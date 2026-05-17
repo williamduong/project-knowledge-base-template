@@ -221,6 +221,31 @@ The contract is satisfied only when:
 - `kbx-ui-module-architecture-map.md` is updated with the KB slice and these endpoints
 - `runtime-control-plane-architecture.md` audit section either lists no new mixed-layer cases or records the resolution
 
+## Audit log
+
+### Slice A shipped (2026-05-18)
+
+- `src/lib/kb-content.mjs` added: pure L4 lib for frontmatter parse, markdown→HTML render, heading extraction, recursive tree walk. Ported verbatim from the slice-3 mock generator so on-disk parity is preserved.
+- `site/kbx-ui/server.mjs` adds `createKbStore({ repoRoot })` that owns:
+  - eager tree walk on first read or refresh, covering 5 candidate roots (`knowledge-base`, `notes`, `svfactory`, `test`, `.github`)
+  - lazy-cached per-doc parse — first hit parses and stores; subsequent hits return `fromCache: true` until the next refresh
+  - path-traversal rejection: paths must resolve inside `repoRoot` and end in `.md` / `.html`
+- Four read endpoints registered, snapshot-backed, no CLI/git/doctor invocation on the request path:
+  - `GET /api/kb/tree`
+  - `GET /api/kb/roots`
+  - `GET /api/kb/doc?path=`
+  - `GET /api/kb/impact?path=`
+- `POST /api/kb/refresh` added as an L3 trigger; also fired by `/api/system-snapshot/refresh` so KB stays in sync with the wider snapshot fingerprint.
+- UI hooks `useKbTree`, `useKbDoc`, `useKbRootCandidates`, `useRefreshKb` swapped to `apiGet` / `apiPost`. Old mock imports (`kbDocsGenerated`, `kbRootCandidates` from the generated file) are no longer referenced.
+- Verified live: tree returns 5 roots / 233 docs in `knowledge-base`; first doc hit reports `fromCache: false`, second hit `fromCache: true`; path traversal `../../etc/passwd` returns 404.
+
+### Open follow-ups (Slice B and beyond)
+
+- mtime-based dirty check on tree walk (frontmatter re-parse only when file mtime changed).
+- Scoped refresh for `POST /api/kb/refresh { path }` (currently always full re-walk).
+- `POST /api/kb/roots` / `DELETE /api/kb/roots/:path` with L5 persistence at `site/kbx-ui/.runtime-state/kb-roots.json`.
+- Move active-roots from UI `localStorage` to that L5 file so two tabs converge.
+
 ## Cross-Refs
 
 - `svfactory/runtime-control-plane-architecture.md` — layer rules this contract follows
