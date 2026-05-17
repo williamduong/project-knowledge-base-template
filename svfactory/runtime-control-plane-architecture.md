@@ -168,42 +168,35 @@ Forbidden:
 
 ## Audit Report
 
-Current mixed-layer remediation cases still requiring follow-up: `7`
+Current mixed-layer remediation cases still requiring follow-up: `0`
 
-### Case 1. `/api/status` still mixes read API with live chaos command
+### Resolved Case 1. `/api/status` no longer mixes read API with live chaos command
 
-- Current shape: read endpoint still executes `kbx chaos --json --no-save`
-- Correct layer: move to collector-produced snapshot field or a dedicated diagnostics refresh path
+- Fixed shape: served from cached snapshot status payload, with chaos folded in during collector refresh only
 
-### Case 2. `/api/rules` still runs `kbx rules list --json` live
+### Resolved Case 2. `/api/rules` no longer runs `kbx rules list --json` live
 
-- Current shape: direct deterministic command inside request path
-- Correct layer: serve from cached rules snapshot or mark as diagnostics-only API
+- Fixed shape: served from `rulesCatalog` cached by the snapshot collector
 
-### Case 3. `/api/workspace` still executes `kbx status --bridge-read`
+### Resolved Case 3. `/api/workspace` no longer executes `kbx status --bridge-read`
 
-- Current shape: lighter than before but still collector work inside request
-- Correct layer: serve workspace block from cached system snapshot
+- Fixed shape: served from snapshot `workspace` block
 
-### Case 4. `/api/session-context` still executes `kbx status --bridge-read`
+### Resolved Case 4. `/api/session-context` no longer executes `kbx status --bridge-read`
 
-- Current shape: same issue as workspace
-- Correct layer: serve session block from cached system snapshot
+- Fixed shape: served from snapshot `sessionContext` block
 
-### Case 5. `/api/intents/:id/detail` still allows git-enriched detail on request path
+### Resolved Case 5. `/api/intents/:id/detail` no longer allows git-enriched detail on request path
 
-- Current shape: `includeGit: true` for detail endpoint
-- Correct layer: split into pure detail vs optional evidence enrichment endpoint
+- Fixed shape: `/api/intents/:id/detail` is pure, and `/api/intents/:id/evidence` owns optional git enrichment
 
-### Case 6. `/api/phase2-bridge` is diagnostics-by-request
+### Resolved Case 6. `/api/phase2-bridge` is no longer diagnostics-by-request
 
-- Current shape: executes status + doctor + chaos directly
-- Correct layer: diagnostics collector or explicit operator diagnostic action only
+- Fixed shape: served from cached diagnostics assembled during snapshot refresh
 
-### Case 7. Collector and read API still live in one module
+### Resolved Case 7. Collector and read API are now separated by a dedicated store module
 
-- Current shape: `site/kbx-ui/server.mjs` hosts both snapshot serving and collection/orchestration logic
-- Correct layer: extract collector into dedicated module so the read API cannot accidentally regain side effects
+- Fixed shape: `site/kbx-ui/system-snapshot-store.mjs` owns snapshot cache/refresh semantics, while route handlers only read or trigger explicit refresh
 
 ---
 
