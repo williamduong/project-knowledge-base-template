@@ -32,6 +32,7 @@ notes/*
 !notes/.gitkeep
 !notes/npm-release-checklist.md
 !notes/kbx-ui-kb-page-runtime-contract.md
+!notes/kbx-ui-kb-page-svfactory-handoff.md
 
 # Self-host KB runtime (Layer D) — committed but exclude cache/log noise
 knowledge-base/.kb/_cacache/
