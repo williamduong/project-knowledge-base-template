@@ -1082,6 +1082,48 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
+.prototype-typo-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.prototype-typo-samples h1 { font-size: 28px; margin: 6px 0 }
+.prototype-typo-samples h2 { font-size: 22px; margin: 6px 0 }
+.prototype-typo-samples h3 { font-size: 18px; margin: 6px 0 }
+.prototype-typo-samples h4 { font-size: 16px; margin: 6px 0 }
+.prototype-typo-samples h5 { font-size: 14px; margin: 6px 0 }
+.prototype-typo-samples h6 { font-size: 12px; margin: 6px 0; color: var(--muted) }
+.prototype-typo-samples .lead { font-size: 15px; color: #c9d8e8; margin: 8px 0 }
+.prototype-typo-samples blockquote { margin: 8px 0; padding-left: 12px; border-left: 3px solid rgba(110,231,183,0.12); color: var(--muted) }
+
+.prototype-input-samples {
+  display: grid;
+  gap: 8px;
+}
+.prototype-input-samples label { display: grid; gap: 6px; font-size: 13px; color: var(--muted) }
+.prototype-input-samples input[type="text"],
+.prototype-input-samples input[type="email"],
+.prototype-input-samples input[type="number"],
+.prototype-input-samples input[type="password"],
+.prototype-input-samples input[type="search"],
+.prototype-input-samples input[type="date"],
+.prototype-input-samples input[type="datetime-local"],
+.prototype-input-samples input[type="time"],
+.prototype-input-samples input[type="color"],
+.prototype-input-samples select,
+.prototype-input-samples textarea {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(11,16,23,0.72);
+  color: var(--text);
+  font: inherit;
+}
+.prototype-input-samples input[type="range"] { width: 100% }
+.prototype-input-samples .prototype-switch-row { display: flex; gap: 12px; align-items: center }
+
+.prototype-input-samples input::placeholder { color: var(--muted) }
+
+
 .prototype-subsection {
   margin-top: 14px;
   padding-top: 12px;
@@ -1187,6 +1229,28 @@ button {
   min-width: 980px;
   grid-template-columns: 120px 110px 110px 160px 280px minmax(260px, 1fr);
 }
+
+.rules-row-wrap {
+  display: block;
+}
+
+.expanded-details {
+  padding: 10px 14px;
+  background: rgba(8, 12, 18, 0.45);
+  border-left: 3px solid rgba(110, 231, 183, 0.12);
+}
+
+.expanded-content p { margin: 6px 0 0 0 }
+
+.prototype-tab-content {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(11, 16, 23, 0.45);
+  color: #c8d6e5;
+}
+
+.prototype-state-controls { margin-bottom: 8px }
 
 .prototype-form-layout {
   display: grid;

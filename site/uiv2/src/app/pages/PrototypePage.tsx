@@ -19,10 +19,10 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import ReactECharts from 'echarts-for-react'
-import ReactFlow, { Background, Controls, MiniMap, type Edge, type Node } from 'reactflow'
+// Lazy-load heavy visualization modules when needed
+// (dynamic imports below inside component)
 import { z } from 'zod'
 import 'reactflow/dist/style.css'
 
@@ -80,6 +80,9 @@ const chartCatalog = [
   { name: 'Donut Chart', use: 'Show distribution of categories with small label sets.' },
   { name: 'Stacked Area', use: 'Surface composition shifts across time or releases.' },
   { name: 'Heatmap', use: 'Matrix-like hotspots such as rule-to-surface pressure.' },
+  { name: 'Scatter', use: 'Plot relationships or anomalies across two metrics.' },
+  { name: 'Radar', use: 'Compare multi-dimensional profiles across axes.' },
+  { name: 'Gauge', use: 'Single-value telemetry or threshold visualization.' },
 ]
 
 const formSchema = z.object({
@@ -91,7 +94,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-const flowNodes: Node[] = [
+const flowNodes: any[] = [
   { id: 'catalog', position: { x: 0, y: 80 }, data: { label: 'Capability Catalog' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
   { id: 'navigation', position: { x: 220, y: 0 }, data: { label: 'Navigation Family' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
   { id: 'grid', position: { x: 220, y: 110 }, data: { label: 'Data Grid Family' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
@@ -100,7 +103,7 @@ const flowNodes: Node[] = [
   { id: 'states', position: { x: 460, y: 170 }, data: { label: 'States & Overlays' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
 ]
 
-const flowEdges: Edge[] = [
+const flowEdges: any[] = [
   { id: 'e1', source: 'catalog', target: 'navigation', animated: true },
   { id: 'e2', source: 'catalog', target: 'grid', animated: true },
   { id: 'e3', source: 'catalog', target: 'forms', animated: true },
@@ -144,6 +147,55 @@ function prototypeCharts() {
         ],
       }],
     },
+    stackedArea: {
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['A', 'B', 'C'], textStyle: { color: '#cbd5e1' } },
+      xAxis: { type: 'category', data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
+      yAxis: { type: 'value' },
+      series: [
+        { name: 'A', type: 'line', stack: 'total', areaStyle: {}, data: [120, 132, 101, 134, 90, 230], color: '#60a5fa' },
+        { name: 'B', type: 'line', stack: 'total', areaStyle: {}, data: [220, 182, 191, 234, 290, 330], color: '#34d399' },
+        { name: 'C', type: 'line', stack: 'total', areaStyle: {}, data: [150, 232, 201, 154, 190, 330], color: '#f97316' },
+      ],
+    },
+    heatmap: {
+      tooltip: { position: 'top' },
+      grid: { height: '50%' },
+      xAxis: { type: 'category', data: ['S1', 'S2', 'S3', 'S4', 'S5'] },
+      yAxis: { type: 'category', data: ['A', 'B', 'C', 'D', 'E'] },
+      visualMap: { min: 0, max: 10, calculable: true, orient: 'horizontal', left: 'center', top: '70%' },
+      series: [{
+        name: 'Heat',
+        type: 'heatmap',
+        data: [[0,0,5],[0,1,1],[0,2,0],[0,3,3],[0,4,7],[1,0,2],[1,1,0],[1,2,4],[1,3,6],[1,4,2]],
+        emphasis: { itemStyle: { borderColor: '#fff', borderWidth: 1 } }
+      }],
+    },
+    scatter: {
+      tooltip: { trigger: 'item' },
+      xAxis: { type: 'value' },
+      yAxis: { type: 'value' },
+      series: [{
+        symbolSize: 12,
+        data: [[10,8],[15,18],[20,12],[25,22],[30,16],[35,28]],
+        type: 'scatter',
+        itemStyle: { color: '#f472b6' }
+      }],
+    },
+    radar: {
+      tooltip: {},
+      radar: { indicator: [{ name: 'Perf', max: 100 }, { name: 'Reliability', max: 100 }, { name: 'Scalability', max: 100 }, { name: 'UX', max: 100 }, { name: 'Security', max: 100 }], radius: '60%' },
+      series: [{ type: 'radar', data: [{ value: [80, 90, 70, 85, 60], name: 'Current' }], itemStyle: { color: '#60a5fa' } }],
+    },
+    gauge: {
+      series: [{
+        type: 'gauge',
+        progress: { show: true },
+        axisLine: { lineStyle: { width: 12 } },
+        detail: { valueAnimation: true, formatter: '{value}%' },
+        data: [{ value: 62, name: 'Util' }]
+      }],
+    },
   }
 }
 
@@ -170,6 +222,32 @@ export function PrototypePage() {
       return next
     })
   }
+
+  // Lazy-loaded modules
+  const [EChartsModule, setEChartsModule] = useState<any | null>(null)
+  const [ReactFlowModule, setReactFlowModule] = useState<any | null>(null)
+
+  useEffect(() => {
+    if (activeTab === 'charts' && !EChartsModule) {
+      import('echarts-for-react').then((m) => setEChartsModule(m)).catch(() => {})
+    }
+    if (activeTab === 'flow' && !ReactFlowModule) {
+      import('reactflow').then((m) => setReactFlowModule(m)).catch(() => {})
+    }
+  }, [activeTab, EChartsModule, ReactFlowModule])
+
+  // Data grid expansion state
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
+  const toggleExpand = (id: string) => setExpandedRows((p) => ({ ...(p || {}), [id]: !p[id] }))
+
+  // Tabs demo local state (per-variant)
+  const [underlineIndex, setUnderlineIndex] = useState<number>(0)
+  const [segmentedTabIndex, setSegmentedTabIndex] = useState<number>(1)
+  const [pillIndex, setPillIndex] = useState<number>(0)
+  const [verticalTabsIndex, setVerticalTabsIndex] = useState<number>(2)
+
+  // States demo selection
+  const [stateView, setStateView] = useState<'loading' | 'success' | 'empty' | 'blocked'>('loading')
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -308,6 +386,54 @@ export function PrototypePage() {
                   </article>
                 ))}
               </div>
+              <div className="system-info-grid prototype-card-grid prototype-typo-grid">
+                <article className="system-info-card">
+                  <span className="runtime-overview-label">Typography</span>
+                  <strong className="system-info-title">Type Scale & Styles</strong>
+                  <div className="prototype-typo-samples">
+                    <h1>H1 — Heading Largest</h1>
+                    <h2>H2 — Section Heading</h2>
+                    <h3>H3 — Subsection</h3>
+                    <h4>H4 — Smaller Heading</h4>
+                    <h5>H5 — Small Heading</h5>
+                    <h6>H6 — Caption</h6>
+                    <p className="lead">Lead paragraph — larger and slightly muted to introduce content.</p>
+                    <p>Text paragraph with <strong>bold</strong>, <em>italic</em>, <u>underline</u>, <code>inline code</code>, and a <a href="#">link</a>.</p>
+                    <blockquote>“Design for operator clarity — keep affordances obvious.”</blockquote>
+                    <ul><li>Unordered item</li><li>Another item</li></ul>
+                    <ol><li>First</li><li>Second</li></ol>
+                  </div>
+                </article>
+                <article className="system-info-card">
+                  <span className="runtime-overview-label">Inputs</span>
+                  <strong className="system-info-title">Native Inputs & Formats</strong>
+                  <form className="prototype-input-samples" onSubmit={(e) => e.preventDefault()}>
+                    <label>Text<input type="text" placeholder="Text input" /></label>
+                    <label>Email<input type="email" placeholder="name@example.com" /></label>
+                    <label>Number<input type="number" placeholder="42" /></label>
+                    <label>Password<input type="password" placeholder="••••••" /></label>
+                    <label>Search<input type="search" placeholder="search" /></label>
+                    <label>Date<input type="date" /></label>
+                    <label>Datetime<input type="datetime-local" /></label>
+                    <label>Time<input type="time" /></label>
+                    <label>Color<input type="color" defaultValue="#60a5fa" /></label>
+                    <label>Range<input type="range" min={0} max={100} defaultValue={30} /></label>
+                    <label>File<input type="file" /></label>
+                    <label>Textarea<textarea rows={3}></textarea></label>
+                    <label>Select
+                      <select defaultValue="">
+                        <option value="">Choose</option>
+                        <option>Option A</option>
+                        <option>Option B</option>
+                      </select>
+                    </label>
+                    <div className="prototype-switch-row">
+                      <label><input type="checkbox" /> Checkbox</label>
+                      <label><input type="radio" name="r1" defaultChecked /> Radio</label>
+                    </div>
+                  </form>
+                </article>
+              </div>
             </>
           ) : null}
 
@@ -407,26 +533,30 @@ export function PrototypePage() {
                 <article className="system-info-card">
                   <span className="runtime-overview-label">Underline Tabs</span>
                   <div className="prototype-underline-tabs">
-                    {['Overview', 'Signals', 'Mutations', 'Audit'].map((item) => <button key={item} className={`prototype-tab-button ${item === 'Overview' ? 'active' : ''}`} type="button">{item}</button>)}
+                    {['Overview', 'Signals', 'Mutations', 'Audit'].map((item, i) => <button key={item} className={`prototype-tab-button ${underlineIndex === i ? 'active' : ''}`} type="button" onClick={() => setUnderlineIndex(i)}>{item}</button>)}
                   </div>
+                  <div className="prototype-tab-content">{['Overview content', 'Signals content', 'Mutations content', 'Audit content'][underlineIndex]}</div>
                 </article>
                 <article className="system-info-card">
                   <span className="runtime-overview-label">Segmented Tabs</span>
                   <div className="prototype-segmented-tabs">
-                    {['List', 'Detail', 'Actions'].map((item, index) => <button key={item} className={`prototype-tab-button ${index === 1 ? 'active' : ''}`} type="button">{item}</button>)}
+                    {['List', 'Detail', 'Actions'].map((item, index) => <button key={item} className={`prototype-tab-button ${segmentedTabIndex === index ? 'active' : ''}`} type="button" onClick={() => setSegmentedTabIndex(index)}>{item}</button>)}
                   </div>
+                  <div className="prototype-tab-content">{['List view content', 'Detail panel content', 'Actions panel content'][segmentedTabIndex]}</div>
                 </article>
                 <article className="system-info-card">
                   <span className="runtime-overview-label">Pill Tabs</span>
                   <div className="rules-pill-row">
-                    {['All', 'Hard', 'Master', 'Soft'].map((item, index) => <button key={item} className={`tool-button${index === 0 ? ' active' : ''}`} type="button">{item}</button>)}
+                    {['All', 'Hard', 'Master', 'Soft'].map((item, index) => <button key={item} className={`tool-button${pillIndex === index ? ' active' : ''}`} type="button" onClick={() => setPillIndex(index)}>{item}</button>)}
                   </div>
+                  <div className="prototype-tab-content">Selected filter: {['All', 'Hard', 'Master', 'Soft'][pillIndex]}</div>
                 </article>
                 <article className="system-info-card">
                   <span className="runtime-overview-label">Vertical Tabs</span>
                   <div className="prototype-vertical-tabs">
-                    {['Profile', 'Policies', 'Runtime', 'Audit'].map((item, index) => <button key={item} className={`prototype-vertical-tab ${index === 2 ? 'active' : ''}`} type="button">{item}</button>)}
+                    {['Profile', 'Policies', 'Runtime', 'Audit'].map((item, index) => <button key={item} className={`prototype-vertical-tab ${verticalTabsIndex === index ? 'active' : ''}`} type="button" onClick={() => setVerticalTabsIndex(index)}>{item}</button>)}
                   </div>
+                  <div className="prototype-tab-content">Panel: {['Profile', 'Policies', 'Runtime', 'Audit'][verticalTabsIndex]}</div>
                 </article>
               </div>
             </>
@@ -450,9 +580,19 @@ export function PrototypePage() {
                   )))}
                 </div>
                 {table.getRowModel().rows.map((row) => (
-                  <article key={row.id} className="rules-table-row prototype-grid-row" role="row">
-                    {row.getVisibleCells().map((cell) => <div key={cell.id} role="cell">{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>)}
-                  </article>
+                  <div key={row.id} className="rules-row-wrap">
+                    <article onClick={() => toggleExpand(row.id)} key={row.id} className="rules-table-row prototype-grid-row" role="row">
+                      {row.getVisibleCells().map((cell) => <div key={cell.id} role="cell">{flexRender(cell.column.columnDef.cell, cell.getContext())}</div>)}
+                    </article>
+                    {expandedRows[row.id] ? (
+                      <div className="expanded-details" role="region">
+                        <div className="expanded-content">
+                          <strong>Details</strong>
+                          <p>{row.original.description}</p>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
                 ))}
               </div>
               <div className="rules-pagination">
@@ -531,11 +671,24 @@ export function PrototypePage() {
           {activeTab === 'states' ? (
             <>
               <div className="panel-toolbar"><div><p className="workspace-eyebrow">State Treatments</p><h2>Loading, Empty, Success, Blocked</h2></div><span className="count-pill">4 state examples</span></div>
+              <div className="prototype-state-controls">
+                <div className="rules-pill-row">
+                  {(['loading', 'success', 'empty', 'blocked'] as const).map((s) => (
+                    <button key={s} className={`tool-button${stateView === s ? ' active' : ''}`} type="button" onClick={() => setStateView(s)}>{s}</button>
+                  ))}
+                </div>
+              </div>
+
               <div className="system-info-grid prototype-card-grid">
-                <article className="system-info-card"><span className="runtime-overview-label">Loading</span><strong className="system-info-title">Skeleton / pending surface</strong><div className="prototype-skeleton-stack"><span /><span /><span /></div></article>
-                <article className="system-info-card"><span className="runtime-overview-label">Success</span><strong className="system-info-title">Ready for promotion</strong><span className="status-pill status-good">healthy</span><p>Use green when the system is ready and user confidence should increase.</p></article>
-                <article className="system-info-card"><span className="runtime-overview-label">Empty</span><strong className="system-info-title">No results found</strong><span className="status-pill status-neutral">empty</span><p>Pair empty state with a next action like widening filters or changing source type.</p></article>
-                <article className="system-info-card"><span className="runtime-overview-label">Blocked</span><strong className="system-info-title">Runtime contract missing</strong><span className="status-pill status-offline">blocked</span><p>Use red for hard blockers only, with exact evidence and a deterministic recovery path.</p></article>
+                {stateView === 'loading' ? (
+                  <article className="system-info-card"><span className="runtime-overview-label">Loading</span><strong className="system-info-title">Skeleton / pending surface</strong><div className="prototype-skeleton-stack"><span /><span /><span /></div></article>
+                ) : stateView === 'success' ? (
+                  <article className="system-info-card"><span className="runtime-overview-label">Success</span><strong className="system-info-title">Ready for promotion</strong><span className="status-pill status-good">healthy</span><p>Use green when the system is ready and user confidence should increase.</p></article>
+                ) : stateView === 'empty' ? (
+                  <article className="system-info-card"><span className="runtime-overview-label">Empty</span><strong className="system-info-title">No results found</strong><span className="status-pill status-neutral">empty</span><p>Pair empty state with a next action like widening filters or changing source type.</p></article>
+                ) : (
+                  <article className="system-info-card"><span className="runtime-overview-label">Blocked</span><strong className="system-info-title">Runtime contract missing</strong><span className="status-pill status-offline">blocked</span><p>Use red for hard blockers only, with exact evidence and a deterministic recovery path.</p></article>
+                )}
               </div>
             </>
           ) : null}
@@ -549,9 +702,25 @@ export function PrototypePage() {
                 ))}
               </div>
               <div className="rules-tool-grid prototype-chart-grid">
-                <article className="rules-tool-card prototype-chart-card"><strong>Bar Chart</strong><ReactECharts option={charts.bar} style={{ height: 260 }} theme="default" /></article>
-                <article className="rules-tool-card prototype-chart-card"><strong>Line / Area Chart</strong><ReactECharts option={charts.line} style={{ height: 260 }} theme="default" /></article>
-                <article className="rules-tool-card prototype-chart-card"><strong>Donut Chart</strong><ReactECharts option={charts.donut} style={{ height: 260 }} theme="default" /></article>
+                {EChartsModule ? (
+                  (() => {
+                    const ReactECharts = EChartsModule.default || EChartsModule
+                    return (
+                      <>
+                        <article className="rules-tool-card prototype-chart-card"><strong>Bar Chart</strong><ReactECharts option={charts.bar} style={{ height: 260 }} theme="default" /></article>
+                        <article className="rules-tool-card prototype-chart-card"><strong>Line / Area Chart</strong><ReactECharts option={charts.line} style={{ height: 260 }} theme="default" /></article>
+                        <article className="rules-tool-card prototype-chart-card"><strong>Donut Chart</strong><ReactECharts option={charts.donut} style={{ height: 260 }} theme="default" /></article>
+                        <article className="rules-tool-card prototype-chart-card"><strong>Stacked Area</strong><ReactECharts option={charts.stackedArea} style={{ height: 260 }} theme="default" /></article>
+                        <article className="rules-tool-card prototype-chart-card"><strong>Heatmap</strong><ReactECharts option={charts.heatmap} style={{ height: 340 }} theme="default" /></article>
+                        <article className="rules-tool-card prototype-chart-card"><strong>Scatter</strong><ReactECharts option={charts.scatter} style={{ height: 260 }} theme="default" /></article>
+                        <article className="rules-tool-card prototype-chart-card"><strong>Radar</strong><ReactECharts option={charts.radar} style={{ height: 340 }} theme="default" /></article>
+                        <article className="rules-tool-card prototype-chart-card"><strong>Gauge</strong><ReactECharts option={charts.gauge} style={{ height: 220 }} theme="default" /></article>
+                      </>
+                    )
+                  })()
+                ) : (
+                  <article className="rules-tool-card prototype-chart-card"><em>Loading chart renderer…</em></article>
+                )}
               </div>
             </>
           ) : null}
@@ -561,11 +730,23 @@ export function PrototypePage() {
               <div className="panel-toolbar"><div><p className="workspace-eyebrow">Flow Family</p><h2>React Flow Canvas</h2></div><span className="count-pill">workflow + dependency demo</span></div>
               <div className="prototype-flow-shell">
                 <div className="prototype-flow-canvas">
-                  <ReactFlow nodes={flowNodes} edges={flowEdges} fitView>
-                    <MiniMap />
-                    <Controls />
-                    <Background />
-                  </ReactFlow>
+                  {ReactFlowModule ? (
+                    (() => {
+                      const ReactFlowComp = ReactFlowModule.default || ReactFlowModule.ReactFlow || ReactFlowModule
+                      const MiniMapComp = ReactFlowModule.MiniMap
+                      const ControlsComp = ReactFlowModule.Controls
+                      const BackgroundComp = ReactFlowModule.Background
+                      return (
+                        <ReactFlowComp nodes={flowNodes} edges={flowEdges} fitView>
+                          {MiniMapComp ? <MiniMapComp /> : null}
+                          {ControlsComp ? <ControlsComp /> : null}
+                          {BackgroundComp ? <BackgroundComp /> : null}
+                        </ReactFlowComp>
+                      )
+                    })()
+                  ) : (
+                    <div className="rules-tool-card prototype-chart-card"><em>Loading flow canvas…</em></div>
+                  )}
                 </div>
                 <article className="system-info-card">
                   <span className="runtime-overview-label">When to use</span>
