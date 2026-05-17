@@ -26,7 +26,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import 'reactflow/dist/style.css'
 
-type PrototypeTab = 'overview' | 'navigation' | 'tabs' | 'grid' | 'forms' | 'overlays' | 'states' | 'charts' | 'flow' | 'components'
+type PrototypeTab = 'overview' | 'navigation' | 'tabs' | 'gates' | 'grid' | 'forms' | 'overlays' | 'states' | 'charts' | 'flow' | 'components'
 
 type CatalogCard = {
   label: string
@@ -73,6 +73,47 @@ const tabsCatalog = [
   { name: 'Pill Tabs', use: 'Visible category switching with low chrome and high contrast.' },
   { name: 'Vertical Tabs', use: 'Inspector or settings style side-mounted switching.' },
 ]
+
+const prototypeGateItems = [
+  {
+    gate: 'G-RELEASE-READY',
+    title: 'Release Ready',
+    status: 'pass',
+    policy: 'block',
+    detail: 'Release preconditions and downstream evidence are satisfied for this snapshot.',
+    command: 'kbx release check --json',
+  },
+  {
+    gate: 'G-EVIDENCE-SUFFICIENT',
+    title: 'Evidence Sufficient',
+    status: 'warn',
+    policy: 'warn',
+    detail: 'Workspace evidence is mostly present, but one downstream validation is still pending.',
+    command: 'kbx doctor --json',
+  },
+  {
+    gate: 'G-CHAOS-WITHIN-THRESHOLD',
+    title: 'Chaos Within Threshold',
+    status: 'block',
+    policy: 'block',
+    detail: 'Chaos coefficient crossed the operator threshold and should stop promotion until reconciled.',
+    command: 'kbx chaos --estimate --json',
+  },
+  {
+    gate: 'G-SINGLE-OWNER-INTENT',
+    title: 'Single Owner Intent',
+    status: 'pass',
+    policy: 'block',
+    detail: 'Exactly one owner intent is active for the current version scope.',
+    command: 'kbx status --json',
+  },
+]
+
+function prototypeGateTone(status: string) {
+  if (status === 'block') return 'status-offline'
+  if (status === 'warn') return 'status-warn'
+  return 'status-good'
+}
 
 const chartCatalog = [
   { name: 'Bar Chart', use: 'Compare counts or throughput across rule families.' },
@@ -332,6 +373,7 @@ export function PrototypePage() {
             <button className={`system-menu-item${activeTab === 'overview' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('overview')}><span className="system-menu-item-label"><Icon icon={server} aria-hidden="true" /><span>Overview</span></span><small>map</small></button>
             <button className={`system-menu-item${activeTab === 'navigation' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('navigation')}><span className="system-menu-item-label"><Icon icon={panelLeft} aria-hidden="true" /><span>Navigation</span></span><small>shell patterns</small></button>
             <button className={`system-menu-item${activeTab === 'tabs' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('tabs')}><span className="system-menu-item-label"><Icon icon={blocks} aria-hidden="true" /><span>Tabs</span></span><small>variants</small></button>
+            <button className={`system-menu-item${activeTab === 'gates' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('gates')}><span className="system-menu-item-label"><Icon icon={shield} aria-hidden="true" /><span>Gates</span></span><small>operator layout</small></button>
             <button className={`system-menu-item${activeTab === 'grid' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('grid')}><span className="system-menu-item-label"><Icon icon={layoutGrid} aria-hidden="true" /><span>Data Grid</span></span><small>tanstack table</small></button>
             <button className={`system-menu-item${activeTab === 'forms' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('forms')}><span className="system-menu-item-label"><Icon icon={listTodo} aria-hidden="true" /><span>Forms</span></span><small>rhf + zod</small></button>
             <button className={`system-menu-item${activeTab === 'overlays' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('overlays')}><span className="system-menu-item-label"><Icon icon={bot} aria-hidden="true" /><span>Overlays</span></span><small>modal + drawer</small></button>
@@ -560,6 +602,87 @@ export function PrototypePage() {
                   </div>
                   <div className="prototype-tab-content">Panel: {['Profile', 'Policies', 'Runtime', 'Audit'][verticalTabsIndex]}</div>
                 </article>
+              </div>
+            </>
+          ) : null}
+
+          {activeTab === 'gates' ? (
+            <>
+              <div className="panel-toolbar">
+                <div>
+                  <p className="workspace-eyebrow">Operational Gates</p>
+                  <h2>Gate Layout Prototype</h2>
+                </div>
+                <div className="panel-toolbar-meta">
+                  <span className="count-pill">system-style detail pane</span>
+                  <span className="count-pill">{prototypeGateItems.length} sample gates</span>
+                </div>
+              </div>
+
+              <div className="kb-health-bar gate-health-bar">
+                <div className="kb-health-group">
+                  <span className="runtime-overview-label">Total</span>
+                  <span className="count-pill kb-health-total">{prototypeGateItems.length} gates</span>
+                </div>
+                <div className="kb-health-group">
+                  <span className="runtime-overview-label">Pass</span>
+                  <span className="status-pill status-good">{prototypeGateItems.filter((item) => item.status === 'pass').length} pass</span>
+                </div>
+                <div className="kb-health-group">
+                  <span className="runtime-overview-label">Warn</span>
+                  <span className="status-pill status-warn">{prototypeGateItems.filter((item) => item.status === 'warn').length} warn</span>
+                </div>
+                <div className="kb-health-group">
+                  <span className="runtime-overview-label">Block</span>
+                  <span className="status-pill status-offline">{prototypeGateItems.filter((item) => item.status === 'block').length} block</span>
+                </div>
+                <div className="kb-health-next">
+                  <span className="runtime-overview-label">Intent</span>
+                  <span className="kb-health-next-text">Use this surface to compare gate-as-card density before graduating it into System.</span>
+                </div>
+              </div>
+
+              <div className="runtime-overview-grid compact-runtime-overview-grid gate-overview-grid">
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Module</span>
+                  <strong>gates</strong>
+                </div>
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Placement</span>
+                  <strong>detail pane</strong>
+                </div>
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Layout</span>
+                  <strong>health + grid</strong>
+                </div>
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Audience</span>
+                  <strong>operator</strong>
+                </div>
+              </div>
+
+              <div className="gate-grid">
+                {prototypeGateItems.map((item) => (
+                  <article key={item.gate} className="gate-card">
+                    <div className="gate-card-header">
+                      <div>
+                        <span className="runtime-overview-label">{item.gate}</span>
+                        <strong className="system-info-title">{item.title}</strong>
+                      </div>
+                      <div className="gate-card-pills">
+                        <span className={`status-pill ${prototypeGateTone(item.status)}`}>{item.status}</span>
+                        <span className={`status-pill ${item.policy === 'block' ? 'status-neutral' : 'status-live'}`}>{item.policy}</span>
+                      </div>
+                    </div>
+                    <p className="rules-cell-copy">{item.detail}</p>
+                    <div className="gate-card-meta">
+                      <div>
+                        <span className="runtime-overview-label">Command</span>
+                        <code>{item.command}</code>
+                      </div>
+                    </div>
+                  </article>
+                ))}
               </div>
             </>
           ) : null}
