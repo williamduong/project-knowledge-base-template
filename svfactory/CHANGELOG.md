@@ -17,6 +17,7 @@
 - **Focus contract extraction**: Added `svfactory/focus.state.json` + `svfactory/focus-state.schema.json` and centralized runtime focus resolution in `src/lib/focus-state.js` so bridge/UI stop parsing `focus.md` directly.
 - **Phase 4 write-through sync**: Routed `kbx intent create|activate|focus|apply|close|cancel|archive` through the centralized focus-state writer so CLI mutations now update SQLite/JSON/markdown projection in one path and runtime focus no longer depends on post-hoc heuristics.
 - **System snapshot architecture**: Replaced `/system` fan-out polling with cached `/api/system-snapshot` metadata (`generatedAt`, `staleAt`, `reloadRecommended`, fingerprint, branch/head/focus drift signals), moved Home/Rules/Runtime/Shell hooks onto one shared snapshot query, and shifted manual refresh to a forced snapshot reload path.
+- **Layer contract documented**: Added `svfactory/runtime-control-plane-architecture.md` with 5-layer runtime model, ASCII diagram, and 7 remaining mixed-layer remediation cases so future work can continue from explicit boundaries instead of process-level symptom chasing.
 
 ## 2026-05-05
 

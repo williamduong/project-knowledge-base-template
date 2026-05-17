@@ -50,6 +50,23 @@ Hoặc tạo VS Code custom chat mode trỏ tới `.local/kb-agent/agent.md`.
 ## Focus Contract
 
 - `focus.state.json` is the machine-readable focus contract for runtime and bridge consumers.
+- `runtime-control-plane-architecture.md` locks the operator runtime layering model for `site/kbx-ui` and `site/uiv2`, including snapshot rules and mixed-layer audit cases.
+
+## Runtime Layering
+
+The local operator UI now follows a layered runtime model:
+
+1. `L1 UI Presentation` — `site/uiv2`
+2. `L2 Read API` — bridge read endpoints serving cached snapshot data
+3. `L3 Collector / Refresh` — explicit refresh and controlled cadence
+4. `L4 Deterministic Runtime` — CLI, git, rules, doctor, chaos
+5. `L5 State / Storage` — sqlite/json/.kb/runtime state files
+
+Rule:
+
+- render-time reads must stop at the snapshot layer
+- refresh/mutation paths may cross into collector/runtime layers
+- any future endpoint must declare which layer owns it
 - `focus-state.db` is the SQLite-backed runtime store for Phase 2; the resolver hydrates it from `focus.state.json` when needed.
 - Phase 4 extends this contract into the CLI path: `kbx intent create|activate|focus|apply|close|cancel|archive` now write through the centralized focus-state writer instead of leaving runtime focus to be re-inferred later.
 - `focus.md` remains the maintainer-facing narrative/projection for humans.
