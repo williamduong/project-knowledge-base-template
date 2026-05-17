@@ -1,0 +1,1105 @@
+version: 1
+metadata:
+  status: draft
+  source: runtime-inventory-seed
+  generatedBy: scripts:none
+  note: >-
+    Draft canonical registry seed generated from current catalog runtime. Loader is additive only; runtime rule-engine
+    path remains unchanged.
+precedence:
+  - level: 1
+    label: root
+    description: Constitutional and non-bypassable legislative boundaries.
+  - level: 2
+    label: hard
+    description: Deterministic CLI/runtime checks with direct input/output contracts.
+  - level: 3
+    label: master
+    description: Highest-precedence agent orchestration rules.
+  - level: 4
+    label: soft
+    description: Contextual agent behavior and communication rules.
+packs:
+  - id: core
+    title: Core Packet
+    context: always
+    description: Minimal always-load packet for anti-hallucination, deterministic boundaries, and source precedence.
+    ruleIds:
+      - KBX-MR001
+      - KBX-MR002
+      - KBX-MR004
+      - KBX-S001
+      - KBX-S006
+      - KBX-S023
+      - KBX-S033
+  - id: read-only
+    title: Read-Only Q&A Packet
+    context: read-only
+    description: >-
+      Load only the rules required to answer questions from KB first, cite carefully, and stay provisional when evidence
+      is thin.
+    ruleIds:
+      - KBX-MR004
+      - KBX-S001
+      - KBX-S002
+      - KBX-S018
+      - KBX-S022
+  - id: mutation
+    title: Mutation Packet
+    context: kb-mutation
+    description: >-
+      Controls intent-first behavior, register-first edits, metadata discipline, and deterministic command preference
+      during KB changes.
+    ruleIds:
+      - KBX-MR002
+      - KBX-MR003
+      - KBX-S003
+      - KBX-S012
+      - KBX-S023
+      - KBX-S024
+      - KBX-S028
+      - KBX-M001
+      - KBX-M002
+      - KBX-V001
+      - KBX-V002
+  - id: onboarding
+    title: Onboarding Packet
+    context: onboarding
+    description: Fresh-install and recovery rules, including no-silent-reinit and full onboarding automation.
+    ruleIds:
+      - KBX-S006
+      - KBX-S013
+      - KBX-S014
+      - KBX-S011
+      - KBX-S005
+  - id: intent
+    title: Intent Packet
+    context: intent
+    description: Intent creation, chaos gating, branch strategy, evidence-backed recommendations, and deterministic intent hygiene.
+    ruleIds:
+      - KBX-MR003
+      - KBX-S004
+      - KBX-S009
+      - KBX-S020
+      - KBX-S021
+      - KBX-S027
+      - KBX-S030
+      - KBX-S031
+      - KBX-I001
+      - KBX-I002
+      - KBX-I003
+      - KBX-GB001
+  - id: release
+    title: Release Packet
+    context: release
+    description: Release-time boundary checks, downstream acceptance discipline, and mutation-safe governance rules.
+    ruleIds:
+      - KBX-MR001
+      - KBX-S019
+      - KBX-S023
+      - KBX-S026
+      - KBX-S029
+      - KBX-S032
+  - id: multi-project
+    title: Multi-Project Packet
+    context: multi-project
+    description: Workspace disambiguation and target resolution before any mutation in multi-project sessions.
+    ruleIds:
+      - KBX-S006
+      - KBX-S007
+  - id: session
+    title: Session Packet
+    context: session
+    description: Presentation and continuity packet for chat sessions, including headers, resume blocks, and persona-aware output.
+    ruleIds:
+      - KBX-S005
+      - KBX-S010
+      - KBX-S011
+  - id: advanced-plan
+    title: Advanced Plan Packet
+    context: advanced-plan
+    description: Special packet for explicit /kbx-plan and /kbx-run modes where planning and execution boundaries matter.
+    ruleIds:
+      - KBX-S015
+      - KBX-S016
+      - KBX-S017
+      - KBX-S025
+rules:
+  - id: KBX-GB001
+    title: KBX-GB001
+    description: Intent IDs must follow vX-Y-slug pattern (e.g., v2-7-nl-rules-to-cli-logic)
+    severity: error
+    kind: hard
+    layer: cli
+    priority: P0
+    scope:
+      - intent
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: template/15-governance/git-binding-policy.md
+    sourceAnchor: null
+    checkerId: KBX-GB001
+    enforcementLevel: validate
+    status: active
+  - id: KBX-I001
+    title: KBX-I001
+    description: Active intents must have non-empty focus.next_action field
+    severity: warn
+    kind: hard
+    layer: cli
+    priority: P1
+    scope:
+      - intent
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: knowledge-base/intents directories (_active, _closed, etc.)
+    sourceAnchor: null
+    checkerId: KBX-I001
+    enforcementLevel: validate
+    status: active
+  - id: KBX-I002
+    title: KBX-I002
+    description: Feature/breaking intents must have non-empty change_scope field
+    severity: warn
+    kind: hard
+    layer: cli
+    priority: P1
+    scope:
+      - intent
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: knowledge-base/intents directories (_active, _closed, etc.)
+    sourceAnchor: null
+    checkerId: KBX-I002
+    enforcementLevel: validate
+    status: active
+  - id: KBX-I003
+    title: KBX-I003
+    description: Active intents must have numeric chaos_estimate.estimated_delta field
+    severity: warn
+    kind: hard
+    layer: cli
+    priority: P1
+    scope:
+      - intent
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: knowledge-base/intents directories (_active, _closed, etc.)
+    sourceAnchor: null
+    checkerId: KBX-I003
+    enforcementLevel: validate
+    status: active
+  - id: KBX-M001
+    title: KBX-M001
+    description: 'Required frontmatter fields must be present: title, type, status, owner.'
+    severity: error
+    kind: hard
+    layer: cli
+    priority: P0
+    scope:
+      - kb-mutation
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: template/15-governance/metadata-schema.md
+    sourceAnchor: null
+    checkerId: KBX-M001
+    enforcementLevel: validate
+    status: active
+  - id: KBX-M002
+    title: KBX-M002
+    description: 'status field must be one of: active, draft, deprecated, archived.'
+    severity: error
+    kind: hard
+    layer: cli
+    priority: P0
+    scope:
+      - kb-mutation
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: template/15-governance/metadata-schema.md
+    sourceAnchor: null
+    checkerId: KBX-M002
+    enforcementLevel: validate
+    status: active
+  - id: KBX-M003
+    title: KBX-M003
+    description: >-
+      verification field, when present, must be one of: code-verified, design-only, unverified, outdated,
+      self-referential.
+    severity: warn
+    kind: hard
+    layer: cli
+    priority: P1
+    scope:
+      - kb-mutation
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: template/15-governance/metadata-schema.md
+    sourceAnchor: null
+    checkerId: KBX-M003
+    enforcementLevel: validate
+    status: active
+  - id: KBX-M004
+    title: KBX-M004
+    description: >-
+      time_state field, when present, must be one of: current, point-in-time, evergreen, historical, 2026-current,
+      future.
+    severity: warn
+    kind: hard
+    layer: cli
+    priority: P1
+    scope:
+      - kb-mutation
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: template/15-governance/metadata-schema.md
+    sourceAnchor: null
+    checkerId: KBX-M004
+    enforcementLevel: validate
+    status: active
+  - id: KBX-MR001
+    title: Constitutional Separation
+    description: SV Factory legislative gates must not be bypassed by agent reasoning or prompt fallback.
+    severity: error
+    kind: master
+    layer: root
+    priority: P0
+    scope:
+      - always
+    dependsOn: []
+    overrideMode: none
+    tools:
+      - kbx init
+      - kbx doctor
+      - kbx chaos
+    precedence: 1
+    sourceDoc: svfactory/CONSTITUTION.md
+    sourceAnchor: AXIOM 1-3
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-MR002
+    title: Deterministic First
+    description: If a deterministic CLI/runtime action exists, the agent must call it instead of reasoning as a substitute.
+    severity: warn
+    kind: master
+    layer: agent
+    priority: P0
+    scope:
+      - always
+    dependsOn:
+      - KBX-MR001
+    overrideMode: none
+    tools:
+      - kbx status
+      - kbx intent
+      - kbx workspace
+    precedence: 3
+    sourceDoc: template/12-ai-skills/agent-operating-manual.md
+    sourceAnchor: Deterministic-First Rule Placement
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-MR003
+    title: Intent First
+    description: Non-trivial KB changes must create or resume an intent rather than mutate content ad hoc.
+    severity: warn
+    kind: master
+    layer: agent
+    priority: P0
+    scope:
+      - kb-mutation
+      - intent
+    dependsOn:
+      - KBX-MR002
+    overrideMode: human-with-reason
+    tools:
+      - kbx intent create
+      - kbx intent list
+      - kbx intent apply
+    precedence: 3
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Behavioral Rules 15
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-MR004
+    title: Verify Baseline First
+    description: Before claiming confidence, compare stored KB baseline against actual repository state.
+    severity: warn
+    kind: master
+    layer: agent
+    priority: P0
+    scope:
+      - always
+      - read-only
+    dependsOn: []
+    overrideMode: human-with-reason
+    tools:
+      - kbx status
+      - git
+    precedence: 3
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Behavioral Rules 1
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S001
+    title: Cite Or Abstain
+    description: Every factual KB or source claim should be cited or marked provisional to reduce hallucination.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P0
+    scope:
+      - read-only
+      - kb-mutation
+    dependsOn:
+      - KBX-MR004
+    overrideMode: none
+    tools: []
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Behavioral Rules 7
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S002
+    title: KB Before Source
+    description: For code Q&A, consult KB routing and KB docs before reading source files directly.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - read-only
+    dependsOn:
+      - KBX-MR004
+      - KBX-S001
+    overrideMode: human-with-reason
+    tools:
+      - semantic_search
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Behavioral Rules 10
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S003
+    title: Register First
+    description: Before creating files, declare purpose, path, metadata, and index registration.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - kb-mutation
+    dependsOn:
+      - KBX-MR003
+    overrideMode: human-with-reason
+    tools: []
+    precedence: 4
+    sourceDoc: template/12-ai-skills/agent-operating-manual.md
+    sourceAnchor: Register-First Rule For File Creation
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S004
+    title: Gate Instead Of Chat Blocking
+    description: If another actor is required, create a gate record and continue non-blocked work instead of stopping in chat.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - intent
+      - kb-mutation
+    dependsOn:
+      - KBX-MR003
+    overrideMode: none
+    tools:
+      - kbx intent list
+    precedence: 4
+    sourceDoc: template/12-ai-skills/agent-operating-manual.md
+    sourceAnchor: Human-Gate Protocol
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S005
+    title: Session Continuity
+    description: Emit resumable context at natural pauses so work can continue across chat sessions.
+    severity: info
+    kind: soft
+    layer: agent
+    priority: P2
+    scope:
+      - session
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Behavioral Rules 19
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S006
+    title: Always Probe State Via CLI
+    description: Install and state detection must come from public CLI commands, not hidden filesystem heuristics.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P0
+    scope:
+      - always
+      - onboarding
+      - multi-project
+    dependsOn:
+      - KBX-MR002
+    overrideMode: none
+    tools:
+      - kbx status
+      - npx @williamduong/kbx status
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Always probe install state via the CLI
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S007
+    title: Multi-Project Mutation Guard
+    description: Mutation commands must resolve exactly one target project before execution in multi-project workspaces.
+    severity: error
+    kind: soft
+    layer: agent
+    priority: P0
+    scope:
+      - multi-project
+      - kb-mutation
+    dependsOn:
+      - KBX-S006
+    overrideMode: none
+    tools:
+      - kbx workspace detect
+      - kbx workspace promote
+      - kbx workspace verify
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Multi-project mutation rule
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S008
+    title: Version Capability Guard
+    description: Agents must not claim behaviors or capabilities from later versions unless explicitly in that version context.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - always
+    dependsOn: []
+    overrideMode: none
+    tools: []
+    precedence: 4
+    sourceDoc: template/12-ai-skills/agent-operating-manual.md
+    sourceAnchor: Doctrine Alignment Rule
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S009
+    title: Evidence Before Recommendation
+    description: AI recommendations for conflicts, ordering, or lessons must include evidence and confidence.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - intent
+      - read-only
+    dependsOn:
+      - KBX-S001
+    overrideMode: none
+    tools:
+      - kbx intent apply
+      - kbx intent suggest-lessons
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: AI decision transparency
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S010
+    title: Status Header First
+    description: Every agent response must begin with a deterministic status header before any explanation.
+    severity: info
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - session
+    dependsOn:
+      - KBX-S005
+    overrideMode: none
+    tools: []
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Response Status Header Protocol
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S011
+    title: Persona Aware Output
+    description: User-facing explanation depth and language should follow stored persona and chat-language preferences.
+    severity: info
+    kind: soft
+    layer: agent
+    priority: P2
+    scope:
+      - session
+      - read-only
+      - kb-mutation
+    dependsOn: []
+    overrideMode: human-with-reason
+    tools:
+      - kbx status
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Behavioral Rules 16 and 20
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S012
+    title: Advisory Metadata Autofill
+    description: In advisory metadata mode, the agent may fill safe defaults and warn, but must not claim verification upgrades.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - kb-mutation
+    dependsOn:
+      - KBX-S003
+    overrideMode: none
+    tools:
+      - kbx status
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Role 2 Structural Guardian
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S013
+    title: No Silent Re-Init
+    description: A partial or corrupted install must never trigger silent re-init; recovery must be surfaced first.
+    severity: error
+    kind: master
+    layer: agent
+    priority: P0
+    scope:
+      - onboarding
+      - kb-mutation
+    dependsOn:
+      - KBX-S006
+    overrideMode: human-with-reason
+    tools:
+      - kbx status
+      - kbx doctor
+      - kbx uninstall
+      - kbx init
+    precedence: 3
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: No silent re-init
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S014
+    title: Auto Onboarding
+    description: Fresh KB setup requests should run the full onboarding flow instead of stopping at init instructions.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P0
+    scope:
+      - onboarding
+    dependsOn:
+      - KBX-S013
+      - KBX-MR003
+    overrideMode: human-with-reason
+    tools:
+      - kbx init
+      - kbx bootstrap
+      - kbx intent create
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Zero-to-Intent Onboarding Protocol
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S015
+    title: Advanced Plan Boundaries
+    description: The explicit /kbx-plan mode may plan, but must not execute CLI steps or mutate outside runtime-plan scope.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - read-only
+    dependsOn:
+      - KBX-MR002
+    overrideMode: none
+    tools:
+      - /kbx-plan
+    precedence: 4
+    sourceDoc: template/.github/prompts/kbx-plan.prompt.template.md
+    sourceAnchor: Boundaries
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S016
+    title: Batch Non-Blocking Run
+    description: >-
+      The explicit /kbx-run mode should batch routine non-blocking steps instead of forcing re-invocation after each
+      step.
+    severity: info
+    kind: soft
+    layer: agent
+    priority: P2
+    scope:
+      - advanced-plan
+      - kb-mutation
+    dependsOn:
+      - KBX-S015
+    overrideMode: none
+    tools:
+      - /kbx-run
+    precedence: 4
+    sourceDoc: template/.github/prompts/kbx-run.prompt.template.md
+    sourceAnchor: Execution — Batch Non-Blocking Steps
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S017
+    title: Unknown Flags Stop Flow
+    description: Agents must not invent CLI flags; unknown options should stop the flow and request refinement.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P0
+    scope:
+      - advanced-plan
+      - kb-mutation
+    dependsOn:
+      - KBX-MR002
+    overrideMode: none
+    tools:
+      - /kbx-run
+    precedence: 4
+    sourceDoc: template/.github/prompts/kbx-run.prompt.template.md
+    sourceAnchor: Boundaries
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S018
+    title: Low Confidence Threshold
+    description: Recommendations with fewer than two evidence points must be labeled low-confidence and not strongly advocated.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - read-only
+      - intent
+    dependsOn:
+      - KBX-S009
+    overrideMode: none
+    tools:
+      - kbx intent suggest-lessons
+    precedence: 4
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Cognitive grounding check T2/T3
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S019
+    title: Downstream Acceptance Boundary
+    description: >-
+      Shipped downstream KB Agent behavior must be accepted in a downstream clean workspace, not inferred from self-host
+      success.
+    severity: warn
+    kind: master
+    layer: agent
+    priority: P0
+    scope:
+      - release
+      - kb-mutation
+    dependsOn:
+      - KBX-MR001
+    overrideMode: human-with-reason
+    tools:
+      - kbx init
+      - kbx update
+    precedence: 3
+    sourceDoc: template/12-ai-skills/agent-operating-manual.md
+    sourceAnchor: User-experience acceptance for shipped KB Agent behavior
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S020
+    title: Chaos Gate Before New Intent
+    description: >-
+      Before starting a new intent, run chaos estimation and surface projected risk, including explicit confirmation if
+      too high.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P0
+    scope:
+      - intent
+    dependsOn:
+      - KBX-MR003
+    overrideMode: human-with-reason
+    tools:
+      - kbx chaos
+      - kbx intent create
+    precedence: 4
+    sourceDoc: template/12-ai-skills/agent-operating-manual.md
+    sourceAnchor: Before creating any new intent or starting work on a new version
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S021
+    title: Large Intent Branch Gate
+    description: Large intents must confirm branch strategy explicitly before implementation continues.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - intent
+    dependsOn:
+      - KBX-S020
+    overrideMode: human-with-reason
+    tools:
+      - git
+    precedence: 4
+    sourceDoc: template/12-ai-skills/agent-operating-manual.md
+    sourceAnchor: After the chaos estimate gate and before creating/starting a large intent
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S022
+    title: Graph Work Requires Graph Context
+    description: Knowledge graph work should only activate when the project actually uses the graph tier or graph-specific sources.
+    severity: info
+    kind: soft
+    layer: agent
+    priority: P2
+    scope:
+      - read-only
+      - kb-mutation
+    dependsOn: []
+    overrideMode: none
+    tools:
+      - kbx graph
+    precedence: 4
+    sourceDoc: template/12-ai-skills/agent-operating-manual.md
+    sourceAnchor: When working in projects that use the Knowledge Graph tier
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S023
+    title: Public CLI Only
+    description: Agents must use public CLI surfaces rather than importing or mutating CLI internals directly.
+    severity: warn
+    kind: master
+    layer: agent
+    priority: P0
+    scope:
+      - always
+    dependsOn:
+      - KBX-MR002
+    overrideMode: none
+    tools:
+      - kbx
+    precedence: 3
+    sourceDoc: template/.github/agents/kbx.agent.template.md
+    sourceAnchor: Behavioral Rules 9
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S024
+    title: Maintainer Three-Layer Separation
+    description: Self-host planning must keep ship surface, maintainer layer, and runtime content root explicitly separated.
+    severity: warn
+    kind: master
+    layer: root
+    priority: P0
+    scope:
+      - kb-mutation
+      - release
+    dependsOn:
+      - KBX-MR001
+    overrideMode: none
+    tools:
+      - /svfactory-plan
+    precedence: 1
+    sourceDoc: .github/prompts/svfactory-plan.prompt.md
+    sourceAnchor: Rules 3-5
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S025
+    title: Maintainer Runtime-Step Discipline
+    description: Self-host execution should advance the next maintainer runtime-step unless blocked by an approval gate.
+    severity: info
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - advanced-plan
+      - session
+    dependsOn:
+      - KBX-S024
+    overrideMode: human-with-reason
+    tools:
+      - /svfactory-run
+    precedence: 4
+    sourceDoc: .github/prompts/svfactory-run.prompt.md
+    sourceAnchor: Rules 3-4
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S026
+    title: Downstream Acceptance Redirect
+    description: >-
+      If the request is really downstream-user acceptance, maintainer surfaces must stop and route to a downstream clean
+      workspace.
+    severity: warn
+    kind: master
+    layer: root
+    priority: P0
+    scope:
+      - release
+      - kb-mutation
+      - read-only
+    dependsOn:
+      - KBX-S019
+    overrideMode: none
+    tools:
+      - /svfactory-run
+      - /svfactory-plan
+      - /svfactory-ask
+    precedence: 1
+    sourceDoc: .github/prompts/svfactory-run.prompt.md
+    sourceAnchor: Rules 5-6
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S027
+    title: Phase Naming Must Be Versioned
+    description: Workflow phase names must use the explicit vX.Y.Z Phase N format instead of floating phase labels.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - intent
+      - kb-mutation
+    dependsOn:
+      - KBX-MR003
+    overrideMode: none
+    tools: []
+    precedence: 4
+    sourceDoc: svfactory/process.md
+    sourceAnchor: Phase naming convention
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S028
+    title: Phase Exit Before Next Phase
+    description: A build phase must verify the previous phase exit criteria before implementation continues.
+    severity: warn
+    kind: soft
+    layer: agent
+    priority: P1
+    scope:
+      - kb-mutation
+      - intent
+    dependsOn:
+      - KBX-MR003
+    overrideMode: none
+    tools: []
+    precedence: 4
+    sourceDoc: svfactory/process.md
+    sourceAnchor: Workflow 2 Step 2
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S029
+    title: Template Touch Requires Downstream Gate
+    description: >-
+      If a change touches template ship surface, downstream acceptance is mandatory before the work can be considered
+      done.
+    severity: warn
+    kind: master
+    layer: root
+    priority: P0
+    scope:
+      - kb-mutation
+      - release
+    dependsOn:
+      - KBX-S019
+      - KBX-S026
+    overrideMode: human-with-reason
+    tools:
+      - npm pack
+      - kbx init
+      - kbx update
+    precedence: 1
+    sourceDoc: svfactory/process.md
+    sourceAnchor: Workflow 2 Downstream Acceptance Gate
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S030
+    title: Version-Prefixed Intent IDs
+    description: >-
+      SVFactory maintainer intents should use version-prefixed IDs so ship history remains traceable without git
+      archaeology.
+    severity: info
+    kind: soft
+    layer: agent
+    priority: P2
+    scope:
+      - intent
+    dependsOn:
+      - KBX-MR003
+    overrideMode: human-with-reason
+    tools:
+      - kbx intent create
+    precedence: 4
+    sourceDoc: svfactory/specifics.md
+    sourceAnchor: Intent ID Format
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S031
+    title: Wave Equals Target Release
+    description: In SVFactory, the intent wave should align with the target release version rather than an arbitrary sprint label.
+    severity: info
+    kind: soft
+    layer: agent
+    priority: P2
+    scope:
+      - intent
+      - release
+    dependsOn:
+      - KBX-S030
+    overrideMode: human-with-reason
+    tools:
+      - kbx intent create
+    precedence: 4
+    sourceDoc: svfactory/specifics.md
+    sourceAnchor: Wave Field
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S032
+    title: Layer C Must Not Ship
+    description: Maintainer-only Layer C artifacts must stay outside npm ship surface even when they support governance tooling.
+    severity: error
+    kind: master
+    layer: root
+    priority: P0
+    scope:
+      - release
+      - kb-mutation
+    dependsOn:
+      - KBX-MR001
+    overrideMode: none
+    tools:
+      - npm pack
+      - git
+    precedence: 1
+    sourceDoc: svfactory/specifics.md
+    sourceAnchor: 'Layer: C (maintainer-only). NOT shipped via npm files whitelist'
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-S033
+    title: Machine-Readable Command Output
+    description: >-
+      Deterministic command contracts should expose machine-readable JSON fields and stable error codes for agents and
+      MCP consumers.
+    severity: info
+    kind: soft
+    layer: cli
+    priority: P1
+    scope:
+      - always
+    dependsOn:
+      - KBX-MR002
+    overrideMode: none
+    tools:
+      - kbx
+    precedence: 4
+    sourceDoc: svfactory/specifics.md
+    sourceAnchor: Common Output Rules
+    checkerId: null
+    enforcementLevel: assist
+    status: active
+  - id: KBX-V001
+    title: KBX-V001
+    description: time_state field must be present when verification = code-verified
+    severity: error
+    kind: hard
+    layer: cli
+    priority: P0
+    scope:
+      - kb-mutation
+    dependsOn:
+      - KBX-M003
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: template/15-governance/verification-policy.md
+    sourceAnchor: null
+    checkerId: KBX-V001
+    enforcementLevel: validate
+    status: active
+  - id: KBX-V002
+    title: KBX-V002
+    description: 'time_state must be one of: current, point-in-time, evergreen, historical, 2026-current, future'
+    severity: error
+    kind: hard
+    layer: cli
+    priority: P0
+    scope:
+      - kb-mutation
+    dependsOn:
+      - KBX-M004
+    overrideMode: none
+    tools: []
+    precedence: 2
+    sourceDoc: template/15-governance/verification-policy.md
+    sourceAnchor: null
+    checkerId: KBX-V002
+    enforcementLevel: validate
+    status: active
