@@ -2018,6 +2018,10 @@
   .runtime-overview-grid {
     grid-template-columns: 1fr;
   }
+
+  .gate-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
@@ -2251,6 +2255,67 @@
   border-radius: 6px;
 }
 .kb-health-next-text { color: #ebf2fa; font-size: 12.5px; }
+.gate-health-bar {
+  margin-bottom: 12px;
+}
+
+.gate-overview-grid {
+  margin-bottom: 12px;
+}
+
+.gate-section-shell {
+  gap: 12px;
+}
+
+.gate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gate-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(11, 16, 23, 0.68);
+}
+
+.gate-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.gate-card-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.gate-card-meta {
+  display: grid;
+  gap: 6px;
+}
+
+.gate-card-meta code {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(53, 70, 96, 0.78);
+  background: rgba(6, 10, 17, 0.82);
+  color: #d4dce6;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.gate-card-empty {
+  grid-column: 1 / -1;
+}
 
 /* Account for health bar height in 3-pane shell */
 .kb-page:has(.kb-health-bar) .kb-shell { height: calc(100vh - var(--shell-chrome-h, 140px) - 56px); }

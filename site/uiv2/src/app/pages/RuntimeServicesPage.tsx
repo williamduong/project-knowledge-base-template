@@ -9,7 +9,7 @@ import settings2 from '@iconify-icons/lucide/settings-2'
 import { useHomeSummary } from '../hooks/useHomeSummary'
 import { useRulesSummary } from '../hooks/useRulesSummary'
 import { useEnsureRuntimeService, useRuntimeServices } from '../hooks/useRuntimeServices'
-import { useRefreshSystemSnapshot } from '../hooks/useSystemSnapshot'
+import { useRefreshSystemSnapshot, useSystemSnapshot } from '../hooks/useSystemSnapshot'
 import { useState } from 'react'
 
 const RULES_PAGE_SIZE = 20
@@ -23,6 +23,24 @@ type RuleSourceCategory = {
 }
 
 type RegistrySortKey = 'id' | 'severity' | 'kind' | 'layer' | 'priority' | 'sourceType'
+type SystemWorkspaceSection = 'services' | 'cron' | 'goal' | 'pipeline' | 'gates' | 'rules'
+type Phase2GateItem = {
+  gate: string
+  severity: string
+  command: string
+  ok: boolean
+  detail: string
+}
+
+type Phase2GateSummary = {
+  blocked?: boolean
+  pass?: number
+  warn?: number
+  fail?: number
+  readyCount?: number
+  blockedCount?: number
+  attentionCount?: number
+}
 
 function paginateItems<T>(items: T[], page: number, pageSize: number) {
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize))
@@ -127,8 +145,100 @@ function ruleSeverityTone(severity: string | null | undefined) {
   return 'status-live'
 }
 
+function gateSeverityTone(severity: string | null | undefined) {
+  const normalized = String(severity || '').toLowerCase()
+  if (normalized === 'hard-fail') {
+    return 'status-offline'
+  }
+  if (normalized === 'warn' || normalized === 'warning') {
+    return 'status-warn'
+  }
+  return 'status-live'
+}
+
+function gateStatusTone(gate: Phase2GateItem) {
+  if (gate.ok) {
+    return 'status-good'
+  }
+
+  return gateSeverityTone(gate.severity)
+}
+
+function gateSeverityLabel(severity: string | null | undefined) {
+  const normalized = String(severity || '').toLowerCase()
+  if (normalized === 'hard-fail') {
+    return 'block'
+  }
+  if (normalized === 'warn' || normalized === 'warning') {
+    return 'warn'
+  }
+  return normalized || 'info'
+}
+
+function gateLabelFromId(gateId: string | null | undefined) {
+  return String(gateId || 'Unknown Gate')
+    .replace(/^G-/, '')
+    .split('-')
+    .filter(Boolean)
+    .map((chunk) => chunk.charAt(0) + chunk.slice(1).toLowerCase())
+    .join(' ')
+}
+
+function gateNextAction(summary: Phase2GateSummary, failingGate: Phase2GateItem | undefined) {
+  const failCount = Number(summary.fail ?? summary.blockedCount ?? 0)
+  const warnCount = Number(summary.warn ?? summary.attentionCount ?? 0)
+
+  if (failCount > 0 && failingGate) {
+    return `Unblock ${gateLabelFromId(failingGate.gate)} before maintain or release flows.`
+  }
+  if (warnCount > 0) {
+    return 'Review warning-level gates before promoting this runtime state.'
+  }
+  return 'Gate surface is healthy enough to continue deeper runtime checks.'
+}
+
+function GateHealthBar({
+  total,
+  passCount,
+  warnCount,
+  failCount,
+  nextAction,
+}: {
+  total: number
+  passCount: number
+  warnCount: number
+  failCount: number
+  nextAction: string
+}) {
+  return (
+    <div className="kb-health-bar gate-health-bar">
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Total</span>
+        <span className="count-pill kb-health-total">{total} gates</span>
+      </div>
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Pass</span>
+        <span className="status-pill status-good">pass {passCount}</span>
+      </div>
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Warn</span>
+        <span className={`status-pill ${warnCount > 0 ? 'status-warn' : 'status-neutral'}`}>warn {warnCount}</span>
+      </div>
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Block</span>
+        <span className={`status-pill ${failCount > 0 ? 'status-offline' : 'status-neutral'}`}>block {failCount}</span>
+      </div>
+      <div className="kb-health-next">
+        <span className="runtime-overview-label">Next action</span>
+        <span className="kb-health-next-text">{nextAction}</span>
+      </div>
+    </div>
+  )
+}
+
 export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   const runtimeServicesQuery = useRuntimeServices()
+  const systemSnapshotQuery = useSystemSnapshot()
   const homeSummaryQuery = useHomeSummary()
   const rulesSummaryQuery = useRulesSummary()
   const ensureRuntimeService = useEnsureRuntimeService()
@@ -140,10 +250,34 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   const dashboard = homeSummaryQuery.data?.summary
   const pipeline = dashboard?.pipeline
   const rules = rulesSummaryQuery.data?.summary ?? dashboard?.rules
+  const snapshotDiagnostics = (systemSnapshotQuery.data?.diagnostics ?? {}) as {
+    phase2Bridge?: {
+      phase?: string
+      checkedAt?: string | null
+      summary?: Phase2GateSummary
+      gates?: Phase2GateItem[]
+      ok?: boolean
+    }
+  }
+  const gateDiagnostics = snapshotDiagnostics.phase2Bridge
+  const gates = Array.isArray(gateDiagnostics?.gates) ? gateDiagnostics.gates : []
+  const gateSummary = gateDiagnostics?.summary ?? {}
+  const gatePassCount = Number(gateSummary.pass ?? gateSummary.readyCount ?? gates.filter((gate) => gate.ok).length)
+  const gateWarnCount = Number(
+    gateSummary.warn
+      ?? gateSummary.attentionCount
+      ?? gates.filter((gate) => !gate.ok && String(gate.severity).toLowerCase() !== 'hard-fail').length,
+  )
+  const gateFailCount = Number(
+    gateSummary.fail
+      ?? gateSummary.blockedCount
+      ?? gates.filter((gate) => !gate.ok && String(gate.severity).toLowerCase() === 'hard-fail').length,
+  )
+  const failingGate = gates.find((gate) => !gate.ok)
   const goalSummary = dashboard?.goal
   const currentIntent = dashboard?.session.intent
   const currentTask = dashboard?.session.currentTask
-  const [activeSection, setActiveSection] = useState<'services' | 'cron' | 'goal' | 'pipeline' | 'rules'>('services')
+  const [activeSection, setActiveSection] = useState<SystemWorkspaceSection>('services')
   const [ruleKindFilter, setRuleKindFilter] = useState<'all' | 'hard' | 'master' | 'soft'>('all')
   const [rulePackFilter, setRulePackFilter] = useState<string>('all')
   const [ruleSourceFilter, setRuleSourceFilter] = useState<string>('all')
@@ -362,6 +496,17 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                 <span>Pipeline</span>
               </span>
               <small>{pipeline?.stepCount ?? 0} steps</small>
+            </button>
+            <button
+              className={`system-menu-item${activeSection === 'gates' ? ' active' : ''}`}
+              type="button"
+              onClick={() => setActiveSection('gates')}
+            >
+              <span className="system-menu-item-label">
+                <Icon icon={shield} aria-hidden="true" />
+                <span>Gates</span>
+              </span>
+              <small>{gateFailCount > 0 ? `${gateFailCount} blocking` : `${gates.length} tracked`}</small>
             </button>
             <button
               className={`system-menu-item${activeSection === 'rules' ? ' active' : ''}`}
@@ -585,6 +730,96 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
               </div>
 
               {pipeline && !pipeline.ok ? <p className="runtime-error-text">Pipeline error: {pipeline.error ?? 'unknown error'}</p> : null}
+            </>
+          ) : activeSection === 'gates' ? (
+            <>
+              <div className="panel-toolbar">
+                <div>
+                  <p className="workspace-eyebrow">Operational Gates</p>
+                  <div className="section-title-row">
+                    <span className="section-icon section-icon-kb" aria-hidden="true">
+                      <Icon icon={shield} />
+                    </span>
+                    <h2>Gate Readiness</h2>
+                  </div>
+                </div>
+                <div className="panel-toolbar-meta">
+                  <span className="count-pill">{gateDiagnostics?.phase ?? 'phase-2-cli-bridge'}</span>
+                  <span className="count-pill">{gateDiagnostics?.checkedAt ?? snapshotMetadata?.generatedAt ?? 'pending'}</span>
+                </div>
+              </div>
+
+              <GateHealthBar
+                total={gates.length}
+                passCount={gatePassCount}
+                warnCount={gateWarnCount}
+                failCount={gateFailCount}
+                nextAction={gateNextAction(gateSummary, failingGate)}
+              />
+
+              <div className="runtime-overview-grid compact-runtime-overview-grid gate-overview-grid">
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Collector</span>
+                  <strong>{gateDiagnostics?.phase ? 'snapshot' : 'pending'}</strong>
+                </div>
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Checked</span>
+                  <strong>{gateDiagnostics?.checkedAt ? 'fresh' : 'pending'}</strong>
+                </div>
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Readiness</span>
+                  <strong>{gateFailCount > 0 ? 'blocked' : gateWarnCount > 0 ? 'review' : 'ready'}</strong>
+                </div>
+                <div className="runtime-overview-card">
+                  <span className="runtime-overview-label">Snapshot source</span>
+                  <strong>{snapshotMetadata?.reloadRecommended ? 'stale' : 'live'}</strong>
+                </div>
+              </div>
+
+              <div className="system-module-stack">
+                <article className="system-info-card gate-section-shell">
+                  <div className="panel-toolbar compact-toolbar">
+                    <div>
+                      <p className="workspace-eyebrow">Gate Registry</p>
+                      <h3>Tracked Decisions</h3>
+                    </div>
+                    <div className="panel-toolbar-meta">
+                      <span className="count-pill">{gates.length} items</span>
+                      <span className="count-pill">{gateFailCount > 0 ? `${gateFailCount} blockers` : 'no blockers'}</span>
+                    </div>
+                  </div>
+
+                  <div className="gate-grid">
+                    {gates.map((gate) => (
+                      <article key={gate.gate} className="gate-card">
+                        <div className="gate-card-header">
+                          <div>
+                            <span className="runtime-overview-label">{gate.gate}</span>
+                            <strong className="system-info-title">{gateLabelFromId(gate.gate)}</strong>
+                          </div>
+                          <div className="gate-card-pills">
+                            <span className={`status-pill ${gateStatusTone(gate)}`}>{gate.ok ? 'pass' : 'needs action'}</span>
+                            <span className={`status-pill ${gateSeverityTone(gate.severity)}`}>{gateSeverityLabel(gate.severity)}</span>
+                          </div>
+                        </div>
+                        <p className="rules-cell-copy">{gate.detail}</p>
+                        <div className="gate-card-meta">
+                          <div>
+                            <span className="runtime-overview-label">Command</span>
+                            <code>{gate.command}</code>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                    {!gates.length ? (
+                      <article className="gate-card gate-card-empty">
+                        <strong className="system-info-title">No gate snapshot yet</strong>
+                        <p className="rules-cell-copy">Refresh the runtime snapshot to hydrate operational gates into this pane.</p>
+                      </article>
+                    ) : null}
+                  </div>
+                </article>
+              </div>
             </>
           ) : (
             <>

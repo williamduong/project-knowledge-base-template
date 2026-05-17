@@ -45,6 +45,7 @@ export type SystemSnapshotResponse = {
   rulesSummary: unknown
   system: unknown
   homeSummary: unknown
+  diagnostics?: unknown
 }
 
 export function useSystemSnapshot() {
