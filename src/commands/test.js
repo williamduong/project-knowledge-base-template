@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const { resolveExistingState } = require('../lib/context');
 const { readStateFile } = require('../lib/state');
@@ -10,6 +11,7 @@ function parseArgs(args) {
   const options = {
     sample: 5,
     all: false,
+    stack: false,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -30,10 +32,53 @@ function parseArgs(args) {
       continue;
     }
 
+    if (current === '--stack') {
+      options.stack = true;
+      continue;
+    }
+
     throw new Error(`Unknown test option \"${current}\".`);
   }
 
   return options;
+}
+
+function runCommand(label, command, args, spawnOptions = {}) {
+  console.log(`test stack: running ${label}`);
+  const isWindowsCmd = process.platform === 'win32' && /\.cmd$/i.test(command);
+  const result = isWindowsCmd
+    ? spawnSync(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', command, ...args], {
+        cwd: spawnOptions.cwd,
+        stdio: 'inherit',
+        windowsHide: true,
+        env: process.env,
+      })
+    : spawnSync(command, args, {
+        cwd: spawnOptions.cwd,
+        stdio: 'inherit',
+        windowsHide: true,
+        env: process.env,
+      });
+
+  if (result.status !== 0) {
+    throw new Error(`${label} failed with exit code ${result.status ?? 1}.`);
+  }
+}
+
+function runStackSuites({ workspaceRoot }) {
+  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+
+  runCommand('root unit tests', npmCommand, ['run', 'test:unit'], {
+    cwd: workspaceRoot,
+  });
+
+  runCommand('kbx-ui bridge tests', npmCommand, ['test'], {
+    cwd: path.join(workspaceRoot, 'site', 'kbx-ui'),
+  });
+
+  runCommand('uiv2 production build', npmCommand, ['run', 'build'], {
+    cwd: path.join(workspaceRoot, 'site', 'uiv2'),
+  });
 }
 
 function sampleArray(items, count) {
@@ -157,6 +202,11 @@ function runTest({ args, cwd }) {
 
   const status = warnings.length > 0 ? 'WARN' : 'PASS';
   console.log(`Result: ${status}`);
+
+  if (options.stack) {
+    runStackSuites({ workspaceRoot });
+    console.log('Stack Result: PASS');
+  }
 }
 
 module.exports = {

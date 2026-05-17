@@ -100,7 +100,7 @@ function runHelp({ packageJson, args }) {
   console.log('  kbx plan add "<description>" [--owner <name>] [--priority P0|P1|P2]');
   console.log('  kbx show [--backup-existing]');
   console.log('  kbx hide [--restore-backup]');
-  console.log('  kbx test [--sample <count>] [--all]');
+  console.log('  kbx test [--sample <count>] [--all] [--stack]');
   console.log('  kbx sync [--accept-baseline]');
   console.log('  kbx update [--accept-baseline] [--refresh-prompts]');
   console.log('  kbx ide <enable|disable> [--json] [--dry-run]');
@@ -186,6 +186,7 @@ function runHelp({ packageJson, args }) {
   console.log('             Use --restore-backup to restore a previous backup directory.');
   console.log('  test       Run deterministic KB integrity and drift checks.');
   console.log('             --all            Validate frontmatter on all indexed markdown docs.');
+  console.log('             --stack          Reuse existing code suites: root unit tests, kbx-ui tests, uiv2 build smoke.');
   console.log('  sync       Collect drift evidence, map source_of_truth changes, and update queue/report.');
   console.log('             Use --accept-baseline to stamp HEAD as new baseline after review.');
   console.log('  update     Sync first, then refresh template version state.');

@@ -71,6 +71,7 @@
     "doctor": "node ./bin/kbx.js doctor",
     "doctor:json": "node ./bin/kbx.js doctor --json",
     "test:all": "node ./bin/kbx.js test --all",
+    "test:stack": "node ./bin/kbx.js test --all --stack",
     "test:unit": "node --test \"test/**/*.test.js\"",
     "maintain": "node ./bin/kbx.js maintain",
     "maintain:fast": "node ./bin/kbx.js maintain --fast",
