@@ -51,11 +51,11 @@ const navigationPatterns: CatalogCard[] = [
   { label: 'Local Rail', detail: 'Secondary workspace navigation for deep operator surfaces.', tone: 'status-warn' },
 ]
 
-const componentGallery: CatalogCard[] = [
-  { label: 'Surface Panel', detail: 'Primary shell panel with dense operator spacing.', tone: 'status-good' },
-  { label: 'Status Pill', detail: 'Compact signal markers for state, severity, and source taxonomy.', tone: 'status-warn' },
-  { label: 'Meta Pill', detail: 'Secondary telemetry chips for low-noise counts.', tone: 'status-neutral' },
-  { label: 'Inspector Card', detail: 'Context sidecar for focus, notes, preview, and readiness.', tone: 'status-live' },
+const navigationPrimitives: CatalogCard[] = [
+  { label: 'Tab Trigger', detail: 'Clickable item that maps one route or view segment to active context.', tone: 'status-good' },
+  { label: 'Rail Item', detail: 'Dense vertical selector for local workspace submodes.', tone: 'status-live' },
+  { label: 'Toolbar Group', detail: 'Action cluster for refresh, preview, and promote flows.', tone: 'status-neutral' },
+  { label: 'Status Indicator', detail: 'Compact health/sync marker anchored near navigation controls.', tone: 'status-warn' },
 ]
 
 const gridRows: GridRow[] = [
@@ -156,6 +156,20 @@ export function PrototypePage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: false }])
+  // Interactive demo state for navigation patterns
+  const [topTabIndex, setTopTabIndex] = useState<number>(0)
+  const [segmentedIndex, setSegmentedIndex] = useState<number>(1)
+  const [verticalIndex, setVerticalIndex] = useState<number>(2)
+  const [railIndex, setRailIndex] = useState<number>(0)
+  const [toolbarActive, setToolbarActive] = useState<boolean[]>([false, false, false])
+
+  function toggleToolbar(index: number) {
+    setToolbarActive((prev) => {
+      const next = [...prev]
+      next[index] = !next[index]
+      return next
+    })
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -300,22 +314,80 @@ export function PrototypePage() {
           {activeTab === 'navigation' ? (
             <>
               <div className="panel-toolbar"><div><p className="workspace-eyebrow">Navigation</p><h2>Shell Patterns</h2></div><span className="count-pill">{navigationPatterns.length} named patterns</span></div>
-              <div className="rules-pack-grid">
+              <div className="rules-pack-grid nav-pattern-grid">
                 {navigationPatterns.map((item) => (
-                  <article key={item.label} className="rules-pack-card">
+                  <article key={item.label} className="nav-pattern-card rules-pack-card">
                     <div className="rules-pack-header"><strong>{item.label}</strong><span className={`status-pill ${item.tone}`}>{item.tone.replace('status-', '')}</span></div>
+                    <div className="nav-pattern-demo">
+                        {(() => {
+                          switch (item.label) {
+                            case 'Top Tab Strip':
+                              return (
+                                <nav className="nav-demo-bar" aria-label="Top tab strip demo">
+                                  {['Overview', 'Signals', 'Mutations', 'Audit'].map((t, i) => (
+                                    <button key={t} className={`nav-tab ${topTabIndex === i ? 'active' : ''}`} type="button" onClick={() => setTopTabIndex(i)}>{t}</button>
+                                  ))}
+                                </nav>
+                              )
+                            case 'Segmented Tabs':
+                              return (
+                                <div className="nav-demo-segmented" aria-hidden>
+                                  {['List', 'Detail', 'Actions'].map((t, i) => (
+                                    <button key={t} className={`segmented ${segmentedIndex === i ? 'active' : ''}`} type="button" onClick={() => setSegmentedIndex(i)}>{t}</button>
+                                  ))}
+                                </div>
+                              )
+                            case 'Vertical Tabs':
+                              return (
+                                <div className="nav-demo-vertical" aria-hidden>
+                                  {['Profile', 'Policies', 'Runtime', 'Audit'].map((t, i) => (
+                                    <button key={t} className={`vertical ${verticalIndex === i ? 'active' : ''}`} type="button" onClick={() => setVerticalIndex(i)}>{t}</button>
+                                  ))}
+                                </div>
+                              )
+                            case 'Toolbar Actions':
+                              return (
+                                <div className="nav-demo-toolbar">
+                                  <button className={`icon-btn ${toolbarActive[0] ? 'active' : ''}`} type="button" aria-pressed={toolbarActive[0]} aria-label="action-1" onClick={() => toggleToolbar(0)}><Icon icon={listTodo} /></button>
+                                  <button className={`icon-btn ${toolbarActive[1] ? 'active' : ''}`} type="button" aria-pressed={toolbarActive[1]} aria-label="action-2" onClick={() => toggleToolbar(1)}><Icon icon={chartColumn} /></button>
+                                  <button className={`icon-btn ${toolbarActive[2] ? 'active' : ''}`} type="button" aria-pressed={toolbarActive[2]} aria-label="action-3" onClick={() => toggleToolbar(2)}><Icon icon={server} /></button>
+                                </div>
+                              )
+                            case 'Local Rail':
+                              return (
+                                <div className="nav-demo-rail" aria-hidden>
+                                  {[{ label: 'Overview', icon: panelLeft }, { label: 'Intents', icon: blocks }, { label: 'Flows', icon: workflow }].map((it, i) => (
+                                    <button key={it.label} className={`rail-btn ${railIndex === i ? 'active' : ''}`} type="button" onClick={() => setRailIndex(i)}><Icon icon={it.icon} /><span>{it.label}</span></button>
+                                  ))}
+                                </div>
+                              )
+                            default:
+                              return null
+                          }
+                        })()}
+                    </div>
                     <p className="rules-cell-copy">{item.detail}</p>
                   </article>
                 ))}
               </div>
-              <div className="system-info-grid prototype-card-grid">
-                {componentGallery.map((item) => (
+              <div className="prototype-subsection">
+                <div className="panel-toolbar prototype-subsection-toolbar">
+                  <div>
+                    <p className="workspace-eyebrow">Navigation Building Blocks</p>
+                    <h3>Primitives Behind The Patterns</h3>
+                  </div>
+                  <span className="count-pill">{navigationPrimitives.length} primitives</span>
+                </div>
+                <p className="prototype-subsection-lead">These primitives are lower-level parts used to compose the shell patterns above.</p>
+                <div className="system-info-grid prototype-card-grid prototype-subsection-grid">
+                  {navigationPrimitives.map((item) => (
                   <article key={item.label} className="system-info-card">
-                    <span className="runtime-overview-label">Primitive</span>
+                    <span className="runtime-overview-label">Navigation Primitive</span>
                     <strong className="system-info-title">{item.label}</strong>
                     <p>{item.detail}</p>
                   </article>
                 ))}
+                </div>
               </div>
             </>
           ) : null}
