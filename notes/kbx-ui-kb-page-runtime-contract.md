@@ -166,17 +166,19 @@ Add a `kb` block to the system snapshot owned by `site/kbx-ui/system-snapshot-st
 }
 ```
 
-Two acceptable storage strategies for `docs`:
-- **Eager**: collector parses all KB docs on refresh and stores them. Simpler L2; bigger snapshot.
-- **Lazy-cached**: collector parses on first `/api/kb/doc?path=` call and caches in the store. Still snapshot-backed (the cache is the store), still no live CLI execution. Preferred if KB grows large.
+**Locked strategy: Lazy-cached.**
 
-SVFactory picks one and locks it in `runtime-control-plane-architecture.md` audit cases.
+- Collector populates `kb.tree` eagerly on snapshot refresh (cheap; just walks frontmatter).
+- `kb.docs[path]` is filled on first `/api/kb/doc?path=` call and kept in the snapshot store until next full refresh or explicit KB refresh invalidation.
+- The store, not the route handler, owns parse + cache. Route handlers stay pure readers.
+- A cache miss on `/api/kb/doc` triggers a single deterministic parse via L4 helpers and returns; this is allowed because parsing a single markdown file is bounded and deterministic, not the kind of mixed-layer recomputation forbidden by the architecture rules. It does **not** run `kbx`/`git`/`doctor`.
 
 ## Refresh Semantics
 
-- Triggered by the existing snapshot refresh path (`POST /api/system-snapshot/refresh`).
-- A KB-only fast refresh is **not** in scope for this contract; if needed later, expose `POST /api/kb/refresh` as an L3 trigger, not a render-time recomputation.
-- Cron cadence in `site/kbx-ui/runtime-services-cron.mjs` may re-parse KB content at a low frequency (e.g. every 5 minutes) so `daysSinceVerified` does not drift.
+- Triggered by the existing snapshot refresh path (`POST /api/system-snapshot/refresh`) — invalidates `kb.tree` and the entire `kb.docs` cache.
+- **`POST /api/kb/refresh` (KB-only fast refresh) is in scope.** It re-walks `knowledge-base/**/*.md` to rebuild `kb.tree` and clears `kb.docs` cache, without rebuilding the rest of the system snapshot. Cheaper than a full snapshot refresh after the user edits a KB doc.
+- Optional `POST /api/kb/refresh` body: `{ path?: string }` — when `path` is given, invalidate only that doc entry and re-walk just the parent folder for tree freshness; full re-walk otherwise.
+- Cron cadence in `site/kbx-ui/runtime-services-cron.mjs` may call the KB-only refresh at a low frequency (e.g. every 5 minutes) so `daysSinceVerified` does not drift; the cron must call the L3 trigger, not the route handler in-process.
 
 ## Forbidden On Request Path
 
@@ -198,6 +200,7 @@ UI slice 1 may render the buttons but should leave them disabled until mutation 
 The contract is satisfied only when:
 
 - `/api/kb/tree`, `/api/kb/doc`, `/api/kb/impact` exist and are served from the snapshot store
+- `POST /api/kb/refresh` exists as an L3 trigger and correctly invalidates `kb.tree` + `kb.docs` cache
 - no KB endpoint runs `kbx`/`git`/`doctor` on the request path
 - the KB page in `site/uiv2` reads only through `useKbTree`/`useKbDoc`/`useKbImpact`
 - `kbx-ui-module-architecture-map.md` is updated with the KB slice and these endpoints

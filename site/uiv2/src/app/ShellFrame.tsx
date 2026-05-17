@@ -19,6 +19,7 @@ import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
 import { RuntimeServicesPage } from './pages/RuntimeServicesPage'
 import { PrototypePage } from './pages/PrototypePage'
+import { KnowledgeBasePage } from './pages/KnowledgeBasePage'
 import { SearchOverlay } from './SearchOverlay'
 import { productLabel, projectName, tabs } from './shell-data'
 
@@ -204,16 +205,7 @@ export function ShellFrame() {
               element={<HomePage />}
             />
             <Route path="/intents" element={<IntentsListPage />} />
-            <Route
-              path="/kb"
-              element={
-                <PlaceholderPage
-                  title="Knowledge Base"
-                  subtitle="Knowledge Base will start from the tree and reader surfaces, not from top-level summaries."
-                  next="After Intent and Task slices, build document tree, then document reader, then metadata side panels."
-                />
-              }
-            />
+            <Route path="/kb" element={<KnowledgeBasePage />} />
             <Route
               path="/rules"
               element={
