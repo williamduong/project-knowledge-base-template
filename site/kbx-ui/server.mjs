@@ -16,7 +16,9 @@ const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 const require = createRequire(import.meta.url);
 const { resolveIntentRecord } = require(path.join(repoRoot, 'src', 'lib', 'intent.js'));
 const { readFocusState, writeFocusState } = require(path.join(repoRoot, 'src', 'lib', 'focus-state.js'));
+const { runGitCommand } = require(path.join(repoRoot, 'src', 'lib', 'git.js'));
 const { readPipeline } = require(path.join(repoRoot, 'src', 'lib', 'pipeline.js'));
+const { run: runCli } = require(path.join(repoRoot, 'src', 'cli.js'));
 
 const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
 const uiPort = Number(process.env.KBX_UI_PORT || 4173);
@@ -24,13 +26,43 @@ const port = Number(process.env.KBX_BRIDGE_PORT || 4174);
 const runtimeServicesRegistryPath = path.join(__dirname, 'runtime-services.json');
 const runtimeServicesStatePath = path.join(__dirname, '.runtime-services-state.json');
 const ensureInFlight = new Map();
+let inProcessCommandQueue = Promise.resolve();
+const SYSTEM_SNAPSHOT_TTL_MS = 15000;
+let systemSnapshotCache = null;
+let systemSnapshotInFlight = null;
+const CHILD_ENV_BLOCKLIST_KEYS = new Set([
+  'ELECTRON_RUN_AS_NODE',
+  'NODE_OPTIONS',
+]);
+const CHILD_ENV_BLOCKLIST_PREFIXES = [
+  'VSCODE_',
+];
+
+function buildChildProcessEnv(baseEnv = process.env) {
+  const nextEnv = {};
+
+  for (const [key, value] of Object.entries(baseEnv || {})) {
+    if (CHILD_ENV_BLOCKLIST_KEYS.has(key)) {
+      continue;
+    }
+
+    if (CHILD_ENV_BLOCKLIST_PREFIXES.some((prefix) => key.startsWith(prefix))) {
+      continue;
+    }
+
+    nextEnv[key] = value;
+  }
+
+  return nextEnv;
+}
 
 function runKbx(args, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [cliPath, ...args], {
       cwd: repoRoot,
-      env: process.env,
+      env: buildChildProcessEnv(process.env),
       stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
     });
 
     const timeout = setTimeout(() => {
@@ -57,6 +89,138 @@ function runKbx(args, timeoutMs = 15000) {
       clearTimeout(timeout);
       resolve({ code: code ?? 1, stdout: stdout.trim(), stderr: stderr.trim() });
     });
+  });
+}
+
+function enqueueInProcessCommand(task) {
+  const next = inProcessCommandQueue.then(task, task);
+  inProcessCommandQueue = next.catch(() => {});
+  return next;
+}
+
+function supportsInProcessCommand(args = []) {
+  const [command = 'help', subcommand = ''] = args;
+  if (command === '--version' || command === '-v' || command === 'version') {
+    return true;
+  }
+
+  if (command === 'status' || command === 'doctor' || command === 'chaos') {
+    return true;
+  }
+
+  if (command === 'rules' && (subcommand === 'list' || subcommand === 'lint')) {
+    return true;
+  }
+
+  return false;
+}
+
+async function runKbxInProcess(args, timeoutMs = 15000) {
+  return enqueueInProcessCommand(async () => {
+    const stdoutChunks = [];
+    const stderrChunks = [];
+    const originalConsoleLog = console.log;
+    const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    const originalStdoutWrite = process.stdout.write.bind(process.stdout);
+    const originalStderrWrite = process.stderr.write.bind(process.stderr);
+    const originalExit = process.exit;
+    const originalExitCode = process.exitCode;
+    const originalCwd = process.cwd();
+
+    class ExitSignal extends Error {
+      constructor(code) {
+        super(`CLI exit ${code}`);
+        this.code = code;
+      }
+    }
+
+    let exitCode = 0;
+
+    const captureChunk = (target, chunk, encoding) => {
+      if (typeof chunk === 'string') {
+        target.push(chunk);
+        return true;
+      }
+      if (Buffer.isBuffer(chunk)) {
+        target.push(chunk.toString(typeof encoding === 'string' ? encoding : 'utf8'));
+        return true;
+      }
+      target.push(String(chunk));
+      return true;
+    };
+
+    try {
+      console.log = (...parts) => {
+        stdoutChunks.push(`${parts.map((part) => String(part)).join(' ')}\n`);
+      };
+      console.error = (...parts) => {
+        stderrChunks.push(`${parts.map((part) => String(part)).join(' ')}\n`);
+      };
+      console.warn = (...parts) => {
+        stderrChunks.push(`${parts.map((part) => String(part)).join(' ')}\n`);
+      };
+      process.stdout.write = (chunk, encoding, callback) => {
+        captureChunk(stdoutChunks, chunk, encoding);
+        if (typeof encoding === 'function') {
+          encoding();
+        } else if (typeof callback === 'function') {
+          callback();
+        }
+        return true;
+      };
+      process.stderr.write = (chunk, encoding, callback) => {
+        captureChunk(stderrChunks, chunk, encoding);
+        if (typeof encoding === 'function') {
+          encoding();
+        } else if (typeof callback === 'function') {
+          callback();
+        }
+        return true;
+      };
+      process.exit = (code = 0) => {
+        exitCode = Number.isFinite(Number(code)) ? Number(code) : 0;
+        throw new ExitSignal(exitCode);
+      };
+      process.exitCode = 0;
+      process.chdir(repoRoot);
+
+      let timeoutHandle = null;
+      await Promise.race([
+        runCli(args),
+        new Promise((_, reject) => {
+          timeoutHandle = setTimeout(() => {
+            reject(new Error(`kbx command timed out after ${timeoutMs}ms`));
+          }, timeoutMs);
+        }),
+      ]);
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+      exitCode = Number.isFinite(Number(process.exitCode)) ? Number(process.exitCode) : exitCode;
+    } catch (error) {
+      if (error instanceof ExitSignal) {
+        exitCode = error.code;
+      } else {
+        exitCode = exitCode || Number(process.exitCode) || 1;
+        stderrChunks.push(`${error instanceof Error ? error.message : String(error)}\n`);
+      }
+    } finally {
+      console.log = originalConsoleLog;
+      console.error = originalConsoleError;
+      console.warn = originalConsoleWarn;
+      process.stdout.write = originalStdoutWrite;
+      process.stderr.write = originalStderrWrite;
+      process.exit = originalExit;
+      process.exitCode = originalExitCode;
+      process.chdir(originalCwd);
+    }
+
+    return {
+      code: exitCode || 0,
+      stdout: stdoutChunks.join('').trim(),
+      stderr: stderrChunks.join('').trim(),
+    };
   });
 }
 
@@ -445,7 +609,7 @@ async function ensureRuntimeService(serviceId) {
       cwd: spawnConfig.cwd,
       detached: true,
       stdio: 'ignore',
-      env: { ...process.env },
+      env: buildChildProcessEnv(process.env),
       windowsHide: true,
     });
     child.unref();
@@ -507,7 +671,9 @@ async function executeBridgeCommand(command, args, options = {}) {
   const expectJson = options.expectJson ?? false;
 
   try {
-    const result = await runKbx(args, timeoutMs);
+    const result = supportsInProcessCommand(args)
+      ? await runKbxInProcess(args, timeoutMs)
+      : await runKbx(args, timeoutMs);
     const parsed = expectJson ? parseJsonLoose(result.stdout) : null;
 
     return {
@@ -544,21 +710,12 @@ function summarizeWorkspace(statusResult) {
     releaseCurrent: release.current ?? null,
     releaseLatest: release.latest ?? null,
     hasWorkingTreeChanges: workingTree.clean === true ? false : true,
+    driftStatus: parsed.state?.driftStatus ?? null,
   };
 }
 
 function readCurrentBranchName() {
-  const result = spawnSync('git', ['branch', '--show-current'], {
-    cwd: repoRoot,
-    encoding: 'utf8',
-    timeout: 3000,
-  });
-
-  if (result.status !== 0) {
-    return null;
-  }
-
-  const branch = result.stdout.trim();
+  const branch = runGitCommand(['git', 'branch', '--show-current'], repoRoot);
   return branch || null;
 }
 
@@ -752,17 +909,12 @@ function lookupRecentCommit(relativePath) {
     return null;
   }
 
-  const result = spawnSync('git', ['log', '-1', '--format=%h|%s', '--', relativePath], {
-    cwd: repoRoot,
-    encoding: 'utf8',
-    timeout: 3000,
-  });
-
-  if (result.status !== 0 || !result.stdout.trim()) {
+  const output = runGitCommand(['git', 'log', '-1', '--format=%h|%s', '--', relativePath], repoRoot);
+  if (!output) {
     return null;
   }
 
-  const [sha, subject] = result.stdout.trim().split('|');
+  const [sha, subject] = output.trim().split('|');
   if (!sha) {
     return null;
   }
@@ -789,7 +941,8 @@ function enrichTasksWithGit(tasks, candidatePaths) {
   }));
 }
 
-function summarizeIntentDetail(intentId) {
+function summarizeIntentDetail(intentId, options = {}) {
+  const includeGit = options.includeGit === true;
   const record = resolveIntentRecord(kbRoot, intentId);
   if (!record) {
     return null;
@@ -809,7 +962,12 @@ function summarizeIntentDetail(intentId) {
     ...stagedFiles,
     path.relative(repoRoot, record.metaPath).replace(/\\/g, '/'),
   ].filter(Boolean);
-  const tasks = enrichTasksWithGit(rawTasks, candidatePaths);
+  const tasks = includeGit ? enrichTasksWithGit(rawTasks, candidatePaths) : rawTasks.map((task) => ({
+    ...task,
+    relatedCommits: task.explicitCommits.length > 0
+      ? task.explicitCommits.map((sha) => ({ sha, subject: 'Referenced in intent text', path: null }))
+      : [],
+  }));
   const chaosEstimate = record.meta?.chaos_estimate && typeof record.meta.chaos_estimate === 'object'
     ? {
         currentScore: readFiniteNumber(record.meta.chaos_estimate.current_score),
@@ -848,9 +1006,9 @@ function summarizeSessionContext(statusResult) {
   const parsed = statusResult.parsed || {};
   const activeIntents = Array.isArray(parsed.activeIntents?.intents) ? parsed.activeIntents.intents : [];
   const activeIntentIds = activeIntents.map((intent) => normalizeIntentId(intent?.id)).filter(Boolean);
-  const branchName = readCurrentBranchName();
+  const focusState = readFocusState({ workspaceRoot: repoRoot, branchName: null });
+  const branchName = focusState.current_focus?.branch ?? focusState.checkpoint?.branch ?? null;
   const branchIntentId = intentIdFromBranchName(branchName);
-  const focusState = readFocusState({ workspaceRoot: repoRoot, branchName });
   const focusFile = focusState.source_files?.state ?? focusState.source_files?.markdown ?? null;
   const checkpointIntentId = normalizeIntentId(focusState.checkpoint?.intent_id ?? null);
   const stateFocusIntentId = normalizeIntentId(focusState.current_focus?.intent_id ?? null);
@@ -923,7 +1081,7 @@ function buildSessionFocus(statusResult) {
     };
   }
 
-  const detail = summarizeIntentDetail(session.sessionIntentId);
+  const detail = summarizeIntentDetail(session.sessionIntentId, { includeGit: false });
   if (!detail) {
     return {
       ...session,
@@ -1173,6 +1331,211 @@ function summarizeHomeDashboard(statusResult, runtimeSnapshot, rulesListResult, 
       },
     ],
   };
+}
+
+function summarizeSnapshotMetadata({
+  previousSnapshot,
+  generatedAt,
+  workspace,
+  session,
+  home,
+}) {
+  const branchName = workspace?.currentFocus?.branch ?? session?.summary?.branchName ?? null;
+  const focusIntentId = workspace?.currentFocus?.intentId ?? session?.summary?.sessionIntentId ?? null;
+  const activeIntentId = home?.workspace?.activeIntentId ?? null;
+  const workingTreeDirty = home?.workspace?.hasWorkingTreeChanges === true;
+  const generatedAtMs = Date.parse(generatedAt);
+  const staleAt = Number.isFinite(generatedAtMs)
+    ? new Date(generatedAtMs + SYSTEM_SNAPSHOT_TTL_MS).toISOString()
+    : new Date(Date.now() + SYSTEM_SNAPSHOT_TTL_MS).toISOString();
+  const previousMetadata = previousSnapshot?.metadata ?? null;
+  const reloadReasons = [];
+
+  if (previousMetadata?.branchName && branchName && previousMetadata.branchName !== branchName) {
+    reloadReasons.push('branch-changed');
+  }
+
+  if (previousMetadata?.focusIntentId && focusIntentId && previousMetadata.focusIntentId !== focusIntentId) {
+    reloadReasons.push('focus-intent-changed');
+  }
+
+  if (previousMetadata?.activeIntentId && activeIntentId && previousMetadata.activeIntentId !== activeIntentId) {
+    reloadReasons.push('active-intent-changed');
+  }
+
+  const fingerprint = JSON.stringify({
+    branchName,
+    focusIntentId,
+    activeIntentId,
+    workingTreeDirty,
+    driftStatus: workspace?.summary?.driftStatus ?? null,
+    runtimeSummary: home?.runtime?.summaryLabel ?? null,
+    rulesPressure: home?.rules?.violationCount ?? null,
+    systemResult: home?.system?.result ?? null,
+  });
+
+  return {
+    snapshotVersion: 1,
+    generatedAt,
+    staleAt,
+    ttlMs: SYSTEM_SNAPSHOT_TTL_MS,
+    reloadRecommended: reloadReasons.length > 0,
+    reloadReasons,
+    fingerprint,
+    branchName,
+    focusIntentId,
+    activeIntentId,
+    workingTreeDirty,
+  };
+}
+
+async function collectSystemSnapshot(commandRunner, options = {}) {
+  const force = options.force === true;
+  const now = Date.now();
+
+  if (!force && systemSnapshotCache) {
+    const ageMs = now - Date.parse(systemSnapshotCache.metadata?.generatedAt ?? 0);
+    if (Number.isFinite(ageMs) && ageMs >= 0 && ageMs < SYSTEM_SNAPSHOT_TTL_MS) {
+      return systemSnapshotCache;
+    }
+  }
+
+  if (!force && systemSnapshotInFlight) {
+    return systemSnapshotInFlight;
+  }
+
+  systemSnapshotInFlight = (async () => {
+    const [statusResult, runtimeSnapshot, rulesListResult, versionResult] = await Promise.all([
+      commandRunner('kbx status --json --no-fail-exit --bridge-read', ['status', '--json', '--no-fail-exit', '--bridge-read'], {
+        expectJson: true,
+        timeoutMs: 20000,
+      }),
+      runtimeServicesCron.read('api-system-snapshot'),
+      commandRunner('kbx rules list --json', ['rules', 'list', '--json'], {
+        expectJson: true,
+        timeoutMs: 15000,
+      }),
+      commandRunner('kbx --version', ['--version'], {
+        timeoutMs: 5000,
+      }),
+    ]);
+
+    const generatedAt = new Date().toISOString();
+    const workspaceSummary = summarizeWorkspace(statusResult);
+    const workspaceFocus = summarizeWorkspaceFocus(statusResult);
+    const sessionSummary = buildSessionFocus(statusResult);
+    const previousRulesSummary = systemSnapshotCache?.rulesSummary?.summary ?? null;
+    const rulesLintResult = systemSnapshotCache?.rulesSummary?.ok
+      ? { ok: true, parsed: { violations: previousRulesSummary?.violations ?? [] }, stderr: '' }
+      : { ok: false, parsed: null, stderr: 'deferred' };
+    const rulesSummary = summarizeRulesResult(rulesListResult, rulesLintResult);
+    const previousSystem = systemSnapshotCache?.system ?? null;
+    const doctorResult = previousSystem?.ok
+      ? {
+          ok: true,
+          parsed: {
+            result: previousSystem.summary?.result ?? null,
+            nodeVersion: previousSystem.summary?.nodeVersion ?? null,
+            workspaceRoot: previousSystem.summary?.workspaceRoot ?? null,
+            checks: [],
+          },
+        }
+      : { ok: false, parsed: null, stderr: 'deferred' };
+    const systemSummary = previousSystem?.summary ?? {
+      result: 'DEFERRED',
+      nodeVersion: process.versions.node,
+      workspaceRoot: repoRoot,
+      checkSummary: {
+        pass: 0,
+        warn: 0,
+        error: 0,
+        info: 0,
+      },
+    };
+    const homeSummary = summarizeHomeDashboard(statusResult, runtimeSnapshot, rulesListResult, rulesLintResult, doctorResult);
+    const version = versionResult.stdout || versionResult.stderr || null;
+
+    const snapshot = {
+      ok: Boolean(statusResult.parsed) || runtimeSnapshot.summary.registeredCount > 0,
+      metadata: summarizeSnapshotMetadata({
+        previousSnapshot: systemSnapshotCache,
+        generatedAt,
+        workspace: {
+          summary: workspaceSummary,
+          currentFocus: workspaceFocus,
+        },
+        session: {
+          summary: sessionSummary,
+        },
+        home: homeSummary,
+      }),
+      version: {
+        ok: versionResult.ok,
+        stdout: version,
+        version,
+      },
+      status: {
+        ok: statusResult.ok,
+        exitCode: statusResult.exitCode,
+        parsed: statusResult.parsed,
+        stderr: statusResult.stderr,
+      },
+      workspace: {
+        ok: statusResult.ok,
+        summary: workspaceSummary,
+        currentFocus: workspaceFocus,
+        stderr: statusResult.stderr,
+      },
+      sessionContext: {
+        ok: statusResult.ok,
+        summary: sessionSummary,
+        stderr: statusResult.stderr,
+      },
+      runtimeServices: {
+        ok: true,
+        summary: runtimeSnapshot.summary,
+        refreshedAt: runtimeSnapshot.refreshedAt ?? null,
+        nextRunAt: runtimeSnapshot.nextRunAt ?? null,
+        intervalMs: runtimeSnapshot.intervalMs ?? null,
+        schedules: runtimeSnapshot.schedules ?? [],
+        reason: runtimeSnapshot.reason ?? null,
+        lastError: runtimeSnapshot.lastError ?? null,
+      },
+      rulesSummary: {
+        ok: Boolean(rulesListResult.ok),
+        summary: rulesSummary,
+        errors: {
+          list: rulesListResult.ok ? null : rulesListResult.stderr || 'rules list failed',
+          lint: systemSnapshotCache?.rulesSummary?.ok ? null : 'deferred',
+        },
+      },
+      system: {
+        ok: previousSystem?.ok ?? false,
+        summary: systemSummary,
+        error: previousSystem?.ok ? null : 'deferred',
+      },
+      homeSummary: {
+        ok: Boolean(statusResult.parsed) || runtimeSnapshot.summary.registeredCount > 0,
+        summary: homeSummary,
+        errors: {
+          status: statusResult.ok ? null : statusResult.stderr || 'status failed',
+          rulesList: rulesListResult.ok ? null : rulesListResult.stderr || 'rules list failed',
+          rulesLint: systemSnapshotCache?.rulesSummary?.ok ? null : 'deferred',
+          doctor: previousSystem?.ok ? null : 'deferred',
+          runtime: runtimeSnapshot.lastError ?? null,
+        },
+      },
+    };
+
+    systemSnapshotCache = snapshot;
+    return snapshot;
+  })();
+
+  try {
+    return await systemSnapshotInFlight;
+  } finally {
+    systemSnapshotInFlight = null;
+  }
 }
 
 function summarizeDocuments(graphCheckResult) {
@@ -1539,7 +1902,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
 
   app.get('/api/status', async (_req, res) => {
     const [statusResult, chaosResult, runtimeSnapshot] = await Promise.all([
-      commandRunner('kbx status --json', ['status', '--json'], {
+      commandRunner('kbx status --json --no-fail-exit --bridge-read', ['status', '--json', '--no-fail-exit', '--bridge-read'], {
         expectJson: true,
         timeoutMs: 20000,
       }),
@@ -1696,25 +2059,33 @@ export function createApp(commandRunner = executeBridgeCommand) {
   });
 
   app.get('/api/rules-summary', async (_req, res) => {
-    const [rulesListResult, rulesLintResult] = await Promise.all([
-      commandRunner('kbx rules list --json', ['rules', 'list', '--json'], {
-        expectJson: true,
-        timeoutMs: 15000,
-      }),
-      commandRunner('kbx rules lint --json', ['rules', 'lint', '--json'], {
-        expectJson: true,
-        timeoutMs: 20000,
-      }),
-    ]);
-
-    res.status(200).json({
-      ok: Boolean(rulesListResult.ok) && Boolean(rulesLintResult.ok || rulesLintResult.parsed),
-      summary: summarizeRulesResult(rulesListResult, rulesLintResult),
-      errors: {
-        list: rulesListResult.ok ? null : rulesListResult.stderr || 'rules list failed',
-        lint: rulesLintResult.ok || rulesLintResult.parsed ? null : rulesLintResult.stderr || 'rules lint failed',
-      },
-    });
+    res.status(200).json(
+      systemSnapshotCache?.rulesSummary ?? {
+        ok: false,
+        summary: {
+          ok: false,
+          count: 0,
+          hardCount: 0,
+          masterCount: 0,
+          softCount: 0,
+          packCount: 0,
+          linted: null,
+          violationCount: 0,
+          errorCount: 0,
+          warnCount: 0,
+          rules: [],
+          packs: [],
+          precedence: [],
+          violations: [],
+          topRules: [],
+          topViolations: [],
+        },
+        errors: {
+          list: 'pending',
+          lint: 'deferred',
+        },
+      }
+    );
   });
 
   app.get('/api/intents', async (_req, res) => {
@@ -1752,7 +2123,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
     }
 
     try {
-      const detail = summarizeIntentDetail(intentId);
+      const detail = summarizeIntentDetail(intentId, { includeGit: true });
       if (!detail) {
         res.status(404).json({ ok: false, error: `Intent not found: ${intentId}` });
         return;
@@ -1768,7 +2139,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
   });
 
   app.get('/api/workspace', async (_req, res) => {
-    const statusResult = await commandRunner('kbx status --json', ['status', '--json'], {
+    const statusResult = await commandRunner('kbx status --json --no-fail-exit --bridge-read', ['status', '--json', '--no-fail-exit', '--bridge-read'], {
       expectJson: true,
       timeoutMs: 20000,
     });
@@ -1787,7 +2158,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
   });
 
   app.get('/api/session-context', async (_req, res) => {
-    const statusResult = await commandRunner('kbx status --json', ['status', '--json'], {
+    const statusResult = await commandRunner('kbx status --json --no-fail-exit --bridge-read', ['status', '--json', '--no-fail-exit', '--bridge-read'], {
       expectJson: true,
       timeoutMs: 20000,
     });
@@ -1842,54 +2213,23 @@ export function createApp(commandRunner = executeBridgeCommand) {
   });
 
   app.get('/api/system', async (_req, res) => {
-    const doctorResult = await commandRunner('kbx doctor --json', ['doctor', '--json'], {
-      expectJson: true,
-      timeoutMs: 20000,
-    });
-
-    if (!doctorResult.ok) {
-      res.status(200).json({ ok: false, error: 'system command failed', stderr: doctorResult.stderr });
-      return;
-    }
-
-    res.status(200).json({
-      ok: true,
-      summary: summarizeSystem(doctorResult),
-    });
+    const snapshot = await collectSystemSnapshot(commandRunner);
+    res.status(200).json(snapshot.system);
   });
 
   app.get('/api/home-summary', async (_req, res) => {
-    const [statusResult, runtimeSnapshot, rulesListResult, rulesLintResult, doctorResult] = await Promise.all([
-      commandRunner('kbx status --json', ['status', '--json'], {
-        expectJson: true,
-        timeoutMs: 20000,
-      }),
-      runtimeServicesCron.read('api-home-summary'),
-      commandRunner('kbx rules list --json', ['rules', 'list', '--json'], {
-        expectJson: true,
-        timeoutMs: 15000,
-      }),
-      commandRunner('kbx rules lint --json', ['rules', 'lint', '--json'], {
-        expectJson: true,
-        timeoutMs: 20000,
-      }),
-      commandRunner('kbx doctor --json', ['doctor', '--json'], {
-        expectJson: true,
-        timeoutMs: 20000,
-      }),
-    ]);
+    const snapshot = await collectSystemSnapshot(commandRunner);
+    res.status(200).json(snapshot.homeSummary);
+  });
 
-    res.status(200).json({
-      ok: Boolean(statusResult.parsed) || runtimeSnapshot.summary.registeredCount > 0,
-      summary: summarizeHomeDashboard(statusResult, runtimeSnapshot, rulesListResult, rulesLintResult, doctorResult),
-      errors: {
-        status: statusResult.ok ? null : statusResult.stderr || 'status failed',
-        rulesList: rulesListResult.ok ? null : rulesListResult.stderr || 'rules list failed',
-        rulesLint: rulesLintResult.ok || rulesLintResult.parsed ? null : rulesLintResult.stderr || 'rules lint failed',
-        doctor: doctorResult.ok ? null : doctorResult.stderr || 'doctor failed',
-        runtime: runtimeSnapshot.lastError ?? null,
-      },
-    });
+  app.get('/api/system-snapshot', async (_req, res) => {
+    const snapshot = await collectSystemSnapshot(commandRunner);
+    res.status(200).json(snapshot);
+  });
+
+  app.post('/api/system-snapshot/refresh', async (_req, res) => {
+    const snapshot = await collectSystemSnapshot(commandRunner, { force: true });
+    res.status(200).json(snapshot);
   });
 
   app.get('/api/documents', async (req, res) => {
@@ -1909,7 +2249,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
 
   app.get('/api/phase2-bridge', async (_req, res) => {
     const [statusResult, doctorResult, chaosResult] = await Promise.all([
-      commandRunner('kbx status --json', ['status', '--json'], {
+      commandRunner('kbx status --json --no-fail-exit --bridge-read', ['status', '--json', '--no-fail-exit', '--bridge-read'], {
         expectJson: true,
         timeoutMs: 20000,
       }),

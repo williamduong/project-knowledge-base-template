@@ -34,7 +34,7 @@ const {
 const KNOWN_PIPELINE_TEMPLATES = new Set(['npm-package', 'docs-only', 'custom']);
 
 function parseArgs(args) {
-  const options = { json: false, quiet: false, noScan: false };
+  const options = { json: false, quiet: false, noScan: false, noFailExit: false, bridgeRead: false };
   for (const arg of args || []) {
     if (arg === '--json') {
       options.json = true;
@@ -48,9 +48,27 @@ function parseArgs(args) {
       options.noScan = true;
       continue;
     }
-    throw new Error(`Unknown status option "${arg}". Supported: --json, --quiet, --no-scan`);
+    if (arg === '--no-fail-exit') {
+      options.noFailExit = true;
+      continue;
+    }
+    if (arg === '--bridge-read') {
+      options.bridgeRead = true;
+      continue;
+    }
+    throw new Error(`Unknown status option "${arg}". Supported: --json, --quiet, --no-scan, --no-fail-exit, --bridge-read`);
   }
   return options;
+}
+
+function exitWithVerdict(verdict, options) {
+  if (!options || options.noFailExit === true) {
+    return;
+  }
+
+  if (verdict.code !== 0) {
+    process.exit(verdict.code);
+  }
 }
 
 function relPath(target, root) {
@@ -211,7 +229,7 @@ function runStatus({ args, cwd, packageJson }) {
 
   if (context && state && presence === 'healthy') {
     try {
-      if (options.noScan) {
+      if (options.noScan || options.bridgeRead) {
         impactData = readImpactFile(context.contentRoot);
       } else {
         impactData = computeImpact({ workspaceRoot, ctx: context });
@@ -221,11 +239,13 @@ function runStatus({ args, cwd, packageJson }) {
       impactError = err.message;
     }
 
-    const workingTree = getWorkingTreeStatus(workspaceRoot);
-    const contentRootRel = contentRootRelativeToWorkspace(workspaceRoot, context.contentRoot);
-    const partition = partitionWorkingTree(workingTree, contentRootRel);
-    kbDirty = partition.kbDirty;
-    codeDirty = partition.codeDirty;
+    if (!options.bridgeRead) {
+      const workingTree = getWorkingTreeStatus(workspaceRoot);
+      const contentRootRel = contentRootRelativeToWorkspace(workspaceRoot, context.contentRoot);
+      const partition = partitionWorkingTree(workingTree, contentRootRel);
+      kbDirty = partition.kbDirty;
+      codeDirty = partition.codeDirty;
+    }
   }
 
   // Recursive impact summary (additive — no breaking change to impact.json on disk).
@@ -298,7 +318,7 @@ function runStatus({ args, cwd, packageJson }) {
 
   if (options.quiet) {
     console.log(verdict.label);
-    if (verdict.code !== 0) process.exit(verdict.code);
+    exitWithVerdict(verdict, options);
     return;
   }
 
@@ -331,7 +351,7 @@ function runStatus({ args, cwd, packageJson }) {
       activeIntents,
       observation: observationSummary,
       verdict,    }, null, 2));
-    if (verdict.code !== 0) process.exit(verdict.code);
+    exitWithVerdict(verdict, options);
     return;
   }
 
@@ -355,7 +375,7 @@ function runStatus({ args, cwd, packageJson }) {
     console.log('  2. kbx uninstall --force   then   kbx init --yes   (clean reinstall)');
     console.log('');
     console.log(`verdict: ${verdict.label}${verdict.reasons.length ? ` (${verdict.reasons.join(', ')})` : ''}`);
-    if (verdict.code !== 0) process.exit(verdict.code);
+    exitWithVerdict(verdict, options);
     return;
   }
 
@@ -481,13 +501,15 @@ function runStatus({ args, cwd, packageJson }) {
   console.log('');
   console.log(`verdict: ${verdict.label}${verdict.reasons.length ? ` (${verdict.reasons.join(', ')})` : ''}`);
 
-  if (verdict.code !== 0) process.exit(verdict.code);
+  exitWithVerdict(verdict, options);
 }
 
 module.exports = {
   detectPipelineTemplate,
   deriveStatusVerdict,
+  exitWithVerdict,
   getReleasePipelineState,
+  parseArgs,
   partitionWorkingTree,
   runStatus,
 };

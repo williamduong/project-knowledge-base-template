@@ -7,7 +7,9 @@ const path = require('path');
 const {
   deriveStatusVerdict,
   detectPipelineTemplate,
+  exitWithVerdict,
   getReleasePipelineState,
+  parseArgs,
   partitionWorkingTree,
 } = require('../../src/commands/status');
 
@@ -44,6 +46,28 @@ test('partitionWorkingTree: contentRoot=null treats everything as code', () => {
   const { kbDirty, codeDirty } = partitionWorkingTree(tree, null);
   assert.equal(kbDirty.length, 0);
   assert.equal(codeDirty.length, 1);
+});
+
+test('parseArgs: accepts --no-fail-exit for bridge readers', () => {
+  const options = parseArgs(['--json', '--no-fail-exit']);
+  assert.equal(options.json, true);
+  assert.equal(options.noFailExit, true);
+});
+
+test('exitWithVerdict: suppresses non-zero exit when noFailExit is enabled', () => {
+  let exitedWith = null;
+  const originalExit = process.exit;
+  process.exit = (code) => {
+    exitedWith = code;
+  };
+
+  try {
+    exitWithVerdict({ code: 1, label: 'attention', reasons: ['unbound-changes'] }, { noFailExit: true });
+  } finally {
+    process.exit = originalExit;
+  }
+
+  assert.equal(exitedWith, null);
 });
 
 test('deriveStatusVerdict: presence partial → blocked kb-partial', () => {

@@ -13,6 +13,7 @@ import blocks from '@iconify-icons/lucide/blocks'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { useShellStatus } from './hooks/useShellStatus'
+import { useRefreshSystemSnapshot } from './hooks/useSystemSnapshot'
 import { IntentsListPage } from './pages/IntentsListPage'
 import { HomePage } from './pages/HomePage'
 import { PlaceholderPage } from './pages/PlaceholderPage'
@@ -64,6 +65,7 @@ function statusItemIcon(key: string, label: string) {
 
 export function ShellFrame() {
   const shellStatusQuery = useShellStatus()
+  const refreshSystemSnapshot = useRefreshSystemSnapshot()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isEditingProjectName, setIsEditingProjectName] = useState(false)
   const [editableProjectName, setEditableProjectName] = useState(projectName)
@@ -104,10 +106,9 @@ export function ShellFrame() {
     setRefreshFeedback('Syncing...')
 
     const previousFingerprint = previousFingerprintRef.current
-    const refetchResult = await shellStatusQuery.refetch()
-    const nextSnapshot = refetchResult.data
+    const nextSnapshot = await refreshSystemSnapshot.mutateAsync()
 
-    const nextFingerprint = nextSnapshot?.fingerprint ?? shellStatusQuery.data?.fingerprint ?? null
+    const nextFingerprint = nextSnapshot?.metadata?.fingerprint ?? shellStatusQuery.data?.fingerprint ?? null
 
     if (nextFingerprint && previousFingerprint && nextFingerprint !== previousFingerprint) {
       setRefreshFeedback('Updated signals')
@@ -189,7 +190,7 @@ export function ShellFrame() {
           </button>
           <button className="tool-button" type="button" onClick={handleRefresh}>
             <Icon icon={refreshCw} aria-hidden="true" />
-            {shellStatusQuery.isFetching ? 'Syncing...' : 'Sync Signals'}
+            {shellStatusQuery.isFetching || refreshSystemSnapshot.isPending ? 'Syncing...' : 'Sync Signals'}
           </button>
           {refreshFeedback ? <span className="refresh-feedback">{refreshFeedback}</span> : null}
         </div>

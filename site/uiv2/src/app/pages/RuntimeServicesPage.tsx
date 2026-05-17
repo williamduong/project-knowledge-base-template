@@ -9,6 +9,7 @@ import settings2 from '@iconify-icons/lucide/settings-2'
 import { useHomeSummary } from '../hooks/useHomeSummary'
 import { useRulesSummary } from '../hooks/useRulesSummary'
 import { useEnsureRuntimeService, useRuntimeServices } from '../hooks/useRuntimeServices'
+import { useRefreshSystemSnapshot } from '../hooks/useSystemSnapshot'
 import { useState } from 'react'
 
 const RULES_PAGE_SIZE = 20
@@ -131,6 +132,8 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   const homeSummaryQuery = useHomeSummary()
   const rulesSummaryQuery = useRulesSummary()
   const ensureRuntimeService = useEnsureRuntimeService()
+  const refreshSystemSnapshot = useRefreshSystemSnapshot()
+  const snapshotMetadata = runtimeServicesQuery.snapshotMetadata
   const summary = runtimeServicesQuery.data?.summary
   const services = summary?.services ?? []
   const schedules = runtimeServicesQuery.data?.schedules ?? []
@@ -287,8 +290,13 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
           <p>{props.subtitle}</p>
         </div>
         <div className="toolbar-actions">
-          <button className="tool-button" type="button" onClick={() => runtimeServicesQuery.refetch()}>
-            {runtimeServicesQuery.isFetching ? 'Refreshing...' : 'Refresh Runtime'}
+          <span className="meta-pill">
+            {snapshotMetadata?.reloadRecommended
+              ? `Reload recommended: ${snapshotMetadata.reloadReasons.join(', ')}`
+              : `Snapshot ${snapshotMetadata?.generatedAt ?? 'pending'}`}
+          </span>
+          <button className="tool-button" type="button" onClick={() => refreshSystemSnapshot.mutate()}>
+            {runtimeServicesQuery.isFetching || refreshSystemSnapshot.isPending ? 'Refreshing...' : 'Refresh Runtime'}
           </button>
         </div>
       </header>

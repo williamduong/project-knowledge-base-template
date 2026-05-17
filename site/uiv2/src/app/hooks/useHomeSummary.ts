@@ -1,5 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
-import { apiGet } from '../../shared/api/client'
+import { useSystemSnapshot } from './useSystemSnapshot'
 
 export type HomeSummaryResponse = {
   ok: boolean
@@ -181,10 +180,11 @@ export type HomeSummaryResponse = {
 }
 
 export function useHomeSummary() {
-  return useQuery({
-    queryKey: ['home-summary'],
-    queryFn: () => apiGet<HomeSummaryResponse>('/api/home-summary'),
-    staleTime: 15_000,
-    refetchInterval: 30_000,
-  })
+  const snapshotQuery = useSystemSnapshot()
+
+  return {
+    ...snapshotQuery,
+    data: snapshotQuery.data?.homeSummary as HomeSummaryResponse | undefined,
+    snapshotMetadata: snapshotQuery.data?.metadata,
+  }
 }

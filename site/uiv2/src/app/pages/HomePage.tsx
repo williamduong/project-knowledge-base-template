@@ -13,10 +13,13 @@ import listTodo from '@iconify-icons/lucide/list-todo'
 import shield from '@iconify-icons/lucide/shield'
 import { Link } from 'react-router-dom'
 import { useHomeSummary } from '../hooks/useHomeSummary'
+import { useRefreshSystemSnapshot } from '../hooks/useSystemSnapshot'
 
 export function HomePage() {
   const homeSummaryQuery = useHomeSummary()
+  const refreshSystemSnapshot = useRefreshSystemSnapshot()
   const dashboard = homeSummaryQuery.data?.summary
+  const snapshotMetadata = homeSummaryQuery.snapshotMetadata
   const runtime = dashboard?.runtime
   const session = dashboard?.session
   const goalSummary = dashboard?.goal
@@ -54,8 +57,8 @@ export function HomePage() {
           <Link className="tool-button" to="/system">
             Open System
           </Link>
-          <button className="tool-button" type="button" onClick={() => homeSummaryQuery.refetch()}>
-            {homeSummaryQuery.isFetching ? 'Refreshing...' : 'Refresh Runtime'}
+          <button className="tool-button" type="button" onClick={() => refreshSystemSnapshot.mutate()}>
+            {homeSummaryQuery.isFetching || refreshSystemSnapshot.isPending ? 'Refreshing...' : 'Refresh Runtime'}
           </button>
         </div>
       </header>
@@ -78,6 +81,8 @@ export function HomePage() {
             <span className="meta-pill">Pipeline {pipeline?.stepCount ?? 0} steps</span>
             <span className="meta-pill">Focus {activeIntent?.id ?? 'pending'}</span>
             <span className="meta-pill">Next scan {runtime?.nextRunAt ?? 'pending'}</span>
+            <span className="meta-pill">Snapshot {snapshotMetadata?.generatedAt ?? 'pending'}</span>
+            <span className="meta-pill">{snapshotMetadata?.reloadRecommended ? `Reload ${snapshotMetadata.reloadReasons.join(', ')}` : 'Snapshot aligned'}</span>
           </div>
         </section>
 

@@ -1,5 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
-import { apiGet } from '../../shared/api/client'
+import { useSystemSnapshot } from './useSystemSnapshot'
 
 export type RulesSummaryResponse = {
   ok: boolean
@@ -79,10 +78,11 @@ export type RulesSummaryResponse = {
 }
 
 export function useRulesSummary() {
-  return useQuery({
-    queryKey: ['rules-summary'],
-    queryFn: () => apiGet<RulesSummaryResponse>('/api/rules-summary'),
-    staleTime: 15_000,
-    refetchInterval: 30_000,
-  })
+  const snapshotQuery = useSystemSnapshot()
+
+  return {
+    ...snapshotQuery,
+    data: snapshotQuery.data?.rulesSummary as RulesSummaryResponse | undefined,
+    snapshotMetadata: snapshotQuery.data?.metadata,
+  }
 }

@@ -1,5 +1,6 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiGet, apiPost } from '../../shared/api/client'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { apiPost } from '../../shared/api/client'
+import { systemSnapshotQueryKey, useSystemSnapshot } from './useSystemSnapshot'
 
 export type RuntimeService = {
   id: string
@@ -50,15 +51,14 @@ export type EnsureRuntimeServiceResponse = {
   service?: RuntimeService
 }
 
-const runtimeServicesQueryKey = ['runtime-services']
-
 export function useRuntimeServices() {
-  return useQuery({
-    queryKey: runtimeServicesQueryKey,
-    queryFn: () => apiGet<RuntimeServicesResponse>('/api/runtime-services'),
-    refetchInterval: 60_000,
-    staleTime: 15_000,
-  })
+  const snapshotQuery = useSystemSnapshot()
+
+  return {
+    ...snapshotQuery,
+    data: snapshotQuery.data?.runtimeServices as RuntimeServicesResponse | undefined,
+    snapshotMetadata: snapshotQuery.data?.metadata,
+  }
 }
 
 export function useEnsureRuntimeService() {
@@ -67,7 +67,7 @@ export function useEnsureRuntimeService() {
   return useMutation({
     mutationFn: (serviceId: string) => apiPost<EnsureRuntimeServiceResponse>(`/api/runtime-services/${serviceId}/ensure`),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: runtimeServicesQueryKey })
+      await queryClient.invalidateQueries({ queryKey: systemSnapshotQueryKey })
     },
   })
 }

@@ -1,11 +1,41 @@
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
+
+function tokenizeGitCommand(command) {
+  if (Array.isArray(command)) {
+    return command.filter((part) => typeof part === 'string' && part.length > 0);
+  }
+
+  const input = String(command || '').trim();
+  if (!input) {
+    return [];
+  }
+
+  const tokens = [];
+  const pattern = /"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|[^\s]+/g;
+  let match;
+  while ((match = pattern.exec(input)) !== null) {
+    const token = match[1] ?? match[2] ?? match[0];
+    if (token) {
+      tokens.push(token);
+    }
+  }
+
+  return tokens;
+}
 
 function runGitCommand(command, cwd) {
   try {
-    return execSync(command, {
+    const tokens = tokenizeGitCommand(command);
+    if (tokens.length === 0) {
+      return null;
+    }
+
+    const [binary, ...args] = tokens;
+    return execFileSync(binary, args, {
       cwd,
       stdio: ['ignore', 'pipe', 'ignore'],
       encoding: 'utf8',
+      windowsHide: true,
     }).trim();
   } catch {
     return null;
@@ -113,9 +143,10 @@ function isAncestor(workspaceRoot, ancestorSha, descendantSha = 'HEAD') {
     return false;
   }
   try {
-    execSync(`git merge-base --is-ancestor ${ancestorSha} ${descendantSha}`, {
+    execFileSync('git', ['merge-base', '--is-ancestor', ancestorSha, descendantSha], {
       cwd: workspaceRoot,
       stdio: 'ignore',
+      windowsHide: true,
     });
     return true;
   } catch {
@@ -132,4 +163,5 @@ module.exports = {
   isAncestor,
   parseDiffNameStatus,
   runGitCommand,
+  tokenizeGitCommand,
 };

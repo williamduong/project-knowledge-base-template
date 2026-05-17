@@ -16,6 +16,7 @@
 - **Grounding sync**: Reconciled `focus.md` with verified git/CLI reality (branch `intent/v2-9-uiv2-shadcn-admin-shell-adoption`, package `2.7.0-beta.1`, chaos `64.8 / unstable`, 3 stale active intents, unresolved drift) and recorded Codex bridge setup in `AGENTS.md`.
 - **Focus contract extraction**: Added `svfactory/focus.state.json` + `svfactory/focus-state.schema.json` and centralized runtime focus resolution in `src/lib/focus-state.js` so bridge/UI stop parsing `focus.md` directly.
 - **Phase 4 write-through sync**: Routed `kbx intent create|activate|focus|apply|close|cancel|archive` through the centralized focus-state writer so CLI mutations now update SQLite/JSON/markdown projection in one path and runtime focus no longer depends on post-hoc heuristics.
+- **System snapshot architecture**: Replaced `/system` fan-out polling with cached `/api/system-snapshot` metadata (`generatedAt`, `staleAt`, `reloadRecommended`, fingerprint, branch/head/focus drift signals), moved Home/Rules/Runtime/Shell hooks onto one shared snapshot query, and shifted manual refresh to a forced snapshot reload path.
 
 ## 2026-05-05
 

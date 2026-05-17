@@ -1,5 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
-import { apiGet } from '../../shared/api/client'
+import { useSystemSnapshot } from './useSystemSnapshot'
 
 type UnknownRecord = Record<string, unknown>
 
@@ -319,68 +318,40 @@ function buildFingerprint(items: ShellStatusItem[]) {
 }
 
 export function useShellStatus() {
-  return useQuery({
-    queryKey: ['shell-status'],
-    queryFn: async () => {
-      const [status, workspace, system, sessionContext, version] = await Promise.allSettled([
-        apiGet<unknown>('/api/status'),
-        apiGet<unknown>('/api/workspace'),
-        apiGet<unknown>('/api/system'),
-        apiGet<unknown>('/api/session-context'),
-        apiGet<unknown>('/api/version'),
-      ])
+  const snapshotQuery = useSystemSnapshot()
+  const snapshot = snapshotQuery.data
+  const statusValue = snapshot?.status
+  const workspaceValue = snapshot?.workspace
+  const systemValue = snapshot?.system
+  const sessionContextValue = snapshot?.sessionContext
+  const versionValue = snapshot?.version
+  const parsedStatus = unwrapParsed(statusValue)
+  const parsedWorkspace = unwrapParsed(workspaceValue)
+  const parsedSystem = unwrapParsed(systemValue)
+  const parsedSession = unwrapParsed(sessionContextValue)
+  const parsedVersion = unwrapParsed(versionValue)
+  const workspaceContext = parsedWorkspace ?? workspaceValue
+  const sessionContextSnapshot = parsedSession ?? sessionContextValue
+  const statusPayload = unwrapBridgePayload(statusValue)
+  const items = [
+    buildItem(
+      'bridge',
+      'Bridge',
+      snapshot ? 'connected' : undefined,
+      snapshot ? 'live' : snapshotQuery.isError ? 'unavailable' : 'pending',
+      statusPayload?.ok === false ? 'warn' : snapshot ? 'live' : 'offline',
+      'surface'
+    ),
+    parseChaos(parsedStatus ?? statusValue, sessionContextSnapshot),
+    parseFocusIntent(workspaceContext, sessionContextSnapshot),
+    ...parseEnvironmentStatus(parsedStatus ?? statusValue, parsedSystem ?? systemValue, parsedVersion ?? versionValue),
+  ]
 
-      const statusValue = status.status === 'fulfilled' ? status.value : undefined
-      const workspaceValue = workspace.status === 'fulfilled' ? workspace.value : undefined
-      const systemValue = system.status === 'fulfilled' ? system.value : undefined
-      const sessionContextValue = sessionContext.status === 'fulfilled' ? sessionContext.value : undefined
-      const versionValue = version.status === 'fulfilled' ? version.value : undefined
-      const parsedStatus = unwrapParsed(statusValue)
-      const parsedWorkspace = unwrapParsed(workspaceValue)
-      const parsedSystem = unwrapParsed(systemValue)
-      const parsedSession = unwrapParsed(sessionContextValue)
-      const parsedVersion = unwrapParsed(versionValue)
-      const workspaceContext = parsedWorkspace ?? workspaceValue
-      const sessionContextSnapshot = parsedSession ?? sessionContextValue
-      const statusPayload = unwrapBridgePayload(statusValue)
-      const items = [
-        buildItem(
-          'bridge',
-          'Bridge',
-          status.status === 'fulfilled' ||
-            workspace.status === 'fulfilled' ||
-            system.status === 'fulfilled' ||
-            sessionContext.status === 'fulfilled' ||
-            version.status === 'fulfilled'
-            ? 'connected'
-            : undefined,
-          status.status === 'rejected' &&
-          workspace.status === 'rejected' &&
-          system.status === 'rejected' &&
-          sessionContext.status === 'rejected' &&
-          version.status === 'rejected'
-            ? 'unavailable'
-            : status.status === 'fulfilled' ||
-                workspace.status === 'fulfilled' ||
-                system.status === 'fulfilled' ||
-                sessionContext.status === 'fulfilled' ||
-                version.status === 'fulfilled'
-              ? 'live'
-              : 'pending',
-          statusPayload?.ok === false ? 'warn' : status.status === 'fulfilled' ? 'live' : 'offline',
-          'surface'
-        ),
-        parseChaos(parsedStatus ?? statusValue, sessionContextSnapshot),
-        parseFocusIntent(workspaceContext, sessionContextSnapshot),
-        ...parseEnvironmentStatus(parsedStatus ?? statusValue, parsedSystem ?? systemValue, parsedVersion ?? versionValue),
-      ]
-
-      return {
-        items,
-        fingerprint: buildFingerprint(items),
-      }
+  return {
+    ...snapshotQuery,
+    data: {
+      items,
+      fingerprint: snapshot?.metadata?.fingerprint ?? buildFingerprint(items),
     },
-    staleTime: 30_000,
-    refetchInterval: 30_000,
-  })
+  }
 }
