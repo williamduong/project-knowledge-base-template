@@ -29,6 +29,7 @@ Use it as the stable read-order contract before planning, building, or reviewing
 - `kbx-ui-localhost-summary.md` = legacy runtime capability inventory and parity baseline
 - `kbx-ui-shadcn-admin-adoption.md` = donor UI adoption boundary for shell and visual primitives
 - `kbx-ui-footer-runtime-contract.md` = footer runtime contract boundary and SVFactory handoff trigger for backend normalization
+- `kbx-ui-kb-page-runtime-contract.md` = Knowledge Base page (three-pane reader) runtime contract: `/api/kb/tree`, `/api/kb/doc`, `/api/kb/impact` and snapshot `kb` block
 
 ## Build Rules Summary
 
