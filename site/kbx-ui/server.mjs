@@ -1531,6 +1531,14 @@ async function collectSystemSnapshot(commandRunner, options = {}) {
         runtime: runtimeSnapshot.lastError ?? null,
       },
     },
+    gates: {
+      ok: true,
+      phase: 'phase-2-cli-bridge',
+      checkedAt: generatedAt,
+      summary,
+      items: gateItems,
+      readiness: summary.blocked ? 'blocked' : summary.warn > 0 ? 'review' : 'ready',
+    },
     diagnostics: {
       doctor: doctorResult,
       chaos: chaosResult,
@@ -1960,6 +1968,19 @@ export function createApp(commandRunner = executeBridgeCommand) {
           runtime: null,
         },
       },
+      gates: {
+        ok: false,
+        phase: 'phase-2-cli-bridge',
+        checkedAt: null,
+        summary: {
+          blocked: true,
+          readyCount: 0,
+          blockedCount: 0,
+          attentionCount: 0,
+        },
+        items: [],
+        readiness: 'pending',
+      },
       diagnostics: {
         doctor: { ok: false, parsed: null, stderr: 'pending' },
         chaos: { ok: false, parsed: null, stderr: 'pending' },
@@ -2293,6 +2314,10 @@ export function createApp(commandRunner = executeBridgeCommand) {
 
   app.get('/api/home-summary', async (_req, res) => {
     res.status(200).json(systemSnapshotStore.read().homeSummary);
+  });
+
+  app.get('/api/gates', async (_req, res) => {
+    res.status(200).json(systemSnapshotStore.read().gates);
   });
 
   app.get('/api/system-snapshot', async (_req, res) => {

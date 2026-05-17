@@ -250,18 +250,16 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   const dashboard = homeSummaryQuery.data?.summary
   const pipeline = dashboard?.pipeline
   const rules = rulesSummaryQuery.data?.summary ?? dashboard?.rules
-  const snapshotDiagnostics = (systemSnapshotQuery.data?.diagnostics ?? {}) as {
-    phase2Bridge?: {
-      phase?: string
-      checkedAt?: string | null
-      summary?: Phase2GateSummary
-      gates?: Phase2GateItem[]
-      ok?: boolean
-    }
+  const gatesSnapshot = (systemSnapshotQuery.data?.gates ?? {}) as {
+    ok?: boolean
+    phase?: string
+    checkedAt?: string | null
+    summary?: Phase2GateSummary
+    items?: Phase2GateItem[]
+    readiness?: string
   }
-  const gateDiagnostics = snapshotDiagnostics.phase2Bridge
-  const gates = Array.isArray(gateDiagnostics?.gates) ? gateDiagnostics.gates : []
-  const gateSummary = gateDiagnostics?.summary ?? {}
+  const gates = Array.isArray(gatesSnapshot?.items) ? gatesSnapshot.items : []
+  const gateSummary = gatesSnapshot?.summary ?? {}
   const gatePassCount = Number(gateSummary.pass ?? gateSummary.readyCount ?? gates.filter((gate) => gate.ok).length)
   const gateWarnCount = Number(
     gateSummary.warn
@@ -744,8 +742,8 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                   </div>
                 </div>
                 <div className="panel-toolbar-meta">
-                  <span className="count-pill">{gateDiagnostics?.phase ?? 'phase-2-cli-bridge'}</span>
-                  <span className="count-pill">{gateDiagnostics?.checkedAt ?? snapshotMetadata?.generatedAt ?? 'pending'}</span>
+                  <span className="count-pill">{gatesSnapshot?.phase ?? 'phase-2-cli-bridge'}</span>
+                  <span className="count-pill">{gatesSnapshot?.checkedAt ?? snapshotMetadata?.generatedAt ?? 'pending'}</span>
                 </div>
               </div>
 
@@ -760,15 +758,15 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
               <div className="runtime-overview-grid compact-runtime-overview-grid gate-overview-grid">
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Collector</span>
-                  <strong>{gateDiagnostics?.phase ? 'snapshot' : 'pending'}</strong>
+                  <strong>{gatesSnapshot?.phase ? 'snapshot' : 'pending'}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Checked</span>
-                  <strong>{gateDiagnostics?.checkedAt ? 'fresh' : 'pending'}</strong>
+                  <strong>{gatesSnapshot?.checkedAt ? 'fresh' : 'pending'}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Readiness</span>
-                  <strong>{gateFailCount > 0 ? 'blocked' : gateWarnCount > 0 ? 'review' : 'ready'}</strong>
+                  <strong>{gatesSnapshot?.readiness ?? (gateFailCount > 0 ? 'blocked' : gateWarnCount > 0 ? 'review' : 'ready')}</strong>
                 </div>
                 <div className="runtime-overview-card">
                   <span className="runtime-overview-label">Snapshot source</span>
