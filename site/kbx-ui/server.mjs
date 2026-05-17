@@ -1931,6 +1931,14 @@ function createKbStore({ repoRoot: storeRepoRoot, statePath = kbRootsStatePath, 
     if (!persisted) writePersistedActive(activeRoots);
   }
 
+  // Hydrate activeRoots WITHOUT triggering a full snapshot rebuild. Used by
+  // the mutation path so add/remove don't pay for a tree walk just to check
+  // membership in the active set.
+  function ensureActiveHydrated() {
+    if (activeRoots) return;
+    hydrateActive(kbDiscoverCandidateRoots(storeRepoRoot, defaults));
+  }
+
   function buildSnapshot(reason) {
     const generatedAt = new Date().toISOString();
     const today = new Date();
@@ -2011,31 +2019,46 @@ function createKbStore({ repoRoot: storeRepoRoot, statePath = kbRootsStatePath, 
     return out;
   }
 
-  async function addRoot(requestedPath) {
+  // Mutations invalidate the cache synchronously but DO NOT await a rebuild.
+  // The UI's invalidateQueries → refetch will pull the fresh tree lazily,
+  // keeping the POST/DELETE response fast (< 20 ms warm) instead of blocking
+  // on a full re-walk (~100 ms+ for the full project).
+  function invalidate(_reason) {
+    cache = null;
+    docCache.clear();
+    // Do NOT pre-warm here. buildSnapshot() runs synchronous fs IO that
+    // blocks the event loop for ~100ms+ per active root. If we pre-warm in
+    // setImmediate, the very next request (typically the UI's tree refetch
+    // after the mutation) is delayed by exactly that block. Let GET
+    // /api/kb/tree trigger the rebuild inline — that's the natural place
+    // for the user to wait, and it doesn't freeze other endpoints.
+  }
+
+  function addRoot(requestedPath) {
     const validation = kbValidateCandidateRoot(storeRepoRoot, requestedPath);
     if (!validation.ok) return { ok: false, error: validation.reason };
-    ensure('lazy-init');
+    ensureActiveHydrated();
     if (activeRoots.has(validation.normalized)) {
       return { ok: true, alreadyActive: true, activeRoots: Array.from(activeRoots) };
     }
     activeRoots.add(validation.normalized);
     writePersistedActive(activeRoots);
-    await refresh(`add-root:${validation.normalized}`);
+    invalidate(`add-root:${validation.normalized}`);
     return { ok: true, activeRoots: Array.from(activeRoots) };
   }
 
-  async function removeRoot(requestedPath) {
+  function removeRoot(requestedPath) {
     if (typeof requestedPath !== 'string' || !requestedPath) {
       return { ok: false, error: 'path required' };
     }
     const normalized = requestedPath.trim().replace(/^[/\\]+/, '').split(/[\\/]+/).join('/');
-    ensure('lazy-init');
+    ensureActiveHydrated();
     if (!activeRoots.has(normalized)) {
       return { ok: true, alreadyInactive: true, activeRoots: Array.from(activeRoots) };
     }
     activeRoots.delete(normalized);
     writePersistedActive(activeRoots);
-    await refresh(`remove-root:${normalized}`);
+    invalidate(`remove-root:${normalized}`);
     return { ok: true, activeRoots: Array.from(activeRoots) };
   }
 
@@ -2050,9 +2073,13 @@ export function createApp(commandRunner = executeBridgeCommand) {
     ttlMs: SYSTEM_SNAPSHOT_TTL_MS,
     collectSnapshot: async (storeOptions) => {
       const snap = await collectSystemSnapshot(commandRunner, storeOptions);
-      // Invalidate KB doc cache on every full system snapshot refresh so doc
-      // bodies don't go stale relative to the rest of the snapshot.
-      kbStore.refresh(`system-snapshot:${storeOptions?.reason || 'unknown'}`).catch(() => {});
+      // Invalidate KB cache only on explicit manual refresh (Sync Signals
+      // button). The 15s background tick and the startup warm must NOT
+      // re-walk the whole project — kbStore is lazy on first read anyway.
+      const reason = storeOptions?.reason || 'unknown';
+      if (reason === 'manual-refresh') {
+        setImmediate(() => { kbStore.refresh(`system-snapshot:${reason}`).catch(() => {}); });
+      }
       return snap;
     },
     buildPendingSnapshot: () => ({
@@ -2551,23 +2578,19 @@ export function createApp(commandRunner = executeBridgeCommand) {
     }
   });
 
-  app.post('/api/kb/roots', express.json(), async (req, res) => {
-    const result = await kbStore.addRoot(req.body?.path);
+  app.post('/api/kb/roots', express.json(), (req, res) => {
+    const result = kbStore.addRoot(req.body?.path);
     if (!result.ok) { res.status(400).json(result); return; }
-    res.status(200).json({
-      ...result,
-      rootCandidates: kbStore.getRootCandidates(),
-    });
+    // Don't include rootCandidates: that would force a synchronous tree
+    // rebuild on the POST path. Client refetches tree+roots via its own
+    // invalidateQueries — see useAddKbRoot.
+    res.status(200).json(result);
   });
 
-  app.delete('/api/kb/roots/:path(*)', async (req, res) => {
-    const requested = req.params.path;
-    const result = await kbStore.removeRoot(requested);
+  app.delete('/api/kb/roots/:path(*)', (req, res) => {
+    const result = kbStore.removeRoot(req.params.path);
     if (!result.ok) { res.status(400).json(result); return; }
-    res.status(200).json({
-      ...result,
-      rootCandidates: kbStore.getRootCandidates(),
-    });
+    res.status(200).json(result);
   });
 
   app.get('/api/kb/doc', (req, res) => {

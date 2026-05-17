@@ -42,19 +42,27 @@ export function useKbRoots() {
   })
 }
 
+function applyMutationResult(qc: ReturnType<typeof useQueryClient>, data: MutationResponse) {
+  if (data.activeRoots) {
+    qc.setQueryData<KbRootsState>(kbRootsQueryKey, (old) => {
+      if (!old) return data.rootCandidates ? { rootCandidates: data.rootCandidates, activeRoots: data.activeRoots! } : old
+      return {
+        rootCandidates: data.rootCandidates ?? old.rootCandidates,
+        activeRoots: data.activeRoots!,
+      }
+    })
+  }
+  // Tree refetch picks up the new active set; the server will lazy-rebuild
+  // its cache on that GET.
+  qc.invalidateQueries({ queryKey: ['kb', 'tree'] })
+  qc.invalidateQueries({ queryKey: kbRootsQueryKey })
+}
+
 export function useAddKbRoot() {
   const qc = useQueryClient()
   return useMutation<MutationResponse, Error, string>({
     mutationFn: (rootPath) => apiPost<MutationResponse>('/api/kb/roots', { path: rootPath }),
-    onSuccess: (data) => {
-      if (data.activeRoots && data.rootCandidates) {
-        qc.setQueryData<KbRootsState>(kbRootsQueryKey, {
-          rootCandidates: data.rootCandidates,
-          activeRoots: data.activeRoots,
-        })
-      }
-      qc.invalidateQueries({ queryKey: ['kb', 'tree'] })
-    },
+    onSuccess: (data) => applyMutationResult(qc, data),
   })
 }
 
@@ -66,15 +74,7 @@ export function useRemoveKbRoot() {
       if (!r.ok) throw new Error(`DELETE failed: ${r.status}`)
       return r.json() as Promise<MutationResponse>
     },
-    onSuccess: (data) => {
-      if (data.activeRoots && data.rootCandidates) {
-        qc.setQueryData<KbRootsState>(kbRootsQueryKey, {
-          rootCandidates: data.rootCandidates,
-          activeRoots: data.activeRoots,
-        })
-      }
-      qc.invalidateQueries({ queryKey: ['kb', 'tree'] })
-    },
+    onSuccess: (data) => applyMutationResult(qc, data),
   })
 }
 

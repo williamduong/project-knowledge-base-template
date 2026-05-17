@@ -167,6 +167,38 @@ function titleFromBody(body, fallback) {
 
 function readDirSorted(dir) { return readdirSync(dir).sort((a, b) => a.localeCompare(b)); }
 
+// Lightweight summary parser used by walkRoot — reads frontmatter only, skips
+// markdown rendering. ~10x cheaper than parseDocFromDisk for tree walks.
+export function parseDocSummary(absPath, relPath, today = new Date()) {
+  const text = readFileSync(absPath, 'utf8');
+  const isMd = relPath.endsWith('.md');
+  const isHtml = relPath.endsWith('.html');
+  const { fm } = isMd ? parseFrontmatter(text) : { fm: {} };
+  const todayStr = today.toISOString().slice(0, 10);
+  const last_updated = typeof fm.last_updated === 'string' ? fm.last_updated : todayStr;
+  const last_verified = typeof fm.last_verified === 'string' ? fm.last_verified : last_updated;
+  let daysSinceVerified = 0;
+  try {
+    const v = new Date(last_verified);
+    if (!Number.isNaN(v.getTime())) daysSinceVerified = daysBetween(v, today);
+  } catch {}
+  return {
+    path: toPosix(relPath),
+    title: typeof fm.title === 'string' ? fm.title : titleFromBody(text, relPath.split(/[\\/]/).pop()),
+    type: normType(fm.type),
+    status: normStatus(fm.status),
+    verification: normVerif(fm.verification),
+    time_state: normTime(fm.time_state),
+    owner: typeof fm.owner === 'string' ? fm.owner : '',
+    last_updated,
+    last_verified,
+    daysSinceVerified,
+    stale: daysSinceVerified >= 60,
+    tags: asStringArray(fm.tags),
+    fileKind: isMd ? 'md' : (isHtml ? 'html' : 'other'),
+  };
+}
+
 export function parseDocFromDisk(absPath, relPath, today = new Date()) {
   const text = readFileSync(absPath, 'utf8');
   const isMd = relPath.endsWith('.md');
@@ -260,12 +292,12 @@ export function walkRoot(absDir, relDir, today = new Date()) {
       const dot = name.lastIndexOf('.');
       const ext = dot >= 0 ? name.slice(dot).toLowerCase() : '';
       if (!ALLOWED_EXT.has(ext)) continue;
-      const parsed = parseDocFromDisk(abs, rel, today);
+      const summary = parseDocSummary(abs, rel, today);
       docCount += 1;
-      if (parsed.summary.daysSinceVerified >= 60 && (!stalest || parsed.summary.daysSinceVerified > stalest.daysSinceVerified)) {
-        stalest = { path: parsed.summary.path, daysSinceVerified: parsed.summary.daysSinceVerified };
+      if (summary.daysSinceVerified >= 60 && (!stalest || summary.daysSinceVerified > stalest.daysSinceVerified)) {
+        stalest = { path: summary.path, daysSinceVerified: summary.daysSinceVerified };
       }
-      children.push({ kind: 'doc', ...parsed.summary });
+      children.push({ kind: 'doc', ...summary });
     }
   }
 
