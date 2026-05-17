@@ -16,6 +16,7 @@ test('help --advanced includes ontology command surface', () => {
 
   assert.ok(output.includes('kbx ontology <show|validate|audit|build>'), 'Advanced help should list ontology command');
   assert.ok(output.includes('ontology   Validate and inspect ontology lifecycle contracts.'), 'Advanced help should describe ontology command');
+  assert.ok(output.includes('kbx gates list [--intent <id>] [--all-statuses] [--json]'), 'Advanced help should list gates command');
 });
 
 test('help (basic) includes ontology command hint', () => {
@@ -30,4 +31,5 @@ test('help (basic) includes ontology command hint', () => {
   console.log = originalLog;
 
   assert.ok(output.includes('kbx ontology <show|validate|audit|build>'), 'Basic help should mention ontology command');
+  assert.ok(output.includes('kbx gates <list|add|done|skip> [options]'), 'Basic help should mention gates command');
 });

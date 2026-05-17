@@ -17,8 +17,8 @@ INSTRUCTIONS FOR AI AGENTS:
 - Append one ## HG-NNN block per gate.
 - Do not delete or reorder existing blocks.
 - Status values: pending | in-progress | done | skipped
-- Run `kb gates done HG-NNN --intent <id> --output "..."` to mark done.
-- Run `kb gates skip HG-NNN --intent <id> --reason "..."` to skip.
+- Run `kbx gates done HG-NNN --intent <id> --output "..."` to mark done.
+- Run `kbx gates skip HG-NNN --intent <id> --reason "..."` to skip.
 -->
 
 <!-- EXAMPLE — delete when adding first real gate:

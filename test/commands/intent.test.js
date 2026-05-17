@@ -49,6 +49,7 @@ const {
   getActiveIntentsSummary,
 } = require('../../src/lib/intent');
 const { readFocusState } = require('../../src/lib/focus-state');
+const { addIntentGate } = require('../../src/lib/gates');
 
 function tmpRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'kb-intent-'));
@@ -66,6 +67,8 @@ async function captureConsole(fn) {
   const warns = [];
   const originalLog = console.log;
   const originalWarn = console.warn;
+  const originalExit = process.exitCode;
+  process.exitCode = 0;
   console.log = (...args) => logs.push(args.join(' '));
   console.warn = (...args) => warns.push(args.join(' '));
   try {
@@ -74,9 +77,12 @@ async function captureConsole(fn) {
     console.log = originalLog;
     console.warn = originalWarn;
   }
+  const exitCode = process.exitCode;
+  process.exitCode = originalExit;
   return {
     stdout: logs.join('\n'),
     stderr: warns.join('\n'),
+    exitCode,
   };
 }
 
@@ -255,6 +261,32 @@ test('sanitizeId: returns null for empty/null input', () => {
 test('sanitizeId: truncates at 60 chars', () => {
   const long = 'a'.repeat(80);
   assert.ok(sanitizeId(long).length <= 60);
+});
+
+test('runApply blocks when pending gates remain in gates.md', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  const intentId = 'v2-9-apply-gate-block';
+  createIntentWorkspace(contentRoot, { intentId, mode: 'quick', changeType: 'docs' });
+  const proposedRoot = proposedChangesPath(contentRoot, intentId);
+  fs.mkdirSync(path.join(proposedRoot, '01-product'), { recursive: true });
+  fs.writeFileSync(path.join(proposedRoot, '01-product', 'doc.md'), '# Draft\n', 'utf8');
+  addIntentGate(contentRoot, {
+    intentId,
+    action: 'Human approval',
+    why: 'Needs explicit approval before apply',
+  });
+
+  const { stdout } = await captureConsole(() => runApply(
+    { contentRoot, mode: 'tracked' },
+    { intentId, yes: true, json: true, release: false },
+    root
+  ));
+
+  const payload = JSON.parse(stdout);
+  assert.equal(payload.status, 'blocked');
+  assert.equal(payload.reason, 'pending-gates');
+  assert.equal(payload.pending_gates.length, 1);
 });
 
 // ---------------------------------------------------------------------------

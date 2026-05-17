@@ -328,21 +328,21 @@ HG-001 · pending  [high]  Actor: human
   → <Action>
   → Blocking: [P5-T1]
 
-Run: kb gates done HG-001 --intent <id> --output "..."
-     kb gates skip HG-001 --intent <id> --reason "..."
+Run: kbx gates done HG-001 --intent <id> --output "..."
+     kbx gates skip HG-001 --intent <id> --reason "..."
 ```
 
-### Khi human mark done (current manual workflow)
+### Khi human mark done (live CLI workflow)
 
-- Cập nhật `Done at:` + `Output received:` trực tiếp trong `gates.md`.
+- Dùng `kbx gates done <HG-ID> --intent <id> --output "..."` hoặc `kbx gates skip <HG-ID> --intent <id> --reason "..."`.
 - Xóa HG-001 khỏi `Blocking` list của các steps.
 - Agent resume từ đúng step bị block.
 
 ### Close condition
 
 `kb intent apply <id>` kiểm tra `gates.md`:
-- Nếu có gate `pending` → theo governance intent không nên close cho đến khi gate được resolve thủ công trong `gates.md`.
-- Runtime note: chưa có `kbx gates` CLI hay `--skip-gates` flow được ship trong source hiện tại.
+- Nếu có gate `pending` → runtime block apply và yêu cầu resolve bằng `kbx gates done|skip`.
+- Runtime note: chưa có `--skip-gates` override; pending gate phải được resolve explicit.
 
 ### Actor types
 

@@ -40,6 +40,7 @@ function runHelp({ packageJson, args }) {
     console.log('  kbx graph check  [--json]');
     console.log('  kbx ontology <show|validate|audit|build> [options]');
     console.log('  kbx rules <lint|check|list> [options]');
+    console.log('  kbx gates <list|add|done|skip> [options]');
     console.log('  kbx ui start [--include <service-id>] [--json]');
     console.log('  kbx extract <source-file> [--target-doc=<path>] [--apply=<output>] [--uncovered] [--model=<hint>] [--yes] [--json]');
     console.log('  kbx ingest <source-file> [--type=auto|text|pdf|image|docx|xlsx] [--json]');
@@ -134,6 +135,10 @@ function runHelp({ packageJson, args }) {
   console.log('  kbx rules lint [--json]');
   console.log('  kbx rules check <rule-id> [--json]');
   console.log('  kbx rules list [--json]');
+  console.log('  kbx gates list [--intent <id>] [--all-statuses] [--json]');
+  console.log('  kbx gates add --intent <id> --action="..." --why="..." [options]');
+  console.log('  kbx gates done <HG-ID> --intent <id> [--output="..."] [--json]');
+  console.log('  kbx gates skip <HG-ID> --intent <id> --reason="..." [--json]');
   console.log('  kbx ui start [--include <service-id>] [--json]');
   console.log('  kbx version');
   console.log('');
@@ -286,6 +291,14 @@ function runHelp({ packageJson, args }) {
   console.log('             validate          Validate intent or ontology contract fixtures.');
   console.log('             audit             Audit natural-language payload against governed glossary.');
   console.log('             build             Compile deterministic ontology artifact.');
+  console.log('  gates      Manage intent-local human gate records stored in gates.md.');
+  console.log('             list              Show pending gates across active intents.');
+  console.log('                               --intent <id> limits output to one intent.');
+  console.log('                               --all-statuses includes done/skipped gates.');
+  console.log('             add               Create a new HG-NNN gate in one intent workspace.');
+  console.log('                               Requires --intent, --action, and --why.');
+  console.log('             done <HG-ID>      Mark a gate done and optionally record --output.');
+  console.log('             skip <HG-ID>      Mark a gate skipped with required --reason.');
   console.log('  uninstall  Remove KB installation from the workspace.');
   console.log('             --keep-ai-files  Keep AGENTS/prompt files at repo root.');
   console.log('             --remove-hook    Remove kbx-managed .git/hooks/pre-commit.');

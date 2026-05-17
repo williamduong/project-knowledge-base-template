@@ -198,6 +198,7 @@ Current canonical gate taxonomy for this repository:
 
 - `System > Gates` currently shows only `gate_type=operator-global`
 - human gates in `gates.md` are `gate_type=intent-local`
+  - owned by `kbx gates list|add|done|skip`
 - observation gates in `src/lib/observation.js` are `gate_type=observation`
 - maintain/release preconditions are still implicit `pipeline-specific` gates until normalized
 

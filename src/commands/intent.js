@@ -33,6 +33,7 @@ const {
 } = require('../lib/intent');
 const { analyzeIntentConflicts, suggestApplyOrder, generateLessonCandidates } = require('../lib/intent-intelligence');
 const { readFocusState, writeFocusState } = require('../lib/focus-state');
+const { listPendingIntentGates } = require('../lib/gates');
 const { runRelease } = require('./release');
 
 // ---------------------------------------------------------------------------
@@ -1225,6 +1226,27 @@ async function runApply(ctx, options, cwd) {
       console.log('kb intent apply: aborted.');
       return;
     }
+  }
+
+  const pendingGates = listPendingIntentGates(ctx.contentRoot, intentId);
+  if (pendingGates.length > 0) {
+    if (json) {
+      console.log(JSON.stringify({
+        command: 'kb intent apply',
+        intent_id: intentId,
+        status: 'blocked',
+        reason: 'pending-gates',
+        pending_gates: pendingGates,
+      }, null, 2));
+    } else {
+      console.log(`kb intent apply: blocked by ${pendingGates.length} pending gate(s) in ${intentId}.`);
+      for (const gate of pendingGates) {
+        console.log(`  ${gate.id} [${gate.priority}] ${gate.action}`);
+      }
+      console.log(`Resolve them with "kbx gates done <HG-ID> --intent ${intentId}" or "kbx gates skip <HG-ID> --intent ${intentId} --reason=\\"...\\"".`);
+    }
+    process.exitCode = 1;
+    return;
   }
 
   // 3. Apply files (write staged → KB core)

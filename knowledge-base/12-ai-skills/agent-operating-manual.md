@@ -388,7 +388,7 @@ Gates are stored in `gates.md` inside the intent folder (`knowledge-base/intents
 
 1. **Write gate → continue immediately.** Do not wait.
 2. **Continue all non-blocked steps.** Only skip steps listed in `Blocking`.
-3. **End of session:** if any gate is `pending`, print a `## Pending Gates` summary and tell the operator to resolve the gate record manually in `gates.md`.
+3. **End of session:** if any gate is `pending`, print a `## Pending Gates` summary and include the `kbx gates done` / `kbx gates skip` commands.
 4. **Never ask a gateable question in chat.** If the need arises mid-task, create the gate record silently and keep going.
 
 ### Session-end summary format
@@ -401,20 +401,20 @@ HG-001 · pending  [high]  Actor: human
   → Blocking: [P5-T1, P5-T2]
 
 To resolve:
-  Update `Done at:` and `Output received:` in `gates.md` when complete,
-  or record an explicit skip rationale in the same file.
+  Run `kbx gates done HG-001 --intent <id> --output "..."`,
+  or `kbx gates skip HG-001 --intent <id> --reason "..."`.
 ```
 
 ### Close condition
 
 An intent should not be closed while any gate is `pending`.  
-Current runtime note: this is a governance rule and manual workflow today, not a live `kbx gates` CLI or `--skip-gates` enforcement surface.
+Current runtime note: `kbx intent apply <id>` now blocks when pending gates remain for that intent.
 
 ### Runtime status
 
-- Gate records are currently manual artifacts in `gates.md`.
-- `kbx gates ...` is not a live CLI surface in this repository at this time.
-- If a future CLI surface is added, it must be documented only after implementation lands.
+- Gate records remain stored in `gates.md` inside the intent workspace.
+- `kbx gates list|add|done|skip` is the live CLI surface for `gate_type=intent-local`, `scope=intent`.
+- `kbx intent apply` blocks on pending gates; there is no `--skip-gates` override surface in the current runtime.
 
 ## Copilot Instruction Digest
 

@@ -37,6 +37,7 @@ const { runWorkspace } = require('./commands/workspace');
 const runOntology = require('./commands/ontology');
 const { runRules } = require('./commands/rules');
 const { runUi } = require('./commands/ui');
+const { runGates } = require('./commands/gates');
 
 async function run(argv) {
   const [command = 'help', ...rest] = argv;
@@ -216,6 +217,11 @@ async function run(argv) {
 
   if (command === 'rules') {
     await runRules({ args: rest, cwd: process.cwd() });
+    return;
+  }
+
+  if (command === 'gates') {
+    await runGates({ args: rest, cwd: process.cwd() });
     return;
   }
 

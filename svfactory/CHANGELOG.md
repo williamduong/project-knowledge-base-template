@@ -21,6 +21,7 @@
 - **Read path fully snapshot-backed**: Completed the 7 mixed-layer remediations by moving read endpoints onto `systemSnapshotStore`, splitting pure intent detail from git evidence enrichment, and adding architecture regression tests under `site/kbx-ui/test`.
 - **Gate source audit**: Added `svfactory/gate-source-audit.md` to classify operator-global, observation, intent-local, and implicit procedural gate families and to document docs/code drift around nonexistent `kbx gates` CLI surfaces.
 - **Gate taxonomy + claim downgrade**: Locked `gate_type`/`scope` taxonomy in runtime architecture, removed live-doc references to nonexistent `kbx gates` and `--skip-gates` surfaces, and kept human-gate flow explicitly manual until CLI implementation actually exists.
+- **Gate CLI shipped**: Added `src/lib/gates/` and official `kbx gates list|add|done|skip` surface for `intent-local` gates, plus `kbx intent apply` blocking on pending gates without a `--skip-gates` override.
 
 ## 2026-05-05
 
