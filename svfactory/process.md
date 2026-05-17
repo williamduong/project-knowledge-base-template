@@ -332,21 +332,17 @@ Run: kb gates done HG-001 --intent <id> --output "..."
      kb gates skip HG-001 --intent <id> --reason "..."
 ```
 
-### Khi human mark done (forward-declared CLI — code v2.4.x)
+### Khi human mark done (current manual workflow)
 
-```
-kb gates done HG-001 --intent <id> --output "<output value>"
-```
-
-- Cập nhật `Done at:` + `Output received:` trong gates.md.
+- Cập nhật `Done at:` + `Output received:` trực tiếp trong `gates.md`.
 - Xóa HG-001 khỏi `Blocking` list của các steps.
 - Agent resume từ đúng step bị block.
 
 ### Close condition
 
 `kb intent apply <id>` kiểm tra `gates.md`:
-- Nếu có gate `pending` → báo lỗi, list gates, đề nghị `kb gates skip` hoặc giải quyết.
-- Override: `--skip-gates` + `--reason "..."` (ghi lại trong intent.md).
+- Nếu có gate `pending` → theo governance intent không nên close cho đến khi gate được resolve thủ công trong `gates.md`.
+- Runtime note: chưa có `kbx gates` CLI hay `--skip-gates` flow được ship trong source hiện tại.
 
 ### Actor types
 

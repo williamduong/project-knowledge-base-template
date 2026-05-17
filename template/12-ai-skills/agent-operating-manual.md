@@ -427,7 +427,7 @@ Gates are stored in `gates.md` inside the intent folder (`knowledge-base/intents
 
 1. **Write gate → continue immediately.** Do not wait.
 2. **Continue all non-blocked steps.** Only skip steps listed in `Blocking`.
-3. **End of session:** if any gate is `pending`, print a `## Pending Gates` summary with the `kb gates done` / `kb gates skip` commands.
+3. **End of session:** if any gate is `pending`, print a `## Pending Gates` summary and tell the operator to resolve the gate record manually in `gates.md`.
 4. **Never ask a gateable question in chat.** If the need arises mid-task, create the gate record silently and keep going.
 
 ### Session-end summary format
@@ -440,23 +440,20 @@ HG-001 · pending  [high]  Actor: human
   → Blocking: [P5-T1, P5-T2]
 
 To resolve:
-  kb gates done HG-001 --intent <id> --output "..."
-  kb gates skip HG-001 --intent <id> --reason "..."
+  Update `Done at:` and `Output received:` in `gates.md` when complete,
+  or record an explicit skip rationale in the same file.
 ```
 
 ### Close condition
 
-An intent cannot be closed (`kbx intent apply`) while any gate is `pending`.  
-Override: `--skip-gates` flag requires an explicit `--reason`.
+An intent should not be closed while any gate is `pending`.  
+Current runtime note: this is a governance rule and manual workflow today, not a live `kbx gates` CLI or `--skip-gates` enforcement surface.
 
-### CLI surface (forward-declared — code in v2.4.x)
+### Runtime status
 
-| Command | Description |
-|---|---|
-| `kb gates list [--intent <id>]` | List all pending gates across active intents |
-| `kb gates done <HG-ID> --intent <id> [--output "..."]` | Mark done, record output |
-| `kb gates skip <HG-ID> --intent <id> --reason "..."` | Skip with reason |
-| `kb gates add --intent <id>` | Interactively create a gate (agent-facing) |
+- Gate records are currently manual artifacts in `gates.md`.
+- `kbx gates ...` is not a live CLI surface in this repository at this time.
+- If a future CLI surface is added, it must be documented only after implementation lands.
 
 ## Copilot Instruction Digest
 

@@ -177,7 +177,7 @@ const SOFT_RULES = Object.freeze([
     source_anchor: 'Human-Gate Protocol',
     dependsOn: ['KBX-MR003'],
     overrideMode: 'none',
-    tools: ['kbx gates add', 'kbx gates list'],
+    tools: ['kbx intent list'],
   },
   {
     id: 'KBX-S005',

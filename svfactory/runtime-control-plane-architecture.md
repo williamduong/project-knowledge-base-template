@@ -166,6 +166,43 @@ Forbidden:
 
 ---
 
+## Gate Taxonomy
+
+Current canonical gate taxonomy for this repository:
+
+### `gate_type`
+
+- `operator-global`
+  - workspace/operator readiness gate exposed through runtime snapshot surfaces
+- `observation`
+  - analytical gate derived from debt/entropy/lesson/version-scope signals
+- `intent-local`
+  - gate record stored inside one intent workspace such as `gates.md`
+- `pipeline-specific`
+  - gate or blocker attached to a concrete flow such as maintain/release
+
+### `scope`
+
+- `workspace-global`
+  - applies to the current workspace snapshot as a whole
+- `intent`
+  - applies to one intent only
+- `release`
+  - applies to release flow only
+- `maintain`
+  - applies to maintain flow only
+- `observation`
+  - applies to analytical reconstruction/readiness only
+
+### Current runtime truth
+
+- `System > Gates` currently shows only `gate_type=operator-global`
+- human gates in `gates.md` are `gate_type=intent-local`
+- observation gates in `src/lib/observation.js` are `gate_type=observation`
+- maintain/release preconditions are still implicit `pipeline-specific` gates until normalized
+
+---
+
 ## Audit Report
 
 Current mixed-layer remediation cases still requiring follow-up: `0`
