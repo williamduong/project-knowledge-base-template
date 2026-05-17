@@ -1014,7 +1014,8 @@
 
 .rules-registry-header,
 .rules-registry-row {
-  grid-template-columns: minmax(180px, 1fr) 100px 100px 100px 100px 130px minmax(0, 1fr) minmax(260px, 1.6fr);
+  /* Adjusted for compact registry: id, severity, kind, layer, priority, sourceType */
+  grid-template-columns: minmax(220px, 1fr) 100px 100px 100px 100px 130px;
 }
 
 .rules-column-button {

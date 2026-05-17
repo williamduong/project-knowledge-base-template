@@ -163,6 +163,10 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
     tools: 1,
   })
 
+  // Expansion state for registry rows (show detail panel)
+  const [expandedRuleRows, setExpandedRuleRows] = useState<Record<string, boolean>>({})
+  const toggleRuleExpand = (id: string) => setExpandedRuleRows((p) => ({ ...(p || {}), [id]: !p?.[id] }))
+
   const allRules = rules?.rules ?? []
   const allPacks = rules?.packs ?? []
   const allViolations = rules?.violations ?? []
@@ -740,46 +744,52 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                           <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleRegistrySort('layer')}>Layer{sortIndicator('layer', registrySortKey, registrySortDirection)}</button>
                           <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleRegistrySort('priority')}>Priority{sortIndicator('priority', registrySortKey, registrySortDirection)}</button>
                           <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleRegistrySort('sourceType')}>Source Type{sortIndicator('sourceType', registrySortKey, registrySortDirection)}</button>
-                          <span role="columnheader">Source</span>
-                          <span role="columnheader">Description</span>
                         </div>
-                        {registryPage.items.map((rule) => {
+                        {registryPage.items.map((rule, idx) => {
+                          const rowId = String(rule.id ?? `rule-${idx}`)
                           const sourceLabel = `${rule.sourceDoc ?? 'n/a'}${rule.sourceAnchor ? `#${rule.sourceAnchor}` : ''}`
                           const sourceCategory = classifyRuleSource(rule.sourceDoc)
 
                           return (
-                            <article key={rule.id ?? rule.description ?? 'rule'} className="rules-table-row rules-registry-row" role="row">
-                              <div role="cell">
-                                <strong>{rule.id ?? 'unknown-rule'}</strong>
-                                <p className="rules-cell-copy">{rule.title ?? rule.id ?? 'Unknown title'}</p>
-                              </div>
-                              <div role="cell">
-                                <span className={`status-pill ${ruleSeverityTone(rule.severity)}`}>{rule.severity ?? 'info'}</span>
-                              </div>
-                              <div role="cell">
-                                <span className="status-pill status-neutral">{rule.kind ?? 'rule'}</span>
-                              </div>
-                              <div role="cell">
-                                <span className="status-pill status-neutral">{rule.layer ?? 'agent'}</span>
-                              </div>
-                              <div role="cell">
-                                <span className="status-pill status-neutral">{rule.priority ?? 'P?'}</span>
-                              </div>
-                              <div role="cell">
-                                <span className={`status-pill ${sourceCategory.tone}`}>{sourceCategory.label}</span>
-                              </div>
-                              <div role="cell">
-                                <p className="rules-cell-copy rules-source-copy" title={sourceLabel}>{sourceLabel}</p>
-                              </div>
-                              <div role="cell">
-                                <p className="rules-cell-copy">{rule.description ?? 'No description'}</p>
-                                <p className="rules-cell-copy">
-                                  {rule.dependsOn?.length ? `Depends: ${rule.dependsOn.join(', ')}` : 'Depends: none'}
-                                  {rule.overrideMode ? ` · Override: ${rule.overrideMode}` : ''}
-                                  {rule.scope?.length ? ` · Scope: ${rule.scope.join(', ')}` : ''}
-                                </p>
-                              </div>
-                            </article>
+                            <div key={rowId} className="rules-row-wrap">
+                              <article onClick={() => toggleRuleExpand(rowId)} className="rules-table-row rules-registry-row" role="row" aria-expanded={expandedRuleRows[rowId] ? 'true' : 'false'}>
+                                <div role="cell">
+                                  <strong>{rule.id ?? 'unknown-rule'}</strong>
+                                  <p className="rules-cell-copy">{rule.title ?? rule.id ?? 'Unknown title'}</p>
+                                </div>
+                                <div role="cell">
+                                  <span className={`status-pill ${ruleSeverityTone(rule.severity)}`}>{rule.severity ?? 'info'}</span>
+                                </div>
+                                <div role="cell">
+                                  <span className="status-pill status-neutral">{rule.kind ?? 'rule'}</span>
+                                </div>
+                                <div role="cell">
+                                  <span className="status-pill status-neutral">{rule.layer ?? 'agent'}</span>
+                                </div>
+                                <div role="cell">
+                                  <span className="status-pill status-neutral">{rule.priority ?? 'P?'}</span>
+                                </div>
+                                <div role="cell">
+                                  <span className={`status-pill ${sourceCategory.tone}`}>{sourceCategory.label}</span>
+                                </div>
+                              </article>
+
+                              {expandedRuleRows[rowId] ? (
+                                <div className="expanded-details" role="region">
+                                  <div className="expanded-content">
+                                    <strong>Source</strong>
+                                    <p className="rules-cell-copy rules-source-copy" title={sourceLabel}>{sourceLabel}</p>
+                                    <strong>Description</strong>
+                                    <p className="rules-cell-copy">{rule.description ?? 'No description'}</p>
+                                    <p className="rules-cell-copy">
+                                      {rule.dependsOn?.length ? `Depends: ${rule.dependsOn.join(', ')}` : 'Depends: none'}
+                                      {rule.overrideMode ? ` · Override: ${rule.overrideMode}` : ''}
+                                      {rule.scope?.length ? ` · Scope: ${rule.scope.join(', ')}` : ''}
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
                           )
                         })}
                         {!registryPage.items.length ? (
