@@ -8,8 +8,10 @@ It exists so KBX UI Builder can build the KB slice against a stable mock-then-wi
 
 ## Scope
 
-- UI slice: `site/uiv2/src/app/pages/KnowledgeBasePage.tsx` (planned)
-- Source of truth on disk: `knowledge-base/**/*.md` + `knowledge-base/.kb/impact.json`
+- UI slice: `site/uiv2/src/app/pages/KnowledgeBasePage.tsx`
+- Source of truth on disk: **any folder under the workspace root** containing `.md` or `.html` files. `knowledge-base/` is the default root, not the only one — the UI is a VS Code-style multi-root workspace where the operator can mount any project folder.
+- Allowed file extensions (server-side filter): `.md`, `.html`. All other files (e.g. `.js`, `.ts`, `.json`) are excluded from tree walks even when their parent folder is mounted.
+- Impact data on disk: `knowledge-base/.kb/impact.json`
 - Layer ownership:
   - L1 (UI) reads through `useKbTree()`, `useKbDoc(path)`, `useKbImpact(path)` only.
   - L2 serves snapshot-backed read endpoints; no live `git`/`doctor`/`rules` execution on read path.
@@ -32,18 +34,23 @@ All three are pure read endpoints. They must be served from the snapshot store a
 
 ### `GET /api/kb/tree`
 
-Returns the full KB folder tree with per-document metadata sufficient to render badges in the left rail.
+Returns the multi-root tree with per-document metadata sufficient to render badges in the left rail. **Breaking change vs the original draft**: the response now exposes `roots: KbRootNode[]` instead of a single `root`, because the UI mounts multiple workspace folders à la VS Code.
+
+Each root carries the per-folder shape used elsewhere, plus a `label` and `defaultActive` flag so the UI can render the workspace-folders dialog.
 
 Response shape:
 
 ```json
 {
   "generatedAt": "2026-05-17T08:00:00Z",
-  "contentRoot": "knowledge-base",
-  "root": {
+  "roots": [{
     "path": "knowledge-base",
     "kind": "folder",
-    "title": "Knowledge Base",
+    "title": "knowledge-base",
+    "label": "knowledge-base",
+    "defaultActive": true,
+    "docCount": 232,
+    "stalest": { "path": "...", "daysSinceVerified": 92 },
     "children": [
       {
         "path": "knowledge-base/00-start-here",
@@ -70,12 +77,18 @@ Response shape:
         ]
       }
     ]
-  }
+  }]
 }
 ```
 
+Companion endpoints:
+- `GET /api/kb/roots` — returns the list of candidate roots discoverable on disk (folders under the workspace root containing at least one allowed file), each with `{ path, label, defaultActive, docCount }`.
+- `POST /api/kb/roots` `{ path, label? }` — add a new root to the active set. Server validates path is inside the workspace and contains at least one allowed file.
+- `DELETE /api/kb/roots/:path` — remove a root from the active set. Active-root persistence belongs to L5 state, not UI-only localStorage, once this endpoint exists.
+
 Notes:
 - `daysSinceVerified` is computed at refresh time, not at request time, against the snapshot's `generatedAt`.
+- Server-side ext filter: only `.md` and `.html`. Files outside this allowlist are silently skipped during the tree walk. The list is intentionally narrow to keep the tree focused on doc-like artifacts.
 - `stale` is true when `daysSinceVerified > 60` (amber threshold) — exact thresholds may live in `metadata-schema` later; pick 60/180 as initial defaults and expose them as config later.
 - Folder nodes carry `stalest` so the tree can render an aggregate dot on the folder row without traversing children in the UI.
 - `kind` is `"folder" | "doc"`. Non-`.md` files are excluded.
@@ -152,7 +165,9 @@ Add a `kb` block to the system snapshot owned by `site/kbx-ui/system-snapshot-st
 ```json
 {
   "kb": {
-    "tree": { /* same shape as /api/kb/tree response.root */ },
+    "tree": { "roots": [ /* same shape as /api/kb/tree response.roots */ ] },
+    "rootCandidates": [ /* discoverable roots not yet active */ ],
+    "activeRoots": [ "knowledge-base" ],
     "docs": {
       "<relative-path>": {
         "frontmatter": { /* ... */ },

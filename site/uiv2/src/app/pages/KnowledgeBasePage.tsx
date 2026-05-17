@@ -2,47 +2,35 @@ import { Icon } from '@iconify/react'
 import bookOpen from '@iconify-icons/lucide/book-open'
 import chevronRight from '@iconify-icons/lucide/chevron-right'
 import chevronDown from '@iconify-icons/lucide/chevron-down'
+import folderIcon from '@iconify-icons/lucide/folder'
+import folderOpen from '@iconify-icons/lucide/folder-open'
+import fileTextIcon from '@iconify-icons/lucide/file-text'
+import fileCodeIcon from '@iconify-icons/lucide/file-code-2'
 import panelLeftClose from '@iconify-icons/lucide/panel-left-close'
 import panelLeftOpen from '@iconify-icons/lucide/panel-left-open'
 import panelRightOpen from '@iconify-icons/lucide/panel-right-open'
+import helpCircle from '@iconify-icons/lucide/help-circle'
+import folderPlus from '@iconify-icons/lucide/folder-plus'
 import xIcon from '@iconify-icons/lucide/x'
-import { useMemo, useState } from 'react'
+import filterX from '@iconify-icons/lucide/filter-x'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useKbTree, useKbDoc } from '../hooks/useKb'
-import type { KbDocStatus, KbDocType, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
+import { kbRootCandidates } from '../mock/kb-data.generated'
+import type { KbDocStatus, KbDocType, KbRootNode, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
 
 type RailMode = 'expanded' | 'icon'
 
-// Glyph by document type — single character, neutral color.
-const typeGlyph: Record<KbDocType, string> = {
-  architecture: '◆',
-  reference: '◇',
-  decision: '◈',
-  orientation: '▸',
-  implementation: '●',
-  concept: '○',
-  governance: '▣',
-  guide: '△',
-  operations: '▽',
-  'test-strategy': '◧',
-  unknown: '·',
-}
+// -----------------------------------------------------------------------------
+// Visual mapping — tones, glyphs, labels
+// -----------------------------------------------------------------------------
 
 const typeShort: Record<KbDocType, string> = {
-  architecture: 'arch',
-  reference: 'ref',
-  decision: 'adr',
-  orientation: 'ori',
-  implementation: 'impl',
-  concept: 'con',
-  governance: 'gov',
-  guide: 'gd',
-  operations: 'ops',
-  'test-strategy': 'test',
-  unknown: '—',
+  architecture: 'arch', reference: 'ref', decision: 'adr', orientation: 'ori',
+  implementation: 'impl', concept: 'con', governance: 'gov', guide: 'gd',
+  operations: 'ops', 'test-strategy': 'test', unknown: '—',
 }
 
-// Status pill tone reuses existing status-* classes from styles.css.
 function statusTone(status: KbDocStatus): string {
   if (status === 'active') return 'status-good'
   if (status === 'draft') return 'status-neutral'
@@ -50,31 +38,87 @@ function statusTone(status: KbDocStatus): string {
   if (status === 'archived') return 'status-offline'
   return 'status-neutral'
 }
-
 function verificationTone(v: KbVerification): string {
   if (v === 'code-verified') return 'status-good'
-  if (v === 'design-only') return 'status-neutral'
-  if (v === 'self-referential') return 'status-neutral'
   if (v === 'unverified') return 'status-warn'
   return 'status-neutral'
 }
-
 function timeStateTone(t: KbTimeState): string {
   if (t === 'mixed') return 'status-warn'
-  if (t === 'to_be') return 'status-neutral'
   if (t === 'historical') return 'status-offline'
   return 'status-neutral'
 }
-
 function staleDot(daysSinceVerified: number): { tone: string; title: string } | null {
   if (daysSinceVerified >= 180) return { tone: 'bg-rose-500', title: `Verified ${daysSinceVerified}d ago (>180d)` }
   if (daysSinceVerified >= 60) return { tone: 'bg-amber-400', title: `Verified ${daysSinceVerified}d ago (>60d)` }
   return null
 }
-
-function isFolder(n: KbTreeNode): n is KbTreeFolderNode {
-  return n.kind === 'folder'
+function statusShortGlyph(status: KbDocStatus, verification: KbVerification): string {
+  if (status === 'deprecated') return '✕'
+  if (status === 'archived') return '▒'
+  if (status === 'draft') return '◐'
+  if (verification === 'code-verified') return '✓'
+  if (verification === 'unverified') return '⚠'
+  return '•'
 }
+
+function isFolder(n: KbTreeNode): n is KbTreeFolderNode { return n.kind === 'folder' }
+
+function fileIconFor(d: KbTreeDocNode) {
+  if (d.fileKind === 'html') return fileCodeIcon
+  return fileTextIcon
+}
+
+// -----------------------------------------------------------------------------
+// Filter model — URL-backed
+// -----------------------------------------------------------------------------
+
+type Filters = {
+  status: KbDocStatus | null
+  verification: KbVerification | null
+  stale: 'amber' | 'red' | null  // amber = >=60d only; red = >=180d only
+  mixed: boolean
+}
+
+function readFilters(p: URLSearchParams): Filters {
+  return {
+    status: (p.get('fs') as KbDocStatus | null) ?? null,
+    verification: (p.get('fv') as KbVerification | null) ?? null,
+    stale: (p.get('fa') as 'amber' | 'red' | null) ?? null,
+    mixed: p.get('fm') === '1',
+  }
+}
+function filtersActive(f: Filters): boolean {
+  return f.status !== null || f.verification !== null || f.stale !== null || f.mixed
+}
+function matchDoc(d: KbTreeDocNode, f: Filters): boolean {
+  if (f.status && d.status !== f.status) return false
+  if (f.verification && d.verification !== f.verification) return false
+  if (f.stale === 'red' && d.daysSinceVerified < 180) return false
+  if (f.stale === 'amber' && d.daysSinceVerified < 60) return false
+  if (f.mixed && d.time_state !== 'mixed') return false
+  return true
+}
+
+// Returns a copy of the tree with non-matching docs removed and empty folders
+// pruned. If filters are inactive, returns the input unchanged.
+function pruneTree(node: KbTreeNode, f: Filters): KbTreeNode | null {
+  if (!filtersActive(f)) return node
+  if (isFolder(node)) {
+    const kept: KbTreeNode[] = []
+    for (const c of node.children) {
+      const p = pruneTree(c, f)
+      if (p) kept.push(p)
+    }
+    if (kept.length === 0) return null
+    return { ...node, children: kept }
+  }
+  return matchDoc(node, f) ? node : null
+}
+
+// -----------------------------------------------------------------------------
+// Tree rendering
+// -----------------------------------------------------------------------------
 
 type TreeRowProps = {
   node: KbTreeNode
@@ -98,7 +142,8 @@ function TreeRow({ node, depth, selectedPath, onSelect, expandedFolders, onToggl
           onClick={() => onToggleFolder(node.path)}
           title={folderStale?.title ?? `${node.docCount} docs`}
         >
-          <Icon icon={isOpen ? chevronDown : chevronRight} aria-hidden="true" />
+          <Icon icon={isOpen ? chevronDown : chevronRight} className="kb-tree-chevron" aria-hidden="true" />
+          <Icon icon={isOpen ? folderOpen : folderIcon} className="kb-tree-folder-icon" aria-hidden="true" />
           <span className="kb-tree-folder-name">{node.title}</span>
           <span className="kb-tree-folder-count">{node.docCount}</span>
           {folderStale ? <span className={`kb-tree-dot ${folderStale.tone}`} aria-hidden="true" /> : null}
@@ -106,13 +151,9 @@ function TreeRow({ node, depth, selectedPath, onSelect, expandedFolders, onToggl
         {isOpen
           ? node.children.map((child) => (
               <TreeRow
-                key={child.path}
-                node={child}
-                depth={depth + 1}
-                selectedPath={selectedPath}
-                onSelect={onSelect}
-                expandedFolders={expandedFolders}
-                onToggleFolder={onToggleFolder}
+                key={child.path} node={child} depth={depth + 1}
+                selectedPath={selectedPath} onSelect={onSelect}
+                expandedFolders={expandedFolders} onToggleFolder={onToggleFolder}
               />
             ))
           : null}
@@ -130,7 +171,7 @@ function TreeRow({ node, depth, selectedPath, onSelect, expandedFolders, onToggl
       onClick={() => onSelect(node.path)}
       title={`${node.title} · verified ${node.daysSinceVerified}d ago`}
     >
-      <span className="kb-tree-glyph" aria-hidden="true">{typeGlyph[node.type]}</span>
+      <Icon icon={fileIconFor(node)} className={`kb-tree-file-icon kb-file-${node.fileKind ?? 'md'}`} aria-hidden="true" />
       <span className="kb-tree-doc-name">{node.title}</span>
       <span className="kb-tree-doc-tag">{typeShort[node.type]}</span>
       <span className={`status-pill ${statusTone(node.status)} kb-tree-status-pill`}>{statusShortGlyph(node.status, node.verification)}</span>
@@ -139,25 +180,19 @@ function TreeRow({ node, depth, selectedPath, onSelect, expandedFolders, onToggl
   )
 }
 
-function statusShortGlyph(status: KbDocStatus, verification: KbVerification): string {
-  if (status === 'deprecated') return '✕'
-  if (status === 'archived') return '▒'
-  if (status === 'draft') return '◐'
-  if (verification === 'code-verified') return '✓'
-  if (verification === 'unverified') return '⚠'
-  return '•'
-}
+// -----------------------------------------------------------------------------
+// Stats + HealthBar
+// -----------------------------------------------------------------------------
 
 type KbStats = {
   total: number
   byStatus: Record<KbDocStatus, number>
   byVerification: Record<KbVerification, number>
-  amberStale: number   // >= 60 days
-  redStale: number     // >= 180 days
+  amberStale: number
+  redStale: number
   mixedTime: number
   unknownType: number
 }
-
 function emptyStats(): KbStats {
   return {
     total: 0,
@@ -166,13 +201,9 @@ function emptyStats(): KbStats {
     amberStale: 0, redStale: 0, mixedTime: 0, unknownType: 0,
   }
 }
-
 function walkStats(node: KbTreeNode, acc: KbStats): KbStats {
-  if (isFolder(node)) {
-    for (const c of node.children) walkStats(c, acc)
-    return acc
-  }
-  const d = node as KbTreeDocNode
+  if (isFolder(node)) { for (const c of node.children) walkStats(c, acc); return acc }
+  const d = node
   acc.total += 1
   acc.byStatus[d.status] = (acc.byStatus[d.status] ?? 0) + 1
   acc.byVerification[d.verification] = (acc.byVerification[d.verification] ?? 0) + 1
@@ -182,7 +213,6 @@ function walkStats(node: KbTreeNode, acc: KbStats): KbStats {
   if (d.type === 'unknown') acc.unknownType += 1
   return acc
 }
-
 function nextActionHint(s: KbStats): string {
   if (s.redStale > 0) return `Re-verify ${s.redStale} doc${s.redStale > 1 ? 's' : ''} stale > 180 ngày`
   if (s.byStatus.deprecated > 0) return `Dọn ${s.byStatus.deprecated} deprecated doc`
@@ -193,8 +223,33 @@ function nextActionHint(s: KbStats): string {
   return 'Bộ tài liệu khoẻ — tiếp tục cadence verify'
 }
 
-function KbHealthBar({ stats }: { stats: KbStats }) {
+type FilterChipProps = {
+  active: boolean
+  tone: string
+  label: string
+  onClick: () => void
+}
+function FilterChip({ active, tone, label, onClick }: FilterChipProps) {
+  return (
+    <button
+      type="button"
+      className={`status-pill ${tone} kb-filter-chip${active ? ' kb-filter-chip-active' : ''}`}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  )
+}
+
+type HealthBarProps = {
+  stats: KbStats
+  filters: Filters
+  onToggleFilter: (key: keyof Filters, value: unknown) => void
+  onClearFilters: () => void
+}
+function KbHealthBar({ stats, filters, onToggleFilter, onClearFilters }: HealthBarProps) {
   if (stats.total === 0) return null
+  const has = filtersActive(filters)
   return (
     <div className="kb-health-bar">
       <div className="kb-health-group">
@@ -203,58 +258,229 @@ function KbHealthBar({ stats }: { stats: KbStats }) {
       </div>
       <div className="kb-health-group">
         <span className="runtime-overview-label">Status</span>
-        <span className="status-pill status-good">active {stats.byStatus.active}</span>
-        {stats.byStatus.draft > 0 ? <span className="status-pill status-neutral">draft {stats.byStatus.draft}</span> : null}
-        {stats.byStatus.deprecated > 0 ? <span className="status-pill status-warn">deprecated {stats.byStatus.deprecated}</span> : null}
-        {stats.byStatus.archived > 0 ? <span className="status-pill status-offline">archived {stats.byStatus.archived}</span> : null}
-        {stats.byStatus.unknown > 0 ? <span className="status-pill status-neutral">unknown {stats.byStatus.unknown}</span> : null}
+        <FilterChip active={filters.status === 'active'} tone="status-good" label={`active ${stats.byStatus.active}`} onClick={() => onToggleFilter('status', 'active')} />
+        {stats.byStatus.draft > 0 ? <FilterChip active={filters.status === 'draft'} tone="status-neutral" label={`draft ${stats.byStatus.draft}`} onClick={() => onToggleFilter('status', 'draft')} /> : null}
+        {stats.byStatus.deprecated > 0 ? <FilterChip active={filters.status === 'deprecated'} tone="status-warn" label={`deprecated ${stats.byStatus.deprecated}`} onClick={() => onToggleFilter('status', 'deprecated')} /> : null}
+        {stats.byStatus.archived > 0 ? <FilterChip active={filters.status === 'archived'} tone="status-offline" label={`archived ${stats.byStatus.archived}`} onClick={() => onToggleFilter('status', 'archived')} /> : null}
+        {stats.byStatus.unknown > 0 ? <FilterChip active={filters.status === 'unknown'} tone="status-neutral" label={`unknown ${stats.byStatus.unknown}`} onClick={() => onToggleFilter('status', 'unknown')} /> : null}
       </div>
       <div className="kb-health-group">
         <span className="runtime-overview-label">Verification</span>
-        <span className="status-pill status-good">verified {stats.byVerification['code-verified']}</span>
-        {stats.byVerification.unverified > 0 ? <span className="status-pill status-warn">unverified {stats.byVerification.unverified}</span> : null}
-        {stats.byVerification['design-only'] > 0 ? <span className="status-pill status-neutral">design {stats.byVerification['design-only']}</span> : null}
-        {stats.byVerification['self-referential'] > 0 ? <span className="status-pill status-neutral">self-ref {stats.byVerification['self-referential']}</span> : null}
+        <FilterChip active={filters.verification === 'code-verified'} tone="status-good" label={`verified ${stats.byVerification['code-verified']}`} onClick={() => onToggleFilter('verification', 'code-verified')} />
+        {stats.byVerification.unverified > 0 ? <FilterChip active={filters.verification === 'unverified'} tone="status-warn" label={`unverified ${stats.byVerification.unverified}`} onClick={() => onToggleFilter('verification', 'unverified')} /> : null}
+        {stats.byVerification['design-only'] > 0 ? <FilterChip active={filters.verification === 'design-only'} tone="status-neutral" label={`design ${stats.byVerification['design-only']}`} onClick={() => onToggleFilter('verification', 'design-only')} /> : null}
+        {stats.byVerification['self-referential'] > 0 ? <FilterChip active={filters.verification === 'self-referential'} tone="status-neutral" label={`self-ref ${stats.byVerification['self-referential']}`} onClick={() => onToggleFilter('verification', 'self-referential')} /> : null}
       </div>
       <div className="kb-health-group">
         <span className="runtime-overview-label">Staleness</span>
-        {stats.amberStale > 0 ? <span className="status-pill status-warn">stale&gt;60d {stats.amberStale}</span> : <span className="status-pill status-good">none&gt;60d</span>}
-        {stats.redStale > 0 ? <span className="status-pill status-offline">stale&gt;180d {stats.redStale}</span> : null}
-        {stats.mixedTime > 0 ? <span className="meta-pill">mixed-time {stats.mixedTime}</span> : null}
+        {stats.amberStale > 0
+          ? <FilterChip active={filters.stale === 'amber'} tone="status-warn" label={`stale>60d ${stats.amberStale}`} onClick={() => onToggleFilter('stale', 'amber')} />
+          : <span className="status-pill status-good">none&gt;60d</span>}
+        {stats.redStale > 0 ? <FilterChip active={filters.stale === 'red'} tone="status-offline" label={`stale>180d ${stats.redStale}`} onClick={() => onToggleFilter('stale', 'red')} /> : null}
+        {stats.mixedTime > 0 ? <FilterChip active={filters.mixed} tone="status-neutral" label={`mixed-time ${stats.mixedTime}`} onClick={() => onToggleFilter('mixed', true)} /> : null}
       </div>
       <div className="kb-health-next">
-        <span className="runtime-overview-label">Next action</span>
-        <span className="kb-health-next-text">{nextActionHint(stats)}</span>
+        {has ? (
+          <button type="button" className="tool-button kb-clear-filters" onClick={onClearFilters}>
+            <Icon icon={filterX} aria-hidden="true" /> Clear filters
+          </button>
+        ) : (
+          <>
+            <span className="runtime-overview-label">Next action</span>
+            <span className="kb-health-next-text">{nextActionHint(stats)}</span>
+          </>
+        )}
       </div>
     </div>
   )
 }
+
+// -----------------------------------------------------------------------------
+// Legend popover
+// -----------------------------------------------------------------------------
+
+function LegendPopover({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="prototype-overlay-backdrop" onClick={onClose}>
+      <div className="prototype-dialog kb-legend-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="panel-toolbar">
+          <h2>Tree Legend</h2>
+          <button className="icon-tool-button" type="button" onClick={onClose} aria-label="Close legend"><Icon icon={xIcon} /></button>
+        </div>
+
+        <div className="kb-legend-grid">
+          <section>
+            <h3>File kind</h3>
+            <ul className="kb-legend-list">
+              <li><Icon icon={fileTextIcon} className="kb-tree-file-icon kb-file-md" /> Markdown (.md) — main doc format</li>
+              <li><Icon icon={fileCodeIcon} className="kb-tree-file-icon kb-file-html" /> HTML (.html) — embedded page</li>
+              <li><Icon icon={folderIcon} className="kb-tree-folder-icon" /> Folder (closed)</li>
+              <li><Icon icon={folderOpen} className="kb-tree-folder-icon" /> Folder (open)</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3>Status (color pill)</h3>
+            <ul className="kb-legend-list">
+              <li><span className="status-pill status-good">✓</span> active + code-verified</li>
+              <li><span className="status-pill status-warn">⚠</span> active but unverified</li>
+              <li><span className="status-pill status-neutral">◐</span> draft</li>
+              <li><span className="status-pill status-warn">✕</span> deprecated</li>
+              <li><span className="status-pill status-offline">▒</span> archived</li>
+              <li><span className="status-pill status-neutral">•</span> design-only / self-referential</li>
+            </ul>
+          </section>
+
+          <section>
+            <h3>Type tag</h3>
+            <ul className="kb-legend-list kb-legend-types">
+              {Object.entries(typeShort).map(([k, v]) => (
+                <li key={k}><span className="kb-tree-doc-tag">{v}</span> {k}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section>
+            <h3>Staleness dot</h3>
+            <ul className="kb-legend-list">
+              <li><span className="kb-tree-dot bg-amber-400" /> last_verified &gt; 60 ngày trước</li>
+              <li><span className="kb-tree-dot bg-rose-500" /> last_verified &gt; 180 ngày trước</li>
+              <li>Folder hiện dot màu cao nhất trong các con của nó.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// -----------------------------------------------------------------------------
+// Add-folder dialog
+// -----------------------------------------------------------------------------
+
+const ACTIVE_ROOTS_KEY = 'kbx-uiv2-kb-active-roots'
+
+function readActiveRoots(): Set<string> | null {
+  try {
+    const raw = window.localStorage.getItem(ACTIVE_ROOTS_KEY)
+    if (!raw) return null
+    const arr = JSON.parse(raw) as string[]
+    if (!Array.isArray(arr)) return null
+    return new Set(arr)
+  } catch { return null }
+}
+function writeActiveRoots(set: Set<string>) {
+  try { window.localStorage.setItem(ACTIVE_ROOTS_KEY, JSON.stringify(Array.from(set))) } catch {}
+}
+
+type AddFolderDialogProps = {
+  roots: KbRootNode[]
+  active: Set<string>
+  onToggle: (path: string) => void
+  onClose: () => void
+}
+function AddFolderDialog({ roots, active, onToggle, onClose }: AddFolderDialogProps) {
+  return (
+    <div className="prototype-overlay-backdrop" onClick={onClose}>
+      <div className="prototype-dialog kb-roots-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="panel-toolbar">
+          <div>
+            <p className="workspace-eyebrow">Workspace folders</p>
+            <h2>Folders in this workspace</h2>
+          </div>
+          <button className="icon-tool-button" type="button" onClick={onClose} aria-label="Close"><Icon icon={xIcon} /></button>
+        </div>
+        <p className="rules-cell-copy">
+          Bật/tắt các thư mục muốn hiển thị trong tree. Mock slice 1 đã scan sẵn các root khả dụng;
+          khi <code>/api/kb/roots</code> ra mắt, danh sách này sẽ được populate động và có thể thêm thư mục mới.
+        </p>
+        <ul className="kb-roots-list">
+          {roots.map((r) => {
+            const isOn = active.has(r.path)
+            return (
+              <li key={r.path} className="kb-roots-item">
+                <label>
+                  <input type="checkbox" checked={isOn} onChange={() => onToggle(r.path)} />
+                  <Icon icon={folderIcon} aria-hidden="true" />
+                  <strong>{r.label}</strong>
+                  <span className="count-pill">{r.docCount} docs</span>
+                  <code className="kb-roots-path">{r.path}</code>
+                </label>
+              </li>
+            )
+          })}
+        </ul>
+        <p className="rules-cell-copy kb-roots-hint">
+          Add-new-folder cần backend mutation (<code>POST /api/kb/roots</code>) — slice 1 mock chỉ cho phép toggle các root đã scan.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// -----------------------------------------------------------------------------
+// Page
+// -----------------------------------------------------------------------------
 
 export function KnowledgeBasePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const selectedPath = searchParams.get('path')
   const leftMode: RailMode = (searchParams.get('left') as RailMode) ?? 'expanded'
   const rightOpen = searchParams.get('right') === 'open'
+  const filters = useMemo(() => readFilters(searchParams), [searchParams])
 
   const treeQuery = useKbTree()
   const docQuery = useKbDoc(selectedPath)
 
-  const stats = useMemo(() => {
-    if (!treeQuery.data) return null
-    return walkStats(treeQuery.data.root, emptyStats())
-  }, [treeQuery.data])
+  // Active roots from localStorage; default to roots flagged defaultActive.
+  const [activeRoots, setActiveRoots] = useState<Set<string>>(() => {
+    const stored = readActiveRoots()
+    if (stored) return stored
+    return new Set(kbRootCandidates.filter((r) => r.defaultActive).map((r) => r.path))
+  })
+  useEffect(() => { writeActiveRoots(activeRoots) }, [activeRoots])
 
+  const [legendOpen, setLegendOpen] = useState(false)
+  const [rootsDialogOpen, setRootsDialogOpen] = useState(false)
+
+  // Roots to show in tree
+  const visibleRoots = useMemo(() => {
+    if (!treeQuery.data) return []
+    return treeQuery.data.roots.filter((r) => activeRoots.has(r.path))
+  }, [treeQuery.data, activeRoots])
+
+  // Stats computed over visible roots only — so filters reflect what user sees.
+  const stats = useMemo(() => {
+    const acc = emptyStats()
+    for (const r of visibleRoots) walkStats(r, acc)
+    return acc
+  }, [visibleRoots])
+
+  // Pruned tree (after filters)
+  const prunedRoots = useMemo(() => {
+    if (!filtersActive(filters)) return visibleRoots
+    return visibleRoots
+      .map((r) => pruneTree(r, filters))
+      .filter((r): r is KbTreeFolderNode => r !== null && isFolder(r))
+  }, [visibleRoots, filters])
+
+  // Default-expand: only top-level root folders.
   const initialFolders = useMemo(() => {
-    if (!treeQuery.data) return new Set<string>()
-    // Default: only expand root-level folders so users can scan the index.
-    return new Set([treeQuery.data.root.path, ...treeQuery.data.root.children.filter(isFolder).map((f) => f.path)])
-  }, [treeQuery.data])
+    const s = new Set<string>()
+    for (const r of visibleRoots) s.add(r.path)
+    return s
+  }, [visibleRoots])
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(initialFolders)
-  // Sync expanded set when tree data arrives the first time.
-  useMemo(() => {
-    if (expandedFolders.size === 0 && initialFolders.size > 0) setExpandedFolders(initialFolders)
-  }, [initialFolders, expandedFolders.size])
+  useEffect(() => {
+    // Whenever the set of visible roots changes (toggled folders), ensure each
+    // visible root is at least added once. Don't collapse user's manual changes.
+    setExpandedFolders((prev) => {
+      const next = new Set(prev)
+      for (const p of initialFolders) next.add(p)
+      return next
+    })
+  }, [initialFolders])
 
   function setParam(key: string, value: string | null) {
     const next = new URLSearchParams(searchParams)
@@ -264,23 +490,38 @@ export function KnowledgeBasePage() {
   }
 
   const handleSelect = (path: string) => setParam('path', path)
-  const toggleFolder = (path: string) => {
-    setExpandedFolders((prev) => {
-      const next = new Set(prev)
-      if (next.has(path)) next.delete(path)
-      else next.add(path)
-      return next
-    })
-  }
+  const toggleFolder = (path: string) =>
+    setExpandedFolders((prev) => { const n = new Set(prev); n.has(path) ? n.delete(path) : n.add(path); return n })
   const toggleLeft = () => setParam('left', leftMode === 'expanded' ? 'icon' : 'expanded')
   const toggleRight = () => setParam('right', rightOpen ? null : 'open')
+
+  const toggleFilter = (key: keyof Filters, value: unknown) => {
+    const map: Record<keyof Filters, string> = { status: 'fs', verification: 'fv', stale: 'fa', mixed: 'fm' }
+    const param = map[key]
+    if (key === 'mixed') {
+      setParam(param, filters.mixed ? null : '1')
+      return
+    }
+    const current = (filters as Record<string, unknown>)[key]
+    setParam(param, current === value ? null : String(value))
+  }
+  const clearFilters = () => {
+    const next = new URLSearchParams(searchParams)
+    next.delete('fs'); next.delete('fv'); next.delete('fa'); next.delete('fm')
+    setSearchParams(next, { replace: true })
+  }
+
+  const toggleRoot = (path: string) =>
+    setActiveRoots((prev) => { const n = new Set(prev); n.has(path) ? n.delete(path) : n.add(path); return n })
 
   const doc = docQuery.data
   const fm = doc?.frontmatter
 
   return (
     <section className="workspace-page kb-page">
-      {stats ? <KbHealthBar stats={stats} /> : null}
+      {stats.total > 0 ? (
+        <KbHealthBar stats={stats} filters={filters} onToggleFilter={toggleFilter} onClearFilters={clearFilters} />
+      ) : null}
       <div className="kb-shell">
         {/* LEFT RAIL */}
         <aside className={`kb-left-rail ${leftMode === 'icon' ? 'kb-rail-icon' : 'kb-rail-expanded'}`}>
@@ -291,27 +532,38 @@ export function KnowledgeBasePage() {
                   <Icon icon={bookOpen} aria-hidden="true" />
                   <strong>Knowledge Base</strong>
                 </div>
-                <button className="icon-tool-button" type="button" aria-label="Collapse tree" onClick={toggleLeft}>
-                  <Icon icon={panelLeftClose} />
-                </button>
+                <div className="kb-rail-tools">
+                  <button className="icon-tool-button" type="button" aria-label="Add folder" title="Manage workspace folders" onClick={() => setRootsDialogOpen(true)}>
+                    <Icon icon={folderPlus} />
+                  </button>
+                  <button className="icon-tool-button" type="button" aria-label="Legend" title="Icon and color legend" onClick={() => setLegendOpen(true)}>
+                    <Icon icon={helpCircle} />
+                  </button>
+                  <button className="icon-tool-button" type="button" aria-label="Collapse tree" onClick={toggleLeft}>
+                    <Icon icon={panelLeftClose} />
+                  </button>
+                </div>
               </div>
               <div className="kb-tree-scroll">
                 {treeQuery.isLoading ? (
                   <div className="prototype-skeleton-stack"><span /><span /><span /></div>
-                ) : treeQuery.data ? (
-                  treeQuery.data.root.children.map((child) => (
+                ) : prunedRoots.length > 0 ? (
+                  prunedRoots.map((root) => (
                     <TreeRow
-                      key={child.path}
-                      node={child}
-                      depth={0}
-                      selectedPath={selectedPath}
-                      onSelect={handleSelect}
-                      expandedFolders={expandedFolders}
-                      onToggleFolder={toggleFolder}
+                      key={root.path} node={root} depth={0}
+                      selectedPath={selectedPath} onSelect={handleSelect}
+                      expandedFolders={expandedFolders} onToggleFolder={toggleFolder}
                     />
                   ))
+                ) : visibleRoots.length === 0 ? (
+                  <div className="kb-empty-cta">
+                    <p className="kb-empty">Chưa có folder nào bật.</p>
+                    <button className="tool-button" type="button" onClick={() => setRootsDialogOpen(true)}>
+                      <Icon icon={folderPlus} /> Bật folder
+                    </button>
+                  </div>
                 ) : (
-                  <p className="kb-empty">Tree unavailable</p>
+                  <p className="kb-empty">Không tài liệu nào khớp filter.</p>
                 )}
               </div>
             </>
@@ -334,9 +586,8 @@ export function KnowledgeBasePage() {
             <div className="prototype-skeleton-stack"><span /><span /><span /></div>
           ) : (
             <>
-              {/* MetaBar */}
               <div className="kb-meta-bar">
-                <h1 className="kb-doc-title">{fm.title}</h1>
+                <h1 className="kb-doc-title">{fm.title || selectedPath}</h1>
                 <div className="kb-meta-chips">
                   <span className={`status-pill ${statusTone(fm.status)}`}>{fm.status}</span>
                   <span className="meta-pill">{fm.type}</span>
@@ -356,21 +607,14 @@ export function KnowledgeBasePage() {
                 </div>
               </div>
 
-              {/* Conditional banners */}
-              {fm.status === 'draft' ? (
-                <div className="kb-banner kb-banner-neutral">Draft — claims chưa lock. Đừng dùng làm source-of-truth.</div>
-              ) : null}
+              {fm.status === 'draft' ? <div className="kb-banner kb-banner-neutral">Draft — claims chưa lock. Đừng dùng làm source-of-truth.</div> : null}
               {fm.verification === 'unverified' && (fm.type === 'reference' || fm.type === 'implementation') ? (
                 <div className="kb-banner kb-banner-warn">Cần verify trước khi dùng làm source-of-truth.</div>
               ) : null}
-              {fm.time_state === 'mixed' ? (
-                <div className="kb-banner kb-banner-warn">Doc trộn Current State và Target State — đọc kỹ.</div>
-              ) : null}
+              {fm.time_state === 'mixed' ? <div className="kb-banner kb-banner-warn">Doc trộn Current State và Target State — đọc kỹ.</div> : null}
 
-              {/* Body */}
               <article className="kb-doc-body" dangerouslySetInnerHTML={{ __html: doc!.html }} />
 
-              {/* Related */}
               {(fm.related_strong.length > 0 || fm.related_weak.length > 0) ? (
                 <footer className="kb-related">
                   {fm.related_strong.length > 0 ? (
@@ -403,30 +647,19 @@ export function KnowledgeBasePage() {
           )}
         </section>
 
-        {/* RIGHT RAIL — floating drawer */}
         {rightOpen ? (
           <aside className="kb-right-rail surface-panel">
             <div className="panel-toolbar">
-              <div>
-                <p className="workspace-eyebrow">Document</p>
-                <h2>Outline</h2>
-              </div>
-              <button className="icon-tool-button" type="button" aria-label="Close panel" onClick={toggleRight}>
-                <Icon icon={xIcon} />
-              </button>
+              <div><p className="workspace-eyebrow">Document</p><h2>Outline</h2></div>
+              <button className="icon-tool-button" type="button" aria-label="Close panel" onClick={toggleRight}><Icon icon={xIcon} /></button>
             </div>
             {doc && doc.headings.length > 0 ? (
               <nav className="kb-toc">
                 {doc.headings.map((h) => (
-                  <a key={h.id} href={`#${h.id}`} className="kb-toc-item" data-level={h.level}>
-                    {h.text}
-                  </a>
+                  <a key={h.id} href={`#${h.id}`} className="kb-toc-item" data-level={h.level}>{h.text}</a>
                 ))}
               </nav>
-            ) : (
-              <p className="kb-empty">No outline yet.</p>
-            )}
-
+            ) : <p className="kb-empty">No outline yet.</p>}
             {fm ? (
               <div className="kb-meta-panel">
                 <span className="runtime-overview-label">Metadata</span>
@@ -445,6 +678,16 @@ export function KnowledgeBasePage() {
           </aside>
         ) : null}
       </div>
+
+      {legendOpen ? <LegendPopover onClose={() => setLegendOpen(false)} /> : null}
+      {rootsDialogOpen && treeQuery.data ? (
+        <AddFolderDialog
+          roots={treeQuery.data.roots}
+          active={activeRoots}
+          onToggle={toggleRoot}
+          onClose={() => setRootsDialogOpen(false)}
+        />
+      ) : null}
     </section>
   )
 }
