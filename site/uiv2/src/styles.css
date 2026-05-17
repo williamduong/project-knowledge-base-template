@@ -234,6 +234,7 @@
   padding: 0 10px;
   border-radius: 4px 4px 0 0;
   border: 1px solid transparent;
+  border-bottom: 3px solid transparent;
   color: var(--muted);
   font-size: 12px;
 }
@@ -244,9 +245,9 @@
 }
 
 .shell-tab.active {
-  background: linear-gradient(180deg, rgba(18, 26, 38, 0.98), rgba(12, 17, 24, 0.98));
-  border-color: var(--line);
-  border-bottom-color: #0f151d;
+  background: transparent;
+  border-color: transparent;
+  border-bottom: 3px solid #6ee7b7;
   color: var(--text);
 }
 
