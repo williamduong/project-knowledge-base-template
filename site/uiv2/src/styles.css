@@ -1388,6 +1388,84 @@ button {
   gap: 10px;
 }
 
+/* Components hub styles */
+.components-hub .components-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+.component-card {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(11,16,23,0.72);
+}
+
+/* Calendar */
+.calendar-header { display:flex; align-items:center; gap:12px; justify-content:space-between; margin-bottom:8px }
+.calendar-title { color:var(--text) }
+.calendar-grid { display:grid; grid-template-columns: repeat(7, 1fr); gap:6px }
+.calendar-weekday { font-size:11px; color:var(--muted); padding:6px 8px }
+.calendar-cell { min-height:48px; padding:6px 8px; border-radius:6px }
+.calendar-cell.in-month { background: rgba(255,255,255,0.02) }
+.calendar-cell.out-month { opacity:0.28 }
+.calendar-cell.today { outline: 2px solid rgba(110,231,183,0.14); border-radius:8px }
+.calendar-day { font-size:13px }
+
+/* Tags */
+.tags-input { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+.tag-chip { display:inline-flex; align-items:center; gap:8px; padding:6px 8px; background:rgba(255,255,255,0.02); border-radius:999px }
+.tag-remove { background:transparent; border:0; color:var(--muted); cursor:pointer }
+.tags-input input { border:0; outline:none; padding:6px; min-width:120px; background:transparent; color:var(--text) }
+
+/* Uploader */
+.uploader-zone { border:1px dashed var(--line); padding:20px; border-radius:8px; text-align:center; cursor:pointer }
+.uploader-list { margin-top:8px }
+.uploader-item { display:flex; align-items:center; gap:12px; padding:6px 0 }
+.uploader-progress-wrap { flex:1; background:rgba(255,255,255,0.02); height:8px; border-radius:6px; overflow:hidden }
+.uploader-progress { height:100%; background:linear-gradient(90deg,#6ee7b7,#38bdf8) }
+
+/* Toasts */
+.toast-viewport { position:relative; min-height:48px; margin-top:12px }
+.toast { padding:8px 12px; border-radius:8px; margin-bottom:8px; color:var(--text) }
+.toast.info { background: rgba(59,130,246,0.12) }
+.toast.success { background: rgba(34,197,94,0.12) }
+.toast.warn { background: rgba(245,158,11,0.12) }
+.toast.error { background: rgba(239,68,68,0.12) }
+
+/* Tooltip */
+[data-tooltip] { position:relative }
+[data-tooltip]::after { content: attr(data-tooltip); position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 8px); background:#071122; color:var(--muted); padding:6px 8px; border-radius:6px; white-space:nowrap; font-size:12px; opacity:0; pointer-events:none; transition:opacity 120ms ease }
+[data-tooltip]:hover::after { opacity:1 }
+
+/* Avatar + chips */
+.avatar-row { display:flex; gap:8px; align-items:center }
+.avatar { width:40px; height:40px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#0b1724,#071221); border:1px solid rgba(255,255,255,0.04); color:var(--accent-strong); font-weight:700 }
+.chip-row { display:flex; gap:8px; margin-top:8px }
+.chip { padding:6px 10px; border-radius:999px; background:rgba(255,255,255,0.02); color:var(--muted) }
+
+/* Virtual table */
+.virtual-viewport { overflow:auto; border:1px solid var(--line); border-radius:8px; background:rgba(11,16,23,0.6) }
+.virtual-row { padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.02) }
+
+/* Timeline */
+.timeline-list { display:grid; gap:10px }
+.timeline-item { display:flex; gap:12px; align-items:start }
+.timeline-marker { width:10px; height:10px; border-radius:50%; background:var(--accent); margin-top:6px }
+.timeline-body { color:var(--muted) }
+.timeline-time { font-size:12px; color:var(--accent) }
+.timeline-title { font-weight:650 }
+
+/* Rich editor */
+.rich-editor { min-height:120px; padding:10px; border:1px solid var(--line); border-radius:8px; background:rgba(11,16,23,0.6); margin-top:8px }
+
+/* Kanban */
+.kanban-board { display:flex; gap:12px }
+.kanban-column { flex:1; border:1px solid var(--line); border-radius:8px; padding:8px; background:rgba(11,16,23,0.6) }
+.kanban-column-title { font-weight:700; margin-bottom:8px }
+.kanban-card { padding:8px; border-radius:8px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)) ; margin-bottom:8px; cursor:grab }
+
+
 .prototype-chart-bars {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));

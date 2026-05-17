@@ -19,14 +19,14 @@ import {
   type SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, lazy, Suspense } from 'react'
 import { useForm } from 'react-hook-form'
 // Lazy-load heavy visualization modules when needed
 // (dynamic imports below inside component)
 import { z } from 'zod'
 import 'reactflow/dist/style.css'
 
-type PrototypeTab = 'overview' | 'navigation' | 'tabs' | 'grid' | 'forms' | 'overlays' | 'states' | 'charts' | 'flow'
+type PrototypeTab = 'overview' | 'navigation' | 'tabs' | 'grid' | 'forms' | 'overlays' | 'states' | 'charts' | 'flow' | 'components'
 
 type CatalogCard = {
   label: string
@@ -226,6 +226,7 @@ export function PrototypePage() {
   // Lazy-loaded modules
   const [EChartsModule, setEChartsModule] = useState<any | null>(null)
   const [ReactFlowModule, setReactFlowModule] = useState<any | null>(null)
+  const ComponentsHub = lazy(() => import('../components/prototype/ComponentsHub'))
 
   useEffect(() => {
     if (activeTab === 'charts' && !EChartsModule) {
@@ -337,6 +338,7 @@ export function PrototypePage() {
             <button className={`system-menu-item${activeTab === 'states' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('states')}><span className="system-menu-item-label"><Icon icon={shield} aria-hidden="true" /><span>States</span></span><small>loading + empty</small></button>
             <button className={`system-menu-item${activeTab === 'charts' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('charts')}><span className="system-menu-item-label"><Icon icon={chartColumn} aria-hidden="true" /><span>Charts</span></span><small>echarts</small></button>
             <button className={`system-menu-item${activeTab === 'flow' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('flow')}><span className="system-menu-item-label"><Icon icon={workflow} aria-hidden="true" /><span>Flow</span></span><small>reactflow</small></button>
+            <button className={`system-menu-item${activeTab === 'components' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('components')}><span className="system-menu-item-label"><Icon icon={blocks} aria-hidden="true" /><span>Components</span></span><small>controls</small></button>
           </div>
           <ul className="signal-list">
             <li>This route is intentionally maximal and is allowed to exceed production simplicity.</li>
@@ -754,6 +756,15 @@ export function PrototypePage() {
                   <p>Good for task flow, approval lanes, dependency paths, or graph-like operator explanation. Avoid when a table or checklist is clearer.</p>
                 </article>
               </div>
+            </>
+          ) : null}
+
+          {activeTab === 'components' ? (
+            <>
+              <div className="panel-toolbar"><div><p className="workspace-eyebrow">UI Controls</p><h2>Component Demos</h2></div><span className="count-pill">10 samples</span></div>
+              <Suspense fallback={<div className="system-info-card"><em>Loading components…</em></div>}>
+                <ComponentsHub />
+              </Suspense>
             </>
           ) : null}
         </section>
