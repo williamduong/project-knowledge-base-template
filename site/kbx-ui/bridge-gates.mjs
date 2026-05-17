@@ -2,6 +2,9 @@ export const phase2GatePolicy = [
   {
     gate: 'G-DETERMINISTIC-PLACEMENT',
     severity: 'hard-fail',
+    scope: 'workspace-global',
+    sourcePolicy: 'site/kbx-ui/bridge-gates.mjs',
+    sourceSignals: ['kbx status --json'],
     command: 'kbx status --json',
     evaluate: ({ statusResult }) => {
       if (!statusResult.ok) {
@@ -20,6 +23,9 @@ export const phase2GatePolicy = [
   {
     gate: 'G-EVIDENCE-SUFFICIENCY',
     severity: 'hard-fail',
+    scope: 'workspace-global',
+    sourcePolicy: 'site/kbx-ui/bridge-gates.mjs',
+    sourceSignals: ['kbx doctor --json'],
     command: 'kbx doctor --json',
     evaluate: ({ doctorResult }) => {
       if (!doctorResult.ok) {
@@ -45,6 +51,9 @@ export const phase2GatePolicy = [
   {
     gate: 'G-INTENT-UNIQUENESS',
     severity: 'hard-fail',
+    scope: 'workspace-global',
+    sourcePolicy: 'site/kbx-ui/bridge-gates.mjs',
+    sourceSignals: ['kbx status --json'],
     command: 'kbx status --json',
     evaluate: ({ statusResult }) => {
       const activeCount = statusResult.parsed?.activeIntents?.count;
@@ -71,6 +80,9 @@ export const phase2GatePolicy = [
   {
     gate: 'G-CHAOS-ESTIMATE',
     severity: 'warn',
+    scope: 'workspace-global',
+    sourcePolicy: 'site/kbx-ui/bridge-gates.mjs',
+    sourceSignals: ['kbx status --json', 'kbx chaos --json --no-save'],
     command: 'kbx status --json (observation.chaosResult)',
     evaluate: ({ statusResult, chaosResult }) => {
       const level = String(statusResult?.parsed?.observation?.chaosResult?.level || '').toLowerCase();
@@ -116,6 +128,9 @@ export const phase2GatePolicy = [
   {
     gate: 'G-THREE-LAYER-TRACE',
     severity: 'info',
+    scope: 'workspace-global',
+    sourcePolicy: 'site/kbx-ui/bridge-gates.mjs',
+    sourceSignals: ['kbx status --json', 'kbx doctor --json', 'kbx chaos --json --no-save'],
     command: 'kbx status --json + kbx doctor --json + kbx chaos --estimate',
     evaluate: ({ statusResult, doctorResult, chaosResult }) => {
       const ok = statusResult.ok && doctorResult.ok && chaosResult.ok;
@@ -161,6 +176,9 @@ export function evaluatePhase2Gates(commandResults) {
     return {
       gate: policy.gate,
       severity: policy.severity,
+      scope: policy.scope,
+      sourcePolicy: policy.sourcePolicy,
+      sourceSignals: policy.sourceSignals,
       command: policy.command,
       ok: evaluation.ok,
       detail: evaluation.detail,

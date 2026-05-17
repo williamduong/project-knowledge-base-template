@@ -19,6 +19,7 @@
 - **System snapshot architecture**: Replaced `/system` fan-out polling with cached `/api/system-snapshot` metadata (`generatedAt`, `staleAt`, `reloadRecommended`, fingerprint, branch/head/focus drift signals), moved Home/Rules/Runtime/Shell hooks onto one shared snapshot query, and shifted manual refresh to a forced snapshot reload path.
 - **Layer contract documented**: Added `svfactory/runtime-control-plane-architecture.md` with 5-layer runtime model, ASCII diagram, and 7 remaining mixed-layer remediation cases so future work can continue from explicit boundaries instead of process-level symptom chasing.
 - **Read path fully snapshot-backed**: Completed the 7 mixed-layer remediations by moving read endpoints onto `systemSnapshotStore`, splitting pure intent detail from git evidence enrichment, and adding architecture regression tests under `site/kbx-ui/test`.
+- **Gate source audit**: Added `svfactory/gate-source-audit.md` to classify operator-global, observation, intent-local, and implicit procedural gate families and to document docs/code drift around nonexistent `kbx gates` CLI surfaces.
 
 ## 2026-05-05
 

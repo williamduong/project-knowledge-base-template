@@ -27,6 +27,9 @@ type SystemWorkspaceSection = 'services' | 'cron' | 'goal' | 'pipeline' | 'gates
 type Phase2GateItem = {
   gate: string
   severity: string
+  scope?: string
+  sourcePolicy?: string
+  sourceSignals?: string[]
   command: string
   ok: boolean
   detail: string
@@ -802,6 +805,18 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                         </div>
                         <p className="rules-cell-copy">{gate.detail}</p>
                         <div className="gate-card-meta">
+                          <div>
+                            <span className="runtime-overview-label">Scope</span>
+                            <code>{gate.scope ?? 'workspace-global'}</code>
+                          </div>
+                          <div>
+                            <span className="runtime-overview-label">Source policy</span>
+                            <code>{gate.sourcePolicy ?? 'site/kbx-ui/bridge-gates.mjs'}</code>
+                          </div>
+                          <div>
+                            <span className="runtime-overview-label">Source signals</span>
+                            <code>{Array.isArray(gate.sourceSignals) && gate.sourceSignals.length > 0 ? gate.sourceSignals.join(' + ') : gate.command}</code>
+                          </div>
                           <div>
                             <span className="runtime-overview-label">Command</span>
                             <code>{gate.command}</code>
