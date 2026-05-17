@@ -86,8 +86,9 @@ function runMaintain({ args, cwd, packageJson }) {
     console.log('maintain: fast mode skips doc:gate for quicker feedback.');
   }
 
-  console.log(`maintain: running kb test ${options.fast ? '(sample)' : '--all'}`);
-  runTest({ args: options.fast ? [] : ['--all'], cwd: workspaceRoot });
+  const testArgs = options.fast ? ['--stack=quick'] : ['--all', '--stack=full'];
+  console.log(`maintain: running kb test ${testArgs.join(' ')}`);
+  runTest({ args: testArgs, cwd: workspaceRoot });
 
   console.log(`maintain: running kb doctor ${options.fast ? '' : '--strict'}`.trim());
   runDoctor({

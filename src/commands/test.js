@@ -11,7 +11,7 @@ function parseArgs(args) {
   const options = {
     sample: 5,
     all: false,
-    stack: false,
+    stackMode: null,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -33,7 +33,26 @@ function parseArgs(args) {
     }
 
     if (current === '--stack') {
-      options.stack = true;
+      options.stackMode = 'full';
+      continue;
+    }
+
+    if (current.startsWith('--stack=')) {
+      const value = String(current.split('=')[1] || '').trim().toLowerCase();
+      if (value !== 'quick' && value !== 'full') {
+        throw new Error('test --stack must be quick or full.');
+      }
+      options.stackMode = value;
+      continue;
+    }
+
+    if (current === '--stack-mode') {
+      const value = String(args[index + 1] || '').trim().toLowerCase();
+      if (value !== 'quick' && value !== 'full') {
+        throw new Error('test --stack-mode requires quick or full.');
+      }
+      options.stackMode = value;
+      index += 1;
       continue;
     }
 
@@ -65,7 +84,7 @@ function runCommand(label, command, args, spawnOptions = {}) {
   }
 }
 
-function runStackSuites({ workspaceRoot }) {
+function runStackSuites({ workspaceRoot, mode }) {
   const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
   runCommand('root unit tests', npmCommand, ['run', 'test:unit'], {
@@ -76,9 +95,11 @@ function runStackSuites({ workspaceRoot }) {
     cwd: path.join(workspaceRoot, 'site', 'kbx-ui'),
   });
 
-  runCommand('uiv2 production build', npmCommand, ['run', 'build'], {
-    cwd: path.join(workspaceRoot, 'site', 'uiv2'),
-  });
+  if (mode === 'full') {
+    runCommand('uiv2 production build', npmCommand, ['run', 'build'], {
+      cwd: path.join(workspaceRoot, 'site', 'uiv2'),
+    });
+  }
 }
 
 function sampleArray(items, count) {
@@ -203,12 +224,13 @@ function runTest({ args, cwd }) {
   const status = warnings.length > 0 ? 'WARN' : 'PASS';
   console.log(`Result: ${status}`);
 
-  if (options.stack) {
-    runStackSuites({ workspaceRoot });
-    console.log('Stack Result: PASS');
+  if (options.stackMode) {
+    runStackSuites({ workspaceRoot, mode: options.stackMode });
+    console.log(`Stack Result (${options.stackMode}): PASS`);
   }
 }
 
 module.exports = {
+  parseArgs,
   runTest,
 };
