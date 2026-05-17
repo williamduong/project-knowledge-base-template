@@ -13,10 +13,10 @@ import helpCircle from '@iconify-icons/lucide/help-circle'
 import folderPlus from '@iconify-icons/lucide/folder-plus'
 import xIcon from '@iconify-icons/lucide/x'
 import filterX from '@iconify-icons/lucide/filter-x'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useKbTree, useKbDoc, useKbRootCandidates } from '../hooks/useKb'
-import type { KbDocStatus, KbDocType, KbRootNode, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
+import { useKbTree, useKbDoc, useKbRoots, useAddKbRoot, useRemoveKbRoot, type KbRootCandidate } from '../hooks/useKb'
+import type { KbDocStatus, KbDocType, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
 
 type RailMode = 'expanded' | 'icon'
 
@@ -357,28 +357,24 @@ function LegendPopover({ onClose }: { onClose: () => void }) {
 // Add-folder dialog
 // -----------------------------------------------------------------------------
 
-const ACTIVE_ROOTS_KEY = 'kbx-uiv2-kb-active-roots'
-
-function readActiveRoots(): Set<string> | null {
-  try {
-    const raw = window.localStorage.getItem(ACTIVE_ROOTS_KEY)
-    if (!raw) return null
-    const arr = JSON.parse(raw) as string[]
-    if (!Array.isArray(arr)) return null
-    return new Set(arr)
-  } catch { return null }
-}
-function writeActiveRoots(set: Set<string>) {
-  try { window.localStorage.setItem(ACTIVE_ROOTS_KEY, JSON.stringify(Array.from(set))) } catch {}
-}
-
 type AddFolderDialogProps = {
-  roots: KbRootNode[]
-  active: Set<string>
-  onToggle: (path: string) => void
+  candidates: KbRootCandidate[]
+  activeRoots: Set<string>
+  pending: boolean
+  errorMessage: string | null
+  onAdd: (path: string) => void
+  onRemove: (path: string) => void
   onClose: () => void
 }
-function AddFolderDialog({ roots, active, onToggle, onClose }: AddFolderDialogProps) {
+function AddFolderDialog({ candidates, activeRoots, pending, errorMessage, onAdd, onRemove, onClose }: AddFolderDialogProps) {
+  const [newPath, setNewPath] = useState('')
+  const submitNew = (e: FormEvent) => {
+    e.preventDefault()
+    const v = newPath.trim()
+    if (!v) return
+    onAdd(v)
+    setNewPath('')
+  }
   return (
     <div className="prototype-overlay-backdrop" onClick={onClose}>
       <div className="prototype-dialog kb-roots-dialog" onClick={(e) => e.stopPropagation()}>
@@ -390,28 +386,43 @@ function AddFolderDialog({ roots, active, onToggle, onClose }: AddFolderDialogPr
           <button className="icon-tool-button" type="button" onClick={onClose} aria-label="Close"><Icon icon={xIcon} /></button>
         </div>
         <p className="rules-cell-copy">
-          Bật/tắt các thư mục muốn hiển thị trong tree. Mock slice 1 đã scan sẵn các root khả dụng;
-          khi <code>/api/kb/roots</code> ra mắt, danh sách này sẽ được populate động và có thể thêm thư mục mới.
+          Bật/tắt folder hoặc gõ path mới (relative tới repo root). Chỉ folder chứa ít nhất 1 file <code>.md</code> hoặc <code>.html</code> được chấp nhận. Active set được persist vào <code>site/kbx-ui/.runtime-state/kb-roots.json</code>.
         </p>
+        <form className="kb-roots-add-form" onSubmit={submitNew}>
+          <input
+            type="text"
+            placeholder="path/to/folder (vd: docs hoặc tools/runbooks)"
+            value={newPath}
+            onChange={(e) => setNewPath(e.target.value)}
+            disabled={pending}
+          />
+          <button className="tool-button tool-button-primary" type="submit" disabled={pending || !newPath.trim()}>
+            <Icon icon={folderPlus} aria-hidden="true" /> Add
+          </button>
+        </form>
+        {errorMessage ? <p className="runtime-error-text">{errorMessage}</p> : null}
         <ul className="kb-roots-list">
-          {roots.map((r) => {
-            const isOn = active.has(r.path)
+          {candidates.map((r) => {
+            const isOn = activeRoots.has(r.path)
             return (
               <li key={r.path} className="kb-roots-item">
                 <label>
-                  <input type="checkbox" checked={isOn} onChange={() => onToggle(r.path)} />
+                  <input
+                    type="checkbox"
+                    checked={isOn}
+                    disabled={pending}
+                    onChange={() => (isOn ? onRemove(r.path) : onAdd(r.path))}
+                  />
                   <Icon icon={folderIcon} aria-hidden="true" />
                   <strong>{r.label}</strong>
                   <span className="count-pill">{r.docCount} docs</span>
+                  {r.source === 'discovered' ? <span className="meta-pill">discovered</span> : null}
                   <code className="kb-roots-path">{r.path}</code>
                 </label>
               </li>
             )
           })}
         </ul>
-        <p className="rules-cell-copy kb-roots-hint">
-          Add-new-folder cần backend mutation (<code>POST /api/kb/roots</code>) — slice 1 mock chỉ cho phép toggle các root đã scan.
-        </p>
       </div>
     </div>
   )
@@ -430,26 +441,24 @@ export function KnowledgeBasePage() {
 
   const treeQuery = useKbTree()
   const docQuery = useKbDoc(selectedPath)
-  const candidatesQuery = useKbRootCandidates()
+  const rootsQuery = useKbRoots()
+  const addRootMutation = useAddKbRoot()
+  const removeRootMutation = useRemoveKbRoot()
 
-  // Active roots come from localStorage (slice A). Once the live candidate
-  // list arrives, hydrate the default set from roots flagged defaultActive
-  // if the user had no prior selection. Slice B replaces this with L5 state.
-  const [activeRoots, setActiveRoots] = useState<Set<string>>(() => readActiveRoots() ?? new Set())
-  const [hasHydratedFromServer, setHasHydratedFromServer] = useState(false)
-  useEffect(() => { writeActiveRoots(activeRoots) }, [activeRoots])
-  useEffect(() => {
-    if (hasHydratedFromServer) return
-    if (!candidatesQuery.data) return
-    if (readActiveRoots() !== null) { setHasHydratedFromServer(true); return }
-    setActiveRoots(new Set(candidatesQuery.data.filter((r) => r.defaultActive).map((r) => r.path)))
-    setHasHydratedFromServer(true)
-  }, [candidatesQuery.data, hasHydratedFromServer])
+  // Active root set comes from the server (L5: site/kbx-ui/.runtime-state/
+  // kb-roots.json). The UI never persists this locally anymore.
+  const activeRoots = useMemo(
+    () => new Set(rootsQuery.data?.activeRoots ?? []),
+    [rootsQuery.data?.activeRoots],
+  )
+  const rootCandidates: KbRootCandidate[] = rootsQuery.data?.rootCandidates ?? []
 
   const [legendOpen, setLegendOpen] = useState(false)
   const [rootsDialogOpen, setRootsDialogOpen] = useState(false)
+  const [rootError, setRootError] = useState<string | null>(null)
 
-  // Roots to show in tree
+  // Roots to show in tree — server already filters by activeRoots, but we
+  // double-filter so a stale tree cache doesn't surface a recently-removed root.
   const visibleRoots = useMemo(() => {
     if (!treeQuery.data) return []
     return treeQuery.data.roots.filter((r) => activeRoots.has(r.path))
@@ -517,8 +526,21 @@ export function KnowledgeBasePage() {
     setSearchParams(next, { replace: true })
   }
 
-  const toggleRoot = (path: string) =>
-    setActiveRoots((prev) => { const n = new Set(prev); n.has(path) ? n.delete(path) : n.add(path); return n })
+  const addRoot = async (rootPath: string) => {
+    setRootError(null)
+    try {
+      const res = await addRootMutation.mutateAsync(rootPath)
+      if (!res.ok && res.error) setRootError(res.error)
+    } catch (e) {
+      setRootError(e instanceof Error ? e.message : 'add failed')
+    }
+  }
+  const removeRoot = async (rootPath: string) => {
+    setRootError(null)
+    try { await removeRootMutation.mutateAsync(rootPath) }
+    catch (e) { setRootError(e instanceof Error ? e.message : 'remove failed') }
+  }
+  const mutationPending = addRootMutation.isPending || removeRootMutation.isPending
 
   const doc = docQuery.data
   const fm = doc?.frontmatter
@@ -686,12 +708,15 @@ export function KnowledgeBasePage() {
       </div>
 
       {legendOpen ? <LegendPopover onClose={() => setLegendOpen(false)} /> : null}
-      {rootsDialogOpen && treeQuery.data ? (
+      {rootsDialogOpen ? (
         <AddFolderDialog
-          roots={treeQuery.data.roots}
-          active={activeRoots}
-          onToggle={toggleRoot}
-          onClose={() => setRootsDialogOpen(false)}
+          candidates={rootCandidates}
+          activeRoots={activeRoots}
+          pending={mutationPending}
+          errorMessage={rootError}
+          onAdd={addRoot}
+          onRemove={removeRoot}
+          onClose={() => { setRootError(null); setRootsDialogOpen(false) }}
         />
       ) : null}
     </section>

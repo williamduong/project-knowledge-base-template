@@ -2411,3 +2411,22 @@
 .kb-doc-body a:hover { text-decoration: underline; }
 .kb-doc-body pre code { background: transparent; padding: 0; }
 .kb-doc-body del { color: #64748b; }
+
+.kb-roots-add-form {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 6px;
+}
+.kb-roots-add-form input {
+  flex: 1 1 auto;
+  background: var(--bg-panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: #ebf2fa;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+}
+.kb-roots-add-form input:focus { outline: 2px solid #38bdf8; outline-offset: 1px; }
+.kb-roots-add-form button[disabled] { opacity: 0.5; cursor: not-allowed; }
+.kb-roots-dialog .runtime-error-text { margin: 0 18px 4px; font-size: 12px; color: #f87171; }

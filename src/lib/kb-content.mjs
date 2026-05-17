@@ -8,8 +8,8 @@
 // Ported from scripts/gen-kb-mock.mjs (slice-3 mock generator) so the live
 // runtime emits the same shapes the UI was already built against.
 
-import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
-import { join, posix } from 'node:path';
+import { readdirSync, readFileSync, statSync, existsSync, realpathSync } from 'node:fs';
+import { join, posix, resolve as resolvePath, relative as relativePath, isAbsolute } from 'node:path';
 import yaml from 'js-yaml';
 
 export const ALLOWED_EXT = new Set(['.md', '.html']);
@@ -281,8 +281,8 @@ export function walkRoot(absDir, relDir, today = new Date()) {
 }
 
 // Default candidate roots — folders likely to be mounted. The L3 collector
-// uses this list to populate kb.rootCandidates. Same defaults the mock
-// generator scanned.
+// seeds kb.rootCandidates with this list, then merges in any auto-discovered
+// top-level folders that contain allowed files.
 export const DEFAULT_CANDIDATE_ROOTS = [
   { path: 'knowledge-base', label: 'knowledge-base', defaultActive: true },
   { path: 'notes',          label: 'notes',          defaultActive: false },
@@ -290,3 +290,94 @@ export const DEFAULT_CANDIDATE_ROOTS = [
   { path: 'test',           label: 'test',           defaultActive: false },
   { path: '.github',        label: '.github',        defaultActive: false },
 ];
+
+// -----------------------------------------------------------------------------
+// Slice B helpers: candidate discovery + root validation
+// -----------------------------------------------------------------------------
+
+// Returns true if `dir` (absolute path) contains at least one .md or .html at
+// any depth. Bounded scan: stops on first hit. Skips SKIP_DIRS.
+export function hasAllowedFiles(absDir) {
+  let stack = [absDir];
+  let scanned = 0;
+  while (stack.length > 0 && scanned < 5000) {
+    const current = stack.pop();
+    scanned += 1;
+    let entries;
+    try { entries = readdirSync(current, { withFileTypes: true }); } catch { continue; }
+    for (const e of entries) {
+      if (e.name.startsWith('.') && e.name !== '.github') continue;
+      if (SKIP_DIRS.has(e.name)) continue;
+      if (e.isDirectory()) {
+        stack.push(join(current, e.name));
+      } else if (e.isFile()) {
+        const dot = e.name.lastIndexOf('.');
+        const ext = dot >= 0 ? e.name.slice(dot).toLowerCase() : '';
+        if (ALLOWED_EXT.has(ext)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Validates a path relative to `repoRoot`. Returns { ok, reason, normalized }.
+// - rejects empty/non-string
+// - rejects paths that resolve outside repoRoot (..-traversal, symlinks-out)
+// - rejects non-existent paths
+// - rejects non-directories
+// - rejects directories with no allowed files at any depth
+export function validateCandidateRoot(repoRoot, requestedPath) {
+  if (typeof requestedPath !== 'string' || requestedPath.trim() === '') {
+    return { ok: false, reason: 'path must be a non-empty string' };
+  }
+  const trimmed = requestedPath.trim().replace(/^[/\\]+/, '');
+  const abs = resolvePath(repoRoot, trimmed);
+  let realAbs;
+  try { realAbs = realpathSync(abs); } catch {
+    return { ok: false, reason: 'path does not exist' };
+  }
+  const realRepo = realpathSync(repoRoot);
+  const rel = relativePath(realRepo, realAbs);
+  if (rel.startsWith('..') || isAbsolute(rel) || rel === '') {
+    return { ok: false, reason: 'path resolves outside the workspace' };
+  }
+  let s;
+  try { s = statSync(realAbs); } catch {
+    return { ok: false, reason: 'path is not accessible' };
+  }
+  if (!s.isDirectory()) {
+    return { ok: false, reason: 'path is not a directory' };
+  }
+  if (!hasAllowedFiles(realAbs)) {
+    return { ok: false, reason: 'directory contains no .md or .html files' };
+  }
+  return { ok: true, normalized: rel.split(/[\\/]+/).join('/') };
+}
+
+// Auto-discover candidate roots: top-level entries in repoRoot that pass
+// hasAllowedFiles. Does not recurse below one level — discovery is just for
+// the workspace-folders dialog; deeper mounting is via explicit POST.
+export function discoverCandidateRoots(repoRoot, defaults = DEFAULT_CANDIDATE_ROOTS) {
+  const seen = new Set();
+  const out = [];
+  for (const d of defaults) {
+    seen.add(d.path);
+    const abs = join(repoRoot, d.path);
+    if (existsSync(abs) && hasAllowedFiles(abs)) {
+      out.push({ path: d.path, label: d.label, defaultActive: !!d.defaultActive, source: 'default' });
+    }
+  }
+  let entries;
+  try { entries = readdirSync(repoRoot, { withFileTypes: true }); } catch { return out; }
+  for (const e of entries) {
+    if (!e.isDirectory()) continue;
+    if (e.name.startsWith('.') && e.name !== '.github') continue;
+    if (SKIP_DIRS.has(e.name)) continue;
+    if (seen.has(e.name)) continue;
+    const abs = join(repoRoot, e.name);
+    if (hasAllowedFiles(abs)) {
+      out.push({ path: e.name, label: e.name, defaultActive: false, source: 'discovered' });
+    }
+  }
+  return out;
+}

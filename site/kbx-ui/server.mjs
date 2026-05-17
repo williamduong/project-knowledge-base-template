@@ -12,6 +12,8 @@ import {
   DEFAULT_CANDIDATE_ROOTS as KB_CANDIDATE_ROOTS,
   parseDocFromDisk as kbParseDocFromDisk,
   walkRoot as kbWalkRoot,
+  discoverCandidateRoots as kbDiscoverCandidateRoots,
+  validateCandidateRoot as kbValidateCandidateRoot,
 } from '../../src/lib/kb-content.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +33,7 @@ const uiPort = Number(process.env.KBX_UI_PORT || 4173);
 const port = Number(process.env.KBX_BRIDGE_PORT || 4174);
 const runtimeServicesRegistryPath = path.join(__dirname, 'runtime-services.json');
 const runtimeServicesStatePath = path.join(__dirname, '.runtime-services-state.json');
+const kbRootsStatePath = path.join(__dirname, '.runtime-state', 'kb-roots.json');
 const ensureInFlight = new Map();
 let inProcessCommandQueue = Promise.resolve();
 const SYSTEM_SNAPSHOT_TTL_MS = 15000;
@@ -1881,29 +1884,74 @@ function buildDocumentsWorkspace(selectedPath) {
 //
 // Owns the lazy-cached representation of the KB multi-root workspace per
 // notes/kbx-ui-kb-page-runtime-contract.md. Route handlers only read from
-// this store; they do not parse the filesystem at request time. The tree is
-// populated eagerly on refresh; per-doc bodies are parsed on first hit and
-// cached until the next refresh.
-function createKbStore({ repoRoot: storeRepoRoot, candidates = KB_CANDIDATE_ROOTS }) {
+// this store; they do not parse the filesystem at request time.
+//
+// Slice B additions:
+//   - active-root set persisted to L5 (kbRootsStatePath)
+//   - candidate list auto-discovered each refresh, merged with defaults
+//   - mutations (add/remove root) trigger a refresh and atomic state write
+function createKbStore({ repoRoot: storeRepoRoot, statePath = kbRootsStatePath, defaults = KB_CANDIDATE_ROOTS }) {
   let cache = null;
   const docCache = new Map();
   let refreshing = null;
+  let activeRoots = null; // Set<string>, hydrated on first ensure()
+
+  function readPersistedActive() {
+    try {
+      if (!fs.existsSync(statePath)) return null;
+      const parsed = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+      if (!parsed || !Array.isArray(parsed.activeRoots)) return null;
+      return new Set(parsed.activeRoots.filter((p) => typeof p === 'string'));
+    } catch { return null; }
+  }
+
+  function writePersistedActive(set) {
+    try {
+      const dir = path.dirname(statePath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      const payload = { activeRoots: Array.from(set), updatedAt: new Date().toISOString() };
+      const tmp = `${statePath}.tmp`;
+      fs.writeFileSync(tmp, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+      fs.renameSync(tmp, statePath);
+    } catch (error) {
+      // Persistence failure must not crash the route; log and continue. The
+      // in-memory active set is still authoritative for the running process.
+      console.warn('[kb-roots] persist failed:', error?.message || error);
+    }
+  }
+
+  function defaultActiveFromCandidates(candidates) {
+    return new Set(candidates.filter((c) => c.defaultActive).map((c) => c.path));
+  }
+
+  function hydrateActive(candidates) {
+    if (activeRoots) return;
+    const persisted = readPersistedActive();
+    activeRoots = persisted || defaultActiveFromCandidates(candidates);
+    if (!persisted) writePersistedActive(activeRoots);
+  }
 
   function buildSnapshot(reason) {
     const generatedAt = new Date().toISOString();
     const today = new Date();
-    const roots = [];
+    const discovered = kbDiscoverCandidateRoots(storeRepoRoot, defaults);
+    hydrateActive(discovered);
+
     const rootCandidates = [];
-    for (const c of candidates) {
+    const roots = [];
+    for (const c of discovered) {
       const abs = path.join(storeRepoRoot, c.path);
       const result = kbWalkRoot(abs, c.path, today);
-      if (!result.node) continue;
       rootCandidates.push({
         path: c.path,
         label: c.label,
         defaultActive: !!c.defaultActive,
-        docCount: result.docCount,
+        source: c.source || 'default',
+        docCount: result.docCount || 0,
+        active: activeRoots.has(c.path),
       });
+      if (!activeRoots.has(c.path)) continue;
+      if (!result.node) continue;
       roots.push({
         ...result.node,
         label: c.label,
@@ -1915,6 +1963,7 @@ function createKbStore({ repoRoot: storeRepoRoot, candidates = KB_CANDIDATE_ROOT
       reason: reason || 'initial',
       tree: { generatedAt, roots },
       rootCandidates,
+      activeRoots: Array.from(activeRoots),
     };
   }
 
@@ -1934,11 +1983,11 @@ function createKbStore({ repoRoot: storeRepoRoot, candidates = KB_CANDIDATE_ROOT
     try { return await refreshing; } finally { refreshing = null; }
   }
 
-  function getTree() {
-    return ensure('lazy-init').tree;
-  }
-  function getRootCandidates() {
-    return ensure('lazy-init').rootCandidates;
+  function getTree() { return ensure('lazy-init').tree; }
+  function getRootCandidates() { return ensure('lazy-init').rootCandidates; }
+  function getActiveRoots() {
+    ensure('lazy-init');
+    return Array.from(activeRoots);
   }
   function getMeta() {
     const c = ensure('lazy-init');
@@ -1946,7 +1995,6 @@ function createKbStore({ repoRoot: storeRepoRoot, candidates = KB_CANDIDATE_ROOT
   }
   function getDoc(relPath) {
     if (typeof relPath !== 'string' || !relPath) return null;
-    // Safety: must resolve inside repoRoot and end with allowed ext.
     const safe = relPath.replace(/^[/\\]+/, '');
     const abs = path.resolve(storeRepoRoot, safe);
     const rel = path.relative(storeRepoRoot, abs);
@@ -1963,7 +2011,35 @@ function createKbStore({ repoRoot: storeRepoRoot, candidates = KB_CANDIDATE_ROOT
     return out;
   }
 
-  return { refresh, getTree, getRootCandidates, getMeta, getDoc };
+  async function addRoot(requestedPath) {
+    const validation = kbValidateCandidateRoot(storeRepoRoot, requestedPath);
+    if (!validation.ok) return { ok: false, error: validation.reason };
+    ensure('lazy-init');
+    if (activeRoots.has(validation.normalized)) {
+      return { ok: true, alreadyActive: true, activeRoots: Array.from(activeRoots) };
+    }
+    activeRoots.add(validation.normalized);
+    writePersistedActive(activeRoots);
+    await refresh(`add-root:${validation.normalized}`);
+    return { ok: true, activeRoots: Array.from(activeRoots) };
+  }
+
+  async function removeRoot(requestedPath) {
+    if (typeof requestedPath !== 'string' || !requestedPath) {
+      return { ok: false, error: 'path required' };
+    }
+    const normalized = requestedPath.trim().replace(/^[/\\]+/, '').split(/[\\/]+/).join('/');
+    ensure('lazy-init');
+    if (!activeRoots.has(normalized)) {
+      return { ok: true, alreadyInactive: true, activeRoots: Array.from(activeRoots) };
+    }
+    activeRoots.delete(normalized);
+    writePersistedActive(activeRoots);
+    await refresh(`remove-root:${normalized}`);
+    return { ok: true, activeRoots: Array.from(activeRoots) };
+  }
+
+  return { refresh, getTree, getRootCandidates, getActiveRoots, getMeta, getDoc, addRoot, removeRoot };
 }
 
 export function createApp(commandRunner = executeBridgeCommand) {
@@ -2465,10 +2541,33 @@ export function createApp(commandRunner = executeBridgeCommand) {
 
   app.get('/api/kb/roots', (_req, res) => {
     try {
-      res.status(200).json({ ok: true, rootCandidates: kbStore.getRootCandidates() });
+      res.status(200).json({
+        ok: true,
+        rootCandidates: kbStore.getRootCandidates(),
+        activeRoots: kbStore.getActiveRoots(),
+      });
     } catch (error) {
       res.status(500).json({ ok: false, error: error instanceof Error ? error.message : 'kb roots failed' });
     }
+  });
+
+  app.post('/api/kb/roots', express.json(), async (req, res) => {
+    const result = await kbStore.addRoot(req.body?.path);
+    if (!result.ok) { res.status(400).json(result); return; }
+    res.status(200).json({
+      ...result,
+      rootCandidates: kbStore.getRootCandidates(),
+    });
+  });
+
+  app.delete('/api/kb/roots/:path(*)', async (req, res) => {
+    const requested = req.params.path;
+    const result = await kbStore.removeRoot(requested);
+    if (!result.ok) { res.status(400).json(result); return; }
+    res.status(200).json({
+      ...result,
+      rootCandidates: kbStore.getRootCandidates(),
+    });
   });
 
   app.get('/api/kb/doc', (req, res) => {

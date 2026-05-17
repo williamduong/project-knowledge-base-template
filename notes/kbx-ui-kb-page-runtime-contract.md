@@ -239,12 +239,25 @@ The contract is satisfied only when:
 - UI hooks `useKbTree`, `useKbDoc`, `useKbRootCandidates`, `useRefreshKb` swapped to `apiGet` / `apiPost`. Old mock imports (`kbDocsGenerated`, `kbRootCandidates` from the generated file) are no longer referenced.
 - Verified live: tree returns 5 roots / 233 docs in `knowledge-base`; first doc hit reports `fromCache: false`, second hit `fromCache: true`; path traversal `../../etc/passwd` returns 404.
 
-### Open follow-ups (Slice B and beyond)
+### Slice B shipped (2026-05-18)
+
+- L5 state: `site/kbx-ui/.runtime-state/kb-roots.json` carries `{ activeRoots: string[], updatedAt }`. Atomic write via temp file + `fs.renameSync`. Gitignored.
+- L4 additions in `src/lib/kb-content.mjs`:
+  - `hasAllowedFiles(absDir)` bounded scan that stops on first allowed file
+  - `validateCandidateRoot(repoRoot, requested)` rejects empty path / traversal (via `realpathSync` + relative check) / non-directory / directory without allowed files
+  - `discoverCandidateRoots(repoRoot, defaults)` returns top-level project folders containing `.md` or `.html`, merged with the seed defaults
+- L3: `createKbStore` now hydrates active-roots from L5 on first ensure (falls back to `defaultActive` candidates when the file is missing). Every mutation writes through. Tree refresh after each mutation reflects the new set immediately.
+- L2 mutations:
+  - `POST /api/kb/roots` with `{ path }` validates, persists, refreshes, returns `{ ok, activeRoots, rootCandidates }`. Validation failures return `400`.
+  - `DELETE /api/kb/roots/:path` (wildcard) removes and persists. Idempotent.
+- L1: `useKbRoots`, `useAddKbRoot`, `useRemoveKbRoot` hooks. localStorage in `KnowledgeBasePage.tsx` removed. `AddFolderDialog` gains a free-form path input and surfaces server validation errors inline.
+- Verified live: POST `notes` flips `kbStore.activeRoots` to `[knowledge-base, notes]` and persists. POST `../etc` returns 400. POST `src/cli.js` returns 400 (`path is not a directory`). DELETE `notes` reduces the set and the on-disk file matches. DELETE of an inactive path returns `alreadyInactive: true`.
+
+### Open follow-ups (beyond Slice B)
 
 - mtime-based dirty check on tree walk (frontmatter re-parse only when file mtime changed).
 - Scoped refresh for `POST /api/kb/refresh { path }` (currently always full re-walk).
-- `POST /api/kb/roots` / `DELETE /api/kb/roots/:path` with L5 persistence at `site/kbx-ui/.runtime-state/kb-roots.json`.
-- Move active-roots from UI `localStorage` to that L5 file so two tabs converge.
+- Concurrent-writer protection beyond atomic rename (no file lock yet; acceptable for single-process kbx-ui server).
 
 ## Cross-Refs
 

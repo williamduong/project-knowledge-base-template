@@ -1,6 +1,6 @@
 # SVFactory Handoff — KB Page Runtime Wiring
 
-> Status: Slice A shipped 2026-05-18 (commit pending). Slice B still open.
+> Status: Slice A shipped 2026-05-18. Slice B shipped 2026-05-18. Audit details in `notes/kbx-ui-kb-page-runtime-contract.md` audit log.
 > Triggered by: KBX UI Builder (slice 3 of the /kb page is mock-backed and ready to switch to live data)
 > Authority: KBX UI Builder may not expand the bridge from a UI slice; this note hands the work off explicitly so SVFactory owns the L2/L3/L4/L5 changes.
 > Read together with: `notes/kbx-ui-kb-page-runtime-contract.md` (the contract this handoff implements)

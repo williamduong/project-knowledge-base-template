@@ -2,14 +2,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost } from '../../shared/api/client'
 import type { KbDocResponse, KbRootDescriptor, KbTreeResponse } from '../mock/kb-mock'
 
-// Slice A wires the UI to the live /api/kb/* endpoints implemented in
-// site/kbx-ui/server.mjs (see notes/kbx-ui-kb-page-svfactory-handoff.md).
-// Active-roots persistence is still UI-local (localStorage) — Slice B will
-// move it to L5 state via POST/DELETE /api/kb/roots.
+// Slice A: read endpoints (tree, doc, roots) wired to /api/kb/*.
+// Slice B: roots are now server-persisted at site/kbx-ui/.runtime-state/
+// kb-roots.json. UI mutations (add/remove root) go through POST /api/kb/roots
+// and DELETE /api/kb/roots/:path; localStorage is gone.
 
 type TreeApiResponse = { ok: boolean } & KbTreeResponse
 type DocApiResponse = { ok: boolean } & KbDocResponse
-type RootsApiResponse = { ok: boolean; rootCandidates: KbRootDescriptor[] }
+export type KbRootCandidate = KbRootDescriptor & {
+  source?: 'default' | 'discovered'
+  active?: boolean
+}
+type RootsApiResponse = { ok: boolean; rootCandidates: KbRootCandidate[]; activeRoots: string[] }
+type MutationResponse = { ok: boolean; activeRoots?: string[]; rootCandidates?: KbRootCandidate[]; error?: string }
+
+export const kbRootsQueryKey = ['kb', 'roots'] as const
 
 export function useKbTree() {
   return useQuery<KbTreeResponse>({
@@ -22,14 +29,52 @@ export function useKbTree() {
   })
 }
 
-export function useKbRootCandidates() {
-  return useQuery<KbRootDescriptor[]>({
-    queryKey: ['kb', 'roots'],
+type KbRootsState = { rootCandidates: KbRootCandidate[]; activeRoots: string[] }
+
+export function useKbRoots() {
+  return useQuery<KbRootsState>({
+    queryKey: kbRootsQueryKey,
     queryFn: async () => {
       const r = await apiGet<RootsApiResponse>('/api/kb/roots')
-      return r.rootCandidates
+      return { rootCandidates: r.rootCandidates, activeRoots: r.activeRoots }
     },
     staleTime: 60_000,
+  })
+}
+
+export function useAddKbRoot() {
+  const qc = useQueryClient()
+  return useMutation<MutationResponse, Error, string>({
+    mutationFn: (rootPath) => apiPost<MutationResponse>('/api/kb/roots', { path: rootPath }),
+    onSuccess: (data) => {
+      if (data.activeRoots && data.rootCandidates) {
+        qc.setQueryData<KbRootsState>(kbRootsQueryKey, {
+          rootCandidates: data.rootCandidates,
+          activeRoots: data.activeRoots,
+        })
+      }
+      qc.invalidateQueries({ queryKey: ['kb', 'tree'] })
+    },
+  })
+}
+
+export function useRemoveKbRoot() {
+  const qc = useQueryClient()
+  return useMutation<MutationResponse, Error, string>({
+    mutationFn: async (rootPath) => {
+      const r = await fetch(`/api/kb/roots/${rootPath.split('/').map(encodeURIComponent).join('/')}`, { method: 'DELETE' })
+      if (!r.ok) throw new Error(`DELETE failed: ${r.status}`)
+      return r.json() as Promise<MutationResponse>
+    },
+    onSuccess: (data) => {
+      if (data.activeRoots && data.rootCandidates) {
+        qc.setQueryData<KbRootsState>(kbRootsQueryKey, {
+          rootCandidates: data.rootCandidates,
+          activeRoots: data.activeRoots,
+        })
+      }
+      qc.invalidateQueries({ queryKey: ['kb', 'tree'] })
+    },
   })
 }
 
