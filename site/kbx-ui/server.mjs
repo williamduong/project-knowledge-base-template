@@ -25,8 +25,15 @@ const repoRoot = path.resolve(__dirname, '..', '..');
 const kbRoot = path.join(repoRoot, 'knowledge-base');
 const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 const require = createRequire(import.meta.url);
-const { resolveIntentRecord } = require(path.join(repoRoot, 'src', 'lib', 'intent.js'));
+const { resolveIntentRecord, updateIntentFields } = require(path.join(repoRoot, 'src', 'lib', 'intent.js'));
 const { readFocusState, writeFocusState } = require(path.join(repoRoot, 'src', 'lib', 'focus-state.js'));
+const {
+  readGoalsState,
+  createGoal,
+  updateGoal,
+  deleteGoal,
+  listGoalsForEntity,
+} = require(path.join(repoRoot, 'src', 'lib', 'goals-state.js'));
 const kbDb = require(path.join(repoRoot, 'src', 'lib', 'kb-db.js'));
 const kbIndexDbPath = path.join(repoRoot, 'svfactory', 'kb-index.db');
 const { runGitCommand } = require(path.join(repoRoot, 'src', 'lib', 'git.js'));
@@ -762,6 +769,143 @@ function sanitizeDraftSlug(value) {
     .slice(0, 60);
 }
 
+function normalizeLifecycle(value) {
+  const text = String(value || '').trim().toLowerCase();
+  if (!text) return 'unknown';
+  if (text === 'active') return 'active';
+  if (text === 'backlog' || text === 'open') return 'backlog';
+  if (text === 'closed' || text === 'released') return 'closed';
+  if (text === 'archive' || text === 'archived') return 'archived';
+  if (text === 'draft') return 'draft';
+  if (text === 'dropped' || text === 'cancelled' || text === 'canceled') return 'dropped';
+  if (text === 'done') return 'done';
+  return text.replace(/\s+/g, '-');
+}
+
+function sanitizeGoalKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+function deriveVersionBucket(intentId) {
+  const match = String(intentId || '').match(/^(v\d+(?:-\d+)?)/i);
+  return match?.[1]?.toLowerCase() ?? 'legacy';
+}
+
+function versionRank(versionId) {
+  const numbers = String(versionId || '')
+    .replace(/^v/i, '')
+    .split('-')
+    .map((part) => Number.parseInt(part, 10))
+    .filter((part) => Number.isFinite(part));
+  return numbers.reduce((accumulator, value, index) => accumulator + value / 10 ** (index * 2), 0);
+}
+
+function buildTaskGoalOwnerId(intentId, task, index) {
+  const titlePart = sanitizeGoalKey(task?.title || task?.text || `task-${index + 1}`) || `task-${index + 1}`;
+  const sourcePart = sanitizeGoalKey(task?.source || 'intent');
+  return `${intentId}::${sourcePart}::${String(index + 1).padStart(3, '0')}::${titlePart}`;
+}
+
+function cloneGoalRecord(goal, childCount = 0) {
+  return {
+    id: goal.id,
+    entityLevel: goal.entity_level,
+    entityId: goal.entity_id,
+    parentGoalId: goal.parent_goal_id ?? null,
+    title: goal.title,
+    description: goal.description || '',
+    state: goal.state || 'active',
+    rank: goal.rank ?? 0,
+    createdAt: goal.created_at,
+    updatedAt: goal.updated_at,
+    childGoalCount: childCount,
+    canDelete: childCount === 0,
+  };
+}
+
+function expectedParentLevel(entityLevel) {
+  if (entityLevel === 'milestone') return 'system';
+  if (entityLevel === 'intent') return 'milestone';
+  if (entityLevel === 'task') return 'intent';
+  return null;
+}
+
+function classifyGoalCoverage(entityLevel, goals) {
+  if (!Array.isArray(goals) || goals.length === 0) {
+    return {
+      code: 'missing-goals',
+      label: entityLevel === 'system' ? 'missing system goals' : 'missing goals',
+    };
+  }
+
+  if (entityLevel === 'system') {
+    return {
+      code: 'aligned',
+      label: `${goals.length} system goal${goals.length === 1 ? '' : 's'}`,
+    };
+  }
+
+  const linkedCount = goals.filter((goal) => goal.parent_goal_id).length;
+  if (linkedCount === 0) {
+    return {
+      code: 'outside-main',
+      label: 'outside main goals',
+    };
+  }
+
+  if (linkedCount < goals.length) {
+    return {
+      code: 'mixed',
+      label: 'partially linked',
+    };
+  }
+
+  return {
+    code: 'aligned',
+    label: 'aligned',
+  };
+}
+
+function countDescendantGoals(goalsState) {
+  const map = new Map();
+  const goals = Array.isArray(goalsState?.goals) ? goalsState.goals : [];
+  for (const goal of goals) {
+    const parentId = goal?.parent_goal_id ? String(goal.parent_goal_id) : null;
+    if (!parentId) continue;
+    map.set(parentId, (map.get(parentId) ?? 0) + 1);
+  }
+  return map;
+}
+
+function preferredGoalTextForEntity(goalsState, entityLevel, entityId) {
+  const goals = listGoalsForEntity(goalsState, entityLevel, entityId);
+  if (!goals.length) {
+    return null;
+  }
+  return goals
+    .map((goal) => String(goal.title || '').trim())
+    .filter(Boolean)
+    .join(' • ') || null;
+}
+
+function syncLegacyIntentGoalText(intentId, goalsState) {
+  if (!intentId) {
+    return null;
+  }
+
+  const titles = listGoalsForEntity(goalsState, 'intent', intentId)
+    .map((goal) => String(goal.title || '').trim())
+    .filter(Boolean);
+
+  return updateIntentFields(kbRoot, intentId, {
+    goalText: titles.join(' • '),
+  });
+}
+
 function extractIntentNarrative(text) {
   if (!text) {
     return { goal: null, summary: null };
@@ -979,6 +1123,7 @@ function enrichTasksWithGit(tasks, candidatePaths) {
 
 function summarizeIntentDetail(intentId, options = {}) {
   const includeGit = options.includeGit === true;
+  const goalsState = options.goalsState ?? readGoalsState({ workspaceRoot: repoRoot });
   const record = resolveIntentRecord(kbRoot, intentId);
   if (!record) {
     return null;
@@ -1014,6 +1159,7 @@ function summarizeIntentDetail(intentId, options = {}) {
         warning: record.meta.chaos_estimate.warning ?? null,
       }
     : null;
+  const registryGoalText = preferredGoalTextForEntity(goalsState, 'intent', record.id ?? intentId);
 
   return {
     id: record.id ?? intentId,
@@ -1024,10 +1170,10 @@ function summarizeIntentDetail(intentId, options = {}) {
     status: record.meta?.status ?? null,
     mode: record.meta?.mode ?? null,
     changeType: record.meta?.change_type ?? null,
-    goalText: record.meta?.goal_text ?? null,
+    goalText: registryGoalText ?? record.meta?.goal_text ?? null,
     decisionSummary: record.meta?.decision_summary ?? null,
     closeCondition: record.meta?.close_condition ?? null,
-    goal: record.meta?.goal_text ?? narrative.goal,
+    goal: registryGoalText ?? record.meta?.goal_text ?? narrative.goal,
     summary: narrative.summary,
     focusCurrent: focus.current ?? null,
     focusNextAction: focus.next_action ?? null,
@@ -1040,8 +1186,8 @@ function summarizeIntentDetail(intentId, options = {}) {
   };
 }
 
-function summarizeIntentListSignals(intentId) {
-  const detail = summarizeIntentDetail(intentId, { includeGit: false });
+function summarizeIntentListSignals(intentId, goalsState = null) {
+  const detail = summarizeIntentDetail(intentId, { includeGit: false, goalsState: goalsState ?? undefined });
   if (!detail) {
     return {
       taskCount: 0,
@@ -1067,6 +1213,209 @@ function summarizeIntentListSignals(intentId) {
     focusCurrent: detail.focusCurrent ?? null,
     focusNextAction: detail.focusNextAction ?? null,
     chaosEstimate: detail.chaosEstimate ?? null,
+  };
+}
+
+function collectIntentsWithPriority() {
+  const intentsRoot = path.join(kbRoot, 'intents');
+  if (!fs.existsSync(intentsRoot)) {
+    return { intents: [], ok: true };
+  }
+
+  const goalsState = readGoalsState({ workspaceRoot: repoRoot });
+  const intents = [];
+  const lifecycles = ['_active', '_backlog', '_archive', '_closed'];
+
+  for (const lifecycle of lifecycles) {
+    const lifecyclePath = path.join(intentsRoot, lifecycle);
+    if (!fs.existsSync(lifecyclePath)) continue;
+
+    const entries = fs.readdirSync(lifecyclePath, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory() && !entry.isFile()) continue;
+
+      let contentPath;
+      let id;
+
+      if (entry.isDirectory()) {
+        contentPath = path.join(lifecyclePath, entry.name, 'intent.md');
+        id = entry.name;
+      } else if (entry.name.endsWith('.md')) {
+        contentPath = path.join(lifecyclePath, entry.name);
+        id = entry.name.replace(/\.md$/, '');
+      } else {
+        continue;
+      }
+
+      if (!fs.existsSync(contentPath)) continue;
+
+      try {
+        const content = fs.readFileSync(contentPath, 'utf8');
+        const sections = content.split(/^---\s*$/m);
+        let frontmatter = {};
+
+        if (sections.length >= 2) {
+          const yamlText = sections[1];
+          const lines = yamlText.split('\n');
+          for (const line of lines) {
+            const match = line.match(/^(\w+):\s*(.+)$/);
+            if (match) {
+              const [, key, value] = match;
+              frontmatter[key] = value.trim();
+            }
+          }
+        }
+
+        intents.push({
+          id: normalizeIntentId(frontmatter.id || id),
+          title: frontmatter.title || id,
+          lifecycle: lifecycle.replace(/^_/, ''),
+          priority: frontmatter.priority || null,
+          blocks: frontmatter.blocks || null,
+          mode: frontmatter.mode || 'normal',
+          strategic_mode: frontmatter.strategic_mode || null,
+          ...summarizeIntentListSignals(normalizeIntentId(frontmatter.id || id), goalsState),
+        });
+      } catch (err) {
+        console.error(`Error reading intent ${id}:`, err.message);
+      }
+    }
+  }
+
+  intents.sort((a, b) => {
+    if ((a.priority ?? '') && !(b.priority ?? '')) return -1;
+    if (!(a.priority ?? '') && (b.priority ?? '')) return 1;
+    if ((a.priority ?? '') && (b.priority ?? '')) {
+      return String(a.priority).localeCompare(String(b.priority), undefined, { numeric: true });
+    }
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
+
+  return { intents, ok: true };
+}
+
+function buildGoalsTreeSnapshot() {
+  const goalsState = readGoalsState({ workspaceRoot: repoRoot });
+  const goalChildCounts = countDescendantGoals(goalsState);
+  const intentsPayload = collectIntentsWithPriority();
+  const intents = Array.isArray(intentsPayload?.intents) ? intentsPayload.intents : [];
+  const milestoneBucketMap = new Map();
+
+  for (const intent of intents) {
+    const bucketId = deriveVersionBucket(intent.id);
+    const current = milestoneBucketMap.get(bucketId) ?? [];
+    current.push(intent);
+    milestoneBucketMap.set(bucketId, current);
+  }
+
+  const rootGoals = listGoalsForEntity(goalsState, 'system', 'workspace')
+    .map((goal) => cloneGoalRecord(goal, goalChildCounts.get(goal.id) ?? 0));
+
+  const milestoneNodes = Array.from(milestoneBucketMap.entries())
+    .sort((left, right) => versionRank(left[0]) - versionRank(right[0]))
+    .map(([bucketId, bucketIntents]) => {
+      const milestoneGoals = listGoalsForEntity(goalsState, 'milestone', bucketId)
+        .map((goal) => cloneGoalRecord(goal, goalChildCounts.get(goal.id) ?? 0));
+      const milestoneStatus = classifyGoalCoverage('milestone', milestoneGoals);
+
+      const intentNodes = bucketIntents.map((intent) => {
+        const detail = summarizeIntentDetail(intent.id, { includeGit: false, goalsState });
+        const intentGoals = listGoalsForEntity(goalsState, 'intent', intent.id)
+          .map((goal) => cloneGoalRecord(goal, goalChildCounts.get(goal.id) ?? 0));
+        const intentStatus = classifyGoalCoverage('intent', intentGoals);
+        const tasks = Array.isArray(detail?.tasks) ? detail.tasks : [];
+        const taskNodes = tasks.map((task, index) => {
+          const taskOwnerId = buildTaskGoalOwnerId(intent.id, task, index);
+          const taskGoals = listGoalsForEntity(goalsState, 'task', taskOwnerId)
+            .map((goal) => cloneGoalRecord(goal, goalChildCounts.get(goal.id) ?? 0));
+          const taskStatus = classifyGoalCoverage('task', taskGoals);
+          return {
+            entityLevel: 'task',
+            entityId: taskOwnerId,
+            label: task.title || task.text || `Task ${index + 1}`,
+            summary: task.description || task.section || null,
+            runtimeState: task.status || 'open',
+            status: taskStatus,
+            goals: taskGoals,
+            children: [],
+          };
+        });
+
+        return {
+          entityLevel: 'intent',
+          entityId: intent.id,
+          label: intent.title || intent.id,
+          summary: detail?.focusCurrent || detail?.summary || null,
+          runtimeState: intent.lifecycle || 'backlog',
+          status: intentStatus,
+          goals: intentGoals,
+          children: taskNodes,
+        };
+      });
+
+      return {
+        entityLevel: 'milestone',
+        entityId: bucketId,
+        label: bucketId === 'legacy' ? 'Legacy' : bucketId.toUpperCase(),
+        summary: `${bucketIntents.length} intents`,
+        runtimeState: bucketIntents.some((intent) => normalizeLifecycle(intent.lifecycle) === 'active')
+          ? 'active'
+          : bucketIntents.some((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog')
+            ? 'backlog'
+            : 'closed',
+        status: milestoneStatus,
+        goals: milestoneGoals,
+        children: intentNodes,
+      };
+    });
+
+  const rootStatus = classifyGoalCoverage('system', rootGoals);
+  const flattenNodes = [
+    { entityLevel: 'system', status: rootStatus },
+    ...milestoneNodes,
+    ...milestoneNodes.flatMap((milestone) => milestone.children),
+    ...milestoneNodes.flatMap((milestone) => milestone.children.flatMap((intent) => intent.children)),
+  ];
+
+  const summary = {
+    totalGoals: Array.isArray(goalsState.goals) ? goalsState.goals.length : 0,
+    coverage: {
+      system: flattenNodes.filter((node) => node.entityLevel === 'system' && node.status.code === 'aligned').length,
+      milestones: flattenNodes.filter((node) => node.entityLevel === 'milestone' && node.status.code === 'aligned').length,
+      intents: flattenNodes.filter((node) => node.entityLevel === 'intent' && node.status.code === 'aligned').length,
+      tasks: flattenNodes.filter((node) => node.entityLevel === 'task' && node.status.code === 'aligned').length,
+    },
+    missingCounts: {
+      milestones: flattenNodes.filter((node) => node.entityLevel === 'milestone' && node.status.code === 'missing-goals').length,
+      intents: flattenNodes.filter((node) => node.entityLevel === 'intent' && node.status.code === 'missing-goals').length,
+      tasks: flattenNodes.filter((node) => node.entityLevel === 'task' && node.status.code === 'missing-goals').length,
+    },
+    outsideCounts: {
+      milestones: flattenNodes.filter((node) => node.entityLevel === 'milestone' && node.status.code === 'outside-main').length,
+      intents: flattenNodes.filter((node) => node.entityLevel === 'intent' && node.status.code === 'outside-main').length,
+      tasks: flattenNodes.filter((node) => node.entityLevel === 'task' && node.status.code === 'outside-main').length,
+    },
+    entityCounts: {
+      milestones: milestoneNodes.length,
+      intents: flattenNodes.filter((node) => node.entityLevel === 'intent').length,
+      tasks: flattenNodes.filter((node) => node.entityLevel === 'task').length,
+    },
+  };
+
+  return {
+    ok: true,
+    checkedAt: new Date().toISOString(),
+    summary,
+    root: {
+      entityLevel: 'system',
+      entityId: 'workspace',
+      label: 'Workspace System',
+      summary: 'Root OKR plane for the maintainer workspace',
+      runtimeState: 'active',
+      status: rootStatus,
+      goals: rootGoals,
+      children: milestoneNodes,
+    },
   };
 }
 
@@ -2789,84 +3138,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
 
   // Helper function to list intents with priority from filesystem
   function listIntentsWithPriority() {
-    const intentsRoot = path.join(kbRoot, 'intents');
-    if (!fs.existsSync(intentsRoot)) {
-      return { intents: [], ok: true };
-    }
-
-    const intents = [];
-    const lifecycles = ['_active', '_backlog', '_archive', '_closed'];
-
-    for (const lifecycle of lifecycles) {
-      const lifecyclePath = path.join(intentsRoot, lifecycle);
-      if (!fs.existsSync(lifecyclePath)) continue;
-
-      const entries = fs.readdirSync(lifecyclePath, { withFileTypes: true });
-      for (const entry of entries) {
-        if (!entry.isDirectory() && !entry.isFile()) continue;
-
-        let contentPath;
-        let id;
-
-        // For folders like _active/v2-9-..., read intent.md
-        if (entry.isDirectory()) {
-          contentPath = path.join(lifecyclePath, entry.name, 'intent.md');
-          id = entry.name;
-        } else if (entry.name.endsWith('.md')) {
-          // For backlog files like v2-10-....md
-          contentPath = path.join(lifecyclePath, entry.name);
-          id = entry.name.replace(/\.md$/, '');
-        } else {
-          continue;
-        }
-
-        if (!fs.existsSync(contentPath)) continue;
-
-        try {
-          const content = fs.readFileSync(contentPath, 'utf8');
-          const sections = content.split(/^---\s*$/m);
-          let frontmatter = {};
-
-          // Parse YAML frontmatter
-          if (sections.length >= 2) {
-            const yamlText = sections[1];
-            const lines = yamlText.split('\n');
-            for (const line of lines) {
-              const match = line.match(/^(\w+):\s*(.+)$/);
-              if (match) {
-                const [, key, value] = match;
-                frontmatter[key] = value.trim();
-              }
-            }
-          }
-
-          intents.push({
-            id: normalizeIntentId(frontmatter.id || id),
-            title: frontmatter.title || id,
-            lifecycle: lifecycle.replace(/^_/, ''),
-            priority: frontmatter.priority || null,
-            blocks: frontmatter.blocks || null,
-            mode: frontmatter.mode || 'normal',
-            strategic_mode: frontmatter.strategic_mode || null,
-            ...summarizeIntentListSignals(normalizeIntentId(frontmatter.id || id)),
-          });
-        } catch (err) {
-          console.error(`Error reading intent ${id}:`, err.message);
-        }
-      }
-    }
-
-    // Sort by priority (lexicographic sort works for semantic versions)
-    intents.sort((a, b) => {
-      if ((a.priority ?? '') && !(b.priority ?? '')) return -1;
-      if (!(a.priority ?? '') && (b.priority ?? '')) return 1;
-      if ((a.priority ?? '') && (b.priority ?? '')) {
-        return String(a.priority).localeCompare(String(b.priority), undefined, { numeric: true });
-      }
-      return String(a.id || '').localeCompare(String(b.id || ''));
-    });
-
-    return { intents, ok: true };
+    return collectIntentsWithPriority();
   }
 
   app.get('/api/rules', async (_req, res) => {
@@ -2926,6 +3198,169 @@ export function createApp(commandRunner = executeBridgeCommand) {
         exitCode: 1,
         stdout: '',
         stderr: String(error),
+      });
+    }
+  });
+
+  app.get('/api/goals/tree', async (_req, res) => {
+    try {
+      res.status(200).json(buildGoalsTreeSnapshot());
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.post('/api/goals', async (req, res) => {
+    try {
+      const body = req.body && typeof req.body === 'object' ? req.body : {};
+      const payload = {
+        entity_level: String(body.entity_level || '').trim(),
+        entity_id: String(body.entity_id || '').trim(),
+        parent_goal_id: body.parent_goal_id ? String(body.parent_goal_id).trim() : null,
+        title: String(body.title || '').trim(),
+        description: body.description == null ? '' : String(body.description).trim(),
+        state: String(body.state || 'active').trim() || 'active',
+      };
+
+      if (!payload.entity_level || !payload.entity_id || !payload.title) {
+        res.status(400).json({ ok: false, error: 'entity_level, entity_id, and title are required.' });
+        return;
+      }
+
+      if (payload.parent_goal_id) {
+        const goalsState = readGoalsState({ workspaceRoot: repoRoot });
+        const parent = Array.isArray(goalsState.goals)
+          ? goalsState.goals.find((goal) => goal.id === payload.parent_goal_id)
+          : null;
+        if (!parent) {
+          res.status(400).json({ ok: false, error: `Parent goal not found: ${payload.parent_goal_id}` });
+          return;
+        }
+        const expectedLevel = expectedParentLevel(payload.entity_level);
+        if (expectedLevel && parent.entity_level !== expectedLevel) {
+          res.status(400).json({
+            ok: false,
+            error: `A ${payload.entity_level} goal must link to a ${expectedLevel} goal.`,
+          });
+          return;
+        }
+      }
+
+      const goal = createGoal({ workspaceRoot: repoRoot, goal: payload });
+      const goalsState = readGoalsState({ workspaceRoot: repoRoot });
+      if (payload.entity_level === 'intent') {
+        syncLegacyIntentGoalText(payload.entity_id, goalsState);
+      }
+      res.status(200).json({
+        ok: true,
+        goal,
+        tree: buildGoalsTreeSnapshot(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.patch('/api/goals/:goalId', async (req, res) => {
+    try {
+      const goalId = String(req.params.goalId || '').trim();
+      if (!goalId) {
+        res.status(400).json({ ok: false, error: 'goalId required' });
+        return;
+      }
+
+      const patch = req.body && typeof req.body === 'object' ? req.body : {};
+      const goalsState = readGoalsState({ workspaceRoot: repoRoot });
+      const current = Array.isArray(goalsState.goals) ? goalsState.goals.find((goal) => goal.id === goalId) : null;
+      if (!current) {
+        res.status(404).json({ ok: false, error: `Goal not found: ${goalId}` });
+        return;
+      }
+
+      const parentGoalId = Object.prototype.hasOwnProperty.call(patch, 'parent_goal_id')
+        ? (patch.parent_goal_id ? String(patch.parent_goal_id).trim() : null)
+        : current.parent_goal_id;
+
+      if (parentGoalId) {
+        const parent = goalsState.goals.find((goal) => goal.id === parentGoalId);
+        if (!parent) {
+          res.status(400).json({ ok: false, error: `Parent goal not found: ${parentGoalId}` });
+          return;
+        }
+        const expectedLevel = expectedParentLevel(current.entity_level);
+        if (expectedLevel && parent.entity_level !== expectedLevel) {
+          res.status(400).json({
+            ok: false,
+            error: `A ${current.entity_level} goal must link to a ${expectedLevel} goal.`,
+          });
+          return;
+        }
+      }
+
+      const goal = updateGoal({
+        workspaceRoot: repoRoot,
+        goalId,
+        patch: {
+          title: Object.prototype.hasOwnProperty.call(patch, 'title') ? String(patch.title || '').trim() : current.title,
+          description: Object.prototype.hasOwnProperty.call(patch, 'description') ? String(patch.description || '').trim() : current.description,
+          state: Object.prototype.hasOwnProperty.call(patch, 'state') ? String(patch.state || '').trim() : current.state,
+          parent_goal_id: parentGoalId,
+        },
+      });
+
+      const nextGoalsState = readGoalsState({ workspaceRoot: repoRoot });
+      if (current.entity_level === 'intent') {
+        syncLegacyIntentGoalText(current.entity_id, nextGoalsState);
+      }
+      res.status(200).json({
+        ok: true,
+        goal,
+        tree: buildGoalsTreeSnapshot(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.delete('/api/goals/:goalId', async (req, res) => {
+    try {
+      const goalId = String(req.params.goalId || '').trim();
+      if (!goalId) {
+        res.status(400).json({ ok: false, error: 'goalId required' });
+        return;
+      }
+
+      const goalsState = readGoalsState({ workspaceRoot: repoRoot });
+      const current = Array.isArray(goalsState.goals) ? goalsState.goals.find((goal) => goal.id === goalId) : null;
+      if (!current) {
+        res.status(404).json({ ok: false, error: `Goal not found: ${goalId}` });
+        return;
+      }
+
+      const deleted = deleteGoal({ workspaceRoot: repoRoot, goalId });
+      const nextGoalsState = readGoalsState({ workspaceRoot: repoRoot });
+      if (current.entity_level === 'intent') {
+        syncLegacyIntentGoalText(current.entity_id, nextGoalsState);
+      }
+      res.status(200).json({
+        ok: true,
+        deleted,
+        tree: buildGoalsTreeSnapshot(),
+      });
+    } catch (error) {
+      const code = error && typeof error === 'object' ? error.code : null;
+      res.status(code === 'GOAL_HAS_CHILDREN' ? 409 : 500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   });

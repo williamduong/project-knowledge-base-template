@@ -45,3 +45,19 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
 
   return response.json() as Promise<T>
 }
+
+export async function apiDelete<T>(path: string): Promise<T> {
+  const response = await fetch(path, {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(text || `Request failed: ${response.status} ${response.statusText}`)
+  }
+
+  return response.json() as Promise<T>
+}

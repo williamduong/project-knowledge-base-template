@@ -17,9 +17,20 @@ import xIcon from '@iconify-icons/lucide/x'
 import pencilLine from '@iconify-icons/lucide/pencil-line'
 import circleDashed from '@iconify-icons/lucide/circle-dashed'
 import listTree from '@iconify-icons/lucide/list-tree'
+import plus from '@iconify-icons/lucide/plus'
+import trash2 from '@iconify-icons/lucide/trash-2'
 import { useIntentsList, type IntentListItem } from '../hooks/useIntentsList'
 import { useIntentDetail, type IntentTask } from '../hooks/useIntentDetail'
 import { useSystemSnapshot, systemSnapshotQueryKey } from '../hooks/useSystemSnapshot'
+import {
+  goalsTreeQueryKey,
+  useGoalsTree,
+  useCreateGoalMutation,
+  useDeleteGoalMutation,
+  useUpdateGoalMutation,
+  type GoalRecord,
+  type GoalTreeNode,
+} from '../hooks/useGoalsTree'
 import { apiPatch } from '../../shared/api/client'
 
 type GoalCard = {
@@ -74,6 +85,48 @@ type RelationEntry = {
   value: string
   evidence?: string
   tooltip: string
+}
+
+type GoalComposerState = {
+  nodeKey: string | null
+  parentGoalId: string | null
+  title: string
+  description: string
+}
+
+type GoalEditorState = {
+  goalId: string | null
+  parentGoalId: string | null
+  title: string
+  description: string
+}
+
+function goalNodeKey(node: { entityLevel: string; entityId: string }) {
+  return `${node.entityLevel}:${node.entityId}`
+}
+
+function goalStatusTone(code: string) {
+  if (code === 'aligned') return 'status-good'
+  if (code === 'mixed') return 'status-live'
+  if (code === 'outside-main') return 'status-warn'
+  return 'status-offline'
+}
+
+function flattenGoalNodes(root: GoalTreeNode | null): GoalTreeNode[] {
+  if (!root) return []
+  const queue = [root]
+  const nodes: GoalTreeNode[] = []
+  while (queue.length) {
+    const current = queue.shift()
+    if (!current) continue
+    nodes.push(current)
+    queue.push(...current.children)
+  }
+  return nodes
+}
+
+function findGoalNode(root: GoalTreeNode | null, entityLevel: string, entityId: string) {
+  return flattenGoalNodes(root).find((node) => node.entityLevel === entityLevel && node.entityId === entityId) ?? null
 }
 
 function normalizeLifecycle(value: string | null | undefined) {
@@ -515,12 +568,205 @@ function InlineEditableText({
   )
 }
 
+function GoalTreeNodeView({
+  node,
+  depth,
+  expandedNodes,
+  onToggle,
+  composerState,
+  onComposerOpen,
+  onComposerCancel,
+  onComposerChange,
+  onCreateGoal,
+  editorState,
+  onEditorOpen,
+  onEditorCancel,
+  onEditorChange,
+  onUpdateGoal,
+  onDeleteGoal,
+  pending,
+  error,
+  parentGoalOptions,
+}: {
+  node: GoalTreeNode
+  depth: number
+  expandedNodes: Set<string>
+  onToggle: (nodeKey: string) => void
+  composerState: GoalComposerState
+  onComposerOpen: (node: GoalTreeNode, parentGoalId?: string | null) => void
+  onComposerCancel: () => void
+  onComposerChange: (patch: Partial<GoalComposerState>) => void
+  onCreateGoal: (node: GoalTreeNode) => void
+  editorState: GoalEditorState
+  onEditorOpen: (goal: GoalRecord) => void
+  onEditorCancel: () => void
+  onEditorChange: (patch: Partial<GoalEditorState>) => void
+  onUpdateGoal: (goal: GoalRecord) => void
+  onDeleteGoal: (goal: GoalRecord) => void
+  pending: boolean
+  error: string | null
+  parentGoalOptions: GoalRecord[]
+}) {
+  const nodeKey = goalNodeKey(node)
+  const isOpen = expandedNodes.has(nodeKey)
+  const isComposing = composerState.nodeKey === nodeKey
+  const hasChildren = node.children.length > 0
+  const paddingLeft = `${depth * 18}px`
+  const activeEditorGoal = node.goals.find((goalItem) => goalItem.id === editorState.goalId) ?? null
+
+  return (
+    <div className={`goal-tree-node goal-tree-node-${node.entityLevel}`}>
+      <div className="goal-tree-row" style={{ paddingLeft }}>
+        <button type="button" className="goal-tree-toggle" onClick={() => onToggle(nodeKey)} aria-label={isOpen ? 'Collapse goals node' : 'Expand goals node'}>
+          <Icon icon={hasChildren ? (isOpen ? chevronDown : chevronRight) : circleDashed} />
+        </button>
+        <div className="goal-tree-copy">
+          <div className="goal-tree-head">
+            <strong>{node.label}</strong>
+            <span className={`status-pill ${goalStatusTone(node.status.code)}`}>{node.status.label}</span>
+            <span className={`status-pill ${statusTone(normalizeLifecycle(node.runtimeState))}`}>{node.runtimeState}</span>
+          </div>
+          {node.summary ? <p className="goal-tree-summary">{node.summary}</p> : null}
+
+          <div className="goal-tree-goal-list">
+            {node.goals.map((goalItem) => {
+              const isEditing = editorState.goalId === goalItem.id
+              return (
+                <div key={goalItem.id} className="goal-tree-goal-item">
+                  {isEditing ? (
+                    <div className="goal-tree-goal-editor">
+                      <input
+                        value={editorState.title}
+                        onChange={(event) => onEditorChange({ title: event.target.value })}
+                        placeholder="Goal title"
+                      />
+                      <textarea
+                        rows={2}
+                        value={editorState.description}
+                        onChange={(event) => onEditorChange({ description: event.target.value })}
+                        placeholder="Goal detail"
+                      />
+                      {node.entityLevel !== 'system' && parentGoalOptions.length ? (
+                        <select
+                          value={editorState.parentGoalId ?? ''}
+                          onChange={(event) => onEditorChange({ parentGoalId: event.target.value || null })}
+                        >
+                          <option value="">Outside main goals</option>
+                          {parentGoalOptions.map((option) => (
+                            <option key={option.id} value={option.id}>{option.title}</option>
+                          ))}
+                        </select>
+                      ) : null}
+                      <div className="goal-tree-actions">
+                        <button className="tool-button tool-button-primary" type="button" onClick={() => onUpdateGoal({ ...goalItem, parentGoalId: editorState.parentGoalId, title: editorState.title, description: editorState.description })} disabled={pending}>
+                          {pending ? 'Saving...' : 'Save'}
+                        </button>
+                        <button className="tool-button" type="button" onClick={onEditorCancel}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="goal-tree-goal-copy">
+                        <span>{goalItem.title}</span>
+                        {goalItem.description ? <p>{goalItem.description}</p> : null}
+                      </div>
+                      <div className="goal-tree-actions">
+                        <button className="icon-tool-button" type="button" onClick={() => onEditorOpen(goalItem)} aria-label="Edit goal">
+                          <Icon icon={pencilLine} />
+                        </button>
+                        <button className="icon-tool-button" type="button" onClick={() => onDeleteGoal(goalItem)} disabled={!goalItem.canDelete} aria-label="Delete goal">
+                          <Icon icon={trash2} />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+            {!node.goals.length ? <p className="goal-tree-empty">{node.entityLevel === 'system' ? 'No system goals yet.' : 'No goals on this object yet.'}</p> : null}
+          </div>
+
+          {isComposing ? (
+            <div className="goal-tree-goal-editor goal-tree-compose">
+              <input
+                value={composerState.title}
+                onChange={(event) => onComposerChange({ title: event.target.value })}
+                placeholder="Goal title"
+              />
+              <textarea
+                rows={2}
+                value={composerState.description}
+                onChange={(event) => onComposerChange({ description: event.target.value })}
+                placeholder="Goal detail"
+              />
+              {node.entityLevel !== 'system' && parentGoalOptions.length ? (
+                <select
+                  value={composerState.parentGoalId ?? ''}
+                  onChange={(event) => onComposerChange({ parentGoalId: event.target.value || null })}
+                >
+                  <option value="">Outside main goals</option>
+                  {parentGoalOptions.map((option) => (
+                    <option key={option.id} value={option.id}>{option.title}</option>
+                  ))}
+                </select>
+              ) : null}
+              <div className="goal-tree-actions">
+                <button className="tool-button tool-button-primary" type="button" onClick={() => onCreateGoal(node)} disabled={pending}>
+                  {pending ? 'Adding...' : 'Add goal'}
+                </button>
+                <button className="tool-button" type="button" onClick={onComposerCancel}>Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <button className="tool-button goal-tree-add-button" type="button" onClick={() => onComposerOpen(node, parentGoalOptions[0]?.id ?? null)}>
+              <Icon icon={plus} />
+              Add {node.entityLevel} goal
+            </button>
+          )}
+
+          {error && (isComposing || Boolean(activeEditorGoal)) ? <p className="runtime-warning-text">{error}</p> : null}
+        </div>
+      </div>
+      {isOpen && hasChildren ? (
+        <div className="goal-tree-children">
+          {node.children.map((child) => (
+            <GoalTreeNodeView
+              key={goalNodeKey(child)}
+              node={child}
+              depth={depth + 1}
+              expandedNodes={expandedNodes}
+              onToggle={onToggle}
+              composerState={composerState}
+              onComposerOpen={onComposerOpen}
+              onComposerCancel={onComposerCancel}
+              onComposerChange={onComposerChange}
+              onCreateGoal={onCreateGoal}
+              editorState={editorState}
+              onEditorOpen={onEditorOpen}
+              onEditorCancel={onEditorCancel}
+              onEditorChange={onEditorChange}
+              onUpdateGoal={onUpdateGoal}
+              onDeleteGoal={onDeleteGoal}
+              pending={pending}
+              error={error}
+              parentGoalOptions={node.goals}
+            />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function IntentsListPage() {
   const queryClient = useQueryClient()
   const intentsQuery = useIntentsList()
   const systemSnapshotQuery = useSystemSnapshot()
+  const goalsTreeQuery = useGoalsTree()
   const intents = intentsQuery.data?.parsed?.intents ?? []
   const snapshot = systemSnapshotQuery.data
+  const goalsTree = goalsTreeQuery.data?.root ?? null
+  const goalsSummary = goalsTreeQuery.data?.summary ?? null
   const snapshotMetadata = snapshot?.metadata
   const focusIntentId = snapshotMetadata?.focusIntentId ?? null
   const activeIntentId = snapshotMetadata?.activeIntentId ?? null
@@ -542,9 +788,20 @@ export function IntentsListPage() {
   const [activeEditor, setActiveEditor] = useState<EditableField | null>(null)
   const [editorDraft, setEditorDraft] = useState('')
   const [editorError, setEditorError] = useState<string | null>(null)
-  const [goalEditorIntentId, setGoalEditorIntentId] = useState<string | null>(null)
-  const [goalEditorDraft, setGoalEditorDraft] = useState('')
-  const [goalEditorError, setGoalEditorError] = useState<string | null>(null)
+  const [goalComposer, setGoalComposer] = useState<GoalComposerState>({
+    nodeKey: null,
+    parentGoalId: null,
+    title: '',
+    description: '',
+  })
+  const [goalEditor, setGoalEditor] = useState<GoalEditorState>({
+    goalId: null,
+    parentGoalId: null,
+    title: '',
+    description: '',
+  })
+  const [goalTreeError, setGoalTreeError] = useState<string | null>(null)
+  const [expandedGoalNodes, setExpandedGoalNodes] = useState<Set<string>>(new Set(['system:workspace']))
 
   useEffect(() => {
     if (!intents.length) {
@@ -565,9 +822,22 @@ export function IntentsListPage() {
     setExpandedTaskIndex(null)
     setActiveEditor(null)
     setEditorError(null)
-    setGoalEditorIntentId(null)
-    setGoalEditorError(null)
+    setGoalEditor({ goalId: null, parentGoalId: null, title: '', description: '' })
+    setGoalComposer({ nodeKey: null, parentGoalId: null, title: '', description: '' })
+    setGoalTreeError(null)
   }, [selectedIntentId])
+
+  useEffect(() => {
+    if (!goalsTree) return
+    const next = new Set<string>(['system:workspace'])
+    for (const milestone of goalsTree.children) {
+      next.add(goalNodeKey(milestone))
+    }
+    if (selectedIntentId) {
+      next.add(`intent:${selectedIntentId}`)
+    }
+    setExpandedGoalNodes((current) => new Set([...current, ...next]))
+  }, [goalsTree, selectedIntentId])
 
   useEffect(() => {
     if (!drawerOpen && !goalsDrawerOpen) return
@@ -588,20 +858,22 @@ export function IntentsListPage() {
     onSuccess: async () => {
       setActiveEditor(null)
       setEditorError(null)
-      setGoalEditorIntentId(null)
-      setGoalEditorError(null)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['intent-detail', selectedIntentId] }),
         queryClient.invalidateQueries({ queryKey: ['intents-list'] }),
         queryClient.invalidateQueries({ queryKey: systemSnapshotQueryKey }),
+        queryClient.invalidateQueries({ queryKey: goalsTreeQueryKey }),
       ])
     },
     onError: (error) => {
       const message = error instanceof Error ? error.message : 'Intent update failed.'
       setEditorError(message)
-      setGoalEditorError(message)
     },
   })
+
+  const createGoalMutation = useCreateGoalMutation()
+  const updateGoalMutation = useUpdateGoalMutation()
+  const deleteGoalMutation = useDeleteGoalMutation()
 
   const lifecycleCounts = useMemo(() => ({
     active: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length,
@@ -619,21 +891,23 @@ export function IntentsListPage() {
     () => intents.find((intent) => intent.id === selectedIntentId) ?? intents.find((intent) => intent.id === focusIntentId) ?? null,
     [focusIntentId, intents, selectedIntentId],
   )
-  const currentGoalText = String(detail?.goalText ?? detail?.goal ?? currentIntentRecord?.goalText ?? currentIntentRecord?.goal ?? '').trim()
+  const selectedIntentGoalNode = useMemo(
+    () => findGoalNode(goalsTree, 'intent', selectedIntentId ?? ''),
+    [goalsTree, selectedIntentId],
+  )
   const currentFocusSummary = detail?.focusCurrent ?? currentIntentRecord?.focusCurrent ?? null
   const currentNextAction = detail?.focusNextAction ?? currentIntentRecord?.focusNextAction ?? null
   const currentChaos = detail?.chaosEstimate ?? currentIntentRecord?.chaosEstimate ?? null
-  const intentsWithGoals = useMemo(
-    () => intents.filter((intent) => String(intent.goalText ?? intent.goal ?? '').trim()).length,
-    [intents],
-  )
-  const milestonesWithGoals = useMemo(
-    () => milestones.filter((milestone) => milestone.goalCount > 0).length,
-    [milestones],
-  )
-  const selectedTaskGoalCount = detail?.tasks.length ? (currentGoalText ? detail.tasks.length : 0) : 0
-  const selectedTaskMissingGoalCount = detail?.tasks.length ? detail.tasks.length - selectedTaskGoalCount : 0
-  const goalHealthProgress = intents.length ? clampProgress((intentsWithGoals / intents.length) * 100) : 0
+  const intentsWithGoals = goalsSummary?.coverage.intents ?? 0
+  const milestonesWithGoals = goalsSummary?.coverage.milestones ?? 0
+  const selectedTaskGoalCount = selectedIntentGoalNode?.children.filter((taskNode) => taskNode.status.code === 'aligned').length ?? 0
+  const selectedTaskMissingGoalCount = selectedIntentGoalNode?.children.filter((taskNode) => taskNode.status.code === 'missing-goals').length ?? 0
+  const goalHealthProgress = useMemo(() => {
+    if (!goalsSummary) return 0
+    const totalEntities = goalsSummary.entityCounts.milestones + goalsSummary.entityCounts.intents + goalsSummary.entityCounts.tasks
+    const alignedEntities = goalsSummary.coverage.milestones + goalsSummary.coverage.intents + goalsSummary.coverage.tasks
+    return totalEntities ? clampProgress((alignedEntities / totalEntities) * 100) : 0
+  }, [goalsSummary])
   const intentHealthProgress = intents.length
     ? clampProgress(((lifecycleCounts.active + lifecycleCounts.closed + lifecycleCounts.archived) / intents.length) * 100)
     : 0
@@ -641,16 +915,16 @@ export function IntentsListPage() {
     {
       id: 'system-goals',
       label: 'System Goals',
-      metric: `${intentsWithGoals}/${intents.length || 0} intents`,
-      state: intentsWithGoals === intents.length && milestonesWithGoals === milestones.length ? 'aligned' : 'needs coverage',
+      metric: `${goalsTree?.goals.length ?? 0} system goals`,
+      state: goalsSummary?.missingCounts.milestones || goalsSummary?.missingCounts.intents || goalsSummary?.missingCounts.tasks ? 'needs coverage' : 'aligned',
       progress: goalHealthProgress,
-      caption: `Milestones ${milestonesWithGoals}/${milestones.length || 0} · Selected tasks ${selectedTaskGoalCount}/${detail?.tasks.length ?? 0}`,
+      caption: `Milestones ${milestonesWithGoals}/${(goalsSummary?.entityCounts.milestones ?? milestones.length ?? 0)} · Selected tasks ${selectedTaskGoalCount}/${(selectedIntentGoalNode?.children.length ?? detail?.tasks.length ?? 0)}`,
       detail: [
-        currentGoalText ? `Current goal: ${currentGoalText}` : 'Current selected intent still has no explicit goal.',
-        selectedTaskMissingGoalCount > 0 ? `${selectedTaskMissingGoalCount} selected tasks are still inheriting no goal.` : 'Selected tasks are linked to an intent goal.',
+        goalsTree?.goals.length ? `${goalsTree.goals.length} workspace-level goals are now tracked in the OKR tree.` : 'No system goals exist yet. Add at least one root goal.',
+        selectedTaskMissingGoalCount > 0 ? `${selectedTaskMissingGoalCount} selected tasks still have no child goal.` : 'Selected tasks are linked into the goal tree.',
       ],
       icon: goal,
-      tone: intentsWithGoals === intents.length ? 'done' : 'warning',
+      tone: goalsTree?.goals.length && !goalsSummary?.missingCounts.milestones && !goalsSummary?.missingCounts.intents ? 'done' : 'warning',
     },
     {
       id: 'focus-details',
@@ -699,23 +973,25 @@ export function IntentsListPage() {
   ], [
     currentChaos,
     currentFocusSummary,
-    currentGoalText,
     currentIntentRecord?.id,
     currentNextAction,
     detail?.focusUpdatedAt,
-    detail?.tasks.length,
     goalHealthProgress,
+    goalsSummary?.entityCounts.milestones,
+    goalsSummary?.missingCounts.intents,
+    goalsSummary?.missingCounts.milestones,
+    goalsSummary?.missingCounts.tasks,
+    goalsTree?.goals.length,
     intentHealthProgress,
     intents.length,
-    intentsWithGoals,
     lifecycleCounts.active,
     lifecycleCounts.archived,
     lifecycleCounts.backlog,
     lifecycleCounts.closed,
     lifecycleCounts.dropped,
     milestones.length,
-    milestonesWithGoals,
     selectedTaskGoalCount,
+    selectedIntentGoalNode?.children.length,
     selectedTaskMissingGoalCount,
     snapshotMetadata?.reloadReasons,
     snapshotMetadata?.reloadRecommended,
@@ -788,24 +1064,12 @@ export function IntentsListPage() {
   const intentPageStart = sortedIntents.length ? (intentPage - 1) * INTENTS_PER_PAGE + 1 : 0
   const intentPageEnd = sortedIntents.length ? Math.min(intentPage * INTENTS_PER_PAGE, sortedIntents.length) : 0
   const milestoneWindowEnd = Math.min(milestoneStartIndex + MILESTONES_PER_VIEW, milestones.length)
-  const goalIntentRows = useMemo(
-    () => [...intents].sort((left, right) => String(left.id).localeCompare(String(right.id))),
-    [intents],
-  )
-  const selectedTaskGoalRows = useMemo(
-    () => (detail?.tasks ?? []).map((task, index) => ({
-      id: `T-${String(index + 1).padStart(2, '0')}`,
-      title: task.title ?? `Task ${index + 1}`,
-      goal: currentGoalText,
-      status: currentGoalText ? 'linked' : 'missing',
-    })),
-    [currentGoalText, detail?.tasks],
-  )
 
   const refreshAll = async () => {
     await Promise.all([
       intentsQuery.refetch(),
       detailQuery.refetch(),
+      goalsTreeQuery.refetch(),
       queryClient.invalidateQueries({ queryKey: systemSnapshotQueryKey }),
     ])
   }
@@ -836,16 +1100,46 @@ export function IntentsListPage() {
     setEditorError(null)
   }
 
-  const startGoalEdit = (intentId: string, currentValue: string) => {
-    setGoalEditorIntentId(intentId)
-    setGoalEditorDraft(currentValue)
-    setGoalEditorError(null)
+  const toggleGoalNode = (nodeKey: string) => {
+    setExpandedGoalNodes((current) => {
+      const next = new Set(current)
+      if (next.has(nodeKey)) {
+        next.delete(nodeKey)
+      } else {
+        next.add(nodeKey)
+      }
+      return next
+    })
   }
 
-  const cancelGoalEdit = () => {
-    setGoalEditorIntentId(null)
-    setGoalEditorDraft('')
-    setGoalEditorError(null)
+  const openGoalComposer = (node: GoalTreeNode, parentGoalId?: string | null) => {
+    setGoalComposer({
+      nodeKey: goalNodeKey(node),
+      parentGoalId: parentGoalId ?? null,
+      title: '',
+      description: '',
+    })
+    setGoalTreeError(null)
+  }
+
+  const cancelGoalComposer = () => {
+    setGoalComposer({ nodeKey: null, parentGoalId: null, title: '', description: '' })
+    setGoalTreeError(null)
+  }
+
+  const openGoalEditor = (goalItem: GoalRecord) => {
+    setGoalEditor({
+      goalId: goalItem.id,
+      parentGoalId: goalItem.parentGoalId,
+      title: goalItem.title,
+      description: goalItem.description,
+    })
+    setGoalTreeError(null)
+  }
+
+  const cancelGoalEditor = () => {
+    setGoalEditor({ goalId: null, parentGoalId: null, title: '', description: '' })
+    setGoalTreeError(null)
   }
 
   const saveEdit = async (field: EditableField) => {
@@ -860,8 +1154,44 @@ export function IntentsListPage() {
     await intentUpdateMutation.mutateAsync({ id: selectedIntentId, body: bodyMap[field] })
   }
 
-  const saveGoalEdit = async (intentId: string) => {
-    await intentUpdateMutation.mutateAsync({ id: intentId, body: { goal_text: goalEditorDraft.trim() } })
+  const createGoalForNode = async (node: GoalTreeNode) => {
+    try {
+      await createGoalMutation.mutateAsync({
+        entity_level: node.entityLevel,
+        entity_id: node.entityId,
+        title: goalComposer.title.trim(),
+        description: goalComposer.description.trim(),
+        parent_goal_id: goalComposer.parentGoalId ?? null,
+      })
+      cancelGoalComposer()
+    } catch (error) {
+      setGoalTreeError(error instanceof Error ? error.message : 'Create goal failed.')
+    }
+  }
+
+  const saveGoalUpdate = async (goalItem: GoalRecord) => {
+    try {
+      await updateGoalMutation.mutateAsync({
+        goalId: goalItem.id,
+        title: goalItem.title,
+        description: goalItem.description,
+        parent_goal_id: goalItem.parentGoalId ?? null,
+      })
+      cancelGoalEditor()
+    } catch (error) {
+      setGoalTreeError(error instanceof Error ? error.message : 'Update goal failed.')
+    }
+  }
+
+  const removeGoal = async (goalItem: GoalRecord) => {
+    try {
+      await deleteGoalMutation.mutateAsync(goalItem.id)
+      if (goalEditor.goalId === goalItem.id) {
+        cancelGoalEditor()
+      }
+    } catch (error) {
+      setGoalTreeError(error instanceof Error ? error.message : 'Delete goal failed.')
+    }
   }
 
   const detailDescription = detail ? (detail.decisionSummary ?? detail.summary ?? detail.goal ?? '') : ''
@@ -1170,31 +1500,37 @@ export function IntentsListPage() {
                 <div className="panel-toolbar">
                   <div>
                     <p className="workspace-eyebrow">Goal Health</p>
-                    <h3>Coverage across milestone, intent, and task</h3>
+                    <h3>Coverage across the 4-layer OKR tree</h3>
                   </div>
                 </div>
                 <div className="kb-health-bar intent-health-bar">
                   <div className="kb-health-group">
+                    <span className="runtime-overview-label">System</span>
+                    <span className={`status-pill ${goalsTree?.goals.length ? 'status-good' : 'status-warn'}`}>
+                      {goalsTree?.goals.length ?? 0} root goals
+                    </span>
+                  </div>
+                  <div className="kb-health-group">
                     <span className="runtime-overview-label">Milestones</span>
-                    <span className={`status-pill ${milestonesWithGoals === milestones.length ? 'status-good' : 'status-warn'}`}>
-                      {milestonesWithGoals}/{milestones.length || 0} with goals
+                    <span className={`status-pill ${goalsSummary?.missingCounts.milestones ? 'status-warn' : 'status-good'}`}>
+                      {milestonesWithGoals}/{goalsSummary?.entityCounts.milestones ?? 0} aligned
                     </span>
                   </div>
                   <div className="kb-health-group">
                     <span className="runtime-overview-label">Intents</span>
-                    <span className={`status-pill ${intentsWithGoals === intents.length ? 'status-good' : 'status-warn'}`}>
-                      {intentsWithGoals}/{intents.length || 0} with goals
+                    <span className={`status-pill ${goalsSummary?.missingCounts.intents ? 'status-warn' : 'status-good'}`}>
+                      {intentsWithGoals}/{goalsSummary?.entityCounts.intents ?? 0} aligned
                     </span>
                   </div>
                   <div className="kb-health-group">
-                    <span className="runtime-overview-label">Selected Tasks</span>
+                    <span className="runtime-overview-label">Tasks</span>
                     <span className={`status-pill ${selectedTaskMissingGoalCount === 0 ? 'status-good' : 'status-warn'}`}>
-                      {selectedTaskGoalCount}/{detail?.tasks.length ?? 0} linked
+                      {selectedTaskGoalCount}/{selectedIntentGoalNode?.children.length ?? detail?.tasks.length ?? 0} selected aligned
                     </span>
                   </div>
                   <div className="kb-health-next">
-                    <span className="runtime-overview-label">Rule</span>
-                    <span className="kb-health-next-text">Milestone, intent, and task should never drift away from a parent goal.</span>
+                    <span className="runtime-overview-label">Tree rule</span>
+                    <span className="kb-health-next-text">System &gt; milestone &gt; intent &gt; task. Child goals can link upward; parent goals cannot be deleted while child goals exist.</span>
                   </div>
                 </div>
               </article>
@@ -1202,105 +1538,37 @@ export function IntentsListPage() {
               <article className="intent-drawer-block">
                 <div className="panel-toolbar">
                   <div>
-                    <p className="workspace-eyebrow">Milestone Goals</p>
-                    <h3>Version buckets must be goal-backed</h3>
+                    <p className="workspace-eyebrow">Goal Tree</p>
+                    <h3>System &gt; milestone &gt; intent &gt; task</h3>
                   </div>
                 </div>
-                <div className="intent-goal-matrix">
-                  {milestones.map((milestone) => (
-                    <div key={milestone.id} className={`intent-goal-matrix-row intent-goal-matrix-row-${milestoneVisualState(milestone.state)}`}>
-                      <div>
-                        <span className="runtime-overview-label">{milestone.label}</span>
-                        <strong>{milestone.metrics}</strong>
-                      </div>
-                      <div>
-                        <span className={`status-pill ${milestone.goalCount > 0 ? 'status-good' : 'status-warn'}`}>
-                          {milestone.goalCount > 0 ? `${milestone.goalCount} goals` : 'missing goals'}
-                        </span>
-                      </div>
-                      <div className="intent-goal-matrix-copy">
-                        <span>{milestone.goals[0] ?? 'No linked goals yet. Add goals to at least one child intent.'}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </article>
-
-              <article className="intent-drawer-block">
-                <div className="panel-toolbar">
-                  <div>
-                    <p className="workspace-eyebrow">Intent Goals</p>
-                    <h3>Edit the goal text that child tasks inherit</h3>
-                  </div>
-                </div>
-                <div className="intent-goal-matrix">
-                  {goalIntentRows.map((intent) => {
-                    const currentValue = String(intent.goalText ?? intent.goal ?? '').trim()
-                    const isEditing = goalEditorIntentId === intent.id
-                    return (
-                      <div key={intent.id} className={`intent-goal-matrix-row intent-goal-matrix-row-${normalizeLifecycle(intent.lifecycle)}`}>
-                        <div>
-                          <strong>{intent.title?.replace(/^"|"$/g, '') || intent.id}</strong>
-                          <span className="intent-id">{intent.id}</span>
-                        </div>
-                        <div>
-                          <span className={`status-pill ${currentValue ? 'status-good' : 'status-warn'}`}>
-                            {currentValue ? 'goal linked' : 'missing'}
-                          </span>
-                        </div>
-                        <div className="intent-goal-matrix-copy">
-                          {isEditing ? (
-                            <div className="intent-inline-editor">
-                              <textarea value={goalEditorDraft} onChange={(event) => setGoalEditorDraft(event.target.value)} rows={3} />
-                              <div className="intent-inline-editor-actions">
-                                <button className="tool-button tool-button-primary" type="button" onClick={() => void saveGoalEdit(intent.id)} disabled={intentUpdateMutation.isPending}>
-                                  {intentUpdateMutation.isPending ? 'Saving...' : 'Save'}
-                                </button>
-                                <button className="tool-button" type="button" onClick={cancelGoalEdit}>Cancel</button>
-                              </div>
-                              {goalEditorError ? <p className="runtime-warning-text">{goalEditorError}</p> : null}
-                            </div>
-                          ) : (
-                            <button className="intent-goal-inline-button" type="button" onClick={() => startGoalEdit(intent.id, currentValue)}>
-                              <span>{currentValue || 'Add goal text'}</span>
-                              <Icon icon={pencilLine} aria-hidden="true" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </article>
-
-              <article className="intent-drawer-block">
-                <div className="panel-toolbar">
-                  <div>
-                    <p className="workspace-eyebrow">Task Goal Links</p>
-                    <h3>Selected intent task alignment</h3>
-                  </div>
-                </div>
-                {selectedTaskGoalRows.length ? (
-                  <div className="intent-goal-matrix">
-                    {selectedTaskGoalRows.map((task) => (
-                      <div key={task.id} className="intent-goal-matrix-row intent-goal-matrix-row-task">
-                        <div>
-                          <span className="runtime-overview-label">{task.id}</span>
-                          <strong>{task.title}</strong>
-                        </div>
-                        <div>
-                          <span className={`status-pill ${task.status === 'linked' ? 'status-good' : 'status-warn'}`}>
-                            {task.status}
-                          </span>
-                        </div>
-                        <div className="intent-goal-matrix-copy">
-                          <span>{task.goal || 'No inherited goal because the parent intent still has no explicit goal text.'}</span>
-                        </div>
-                      </div>
-                    ))}
+                {goalsTreeQuery.isLoading ? (
+                  <p className="rules-cell-copy">Loading goal tree...</p>
+                ) : goalsTree ? (
+                  <div className="goal-tree-shell">
+                    <GoalTreeNodeView
+                      node={goalsTree}
+                      depth={0}
+                      expandedNodes={expandedGoalNodes}
+                      onToggle={toggleGoalNode}
+                      composerState={goalComposer}
+                      onComposerOpen={openGoalComposer}
+                      onComposerCancel={cancelGoalComposer}
+                      onComposerChange={(patch) => setGoalComposer((current) => ({ ...current, ...patch }))}
+                      onCreateGoal={(node) => void createGoalForNode(node)}
+                      editorState={goalEditor}
+                      onEditorOpen={openGoalEditor}
+                      onEditorCancel={cancelGoalEditor}
+                      onEditorChange={(patch) => setGoalEditor((current) => ({ ...current, ...patch }))}
+                      onUpdateGoal={(goalItem) => void saveGoalUpdate(goalItem)}
+                      onDeleteGoal={(goalItem) => void removeGoal(goalItem)}
+                      pending={createGoalMutation.isPending || updateGoalMutation.isPending || deleteGoalMutation.isPending}
+                      error={goalTreeError}
+                      parentGoalOptions={[]}
+                    />
                   </div>
                 ) : (
-                  <p className="rules-cell-copy">Select an intent with extracted tasks to inspect task-to-goal linkage.</p>
+                  <p className="rules-cell-copy">Goal tree is unavailable right now.</p>
                 )}
               </article>
             </div>
