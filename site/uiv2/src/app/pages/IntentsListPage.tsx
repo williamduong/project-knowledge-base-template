@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Icon } from '@iconify/react'
 import flag from '@iconify-icons/lucide/flag'
@@ -62,8 +62,6 @@ type DetailSectionKey = 'summary' | 'detail' | 'relations' | 'tasks'
 type EditableField = 'title' | 'summaryText' | 'focusCurrent' | 'focusNextAction' | 'closeCondition'
 
 const INTENTS_PER_PAGE = 20
-const MILESTONES_PER_VIEW = 3
-
 type IntentPatchResponse = {
   ok: boolean
   result?: {
@@ -110,6 +108,12 @@ function goalStatusTone(code: string) {
   if (code === 'mixed') return 'status-live'
   if (code === 'outside-main') return 'status-warn'
   return 'status-offline'
+}
+
+function goalProcessLabel(state: string | null | undefined) {
+  const normalized = String(state || '').trim().toLowerCase()
+  if (!normalized) return 'active'
+  return normalized.replace(/[-_]+/g, ' ')
 }
 
 function flattenGoalNodes(root: GoalTreeNode | null): GoalTreeNode[] {
@@ -667,7 +671,11 @@ function GoalTreeNodeView({
                   ) : (
                     <>
                       <div className="goal-tree-goal-copy">
-                        <span>{goalItem.title}</span>
+                        <div className="goal-tree-goal-copy-head">
+                          <span>{goalItem.title}</span>
+                          <span className={`status-pill ${statusTone(normalizeLifecycle(goalItem.state))}`}>{goalProcessLabel(goalItem.state)}</span>
+                          {goalItem.childGoalCount > 0 ? <span className="intent-path-chip">{goalItem.childGoalCount} child</span> : null}
+                        </div>
                         {goalItem.description ? <p>{goalItem.description}</p> : null}
                       </div>
                       <div className="goal-tree-actions">
@@ -774,7 +782,7 @@ export function IntentsListPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [goalsDrawerOpen, setGoalsDrawerOpen] = useState(false)
   const [expandedTaskIndex, setExpandedTaskIndex] = useState<number | null>(null)
-  const [milestoneStartIndex, setMilestoneStartIndex] = useState(0)
+  const [milestoneActiveIndex, setMilestoneActiveIndex] = useState(0)
   const [healthFilter, setHealthFilter] = useState<IntentHealthFilter>('all')
   const [intentSortKey, setIntentSortKey] = useState<IntentSortKey>('milestone')
   const [intentSortDirection, setIntentSortDirection] = useState<'asc' | 'desc'>('desc')
@@ -802,6 +810,7 @@ export function IntentsListPage() {
   })
   const [goalTreeError, setGoalTreeError] = useState<string | null>(null)
   const [expandedGoalNodes, setExpandedGoalNodes] = useState<Set<string>>(new Set(['system:workspace']))
+  const milestoneRailRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!intents.length) {
@@ -883,10 +892,6 @@ export function IntentsListPage() {
     dropped: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'dropped').length,
   }), [intents])
   const milestones = useMemo(() => buildMilestones(intents), [intents])
-  const visibleMilestones = useMemo(
-    () => milestones.slice(milestoneStartIndex, milestoneStartIndex + MILESTONES_PER_VIEW),
-    [milestoneStartIndex, milestones],
-  )
   const currentIntentRecord = useMemo(
     () => intents.find((intent) => intent.id === selectedIntentId) ?? intents.find((intent) => intent.id === focusIntentId) ?? null,
     [focusIntentId, intents, selectedIntentId],
@@ -1050,11 +1055,23 @@ export function IntentsListPage() {
   }, [intentPage, sortedIntents.length])
 
   useEffect(() => {
-    const maxStart = Math.max(0, milestones.length - MILESTONES_PER_VIEW)
-    if (milestoneStartIndex > maxStart) {
-      setMilestoneStartIndex(maxStart)
+    const maxIndex = Math.max(0, milestones.length - 1)
+    if (milestoneActiveIndex > maxIndex) {
+      setMilestoneActiveIndex(maxIndex)
     }
-  }, [milestoneStartIndex, milestones.length])
+  }, [milestoneActiveIndex, milestones.length])
+
+  useEffect(() => {
+    const rail = milestoneRailRef.current
+    if (!rail) return
+    const target = rail.querySelector<HTMLElement>(`[data-milestone-index="${milestoneActiveIndex}"]`)
+    if (!target) return
+    target.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'start',
+    })
+  }, [milestoneActiveIndex, milestones.length])
 
   const intentPageCount = Math.max(1, Math.ceil(sortedIntents.length / INTENTS_PER_PAGE))
   const pagedIntents = useMemo(() => {
@@ -1063,7 +1080,6 @@ export function IntentsListPage() {
   }, [intentPage, sortedIntents])
   const intentPageStart = sortedIntents.length ? (intentPage - 1) * INTENTS_PER_PAGE + 1 : 0
   const intentPageEnd = sortedIntents.length ? Math.min(intentPage * INTENTS_PER_PAGE, sortedIntents.length) : 0
-  const milestoneWindowEnd = Math.min(milestoneStartIndex + MILESTONES_PER_VIEW, milestones.length)
 
   const refreshAll = async () => {
     await Promise.all([
@@ -1315,12 +1331,12 @@ export function IntentsListPage() {
               <h2>Version rail</h2>
             </div>
             <div className="intent-milestone-nav">
-              <span className="runtime-overview-label">{milestones.length ? `${milestoneStartIndex + 1}-${milestoneWindowEnd} of ${milestones.length}` : 'No milestones'}</span>
+              <span className="runtime-overview-label">{milestones.length ? `${milestoneActiveIndex + 1} / ${milestones.length}` : 'No milestones'}</span>
               <button
                 className="icon-tool-button"
                 type="button"
-                onClick={() => setMilestoneStartIndex((current) => Math.max(0, current - 1))}
-                disabled={milestoneStartIndex === 0}
+                onClick={() => setMilestoneActiveIndex((current) => Math.max(0, current - 1))}
+                disabled={milestoneActiveIndex === 0}
                 aria-label="Previous milestones"
               >
                 <Icon icon={chevronLeft} aria-hidden="true" />
@@ -1328,20 +1344,21 @@ export function IntentsListPage() {
               <button
                 className="icon-tool-button"
                 type="button"
-                onClick={() => setMilestoneStartIndex((current) => Math.min(Math.max(0, milestones.length - MILESTONES_PER_VIEW), current + 1))}
-                disabled={milestoneWindowEnd >= milestones.length}
+                onClick={() => setMilestoneActiveIndex((current) => Math.min(Math.max(0, milestones.length - 1), current + 1))}
+                disabled={milestoneActiveIndex >= Math.max(0, milestones.length - 1)}
                 aria-label="Next milestones"
               >
                 <Icon icon={chevronRight} aria-hidden="true" />
               </button>
             </div>
           </div>
-          <div className="intent-milestone-rail compact">
-            {visibleMilestones.map((milestone) => (
+          <div className="intent-milestone-rail compact" ref={milestoneRailRef}>
+            {milestones.map((milestone, index) => (
               <article
                 key={milestone.id}
                 className={`intent-milestone-card intent-milestone-card-${milestoneVisualState(milestone.state)}`}
                 data-tooltip={`${milestone.metrics} | ${milestone.objectives.join(' · ')}`}
+                data-milestone-index={index}
                 tabIndex={0}
               >
                 <div className="intent-milestone-head">

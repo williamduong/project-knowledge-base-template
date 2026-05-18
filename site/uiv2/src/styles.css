@@ -2026,8 +2026,18 @@
 }
 
 .intent-milestone-rail.compact {
-  grid-template-columns: repeat(3, minmax(180px, 220px));
-  justify-content: start;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 4px;
+}
+
+.intent-milestone-rail.compact .intent-milestone-card {
+  flex: 0 0 clamp(128px, 11vw, 156px);
+  min-width: 0;
+  scroll-snap-align: start;
 }
 
 .intent-milestone-nav {
@@ -2221,6 +2231,13 @@
 .goal-tree-goal-copy {
   display: grid;
   gap: 4px;
+}
+
+.goal-tree-goal-copy-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .goal-tree-goal-copy span {
