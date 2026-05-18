@@ -13,8 +13,6 @@ import chevronUp from '@iconify-icons/lucide/chevron-up'
 import clock3 from '@iconify-icons/lucide/clock-3'
 import xIcon from '@iconify-icons/lucide/x'
 import pencilLine from '@iconify-icons/lucide/pencil-line'
-import fileText from '@iconify-icons/lucide/file-text'
-import folderTree from '@iconify-icons/lucide/folder-tree'
 import circleDashed from '@iconify-icons/lucide/circle-dashed'
 import listTree from '@iconify-icons/lucide/list-tree'
 import { useIntentsList, type IntentListItem } from '../hooks/useIntentsList'
@@ -56,6 +54,20 @@ type IntentPatchResponse = {
   }
 }
 
+type MetadataEntry = {
+  label: string
+  value: string
+  icon: typeof activity
+  tooltip: string
+}
+
+type RelationEntry = {
+  label: string
+  value: string
+  evidence?: string
+  tooltip: string
+}
+
 function normalizeLifecycle(value: string | null | undefined) {
   const text = String(value || '').trim().toLowerCase()
   if (!text) return 'unknown'
@@ -88,6 +100,12 @@ function compactPath(value: string | null | undefined) {
   const parts = text.split(/[\\/]/).filter(Boolean)
   if (parts.length <= 3) return text
   return `.../${parts.slice(-3).join('/')}`
+}
+
+function sentenceCase(value: string | null | undefined) {
+  const text = String(value || '').trim()
+  if (!text) return 'n/a'
+  return text.replace(/[-_]+/g, ' ')
 }
 
 function taskStateTone(value: string | null | undefined) {
@@ -702,19 +720,83 @@ export function IntentsListPage() {
   const detailProgress = detail ? computeIntentProgress(detail.lifecycle) : 0
   const detailTaskCount = detail?.tasks.length ?? 0
   const detailTaskDoneCount = detail?.tasks.filter((task) => task.done || normalizeLifecycle(task.status) === 'done').length ?? 0
-  const metadataEntries = detail ? [
-    { label: 'Lifecycle', value: detail.lifecycle ?? detail.status ?? 'unknown', icon: circleDashed },
-    { label: 'Scope', value: detail.scope ?? 'n/a', icon: listTree },
-    { label: 'Mode', value: detail.mode ?? 'n/a', icon: circleDashed },
-    { label: 'Change type', value: detail.changeType ?? 'n/a', icon: target },
-    { label: 'Milestone', value: intentVersionLabel(detail.id ?? selectedIntentId ?? ''), icon: archive },
-    { label: 'Progress', value: `${detailProgress}% · ${detailTaskDoneCount}/${detailTaskCount} tasks done`, icon: activity },
-    { label: 'Source file', value: compactPath(detail.sourceFile), icon: fileText },
-    ...(detail.workspacePath ? [{ label: 'Workspace', value: compactPath(detail.workspacePath), icon: folderTree }] : []),
-    ...(detail.stagedFiles.length ? [{ label: 'Staged', value: `${detail.stagedFiles.length} files`, icon: fileText }] : []),
+  const metadataEntries: MetadataEntry[] = detail ? [
+    {
+      label: 'Lifecycle',
+      value: sentenceCase(detail.lifecycle ?? detail.status ?? 'unknown'),
+      icon: circleDashed,
+      tooltip: 'Current process state of the intent in the lifecycle rail.',
+    },
+    {
+      label: 'Scope',
+      value: sentenceCase(detail.scope),
+      icon: listTree,
+      tooltip: 'Declared operating scope of the intent, such as repo-wide or feature-local.',
+    },
+    {
+      label: 'Mode',
+      value: sentenceCase(detail.mode),
+      icon: circleDashed,
+      tooltip: 'Execution mode recorded for this intent, usually how strictly it should be governed.',
+    },
+    {
+      label: 'Change type',
+      value: sentenceCase(detail.changeType),
+      icon: target,
+      tooltip: 'Nature of the intended change, such as feature, refactor, governance, or docs.',
+    },
+    {
+      label: 'Milestone',
+      value: intentVersionLabel(detail.id ?? selectedIntentId ?? ''),
+      icon: archive,
+      tooltip: 'Version or milestone bucket inferred from the intent id.',
+    },
+    {
+      label: 'Progress',
+      value: `${detailProgress}% · ${detailTaskDoneCount}/${detailTaskCount} tasks done`,
+      icon: activity,
+      tooltip: 'UI progress estimate derived from lifecycle plus extracted task completion count.',
+    },
     ...(detail.chaosEstimate?.projectedLevel || detail.chaosEstimate?.currentLevel
-      ? [{ label: 'Chaos', value: `${detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'} · ${detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel}`, icon: activity }]
+      ? [{
+          label: 'Chaos',
+          value: `${detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'} · ${detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel}`,
+          icon: activity,
+          tooltip: 'Risk or instability estimate attached to this intent when the runtime has one.',
+        }]
       : []),
+  ] : []
+  const relationEntries: RelationEntry[] = detail ? [
+    ...(detail.goal ? [{
+      label: 'Goal',
+      value: detail.goal,
+      evidence: compactPath(detail.sourceFile),
+      tooltip: 'Primary outcome the intent is trying to achieve, extracted from the intent record.',
+    }] : []),
+    {
+      label: 'Milestone / Version',
+      value: intentVersionLabel(detail.id ?? selectedIntentId ?? ''),
+      evidence: detail.id ?? 'unknown',
+      tooltip: 'Version line or milestone bucket this intent belongs to.',
+    },
+    ...(detail.workspacePath ? [{
+      label: 'Workspace',
+      value: compactPath(detail.workspacePath),
+      evidence: 'intent workspace',
+      tooltip: 'Intent-owned workspace folder where plan, impact, and proposed changes live.',
+    }] : []),
+    ...(detail.sourceFile ? [{
+      label: 'Source document',
+      value: compactPath(detail.sourceFile),
+      evidence: 'intent record',
+      tooltip: 'The canonical source file that defines this intent entry.',
+    }] : []),
+    ...(detail.stagedFiles.length ? [{
+      label: 'Staged files',
+      value: `${detail.stagedFiles.length} linked file${detail.stagedFiles.length === 1 ? '' : 's'}`,
+      evidence: detail.stagedFiles.slice(0, 3).map((file) => compactPath(file)).join(' · '),
+      tooltip: 'Files explicitly attached to the intent as staged or governed evidence.',
+    }] : []),
   ] : []
 
   return (
@@ -871,7 +953,7 @@ export function IntentsListPage() {
       {drawerOpen && selectedIntentId ? (
         <div className="prototype-overlay-backdrop" onClick={() => setDrawerOpen(false)}>
           <aside className="prototype-drawer intent-detail-drawer" onClick={(event) => event.stopPropagation()}>
-            <div className="panel-toolbar">
+            <div className="panel-toolbar intent-detail-toolbar">
               <div>
                 <p className="workspace-eyebrow">Intent Detail</p>
                 <h2>{selectedIntentId}</h2>
@@ -975,6 +1057,12 @@ export function IntentsListPage() {
                         multiline
                       />
                     </div>
+                    <div className="system-info-card">
+                      <span className="runtime-overview-label">Source file</span>
+                      <div className="intent-static-value">
+                        <span>{compactPath(detail.sourceFile)}</span>
+                      </div>
+                    </div>
                   </div>
                   <InlineEditableText
                     label="Description"
@@ -993,12 +1081,12 @@ export function IntentsListPage() {
                 </CollapsibleBlock>
 
                 <CollapsibleBlock
-                  title="Metadata & Relations"
+                  title="Metadata"
                   icon={network}
                   sectionKey="relations"
                   collapsed={collapsedSections.relations}
                   onToggle={toggleSection}
-                  subtitle="Compact metadata only. Direct relations appear only when the intent actually has them."
+                  subtitle="Runtime metadata first. Related objects only appear when the intent actually links to them."
                 >
                   <div className="intent-metadata-compact">
                     {metadataEntries.map((entry) => (
@@ -1007,19 +1095,27 @@ export function IntentsListPage() {
                           <span className="section-icon section-icon-kb" aria-hidden="true">
                             <Icon icon={entry.icon} />
                           </span>
-                          <span className="runtime-overview-label">{entry.label}</span>
+                          <span className="runtime-overview-label" data-tooltip={entry.tooltip} tabIndex={0}>{entry.label}</span>
                         </div>
-                        <strong className="intent-relation-object">{entry.value}</strong>
+                        <span className="intent-relation-object">{entry.value}</span>
                       </article>
                     ))}
                   </div>
-                  {detail.stagedFiles.length ? (
-                    <div className="intent-staged-list">
-                      {detail.stagedFiles.map((file) => (
-                        <code key={file} className="intent-staged-chip">{file}</code>
+                  {relationEntries.length ? (
+                    <div className="intent-relation-compact-list">
+                      {relationEntries.map((entry) => (
+                        <div key={`${entry.label}-${entry.value}`} className="intent-relation-compact-row">
+                          <span className="runtime-overview-label" data-tooltip={entry.tooltip} tabIndex={0}>{entry.label}</span>
+                          <div className="intent-relation-compact-copy">
+                            <span className="intent-relation-object">{entry.value}</span>
+                            {entry.evidence ? <span className="intent-relation-evidence">{entry.evidence}</span> : null}
+                          </div>
+                        </div>
                       ))}
                     </div>
-                  ) : null}
+                  ) : (
+                    <p className="rules-cell-copy">No explicit linked objects were extracted for this intent yet.</p>
+                  )}
                 </CollapsibleBlock>
 
                 <CollapsibleBlock

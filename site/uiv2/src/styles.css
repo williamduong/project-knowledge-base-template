@@ -1452,7 +1452,8 @@
 /* Tooltip */
 [data-tooltip] { position:relative }
 [data-tooltip]::after { content: attr(data-tooltip); position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 8px); background:#071122; color:var(--muted); padding:6px 8px; border-radius:6px; white-space:nowrap; font-size:12px; opacity:0; pointer-events:none; transition:opacity 120ms ease }
-[data-tooltip]:hover::after { opacity:1 }
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after { opacity:1 }
 
 /* Avatar + chips */
 .avatar-row { display:flex; gap:8px; align-items:center }
@@ -2264,6 +2265,17 @@
   border-left: 3px solid rgba(248, 113, 113, 0.8);
 }
 
+.intent-detail-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  padding: 10px 0 12px;
+  margin: -2px 0 8px;
+  background:
+    linear-gradient(180deg, rgba(16, 23, 34, 0.98), rgba(10, 14, 21, 0.94));
+  border-bottom: 1px solid rgba(120, 144, 167, 0.14);
+}
+
 .intent-task-grid-button {
   width: 100%;
   padding: 12px;
@@ -2349,6 +2361,19 @@
   flex-wrap: wrap;
 }
 
+.intent-static-value {
+  display: flex;
+  align-items: start;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: #c9d5e2;
+  text-align: left;
+  background: rgba(15, 23, 36, 0.72);
+  border: 1px solid rgba(120, 144, 167, 0.16);
+  border-radius: 10px;
+  word-break: break-word;
+}
+
 .intent-metadata-compact {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -2383,6 +2408,34 @@
   color: #f8fafc;
   word-break: break-word;
   font-weight: 400;
+}
+
+.intent-relation-compact-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.intent-relation-compact-row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1px solid rgba(120, 144, 167, 0.14);
+  border-radius: 10px;
+  background: rgba(15, 23, 36, 0.54);
+}
+
+.intent-relation-compact-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.intent-relation-evidence {
+  color: #8ca0b6;
+  word-break: break-word;
 }
 
 .shell-status-bar {
