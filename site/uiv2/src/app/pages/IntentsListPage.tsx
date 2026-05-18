@@ -5,6 +5,12 @@ import flag from '@iconify-icons/lucide/flag'
 import flagTriangleRight from '@iconify-icons/lucide/flag-triangle-right'
 import listTodo from '@iconify-icons/lucide/list-todo'
 import network from '@iconify-icons/lucide/network'
+import target from '@iconify-icons/lucide/target'
+import activity from '@iconify-icons/lucide/activity'
+import archive from '@iconify-icons/lucide/archive'
+import chevronDown from '@iconify-icons/lucide/chevron-down'
+import chevronUp from '@iconify-icons/lucide/chevron-up'
+import clock3 from '@iconify-icons/lucide/clock-3'
 import xIcon from '@iconify-icons/lucide/x'
 import { useIntentsList, type IntentListItem } from '../hooks/useIntentsList'
 import { useIntentDetail, type IntentTask } from '../hooks/useIntentDetail'
@@ -17,17 +23,21 @@ type GoalCard = {
   state: string
   progress: number
   caption: string
+  icon: typeof target
+  tone: 'active' | 'warning' | 'neutral' | 'done'
 }
 
 type MilestoneBlock = {
   id: string
   label: string
   progress: number
-  state: string
+  state: 'active' | 'backlog' | 'closed'
   metrics: string
   objectives: string[]
-  intents: IntentListItem[]
 }
+
+type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' | 'dropped' | 'selected'
+type IntentSortKey = 'title' | 'version' | 'lifecycle' | 'mode' | 'runtime'
 
 function normalizeLifecycle(value: string | null | undefined) {
   const text = String(value || '').trim().toLowerCase()
@@ -71,6 +81,11 @@ function deriveVersionBucket(intentId: string) {
   return match?.[1]?.toLowerCase() ?? 'legacy'
 }
 
+function versionRank(versionId: string) {
+  const numbers = versionId.replace(/^v/i, '').split('-').map((part) => Number.parseInt(part, 10)).filter((part) => Number.isFinite(part))
+  return numbers.reduce((accumulator, value, index) => accumulator + value / 10 ** (index * 2), 0)
+}
+
 function summarizeMilestoneState(intents: IntentListItem[]) {
   const total = intents.length || 1
   const active = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
@@ -78,9 +93,9 @@ function summarizeMilestoneState(intents: IntentListItem[]) {
   const closed = intents.filter((intent) => ['closed', 'archived'].includes(normalizeLifecycle(intent.lifecycle))).length
   const progress = clampProgress((closed / total) * 100)
 
-  if (active > 0) return { state: 'active', progress }
-  if (backlog > 0) return { state: 'backlog', progress }
-  return { state: 'closed', progress: closed === total ? 100 : progress }
+  if (active > 0) return { state: 'active' as const, progress }
+  if (backlog > 0) return { state: 'backlog' as const, progress }
+  return { state: 'closed' as const, progress: closed === total ? 100 : progress }
 }
 
 function buildGoalCards(intents: IntentListItem[], focusIntentId: string | null, activeIntentId: string | null, snapshotMetadata: { generatedAt?: string | null; reloadRecommended?: boolean | null } | undefined): GoalCard[] {
@@ -99,6 +114,8 @@ function buildGoalCards(intents: IntentListItem[], focusIntentId: string | null,
       state: active > 0 ? 'in-flight' : 'idle',
       progress: clampProgress((active / total) * 100),
       caption: `${backlog} backlog waiting behind the active stream.`,
+      icon: activity,
+      tone: active > 0 ? 'active' : 'neutral',
     },
     {
       id: 'focus-alignment',
@@ -107,6 +124,8 @@ function buildGoalCards(intents: IntentListItem[], focusIntentId: string | null,
       state: focusAligned ? 'aligned' : 'drift',
       progress: focusAligned ? 100 : 38,
       caption: activeIntentId ? `Current active record: ${activeIntentId}.` : 'No active intent surfaced by snapshot.',
+      icon: target,
+      tone: focusAligned ? 'done' : 'warning',
     },
     {
       id: 'completion-flow',
@@ -115,6 +134,8 @@ function buildGoalCards(intents: IntentListItem[], focusIntentId: string | null,
       state: completed > 0 ? 'moving' : 'starting',
       progress: clampProgress((completed / total) * 100),
       caption: 'Counts archive and closed intents as delivered milestones.',
+      icon: archive,
+      tone: completed > 0 ? 'done' : 'neutral',
     },
     {
       id: 'snapshot-readiness',
@@ -123,6 +144,8 @@ function buildGoalCards(intents: IntentListItem[], focusIntentId: string | null,
       state: snapshotMetadata?.reloadRecommended ? 'reload' : 'fresh',
       progress: snapshotMetadata?.reloadRecommended ? 62 : 100,
       caption: snapshotMetadata?.reloadRecommended ? 'Bridge says UI should reload signals.' : 'Bridge snapshot is healthy enough for live intent browsing.',
+      icon: clock3,
+      tone: snapshotMetadata?.reloadRecommended ? 'warning' : 'active',
     },
   ]
 }
@@ -143,7 +166,7 @@ function buildMilestones(intents: IntentListItem[]) {
       const active = bucketIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
       const backlog = bucketIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length
       const objectives = bucketIntents
-        .slice(0, 4)
+        .slice(0, 3)
         .map((intent) => intent.title?.replace(/^"|"$/g, '') || intent.id)
 
       return {
@@ -153,28 +176,54 @@ function buildMilestones(intents: IntentListItem[]) {
         state,
         metrics: `${bucketIntents.length} intents · ${active} active · ${backlog} backlog`,
         objectives,
-        intents: bucketIntents,
       } satisfies MilestoneBlock
     })
-    .sort((a, b) => a.id.localeCompare(b.id))
+    .sort((left, right) => versionRank(right.id) - versionRank(left.id))
 }
 
 function statusTone(value: string) {
-  if (value === 'active' || value === 'aligned' || value === 'fresh') return 'status-good'
+  if (value === 'active' || value === 'aligned' || value === 'fresh' || value === 'closed') return 'status-good'
   if (value === 'backlog' || value === 'moving' || value === 'in-flight') return 'status-neutral'
-  if (value === 'closed') return 'status-good'
   if (value === 'archived') return 'status-offline'
   if (value === 'dropped' || value === 'reload' || value === 'drift') return 'status-warn'
   return 'status-neutral'
 }
 
+function milestoneVisualState(value: MilestoneBlock['state']) {
+  if (value === 'closed') return 'done'
+  if (value === 'active') return 'active'
+  return 'upcoming'
+}
+
+function intentVersionLabel(intentId: string) {
+  const bucket = deriveVersionBucket(intentId)
+  return bucket === 'legacy' ? 'legacy' : bucket.toUpperCase()
+}
+
+function intentRuntimeLabel(intentId: string, focusIntentId: string | null, activeIntentId: string | null) {
+  if (intentId === focusIntentId && intentId === activeIntentId) return 'focus + active'
+  if (intentId === focusIntentId) return 'focus'
+  if (intentId === activeIntentId) return 'active'
+  return 'queued'
+}
+
+function sortIndicator(active: string, current: string, direction: 'asc' | 'desc') {
+  if (active !== current) return ' ⇅'
+  return direction === 'asc' ? ' ↑' : ' ↓'
+}
+
 function GoalCardView({ card }: { card: GoalCard }) {
   return (
-    <article className="intent-goal-card">
+    <article className={`intent-goal-card intent-goal-card-${card.tone}`}>
       <div className="intent-goal-head">
-        <div>
-          <p className="workspace-eyebrow">{card.label}</p>
-          <strong>{card.metric}</strong>
+        <div className="intent-goal-head-copy">
+          <span className="intent-goal-icon" aria-hidden="true">
+            <Icon icon={card.icon} />
+          </span>
+          <div>
+            <p className="workspace-eyebrow">{card.label}</p>
+            <strong>{card.metric}</strong>
+          </div>
         </div>
         <span className={`status-pill ${statusTone(card.state)}`}>{card.state}</span>
       </div>
@@ -197,6 +246,8 @@ function IntentHealthBar({
   archived,
   dropped,
   selected,
+  filter,
+  onFilterChange,
 }: {
   total: number
   active: number
@@ -205,24 +256,39 @@ function IntentHealthBar({
   archived: number
   dropped: number
   selected: string | null
+  filter: IntentHealthFilter
+  onFilterChange: (next: IntentHealthFilter) => void
 }) {
+  const pill = (id: IntentHealthFilter, label: string, tone: string) => (
+    <button
+      type="button"
+      className={`status-pill intent-filter-pill ${tone}${filter === id ? ' intent-filter-pill-active' : ''}`}
+      onClick={() => onFilterChange(filter === id ? 'all' : id)}
+    >
+      {label}
+    </button>
+  )
+
   return (
     <div className="kb-health-bar intent-health-bar">
       <div className="kb-health-group">
         <span className="runtime-overview-label">Total</span>
-        <span className="count-pill kb-health-total">{total} intents</span>
+        <button type="button" className={`count-pill kb-health-total intent-filter-total${filter === 'all' ? ' intent-filter-pill-active' : ''}`} onClick={() => onFilterChange('all')}>
+          {total} intents
+        </button>
       </div>
       <div className="kb-health-group">
         <span className="runtime-overview-label">Lifecycle</span>
-        <span className="status-pill status-good">active {active}</span>
-        <span className="status-pill status-neutral">backlog {backlog}</span>
-        <span className="status-pill status-good">closed {closed}</span>
-        <span className="status-pill status-offline">archived {archived}</span>
-        {dropped > 0 ? <span className="status-pill status-warn">dropped {dropped}</span> : null}
+        {pill('active', `active ${active}`, 'status-good')}
+        {pill('backlog', `backlog ${backlog}`, 'status-neutral')}
+        {pill('closed', `closed ${closed}`, 'status-good')}
+        {pill('archived', `archived ${archived}`, 'status-offline')}
+        {dropped > 0 ? pill('dropped', `dropped ${dropped}`, 'status-warn') : null}
+        {selected ? pill('selected', 'selected', 'status-live') : null}
       </div>
       <div className="kb-health-next">
-        <span className="runtime-overview-label">Selection</span>
-        <span className="kb-health-next-text">{selected ?? 'Choose an intent to inspect detail drawer'}</span>
+        <span className="runtime-overview-label">Filter</span>
+        <span className="kb-health-next-text">{filter === 'all' ? (selected ?? 'All intents visible') : `Showing ${filter} intents`}</span>
       </div>
     </div>
   )
@@ -289,6 +355,10 @@ export function IntentsListPage() {
   const [selectedIntentId, setSelectedIntentId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [expandedTaskIndex, setExpandedTaskIndex] = useState<number | null>(null)
+  const [showAllMilestones, setShowAllMilestones] = useState(false)
+  const [healthFilter, setHealthFilter] = useState<IntentHealthFilter>('all')
+  const [intentSortKey, setIntentSortKey] = useState<IntentSortKey>('version')
+  const [intentSortDirection, setIntentSortDirection] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
     if (!intents.length) {
@@ -325,6 +395,46 @@ export function IntentsListPage() {
     [activeIntentId, focusIntentId, intents, snapshotMetadata],
   )
   const milestones = useMemo(() => buildMilestones(intents), [intents])
+  const visibleMilestones = showAllMilestones ? milestones : milestones.slice(0, 3)
+
+  const filteredIntents = useMemo(() => {
+    return intents.filter((intent) => {
+      const lifecycle = normalizeLifecycle(intent.lifecycle)
+      if (healthFilter === 'all') return true
+      if (healthFilter === 'selected') return intent.id === selectedIntentId
+      return lifecycle === healthFilter
+    })
+  }, [healthFilter, intents, selectedIntentId])
+
+  const sortedIntents = useMemo(() => {
+    const items = [...filteredIntents]
+    items.sort((left, right) => {
+      const leftRuntime = intentRuntimeLabel(left.id, focusIntentId, activeIntentId)
+      const rightRuntime = intentRuntimeLabel(right.id, focusIntentId, activeIntentId)
+      const leftValues: Record<IntentSortKey, string> = {
+        title: String(left.title ?? left.id),
+        version: intentVersionLabel(left.id),
+        lifecycle: String(left.lifecycle ?? ''),
+        mode: String(left.mode ?? ''),
+        runtime: leftRuntime,
+      }
+      const rightValues: Record<IntentSortKey, string> = {
+        title: String(right.title ?? right.id),
+        version: intentVersionLabel(right.id),
+        lifecycle: String(right.lifecycle ?? ''),
+        mode: String(right.mode ?? ''),
+        runtime: rightRuntime,
+      }
+      let comparison = 0
+      if (intentSortKey === 'version') {
+        comparison = versionRank(leftValues.version) - versionRank(rightValues.version)
+      } else {
+        comparison = leftValues[intentSortKey].localeCompare(rightValues[intentSortKey])
+      }
+      return comparison * (intentSortDirection === 'asc' ? 1 : -1)
+    })
+    return items
+  }, [activeIntentId, filteredIntents, focusIntentId, intentSortDirection, intentSortKey])
 
   const refreshAll = async () => {
     await Promise.all([
@@ -337,6 +447,11 @@ export function IntentsListPage() {
   const openDrawerForIntent = (intentId: string) => {
     setSelectedIntentId(intentId)
     setDrawerOpen(true)
+  }
+
+  const toggleIntentSort = (nextKey: IntentSortKey) => {
+    setIntentSortDirection((current) => (intentSortKey === nextKey ? (current === 'asc' ? 'desc' : 'asc') : nextKey === 'version' ? 'desc' : 'asc'))
+    setIntentSortKey(nextKey)
   }
 
   const selectedIntent = intents.find((intent) => intent.id === selectedIntentId) ?? null
@@ -355,7 +470,7 @@ export function IntentsListPage() {
           <p className="workspace-eyebrow">Intent Workspace</p>
           <h1>Intents</h1>
           <p className="intent-page-summary">
-            Goals, milestone progress, live intent health, and a drawer-based operator detail surface now share the same bridge-backed inventory.
+            Compact roadmap view on top, operator registry below, and intent detail kept in the drawer.
           </p>
         </div>
         <div className="toolbar-actions">
@@ -369,35 +484,47 @@ export function IntentsListPage() {
       </header>
 
       <section className="intent-section-shell">
-        <div className="intent-goal-grid">
+        <div className="intent-goal-grid compact">
           {goalCards.map((card) => (
             <GoalCardView key={card.id} card={card} />
           ))}
         </div>
 
-        <div className="intent-milestone-rail">
-          {milestones.map((milestone) => (
-            <article key={milestone.id} className="intent-milestone-card">
-              <div className="intent-milestone-head">
-                <div>
-                  <p className="workspace-eyebrow">Milestone</p>
-                  <h3>{milestone.label}</h3>
+        <section className="surface-panel surface-panel-primary intent-milestone-strip-shell">
+          <div className="panel-toolbar">
+            <div>
+              <p className="workspace-eyebrow">Milestones</p>
+              <h2>Version rail</h2>
+            </div>
+            <button className="tool-button" type="button" onClick={() => setShowAllMilestones((current) => !current)}>
+              <Icon icon={showAllMilestones ? chevronUp : chevronDown} aria-hidden="true" />
+              {showAllMilestones ? 'Collapse' : 'Expand'}
+            </button>
+          </div>
+          <div className="intent-milestone-rail compact">
+            {visibleMilestones.map((milestone) => (
+              <article key={milestone.id} className={`intent-milestone-card intent-milestone-card-${milestoneVisualState(milestone.state)}`}>
+                <div className="intent-milestone-head">
+                  <div>
+                    <p className="workspace-eyebrow">Milestone</p>
+                    <h3>{milestone.label}</h3>
+                  </div>
+                  <span className={`status-pill ${statusTone(milestone.state)}`}>{milestone.state}</span>
                 </div>
-                <span className={`status-pill ${statusTone(milestone.state)}`}>{milestone.state}</span>
-              </div>
-              <p className="intent-milestone-metrics">{milestone.metrics}</p>
-              <div className="intent-progress-track" aria-hidden="true">
-                <span style={{ width: `${milestone.progress}%` }} />
-              </div>
-              <span className="intent-milestone-progress">{milestone.progress}% complete</span>
-              <div className="intent-milestone-objectives">
-                {milestone.objectives.map((objective) => (
-                  <div key={objective} className="intent-milestone-objective">{objective}</div>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
+                <p className="intent-milestone-metrics">{milestone.metrics}</p>
+                <div className="intent-progress-track" aria-hidden="true">
+                  <span style={{ width: `${milestone.progress}%` }} />
+                </div>
+                <span className="intent-milestone-progress">{milestone.progress}% complete</span>
+                <div className="intent-milestone-objectives">
+                  {milestone.objectives.map((objective) => (
+                    <div key={objective} className="intent-milestone-objective">{objective}</div>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
         <IntentHealthBar
           total={intents.length}
@@ -407,6 +534,8 @@ export function IntentsListPage() {
           archived={lifecycleCounts.archived}
           dropped={lifecycleCounts.dropped}
           selected={selectedIntentId}
+          filter={healthFilter}
+          onFilterChange={setHealthFilter}
         />
 
         {intentsQuery.isLoading ? (
@@ -425,44 +554,56 @@ export function IntentsListPage() {
             <p>The workspace did not return any intent records yet.</p>
           </div>
         ) : (
-          <div className="intent-record-grid">
-            {intents.map((intent) => {
+          <div className="rules-table intent-registry-table" role="table" aria-label="Intent registry list">
+            <div className="rules-table-header intent-registry-header" role="row">
+              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('title')}>Intent{sortIndicator('title', intentSortKey, intentSortDirection)}</button>
+              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('version')}>Version{sortIndicator('version', intentSortKey, intentSortDirection)}</button>
+              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('lifecycle')}>Lifecycle{sortIndicator('lifecycle', intentSortKey, intentSortDirection)}</button>
+              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('mode')}>Mode{sortIndicator('mode', intentSortKey, intentSortDirection)}</button>
+              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('runtime')}>Runtime{sortIndicator('runtime', intentSortKey, intentSortDirection)}</button>
+              <span role="columnheader">Blockers</span>
+            </div>
+            {sortedIntents.map((intent) => {
               const lifecycle = normalizeLifecycle(intent.lifecycle)
               const isFocused = intent.id === focusIntentId
               const isActive = intent.id === activeIntentId
               return (
-                <button
+                <article
                   key={intent.id}
-                  className={`intent-record-card${selectedIntentId === intent.id ? ' selected' : ''}`}
-                  type="button"
+                  className={`rules-table-row intent-registry-row${selectedIntentId === intent.id ? ' selected' : ''}`}
+                  role="row"
                   onClick={() => openDrawerForIntent(intent.id)}
                 >
-                  <div className="intent-record-head">
-                    <div>
-                      <h3>{intent.title?.replace(/^"|"$/g, '') || intent.id}</h3>
-                      <p className="intent-id">{intent.id}</p>
-                    </div>
+                  <div role="cell" className="intent-registry-title-cell">
+                    <strong>{intent.title?.replace(/^"|"$/g, '') || intent.id}</strong>
+                    <p className="intent-id">{intent.id}</p>
+                  </div>
+                  <div role="cell">
+                    <span className="meta-pill">{intentVersionLabel(intent.id)}</span>
+                  </div>
+                  <div role="cell">
                     <span className={`status-pill ${statusTone(lifecycle)}`}>{intent.lifecycle ?? 'unknown'}</span>
                   </div>
-                  <div className="intent-record-pills">
-                    {isFocused ? <span className="meta-pill meta-pill-focus">Focus</span> : null}
-                    {isActive ? <span className="meta-pill">Active runtime</span> : null}
+                  <div role="cell">
                     <span className="meta-pill">{intent.mode ?? 'normal'}</span>
-                    <span className="meta-pill">{intent.strategic_mode ?? 'no strategic mode'}</span>
                   </div>
-                  <div className="intent-record-meta">
-                    <div>
-                      <span className="runtime-overview-label">Priority</span>
-                      <strong>{intent.priority ?? 'n/a'}</strong>
-                    </div>
-                    <div>
-                      <span className="runtime-overview-label">Blockers</span>
-                      <strong>{intent.blocks ?? 'none'}</strong>
-                    </div>
+                  <div role="cell" className="intent-runtime-cell">
+                    {isFocused ? <span className="meta-pill meta-pill-focus">Focus</span> : null}
+                    {isActive ? <span className="meta-pill">Active</span> : null}
+                    {!isFocused && !isActive ? <span className="meta-pill">Queued</span> : null}
                   </div>
-                </button>
+                  <div role="cell">
+                    <p className="intent-registry-blockers">{intent.blocks ?? 'none'}</p>
+                  </div>
+                </article>
               )
             })}
+            {!sortedIntents.length ? (
+              <article className="rules-table-empty" role="row">
+                <h3>No intents match this filter</h3>
+                <p>Try another lifecycle pill in the intent health bar.</p>
+              </article>
+            ) : null}
           </div>
         )}
       </section>

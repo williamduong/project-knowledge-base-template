@@ -1900,6 +1900,10 @@
   gap: 10px;
 }
 
+.intent-goal-grid.compact {
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+}
+
 .intent-goal-card,
 .intent-milestone-card,
 .intent-record-card,
@@ -1912,6 +1916,22 @@
   border-radius: 12px;
 }
 
+.intent-goal-card-active {
+  background: linear-gradient(180deg, rgba(10, 31, 40, 0.92), rgba(11, 16, 23, 0.82));
+}
+
+.intent-goal-card-warning {
+  background: linear-gradient(180deg, rgba(46, 26, 10, 0.92), rgba(11, 16, 23, 0.82));
+}
+
+.intent-goal-card-neutral {
+  background: linear-gradient(180deg, rgba(24, 29, 36, 0.92), rgba(11, 16, 23, 0.82));
+}
+
+.intent-goal-card-done {
+  background: linear-gradient(180deg, rgba(18, 35, 23, 0.92), rgba(11, 16, 23, 0.82));
+}
+
 .intent-goal-head,
 .intent-milestone-head,
 .intent-record-head {
@@ -1919,6 +1939,24 @@
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
+}
+
+.intent-goal-head-copy {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+}
+
+.intent-goal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  flex: 0 0 auto;
 }
 
 .intent-progress-track {
@@ -1963,6 +2001,32 @@
   gap: 10px;
 }
 
+.intent-milestone-strip-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.intent-milestone-rail.compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.intent-milestone-card-done {
+  background: rgba(22, 101, 52, 0.18);
+  border-color: rgba(74, 222, 128, 0.28);
+}
+
+.intent-milestone-card-active {
+  background: linear-gradient(180deg, rgba(19, 44, 66, 0.92), rgba(11, 16, 23, 0.82));
+  border-color: rgba(56, 189, 248, 0.34);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.18);
+}
+
+.intent-milestone-card-upcoming {
+  background: rgba(11, 16, 23, 0.52);
+  border-style: dashed;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
 .intent-milestone-objectives {
   display: grid;
   gap: 6px;
@@ -1977,6 +2041,15 @@
 
 .intent-health-bar {
   margin: 0;
+}
+
+.intent-filter-pill,
+.intent-filter-total {
+  cursor: pointer;
+}
+
+.intent-filter-pill-active {
+  box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.35);
 }
 
 .intent-record-grid {
@@ -2027,6 +2100,42 @@
 .intent-detail-drawer {
   width: min(780px, 100vw);
   overflow-y: auto;
+}
+
+.intent-registry-table {
+  width: 100%;
+}
+
+.intent-registry-header,
+.intent-registry-row {
+  grid-template-columns: minmax(0, 2.2fr) 110px 120px 100px 160px minmax(140px, 1fr);
+}
+
+.intent-registry-row {
+  cursor: pointer;
+}
+
+.intent-registry-row.selected,
+.intent-registry-row:hover {
+  background: rgba(15, 23, 36, 0.94);
+  border-color: rgba(56, 189, 248, 0.24);
+}
+
+.intent-registry-title-cell {
+  display: grid;
+  gap: 6px;
+}
+
+.intent-runtime-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.intent-registry-blockers {
+  margin: 0;
+  color: #c9d5e2;
+  line-height: 1.5;
 }
 
 .intent-drawer-stack {
@@ -2331,6 +2440,12 @@
   .intent-record-meta,
   .intent-relations-grid,
   .intent-drawer-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .intent-milestone-rail.compact,
+  .intent-registry-header,
+  .intent-registry-row {
     grid-template-columns: 1fr;
   }
 
