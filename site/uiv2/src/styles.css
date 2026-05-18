@@ -1663,6 +1663,10 @@
   color: #f0a3a3;
 }
 
+.runtime-warning-text {
+  color: var(--warning);
+}
+
 .runtime-success-text {
   color: var(--success);
 }
@@ -1691,8 +1695,33 @@
   background: rgba(11, 16, 23, 0.72);
 }
 
+.intent-row-button {
+  width: 100%;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+
+.intent-row-button:hover {
+  background: rgba(15, 23, 34, 0.92);
+}
+
+.intent-row-button.selected {
+  background:
+    linear-gradient(180deg, rgba(17, 30, 42, 0.96), rgba(11, 18, 27, 0.98));
+  box-shadow: inset 3px 0 0 #6ee7b7;
+}
+
 .intent-row:last-child {
   border-bottom: none;
+}
+
+.intent-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .intent-main-cell h3 {
@@ -1727,6 +1756,137 @@
 .status-dropped {
   border-color: rgba(248, 113, 113, 0.22);
   color: #f0a3a3;
+}
+
+.status-backlog {
+  border-color: rgba(251, 191, 36, 0.28);
+  color: var(--warning);
+}
+
+.status-archived,
+.status-unknown,
+.status-next,
+.status-in-progress,
+.status-pending {
+  border-color: rgba(142, 163, 187, 0.22);
+  color: var(--muted);
+}
+
+.meta-pill-focus {
+  border-color: rgba(110, 231, 183, 0.24);
+  color: var(--success);
+}
+
+.intent-page-summary {
+  margin-top: 6px;
+  max-width: 72ch;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.intent-workspace-live-grid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(280px, 0.55fr);
+}
+
+.intent-runtime-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.intent-detail-panel,
+.intent-detail-stack,
+.intent-task-list,
+.intent-source-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.intent-hero-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at top right, rgba(110, 231, 183, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(16, 23, 34, 0.96), rgba(9, 14, 21, 0.98));
+}
+
+.intent-hero-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.intent-hero-copy h3,
+.intent-detail-card h3,
+.intent-empty-state h3 {
+  margin: 0;
+}
+
+.intent-hero-badges,
+.intent-staged-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.intent-detail-summary,
+.intent-inline-note,
+.system-card-subtle {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.intent-detail-card {
+  padding: 12px;
+}
+
+.intent-task-card {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(11, 16, 23, 0.72);
+}
+
+.intent-task-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: start;
+}
+
+.intent-source-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.intent-staged-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--accent);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+}
+
+.intent-empty-state {
+  display: grid;
+  gap: 8px;
+  padding: 22px 16px;
+  border: 1px dashed rgba(142, 163, 187, 0.24);
+  border-radius: 6px;
+  background: rgba(11, 16, 23, 0.5);
+}
+
+.intent-empty-state-danger {
+  border-color: rgba(248, 113, 113, 0.26);
 }
 
 .shell-status-bar {
@@ -1941,6 +2101,12 @@
   .home-dashboard-grid,
   .intent-workspace-grid,
   .runtime-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .intent-workspace-live-grid,
+  .intent-runtime-summary,
+  .intent-source-grid {
     grid-template-columns: 1fr;
   }
 
