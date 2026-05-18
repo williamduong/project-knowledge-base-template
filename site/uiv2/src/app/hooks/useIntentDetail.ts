@@ -5,6 +5,11 @@ export type IntentTask = {
   title: string | null
   status: string | null
   source: string | null
+  description?: string | null
+  text?: string | null
+  done?: boolean
+  section?: string | null
+  tags?: string[]
   explicitCommits?: string[]
   relatedCommits?: Array<{
     sha: string | null

@@ -48,7 +48,7 @@ type MilestoneBlock = {
 type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' | 'dropped' | 'selected'
 type IntentSortKey = 'title' | 'milestone' | 'lifecycle' | 'progress' | 'runtime'
 type DetailSectionKey = 'summary' | 'detail' | 'relations' | 'tasks'
-type EditableField = 'title' | 'decisionSummary' | 'focusCurrent' | 'focusNextAction'
+type EditableField = 'title' | 'summaryText' | 'focusCurrent' | 'focusNextAction'
 
 type IntentPatchResponse = {
   ok: boolean
@@ -70,15 +70,6 @@ function normalizeLifecycle(value: string | null | undefined) {
   if (text === 'draft') return 'draft'
   if (text === 'open') return 'backlog'
   return text.replace(/\s+/g, '-')
-}
-
-function formatIntentStatus(detail: { lifecycle: string | null; status: string | null }) {
-  const lifecycle = detail.lifecycle?.trim()
-  const status = detail.status?.trim()
-  if (lifecycle && status && lifecycle.toLowerCase() !== status.toLowerCase()) {
-    return `${lifecycle} · ${status}`
-  }
-  return lifecycle ?? status ?? 'unknown'
 }
 
 function formatTimestamp(value: string | null) {
@@ -108,11 +99,7 @@ function versionRank(versionId: string) {
   return numbers.reduce((accumulator, value, index) => accumulator + value / 10 ** (index * 2), 0)
 }
 
-function computeIntentProgress(lifecycle: string | null | undefined, taskCount = 0, doneTaskCount = 0) {
-  if (taskCount > 0) {
-    return clampProgress((doneTaskCount / taskCount) * 100)
-  }
-
+function computeIntentProgress(lifecycle: string | null | undefined) {
   const normalized = normalizeLifecycle(lifecycle)
   if (normalized === 'draft') return 10
   if (normalized === 'backlog') return 25
@@ -411,12 +398,25 @@ function TaskRow({
     <div className={`intent-task-grid-row${expanded ? ' expanded' : ''}`}>
       <button className="intent-task-grid-button" type="button" onClick={onToggle}>
         <span>{task.title ?? `Task ${index + 1}`}</span>
+        <span>{task.section ?? 'General'}</span>
         <span className={`status-pill ${statusTone(normalizeLifecycle(task.status))}`}>{task.status ?? 'unknown'}</span>
-        <span>{task.source ?? 'No source'}</span>
+        <span>{task.tags?.length ? task.tags.join(', ') : task.source ?? 'No source'}</span>
       </button>
       {expanded ? (
         <div className="intent-task-grid-detail">
-          <p>{task.source ?? 'Task detail source unavailable.'}</p>
+          <p>{task.description ?? task.text ?? task.source ?? 'Task detail source unavailable.'}</p>
+          <div className="intent-task-detail-meta">
+            <span className="intent-path-chip">section: {task.section ?? 'General'}</span>
+            <span className="intent-path-chip">source: {task.source ?? 'unknown'}</span>
+            <span className="intent-path-chip">state: {task.done ? 'done' : task.status ?? 'open'}</span>
+          </div>
+          {task.tags?.length ? (
+            <div className="intent-staged-list">
+              {task.tags.map((tag) => (
+                <span key={`${task.title ?? 'task'}-${tag}`} className="intent-task-tag">{tag}</span>
+              ))}
+            </div>
+          ) : null}
           {task.explicitCommits?.length ? (
             <div>
               <strong>Explicit commits</strong>
@@ -603,9 +603,6 @@ export function IntentsListPage() {
     })
   }, [healthFilter, intents, selectedIntentId])
 
-  const selectedTaskCount = detail?.tasks.length ?? 0
-  const selectedDoneTasks = detail?.tasks.filter((task) => normalizeLifecycle(task.status) === 'closed' || String(task.status).toLowerCase() === 'done').length ?? 0
-
   const sortedIntents = useMemo(() => {
     const items = [...filteredIntents]
     items.sort((left, right) => {
@@ -676,7 +673,7 @@ export function IntentsListPage() {
     if (!selectedIntentId) return
     const bodyMap: Record<EditableField, Record<string, string>> = {
       title: { title: editorDraft.trim() },
-      decisionSummary: { decision_summary: editorDraft.trim() },
+      summaryText: { decision_summary: editorDraft.trim() },
       focusCurrent: { focus: editorDraft.trim() },
       focusNextAction: { next_action: editorDraft.trim() },
     }
@@ -684,7 +681,6 @@ export function IntentsListPage() {
   }
 
   const selectedIntent = intents.find((intent) => intent.id === selectedIntentId) ?? null
-  const detailStatus = detail ? formatIntentStatus(detail) : 'Select an intent'
   const rulesSummary = (snapshot?.rulesSummary as { summary?: { count?: number; packCount?: number; topRules?: Array<{ id: string }> } } | undefined)?.summary
   const runtimeSummary = (snapshot?.runtimeServices as { summary?: { runningCount?: number }; schedules?: Array<{ id: string }> } | undefined)
   const gatesSummary = (snapshot?.gates as { items?: Array<{ gate: string }>; readiness?: string } | undefined)
@@ -700,7 +696,7 @@ export function IntentsListPage() {
     { label: 'Database', value: 'focus-state.db + SQLite-backed focus store', icon: database },
     { label: 'Services', value: `${runtimeSummary?.summary?.runningCount ?? 0} runtime services`, icon: server },
     { label: 'Cron', value: `${runtimeSummary?.schedules?.length ?? 0} schedules`, icon: clock3 },
-    { label: 'Workspace node', value: detail.workspacePath ?? 'none', icon: network },
+    { label: 'Intent workspace', value: detail.workspacePath ?? 'none', icon: network },
   ] : []
 
   return (
@@ -887,12 +883,7 @@ export function IntentsListPage() {
                   onToggle={toggleSection}
                   subtitle="Double-click supported on title."
                 >
-                  <div className="intent-hero-badges">
-                    <span className={`status-pill ${statusTone(normalizeLifecycle(detail.lifecycle))}`}>{detail.lifecycle ?? 'unknown'}</span>
-                    <span className="meta-pill">{detailStatus}</span>
-                    <span className="meta-pill">{detail.mode ?? 'normal'}</span>
-                    <span className="meta-pill">{detail.changeType ?? 'unspecified'}</span>
-                  </div>
+                  <p className="intent-id">{detail.id ?? selectedIntentId}</p>
                   <InlineEditableText
                     label="Title"
                     value={detail.title ?? ''}
@@ -921,7 +912,7 @@ export function IntentsListPage() {
                   <div className="intent-drawer-detail-grid">
                     <div className="system-info-card">
                       <InlineEditableText
-                        label="Current focus"
+                        label="Current focus area"
                         value={detail.focusCurrent ?? ''}
                         field="focusCurrent"
                         activeField={activeEditor}
@@ -938,7 +929,7 @@ export function IntentsListPage() {
                     </div>
                     <div className="system-info-card">
                       <InlineEditableText
-                        label="Close condition / next action"
+                        label="Next action"
                         value={detail.focusNextAction ?? ''}
                         field="focusNextAction"
                         activeField={activeEditor}
@@ -953,32 +944,30 @@ export function IntentsListPage() {
                       />
                     </div>
                     <div className="system-info-card">
-                      <strong className="system-info-title">
-                        {detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'}
-                      </strong>
-                      <p>{detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'No live chaos estimate attached.'}</p>
-                      {detail.chaosEstimate?.warning ? <p className="runtime-warning-text">{detail.chaosEstimate.warning}</p> : null}
+                      <span className="runtime-overview-label">Close condition</span>
+                      <strong className="system-info-title">{detail.goal ?? 'No dedicated close condition field in current runtime contract.'}</strong>
+                      <p className="system-card-subtle">Currently derived from intent goal until backend exposes a dedicated close-condition field.</p>
                     </div>
                     <div className="system-info-card">
                       <span className="runtime-overview-label">Intent progress</span>
                       <div className="intent-grid-progress">
                         <div className="intent-progress-track" aria-hidden="true">
-                          <span style={{ width: `${computeIntentProgress(detail.lifecycle, selectedTaskCount, selectedDoneTasks)}%` }} />
+                          <span style={{ width: `${computeIntentProgress(detail.lifecycle)}%` }} />
                         </div>
-                        <strong>{computeIntentProgress(detail.lifecycle, selectedTaskCount, selectedDoneTasks)}%</strong>
+                        <strong>{computeIntentProgress(detail.lifecycle)}%</strong>
                       </div>
                     </div>
                   </div>
                   <InlineEditableText
-                    label="Description / decision summary"
-                    value={detail.decisionSummary ?? ''}
-                    field="decisionSummary"
+                    label="Description"
+                    value={detail.summary ?? detail.decisionSummary ?? detail.goal ?? ''}
+                    field="summaryText"
                     activeField={activeEditor}
                     draftValue={editorDraft}
                     onStartEdit={startEdit}
                     onChangeDraft={setEditorDraft}
                     onCancel={cancelEdit}
-                    onSave={() => void saveEdit('decisionSummary')}
+                    onSave={() => void saveEdit('summaryText')}
                     saving={intentUpdateMutation.isPending}
                     error={editorError}
                     multiline
@@ -1005,6 +994,17 @@ export function IntentsListPage() {
                         <strong>{entry.value}</strong>
                       </div>
                     ))}
+                    <div className="intent-relation-card">
+                      <div className="intent-relation-head">
+                        <span className="section-icon section-icon-kb" aria-hidden="true">
+                          <Icon icon={activity} />
+                        </span>
+                        <span className="runtime-overview-label">Chaos</span>
+                      </div>
+                      <strong>{detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'}</strong>
+                      <p>{detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'No live chaos estimate attached.'}</p>
+                      {detail.chaosEstimate?.warning ? <p className="runtime-warning-text">{detail.chaosEstimate.warning}</p> : null}
+                    </div>
                   </div>
                   {detail.stagedFiles.length ? (
                     <div className="intent-staged-list">
@@ -1027,8 +1027,9 @@ export function IntentsListPage() {
                     <div className="intent-task-grid">
                       <div className="intent-task-grid-header">
                         <span>Task</span>
+                        <span>Section</span>
                         <span>Status</span>
-                        <span>Source</span>
+                        <span>Signals</span>
                       </div>
                       {detail.tasks.map((task, index) => (
                         <TaskRow
