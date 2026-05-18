@@ -10,7 +10,20 @@
 
 import { readdirSync, readFileSync, statSync, existsSync, realpathSync } from 'node:fs';
 import { join, posix, resolve as resolvePath, relative as relativePath, isAbsolute } from 'node:path';
+import { createHash } from 'node:crypto';
 import yaml from 'js-yaml';
+
+// SHA-1 of file bytes. Slice C-2 uses this to detect drift between the
+// DB row (intent) and the on-disk file (observed). SHA-1 is fine here —
+// not a security hash, just collision-resistant enough for "did the bytes
+// change". ~1 ms per file for typical KB docs.
+export function computeFileHashFromBuffer(buf) {
+  return createHash('sha1').update(buf).digest('hex');
+}
+export function computeFileHash(absPath) {
+  try { return computeFileHashFromBuffer(readFileSync(absPath)); }
+  catch { return null; }
+}
 
 export const ALLOWED_EXT = new Set(['.md', '.html']);
 export const SKIP_DIRS = new Set([
@@ -200,7 +213,9 @@ export function parseDocSummary(absPath, relPath, today = new Date()) {
 }
 
 export function parseDocFromDisk(absPath, relPath, today = new Date()) {
-  const text = readFileSync(absPath, 'utf8');
+  const raw = readFileSync(absPath);
+  const contentHash = computeFileHashFromBuffer(raw);
+  const text = raw.toString('utf8');
   const isMd = relPath.endsWith('.md');
   const isHtml = relPath.endsWith('.html');
   const { fm, body } = isMd ? parseFrontmatter(text) : { fm: {}, body: text };
@@ -257,6 +272,7 @@ export function parseDocFromDisk(absPath, relPath, today = new Date()) {
       headings,
       html,
     },
+    contentHash,
   };
 }
 

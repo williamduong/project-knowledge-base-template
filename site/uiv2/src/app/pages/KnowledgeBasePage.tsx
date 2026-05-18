@@ -15,8 +15,9 @@ import xIcon from '@iconify-icons/lucide/x'
 import filterX from '@iconify-icons/lucide/filter-x'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useKbTree, useKbDoc, useKbRoots, useAddKbRoot, useRemoveKbRoot, useKbBrowse, type KbRootCandidate } from '../hooks/useKb'
+import { useKbTree, useKbDoc, useKbRoots, useAddKbRoot, useRemoveKbRoot, useKbBrowse, useKbDrift, type KbDriftEntry, type KbRootCandidate } from '../hooks/useKb'
 import chevronLeftIcon from '@iconify-icons/lucide/chevron-left'
+import alertCircle from '@iconify-icons/lucide/alert-circle'
 import type { KbDocStatus, KbDocType, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
 
 type RailMode = 'expanded' | 'icon'
@@ -246,8 +247,9 @@ type HealthBarProps = {
   filters: Filters
   onToggleFilter: (key: keyof Filters, value: unknown) => void
   onClearFilters: () => void
+  onOpenDrift: () => void
 }
-function KbHealthBar({ stats, filters, onToggleFilter, onClearFilters }: HealthBarProps) {
+function KbHealthBar({ stats, filters, onToggleFilter, onClearFilters, onOpenDrift }: HealthBarProps) {
   if (stats.total === 0) return null
   const has = filtersActive(filters)
   return (
@@ -278,6 +280,11 @@ function KbHealthBar({ stats, filters, onToggleFilter, onClearFilters }: HealthB
           : <span className="status-pill status-good">none&gt;60d</span>}
         {stats.redStale > 0 ? <FilterChip active={filters.stale === 'red'} tone="status-offline" label={`stale>180d ${stats.redStale}`} onClick={() => onToggleFilter('stale', 'red')} /> : null}
         {stats.mixedTime > 0 ? <FilterChip active={filters.mixed} tone="status-neutral" label={`mixed-time ${stats.mixedTime}`} onClick={() => onToggleFilter('mixed', true)} /> : null}
+      </div>
+      <div className="kb-health-group">
+        <button type="button" className="tool-button kb-drift-trigger" onClick={onOpenDrift} title="So DB vs disk">
+          <Icon icon={alertCircle} aria-hidden="true" /> Drift…
+        </button>
       </div>
       <div className="kb-health-next">
         {has ? (
@@ -475,6 +482,80 @@ function AddFolderDialog({ candidates, activeRoots, pending, errorMessage, onAdd
 }
 
 // -----------------------------------------------------------------------------
+// Drift panel — read-only listing of DB vs disk mismatches. Slice C-3 will
+// add per-row sync actions (restore from DB, accept from disk).
+// -----------------------------------------------------------------------------
+
+const DRIFT_STATE_LABEL: Record<KbDriftEntry['state'], string> = {
+  'disk-only':    'Disk only (file mới, DB chưa biết)',
+  'db-only':      'DB only (file đã bị xoá khỏi disk)',
+  'content-diff': 'Content khác (file bị edit bên ngoài)',
+}
+const DRIFT_STATE_TONE: Record<KbDriftEntry['state'], string> = {
+  'disk-only': 'status-neutral',
+  'db-only': 'status-offline',
+  'content-diff': 'status-warn',
+}
+
+function DriftPanel({ onClose }: { onClose: () => void }) {
+  const drift = useKbDrift(true)
+  return (
+    <div className="prototype-overlay-backdrop" onClick={onClose}>
+      <div className="prototype-dialog kb-drift-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="panel-toolbar">
+          <div>
+            <p className="workspace-eyebrow">DB vs disk</p>
+            <h2>Drift</h2>
+          </div>
+          <button className="icon-tool-button" type="button" onClick={onClose} aria-label="Close"><Icon icon={xIcon} /></button>
+        </div>
+        {drift.isLoading ? (
+          <div className="prototype-skeleton-stack"><span /><span /><span /></div>
+        ) : drift.data ? (
+          <>
+            <div className="kb-health-bar kb-drift-summary">
+              <span className="count-pill">{drift.data.summary.total} total</span>
+              {drift.data.summary.diskOnly > 0 ? <span className="status-pill status-neutral">disk-only {drift.data.summary.diskOnly}</span> : null}
+              {drift.data.summary.dbOnly > 0 ? <span className="status-pill status-offline">db-only {drift.data.summary.dbOnly}</span> : null}
+              {drift.data.summary.contentDiff > 0 ? <span className="status-pill status-warn">content-diff {drift.data.summary.contentDiff}</span> : null}
+            </div>
+            {drift.data.entries.length === 0 ? (
+              <p className="kb-empty" style={{ padding: '12px 18px' }}>DB và disk khớp hoàn toàn. Tốt.</p>
+            ) : (
+              <ul className="kb-roots-list kb-drift-list">
+                {(['disk-only','db-only','content-diff'] as const).flatMap((state) => {
+                  const rows = drift.data!.entries.filter((e) => e.state === state)
+                  if (rows.length === 0) return []
+                  return [
+                    <li key={`__hdr_${state}`} className="kb-drift-section-head">
+                      <span className={`status-pill ${DRIFT_STATE_TONE[state]}`}>{state}</span>
+                      <span className="kb-drift-section-text">{DRIFT_STATE_LABEL[state]}</span>
+                    </li>,
+                    ...rows.map((e) => (
+                      <li key={`${state}:${e.path}`} className="kb-roots-item kb-drift-row">
+                        <code className="kb-drift-path" title={e.path}>{e.path}</code>
+                        <span className="kb-drift-hash" title={`db: ${e.dbHash ?? '—'} | disk: ${e.diskHash ?? '—'}`}>
+                          {e.dbHash ? e.dbHash.slice(0, 8) : '—'} → {e.diskHash ? e.diskHash.slice(0, 8) : '—'}
+                        </span>
+                      </li>
+                    )),
+                  ]
+                })}
+              </ul>
+            )}
+            <p className="rules-cell-copy kb-roots-hint">
+              Slice C-3 sẽ thêm nút "Restore từ DB" (ghi đè disk) và "Accept disk" (import vào DB) cho từng dòng. Hiện tại chỉ display.
+            </p>
+          </>
+        ) : (
+          <p className="kb-empty">Không lấy được drift data.</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// -----------------------------------------------------------------------------
 // Page
 // -----------------------------------------------------------------------------
 
@@ -501,6 +582,7 @@ export function KnowledgeBasePage() {
 
   const [legendOpen, setLegendOpen] = useState(false)
   const [rootsDialogOpen, setRootsDialogOpen] = useState(false)
+  const [driftOpen, setDriftOpen] = useState(false)
   const [rootError, setRootError] = useState<string | null>(null)
 
   // Roots to show in tree — server already filters by activeRoots, but we
@@ -594,7 +676,7 @@ export function KnowledgeBasePage() {
   return (
     <section className="workspace-page kb-page">
       {stats.total > 0 ? (
-        <KbHealthBar stats={stats} filters={filters} onToggleFilter={toggleFilter} onClearFilters={clearFilters} />
+        <KbHealthBar stats={stats} filters={filters} onToggleFilter={toggleFilter} onClearFilters={clearFilters} onOpenDrift={() => setDriftOpen(true)} />
       ) : null}
       <div className="kb-shell">
         {/* LEFT RAIL */}
@@ -754,6 +836,7 @@ export function KnowledgeBasePage() {
       </div>
 
       {legendOpen ? <LegendPopover onClose={() => setLegendOpen(false)} /> : null}
+      {driftOpen ? <DriftPanel onClose={() => setDriftOpen(false)} /> : null}
       {rootsDialogOpen ? (
         <AddFolderDialog
           candidates={rootCandidates}

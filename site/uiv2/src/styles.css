@@ -3091,3 +3091,21 @@
 }
 .kb-browse-row:hover { background: var(--bg-panel-2); }
 .kb-browse-row svg { width: 14px; height: 14px; color: #fbbf24; flex-shrink: 0; }
+
+/* KB drift panel (slice C-2) */
+.kb-drift-dialog { max-width: 720px; width: min(720px, 92vw); max-height: 80vh; overflow: auto; }
+.kb-drift-summary { margin: 0 18px 8px; padding: 8px 12px; }
+.kb-drift-trigger { display: inline-flex; align-items: center; gap: 4px; }
+.kb-drift-trigger svg { width: 14px; height: 14px; color: #fbbf24; }
+.kb-drift-list { padding-bottom: 6px; }
+.kb-drift-section-head {
+  list-style: none; padding: 8px 18px 4px; display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; color: #94a3b8;
+}
+.kb-drift-section-text { color: #cbd5e1; }
+.kb-drift-row { gap: 12px; padding: 4px 18px; }
+.kb-drift-path { flex: 1 1 auto; color: #ebf2fa; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kb-drift-hash {
+  font-family: ui-monospace, monospace; font-size: 11px; color: #64748b;
+  background: var(--bg-panel-2); padding: 2px 6px; border-radius: 4px;
+}

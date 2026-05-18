@@ -14,6 +14,7 @@ import {
   walkRoot as kbWalkRoot,
   validateCandidateRoot as kbValidateCandidateRoot,
   hasAllowedFiles as kbHasAllowedFiles,
+  computeFileHash as kbComputeFileHash,
   ALLOWED_EXT as KB_ALLOWED_EXT,
   SKIP_DIRS as KB_SKIP_DIRS,
 } from '../../src/lib/kb-content.mjs';
@@ -2071,7 +2072,7 @@ function createKbStore({ repoRoot: storeRepoRoot, dbPath = kbIndexDbPath, legacy
               kind: node.fileKind || (node.path.endsWith('.html') ? 'html' : 'md'),
               size: stat ? stat.size : null,
               mtime_ms: stat ? Math.round(stat.mtimeMs) : null,
-              content_hash: null,
+              content_hash: parsed.contentHash || null,
               title: parsed.doc.frontmatter.title || node.title,
               type: parsed.doc.frontmatter.type,
               status: parsed.doc.frontmatter.status,
@@ -2271,7 +2272,80 @@ function createKbStore({ repoRoot: storeRepoRoot, dbPath = kbIndexDbPath, legacy
     return { ok: true, path: safe, parent, maxDepth, children };
   }
 
-  return { getTree, getRootCandidates, getActiveRoots, getDoc, refresh, addRoot, removeRoot, browse };
+  // ─── drift detection (slice C-2) ───
+  //
+  // Compares DB rows against disk for each active root. Returns one entry
+  // per out-of-sync file. Categories:
+  //   - disk-only:    file exists on disk, no DB row (created outside UI)
+  //   - db-only:      DB row exists, no file on disk (deleted outside UI)
+  //   - content-diff: both exist but content_hash differs (edited outside UI)
+  // Backfill: if a DB row has null content_hash (legacy row from before
+  // slice C-2), it's hashed lazily and the row updated, then compared.
+  function detectDrift(filterRoot) {
+    const roots = filterRoot
+      ? [kbDb.getRoot(db, filterRoot)].filter((r) => r && r.active === 1)
+      : kbDb.listActiveRoots(db).map((r) => kbDb.getRoot(db, r.path));
+    const drift = [];
+    for (const root of roots) {
+      // 1) walk disk to collect file set (only kb-relevant extensions)
+      const diskFiles = new Map(); // relPath → { hash, mtime, size }
+      const rootAbs = path.join(storeRepoRoot, root.path);
+      if (fs.existsSync(rootAbs)) {
+        const stack = [rootAbs];
+        while (stack.length > 0) {
+          const cur = stack.pop();
+          let entries;
+          try { entries = fs.readdirSync(cur, { withFileTypes: true }); } catch { continue; }
+          for (const e of entries) {
+            if (e.name.startsWith('.') && e.name !== '.github') continue;
+            if (KB_SKIP_DIRS.has(e.name)) continue;
+            const abs = path.join(cur, e.name);
+            if (e.isDirectory()) { stack.push(abs); continue; }
+            if (!e.isFile()) continue;
+            const dot = e.name.lastIndexOf('.');
+            const ext = dot >= 0 ? e.name.slice(dot).toLowerCase() : '';
+            if (!KB_ALLOWED_EXT.has(ext)) continue;
+            const rel = path.relative(storeRepoRoot, abs).split(path.sep).join('/');
+            const hash = kbComputeFileHash(abs);
+            let stat = null; try { stat = fs.statSync(abs); } catch {}
+            diskFiles.set(rel, { hash, mtime: stat ? Math.round(stat.mtimeMs) : null, size: stat ? stat.size : null });
+          }
+        }
+      }
+      // 2) DB rows (file kind only)
+      const rows = kbDb.listAllUnderRoot(db, root.path).filter((r) => r.kind !== 'folder');
+      const dbPaths = new Set(rows.map((r) => r.path));
+      // 3) Compare
+      // disk-only
+      for (const [p, info] of diskFiles) {
+        if (!dbPaths.has(p)) {
+          drift.push({ root: root.path, path: p, state: 'disk-only', diskHash: info.hash, dbHash: null });
+        }
+      }
+      // db-only + content-diff
+      for (const r of rows) {
+        if (!diskFiles.has(r.path)) {
+          drift.push({ root: root.path, path: r.path, state: 'db-only', diskHash: null, dbHash: r.content_hash });
+          continue;
+        }
+        const disk = diskFiles.get(r.path);
+        let dbHash = r.content_hash;
+        // Backfill missing hash from disk (and update DB row so next check is fast)
+        if (!dbHash && disk.hash) {
+          try {
+            db.prepare(`UPDATE kb_files SET content_hash = ? WHERE path = ?`).run(disk.hash, r.path);
+            dbHash = disk.hash;
+          } catch {}
+        }
+        if (dbHash && disk.hash && dbHash !== disk.hash) {
+          drift.push({ root: root.path, path: r.path, state: 'content-diff', diskHash: disk.hash, dbHash });
+        }
+      }
+    }
+    return drift;
+  }
+
+  return { getTree, getRootCandidates, getActiveRoots, getDoc, refresh, addRoot, removeRoot, browse, detectDrift };
 }
 
 export function createApp(commandRunner = executeBridgeCommand) {
@@ -2841,6 +2915,22 @@ export function createApp(commandRunner = executeBridgeCommand) {
     const targetPath = typeof req.body?.path === 'string' ? req.body.path : null;
     const result = kbStore.refresh('manual', targetPath);
     res.status(200).json({ ok: true, generatedAt: result.generatedAt, reason: result.reason });
+  });
+
+  app.get('/api/kb/drift', (req, res) => {
+    const filterRoot = typeof req.query.root === 'string' && req.query.root ? req.query.root : null;
+    try {
+      const entries = kbStore.detectDrift(filterRoot);
+      const summary = {
+        total: entries.length,
+        diskOnly:    entries.filter((e) => e.state === 'disk-only').length,
+        dbOnly:      entries.filter((e) => e.state === 'db-only').length,
+        contentDiff: entries.filter((e) => e.state === 'content-diff').length,
+      };
+      res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), summary, entries });
+    } catch (error) {
+      res.status(500).json({ ok: false, error: error instanceof Error ? error.message : 'drift detection failed' });
+    }
   });
 
   // Drill-down picker for the AddFolderDialog. Returns immediate child

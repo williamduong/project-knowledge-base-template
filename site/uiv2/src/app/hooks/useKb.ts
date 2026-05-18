@@ -33,6 +33,32 @@ export type KbBrowseResponse = {
   children: KbBrowseChild[]
 }
 
+export type KbDriftEntry = {
+  root: string
+  path: string
+  state: 'disk-only' | 'db-only' | 'content-diff'
+  diskHash: string | null
+  dbHash: string | null
+}
+export type KbDriftResponse = {
+  ok: boolean
+  generatedAt: string
+  summary: { total: number; diskOnly: number; dbOnly: number; contentDiff: number }
+  entries: KbDriftEntry[]
+}
+
+// Drift = DB intent vs disk reality. Heavy enough to be on-demand only
+// (called when the user opens the DriftPanel) — not in the auto-refetch
+// loop. Slice C-2 ships read-only; sync actions land in C-3.
+export function useKbDrift(enabled: boolean) {
+  return useQuery<KbDriftResponse>({
+    queryKey: ['kb', 'drift'],
+    queryFn: () => apiGet<KbDriftResponse>('/api/kb/drift'),
+    enabled,
+    staleTime: 10_000,
+  })
+}
+
 export function useKbBrowse(path: string, enabled = true) {
   return useQuery<KbBrowseResponse>({
     queryKey: ['kb', 'browse', path],

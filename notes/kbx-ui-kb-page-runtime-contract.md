@@ -300,7 +300,33 @@ Measured live (warm, fresh DB):
 | GET /api/kb/tree after add (triggers notes import) | ~130 ms |
 | GET /api/kb/browse?path=knowledge-base | ~10 ms |
 
-### Open follow-ups (beyond Slice C-1)
+### Slice C-2 shipped (2026-05-18)
+
+Drift = DB intent vs disk reality. Read-only display in this slice; sync
+actions land in C-3.
+
+- L4 `src/lib/kb-content.mjs` adds `computeFileHash(absPath)` and
+  `computeFileHashFromBuffer(buf)` — SHA-1 over file bytes. `parseDocFromDisk`
+  now returns `contentHash` alongside `summary` + `doc` so import naturally
+  captures it.
+- L3 `createKbStore.detectDrift(rootPath?)` walks disk under each active root,
+  collects per-file `{hash, mtime, size}`, fetches matching kb_files rows
+  (now SELECTing `content_hash`, `mtime_ms`, `size`), and emits one entry
+  per mismatch with state `'disk-only' | 'db-only' | 'content-diff'`.
+  Lazy backfill: legacy rows with null `content_hash` get hashed once from
+  disk and the row updated, so the next check is fast and clean.
+- L2 `GET /api/kb/drift?root=` returns `{ summary, entries }`. Heavy-ish
+  endpoint (~250 ms for 320 docs across 5 roots) — kept out of any auto
+  polling.
+- L1 `useKbDrift(enabled)` is `enabled`-gated so the call only fires when
+  the DriftPanel opens. New `DriftPanel` dialog groups entries by state
+  with first-8-char hash badges. New "Drift…" button in HealthBar opens
+  the panel.
+
+Verified live for all three states: created a disk file → `disk-only` row;
+deleted a DB-known file → `db-only`; appended bytes to a doc → `content-diff`.
+
+### Open follow-ups (beyond Slice C-2)
 
 - mtime-based dirty check on tree walk (frontmatter re-parse only when file mtime changed).
 - Scoped refresh for `POST /api/kb/refresh { path }` (currently always full re-walk).

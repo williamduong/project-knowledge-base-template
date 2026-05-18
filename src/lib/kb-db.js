@@ -183,7 +183,7 @@ function listChildren(db, parentPath) {
 function listAllUnderRoot(db, rootPath) {
   return db.prepare(`
     SELECT path, parent_path, basename, kind, title, type, status, verification, time_state, owner,
-           last_updated, last_verified, days_since_verified, tags
+           last_updated, last_verified, days_since_verified, tags, content_hash, mtime_ms, size
     FROM kb_files WHERE root_path = ?
     ORDER BY path
   `).all(rootPath);
