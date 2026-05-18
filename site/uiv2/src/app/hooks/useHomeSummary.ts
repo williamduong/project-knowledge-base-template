@@ -105,6 +105,8 @@ export type HomeSummaryResponse = {
           hardCount: number
           masterCount: number
           softCount: number
+          toolAssociationCoverage: number
+          enforcementCoverage: number
           toolCoverage: number
         }
       }>

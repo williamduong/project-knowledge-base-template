@@ -40,6 +40,8 @@ export type RulesSummaryResponse = {
         hardCount: number
         masterCount: number
         softCount: number
+        toolAssociationCoverage: number
+        enforcementCoverage: number
         toolCoverage: number
       }
     }>

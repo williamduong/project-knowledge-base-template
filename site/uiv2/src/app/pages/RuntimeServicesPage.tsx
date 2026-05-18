@@ -1131,7 +1131,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                             </div>
                             <p className="rules-cell-copy">{pack.description ?? 'No description'}</p>
                             <p className="rules-cell-copy">Rules: {pack.stats.count} · Hard: {pack.stats.hardCount} · Master: {pack.stats.masterCount} · Soft: {pack.stats.softCount}</p>
-                            <p className="rules-cell-copy">Tool coverage: {pack.stats.toolCoverage}/{pack.stats.count}</p>
+                            <p className="rules-cell-copy">Enforcement coverage: {pack.stats.enforcementCoverage}/{pack.stats.count} · Tool association: {pack.stats.toolAssociationCoverage}/{pack.stats.count}</p>
                           </article>
                         ))}
                         {!packsPage.items.length ? <p className="rules-cell-copy">No rule packs registered.</p> : null}
