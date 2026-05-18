@@ -1,5 +1,4 @@
 import { Icon } from '@iconify/react'
-import goal from '@iconify-icons/lucide/goal'
 import gitBranch from '@iconify-icons/lucide/git-branch'
 import shield from '@iconify-icons/lucide/shield'
 import clock3 from '@iconify-icons/lucide/clock-3'
@@ -23,7 +22,7 @@ type RuleSourceCategory = {
 }
 
 type RegistrySortKey = 'id' | 'severity' | 'kind' | 'layer' | 'priority' | 'sourceType'
-type SystemWorkspaceSection = 'services' | 'cron' | 'goal' | 'pipeline' | 'gates' | 'rules'
+type SystemWorkspaceSection = 'services' | 'cron' | 'pipeline' | 'gates' | 'rules'
 type Phase2GateItem = {
   gate: string
   severity: string
@@ -277,9 +276,6 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
       ?? gates.filter((gate) => !gate.ok && String(gate.severity).toLowerCase() === 'hard-fail').length,
   )
   const failingGate = gates.find((gate) => !gate.ok)
-  const goalSummary = dashboard?.goal
-  const currentIntent = dashboard?.session.intent
-  const currentTask = dashboard?.session.currentTask
   const [activeSection, setActiveSection] = useState<SystemWorkspaceSection>(isRulesWorkspace ? 'rules' : 'services')
   const [ruleKindFilter, setRuleKindFilter] = useState<'all' | 'hard' | 'master' | 'soft'>('all')
   const [rulePackFilter, setRulePackFilter] = useState<string>('all')
@@ -482,17 +478,6 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
               <small>{schedules.length} entries</small>
             </button>
             <button
-              className={`system-menu-item${activeSection === 'goal' ? ' active' : ''}`}
-              type="button"
-              onClick={() => setActiveSection('goal')}
-            >
-              <span className="system-menu-item-label">
-                <Icon icon={goal} aria-hidden="true" />
-                <span>Goal</span>
-              </span>
-              <small>{currentIntent?.id ?? 'pending'}</small>
-            </button>
-            <button
               className={`system-menu-item${activeSection === 'pipeline' ? ' active' : ''}`}
               type="button"
               onClick={() => setActiveSection('pipeline')}
@@ -639,47 +624,6 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                 <li>Runtime registry refresh persists the snapshot used by footer and Home summary surfaces.</li>
                 <li>Failures in cron should degrade this pane, not spawn duplicate services.</li>
               </ul>
-            </>
-          ) : currentSection === 'goal' ? (
-            <>
-              <div className="panel-toolbar">
-                <div>
-                  <p className="workspace-eyebrow">Session Intent</p>
-                  <div className="section-title-row">
-                    <span className="section-icon section-icon-intent" aria-hidden="true">
-                      <Icon icon={goal} />
-                    </span>
-                    <h2>Goal And Checkpoint</h2>
-                  </div>
-                </div>
-                <div className="panel-toolbar-meta">
-                  <span className="count-pill">{currentIntent?.id ?? 'pending'}</span>
-                  <span className="count-pill">{currentIntent?.status ?? currentIntent?.lifecycle ?? 'unavailable'}</span>
-                </div>
-              </div>
-
-              <div className="system-info-grid">
-                <article className="system-info-card">
-                  <span className="runtime-overview-label">Primary Goal</span>
-                  <strong className="system-info-title">{goalSummary?.text ?? currentIntent?.goal ?? 'Goal unavailable'}</strong>
-                  <p>{goalSummary?.summary ?? currentIntent?.summary ?? 'No goal summary available yet.'}</p>
-                </article>
-                <article className="system-info-card">
-                  <span className="runtime-overview-label">Focus Current</span>
-                  <strong className="system-info-title">{goalSummary?.focusCurrent ?? currentIntent?.focusCurrent ?? 'pending'}</strong>
-                  <p>Next action: {goalSummary?.focusNextAction ?? currentIntent?.focusNextAction ?? 'pending'}</p>
-                </article>
-                <article className="system-info-card">
-                  <span className="runtime-overview-label">Checkpoint Event</span>
-                  <strong className="system-info-title">{goalSummary?.checkpointEvent ?? 'pending'}</strong>
-                  <p>{goalSummary?.checkpointTimestamp ?? 'No checkpoint timestamp recorded.'}</p>
-                </article>
-                <article className="system-info-card">
-                  <span className="runtime-overview-label">Current Task</span>
-                  <strong className="system-info-title">{currentTask?.title ?? 'No current task'}</strong>
-                  <p>{currentTask?.status ?? 'Task state unavailable'}{currentTask?.source ? ` · ${currentTask.source}` : ''}</p>
-                </article>
-              </div>
             </>
           ) : currentSection === 'pipeline' ? (
             <>
@@ -1125,6 +1069,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                               <span className="status-pill status-neutral">{pack.context ?? 'context'}</span>
                             </div>
                             <p className="rules-cell-copy">{pack.description ?? 'No description'}</p>
+                            {pack.promptSummary ? <p className="rules-cell-copy">Packet brief: {pack.promptSummary}</p> : null}
                             <p className="rules-cell-copy">Rules: {pack.stats.count} · Hard: {pack.stats.hardCount} · Master: {pack.stats.masterCount} · Soft: {pack.stats.softCount}</p>
                             <p className="rules-cell-copy">Enforcement coverage: {pack.stats.enforcementCoverage}/{pack.stats.count} · Tool association: {pack.stats.toolAssociationCoverage}/{pack.stats.count}</p>
                           </article>

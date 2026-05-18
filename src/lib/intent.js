@@ -151,6 +151,7 @@ function buildIntentMeta({ intentId, mode, changeType }) {
     '  current: ""',
     `  last_updated: ${now.slice(0, 10)}`,
     '  next_action: ""',
+    'goal_text: ""',
     `change_type: ${changeType || 'docs'}`,
     `change_scope: []`,
     `impact_signals: []`,
@@ -203,6 +204,7 @@ function buildBacklogIntentMeta({ slug, title, description, wave }) {
     '  current: ""',
     `  last_updated: ${now.slice(0, 10)}`,
     '  next_action: ""',
+    'goal_text: ""',
   ];
   if (wave) {
     lines.push('architecture_position:');
@@ -730,6 +732,11 @@ function updateIntentFields(contentRoot, intentId, fields = {}) {
   if (Object.prototype.hasOwnProperty.call(fields, 'decisionSummary')) {
     meta.decision_summary = fields.decisionSummary;
     updatedFields.push('decision_summary');
+  }
+
+  if (Object.prototype.hasOwnProperty.call(fields, 'goalText')) {
+    meta.goal_text = fields.goalText;
+    updatedFields.push('goal_text');
   }
 
   if (Object.prototype.hasOwnProperty.call(fields, 'closeCondition')) {

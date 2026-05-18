@@ -63,6 +63,7 @@ function parseArgs(args) {
     title: null,
     decisionSummary: null,
     closeCondition: null,
+    goalText: null,
     state: null,
     stale: false,
     aged: false,
@@ -185,6 +186,15 @@ function parseArgs(args) {
       i += 1;
       continue;
     }
+    if (arg.startsWith('--goal=')) {
+      options.goalText = arg.slice('--goal='.length).trim();
+      continue;
+    }
+    if (arg === '--goal') {
+      options.goalText = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
     if (arg.startsWith('--state=')) {
       options.state = arg.slice('--state='.length).trim();
       continue;
@@ -270,9 +280,10 @@ function parseArgs(args) {
       && options.nextAction === null
       && options.decisionSummary === null
       && options.closeCondition === null
+      && options.goalText === null
       && options.state === null
     ) {
-      throw new Error('kb intent update requires at least one field such as --title, --focus, --next-action, --decision-summary, --close-condition, or --state.');
+      throw new Error('kb intent update requires at least one field such as --title, --goal, --focus, --next-action, --decision-summary, --close-condition, or --state.');
     }
   } else if (options.sub === 'archive') {
     if (rest.length < 2) {
@@ -1194,6 +1205,7 @@ async function runUpdate(ctx, options, cwd) {
     lastUpdated: options.lastUpdated,
     decisionSummary: options.decisionSummary,
     closeCondition: options.closeCondition,
+    goalText: options.goalText,
     state: options.state,
   });
 
@@ -1681,7 +1693,7 @@ function printHelp() {
   console.log('  kb intent status [<id-or-slug>] [--json]');
   console.log('  kb intent list [--backlog|--closed|--archived|--all] [--json]');
   console.log('  kb intent focus <id> [--current="..."] [--next="..."] [--date=YYYY-MM-DD] [--json]');
-  console.log('  kb intent update <id> [--title="..."] [--focus="..."] [--next-action="..."] [--decision-summary="..."] [--close-condition="..."] [--state=<lifecycle>] [--json]');
+  console.log('  kb intent update <id> [--title="..."] [--goal="..."] [--focus="..."] [--next-action="..."] [--decision-summary="..."] [--close-condition="..."] [--state=<lifecycle>] [--json]');
   console.log('  kb intent cleanup [--stale] [--aged] [--json]');
   console.log('  kb intent apply <id> [--release] [--yes] [--json]');
   console.log('  kb intent close <id> --type=released --release=vX.Y.Z [--json]');

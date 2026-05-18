@@ -27,6 +27,7 @@ export type IntentDetail = {
   status: string | null
   mode: string | null
   changeType: string | null
+  goalText: string | null
   decisionSummary: string | null
   closeCondition: string | null
   goal: string | null

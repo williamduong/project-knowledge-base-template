@@ -1024,9 +1024,10 @@ function summarizeIntentDetail(intentId, options = {}) {
     status: record.meta?.status ?? null,
     mode: record.meta?.mode ?? null,
     changeType: record.meta?.change_type ?? null,
+    goalText: record.meta?.goal_text ?? null,
     decisionSummary: record.meta?.decision_summary ?? null,
     closeCondition: record.meta?.close_condition ?? null,
-    goal: narrative.goal,
+    goal: record.meta?.goal_text ?? narrative.goal,
     summary: narrative.summary,
     focusCurrent: focus.current ?? null,
     focusNextAction: focus.next_action ?? null,
@@ -1036,6 +1037,36 @@ function summarizeIntentDetail(intentId, options = {}) {
     stagedFiles,
     workspacePath: record.workspacePath ? path.relative(repoRoot, record.workspacePath).replace(/\\/g, '/') : null,
     sourceFile: record.metaPath ? path.relative(repoRoot, record.metaPath).replace(/\\/g, '/') : null,
+  };
+}
+
+function summarizeIntentListSignals(intentId) {
+  const detail = summarizeIntentDetail(intentId, { includeGit: false });
+  if (!detail) {
+    return {
+      taskCount: 0,
+      taskDoneCount: 0,
+      goal: null,
+      goalText: null,
+      focusCurrent: null,
+      focusNextAction: null,
+      chaosEstimate: null,
+    };
+  }
+
+  const taskCount = Array.isArray(detail.tasks) ? detail.tasks.length : 0;
+  const taskDoneCount = Array.isArray(detail.tasks)
+    ? detail.tasks.filter((task) => task?.done || normalizeLifecycle(task?.status) === 'done').length
+    : 0;
+
+  return {
+    taskCount,
+    taskDoneCount,
+    goal: detail.goal ?? null,
+    goalText: detail.goalText ?? null,
+    focusCurrent: detail.focusCurrent ?? null,
+    focusNextAction: detail.focusNextAction ?? null,
+    chaosEstimate: detail.chaosEstimate ?? null,
   };
 }
 
@@ -1277,12 +1308,15 @@ function summarizeRulesResult(listResult, lintResult) {
       title: pack?.title ?? pack?.id ?? null,
       context: pack?.context ?? null,
       description: pack?.description ?? null,
+      promptSummary: pack?.promptSummary ?? null,
       ruleIds: Array.isArray(pack?.ruleIds) ? pack.ruleIds : [],
       stats: {
         count: pack?.stats?.count ?? 0,
         hardCount: pack?.stats?.hardCount ?? 0,
         masterCount: pack?.stats?.masterCount ?? 0,
         softCount: pack?.stats?.softCount ?? 0,
+        toolAssociationCoverage: pack?.stats?.toolAssociationCoverage ?? 0,
+        enforcementCoverage: pack?.stats?.enforcementCoverage ?? 0,
         toolCoverage: pack?.stats?.toolCoverage ?? 0,
       },
     })),
@@ -2814,6 +2848,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
             blocks: frontmatter.blocks || null,
             mode: frontmatter.mode || 'normal',
             strategic_mode: frontmatter.strategic_mode || null,
+            ...summarizeIntentListSignals(normalizeIntentId(frontmatter.id || id)),
           });
         } catch (err) {
           console.error(`Error reading intent ${id}:`, err.message);
@@ -3259,6 +3294,10 @@ export function createApp(commandRunner = executeBridgeCommand) {
     if (Object.prototype.hasOwnProperty.call(fields, 'decision_summary')) {
       args.push('--decision-summary', String(fields.decision_summary ?? '').trim());
       updateFields.push('decision_summary');
+    }
+    if (Object.prototype.hasOwnProperty.call(fields, 'goal_text')) {
+      args.push('--goal', String(fields.goal_text ?? '').trim());
+      updateFields.push('goal_text');
     }
     if (Object.prototype.hasOwnProperty.call(fields, 'close_condition')) {
       args.push('--close-condition', String(fields.close_condition ?? '').trim());

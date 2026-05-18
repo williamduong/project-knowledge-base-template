@@ -5,6 +5,7 @@ import flag from '@iconify-icons/lucide/flag'
 import flagTriangleRight from '@iconify-icons/lucide/flag-triangle-right'
 import listTodo from '@iconify-icons/lucide/list-todo'
 import network from '@iconify-icons/lucide/network'
+import goal from '@iconify-icons/lucide/goal'
 import target from '@iconify-icons/lucide/target'
 import activity from '@iconify-icons/lucide/activity'
 import archive from '@iconify-icons/lucide/archive'
@@ -12,7 +13,6 @@ import chevronDown from '@iconify-icons/lucide/chevron-down'
 import chevronLeft from '@iconify-icons/lucide/chevron-left'
 import chevronRight from '@iconify-icons/lucide/chevron-right'
 import chevronUp from '@iconify-icons/lucide/chevron-up'
-import clock3 from '@iconify-icons/lucide/clock-3'
 import xIcon from '@iconify-icons/lucide/x'
 import pencilLine from '@iconify-icons/lucide/pencil-line'
 import circleDashed from '@iconify-icons/lucide/circle-dashed'
@@ -29,6 +29,7 @@ type GoalCard = {
   state: string
   progress: number
   caption: string
+  detail: string[]
   icon: typeof target
   tone: 'active' | 'warning' | 'neutral' | 'done'
 }
@@ -40,6 +41,8 @@ type MilestoneBlock = {
   state: 'draft' | 'backlog' | 'active' | 'closed'
   metrics: string
   objectives: string[]
+  goals: string[]
+  goalCount: number
 }
 
 type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' | 'dropped' | 'selected'
@@ -171,58 +174,6 @@ function summarizeMilestoneState(intents: IntentListItem[]) {
   return { state: 'closed' as const, progress: closed === total ? 100 : progress }
 }
 
-function buildGoalCards(intents: IntentListItem[], focusIntentId: string | null, activeIntentId: string | null, snapshotMetadata: { generatedAt?: string | null; reloadRecommended?: boolean | null } | undefined): GoalCard[] {
-  const total = intents.length || 1
-  const active = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
-  const backlog = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length
-  const completed = intents.filter((intent) => ['closed', 'archived'].includes(normalizeLifecycle(intent.lifecycle))).length
-  const focusAligned = focusIntentId ? intents.some((intent) => intent.id === focusIntentId) : false
-  const snapshotLive = snapshotMetadata?.generatedAt ? true : false
-
-  return [
-    {
-      id: 'active-delivery',
-      label: 'Active Delivery',
-      metric: `${active} intents`,
-      state: active > 0 ? 'in-flight' : 'idle',
-      progress: clampProgress((active / total) * 100),
-      caption: `${backlog} backlog waiting behind the active stream.`,
-      icon: activity,
-      tone: active > 0 ? 'active' : 'neutral',
-    },
-    {
-      id: 'focus-alignment',
-      label: 'Focus Alignment',
-      metric: focusIntentId ?? 'missing focus',
-      state: focusAligned ? 'aligned' : 'drift',
-      progress: focusAligned ? 100 : 38,
-      caption: activeIntentId ? `Current active record: ${activeIntentId}.` : 'No active intent surfaced by snapshot.',
-      icon: target,
-      tone: focusAligned ? 'done' : 'warning',
-    },
-    {
-      id: 'completion-flow',
-      label: 'Completion Flow',
-      metric: `${completed}/${intents.length} done`,
-      state: completed > 0 ? 'moving' : 'starting',
-      progress: clampProgress((completed / total) * 100),
-      caption: 'Counts archive and closed intents as delivered milestones.',
-      icon: archive,
-      tone: completed > 0 ? 'done' : 'neutral',
-    },
-    {
-      id: 'snapshot-readiness',
-      label: 'Snapshot Readiness',
-      metric: snapshotLive ? 'live contract' : 'pending',
-      state: snapshotMetadata?.reloadRecommended ? 'reload' : 'fresh',
-      progress: snapshotMetadata?.reloadRecommended ? 62 : 100,
-      caption: snapshotMetadata?.reloadRecommended ? 'Bridge says UI should reload signals.' : 'Bridge snapshot is healthy enough for live intent browsing.',
-      icon: clock3,
-      tone: snapshotMetadata?.reloadRecommended ? 'warning' : 'active',
-    },
-  ]
-}
-
 function buildMilestones(intents: IntentListItem[]) {
   const buckets = new Map<string, IntentListItem[]>()
 
@@ -241,6 +192,9 @@ function buildMilestones(intents: IntentListItem[]) {
       const objectives = bucketIntents
         .slice(0, 3)
         .map((intent) => intent.title?.replace(/^"|"$/g, '') || intent.id)
+      const goals = bucketIntents
+        .map((intent) => String(intent.goalText ?? intent.goal ?? '').trim())
+        .filter(Boolean)
 
       return {
         id,
@@ -249,9 +203,11 @@ function buildMilestones(intents: IntentListItem[]) {
         state,
         metrics: `${bucketIntents.length} intents · ${active} active · ${backlog} backlog`,
         objectives,
+        goals,
+        goalCount: goals.length,
       } satisfies MilestoneBlock
     })
-    .sort((left, right) => versionRank(right.id) - versionRank(left.id))
+    .sort((left, right) => versionRank(left.id) - versionRank(right.id))
 }
 
 function statusTone(value: string) {
@@ -285,9 +241,9 @@ function sortIndicator(active: string, current: string, direction: 'asc' | 'desc
   return direction === 'asc' ? ' ↑' : ' ↓'
 }
 
-function GoalCardView({ card }: { card: GoalCard }) {
-  return (
-    <article className={`intent-goal-card intent-goal-card-${card.tone}`}>
+function GoalCardView({ card, onClick }: { card: GoalCard; onClick?: () => void }) {
+  const content = (
+    <>
       <div className="intent-goal-head">
         <div className="intent-goal-head-copy">
           <span className="intent-goal-icon" aria-hidden="true">
@@ -306,7 +262,24 @@ function GoalCardView({ card }: { card: GoalCard }) {
       <div className="intent-goal-foot">
         <span>{card.progress}%</span>
         <p>{card.caption}</p>
+        {card.detail.map((line) => (
+          <p key={`${card.id}-${line}`} className="intent-goal-detail-line">{line}</p>
+        ))}
       </div>
+    </>
+  )
+
+  if (onClick) {
+    return (
+      <button type="button" className={`intent-goal-card intent-goal-card-${card.tone} intent-goal-card-button`} onClick={onClick}>
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <article className={`intent-goal-card intent-goal-card-${card.tone}`}>
+      {content}
     </article>
   )
 }
@@ -553,6 +526,7 @@ export function IntentsListPage() {
   const activeIntentId = snapshotMetadata?.activeIntentId ?? null
   const [selectedIntentId, setSelectedIntentId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [goalsDrawerOpen, setGoalsDrawerOpen] = useState(false)
   const [expandedTaskIndex, setExpandedTaskIndex] = useState<number | null>(null)
   const [milestoneStartIndex, setMilestoneStartIndex] = useState(0)
   const [healthFilter, setHealthFilter] = useState<IntentHealthFilter>('all')
@@ -568,6 +542,9 @@ export function IntentsListPage() {
   const [activeEditor, setActiveEditor] = useState<EditableField | null>(null)
   const [editorDraft, setEditorDraft] = useState('')
   const [editorError, setEditorError] = useState<string | null>(null)
+  const [goalEditorIntentId, setGoalEditorIntentId] = useState<string | null>(null)
+  const [goalEditorDraft, setGoalEditorDraft] = useState('')
+  const [goalEditorError, setGoalEditorError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!intents.length) {
@@ -588,16 +565,18 @@ export function IntentsListPage() {
     setExpandedTaskIndex(null)
     setActiveEditor(null)
     setEditorError(null)
+    setGoalEditorIntentId(null)
+    setGoalEditorError(null)
   }, [selectedIntentId])
 
   useEffect(() => {
-    if (!drawerOpen) return
+    if (!drawerOpen && !goalsDrawerOpen) return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [drawerOpen])
+  }, [drawerOpen, goalsDrawerOpen])
 
   const detailQuery = useIntentDetail(selectedIntentId)
   const detail = detailQuery.data?.detail ?? null
@@ -609,6 +588,8 @@ export function IntentsListPage() {
     onSuccess: async () => {
       setActiveEditor(null)
       setEditorError(null)
+      setGoalEditorIntentId(null)
+      setGoalEditorError(null)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['intent-detail', selectedIntentId] }),
         queryClient.invalidateQueries({ queryKey: ['intents-list'] }),
@@ -616,7 +597,9 @@ export function IntentsListPage() {
       ])
     },
     onError: (error) => {
-      setEditorError(error instanceof Error ? error.message : 'Intent update failed.')
+      const message = error instanceof Error ? error.message : 'Intent update failed.'
+      setEditorError(message)
+      setGoalEditorError(message)
     },
   })
 
@@ -627,16 +610,116 @@ export function IntentsListPage() {
     archived: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'archived').length,
     dropped: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'dropped').length,
   }), [intents])
-
-  const goalCards = useMemo(
-    () => buildGoalCards(intents, focusIntentId, activeIntentId, snapshotMetadata),
-    [activeIntentId, focusIntentId, intents, snapshotMetadata],
-  )
   const milestones = useMemo(() => buildMilestones(intents), [intents])
   const visibleMilestones = useMemo(
     () => milestones.slice(milestoneStartIndex, milestoneStartIndex + MILESTONES_PER_VIEW),
     [milestoneStartIndex, milestones],
   )
+  const currentIntentRecord = useMemo(
+    () => intents.find((intent) => intent.id === selectedIntentId) ?? intents.find((intent) => intent.id === focusIntentId) ?? null,
+    [focusIntentId, intents, selectedIntentId],
+  )
+  const currentGoalText = String(detail?.goalText ?? detail?.goal ?? currentIntentRecord?.goalText ?? currentIntentRecord?.goal ?? '').trim()
+  const currentFocusSummary = detail?.focusCurrent ?? currentIntentRecord?.focusCurrent ?? null
+  const currentNextAction = detail?.focusNextAction ?? currentIntentRecord?.focusNextAction ?? null
+  const currentChaos = detail?.chaosEstimate ?? currentIntentRecord?.chaosEstimate ?? null
+  const intentsWithGoals = useMemo(
+    () => intents.filter((intent) => String(intent.goalText ?? intent.goal ?? '').trim()).length,
+    [intents],
+  )
+  const milestonesWithGoals = useMemo(
+    () => milestones.filter((milestone) => milestone.goalCount > 0).length,
+    [milestones],
+  )
+  const selectedTaskGoalCount = detail?.tasks.length ? (currentGoalText ? detail.tasks.length : 0) : 0
+  const selectedTaskMissingGoalCount = detail?.tasks.length ? detail.tasks.length - selectedTaskGoalCount : 0
+  const goalHealthProgress = intents.length ? clampProgress((intentsWithGoals / intents.length) * 100) : 0
+  const intentHealthProgress = intents.length
+    ? clampProgress(((lifecycleCounts.active + lifecycleCounts.closed + lifecycleCounts.archived) / intents.length) * 100)
+    : 0
+  const goalCards = useMemo<GoalCard[]>(() => [
+    {
+      id: 'system-goals',
+      label: 'System Goals',
+      metric: `${intentsWithGoals}/${intents.length || 0} intents`,
+      state: intentsWithGoals === intents.length && milestonesWithGoals === milestones.length ? 'aligned' : 'needs coverage',
+      progress: goalHealthProgress,
+      caption: `Milestones ${milestonesWithGoals}/${milestones.length || 0} · Selected tasks ${selectedTaskGoalCount}/${detail?.tasks.length ?? 0}`,
+      detail: [
+        currentGoalText ? `Current goal: ${currentGoalText}` : 'Current selected intent still has no explicit goal.',
+        selectedTaskMissingGoalCount > 0 ? `${selectedTaskMissingGoalCount} selected tasks are still inheriting no goal.` : 'Selected tasks are linked to an intent goal.',
+      ],
+      icon: goal,
+      tone: intentsWithGoals === intents.length ? 'done' : 'warning',
+    },
+    {
+      id: 'focus-details',
+      label: 'Focus Details',
+      metric: currentIntentRecord?.id ?? 'no focus intent',
+      state: currentFocusSummary ? 'tracked' : 'missing',
+      progress: currentFocusSummary && currentNextAction ? 100 : currentFocusSummary ? 72 : 24,
+      caption: currentFocusSummary ?? 'No detailed focus summary surfaced yet.',
+      detail: [
+        currentNextAction ? `Next: ${currentNextAction}` : 'Next action is not recorded yet.',
+        detail?.focusUpdatedAt ? `Updated: ${formatTimestamp(detail.focusUpdatedAt)}` : 'Focus timestamp unavailable.',
+      ],
+      icon: flagTriangleRight,
+      tone: currentFocusSummary ? 'active' : 'warning',
+    },
+    {
+      id: 'chaos-estimate',
+      label: 'Chaos & Estimate',
+      metric: currentChaos?.projectedScore != null || currentChaos?.currentScore != null
+        ? `${currentChaos?.projectedScore ?? currentChaos?.currentScore}`
+        : 'n/a',
+      state: currentChaos?.projectedLevel ?? currentChaos?.currentLevel ?? 'unknown',
+      progress: clampProgress(Number(currentChaos?.projectedScore ?? currentChaos?.currentScore ?? 0)),
+      caption: currentChaos?.warning ?? 'No chaos warning attached to the selected intent.',
+      detail: [
+        `Current: ${currentChaos?.currentScore ?? 'n/a'} · ${currentChaos?.currentLevel ?? 'n/a'}`,
+        `Projected: ${currentChaos?.projectedScore ?? 'n/a'} · ${currentChaos?.projectedLevel ?? 'n/a'}`,
+      ],
+      icon: activity,
+      tone: currentChaos?.warning ? 'warning' : currentChaos ? 'active' : 'neutral',
+    },
+    {
+      id: 'intent-health',
+      label: 'Intent Health',
+      metric: `${lifecycleCounts.active} active / ${intents.length || 0}`,
+      state: lifecycleCounts.dropped > 0 ? 'attention' : snapshotMetadata?.reloadRecommended ? 'reload' : 'stable',
+      progress: intentHealthProgress,
+      caption: `Backlog ${lifecycleCounts.backlog} · Closed ${lifecycleCounts.closed} · Archived ${lifecycleCounts.archived}`,
+      detail: [
+        lifecycleCounts.dropped > 0 ? `${lifecycleCounts.dropped} dropped intents still need review.` : 'No dropped intents in the current workspace slice.',
+        snapshotMetadata?.reloadRecommended ? `Snapshot reload recommended: ${snapshotMetadata.reloadReasons.join(', ')}` : 'Snapshot and intent list are currently aligned enough for operator work.',
+      ],
+      icon: network,
+      tone: lifecycleCounts.dropped > 0 || snapshotMetadata?.reloadRecommended ? 'warning' : 'done',
+    },
+  ], [
+    currentChaos,
+    currentFocusSummary,
+    currentGoalText,
+    currentIntentRecord?.id,
+    currentNextAction,
+    detail?.focusUpdatedAt,
+    detail?.tasks.length,
+    goalHealthProgress,
+    intentHealthProgress,
+    intents.length,
+    intentsWithGoals,
+    lifecycleCounts.active,
+    lifecycleCounts.archived,
+    lifecycleCounts.backlog,
+    lifecycleCounts.closed,
+    lifecycleCounts.dropped,
+    milestones.length,
+    milestonesWithGoals,
+    selectedTaskGoalCount,
+    selectedTaskMissingGoalCount,
+    snapshotMetadata?.reloadReasons,
+    snapshotMetadata?.reloadRecommended,
+  ])
 
   const filteredIntents = useMemo(() => {
     return intents.filter((intent) => {
@@ -705,6 +788,19 @@ export function IntentsListPage() {
   const intentPageStart = sortedIntents.length ? (intentPage - 1) * INTENTS_PER_PAGE + 1 : 0
   const intentPageEnd = sortedIntents.length ? Math.min(intentPage * INTENTS_PER_PAGE, sortedIntents.length) : 0
   const milestoneWindowEnd = Math.min(milestoneStartIndex + MILESTONES_PER_VIEW, milestones.length)
+  const goalIntentRows = useMemo(
+    () => [...intents].sort((left, right) => String(left.id).localeCompare(String(right.id))),
+    [intents],
+  )
+  const selectedTaskGoalRows = useMemo(
+    () => (detail?.tasks ?? []).map((task, index) => ({
+      id: `T-${String(index + 1).padStart(2, '0')}`,
+      title: task.title ?? `Task ${index + 1}`,
+      goal: currentGoalText,
+      status: currentGoalText ? 'linked' : 'missing',
+    })),
+    [currentGoalText, detail?.tasks],
+  )
 
   const refreshAll = async () => {
     await Promise.all([
@@ -740,6 +836,18 @@ export function IntentsListPage() {
     setEditorError(null)
   }
 
+  const startGoalEdit = (intentId: string, currentValue: string) => {
+    setGoalEditorIntentId(intentId)
+    setGoalEditorDraft(currentValue)
+    setGoalEditorError(null)
+  }
+
+  const cancelGoalEdit = () => {
+    setGoalEditorIntentId(null)
+    setGoalEditorDraft('')
+    setGoalEditorError(null)
+  }
+
   const saveEdit = async (field: EditableField) => {
     if (!selectedIntentId) return
     const bodyMap: Record<EditableField, Record<string, string>> = {
@@ -750,6 +858,10 @@ export function IntentsListPage() {
       closeCondition: { close_condition: editorDraft.trim() },
     }
     await intentUpdateMutation.mutateAsync({ id: selectedIntentId, body: bodyMap[field] })
+  }
+
+  const saveGoalEdit = async (intentId: string) => {
+    await intentUpdateMutation.mutateAsync({ id: intentId, body: { goal_text: goalEditorDraft.trim() } })
   }
 
   const detailDescription = detail ? (detail.decisionSummary ?? detail.summary ?? detail.goal ?? '') : ''
@@ -858,7 +970,11 @@ export function IntentsListPage() {
       <section className="intent-section-shell">
         <div className="intent-goal-grid compact">
           {goalCards.map((card) => (
-            <GoalCardView key={card.id} card={card} />
+            <GoalCardView
+              key={card.id}
+              card={card}
+              onClick={card.id === 'system-goals' ? () => setGoalsDrawerOpen(true) : undefined}
+            />
           ))}
         </div>
 
@@ -951,6 +1067,7 @@ export function IntentsListPage() {
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('title')}>Intent{sortIndicator('title', intentSortKey, intentSortDirection)}</button>
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('milestone')}>Milestone{sortIndicator('milestone', intentSortKey, intentSortDirection)}</button>
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('lifecycle')}>Lifecycle{sortIndicator('lifecycle', intentSortKey, intentSortDirection)}</button>
+              <span role="columnheader">Tasks</span>
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('progress')}>Progress{sortIndicator('progress', intentSortKey, intentSortDirection)}</button>
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('runtime')}>Runtime{sortIndicator('runtime', intentSortKey, intentSortDirection)}</button>
               <span role="columnheader">Blockers</span>
@@ -976,6 +1093,11 @@ export function IntentsListPage() {
                   </div>
                   <div role="cell">
                     <span className={`status-pill ${statusTone(lifecycle)}`}>{intent.lifecycle ?? 'unknown'}</span>
+                  </div>
+                  <div role="cell">
+                    <span className="meta-pill">
+                      {(intent.taskDoneCount ?? 0)}/{(intent.taskCount ?? 0)}
+                    </span>
                   </div>
                   <div role="cell">
                     <div className="intent-grid-progress">
@@ -1029,6 +1151,162 @@ export function IntentsListPage() {
           </div>
         ) : null}
       </section>
+
+      {goalsDrawerOpen ? (
+        <div className="prototype-overlay-backdrop" onClick={() => setGoalsDrawerOpen(false)}>
+          <aside className="prototype-drawer intent-goal-drawer" onClick={(event) => event.stopPropagation()}>
+            <div className="panel-toolbar intent-detail-toolbar">
+              <div>
+                <p className="workspace-eyebrow">Goal Module</p>
+                <h2>System Goals</h2>
+              </div>
+              <button className="icon-tool-button" type="button" onClick={() => setGoalsDrawerOpen(false)} aria-label="Close goals drawer">
+                <Icon icon={xIcon} />
+              </button>
+            </div>
+
+            <div className="intent-drawer-stack">
+              <article className="intent-drawer-block">
+                <div className="panel-toolbar">
+                  <div>
+                    <p className="workspace-eyebrow">Goal Health</p>
+                    <h3>Coverage across milestone, intent, and task</h3>
+                  </div>
+                </div>
+                <div className="kb-health-bar intent-health-bar">
+                  <div className="kb-health-group">
+                    <span className="runtime-overview-label">Milestones</span>
+                    <span className={`status-pill ${milestonesWithGoals === milestones.length ? 'status-good' : 'status-warn'}`}>
+                      {milestonesWithGoals}/{milestones.length || 0} with goals
+                    </span>
+                  </div>
+                  <div className="kb-health-group">
+                    <span className="runtime-overview-label">Intents</span>
+                    <span className={`status-pill ${intentsWithGoals === intents.length ? 'status-good' : 'status-warn'}`}>
+                      {intentsWithGoals}/{intents.length || 0} with goals
+                    </span>
+                  </div>
+                  <div className="kb-health-group">
+                    <span className="runtime-overview-label">Selected Tasks</span>
+                    <span className={`status-pill ${selectedTaskMissingGoalCount === 0 ? 'status-good' : 'status-warn'}`}>
+                      {selectedTaskGoalCount}/{detail?.tasks.length ?? 0} linked
+                    </span>
+                  </div>
+                  <div className="kb-health-next">
+                    <span className="runtime-overview-label">Rule</span>
+                    <span className="kb-health-next-text">Milestone, intent, and task should never drift away from a parent goal.</span>
+                  </div>
+                </div>
+              </article>
+
+              <article className="intent-drawer-block">
+                <div className="panel-toolbar">
+                  <div>
+                    <p className="workspace-eyebrow">Milestone Goals</p>
+                    <h3>Version buckets must be goal-backed</h3>
+                  </div>
+                </div>
+                <div className="intent-goal-matrix">
+                  {milestones.map((milestone) => (
+                    <div key={milestone.id} className={`intent-goal-matrix-row intent-goal-matrix-row-${milestoneVisualState(milestone.state)}`}>
+                      <div>
+                        <span className="runtime-overview-label">{milestone.label}</span>
+                        <strong>{milestone.metrics}</strong>
+                      </div>
+                      <div>
+                        <span className={`status-pill ${milestone.goalCount > 0 ? 'status-good' : 'status-warn'}`}>
+                          {milestone.goalCount > 0 ? `${milestone.goalCount} goals` : 'missing goals'}
+                        </span>
+                      </div>
+                      <div className="intent-goal-matrix-copy">
+                        <span>{milestone.goals[0] ?? 'No linked goals yet. Add goals to at least one child intent.'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="intent-drawer-block">
+                <div className="panel-toolbar">
+                  <div>
+                    <p className="workspace-eyebrow">Intent Goals</p>
+                    <h3>Edit the goal text that child tasks inherit</h3>
+                  </div>
+                </div>
+                <div className="intent-goal-matrix">
+                  {goalIntentRows.map((intent) => {
+                    const currentValue = String(intent.goalText ?? intent.goal ?? '').trim()
+                    const isEditing = goalEditorIntentId === intent.id
+                    return (
+                      <div key={intent.id} className={`intent-goal-matrix-row intent-goal-matrix-row-${normalizeLifecycle(intent.lifecycle)}`}>
+                        <div>
+                          <strong>{intent.title?.replace(/^"|"$/g, '') || intent.id}</strong>
+                          <span className="intent-id">{intent.id}</span>
+                        </div>
+                        <div>
+                          <span className={`status-pill ${currentValue ? 'status-good' : 'status-warn'}`}>
+                            {currentValue ? 'goal linked' : 'missing'}
+                          </span>
+                        </div>
+                        <div className="intent-goal-matrix-copy">
+                          {isEditing ? (
+                            <div className="intent-inline-editor">
+                              <textarea value={goalEditorDraft} onChange={(event) => setGoalEditorDraft(event.target.value)} rows={3} />
+                              <div className="intent-inline-editor-actions">
+                                <button className="tool-button tool-button-primary" type="button" onClick={() => void saveGoalEdit(intent.id)} disabled={intentUpdateMutation.isPending}>
+                                  {intentUpdateMutation.isPending ? 'Saving...' : 'Save'}
+                                </button>
+                                <button className="tool-button" type="button" onClick={cancelGoalEdit}>Cancel</button>
+                              </div>
+                              {goalEditorError ? <p className="runtime-warning-text">{goalEditorError}</p> : null}
+                            </div>
+                          ) : (
+                            <button className="intent-goal-inline-button" type="button" onClick={() => startGoalEdit(intent.id, currentValue)}>
+                              <span>{currentValue || 'Add goal text'}</span>
+                              <Icon icon={pencilLine} aria-hidden="true" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </article>
+
+              <article className="intent-drawer-block">
+                <div className="panel-toolbar">
+                  <div>
+                    <p className="workspace-eyebrow">Task Goal Links</p>
+                    <h3>Selected intent task alignment</h3>
+                  </div>
+                </div>
+                {selectedTaskGoalRows.length ? (
+                  <div className="intent-goal-matrix">
+                    {selectedTaskGoalRows.map((task) => (
+                      <div key={task.id} className="intent-goal-matrix-row intent-goal-matrix-row-task">
+                        <div>
+                          <span className="runtime-overview-label">{task.id}</span>
+                          <strong>{task.title}</strong>
+                        </div>
+                        <div>
+                          <span className={`status-pill ${task.status === 'linked' ? 'status-good' : 'status-warn'}`}>
+                            {task.status}
+                          </span>
+                        </div>
+                        <div className="intent-goal-matrix-copy">
+                          <span>{task.goal || 'No inherited goal because the parent intent still has no explicit goal text.'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rules-cell-copy">Select an intent with extracted tasks to inspect task-to-goal linkage.</p>
+                )}
+              </article>
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
       {drawerOpen && selectedIntentId ? (
         <div className="prototype-overlay-backdrop" onClick={() => setDrawerOpen(false)}>

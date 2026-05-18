@@ -9,6 +9,20 @@ export type IntentListItem = {
   blocks: string | null
   mode: string | null
   strategic_mode: string | null
+  taskCount?: number
+  taskDoneCount?: number
+  goal?: string | null
+  goalText?: string | null
+  focusCurrent?: string | null
+  focusNextAction?: string | null
+  chaosEstimate?: {
+    currentScore: number | null
+    currentLevel: string | null
+    estimatedDelta: number | null
+    projectedScore: number | null
+    projectedLevel: string | null
+    warning: string | null
+  } | null
 }
 
 export type IntentsListResponse = {
