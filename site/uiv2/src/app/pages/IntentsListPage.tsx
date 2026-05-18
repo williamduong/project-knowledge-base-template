@@ -13,13 +13,6 @@ import chevronUp from '@iconify-icons/lucide/chevron-up'
 import clock3 from '@iconify-icons/lucide/clock-3'
 import xIcon from '@iconify-icons/lucide/x'
 import pencilLine from '@iconify-icons/lucide/pencil-line'
-import database from '@iconify-icons/lucide/database'
-import bot from '@iconify-icons/lucide/bot'
-import fileText from '@iconify-icons/lucide/file-text'
-import shield from '@iconify-icons/lucide/shield'
-import server from '@iconify-icons/lucide/server'
-import gitBranch from '@iconify-icons/lucide/git-branch'
-import layers3 from '@iconify-icons/lucide/layers-3'
 import { useIntentsList, type IntentListItem } from '../hooks/useIntentsList'
 import { useIntentDetail, type IntentTask } from '../hooks/useIntentDetail'
 import { useSystemSnapshot, systemSnapshotQueryKey } from '../hooks/useSystemSnapshot'
@@ -48,7 +41,7 @@ type MilestoneBlock = {
 type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' | 'dropped' | 'selected'
 type IntentSortKey = 'title' | 'milestone' | 'lifecycle' | 'progress' | 'runtime'
 type DetailSectionKey = 'summary' | 'detail' | 'relations' | 'tasks'
-type EditableField = 'title' | 'summaryText' | 'focusCurrent' | 'focusNextAction'
+type EditableField = 'title' | 'summaryText' | 'focusCurrent' | 'focusNextAction' | 'closeCondition'
 
 type IntentPatchResponse = {
   ok: boolean
@@ -676,6 +669,7 @@ export function IntentsListPage() {
       summaryText: { decision_summary: editorDraft.trim() },
       focusCurrent: { focus: editorDraft.trim() },
       focusNextAction: { next_action: editorDraft.trim() },
+      closeCondition: { close_condition: editorDraft.trim() },
     }
     await intentUpdateMutation.mutateAsync({ id: selectedIntentId, body: bodyMap[field] })
   }
@@ -684,19 +678,42 @@ export function IntentsListPage() {
   const rulesSummary = (snapshot?.rulesSummary as { summary?: { count?: number; packCount?: number; topRules?: Array<{ id: string }> } } | undefined)?.summary
   const runtimeSummary = (snapshot?.runtimeServices as { summary?: { runningCount?: number }; schedules?: Array<{ id: string }> } | undefined)
   const gatesSummary = (snapshot?.gates as { items?: Array<{ gate: string }>; readiness?: string } | undefined)
-  const relationEntries = detail ? [
-    { label: 'Goal', value: detail.goal ?? detail.summary ?? 'No explicit goal yet', icon: target },
-    { label: 'Milestone / Version', value: intentVersionLabel(detail.id ?? selectedIntentId ?? ''), icon: flagTriangleRight },
-    { label: 'Pipeline', value: `release pipeline · ${((snapshot?.homeSummary as { summary?: { pipeline?: { stepCount?: number } } } | undefined)?.summary?.pipeline?.stepCount ?? 0)} steps`, icon: gitBranch },
-    { label: 'Rules', value: `${rulesSummary?.count ?? 0} rules · ${rulesSummary?.packCount ?? 0} packs`, icon: shield },
-    { label: 'Gates', value: `${gatesSummary?.items?.length ?? 0} gates · ${gatesSummary?.readiness ?? 'unknown'}`, icon: shield },
-    { label: 'Document (KB)', value: detail.sourceFile ?? 'none', icon: fileText },
-    { label: 'Agent', value: 'SVFactory maintainer surface', icon: bot },
-    { label: 'Prompt', value: '.github/agents + svfactory prompts', icon: layers3 },
-    { label: 'Database', value: 'focus-state.db + SQLite-backed focus store', icon: database },
-    { label: 'Services', value: `${runtimeSummary?.summary?.runningCount ?? 0} runtime services`, icon: server },
-    { label: 'Cron', value: `${runtimeSummary?.schedules?.length ?? 0} schedules`, icon: clock3 },
-    { label: 'Intent workspace', value: detail.workspacePath ?? 'none', icon: network },
+  const detailDescription = detail ? (detail.decisionSummary ?? detail.summary ?? detail.goal ?? '') : ''
+  const detailProgress = detail ? computeIntentProgress(detail.lifecycle) : 0
+  const relationSections = detail ? [
+    {
+      title: 'Intent Topology',
+      rows: [
+        { type: 'Goal', object: detail.goal ?? 'No explicit goal extracted yet', state: detail.goal ? 'declared' : 'missing', evidence: detail.sourceFile ?? 'intent.md' },
+        { type: 'Milestone / Version', object: intentVersionLabel(detail.id ?? selectedIntentId ?? ''), state: normalizeLifecycle(detail.lifecycle), evidence: detail.id ?? selectedIntentId ?? 'unknown' },
+        { type: 'Document (KB)', object: detail.sourceFile ?? 'none', state: detail.sourceFile ? 'linked' : 'missing', evidence: `${detail.stagedFiles.length} staged files` },
+      ],
+    },
+    {
+      title: 'Governance & Flow',
+      rows: [
+        { type: 'Pipeline', object: 'release pipeline', state: `${((snapshot?.homeSummary as { summary?: { pipeline?: { stepCount?: number } } } | undefined)?.summary?.pipeline?.stepCount ?? 0)} steps`, evidence: 'workspace snapshot' },
+        { type: 'Rules', object: `${rulesSummary?.count ?? 0} rules`, state: `${rulesSummary?.packCount ?? 0} packs`, evidence: rulesSummary?.topRules?.[0]?.id ?? 'registry summary' },
+        { type: 'Gates', object: `${gatesSummary?.items?.length ?? 0} operator gates`, state: gatesSummary?.readiness ?? 'unknown', evidence: 'system snapshot' },
+      ],
+    },
+    {
+      title: 'Runtime & Storage',
+      rows: [
+        { type: 'Services', object: `${runtimeSummary?.summary?.runningCount ?? 0} runtime services`, state: 'managed', evidence: 'runtime-services summary' },
+        { type: 'Cron', object: `${runtimeSummary?.schedules?.length ?? 0} schedules`, state: 'registered', evidence: 'runtime-services summary' },
+        { type: 'Database', object: 'focus-state.db', state: 'sqlite-backed', evidence: 'focus-state resolver' },
+        { type: 'Chaos', object: String(detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'), state: detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'unknown', evidence: detail.chaosEstimate?.warning ?? 'intent metadata' },
+      ],
+    },
+    {
+      title: 'Agent & Prompt Surfaces',
+      rows: [
+        { type: 'Agent', object: 'SVFactory maintainer surface', state: 'self-host', evidence: '.github/agents/SVFactory.agent.md' },
+        { type: 'Prompt', object: '.github/agents + svfactory prompts', state: 'active', evidence: 'workspace contract' },
+        { type: 'Workspace Path', object: detail.workspacePath ?? 'none', state: detail.workspacePath ? 'linked' : 'missing', evidence: 'intent workspace' },
+      ],
+    },
   ] : []
 
   return (
@@ -881,7 +898,7 @@ export function IntentsListPage() {
                   sectionKey="summary"
                   collapsed={collapsedSections.summary}
                   onToggle={toggleSection}
-                  subtitle="Double-click supported on title."
+                  subtitle="Title and description are editable here."
                 >
                   <p className="intent-id">{detail.id ?? selectedIntentId}</p>
                   <InlineEditableText
@@ -897,7 +914,35 @@ export function IntentsListPage() {
                     saving={intentUpdateMutation.isPending}
                     error={editorError}
                   />
-                  <p className="intent-detail-summary">{detail.summary ?? detail.goal ?? 'No narrative summary has been extracted from intent.md yet.'}</p>
+                  <InlineEditableText
+                    label="Description"
+                    value={detailDescription}
+                    field="summaryText"
+                    activeField={activeEditor}
+                    draftValue={editorDraft}
+                    onStartEdit={startEdit}
+                    onChangeDraft={setEditorDraft}
+                    onCancel={cancelEdit}
+                    onSave={() => void saveEdit('summaryText')}
+                    saving={intentUpdateMutation.isPending}
+                    error={editorError}
+                    multiline
+                  />
+                  <div className="intent-summary-metrics">
+                    <div className="system-info-card">
+                      <span className="runtime-overview-label">Lifecycle</span>
+                      <strong className="system-info-title">{detail.lifecycle ?? detail.status ?? 'unknown'}</strong>
+                    </div>
+                    <div className="system-info-card">
+                      <span className="runtime-overview-label">Intent progress</span>
+                      <div className="intent-grid-progress">
+                        <div className="intent-progress-track" aria-hidden="true">
+                          <span style={{ width: `${detailProgress}%` }} />
+                        </div>
+                        <strong>{detailProgress}%</strong>
+                      </div>
+                    </div>
+                  </div>
                   <LifecycleRail lifecycle={detail.lifecycle ?? detail.status} />
                 </CollapsibleBlock>
 
@@ -907,7 +952,7 @@ export function IntentsListPage() {
                   sectionKey="detail"
                   collapsed={collapsedSections.detail}
                   onToggle={toggleSection}
-                  subtitle="Double-click supported on description, focus, and close condition."
+                  subtitle="Operational fields only. No duplicated summary content."
                 >
                   <div className="intent-drawer-detail-grid">
                     <div className="system-info-card">
@@ -944,34 +989,22 @@ export function IntentsListPage() {
                       />
                     </div>
                     <div className="system-info-card">
-                      <span className="runtime-overview-label">Close condition</span>
-                      <strong className="system-info-title">{detail.goal ?? 'No dedicated close condition field in current runtime contract.'}</strong>
-                      <p className="system-card-subtle">Currently derived from intent goal until backend exposes a dedicated close-condition field.</p>
-                    </div>
-                    <div className="system-info-card">
-                      <span className="runtime-overview-label">Intent progress</span>
-                      <div className="intent-grid-progress">
-                        <div className="intent-progress-track" aria-hidden="true">
-                          <span style={{ width: `${computeIntentProgress(detail.lifecycle)}%` }} />
-                        </div>
-                        <strong>{computeIntentProgress(detail.lifecycle)}%</strong>
-                      </div>
+                      <InlineEditableText
+                        label="Close condition"
+                        value={detail.closeCondition ?? ''}
+                        field="closeCondition"
+                        activeField={activeEditor}
+                        draftValue={editorDraft}
+                        onStartEdit={startEdit}
+                        onChangeDraft={setEditorDraft}
+                        onCancel={cancelEdit}
+                        onSave={() => void saveEdit('closeCondition')}
+                        saving={intentUpdateMutation.isPending}
+                        error={editorError}
+                        multiline
+                      />
                     </div>
                   </div>
-                  <InlineEditableText
-                    label="Description"
-                    value={detail.summary ?? detail.decisionSummary ?? detail.goal ?? ''}
-                    field="summaryText"
-                    activeField={activeEditor}
-                    draftValue={editorDraft}
-                    onStartEdit={startEdit}
-                    onChangeDraft={setEditorDraft}
-                    onCancel={cancelEdit}
-                    onSave={() => void saveEdit('summaryText')}
-                    saving={intentUpdateMutation.isPending}
-                    error={editorError}
-                    multiline
-                  />
                 </CollapsibleBlock>
 
                 <CollapsibleBlock
@@ -980,31 +1013,38 @@ export function IntentsListPage() {
                   sectionKey="relations"
                   collapsed={collapsedSections.relations}
                   onToggle={toggleSection}
-                  subtitle="Surface catalog across modules, runtime, and KB artifacts."
+                  subtitle="Grouped matrix of related objects, runtime surfaces, and evidence."
                 >
-                  <div className="intent-relations-grid">
-                    {relationEntries.map((entry) => (
-                      <div key={entry.label} className="intent-relation-card">
-                        <div className="intent-relation-head">
+                  <div className="intent-relations-matrix">
+                    {relationSections.map((section) => (
+                      <article key={section.title} className="intent-relation-group">
+                        <div className="intent-relation-group-head">
                           <span className="section-icon section-icon-kb" aria-hidden="true">
-                            <Icon icon={entry.icon} />
+                            <Icon icon={network} />
                           </span>
-                          <span className="runtime-overview-label">{entry.label}</span>
+                          <div>
+                            <h4>{section.title}</h4>
+                            <p className="system-card-subtle">Type, object, state, and evidence.</p>
+                          </div>
                         </div>
-                        <strong>{entry.value}</strong>
-                      </div>
+                        <div className="intent-relation-table" role="table" aria-label={section.title}>
+                          <div className="intent-relation-table-header" role="row">
+                            <span role="columnheader">Type</span>
+                            <span role="columnheader">Object</span>
+                            <span role="columnheader">State</span>
+                            <span role="columnheader">Evidence</span>
+                          </div>
+                          {section.rows.map((row) => (
+                            <div key={`${section.title}-${row.type}`} className="intent-relation-table-row" role="row">
+                              <span role="cell" className="intent-relation-type">{row.type}</span>
+                              <span role="cell">{row.object}</span>
+                              <span role="cell"><span className={`status-pill ${statusTone(normalizeLifecycle(row.state))}`}>{row.state}</span></span>
+                              <span role="cell" className="intent-relation-evidence">{row.evidence}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </article>
                     ))}
-                    <div className="intent-relation-card">
-                      <div className="intent-relation-head">
-                        <span className="section-icon section-icon-kb" aria-hidden="true">
-                          <Icon icon={activity} />
-                        </span>
-                        <span className="runtime-overview-label">Chaos</span>
-                      </div>
-                      <strong>{detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'}</strong>
-                      <p>{detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'No live chaos estimate attached.'}</p>
-                      {detail.chaosEstimate?.warning ? <p className="runtime-warning-text">{detail.chaosEstimate.warning}</p> : null}
-                    </div>
                   </div>
                   {detail.stagedFiles.length ? (
                     <div className="intent-staged-list">

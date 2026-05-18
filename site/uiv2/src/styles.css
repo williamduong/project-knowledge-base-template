@@ -2089,15 +2089,15 @@
 }
 
 .intent-record-meta,
-.intent-relations-grid,
-.intent-drawer-detail-grid {
+.intent-drawer-detail-grid,
+.intent-summary-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
 .intent-record-meta strong,
-.intent-relation-card strong {
+.intent-relation-group strong {
   color: #f8fafc;
   word-break: break-word;
 }
@@ -2207,7 +2207,7 @@
 .intent-task-grid-header,
 .intent-task-grid-button {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) 120px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.8fr) 120px 120px minmax(0, 1.2fr);
   gap: 10px;
   align-items: center;
 }
@@ -2305,19 +2305,62 @@
   flex-wrap: wrap;
 }
 
-.intent-relation-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.intent-relations-matrix {
+  display: grid;
+  gap: 12px;
 }
 
-.intent-relation-card {
+.intent-relation-group {
   display: grid;
-  gap: 6px;
-  padding: 10px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid rgba(120, 144, 167, 0.14);
   border-radius: 10px;
   background: rgba(15, 23, 36, 0.66);
+}
+
+.intent-relation-group-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.intent-relation-group-head h4 {
+  margin: 0;
+}
+
+.intent-relation-table,
+.intent-relation-table-header,
+.intent-relation-table-row {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1.4fr) 140px minmax(0, 1.2fr);
+  gap: 10px;
+}
+
+.intent-relation-table {
+  gap: 8px;
+}
+
+.intent-relation-table-header {
+  padding: 0 10px 6px;
+  color: #8ca0b6;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.intent-relation-table-row {
+  padding: 10px;
+  border: 1px solid rgba(120, 144, 167, 0.12);
+  border-radius: 10px;
+  background: rgba(11, 16, 23, 0.66);
+  align-items: center;
+}
+
+.intent-relation-type,
+.intent-relation-evidence {
+  color: #c9d5e2;
+  word-break: break-word;
 }
 
 .shell-status-bar {
@@ -2540,8 +2583,8 @@
   .intent-source-grid,
   .intent-goal-grid,
   .intent-record-meta,
-  .intent-relations-grid,
-  .intent-drawer-detail-grid {
+  .intent-drawer-detail-grid,
+  .intent-summary-metrics {
     grid-template-columns: 1fr;
   }
 
@@ -2553,7 +2596,10 @@
   }
 
   .intent-task-grid-header,
-  .intent-task-grid-button {
+  .intent-task-grid-button,
+  .intent-relation-table,
+  .intent-relation-table-header,
+  .intent-relation-table-row {
     grid-template-columns: 1fr;
   }
 

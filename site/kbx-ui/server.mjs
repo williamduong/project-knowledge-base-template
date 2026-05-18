@@ -1000,6 +1000,7 @@ function summarizeIntentDetail(intentId, options = {}) {
     mode: record.meta?.mode ?? null,
     changeType: record.meta?.change_type ?? null,
     decisionSummary: record.meta?.decision_summary ?? null,
+    closeCondition: record.meta?.close_condition ?? null,
     goal: narrative.goal,
     summary: narrative.summary,
     focusCurrent: focus.current ?? null,
@@ -2906,24 +2907,28 @@ export function createApp(commandRunner = executeBridgeCommand) {
     const args = ['intent', 'update', id, '--json'];
     const updateFields = [];
 
-    if (fields.title) {
-      args.push('--title', String(fields.title).trim());
+    if (Object.prototype.hasOwnProperty.call(fields, 'title')) {
+      args.push('--title', String(fields.title ?? '').trim());
       updateFields.push('title');
     }
-    if (fields.focus) {
-      args.push('--focus', String(fields.focus).trim());
+    if (Object.prototype.hasOwnProperty.call(fields, 'focus')) {
+      args.push('--focus', String(fields.focus ?? '').trim());
       updateFields.push('focus');
     }
-    if (fields.next_action) {
-      args.push('--next-action', String(fields.next_action).trim());
+    if (Object.prototype.hasOwnProperty.call(fields, 'next_action')) {
+      args.push('--next-action', String(fields.next_action ?? '').trim());
       updateFields.push('next_action');
     }
-    if (fields.decision_summary) {
-      args.push('--decision-summary', String(fields.decision_summary).trim());
+    if (Object.prototype.hasOwnProperty.call(fields, 'decision_summary')) {
+      args.push('--decision-summary', String(fields.decision_summary ?? '').trim());
       updateFields.push('decision_summary');
     }
-    if (fields.state) {
-      args.push('--state', String(fields.state).trim());
+    if (Object.prototype.hasOwnProperty.call(fields, 'close_condition')) {
+      args.push('--close-condition', String(fields.close_condition ?? '').trim());
+      updateFields.push('close_condition');
+    }
+    if (Object.prototype.hasOwnProperty.call(fields, 'state')) {
+      args.push('--state', String(fields.state ?? '').trim());
       updateFields.push('state');
     }
 

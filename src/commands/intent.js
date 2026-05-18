@@ -24,6 +24,7 @@ const {
   writeApplyRecord,
   archiveIntent,
   updateIntentFocus,
+  updateIntentFields,
   closeIntent,
   sanitizeId,
   listIntentRecords,
@@ -59,6 +60,10 @@ function parseArgs(args) {
     current: null,
     nextAction: null,
     lastUpdated: null,
+    title: null,
+    decisionSummary: null,
+    closeCondition: null,
+    state: null,
     stale: false,
     aged: false,
   };
@@ -90,7 +95,18 @@ function parseArgs(args) {
       continue;
     }
     if (arg.startsWith('--title=')) {
-      options.extractTitle = arg.slice('--title='.length).trim();
+      const titleValue = arg.slice('--title='.length).trim();
+      options.extractTitle = titleValue;
+      options.title = titleValue;
+      continue;
+    }
+    if (arg === '--title') {
+      options.title = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--intent-title=')) {
+      options.title = arg.slice('--intent-title='.length).trim();
       continue;
     }
     if (arg.startsWith('--type=')) {
@@ -110,12 +126,72 @@ function parseArgs(args) {
       options.current = arg.slice('--current='.length).trim();
       continue;
     }
+    if (arg === '--current') {
+      options.current = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
     if (arg.startsWith('--next=')) {
       options.nextAction = arg.slice('--next='.length).trim();
       continue;
     }
+    if (arg === '--next') {
+      options.nextAction = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--focus=')) {
+      options.current = arg.slice('--focus='.length).trim();
+      continue;
+    }
+    if (arg === '--focus') {
+      options.current = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--next-action=')) {
+      options.nextAction = arg.slice('--next-action='.length).trim();
+      continue;
+    }
+    if (arg === '--next-action') {
+      options.nextAction = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
     if (arg.startsWith('--date=')) {
       options.lastUpdated = arg.slice('--date='.length).trim();
+      continue;
+    }
+    if (arg === '--date') {
+      options.lastUpdated = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--decision-summary=')) {
+      options.decisionSummary = arg.slice('--decision-summary='.length).trim();
+      continue;
+    }
+    if (arg === '--decision-summary') {
+      options.decisionSummary = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--close-condition=')) {
+      options.closeCondition = arg.slice('--close-condition='.length).trim();
+      continue;
+    }
+    if (arg === '--close-condition') {
+      options.closeCondition = String(args[i + 1] || '').trim();
+      i += 1;
+      continue;
+    }
+    if (arg.startsWith('--state=')) {
+      options.state = arg.slice('--state='.length).trim();
+      continue;
+    }
+    if (arg === '--state') {
+      options.state = String(args[i + 1] || '').trim();
+      i += 1;
       continue;
     }
     if (arg.startsWith('--release=')) {
@@ -183,6 +259,21 @@ function parseArgs(args) {
     if (options.current === null && options.nextAction === null) {
       throw new Error('kb intent focus requires --current or --next.');
     }
+  } else if (options.sub === 'update') {
+    if (rest.length < 2) {
+      throw new Error('kb intent update requires an intent ID.');
+    }
+    options.intentId = rest[1];
+    if (
+      options.title === null
+      && options.current === null
+      && options.nextAction === null
+      && options.decisionSummary === null
+      && options.closeCondition === null
+      && options.state === null
+    ) {
+      throw new Error('kb intent update requires at least one field such as --title, --focus, --next-action, --decision-summary, --close-condition, or --state.');
+    }
   } else if (options.sub === 'archive') {
     if (rest.length < 2) {
       throw new Error('kb intent archive requires an intent ID.');
@@ -221,7 +312,7 @@ function parseArgs(args) {
     }
     options.commitRange = rest[1];
   } else {
-    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, cleanup, close, cancel, archive, apply, suggest-lessons, extract`);
+    throw new Error(`kb intent: unknown subcommand "${options.sub}". Supported: create, draft, activate, status, list, focus, update, cleanup, close, cancel, archive, apply, suggest-lessons, extract`);
   }
 
   return options;
@@ -1095,6 +1186,44 @@ async function runFocus(ctx, options, cwd) {
   console.log(`Path: ${metaPath}`);
 }
 
+async function runUpdate(ctx, options, cwd) {
+  const result = updateIntentFields(ctx.contentRoot, options.intentId, {
+    title: options.title,
+    focusCurrent: options.current,
+    nextAction: options.nextAction,
+    lastUpdated: options.lastUpdated,
+    decisionSummary: options.decisionSummary,
+    closeCondition: options.closeCondition,
+    state: options.state,
+  });
+
+  const focusState = syncRuntimeFocusAfterIntentMutation({
+    cwd,
+    intentId: options.intentId,
+    event: 'intent-updated',
+    intentState: options.state === 'closed' || options.state === 'archived' ? 'closed' : 'active',
+    focusSummary: result.meta.focus && result.meta.focus.current ? result.meta.focus.current : null,
+    nextAction: result.meta.focus && result.meta.focus.next_action ? result.meta.focus.next_action : null,
+    fallbackLabel: 'Intent updated',
+  });
+
+  if (options.json) {
+    console.log(JSON.stringify({
+      command: 'kb intent update',
+      intent_id: options.intentId,
+      updated_fields: result.updatedFields,
+      path: result.metaPath,
+      state: result.meta.lifecycle || null,
+      status: 'updated',
+      focus_state: focusState,
+    }, null, 2));
+    return;
+  }
+
+  console.log(`Updated intent "${options.intentId}".`);
+  console.log(`Path: ${result.metaPath}`);
+}
+
 async function runArchive(ctx, options, cwd) {
   const archivePath = archiveIntent(ctx.contentRoot, options.intentId, new Date().toISOString());
   const focusState = syncRuntimeFocusAfterIntentMutation({
@@ -1523,6 +1652,8 @@ async function runIntent({ args, cwd }) {
     await runList(ctx, options);
   } else if (options.sub === 'focus') {
     await runFocus(ctx, options, cwd);
+  } else if (options.sub === 'update') {
+    await runUpdate(ctx, options, cwd);
   } else if (options.sub === 'close') {
     await runClose(ctx, options, cwd);
   } else if (options.sub === 'cancel') {
@@ -1550,6 +1681,7 @@ function printHelp() {
   console.log('  kb intent status [<id-or-slug>] [--json]');
   console.log('  kb intent list [--backlog|--closed|--archived|--all] [--json]');
   console.log('  kb intent focus <id> [--current="..."] [--next="..."] [--date=YYYY-MM-DD] [--json]');
+  console.log('  kb intent update <id> [--title="..."] [--focus="..."] [--next-action="..."] [--decision-summary="..."] [--close-condition="..."] [--state=<lifecycle>] [--json]');
   console.log('  kb intent cleanup [--stale] [--aged] [--json]');
   console.log('  kb intent apply <id> [--release] [--yes] [--json]');
   console.log('  kb intent close <id> --type=released --release=vX.Y.Z [--json]');
@@ -1572,6 +1704,7 @@ function printHelp() {
   console.log('  list            List intents by scope. Default scope is active only.');
   console.log('                  Flags: --backlog, --closed, --archived, --all');
   console.log('  focus           Update focus block fields on an active intent.');
+  console.log('  update          Deterministically update editable runtime/frontmatter fields on an intent.');
   console.log('  cleanup         Advisory scan — reports stale/missing-focus active intents and aged closed intents.');
   console.log('                  --stale  Focus on active intents with stale/missing focus (default: 14 day threshold).');
   console.log('                  --aged   Focus on closed intents eligible for archive (default: 30 day threshold).');

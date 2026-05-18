@@ -28,6 +28,7 @@ export type IntentDetail = {
   mode: string | null
   changeType: string | null
   decisionSummary: string | null
+  closeCondition: string | null
   goal: string | null
   summary: string | null
   focusCurrent: string | null

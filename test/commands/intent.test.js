@@ -33,6 +33,7 @@ const {
   validateStagedFilePaths,
   cancelIntent,
   updateIntentFocus,
+  updateIntentFields,
   closeIntent,
   archiveIntent,
   archiveFolderName,
@@ -173,6 +174,18 @@ test('intent parseArgs: focus requires id and a field', () => {
   assert.equal(o.sub, 'focus');
   assert.equal(o.current, 'Investigating');
   assert.throws(() => parseArgs(['focus', 'my-intent']), /requires --current or --next/);
+});
+
+test('intent parseArgs: update accepts runtime edit fields', () => {
+  const o = parseArgs(['update', 'my-intent', '--title', 'Refine shell', '--focus', 'Detail pass', '--next-action', 'Wire API', '--decision-summary', 'Single canonical description', '--close-condition', 'Runtime review complete', '--state', 'active']);
+  assert.equal(o.sub, 'update');
+  assert.equal(o.intentId, 'my-intent');
+  assert.equal(o.title, 'Refine shell');
+  assert.equal(o.current, 'Detail pass');
+  assert.equal(o.nextAction, 'Wire API');
+  assert.equal(o.decisionSummary, 'Single canonical description');
+  assert.equal(o.closeCondition, 'Runtime review complete');
+  assert.equal(o.state, 'active');
 });
 
 test('intent parseArgs: archive with id', () => {
@@ -602,6 +615,28 @@ test('updateIntentFocus: writes nested focus block into active intent frontmatte
   assert.equal(meta.focus.current, 'Investigating command surface');
   assert.equal(meta.focus.next_action, 'Implement activate');
   assert.equal(meta.focus.last_updated, '2026-05-06');
+});
+
+test('updateIntentFields: writes close_condition and decision_summary into frontmatter', () => {
+  const root = tmpRoot();
+  const contentRoot = path.join(root, 'knowledge-base');
+  createIntentWorkspace(contentRoot, { intentId: 'update-intent', mode: 'quick', changeType: 'docs' });
+
+  const result = updateIntentFields(contentRoot, 'update-intent', {
+    decisionSummary: 'Use one canonical summary field in drawer.',
+    closeCondition: 'UI build passes and runtime contract is synced.',
+    focusCurrent: 'Intent detail cleanup',
+    nextAction: 'Patch metadata matrix',
+    lastUpdated: '2026-05-18',
+  });
+
+  const meta = readIntentMeta(contentRoot, 'update-intent');
+  assert.equal(meta.decision_summary, 'Use one canonical summary field in drawer.');
+  assert.equal(meta.close_condition, 'UI build passes and runtime contract is synced.');
+  assert.equal(meta.focus.current, 'Intent detail cleanup');
+  assert.equal(meta.focus.next_action, 'Patch metadata matrix');
+  assert.equal(meta.focus.last_updated, '2026-05-18');
+  assert.deepEqual(result.updatedFields, ['decision_summary', 'close_condition', 'focus', 'next_action']);
 });
 
 // ---------------------------------------------------------------------------
@@ -1087,6 +1122,26 @@ test('runIntent focus and close: keep runtime focus in sync with intent lifecycl
   assert.equal(state.current_focus.intent_id, null);
   assert.equal(state.current_focus.intent_state, null);
   assert.equal(state.checkpoint.event, 'intent-closed');
+});
+
+test('runIntent update: persists close condition and refreshes runtime focus state', async () => {
+  const root = tmpRoot();
+  const contentRoot = initTrackedWorkspace(root);
+  createIntentWorkspace(contentRoot, { intentId: 'v2-9-update-intent', mode: 'quick', changeType: 'docs' });
+
+  const captured = await captureConsole(() => runIntent({
+    args: ['update', 'v2-9-update-intent', '--focus', 'Normalize detail semantics', '--next-action', 'Ship relation matrix', '--decision-summary', 'Summary now has a single canonical field.', '--close-condition', 'UI build passes and metadata contract is live.', '--json'],
+    cwd: root,
+  }));
+  const parsed = JSON.parse(captured.stdout);
+  const meta = readIntentMeta(contentRoot, 'v2-9-update-intent');
+  const state = readFocusState({ workspaceRoot: root });
+
+  assert.equal(parsed.status, 'updated');
+  assert.equal(meta.close_condition, 'UI build passes and metadata contract is live.');
+  assert.equal(meta.decision_summary, 'Summary now has a single canonical field.');
+  assert.equal(state.current_focus.intent_id, 'v2-9-update-intent');
+  assert.equal(state.checkpoint.event, 'intent-updated');
 });
 
 test('runIntent cleanup: reports critical when focus.current is empty', async () => {

@@ -155,6 +155,7 @@ function buildIntentMeta({ intentId, mode, changeType }) {
     `change_scope: []`,
     `impact_signals: []`,
     `decision_summary: ""`,
+    `close_condition: ""`,
     `review_after: null`,
     `schema_version: ${pkgVersion}`,
   ];
@@ -712,6 +713,57 @@ function updateIntentFocus(contentRoot, intentId, { current, nextAction, lastUpd
   return metaPath;
 }
 
+function updateIntentFields(contentRoot, intentId, fields = {}) {
+  const metaPath = intentMetaPath(contentRoot, intentId);
+  if (!fs.existsSync(metaPath)) {
+    throw new Error(`Intent "${intentId}" not found. Expected: ${metaPath}`);
+  }
+
+  const meta = readIntentMeta(contentRoot, intentId);
+  const updatedFields = [];
+
+  if (Object.prototype.hasOwnProperty.call(fields, 'title')) {
+    meta.title = fields.title;
+    updatedFields.push('title');
+  }
+
+  if (Object.prototype.hasOwnProperty.call(fields, 'decisionSummary')) {
+    meta.decision_summary = fields.decisionSummary;
+    updatedFields.push('decision_summary');
+  }
+
+  if (Object.prototype.hasOwnProperty.call(fields, 'closeCondition')) {
+    meta.close_condition = fields.closeCondition;
+    updatedFields.push('close_condition');
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(fields, 'focusCurrent')
+    || Object.prototype.hasOwnProperty.call(fields, 'nextAction')
+    || Object.prototype.hasOwnProperty.call(fields, 'lastUpdated')
+  ) {
+    const focus = meta.focus && typeof meta.focus === 'object' ? { ...meta.focus } : {};
+    if (Object.prototype.hasOwnProperty.call(fields, 'focusCurrent')) {
+      focus.current = fields.focusCurrent;
+      updatedFields.push('focus');
+    }
+    if (Object.prototype.hasOwnProperty.call(fields, 'nextAction')) {
+      focus.next_action = fields.nextAction;
+      updatedFields.push('next_action');
+    }
+    focus.last_updated = fields.lastUpdated || new Date().toISOString().slice(0, 10);
+    meta.focus = focus;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(fields, 'state')) {
+    meta.lifecycle = fields.state;
+    updatedFields.push('state');
+  }
+
+  writeIntentFrontmatter(metaPath, meta);
+  return { metaPath, meta, updatedFields };
+}
+
 function closeIntent(contentRoot, intentId, { closeType, releaseRef, dropReason, timestamp }) {
   const srcPath = intentWorkspacePath(contentRoot, intentId);
   if (!fs.existsSync(srcPath)) {
@@ -978,6 +1030,7 @@ module.exports = {
   deriveIntentStatus,
   cancelIntent,
   updateIntentFocus,
+  updateIntentFields,
   closeIntent,
   archiveIntent,
   archiveFolderName,
@@ -993,4 +1046,3 @@ module.exports = {
   // Constants
   VALID_MODES,
 };
-
