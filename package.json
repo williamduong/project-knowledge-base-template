@@ -54,6 +54,7 @@
   "scripts": {
     "help": "node ./bin/kbx.js help",
     "start": "node ./bin/kbx.js help",
+    "start:ui": "node ./bin/kbx.js ui start",
     "docs:tree": "node ./tools/build-docs-tree.js",
     "release:notes": "node ./bin/kbx.js release notes",
     "keywords:show": "node ./tools/npm-keywords.js",
