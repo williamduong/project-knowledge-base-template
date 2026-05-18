@@ -2207,7 +2207,7 @@
 .intent-task-grid-header,
 .intent-task-grid-button {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) 120px 120px minmax(0, 1.2fr);
+  grid-template-columns: 64px minmax(0, 1.9fr) 120px 100px;
   gap: 10px;
   align-items: center;
 }
@@ -2248,6 +2248,12 @@
   padding: 0 12px 12px;
   color: #c9d5e2;
   font-size: 13px;
+}
+
+.intent-task-id {
+  color: #8ca0b6;
+  font-family: JetBrains Mono, monospace;
+  font-size: 11px;
 }
 
 .intent-related-list {
@@ -2305,52 +2311,26 @@
   flex-wrap: wrap;
 }
 
-.intent-relations-matrix {
+.intent-metadata-compact {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
 }
 
-.intent-relation-group {
+.intent-metadata-chip-card {
   display: grid;
-  gap: 10px;
-  padding: 12px;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
   border: 1px solid rgba(120, 144, 167, 0.14);
   border-radius: 10px;
   background: rgba(15, 23, 36, 0.66);
 }
 
-.intent-relation-group-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.intent-relation-group-head h4 {
-  margin: 0;
-}
-
-.intent-relation-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-}
-
-.intent-relation-row-card {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-  padding: 12px;
-  border: 1px solid rgba(120, 144, 167, 0.12);
-  border-radius: 10px;
-  background: rgba(11, 16, 23, 0.66);
-}
-
 .intent-relation-row-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 .intent-relation-type,
@@ -2598,7 +2578,7 @@
 
   .intent-task-grid-header,
   .intent-task-grid-button,
-  .intent-relation-list {
+  .intent-metadata-compact {
     grid-template-columns: 1fr;
   }
 

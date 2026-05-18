@@ -13,6 +13,10 @@ import chevronUp from '@iconify-icons/lucide/chevron-up'
 import clock3 from '@iconify-icons/lucide/clock-3'
 import xIcon from '@iconify-icons/lucide/x'
 import pencilLine from '@iconify-icons/lucide/pencil-line'
+import fileText from '@iconify-icons/lucide/file-text'
+import folderTree from '@iconify-icons/lucide/folder-tree'
+import circleDashed from '@iconify-icons/lucide/circle-dashed'
+import listTree from '@iconify-icons/lucide/list-tree'
 import { useIntentsList, type IntentListItem } from '../hooks/useIntentsList'
 import { useIntentDetail, type IntentTask } from '../hooks/useIntentDetail'
 import { useSystemSnapshot, systemSnapshotQueryKey } from '../hooks/useSystemSnapshot'
@@ -78,19 +82,24 @@ function formatTimestamp(value: string | null) {
   }).format(date)
 }
 
-function compactText(value: string | null | undefined, fallback: string, maxLength = 120) {
-  const text = String(value || '').trim()
-  if (!text) return fallback
-  if (text.length <= maxLength) return text
-  return `${text.slice(0, maxLength - 1).trimEnd()}…`
-}
-
 function compactPath(value: string | null | undefined) {
   const text = String(value || '').trim()
   if (!text) return 'none'
   const parts = text.split(/[\\/]/).filter(Boolean)
   if (parts.length <= 3) return text
   return `.../${parts.slice(-3).join('/')}`
+}
+
+function taskStateTone(value: string | null | undefined) {
+  const normalized = normalizeLifecycle(value)
+  if (normalized === 'done' || normalized === 'closed') return 'status-good'
+  if (normalized === 'blocked' || normalized === 'dropped') return 'status-warn'
+  if (normalized === 'warning') return 'status-warn'
+  return 'status-neutral'
+}
+
+function summarizeTaskDetail(task: IntentTask) {
+  return task.description ?? task.text ?? 'No task detail available.'
 }
 
 function clampProgress(value: number) {
@@ -402,19 +411,20 @@ function TaskRow({
   expanded: boolean
   onToggle: () => void
 }) {
+  const taskId = `T-${String(index + 1).padStart(2, '0')}`
   return (
     <div className={`intent-task-grid-row${expanded ? ' expanded' : ''}`}>
       <button className="intent-task-grid-button" type="button" onClick={onToggle}>
+        <span className="intent-task-id">{taskId}</span>
         <span>{task.title ?? `Task ${index + 1}`}</span>
-        <span>{task.section ?? 'General'}</span>
-        <span className={`status-pill ${statusTone(normalizeLifecycle(task.status))}`}>{task.status ?? 'unknown'}</span>
-        <span>{task.tags?.length ? task.tags.join(', ') : task.source ?? 'No source'}</span>
+        <span className={`status-pill ${taskStateTone(task.status)}`}>{task.status ?? 'open'}</span>
+        <span>{task.source ?? 'intent.md'}</span>
       </button>
       {expanded ? (
         <div className="intent-task-grid-detail">
-          <p>{task.description ?? task.text ?? task.source ?? 'Task detail source unavailable.'}</p>
+          <p>{summarizeTaskDetail(task)}</p>
           <div className="intent-task-detail-meta">
-            <span className="intent-path-chip">section: {task.section ?? 'General'}</span>
+            {task.section ? <span className="intent-path-chip">group: {task.section}</span> : null}
             <span className="intent-path-chip">source: {task.source ?? 'unknown'}</span>
             <span className="intent-path-chip">state: {task.done ? 'done' : task.status ?? 'open'}</span>
           </div>
@@ -690,45 +700,20 @@ export function IntentsListPage() {
   }
 
   const selectedIntent = intents.find((intent) => intent.id === selectedIntentId) ?? null
-  const rulesSummary = (snapshot?.rulesSummary as { summary?: { count?: number; packCount?: number; topRules?: Array<{ id: string }> } } | undefined)?.summary
-  const runtimeSummary = (snapshot?.runtimeServices as { summary?: { runningCount?: number }; schedules?: Array<{ id: string }> } | undefined)
-  const gatesSummary = (snapshot?.gates as { items?: Array<{ gate: string }>; readiness?: string } | undefined)
   const detailDescription = detail ? (detail.decisionSummary ?? detail.summary ?? detail.goal ?? '') : ''
   const detailProgress = detail ? computeIntentProgress(detail.lifecycle) : 0
-  const relationSections = detail ? [
-    {
-      title: 'Intent Topology',
-      rows: [
-        { type: 'Goal', object: compactText(detail.goal, 'No explicit goal extracted yet', 150), state: detail.goal ? 'declared' : 'missing', evidence: compactPath(detail.sourceFile ?? 'intent.md') },
-        { type: 'Milestone / Version', object: intentVersionLabel(detail.id ?? selectedIntentId ?? ''), state: normalizeLifecycle(detail.lifecycle), evidence: detail.id ?? selectedIntentId ?? 'unknown' },
-        { type: 'Document (KB)', object: compactPath(detail.sourceFile), state: detail.sourceFile ? 'linked' : 'missing', evidence: detail.stagedFiles.length ? `${detail.stagedFiles.length} staged files` : 'No staged files attached' },
-      ],
-    },
-    {
-      title: 'Governance & Flow',
-      rows: [
-        { type: 'Pipeline', object: 'release pipeline', state: `${((snapshot?.homeSummary as { summary?: { pipeline?: { stepCount?: number } } } | undefined)?.summary?.pipeline?.stepCount ?? 0)} steps`, evidence: 'workspace snapshot' },
-        { type: 'Rules', object: `${rulesSummary?.count ?? 0} rules`, state: `${rulesSummary?.packCount ?? 0} packs`, evidence: compactText(rulesSummary?.topRules?.[0]?.id, 'registry summary', 60) },
-        { type: 'Gates', object: `${gatesSummary?.items?.length ?? 0} operator gates`, state: gatesSummary?.readiness ?? 'unknown', evidence: 'system snapshot' },
-      ],
-    },
-    {
-      title: 'Runtime & Storage',
-      rows: [
-        { type: 'Services', object: `${runtimeSummary?.summary?.runningCount ?? 0} runtime services`, state: 'managed', evidence: 'runtime-services summary' },
-        { type: 'Cron', object: `${runtimeSummary?.schedules?.length ?? 0} schedules`, state: 'registered', evidence: 'runtime-services summary' },
-        { type: 'Database', object: 'focus-state.db', state: 'sqlite-backed', evidence: 'focus-state resolver' },
-        { type: 'Chaos', object: String(detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'), state: detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'unknown', evidence: compactText(detail.chaosEstimate?.warning, 'intent metadata', 120) },
-      ],
-    },
-    {
-      title: 'Agent & Prompt Surfaces',
-      rows: [
-        { type: 'Agent', object: 'SVFactory maintainer surface', state: 'self-host', evidence: '.github/agents/SVFactory.agent.md' },
-        { type: 'Prompt', object: '.github/agents + svfactory prompts', state: 'active', evidence: 'workspace contract' },
-        { type: 'Workspace Path', object: detail.workspacePath ?? 'none', state: detail.workspacePath ? 'linked' : 'missing', evidence: 'intent workspace' },
-      ],
-    },
+  const metadataEntries = detail ? [
+    { label: 'Lifecycle', value: detail.lifecycle ?? detail.status ?? 'unknown', icon: circleDashed },
+    { label: 'Scope', value: detail.scope ?? 'n/a', icon: listTree },
+    { label: 'Mode', value: detail.mode ?? 'n/a', icon: circleDashed },
+    { label: 'Change type', value: detail.changeType ?? 'n/a', icon: target },
+    { label: 'Milestone', value: intentVersionLabel(detail.id ?? selectedIntentId ?? ''), icon: archive },
+    { label: 'Source file', value: compactPath(detail.sourceFile), icon: fileText },
+    ...(detail.workspacePath ? [{ label: 'Workspace', value: compactPath(detail.workspacePath), icon: folderTree }] : []),
+    ...(detail.stagedFiles.length ? [{ label: 'Staged', value: `${detail.stagedFiles.length} files`, icon: fileText }] : []),
+    ...(detail.chaosEstimate?.projectedLevel || detail.chaosEstimate?.currentLevel
+      ? [{ label: 'Chaos', value: `${detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'} · ${detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel}`, icon: activity }]
+      : []),
   ] : []
 
   return (
@@ -1024,32 +1009,18 @@ export function IntentsListPage() {
                   sectionKey="relations"
                   collapsed={collapsedSections.relations}
                   onToggle={toggleSection}
-                  subtitle="Grouped matrix of related objects, runtime surfaces, and evidence."
+                  subtitle="Compact metadata only. Direct relations appear only when the intent actually has them."
                 >
-                  <div className="intent-relations-matrix">
-                    {relationSections.map((section) => (
-                      <article key={section.title} className="intent-relation-group">
-                        <div className="intent-relation-group-head">
+                  <div className="intent-metadata-compact">
+                    {metadataEntries.map((entry) => (
+                      <article key={entry.label} className="intent-metadata-chip-card">
+                        <div className="intent-relation-row-head">
                           <span className="section-icon section-icon-kb" aria-hidden="true">
-                            <Icon icon={network} />
+                            <Icon icon={entry.icon} />
                           </span>
-                          <div>
-                            <h4>{section.title}</h4>
-                            <p className="system-card-subtle">Type, object, state, and evidence.</p>
-                          </div>
+                          <span className="runtime-overview-label">{entry.label}</span>
                         </div>
-                        <div className="intent-relation-list" role="list" aria-label={section.title}>
-                          {section.rows.map((row) => (
-                            <article key={`${section.title}-${row.type}`} className="intent-relation-row-card" role="listitem">
-                              <div className="intent-relation-row-head">
-                                <span className="intent-relation-type">{row.type}</span>
-                                <span className={`status-pill ${statusTone(normalizeLifecycle(row.state))}`}>{row.state}</span>
-                              </div>
-                              <strong className="intent-relation-object">{row.object}</strong>
-                              <p className="intent-relation-evidence">{row.evidence}</p>
-                            </article>
-                          ))}
-                        </div>
+                        <strong className="intent-relation-object">{entry.value}</strong>
                       </article>
                     ))}
                   </div>
@@ -1068,15 +1039,15 @@ export function IntentsListPage() {
                   sectionKey="tasks"
                   collapsed={collapsedSections.tasks}
                   onToggle={toggleSection}
-                  subtitle="Click a task row to expand row detail inline."
+                  subtitle="Legacy-style compact task board with expandable row detail."
                 >
                   {detail.tasks.length ? (
                     <div className="intent-task-grid">
                       <div className="intent-task-grid-header">
+                        <span>ID</span>
                         <span>Task</span>
-                        <span>Section</span>
                         <span>Status</span>
-                        <span>Signals</span>
+                        <span>Source</span>
                       </div>
                       {detail.tasks.map((task, index) => (
                         <TaskRow
