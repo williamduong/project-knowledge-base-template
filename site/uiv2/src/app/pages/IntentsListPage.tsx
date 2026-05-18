@@ -945,10 +945,6 @@ export function IntentsListPage() {
                   />
                   <div className="intent-summary-metrics">
                     <div className="system-info-card">
-                      <span className="runtime-overview-label">Lifecycle</span>
-                      <strong className="system-info-title">{detail.lifecycle ?? detail.status ?? 'unknown'}</strong>
-                    </div>
-                    <div className="system-info-card">
                       <span className="runtime-overview-label">Intent progress</span>
                       <div className="intent-grid-progress">
                         <div className="intent-progress-track" aria-hidden="true">

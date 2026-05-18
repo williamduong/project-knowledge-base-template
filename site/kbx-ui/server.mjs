@@ -770,9 +770,19 @@ function extractIntentNarrative(text) {
   const body = sections.length >= 3 ? sections.slice(2).join('---').trim() : String(text).trim();
   const goalMatch = body.match(/^(?:\*\*Goal:\*\*|Goal:)\s*(.+)$/im);
   const summaryMatch = body.match(/^## Summary\s+([\s\S]*?)(?:\n## |$)/m);
+  const goalSectionMatch = body.match(/^## Goal\s+([\s\S]*?)(?:\n## |$)/m);
+  const goalSection = goalSectionMatch?.[1]
+    ?.split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !line.startsWith('```'))
+    .map((line) => line.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '').trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .join(' • ');
 
   return {
-    goal: goalMatch?.[1]?.trim() ?? null,
+    goal: goalMatch?.[1]?.trim() ?? goalSection ?? null,
     summary: summaryMatch?.[1]?.replace(/^[>\s]+/gm, '').trim() || null,
   };
 }
@@ -787,8 +797,19 @@ function extractIntentTasks(text, source) {
   let currentSection = null;
   let inTaskSection = false;
 
+  function isTaskLikeSection(sectionName) {
+    return /plan|task|checklist|verification|implementation order|execution order/i.test(sectionName || '');
+  }
+
+  function isExcludedTaskSection(sectionName) {
+    return /goal|acceptance criteria|stop when|files touched|intent split strategy|post-v/i.test(sectionName || '');
+  }
+
   function parseTaskText(rawText, fallbackDone = false) {
     const text = String(rawText || '').trim();
+    if (!text || /:\s*$/.test(text)) {
+      return null;
+    }
     const commitMatches = [...text.matchAll(/commit\s+([0-9a-f]{7,40})/gi)].map((match) => match[1]);
     const titleDescMatch = text.match(/^(?:\*\*)?(.+?)(?:\*\*)?\s+[—-]\s+(.+)$/);
     const title = (titleDescMatch?.[1] ?? text).trim();
@@ -828,13 +849,14 @@ function extractIntentTasks(text, source) {
     const headingMatch = line.match(/^(#{2,4})\s+(.+)$/);
     if (headingMatch) {
       currentSection = headingMatch[2].trim();
-      inTaskSection = /plan|task|checklist|verification/i.test(currentSection);
+      inTaskSection = isTaskLikeSection(currentSection) && !isExcludedTaskSection(currentSection);
       continue;
     }
 
     const checkboxMatch = line.match(/^[-*]\s+\[(x| )\]\s+(.+)$/i);
-    if (checkboxMatch) {
+    if (checkboxMatch && inTaskSection) {
       const parsed = parseTaskText(checkboxMatch[2], checkboxMatch[1].toLowerCase() === 'x');
+      if (!parsed) continue;
       tasks.push({
         ...parsed,
         section: currentSection,
@@ -844,8 +866,9 @@ function extractIntentTasks(text, source) {
     }
 
     const numberedMatch = line.match(/^\d+\.\s+(.+)$/);
-    if (numberedMatch && (source === 'plan.md' || /summary|plan|task|checklist|verification|phase|goal/i.test(currentSection || ''))) {
+    if (numberedMatch && inTaskSection) {
       const parsed = parseTaskText(numberedMatch[1], false);
+      if (!parsed) continue;
       tasks.push({
         ...parsed,
         section: currentSection,
@@ -854,13 +877,14 @@ function extractIntentTasks(text, source) {
       continue;
     }
 
-    if (!inTaskSection && source !== 'plan.md') {
+    if (!inTaskSection) {
       continue;
     }
 
     const bulletMatch = line.match(/^[-*]\s+(.+)$/);
     if (bulletMatch) {
       const parsed = parseTaskText(bulletMatch[1], false);
+      if (!parsed) continue;
       tasks.push({
         ...parsed,
         section: currentSection,
