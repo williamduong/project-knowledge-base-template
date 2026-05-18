@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Icon } from '@iconify/react'
 import flag from '@iconify-icons/lucide/flag'
 import flagTriangleRight from '@iconify-icons/lucide/flag-triangle-right'
@@ -12,9 +12,18 @@ import chevronDown from '@iconify-icons/lucide/chevron-down'
 import chevronUp from '@iconify-icons/lucide/chevron-up'
 import clock3 from '@iconify-icons/lucide/clock-3'
 import xIcon from '@iconify-icons/lucide/x'
+import pencilLine from '@iconify-icons/lucide/pencil-line'
+import database from '@iconify-icons/lucide/database'
+import bot from '@iconify-icons/lucide/bot'
+import fileText from '@iconify-icons/lucide/file-text'
+import shield from '@iconify-icons/lucide/shield'
+import server from '@iconify-icons/lucide/server'
+import gitBranch from '@iconify-icons/lucide/git-branch'
+import layers3 from '@iconify-icons/lucide/layers-3'
 import { useIntentsList, type IntentListItem } from '../hooks/useIntentsList'
 import { useIntentDetail, type IntentTask } from '../hooks/useIntentDetail'
 import { useSystemSnapshot, systemSnapshotQueryKey } from '../hooks/useSystemSnapshot'
+import { apiPatch } from '../../shared/api/client'
 
 type GoalCard = {
   id: string
@@ -31,13 +40,24 @@ type MilestoneBlock = {
   id: string
   label: string
   progress: number
-  state: 'active' | 'backlog' | 'closed'
+  state: 'draft' | 'backlog' | 'active' | 'closed'
   metrics: string
   objectives: string[]
 }
 
 type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' | 'dropped' | 'selected'
-type IntentSortKey = 'title' | 'version' | 'lifecycle' | 'mode' | 'runtime'
+type IntentSortKey = 'title' | 'milestone' | 'lifecycle' | 'progress' | 'runtime'
+type DetailSectionKey = 'summary' | 'detail' | 'relations' | 'tasks'
+type EditableField = 'title' | 'decisionSummary' | 'focusCurrent' | 'focusNextAction'
+
+type IntentPatchResponse = {
+  ok: boolean
+  result?: {
+    id?: string
+    updated_fields?: string[]
+    status?: string
+  }
+}
 
 function normalizeLifecycle(value: string | null | undefined) {
   const text = String(value || '').trim().toLowerCase()
@@ -47,6 +67,8 @@ function normalizeLifecycle(value: string | null | undefined) {
   if (text === 'closed' || text === 'released') return 'closed'
   if (text === 'dropped' || text === 'cancelled' || text === 'canceled') return 'dropped'
   if (text === 'archive' || text === 'archived') return 'archived'
+  if (text === 'draft') return 'draft'
+  if (text === 'open') return 'backlog'
   return text.replace(/\s+/g, '-')
 }
 
@@ -86,15 +108,39 @@ function versionRank(versionId: string) {
   return numbers.reduce((accumulator, value, index) => accumulator + value / 10 ** (index * 2), 0)
 }
 
+function computeIntentProgress(lifecycle: string | null | undefined, taskCount = 0, doneTaskCount = 0) {
+  if (taskCount > 0) {
+    return clampProgress((doneTaskCount / taskCount) * 100)
+  }
+
+  const normalized = normalizeLifecycle(lifecycle)
+  if (normalized === 'draft') return 10
+  if (normalized === 'backlog') return 25
+  if (normalized === 'active') return 60
+  if (normalized === 'closed' || normalized === 'archived') return 100
+  if (normalized === 'dropped') return 0
+  return 15
+}
+
+function lifecycleRailState(value: string | null | undefined): 'draft' | 'backlog' | 'active' | 'closed' {
+  const normalized = normalizeLifecycle(value)
+  if (normalized === 'active') return 'active'
+  if (normalized === 'closed' || normalized === 'archived') return 'closed'
+  if (normalized === 'draft') return 'draft'
+  return 'backlog'
+}
+
 function summarizeMilestoneState(intents: IntentListItem[]) {
   const total = intents.length || 1
   const active = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
+  const draft = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'draft').length
   const backlog = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length
   const closed = intents.filter((intent) => ['closed', 'archived'].includes(normalizeLifecycle(intent.lifecycle))).length
   const progress = clampProgress((closed / total) * 100)
 
   if (active > 0) return { state: 'active' as const, progress }
   if (backlog > 0) return { state: 'backlog' as const, progress }
+  if (draft > 0) return { state: 'draft' as const, progress }
   return { state: 'closed' as const, progress: closed === total ? 100 : progress }
 }
 
@@ -183,7 +229,7 @@ function buildMilestones(intents: IntentListItem[]) {
 
 function statusTone(value: string) {
   if (value === 'active' || value === 'aligned' || value === 'fresh' || value === 'closed') return 'status-good'
-  if (value === 'backlog' || value === 'moving' || value === 'in-flight') return 'status-neutral'
+  if (value === 'backlog' || value === 'moving' || value === 'in-flight' || value === 'draft') return 'status-neutral'
   if (value === 'archived') return 'status-offline'
   if (value === 'dropped' || value === 'reload' || value === 'drift') return 'status-warn'
   return 'status-neutral'
@@ -294,6 +340,62 @@ function IntentHealthBar({
   )
 }
 
+function LifecycleRail({ lifecycle }: { lifecycle: string | null | undefined }) {
+  const current = lifecycleRailState(lifecycle)
+  const steps: Array<'draft' | 'backlog' | 'active' | 'closed'> = ['draft', 'backlog', 'active', 'closed']
+  const currentIndex = steps.indexOf(current)
+
+  return (
+    <div className="intent-lifecycle-rail" role="list" aria-label="Intent lifecycle">
+      {steps.map((step, index) => {
+        const state = index < currentIndex ? 'done' : index === currentIndex ? 'active' : 'upcoming'
+        return (
+          <div key={step} className={`intent-lifecycle-step intent-lifecycle-step-${state}`} role="listitem">
+            <span className="intent-lifecycle-dot" aria-hidden="true" />
+            <strong>{step}</strong>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function CollapsibleBlock({
+  title,
+  icon,
+  sectionKey,
+  collapsed,
+  onToggle,
+  subtitle,
+  children,
+}: {
+  title: string
+  icon: typeof flag
+  sectionKey: DetailSectionKey
+  collapsed: boolean
+  onToggle: (key: DetailSectionKey) => void
+  subtitle?: string
+  children: ReactNode
+}) {
+  return (
+    <article className="intent-drawer-block">
+      <button className="intent-section-toggle" type="button" onClick={() => onToggle(sectionKey)}>
+        <span className="section-title-row">
+          <span className="section-icon section-icon-intent" aria-hidden="true">
+            <Icon icon={icon} />
+          </span>
+          <span>
+            <h3>{title}</h3>
+            {subtitle ? <p className="system-card-subtle">{subtitle}</p> : null}
+          </span>
+        </span>
+        <Icon icon={collapsed ? chevronDown : chevronUp} aria-hidden="true" />
+      </button>
+      {!collapsed ? children : null}
+    </article>
+  )
+}
+
 function TaskRow({
   task,
   index,
@@ -344,12 +446,69 @@ function TaskRow({
   )
 }
 
+function InlineEditableText({
+  label,
+  value,
+  field,
+  activeField,
+  draftValue,
+  onStartEdit,
+  onChangeDraft,
+  onCancel,
+  onSave,
+  saving,
+  error,
+  multiline = false,
+}: {
+  label: string
+  value: string
+  field: EditableField
+  activeField: EditableField | null
+  draftValue: string
+  onStartEdit: (field: EditableField, currentValue: string) => void
+  onChangeDraft: (value: string) => void
+  onCancel: () => void
+  onSave: () => void
+  saving: boolean
+  error: string | null
+  multiline?: boolean
+}) {
+  const isEditing = activeField === field
+  return (
+    <div className="intent-editable-field">
+      <span className="runtime-overview-label">{label}</span>
+      {isEditing ? (
+        <div className="intent-inline-editor">
+          {multiline ? (
+            <textarea value={draftValue} onChange={(event) => onChangeDraft(event.target.value)} rows={4} />
+          ) : (
+            <input value={draftValue} onChange={(event) => onChangeDraft(event.target.value)} />
+          )}
+          <div className="intent-inline-editor-actions">
+            <button className="tool-button tool-button-primary" type="button" onClick={onSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button className="tool-button" type="button" onClick={onCancel}>Cancel</button>
+          </div>
+          {error ? <p className="runtime-warning-text">{error}</p> : null}
+        </div>
+      ) : (
+        <button className="intent-editable-display" type="button" onDoubleClick={() => onStartEdit(field, value)}>
+          <span>{value || 'Double-click to edit'}</span>
+          <Icon icon={pencilLine} aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function IntentsListPage() {
   const queryClient = useQueryClient()
   const intentsQuery = useIntentsList()
   const systemSnapshotQuery = useSystemSnapshot()
   const intents = intentsQuery.data?.parsed?.intents ?? []
-  const snapshotMetadata = systemSnapshotQuery.data?.metadata
+  const snapshot = systemSnapshotQuery.data
+  const snapshotMetadata = snapshot?.metadata
   const focusIntentId = snapshotMetadata?.focusIntentId ?? null
   const activeIntentId = snapshotMetadata?.activeIntentId ?? null
   const [selectedIntentId, setSelectedIntentId] = useState<string | null>(null)
@@ -357,8 +516,17 @@ export function IntentsListPage() {
   const [expandedTaskIndex, setExpandedTaskIndex] = useState<number | null>(null)
   const [showAllMilestones, setShowAllMilestones] = useState(false)
   const [healthFilter, setHealthFilter] = useState<IntentHealthFilter>('all')
-  const [intentSortKey, setIntentSortKey] = useState<IntentSortKey>('version')
+  const [intentSortKey, setIntentSortKey] = useState<IntentSortKey>('milestone')
   const [intentSortDirection, setIntentSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [collapsedSections, setCollapsedSections] = useState<Record<DetailSectionKey, boolean>>({
+    summary: false,
+    detail: false,
+    relations: false,
+    tasks: false,
+  })
+  const [activeEditor, setActiveEditor] = useState<EditableField | null>(null)
+  const [editorDraft, setEditorDraft] = useState('')
+  const [editorError, setEditorError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!intents.length) {
@@ -377,10 +545,39 @@ export function IntentsListPage() {
 
   useEffect(() => {
     setExpandedTaskIndex(null)
+    setActiveEditor(null)
+    setEditorError(null)
   }, [selectedIntentId])
+
+  useEffect(() => {
+    if (!drawerOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [drawerOpen])
 
   const detailQuery = useIntentDetail(selectedIntentId)
   const detail = detailQuery.data?.detail ?? null
+
+  const intentUpdateMutation = useMutation({
+    mutationFn: async (payload: { id: string; body: Record<string, string> }) => {
+      return apiPatch<IntentPatchResponse>(`/api/intents/${encodeURIComponent(payload.id)}`, payload.body)
+    },
+    onSuccess: async () => {
+      setActiveEditor(null)
+      setEditorError(null)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['intent-detail', selectedIntentId] }),
+        queryClient.invalidateQueries({ queryKey: ['intents-list'] }),
+        queryClient.invalidateQueries({ queryKey: systemSnapshotQueryKey }),
+      ])
+    },
+    onError: (error) => {
+      setEditorError(error instanceof Error ? error.message : 'Intent update failed.')
+    },
+  })
 
   const lifecycleCounts = useMemo(() => ({
     active: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length,
@@ -406,30 +603,35 @@ export function IntentsListPage() {
     })
   }, [healthFilter, intents, selectedIntentId])
 
+  const selectedTaskCount = detail?.tasks.length ?? 0
+  const selectedDoneTasks = detail?.tasks.filter((task) => normalizeLifecycle(task.status) === 'closed' || String(task.status).toLowerCase() === 'done').length ?? 0
+
   const sortedIntents = useMemo(() => {
     const items = [...filteredIntents]
     items.sort((left, right) => {
       const leftRuntime = intentRuntimeLabel(left.id, focusIntentId, activeIntentId)
       const rightRuntime = intentRuntimeLabel(right.id, focusIntentId, activeIntentId)
-      const leftValues: Record<IntentSortKey, string> = {
+      const leftProgress = computeIntentProgress(left.lifecycle)
+      const rightProgress = computeIntentProgress(right.lifecycle)
+      const leftValues: Record<IntentSortKey, string | number> = {
         title: String(left.title ?? left.id),
-        version: intentVersionLabel(left.id),
+        milestone: versionRank(deriveVersionBucket(left.id)),
         lifecycle: String(left.lifecycle ?? ''),
-        mode: String(left.mode ?? ''),
+        progress: leftProgress,
         runtime: leftRuntime,
       }
-      const rightValues: Record<IntentSortKey, string> = {
+      const rightValues: Record<IntentSortKey, string | number> = {
         title: String(right.title ?? right.id),
-        version: intentVersionLabel(right.id),
+        milestone: versionRank(deriveVersionBucket(right.id)),
         lifecycle: String(right.lifecycle ?? ''),
-        mode: String(right.mode ?? ''),
+        progress: rightProgress,
         runtime: rightRuntime,
       }
       let comparison = 0
-      if (intentSortKey === 'version') {
-        comparison = versionRank(leftValues.version) - versionRank(rightValues.version)
+      if (typeof leftValues[intentSortKey] === 'number' && typeof rightValues[intentSortKey] === 'number') {
+        comparison = Number(leftValues[intentSortKey]) - Number(rightValues[intentSortKey])
       } else {
-        comparison = leftValues[intentSortKey].localeCompare(rightValues[intentSortKey])
+        comparison = String(leftValues[intentSortKey]).localeCompare(String(rightValues[intentSortKey]))
       }
       return comparison * (intentSortDirection === 'asc' ? 1 : -1)
     })
@@ -450,17 +652,55 @@ export function IntentsListPage() {
   }
 
   const toggleIntentSort = (nextKey: IntentSortKey) => {
-    setIntentSortDirection((current) => (intentSortKey === nextKey ? (current === 'asc' ? 'desc' : 'asc') : nextKey === 'version' ? 'desc' : 'asc'))
+    setIntentSortDirection((current) => (intentSortKey === nextKey ? (current === 'asc' ? 'desc' : 'asc') : nextKey === 'milestone' || nextKey === 'progress' ? 'desc' : 'asc'))
     setIntentSortKey(nextKey)
+  }
+
+  const toggleSection = (key: DetailSectionKey) => {
+    setCollapsedSections((current) => ({ ...current, [key]: !current[key] }))
+  }
+
+  const startEdit = (field: EditableField, currentValue: string) => {
+    setActiveEditor(field)
+    setEditorDraft(currentValue)
+    setEditorError(null)
+  }
+
+  const cancelEdit = () => {
+    setActiveEditor(null)
+    setEditorDraft('')
+    setEditorError(null)
+  }
+
+  const saveEdit = async (field: EditableField) => {
+    if (!selectedIntentId) return
+    const bodyMap: Record<EditableField, Record<string, string>> = {
+      title: { title: editorDraft.trim() },
+      decisionSummary: { decision_summary: editorDraft.trim() },
+      focusCurrent: { focus: editorDraft.trim() },
+      focusNextAction: { next_action: editorDraft.trim() },
+    }
+    await intentUpdateMutation.mutateAsync({ id: selectedIntentId, body: bodyMap[field] })
   }
 
   const selectedIntent = intents.find((intent) => intent.id === selectedIntentId) ?? null
   const detailStatus = detail ? formatIntentStatus(detail) : 'Select an intent'
+  const rulesSummary = (snapshot?.rulesSummary as { summary?: { count?: number; packCount?: number; topRules?: Array<{ id: string }> } } | undefined)?.summary
+  const runtimeSummary = (snapshot?.runtimeServices as { summary?: { runningCount?: number }; schedules?: Array<{ id: string }> } | undefined)
+  const gatesSummary = (snapshot?.gates as { items?: Array<{ gate: string }>; readiness?: string } | undefined)
   const relationEntries = detail ? [
-    { label: 'Intent file', value: detail.sourceFile ?? 'none' },
-    { label: 'Workspace node', value: detail.workspacePath ?? 'none' },
-    { label: 'Focus relation', value: detail.id === focusIntentId ? 'Current workspace focus' : 'Not current focus' },
-    { label: 'Active relation', value: detail.id === activeIntentId ? 'Current active intent' : 'Not active runtime intent' },
+    { label: 'Goal', value: detail.goal ?? detail.summary ?? 'No explicit goal yet', icon: target },
+    { label: 'Milestone / Version', value: intentVersionLabel(detail.id ?? selectedIntentId ?? ''), icon: flagTriangleRight },
+    { label: 'Pipeline', value: `release pipeline · ${((snapshot?.homeSummary as { summary?: { pipeline?: { stepCount?: number } } } | undefined)?.summary?.pipeline?.stepCount ?? 0)} steps`, icon: gitBranch },
+    { label: 'Rules', value: `${rulesSummary?.count ?? 0} rules · ${rulesSummary?.packCount ?? 0} packs`, icon: shield },
+    { label: 'Gates', value: `${gatesSummary?.items?.length ?? 0} gates · ${gatesSummary?.readiness ?? 'unknown'}`, icon: shield },
+    { label: 'Document (KB)', value: detail.sourceFile ?? 'none', icon: fileText },
+    { label: 'Agent', value: 'SVFactory maintainer surface', icon: bot },
+    { label: 'Prompt', value: '.github/agents + svfactory prompts', icon: layers3 },
+    { label: 'Database', value: 'focus-state.db + SQLite-backed focus store', icon: database },
+    { label: 'Services', value: `${runtimeSummary?.summary?.runningCount ?? 0} runtime services`, icon: server },
+    { label: 'Cron', value: `${runtimeSummary?.schedules?.length ?? 0} schedules`, icon: clock3 },
+    { label: 'Workspace node', value: detail.workspacePath ?? 'none', icon: network },
   ] : []
 
   return (
@@ -557,9 +797,9 @@ export function IntentsListPage() {
           <div className="rules-table intent-registry-table" role="table" aria-label="Intent registry list">
             <div className="rules-table-header intent-registry-header" role="row">
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('title')}>Intent{sortIndicator('title', intentSortKey, intentSortDirection)}</button>
-              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('version')}>Version{sortIndicator('version', intentSortKey, intentSortDirection)}</button>
+              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('milestone')}>Milestone{sortIndicator('milestone', intentSortKey, intentSortDirection)}</button>
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('lifecycle')}>Lifecycle{sortIndicator('lifecycle', intentSortKey, intentSortDirection)}</button>
-              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('mode')}>Mode{sortIndicator('mode', intentSortKey, intentSortDirection)}</button>
+              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('progress')}>Progress{sortIndicator('progress', intentSortKey, intentSortDirection)}</button>
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('runtime')}>Runtime{sortIndicator('runtime', intentSortKey, intentSortDirection)}</button>
               <span role="columnheader">Blockers</span>
             </div>
@@ -567,6 +807,7 @@ export function IntentsListPage() {
               const lifecycle = normalizeLifecycle(intent.lifecycle)
               const isFocused = intent.id === focusIntentId
               const isActive = intent.id === activeIntentId
+              const progress = computeIntentProgress(intent.lifecycle)
               return (
                 <article
                   key={intent.id}
@@ -585,7 +826,12 @@ export function IntentsListPage() {
                     <span className={`status-pill ${statusTone(lifecycle)}`}>{intent.lifecycle ?? 'unknown'}</span>
                   </div>
                   <div role="cell">
-                    <span className="meta-pill">{intent.mode ?? 'normal'}</span>
+                    <div className="intent-grid-progress">
+                      <div className="intent-progress-track" aria-hidden="true">
+                        <span style={{ width: `${progress}%` }} />
+                      </div>
+                      <strong>{progress}%</strong>
+                    </div>
                   </div>
                   <div role="cell" className="intent-runtime-cell">
                     {isFocused ? <span className="meta-pill meta-pill-focus">Focus</span> : null}
@@ -633,42 +879,78 @@ export function IntentsListPage() {
               </div>
             ) : (
               <div className="intent-drawer-stack">
-                <article className="intent-drawer-block">
-                  <div className="section-title-row">
-                    <span className="section-icon section-icon-intent" aria-hidden="true">
-                      <Icon icon={flag} />
-                    </span>
-                    <div>
-                      <h3>Summary & Lifecycle</h3>
-                      <p className="intent-id">{detail.id ?? selectedIntentId}</p>
-                    </div>
-                  </div>
+                <CollapsibleBlock
+                  title="Summary & Lifecycle"
+                  icon={flag}
+                  sectionKey="summary"
+                  collapsed={collapsedSections.summary}
+                  onToggle={toggleSection}
+                  subtitle="Double-click supported on title."
+                >
                   <div className="intent-hero-badges">
                     <span className={`status-pill ${statusTone(normalizeLifecycle(detail.lifecycle))}`}>{detail.lifecycle ?? 'unknown'}</span>
                     <span className="meta-pill">{detailStatus}</span>
                     <span className="meta-pill">{detail.mode ?? 'normal'}</span>
                     <span className="meta-pill">{detail.changeType ?? 'unspecified'}</span>
                   </div>
-                  <p className="intent-detail-summary">
-                    {detail.summary ?? detail.goal ?? 'No narrative summary has been extracted from intent.md yet.'}
-                  </p>
-                  <div className="intent-progress-track" aria-hidden="true">
-                    <span style={{ width: `${detail.lifecycle === 'active' ? 56 : detail.lifecycle === 'backlog' ? 22 : 100}%` }} />
-                  </div>
-                </article>
+                  <InlineEditableText
+                    label="Title"
+                    value={detail.title ?? ''}
+                    field="title"
+                    activeField={activeEditor}
+                    draftValue={editorDraft}
+                    onStartEdit={startEdit}
+                    onChangeDraft={setEditorDraft}
+                    onCancel={cancelEdit}
+                    onSave={() => void saveEdit('title')}
+                    saving={intentUpdateMutation.isPending}
+                    error={editorError}
+                  />
+                  <p className="intent-detail-summary">{detail.summary ?? detail.goal ?? 'No narrative summary has been extracted from intent.md yet.'}</p>
+                  <LifecycleRail lifecycle={detail.lifecycle ?? detail.status} />
+                </CollapsibleBlock>
 
-                <article className="intent-drawer-block">
-                  <div className="section-title-row">
-                    <span className="section-icon section-icon-runtime" aria-hidden="true">
-                      <Icon icon={flagTriangleRight} />
-                    </span>
-                    <h3>Detail</h3>
-                  </div>
+                <CollapsibleBlock
+                  title="Detail"
+                  icon={flagTriangleRight}
+                  sectionKey="detail"
+                  collapsed={collapsedSections.detail}
+                  onToggle={toggleSection}
+                  subtitle="Double-click supported on description, focus, and close condition."
+                >
                   <div className="intent-drawer-detail-grid">
                     <div className="system-info-card">
-                      <strong className="system-info-title">{detail.focusCurrent ?? 'No current focus recorded'}</strong>
-                      <p>Next action: {detail.focusNextAction ?? 'pending'}</p>
+                      <InlineEditableText
+                        label="Current focus"
+                        value={detail.focusCurrent ?? ''}
+                        field="focusCurrent"
+                        activeField={activeEditor}
+                        draftValue={editorDraft}
+                        onStartEdit={startEdit}
+                        onChangeDraft={setEditorDraft}
+                        onCancel={cancelEdit}
+                        onSave={() => void saveEdit('focusCurrent')}
+                        saving={intentUpdateMutation.isPending}
+                        error={editorError}
+                        multiline
+                      />
                       <p className="system-card-subtle">Updated: {formatTimestamp(detail.focusUpdatedAt)}</p>
+                    </div>
+                    <div className="system-info-card">
+                      <InlineEditableText
+                        label="Close condition / next action"
+                        value={detail.focusNextAction ?? ''}
+                        field="focusNextAction"
+                        activeField={activeEditor}
+                        draftValue={editorDraft}
+                        onStartEdit={startEdit}
+                        onChangeDraft={setEditorDraft}
+                        onCancel={cancelEdit}
+                        onSave={() => void saveEdit('focusNextAction')}
+                        saving={intentUpdateMutation.isPending}
+                        error={editorError}
+                        multiline
+                      />
                     </div>
                     <div className="system-info-card">
                       <strong className="system-info-title">
@@ -677,32 +959,52 @@ export function IntentsListPage() {
                       <p>{detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'No live chaos estimate attached.'}</p>
                       {detail.chaosEstimate?.warning ? <p className="runtime-warning-text">{detail.chaosEstimate.warning}</p> : null}
                     </div>
+                    <div className="system-info-card">
+                      <span className="runtime-overview-label">Intent progress</span>
+                      <div className="intent-grid-progress">
+                        <div className="intent-progress-track" aria-hidden="true">
+                          <span style={{ width: `${computeIntentProgress(detail.lifecycle, selectedTaskCount, selectedDoneTasks)}%` }} />
+                        </div>
+                        <strong>{computeIntentProgress(detail.lifecycle, selectedTaskCount, selectedDoneTasks)}%</strong>
+                      </div>
+                    </div>
                   </div>
-                  <p className="rules-cell-copy">{detail.decisionSummary ?? 'No decision summary captured yet.'}</p>
-                </article>
+                  <InlineEditableText
+                    label="Description / decision summary"
+                    value={detail.decisionSummary ?? ''}
+                    field="decisionSummary"
+                    activeField={activeEditor}
+                    draftValue={editorDraft}
+                    onStartEdit={startEdit}
+                    onChangeDraft={setEditorDraft}
+                    onCancel={cancelEdit}
+                    onSave={() => void saveEdit('decisionSummary')}
+                    saving={intentUpdateMutation.isPending}
+                    error={editorError}
+                    multiline
+                  />
+                </CollapsibleBlock>
 
-                <article className="intent-drawer-block">
-                  <div className="section-title-row">
-                    <span className="section-icon section-icon-kb" aria-hidden="true">
-                      <Icon icon={network} />
-                    </span>
-                    <h3>Metadata & Relations</h3>
-                  </div>
+                <CollapsibleBlock
+                  title="Metadata & Relations"
+                  icon={network}
+                  sectionKey="relations"
+                  collapsed={collapsedSections.relations}
+                  onToggle={toggleSection}
+                  subtitle="Surface catalog across modules, runtime, and KB artifacts."
+                >
                   <div className="intent-relations-grid">
                     {relationEntries.map((entry) => (
                       <div key={entry.label} className="intent-relation-card">
-                        <span className="runtime-overview-label">{entry.label}</span>
+                        <div className="intent-relation-head">
+                          <span className="section-icon section-icon-kb" aria-hidden="true">
+                            <Icon icon={entry.icon} />
+                          </span>
+                          <span className="runtime-overview-label">{entry.label}</span>
+                        </div>
                         <strong>{entry.value}</strong>
                       </div>
                     ))}
-                    <div className="intent-relation-card">
-                      <span className="runtime-overview-label">Staged modules</span>
-                      <strong>{detail.stagedFiles.length}</strong>
-                    </div>
-                    <div className="intent-relation-card">
-                      <span className="runtime-overview-label">Task nodes</span>
-                      <strong>{detail.tasks.length}</strong>
-                    </div>
                   </div>
                   {detail.stagedFiles.length ? (
                     <div className="intent-staged-list">
@@ -711,18 +1013,16 @@ export function IntentsListPage() {
                       ))}
                     </div>
                   ) : null}
-                </article>
+                </CollapsibleBlock>
 
-                <article className="intent-drawer-block">
-                  <div className="section-title-row">
-                    <span className="section-icon section-icon-runtime" aria-hidden="true">
-                      <Icon icon={listTodo} />
-                    </span>
-                    <div>
-                      <h3>Tasks Grid</h3>
-                      <p className="system-card-subtle">Click a task row to expand row detail inline.</p>
-                    </div>
-                  </div>
+                <CollapsibleBlock
+                  title="Tasks Grid"
+                  icon={listTodo}
+                  sectionKey="tasks"
+                  collapsed={collapsedSections.tasks}
+                  onToggle={toggleSection}
+                  subtitle="Click a task row to expand row detail inline."
+                >
                   {detail.tasks.length ? (
                     <div className="intent-task-grid">
                       <div className="intent-task-grid-header">
@@ -743,7 +1043,7 @@ export function IntentsListPage() {
                   ) : (
                     <p className="rules-cell-copy">No task lines were extracted from `intent.md` or `plan.md` for this intent.</p>
                   )}
-                </article>
+                </CollapsibleBlock>
               </div>
             )}
           </aside>

@@ -2052,6 +2052,11 @@
   box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.35);
 }
 
+.intent-grid-progress {
+  display: grid;
+  gap: 6px;
+}
+
 .intent-record-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -2126,6 +2131,19 @@
   gap: 6px;
 }
 
+.intent-section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+
 .intent-runtime-cell {
   display: flex;
   flex-wrap: wrap;
@@ -2142,6 +2160,43 @@
   display: grid;
   gap: 12px;
   margin-top: 12px;
+}
+
+.intent-lifecycle-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.intent-lifecycle-step {
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 144, 167, 0.2);
+}
+
+.intent-lifecycle-step-done {
+  background: rgba(22, 101, 52, 0.16);
+  border-color: rgba(74, 222, 128, 0.24);
+}
+
+.intent-lifecycle-step-active {
+  background: linear-gradient(180deg, rgba(19, 44, 66, 0.92), rgba(11, 16, 23, 0.82));
+  border-color: rgba(56, 189, 248, 0.34);
+}
+
+.intent-lifecycle-step-upcoming {
+  background: rgba(11, 16, 23, 0.52);
+  border-style: dashed;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.intent-lifecycle-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
 .intent-task-grid {
@@ -2207,6 +2262,53 @@
   padding: 8px 10px;
   border-radius: 8px;
   background: rgba(11, 16, 23, 0.72);
+}
+
+.intent-editable-field {
+  display: grid;
+  gap: 8px;
+}
+
+.intent-editable-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  color: inherit;
+  text-align: left;
+  background: rgba(15, 23, 36, 0.72);
+  border: 1px solid rgba(120, 144, 167, 0.16);
+  border-radius: 10px;
+}
+
+.intent-inline-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.intent-inline-editor input,
+.intent-inline-editor textarea {
+  width: 100%;
+  padding: 10px 12px;
+  color: #e5edf5;
+  background: rgba(11, 16, 23, 0.92);
+  border: 1px solid rgba(120, 144, 167, 0.2);
+  border-radius: 10px;
+}
+
+.intent-inline-editor-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.intent-relation-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .intent-relation-card {
@@ -2445,7 +2547,8 @@
 
   .intent-milestone-rail.compact,
   .intent-registry-header,
-  .intent-registry-row {
+  .intent-registry-row,
+  .intent-lifecycle-rail {
     grid-template-columns: 1fr;
   }
 
