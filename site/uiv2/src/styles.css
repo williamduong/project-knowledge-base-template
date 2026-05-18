@@ -3047,3 +3047,22 @@
 .kb-roots-add-form input:focus { outline: 2px solid #38bdf8; outline-offset: 1px; }
 .kb-roots-add-form button[disabled] { opacity: 0.5; cursor: not-allowed; }
 .kb-roots-dialog .runtime-error-text { margin: 0 18px 4px; font-size: 12px; color: #f87171; }
+
+/* KB browse picker (slice C-1) */
+.kb-roots-section-head { padding: 4px 18px 2px; margin: 0; }
+.kb-browse-header { padding: 10px 18px 4px; display: flex; flex-direction: column; gap: 6px; }
+.kb-breadcrumb { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; font-size: 13px; }
+.kb-breadcrumb-crumb {
+  background: transparent; border: 0; color: #cbd5e1; cursor: pointer;
+  padding: 2px 6px; border-radius: 4px; font: inherit;
+}
+.kb-breadcrumb-crumb:hover { background: var(--bg-panel-2); color: #ebf2fa; }
+.kb-breadcrumb-sep { color: #64748b; }
+.kb-browse-list .kb-roots-item { justify-content: space-between; }
+.kb-browse-row {
+  flex: 1 1 auto; display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; border: 0; cursor: pointer; padding: 6px 10px;
+  border-radius: 6px; color: #ebf2fa; text-align: left; font: inherit;
+}
+.kb-browse-row:hover { background: var(--bg-panel-2); }
+.kb-browse-row svg { width: 14px; height: 14px; color: #fbbf24; flex-shrink: 0; }

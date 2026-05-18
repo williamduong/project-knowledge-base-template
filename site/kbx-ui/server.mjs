@@ -12,8 +12,10 @@ import {
   DEFAULT_CANDIDATE_ROOTS as KB_CANDIDATE_ROOTS,
   parseDocFromDisk as kbParseDocFromDisk,
   walkRoot as kbWalkRoot,
-  discoverCandidateRoots as kbDiscoverCandidateRoots,
   validateCandidateRoot as kbValidateCandidateRoot,
+  hasAllowedFiles as kbHasAllowedFiles,
+  ALLOWED_EXT as KB_ALLOWED_EXT,
+  SKIP_DIRS as KB_SKIP_DIRS,
 } from '../../src/lib/kb-content.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +26,8 @@ const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 const require = createRequire(import.meta.url);
 const { resolveIntentRecord } = require(path.join(repoRoot, 'src', 'lib', 'intent.js'));
 const { readFocusState, writeFocusState } = require(path.join(repoRoot, 'src', 'lib', 'focus-state.js'));
+const kbDb = require(path.join(repoRoot, 'src', 'lib', 'kb-db.js'));
+const kbIndexDbPath = path.join(repoRoot, 'svfactory', 'kb-index.db');
 const { runGitCommand } = require(path.join(repoRoot, 'src', 'lib', 'git.js'));
 const { readPipeline } = require(path.join(repoRoot, 'src', 'lib', 'pipeline.js'));
 const { run: runCli } = require(path.join(repoRoot, 'src', 'cli.js'));
@@ -1880,171 +1884,306 @@ function buildDocumentsWorkspace(selectedPath) {
   };
 }
 
-// ═══ KB STORE (L3 collector for /api/kb/* endpoints) ═══
+// ═══ KB STORE (Slice C-1 — DB-backed) ═══
 //
-// Owns the lazy-cached representation of the KB multi-root workspace per
-// notes/kbx-ui-kb-page-runtime-contract.md. Route handlers only read from
-// this store; they do not parse the filesystem at request time.
-//
-// Slice B additions:
-//   - active-root set persisted to L5 (kbRootsStatePath)
-//   - candidate list auto-discovered each refresh, merged with defaults
-//   - mutations (add/remove root) trigger a refresh and atomic state write
-function createKbStore({ repoRoot: storeRepoRoot, statePath = kbRootsStatePath, defaults = KB_CANDIDATE_ROOTS }) {
-  let cache = null;
-  const docCache = new Map();
-  let refreshing = null;
-  let activeRoots = null; // Set<string>, hydrated on first ensure()
+// The KB workspace is now persisted in svfactory/kb-index.db. Roots and per-
+// file rows (folders + .md/.html docs) live in `kb_roots` and `kb_files`.
+// Reads hit indexed columns (~ms); mutations write to DB then schedule a
+// background re-import of the affected root. Filesystem is reconciled
+// against the DB via drift/sync ops in slice C-2+.
+function createKbStore({ repoRoot: storeRepoRoot, dbPath = kbIndexDbPath, legacyStatePath = kbRootsStatePath, defaults = KB_CANDIDATE_ROOTS }) {
+  const db = kbDb.openKbDb(dbPath);
 
-  function readPersistedActive() {
-    try {
-      if (!fs.existsSync(statePath)) return null;
-      const parsed = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-      if (!parsed || !Array.isArray(parsed.activeRoots)) return null;
-      return new Set(parsed.activeRoots.filter((p) => typeof p === 'string'));
-    } catch { return null; }
-  }
-
-  function writePersistedActive(set) {
-    try {
-      const dir = path.dirname(statePath);
-      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      const payload = { activeRoots: Array.from(set), updatedAt: new Date().toISOString() };
-      const tmp = `${statePath}.tmp`;
-      fs.writeFileSync(tmp, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
-      fs.renameSync(tmp, statePath);
-    } catch (error) {
-      // Persistence failure must not crash the route; log and continue. The
-      // in-memory active set is still authoritative for the running process.
-      console.warn('[kb-roots] persist failed:', error?.message || error);
+  // One-time migration: if the slice-B L5 json still exists and the DB has
+  // no roots, seed the table from it. Then delete the json — DB takes over.
+  function migrateLegacyL5() {
+    const seeded = kbDb.readMeta(db, 'legacy_l5_migrated');
+    if (seeded === '1') return;
+    const existingRoots = kbDb.listRoots(db);
+    let toSeed = [];
+    if (existingRoots.length === 0) {
+      let activeFromJson = null;
+      try {
+        if (fs.existsSync(legacyStatePath)) {
+          const parsed = JSON.parse(fs.readFileSync(legacyStatePath, 'utf8'));
+          if (parsed && Array.isArray(parsed.activeRoots)) activeFromJson = parsed.activeRoots;
+        }
+      } catch {}
+      const activeSet = new Set(activeFromJson ?? defaults.filter((d) => d.defaultActive).map((d) => d.path));
+      // Seed from defaults; mark active per active-set.
+      toSeed = defaults
+        .filter((d) => fs.existsSync(path.join(storeRepoRoot, d.path)))
+        .map((d) => ({ path: d.path, label: d.label, active: activeSet.has(d.path) ? 1 : 0 }));
     }
+    for (const row of toSeed) {
+      kbDb.upsertRoot(db, { path: row.path, label: row.label, active: row.active, addedAt: new Date().toISOString() });
+    }
+    kbDb.writeMeta(db, 'legacy_l5_migrated', '1');
+    try { if (fs.existsSync(legacyStatePath)) fs.renameSync(legacyStatePath, `${legacyStatePath}.migrated`); } catch {}
   }
+  migrateLegacyL5();
 
-  function defaultActiveFromCandidates(candidates) {
-    return new Set(candidates.filter((c) => c.defaultActive).map((c) => c.path));
-  }
+  // ─── helpers ───
 
-  function hydrateActive(candidates) {
-    if (activeRoots) return;
-    const persisted = readPersistedActive();
-    activeRoots = persisted || defaultActiveFromCandidates(candidates);
-    if (!persisted) writePersistedActive(activeRoots);
-  }
-
-  // Hydrate activeRoots WITHOUT triggering a full snapshot rebuild. Used by
-  // the mutation path so add/remove don't pay for a tree walk just to check
-  // membership in the active set.
-  function ensureActiveHydrated() {
-    if (activeRoots) return;
-    hydrateActive(kbDiscoverCandidateRoots(storeRepoRoot, defaults));
-  }
-
-  function buildSnapshot(reason) {
-    const generatedAt = new Date().toISOString();
-    const today = new Date();
-    const discovered = kbDiscoverCandidateRoots(storeRepoRoot, defaults);
-    hydrateActive(discovered);
-
-    const rootCandidates = [];
-    const roots = [];
-    for (const c of discovered) {
-      const abs = path.join(storeRepoRoot, c.path);
-      const result = kbWalkRoot(abs, c.path, today);
-      rootCandidates.push({
-        path: c.path,
-        label: c.label,
-        defaultActive: !!c.defaultActive,
-        source: c.source || 'default',
-        docCount: result.docCount || 0,
-        active: activeRoots.has(c.path),
-      });
-      if (!activeRoots.has(c.path)) continue;
-      if (!result.node) continue;
-      roots.push({
-        ...result.node,
-        label: c.label,
-        defaultActive: !!c.defaultActive,
-      });
+  function rowToTreeNode(row) {
+    if (row.kind === 'folder') {
+      return {
+        kind: 'folder',
+        path: row.path,
+        title: row.basename || row.path.split('/').pop(),
+        children: [],
+        // docCount set after assembly
+        docCount: 0,
+        stalest: null,
+      };
     }
     return {
-      generatedAt,
-      reason: reason || 'initial',
-      tree: { generatedAt, roots },
-      rootCandidates,
-      activeRoots: Array.from(activeRoots),
+      kind: 'doc',
+      path: row.path,
+      title: row.title || row.basename,
+      type: row.type || 'unknown',
+      status: row.status || 'unknown',
+      verification: row.verification || 'unknown',
+      time_state: row.time_state || 'unknown',
+      owner: row.owner || '',
+      last_updated: row.last_updated || '',
+      last_verified: row.last_verified || '',
+      daysSinceVerified: row.days_since_verified ?? 0,
+      stale: (row.days_since_verified ?? 0) >= 60,
+      tags: row.tags ? safeJsonParse(row.tags, []) : [],
+      fileKind: row.kind,
     };
   }
 
-  function ensure(reason) {
-    if (cache) return cache;
-    cache = buildSnapshot(reason);
-    return cache;
+  function safeJsonParse(s, fallback) {
+    try { return JSON.parse(s); } catch { return fallback; }
   }
 
-  async function refresh(reason) {
-    if (refreshing) return refreshing;
-    refreshing = Promise.resolve().then(() => {
-      cache = buildSnapshot(reason || 'refresh');
-      docCache.clear();
-      return cache;
-    });
-    try { return await refreshing; } finally { refreshing = null; }
+  // Build a root subtree from all rows under root_path.
+  function buildRootTree(rootRow) {
+    const rows = kbDb.listAllUnderRoot(db, rootRow.path);
+    const byPath = new Map();
+    for (const r of rows) byPath.set(r.path, rowToTreeNode(r));
+    // root node itself isn't in kb_files (we only store children); synthesize.
+    const rootNode = {
+      kind: 'folder',
+      path: rootRow.path,
+      title: rootRow.path.split('/').pop() || rootRow.path,
+      label: rootRow.label,
+      defaultActive: true,
+      docCount: 0,
+      stalest: null,
+      children: [],
+    };
+    byPath.set(rootRow.path, rootNode);
+    // Attach children to parents; track docCount and stalest.
+    for (const r of rows) {
+      const parent = byPath.get(r.parent_path) || rootNode;
+      parent.children.push(byPath.get(r.path));
+    }
+    // Recursive post-order: counts + stalest aggregate
+    function fold(node) {
+      if (node.kind !== 'folder') {
+        return { count: 1, stalest: node.daysSinceVerified >= 60 ? { path: node.path, daysSinceVerified: node.daysSinceVerified } : null };
+      }
+      let count = 0;
+      let stalest = null;
+      // sort children: folders first then files, alphabetical
+      node.children.sort((a, b) => {
+        if (a.kind !== b.kind) return a.kind === 'folder' ? -1 : 1;
+        return (a.title || '').localeCompare(b.title || '');
+      });
+      for (const c of node.children) {
+        const f = fold(c);
+        count += f.count;
+        if (f.stalest && (!stalest || f.stalest.daysSinceVerified > stalest.daysSinceVerified)) stalest = f.stalest;
+      }
+      node.docCount = count;
+      node.stalest = stalest;
+      return { count, stalest };
+    }
+    fold(rootNode);
+    return rootNode;
   }
 
-  function getTree() { return ensure('lazy-init').tree; }
-  function getRootCandidates() { return ensure('lazy-init').rootCandidates; }
+  // ─── import (disk → DB) ───
+
+  let importing = new Set(); // paths being imported (guard re-entry)
+
+  function importRoot(rootPath, { force = false } = {}) {
+    if (importing.has(rootPath)) return;
+    const root = kbDb.getRoot(db, rootPath);
+    if (!root) return;
+    if (!force && root.indexed_at && kbDb.countFilesByRoot(db, rootPath) > 0) return;
+    importing.add(rootPath);
+    try {
+      const abs = path.join(storeRepoRoot, rootPath);
+      const walk = kbWalkRoot(abs, rootPath, new Date());
+      if (!walk.node) {
+        kbDb.deleteFilesUnderRoot(db, rootPath);
+        kbDb.setRootIndexed(db, rootPath);
+        return;
+      }
+      // Wipe and re-insert in a transaction (simple full reimport).
+      const tx = db.prepare('BEGIN'); tx.run();
+      try {
+        kbDb.deleteFilesUnderRoot(db, rootPath);
+        const indexedAt = new Date().toISOString();
+        // walk.node.children contains the tree. We need flat rows: every doc
+        // and every folder under root (including nested), with parent_path.
+        function flatten(node, parentPath) {
+          if (node.kind === 'doc') {
+            // Need full body+html — kbWalkRoot returns summary only. Re-parse
+            // from disk for body+html.
+            const fullAbs = path.join(storeRepoRoot, node.path);
+            const parsed = kbParseDocFromDisk(fullAbs, node.path, new Date());
+            const stat = (() => { try { return fs.statSync(fullAbs); } catch { return null; } })();
+            kbDb.upsertFileRow(db, {
+              path: node.path,
+              root_path: rootPath,
+              parent_path: parentPath,
+              basename: node.path.split('/').pop(),
+              kind: node.fileKind || (node.path.endsWith('.html') ? 'html' : 'md'),
+              size: stat ? stat.size : null,
+              mtime_ms: stat ? Math.round(stat.mtimeMs) : null,
+              content_hash: null,
+              title: parsed.doc.frontmatter.title || node.title,
+              type: parsed.doc.frontmatter.type,
+              status: parsed.doc.frontmatter.status,
+              verification: parsed.doc.frontmatter.verification,
+              time_state: parsed.doc.frontmatter.time_state,
+              owner: parsed.doc.frontmatter.owner,
+              last_updated: parsed.doc.frontmatter.last_updated,
+              last_verified: parsed.doc.frontmatter.last_verified,
+              days_since_verified: node.daysSinceVerified,
+              tags: parsed.doc.frontmatter.tags,
+              body: null,                   // skip raw body for slice C-1; populated via getDoc on demand later
+              html: parsed.doc.html,
+              indexed_at: indexedAt,
+            });
+            return;
+          }
+          // folder
+          kbDb.upsertFileRow(db, {
+            path: node.path,
+            root_path: rootPath,
+            parent_path: parentPath,
+            basename: node.path.split('/').pop(),
+            kind: 'folder',
+            indexed_at: indexedAt,
+          });
+          for (const c of node.children || []) flatten(c, node.path);
+        }
+        // Children of the root walk node go under parent = rootPath.
+        for (const c of walk.node.children || []) flatten(c, rootPath);
+        kbDb.setRootIndexed(db, rootPath, indexedAt);
+        db.prepare('COMMIT').run();
+      } catch (err) {
+        try { db.prepare('ROLLBACK').run(); } catch {}
+        throw err;
+      }
+    } finally {
+      importing.delete(rootPath);
+    }
+  }
+
+  function ensureRootImported(rootPath) {
+    const root = kbDb.getRoot(db, rootPath);
+    if (!root) return;
+    if (kbDb.countFilesByRoot(db, rootPath) === 0) importRoot(rootPath);
+  }
+
+  // ─── public API (UI contract) ───
+
+  function getTree() {
+    const generatedAt = new Date().toISOString();
+    const activeRoots = kbDb.listActiveRoots(db);
+    const roots = [];
+    for (const r of activeRoots) {
+      ensureRootImported(r.path);
+      const rootRow = kbDb.getRoot(db, r.path);
+      roots.push(buildRootTree(rootRow));
+    }
+    return { generatedAt, roots };
+  }
+
+  function getRootCandidates() {
+    // All rows in kb_roots, with active flag and docCount.
+    const all = kbDb.listRoots(db);
+    return all.map((r) => ({
+      path: r.path,
+      label: r.label,
+      defaultActive: false, // not meaningful anymore — DB tracks active per-row
+      docCount: kbDb.countFilesByRoot(db, r.path),
+      active: r.active === 1,
+      indexedAt: r.indexed_at,
+    }));
+  }
+
   function getActiveRoots() {
-    ensure('lazy-init');
-    return Array.from(activeRoots);
+    return kbDb.listActiveRoots(db).map((r) => r.path);
   }
-  function getMeta() {
-    const c = ensure('lazy-init');
-    return { generatedAt: c.generatedAt, reason: c.reason };
-  }
+
   function getDoc(relPath) {
     if (typeof relPath !== 'string' || !relPath) return null;
-    const safe = relPath.replace(/^[/\\]+/, '');
+    const safe = relPath.replace(/^[/\\]+/, '').split(/[\\/]+/).join('/');
+    const row = kbDb.getDoc(db, safe);
+    if (row) {
+      if (row.kind === 'folder') return null;
+      return {
+        path: row.path,
+        frontmatter: {
+          title: row.title || '',
+          type: row.type || 'unknown',
+          status: row.status || 'unknown',
+          owner: row.owner || '',
+          time_state: row.time_state || 'unknown',
+          verification: row.verification || 'unknown',
+          last_updated: row.last_updated || '',
+          last_verified: row.last_verified || '',
+          last_verified_commit: null,
+          source_of_truth: null,
+          related_strong: [],
+          related_weak: [],
+          released_in: null,
+          tags: row.tags ? safeJsonParse(row.tags, []) : [],
+        },
+        headings: [], // not stored in slice C-1; client TOC is empty until C-2 stores them
+        html: row.html || '',
+        fromCache: true,
+        snapshotAt: row.indexed_at,
+      };
+    }
+    // Fallback: doc not in DB but path looks like a valid file under repo →
+    // parse on the fly and upsert. Lets us serve a file before its root was
+    // ever indexed.
     const abs = path.resolve(storeRepoRoot, safe);
-    const rel = path.relative(storeRepoRoot, abs);
+    const rel = path.relative(storeRepoRoot, abs).split(path.sep).join('/');
     if (rel.startsWith('..') || path.isAbsolute(rel)) return null;
     if (!/\.(md|html)$/i.test(rel)) return null;
     if (!fs.existsSync(abs)) return null;
-    const key = rel.split(path.sep).join('/');
-    const cached = docCache.get(key);
-    if (cached) return { ...cached, fromCache: true };
-    const parsed = kbParseDocFromDisk(abs, key, new Date());
-    const meta = getMeta();
-    const out = { ...parsed.doc, fromCache: false, snapshotAt: meta.generatedAt };
-    docCache.set(key, out);
-    return out;
+    const parsed = kbParseDocFromDisk(abs, rel, new Date());
+    return { ...parsed.doc, fromCache: false, snapshotAt: new Date().toISOString() };
   }
 
-  // Mutations invalidate the cache synchronously but DO NOT await a rebuild.
-  // The UI's invalidateQueries → refetch will pull the fresh tree lazily,
-  // keeping the POST/DELETE response fast (< 20 ms warm) instead of blocking
-  // on a full re-walk (~100 ms+ for the full project).
-  function invalidate(_reason) {
-    cache = null;
-    docCache.clear();
-    // Do NOT pre-warm here. buildSnapshot() runs synchronous fs IO that
-    // blocks the event loop for ~100ms+ per active root. If we pre-warm in
-    // setImmediate, the very next request (typically the UI's tree refetch
-    // after the mutation) is delayed by exactly that block. Let GET
-    // /api/kb/tree trigger the rebuild inline — that's the natural place
-    // for the user to wait, and it doesn't freeze other endpoints.
+  function refresh(reason, rootPath) {
+    if (rootPath) { importRoot(rootPath, { force: true }); return { generatedAt: new Date().toISOString(), reason: `refresh:${reason || 'manual'}:${rootPath}` }; }
+    // Full refresh = re-import all active roots.
+    for (const r of kbDb.listActiveRoots(db)) importRoot(r.path, { force: true });
+    return { generatedAt: new Date().toISOString(), reason: `refresh:${reason || 'manual'}:all` };
   }
 
   function addRoot(requestedPath) {
-    const validation = kbValidateCandidateRoot(storeRepoRoot, requestedPath);
-    if (!validation.ok) return { ok: false, error: validation.reason };
-    ensureActiveHydrated();
-    if (activeRoots.has(validation.normalized)) {
-      return { ok: true, alreadyActive: true, activeRoots: Array.from(activeRoots) };
+    const v = kbValidateCandidateRoot(storeRepoRoot, requestedPath);
+    if (!v.ok) return { ok: false, error: v.reason };
+    const existing = kbDb.getRoot(db, v.normalized);
+    if (existing && existing.active === 1) {
+      return { ok: true, alreadyActive: true, activeRoots: getActiveRoots() };
     }
-    activeRoots.add(validation.normalized);
-    writePersistedActive(activeRoots);
-    invalidate(`add-root:${validation.normalized}`);
-    return { ok: true, activeRoots: Array.from(activeRoots) };
+    const label = existing ? existing.label : v.normalized.split('/').pop() || v.normalized;
+    kbDb.upsertRoot(db, { path: v.normalized, label, active: 1, addedAt: existing ? existing.added_at : new Date().toISOString() });
+    // Defer import: GET /api/kb/tree triggers ensureRootImported lazily.
+    return { ok: true, activeRoots: getActiveRoots(), addedPath: v.normalized };
   }
 
   function removeRoot(requestedPath) {
@@ -2052,17 +2191,62 @@ function createKbStore({ repoRoot: storeRepoRoot, statePath = kbRootsStatePath, 
       return { ok: false, error: 'path required' };
     }
     const normalized = requestedPath.trim().replace(/^[/\\]+/, '').split(/[\\/]+/).join('/');
-    ensureActiveHydrated();
-    if (!activeRoots.has(normalized)) {
-      return { ok: true, alreadyInactive: true, activeRoots: Array.from(activeRoots) };
+    const existing = kbDb.getRoot(db, normalized);
+    if (!existing || existing.active === 0) {
+      return { ok: true, alreadyInactive: true, activeRoots: getActiveRoots() };
     }
-    activeRoots.delete(normalized);
-    writePersistedActive(activeRoots);
-    invalidate(`remove-root:${normalized}`);
-    return { ok: true, activeRoots: Array.from(activeRoots) };
+    kbDb.upsertRoot(db, { path: normalized, label: existing.label, active: 0, addedAt: existing.added_at });
+    // Keep cached rows for a possible re-activate later; full delete is opt-in.
+    return { ok: true, activeRoots: getActiveRoots() };
   }
 
-  return { refresh, getTree, getRootCandidates, getActiveRoots, getMeta, getDoc, addRoot, removeRoot };
+  // ─── browse picker (drill-down filesystem chooser, no DB writes) ───
+
+  function browse(relPath, maxDepth = 3) {
+    const safe = (relPath || '').replace(/^[/\\]+/, '').split(/[\\/]+/).filter(Boolean).join('/');
+    const abs = safe ? path.join(storeRepoRoot, safe) : storeRepoRoot;
+    if (!fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) {
+      return { ok: false, error: 'path is not a directory' };
+    }
+    // List immediate child directories; only those with at least one allowed
+    // file at any depth ≤ maxDepth.
+    let entries;
+    try { entries = fs.readdirSync(abs, { withFileTypes: true }); } catch { return { ok: false, error: 'cannot read directory' }; }
+    const children = [];
+    for (const e of entries) {
+      if (!e.isDirectory()) continue;
+      if (e.name.startsWith('.') && e.name !== '.github') continue;
+      if (KB_SKIP_DIRS.has(e.name)) continue;
+      const childAbs = path.join(abs, e.name);
+      if (!kbHasAllowedFiles(childAbs)) continue;
+      const childRel = safe ? `${safe}/${e.name}` : e.name;
+      // Count immediate-level docs (cheap).
+      let immediateDocs = 0;
+      try {
+        for (const ee of fs.readdirSync(childAbs, { withFileTypes: true })) {
+          if (ee.isFile()) {
+            const dot = ee.name.lastIndexOf('.');
+            const ext = dot >= 0 ? ee.name.slice(dot).toLowerCase() : '';
+            if (KB_ALLOWED_EXT.has(ext)) immediateDocs += 1;
+          }
+        }
+      } catch {}
+      // Mark whether this child is already a known root (active or inactive).
+      const existing = kbDb.getRoot(db, childRel);
+      children.push({
+        name: e.name,
+        path: childRel,
+        immediateDocs,
+        isRoot: !!existing,
+        active: existing ? existing.active === 1 : false,
+      });
+    }
+    children.sort((a, b) => a.name.localeCompare(b.name));
+    const parent = safe ? safe.split('/').slice(0, -1).join('/') : null;
+    return { ok: true, path: safe, parent, maxDepth, children };
+  }
+
+  return { getTree, getRootCandidates, getActiveRoots, getDoc, refresh, addRoot, removeRoot, browse };
 }
 
 export function createApp(commandRunner = executeBridgeCommand) {
@@ -2078,7 +2262,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
       // re-walk the whole project — kbStore is lazy on first read anyway.
       const reason = storeOptions?.reason || 'unknown';
       if (reason === 'manual-refresh') {
-        setImmediate(() => { kbStore.refresh(`system-snapshot:${reason}`).catch(() => {}); });
+        setImmediate(() => { try { kbStore.refresh(`system-snapshot:${reason}`); } catch {} });
       }
       return snap;
     },
@@ -2628,11 +2812,23 @@ export function createApp(commandRunner = executeBridgeCommand) {
     res.status(200).json({ ok: true, path: requested, ...edges, affectedCount, impactGeneratedAt });
   });
 
-  app.post('/api/kb/refresh', express.json(), async (req, res) => {
+  app.post('/api/kb/refresh', express.json(), (req, res) => {
     const targetPath = typeof req.body?.path === 'string' ? req.body.path : null;
-    // For slice A: full re-walk regardless of `path` (TODO: scoped invalidation).
-    const result = await kbStore.refresh(targetPath ? `kb-only:${targetPath}` : 'kb-only:full');
+    const result = kbStore.refresh('manual', targetPath);
     res.status(200).json({ ok: true, generatedAt: result.generatedAt, reason: result.reason });
+  });
+
+  // Drill-down picker for the AddFolderDialog. Returns immediate child
+  // directories of `path` (relative to repo root) that contain ≥1 .md/.html
+  // anywhere ≤ maxDepth levels deep. Folders without allowed files hidden.
+  // Each row also flags whether it is already a known root + its active state.
+  app.get('/api/kb/browse', (req, res) => {
+    const requested = typeof req.query.path === 'string' ? req.query.path : '';
+    const raw = Number(req.query.maxDepth);
+    const maxDepth = Number.isFinite(raw) && raw > 0 ? Math.min(raw, 5) : 3;
+    const result = kbStore.browse(requested, maxDepth);
+    if (!result.ok) { res.status(400).json(result); return; }
+    res.status(200).json(result);
   });
 
   // ═══ PHASE 4: MUTATION ENDPOINTS ═══

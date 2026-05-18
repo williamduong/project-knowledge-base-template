@@ -18,6 +18,30 @@ type MutationResponse = { ok: boolean; activeRoots?: string[]; rootCandidates?: 
 
 export const kbRootsQueryKey = ['kb', 'roots'] as const
 
+export type KbBrowseChild = {
+  name: string
+  path: string
+  immediateDocs: number
+  isRoot: boolean
+  active: boolean
+}
+export type KbBrowseResponse = {
+  ok: boolean
+  path: string
+  parent: string | null
+  maxDepth: number
+  children: KbBrowseChild[]
+}
+
+export function useKbBrowse(path: string, enabled = true) {
+  return useQuery<KbBrowseResponse>({
+    queryKey: ['kb', 'browse', path],
+    queryFn: () => apiGet<KbBrowseResponse>(`/api/kb/browse?path=${encodeURIComponent(path)}`),
+    enabled,
+    staleTime: 30_000,
+  })
+}
+
 export function useKbTree() {
   return useQuery<KbTreeResponse>({
     queryKey: ['kb', 'tree'],

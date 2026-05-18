@@ -13,9 +13,10 @@ import helpCircle from '@iconify-icons/lucide/help-circle'
 import folderPlus from '@iconify-icons/lucide/folder-plus'
 import xIcon from '@iconify-icons/lucide/x'
 import filterX from '@iconify-icons/lucide/filter-x'
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useKbTree, useKbDoc, useKbRoots, useAddKbRoot, useRemoveKbRoot, type KbRootCandidate } from '../hooks/useKb'
+import { useKbTree, useKbDoc, useKbRoots, useAddKbRoot, useRemoveKbRoot, useKbBrowse, type KbRootCandidate } from '../hooks/useKb'
+import chevronLeftIcon from '@iconify-icons/lucide/chevron-left'
 import type { KbDocStatus, KbDocType, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
 
 type RailMode = 'expanded' | 'icon'
@@ -367,14 +368,9 @@ type AddFolderDialogProps = {
   onClose: () => void
 }
 function AddFolderDialog({ candidates, activeRoots, pending, errorMessage, onAdd, onRemove, onClose }: AddFolderDialogProps) {
-  const [newPath, setNewPath] = useState('')
-  const submitNew = (e: FormEvent) => {
-    e.preventDefault()
-    const v = newPath.trim()
-    if (!v) return
-    onAdd(v)
-    setNewPath('')
-  }
+  const [browsePath, setBrowsePath] = useState('')
+  const browse = useKbBrowse(browsePath)
+
   return (
     <div className="prototype-overlay-backdrop" onClick={onClose}>
       <div className="prototype-dialog kb-roots-dialog" onClick={(e) => e.stopPropagation()}>
@@ -385,44 +381,94 @@ function AddFolderDialog({ candidates, activeRoots, pending, errorMessage, onAdd
           </div>
           <button className="icon-tool-button" type="button" onClick={onClose} aria-label="Close"><Icon icon={xIcon} /></button>
         </div>
-        <p className="rules-cell-copy">
-          Bật/tắt folder hoặc gõ path mới (relative tới repo root). Chỉ folder chứa ít nhất 1 file <code>.md</code> hoặc <code>.html</code> được chấp nhận. Active set được persist vào <code>site/kbx-ui/.runtime-state/kb-roots.json</code>.
-        </p>
-        <form className="kb-roots-add-form" onSubmit={submitNew}>
-          <input
-            type="text"
-            placeholder="path/to/folder (vd: docs hoặc tools/runbooks)"
-            value={newPath}
-            onChange={(e) => setNewPath(e.target.value)}
-            disabled={pending}
-          />
-          <button className="tool-button tool-button-primary" type="submit" disabled={pending || !newPath.trim()}>
-            <Icon icon={folderPlus} aria-hidden="true" /> Add
-          </button>
-        </form>
-        {errorMessage ? <p className="runtime-error-text">{errorMessage}</p> : null}
-        <ul className="kb-roots-list">
-          {candidates.map((r) => {
-            const isOn = activeRoots.has(r.path)
-            return (
-              <li key={r.path} className="kb-roots-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isOn}
-                    disabled={pending}
-                    onChange={() => (isOn ? onRemove(r.path) : onAdd(r.path))}
-                  />
+
+        {/* ACTIVE / KNOWN roots — toggle on/off here */}
+        {candidates.length > 0 ? (
+          <>
+            <p className="workspace-eyebrow kb-roots-section-head">Đã chọn</p>
+            <ul className="kb-roots-list">
+              {candidates.map((r) => {
+                const isOn = activeRoots.has(r.path)
+                return (
+                  <li key={r.path} className="kb-roots-item">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={isOn}
+                        disabled={pending}
+                        onChange={() => (isOn ? onRemove(r.path) : onAdd(r.path))}
+                      />
+                      <Icon icon={folderIcon} aria-hidden="true" />
+                      <strong>{r.label}</strong>
+                      <span className="count-pill">{r.docCount} docs</span>
+                      <code className="kb-roots-path">{r.path}</code>
+                    </label>
+                  </li>
+                )
+              })}
+            </ul>
+          </>
+        ) : null}
+
+        {/* DRILL-DOWN browser — pick any folder in the project */}
+        <div className="kb-browse-header">
+          <p className="workspace-eyebrow">Chọn folder mới</p>
+          <div className="kb-breadcrumb">
+            {browsePath ? (
+              <button className="icon-tool-button" type="button" aria-label="Lên 1 cấp"
+                onClick={() => setBrowsePath(browse.data?.parent ?? '')}>
+                <Icon icon={chevronLeftIcon} />
+              </button>
+            ) : null}
+            <button type="button" className="kb-breadcrumb-crumb" onClick={() => setBrowsePath('')}>repo</button>
+            {browsePath
+              ? browsePath.split('/').map((seg, idx, arr) => {
+                  const upto = arr.slice(0, idx + 1).join('/')
+                  return (
+                    <span key={upto}>
+                      <span className="kb-breadcrumb-sep">/</span>
+                      <button type="button" className="kb-breadcrumb-crumb" onClick={() => setBrowsePath(upto)}>{seg}</button>
+                    </span>
+                  )
+                })
+              : null}
+          </div>
+        </div>
+
+        {browse.isLoading ? (
+          <div className="prototype-skeleton-stack"><span /><span /></div>
+        ) : browse.data && browse.data.children.length > 0 ? (
+          <ul className="kb-roots-list kb-browse-list">
+            {browse.data.children.map((c) => (
+              <li key={c.path} className="kb-roots-item">
+                <button type="button" className="kb-browse-row" onClick={() => setBrowsePath(c.path)} title={`Mở ${c.path}`}>
                   <Icon icon={folderIcon} aria-hidden="true" />
-                  <strong>{r.label}</strong>
-                  <span className="count-pill">{r.docCount} docs</span>
-                  {r.source === 'discovered' ? <span className="meta-pill">discovered</span> : null}
-                  <code className="kb-roots-path">{r.path}</code>
-                </label>
+                  <strong>{c.name}</strong>
+                  {c.immediateDocs > 0 ? <span className="count-pill">{c.immediateDocs} docs</span> : null}
+                  <code className="kb-roots-path">{c.path}</code>
+                </button>
+                {c.isRoot && c.active ? (
+                  <span className="meta-pill kb-pill-strong">đang active</span>
+                ) : c.isRoot ? (
+                  <button className="tool-button" type="button" disabled={pending} onClick={() => onAdd(c.path)}>
+                    Re-enable
+                  </button>
+                ) : (
+                  <button className="tool-button tool-button-primary" type="button" disabled={pending} onClick={() => onAdd(c.path)}>
+                    <Icon icon={folderPlus} /> Add
+                  </button>
+                )}
               </li>
-            )
-          })}
-        </ul>
+            ))}
+          </ul>
+        ) : (
+          <p className="kb-empty">Không folder con nào có .md / .html ở đây.</p>
+        )}
+
+        {errorMessage ? <p className="runtime-error-text">{errorMessage}</p> : null}
+        <p className="rules-cell-copy kb-roots-hint">
+          Folder ẩn nếu không chứa file <code>.md</code> hoặc <code>.html</code> nào ở 3 cấp đầu. Active set lưu trong <code>svfactory/kb-index.db</code>.
+        </p>
       </div>
     </div>
   )

@@ -253,7 +253,54 @@ The contract is satisfied only when:
 - L1: `useKbRoots`, `useAddKbRoot`, `useRemoveKbRoot` hooks. localStorage in `KnowledgeBasePage.tsx` removed. `AddFolderDialog` gains a free-form path input and surfaces server validation errors inline.
 - Verified live: POST `notes` flips `kbStore.activeRoots` to `[knowledge-base, notes]` and persists. POST `../etc` returns 400. POST `src/cli.js` returns 400 (`path is not a directory`). DELETE `notes` reduces the set and the on-disk file matches. DELETE of an inactive path returns `alreadyInactive: true`.
 
-### Open follow-ups (beyond Slice B)
+### Slice C-1 shipped (2026-05-18)
+
+DB is now the source of truth for KB tree/doc/roots. Filesystem is the
+import source; drift detection + sync ops live in slice C-2+.
+
+- L5 swap: removed `site/kbx-ui/.runtime-state/kb-roots.json`. State now in
+  `svfactory/kb-index.db` (SQLite via `node:sqlite`, gitignored). Schema
+  `kb_meta` / `kb_roots` / `kb_files` defined in `src/lib/kb-db.js`. One-time
+  migration in `createKbStore` reads any leftover legacy json and seeds the
+  table, then renames the json to `*.migrated`.
+- L4: `src/lib/kb-db.js` (new) wraps `DatabaseSync` per the focus-state
+  pattern. Exposes prepared statements for roots and files plus aggregate
+  stats. `src/lib/kb-content.mjs` keeps the filesystem helpers used during
+  import.
+- L3: `createKbStore` rewritten. `getTree()` reads `kb_files` rows under
+  active roots and assembles a nested tree in JS (post-order folds for
+  docCount + stalest). First call per root triggers a one-time inline
+  import (~300 ms for knowledge-base / 233 docs). Subsequent reads ~15 ms.
+  Mutations (`addRoot` / `removeRoot`) just write `kb_roots` rows; the next
+  tree read lazily imports if the new root has no rows yet.
+- L2: response shapes for `/api/kb/tree`, `/api/kb/roots`, `/api/kb/doc`
+  are unchanged so the UI contract is preserved. New endpoint:
+  - `GET /api/kb/browse?path=&maxDepth=3` — drill-down picker. Returns
+    immediate child directories that have ≥1 `.md`/`.html` anywhere in the
+    next `maxDepth` levels. Each child carries `isRoot` + `active` flags
+    so the dialog can label "đang active" vs "Add" vs "Re-enable".
+  - `POST /api/kb/refresh { path? }` now invokes `kbStore.refresh('manual', path)`
+    which re-imports the named root (or all active roots if omitted).
+- L1: new `useKbBrowse(path)` hook; `AddFolderDialog` rewritten as a
+  breadcrumb drill-down picker over the project. The flat free-form text
+  input is gone — folder selection now happens by clicking through real
+  paths.
+- Cleanup: deleted `site/uiv2/src/app/mock/kb-data.generated.ts` (20k
+  lines of static mock) and `scripts/gen-kb-mock.mjs`. No mock fallback —
+  the UI requires the live `/api/kb/*` endpoints.
+
+Measured live (warm, fresh DB):
+
+| op | latency |
+|---|---|
+| GET /api/kb/tree (first call, triggers knowledge-base import) | ~365 ms |
+| GET /api/kb/tree (warm read) | ~15 ms |
+| GET /api/kb/doc | ~5 ms |
+| POST /api/kb/roots (deferred import) | ~20 ms |
+| GET /api/kb/tree after add (triggers notes import) | ~130 ms |
+| GET /api/kb/browse?path=knowledge-base | ~10 ms |
+
+### Open follow-ups (beyond Slice C-1)
 
 - mtime-based dirty check on tree walk (frontmatter re-parse only when file mtime changed).
 - Scoped refresh for `POST /api/kb/refresh { path }` (currently always full re-walk).
