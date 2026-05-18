@@ -326,7 +326,41 @@ actions land in C-3.
 Verified live for all three states: created a disk file → `disk-only` row;
 deleted a DB-known file → `db-only`; appended bytes to a doc → `content-diff`.
 
-### Open follow-ups (beyond Slice C-2)
+### Slice C-3 shipped (2026-05-18)
+
+Per-row drift resolution. UI can now repair drift either direction.
+
+- L4 `parseDocFromDisk` now returns `rawText` along with `summary`/`doc`/
+  `contentHash`. Import in `createKbStore` persists `body = rawText` so the
+  DB carries enough state to recreate the file from scratch (the missing
+  piece in C-1 where `body` was null).
+- L3 `kbStore.syncImport(path)` / `syncRestore(path)` (and `syncMany(op, paths[])`)
+  classify the path's current state on the spot via `classifyOne()` —
+  prevents a stale UI from misfiring an action.
+  - `syncImport` ("accept disk → DB"):
+    - `disk-only` → parse disk, INSERT row
+    - `content-diff` → parse disk, UPSERT row
+    - `db-only` → DELETE row
+  - `syncRestore` ("restore disk ← DB"):
+    - `disk-only` → DELETE file on disk
+    - `content-diff` → write DB body over disk
+    - `db-only` → re-create file from DB body
+  - Both fail with a clean error if `body` is null in DB (legacy slice-C-1
+    rows). The fix is one `POST /api/kb/refresh` to repopulate.
+- L2 `POST /api/kb/sync/import` and `POST /api/kb/sync/restore` accept
+  `{ path }` or `{ paths: [] }`. Mixed-success returns 207 with per-path
+  results.
+- L1 `useKbSync('import' | 'restore')` mutation hook. `DriftPanel` now
+  shows per-row action buttons (label changes by state, e.g. "Del DB" for
+  db-only on the import side, "Del disk" for disk-only on the restore
+  side) plus bulk "Accept all → DB" / "Restore all ← DB" buttons.
+  Every action goes through a sticky confirmation footer before firing.
+
+Verified live: induced all three drift states → applied corresponding
+sync action → drift returns to `total: 0`. Restore of a `db-only` file
+recreated the deleted markdown byte-for-byte from DB body.
+
+### Open follow-ups (beyond Slice C-3)
 
 - mtime-based dirty check on tree walk (frontmatter re-parse only when file mtime changed).
 - Scoped refresh for `POST /api/kb/refresh { path }` (currently always full re-walk).

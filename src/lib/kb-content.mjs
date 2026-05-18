@@ -273,6 +273,7 @@ export function parseDocFromDisk(absPath, relPath, today = new Date()) {
       html,
     },
     contentHash,
+    rawText: text,   // full file contents (frontmatter + body), used by DB for restore
   };
 }
 

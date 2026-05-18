@@ -15,7 +15,7 @@ import xIcon from '@iconify-icons/lucide/x'
 import filterX from '@iconify-icons/lucide/filter-x'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useKbTree, useKbDoc, useKbRoots, useAddKbRoot, useRemoveKbRoot, useKbBrowse, useKbDrift, type KbDriftEntry, type KbRootCandidate } from '../hooks/useKb'
+import { useKbTree, useKbDoc, useKbRoots, useAddKbRoot, useRemoveKbRoot, useKbBrowse, useKbDrift, useKbSync, type KbDriftEntry, type KbRootCandidate } from '../hooks/useKb'
 import chevronLeftIcon from '@iconify-icons/lucide/chevron-left'
 import alertCircle from '@iconify-icons/lucide/alert-circle'
 import type { KbDocStatus, KbDocType, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
@@ -499,6 +499,22 @@ const DRIFT_STATE_TONE: Record<KbDriftEntry['state'], string> = {
 
 function DriftPanel({ onClose }: { onClose: () => void }) {
   const drift = useKbDrift(true)
+  const importMut = useKbSync('import')
+  const restoreMut = useKbSync('restore')
+  const [confirm, setConfirm] = useState<{ op: 'import' | 'restore'; paths: string[]; label: string } | null>(null)
+  const pending = importMut.isPending || restoreMut.isPending
+
+  const importLabel = (state: KbDriftEntry['state']) =>
+    state === 'db-only' ? 'Delete DB row' : 'Accept disk → DB'
+  const restoreLabel = (state: KbDriftEntry['state']) =>
+    state === 'disk-only' ? 'Delete disk file' : state === 'db-only' ? 'Restore file from DB' : 'Overwrite disk ← DB'
+
+  const doSync = (op: 'import' | 'restore', paths: string[]) => {
+    const mut = op === 'import' ? importMut : restoreMut
+    mut.mutate(paths.length === 1 ? paths[0] : paths)
+    setConfirm(null)
+  }
+
   return (
     <div className="prototype-overlay-backdrop" onClick={onClose}>
       <div className="prototype-dialog kb-drift-dialog" onClick={(e) => e.stopPropagation()}>
@@ -518,6 +534,18 @@ function DriftPanel({ onClose }: { onClose: () => void }) {
               {drift.data.summary.diskOnly > 0 ? <span className="status-pill status-neutral">disk-only {drift.data.summary.diskOnly}</span> : null}
               {drift.data.summary.dbOnly > 0 ? <span className="status-pill status-offline">db-only {drift.data.summary.dbOnly}</span> : null}
               {drift.data.summary.contentDiff > 0 ? <span className="status-pill status-warn">content-diff {drift.data.summary.contentDiff}</span> : null}
+              {drift.data.entries.length > 0 ? (
+                <div className="kb-drift-bulk">
+                  <button type="button" className="tool-button" disabled={pending} title="Accept tất cả thay đổi ngoài → DB"
+                    onClick={() => setConfirm({ op: 'import', paths: drift.data!.entries.map((e) => e.path), label: 'Accept tất cả disk vào DB' })}>
+                    Accept all → DB
+                  </button>
+                  <button type="button" className="tool-button" disabled={pending} title="Khôi phục disk theo DB"
+                    onClick={() => setConfirm({ op: 'restore', paths: drift.data!.entries.map((e) => e.path), label: 'Restore tất cả disk theo DB' })}>
+                    Restore all ← DB
+                  </button>
+                </div>
+              ) : null}
             </div>
             {drift.data.entries.length === 0 ? (
               <p className="kb-empty" style={{ padding: '12px 18px' }}>DB và disk khớp hoàn toàn. Tốt.</p>
@@ -537,19 +565,43 @@ function DriftPanel({ onClose }: { onClose: () => void }) {
                         <span className="kb-drift-hash" title={`db: ${e.dbHash ?? '—'} | disk: ${e.diskHash ?? '—'}`}>
                           {e.dbHash ? e.dbHash.slice(0, 8) : '—'} → {e.diskHash ? e.diskHash.slice(0, 8) : '—'}
                         </span>
+                        <div className="kb-drift-actions">
+                          <button type="button" className="tool-button" disabled={pending} title={importLabel(e.state)}
+                            onClick={() => setConfirm({ op: 'import', paths: [e.path], label: importLabel(e.state) + ' • ' + e.path })}>
+                            { state === 'db-only' ? 'Del DB' : 'Accept' }
+                          </button>
+                          <button type="button" className="tool-button" disabled={pending} title={restoreLabel(e.state)}
+                            onClick={() => setConfirm({ op: 'restore', paths: [e.path], label: restoreLabel(e.state) + ' • ' + e.path })}>
+                            { state === 'disk-only' ? 'Del disk' : 'Restore' }
+                          </button>
+                        </div>
                       </li>
                     )),
                   ]
                 })}
               </ul>
             )}
-            <p className="rules-cell-copy kb-roots-hint">
-              Slice C-3 sẽ thêm nút "Restore từ DB" (ghi đè disk) và "Accept disk" (import vào DB) cho từng dòng. Hiện tại chỉ display.
-            </p>
+            {importMut.data && importMut.data.results.some((r) => !r.ok) ? (
+              <p className="runtime-error-text">{importMut.data.results.filter((r) => !r.ok).map((r) => `${r.path}: ${r.error}`).join(' | ')}</p>
+            ) : null}
+            {restoreMut.data && restoreMut.data.results.some((r) => !r.ok) ? (
+              <p className="runtime-error-text">{restoreMut.data.results.filter((r) => !r.ok).map((r) => `${r.path}: ${r.error}`).join(' | ')}</p>
+            ) : null}
           </>
         ) : (
           <p className="kb-empty">Không lấy được drift data.</p>
         )}
+
+        {confirm ? (
+          <div className="kb-drift-confirm">
+            <p>Xác nhận: <strong>{confirm.label}</strong>?</p>
+            <div className="prototype-action-row">
+              <button type="button" className="tool-button tool-button-primary" disabled={pending}
+                onClick={() => doSync(confirm.op, confirm.paths)}>OK</button>
+              <button type="button" className="tool-button" onClick={() => setConfirm(null)}>Huỷ</button>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   )

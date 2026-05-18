@@ -49,13 +49,40 @@ export type KbDriftResponse = {
 
 // Drift = DB intent vs disk reality. Heavy enough to be on-demand only
 // (called when the user opens the DriftPanel) — not in the auto-refetch
-// loop. Slice C-2 ships read-only; sync actions land in C-3.
+// loop.
 export function useKbDrift(enabled: boolean) {
   return useQuery<KbDriftResponse>({
     queryKey: ['kb', 'drift'],
     queryFn: () => apiGet<KbDriftResponse>('/api/kb/drift'),
     enabled,
     staleTime: 10_000,
+  })
+}
+
+export type KbSyncResult = {
+  path: string
+  ok: boolean
+  state?: 'disk-only' | 'db-only' | 'content-diff' | 'in-sync'
+  action?: string
+  noop?: boolean
+  error?: string
+}
+type KbSyncResponse = { ok: boolean; results: KbSyncResult[] }
+
+// Slice C-3 sync ops. "import" makes DB match disk; "restore" makes disk
+// match DB. Both accept a single path or an array via the same hook.
+export function useKbSync(op: 'import' | 'restore') {
+  const qc = useQueryClient()
+  return useMutation<KbSyncResponse, Error, string | string[]>({
+    mutationFn: (paths) => {
+      const body = Array.isArray(paths) ? { paths } : { path: paths }
+      return apiPost<KbSyncResponse>(`/api/kb/sync/${op}`, body)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['kb', 'drift'] })
+      qc.invalidateQueries({ queryKey: ['kb', 'tree'] })
+      qc.invalidateQueries({ queryKey: ['kb', 'doc'] })
+    },
   })
 }
 

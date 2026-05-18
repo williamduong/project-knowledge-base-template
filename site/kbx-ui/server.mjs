@@ -2083,7 +2083,7 @@ function createKbStore({ repoRoot: storeRepoRoot, dbPath = kbIndexDbPath, legacy
               last_verified: parsed.doc.frontmatter.last_verified,
               days_since_verified: node.daysSinceVerified,
               tags: parsed.doc.frontmatter.tags,
-              body: null,                   // skip raw body for slice C-1; populated via getDoc on demand later
+              body: parsed.rawText,         // raw file bytes (used by slice C-3 restore)
               html: parsed.doc.html,
               indexed_at: indexedAt,
             });
@@ -2345,7 +2345,120 @@ function createKbStore({ repoRoot: storeRepoRoot, dbPath = kbIndexDbPath, legacy
     return drift;
   }
 
-  return { getTree, getRootCandidates, getActiveRoots, getDoc, refresh, addRoot, removeRoot, browse, detectDrift };
+  // ─── sync ops (slice C-3) ───
+  //
+  // Per-row drift resolution.
+  //   syncImport(path)  = "accept disk" — make DB match disk.
+  //     disk-only    → INSERT row from disk
+  //     content-diff → UPSERT row with fresh disk content
+  //     db-only      → DELETE row (file is gone)
+  //   syncRestore(path) = "restore from DB" — make disk match DB.
+  //     disk-only    → DELETE file from disk
+  //     content-diff → overwrite disk with DB body
+  //     db-only      → re-create file on disk from DB body
+  //
+  // Both operations re-check the file's actual state right before acting so
+  // a stale UI doesn't cause a misfire.
+
+  function classifyOne(relPath) {
+    const safe = relPath.replace(/^[/\\]+/, '').split(/[\\/]+/).join('/');
+    const abs = path.resolve(storeRepoRoot, safe);
+    const rel = path.relative(storeRepoRoot, abs).split(path.sep).join('/');
+    if (rel.startsWith('..') || path.isAbsolute(rel)) return { error: 'path outside workspace' };
+    if (!/\.(md|html)$/i.test(rel)) return { error: 'path is not an allowed file' };
+    const row = kbDb.getDoc(db, rel);
+    const onDisk = fs.existsSync(abs);
+    let diskHash = null;
+    if (onDisk) diskHash = kbComputeFileHash(abs);
+    if (!row && !onDisk) return { error: 'no DB row and no disk file' };
+    if (!row && onDisk) return { state: 'disk-only', abs, rel, row: null, diskHash };
+    if (row && !onDisk) return { state: 'db-only', abs, rel, row, diskHash: null };
+    if (row && onDisk && row.content_hash === diskHash) return { state: 'in-sync', abs, rel, row, diskHash };
+    return { state: 'content-diff', abs, rel, row, diskHash };
+  }
+
+  function rootOf(rel) {
+    // Pick the deepest active root that is a prefix of rel.
+    let best = null;
+    for (const r of kbDb.listActiveRoots(db)) {
+      if (rel === r.path || rel.startsWith(r.path + '/')) {
+        if (!best || r.path.length > best.path.length) best = r;
+      }
+    }
+    return best;
+  }
+
+  function syncImport(relPath) {
+    const c = classifyOne(relPath);
+    if (c.error) return { ok: false, error: c.error };
+    if (c.state === 'in-sync') return { ok: true, state: 'in-sync', noop: true };
+    if (c.state === 'db-only') {
+      db.prepare(`DELETE FROM kb_files WHERE path = ?`).run(c.rel);
+      return { ok: true, state: c.state, action: 'deleted-db-row' };
+    }
+    // disk-only or content-diff → parse disk and upsert.
+    const root = rootOf(c.rel);
+    if (!root) return { ok: false, error: 'path is not under any active root' };
+    const parsed = kbParseDocFromDisk(c.abs, c.rel, new Date());
+    let stat = null; try { stat = fs.statSync(c.abs); } catch {}
+    const parentPath = c.rel.split('/').slice(0, -1).join('/');
+    kbDb.upsertFileRow(db, {
+      path: c.rel,
+      root_path: root.path,
+      parent_path: parentPath,
+      basename: c.rel.split('/').pop(),
+      kind: c.rel.endsWith('.html') ? 'html' : 'md',
+      size: stat ? stat.size : null,
+      mtime_ms: stat ? Math.round(stat.mtimeMs) : null,
+      content_hash: parsed.contentHash,
+      title: parsed.doc.frontmatter.title || c.rel.split('/').pop(),
+      type: parsed.doc.frontmatter.type,
+      status: parsed.doc.frontmatter.status,
+      verification: parsed.doc.frontmatter.verification,
+      time_state: parsed.doc.frontmatter.time_state,
+      owner: parsed.doc.frontmatter.owner,
+      last_updated: parsed.doc.frontmatter.last_updated,
+      last_verified: parsed.doc.frontmatter.last_verified,
+      days_since_verified: 0,
+      tags: parsed.doc.frontmatter.tags,
+      body: parsed.rawText,
+      html: parsed.doc.html,
+      indexed_at: new Date().toISOString(),
+    });
+    return { ok: true, state: c.state, action: 'upserted' };
+  }
+
+  function syncRestore(relPath) {
+    const c = classifyOne(relPath);
+    if (c.error) return { ok: false, error: c.error };
+    if (c.state === 'in-sync') return { ok: true, state: 'in-sync', noop: true };
+    if (c.state === 'disk-only') {
+      try { fs.unlinkSync(c.abs); } catch (err) { return { ok: false, error: `unlink failed: ${err?.message || err}` }; }
+      return { ok: true, state: c.state, action: 'deleted-disk-file' };
+    }
+    // db-only or content-diff → write DB body to disk.
+    if (!c.row || !c.row.body) {
+      return { ok: false, error: 'DB row has no body (legacy slice-C-1 row). Run POST /api/kb/refresh once to populate.' };
+    }
+    try {
+      fs.mkdirSync(path.dirname(c.abs), { recursive: true });
+      fs.writeFileSync(c.abs, c.row.body, 'utf8');
+    } catch (err) {
+      return { ok: false, error: `write failed: ${err?.message || err}` };
+    }
+    return { ok: true, state: c.state, action: 'wrote-disk-from-db' };
+  }
+
+  function syncMany(op, paths) {
+    const results = [];
+    for (const p of paths) {
+      const r = op === 'import' ? syncImport(p) : syncRestore(p);
+      results.push({ path: p, ...r });
+    }
+    return results;
+  }
+
+  return { getTree, getRootCandidates, getActiveRoots, getDoc, refresh, addRoot, removeRoot, browse, detectDrift, syncImport, syncRestore, syncMany };
 }
 
 export function createApp(commandRunner = executeBridgeCommand) {
@@ -2915,6 +3028,30 @@ export function createApp(commandRunner = executeBridgeCommand) {
     const targetPath = typeof req.body?.path === 'string' ? req.body.path : null;
     const result = kbStore.refresh('manual', targetPath);
     res.status(200).json({ ok: true, generatedAt: result.generatedAt, reason: result.reason });
+  });
+
+  // Resolve drift per path. Body accepts either { path } or { paths: [] }.
+  //   POST /api/kb/sync/import    — accept disk into DB
+  //   POST /api/kb/sync/restore   — overwrite disk from DB
+  function readPathsFromBody(body) {
+    if (!body) return [];
+    if (Array.isArray(body.paths)) return body.paths.filter((p) => typeof p === 'string' && p.length > 0);
+    if (typeof body.path === 'string' && body.path.length > 0) return [body.path];
+    return [];
+  }
+  app.post('/api/kb/sync/import', express.json(), (req, res) => {
+    const paths = readPathsFromBody(req.body);
+    if (paths.length === 0) { res.status(400).json({ ok: false, error: 'paths required' }); return; }
+    const results = kbStore.syncMany('import', paths);
+    const ok = results.every((r) => r.ok);
+    res.status(ok ? 200 : 207).json({ ok, results });
+  });
+  app.post('/api/kb/sync/restore', express.json(), (req, res) => {
+    const paths = readPathsFromBody(req.body);
+    if (paths.length === 0) { res.status(400).json({ ok: false, error: 'paths required' }); return; }
+    const results = kbStore.syncMany('restore', paths);
+    const ok = results.every((r) => r.ok);
+    res.status(ok ? 200 : 207).json({ ok, results });
   });
 
   app.get('/api/kb/drift', (req, res) => {

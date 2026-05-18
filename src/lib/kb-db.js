@@ -165,7 +165,8 @@ function countFilesByRoot(db, rootPath) {
 
 function getDoc(db, filePath) {
   return db.prepare(`
-    SELECT path, basename, kind, title, type, status, verification, time_state, owner,
+    SELECT path, parent_path, root_path, basename, kind, size, mtime_ms, content_hash,
+           title, type, status, verification, time_state, owner,
            last_updated, last_verified, days_since_verified, tags, body, html, indexed_at
     FROM kb_files WHERE path = ?
   `).get(filePath);
