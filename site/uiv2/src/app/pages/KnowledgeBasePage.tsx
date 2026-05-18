@@ -453,7 +453,6 @@ function AddFolderDialog({ candidates, activeRoots, pending, errorMessage, onAdd
                 <button type="button" className="kb-browse-row" onClick={() => setBrowsePath(c.path)} title={`Mở ${c.path}`}>
                   <Icon icon={folderIcon} aria-hidden="true" />
                   <strong>{c.name}</strong>
-                  {c.immediateDocs > 0 ? <span className="count-pill">{c.immediateDocs} docs</span> : null}
                   <code className="kb-roots-path">{c.path}</code>
                 </button>
                 {c.isRoot && c.active ? (
@@ -471,12 +470,12 @@ function AddFolderDialog({ candidates, activeRoots, pending, errorMessage, onAdd
             ))}
           </ul>
         ) : (
-          <p className="kb-empty">Không folder con nào có .md / .html ở đây.</p>
+          <p className="kb-empty">Không có folder con nào ở đây.</p>
         )}
 
         {errorMessage ? <p className="runtime-error-text">{errorMessage}</p> : null}
         <p className="rules-cell-copy kb-roots-hint">
-          Folder ẩn nếu không chứa file <code>.md</code> hoặc <code>.html</code> nào ở 3 cấp đầu. Active set lưu trong <code>svfactory/kb-index.db</code>.
+          Chọn bất kỳ folder nào. Server sẽ scan khi bạn add — chỉ <code>.md</code> và <code>.html</code> được index. Active set lưu trong <code>svfactory/kb-index.db</code>.
         </p>
       </div>
     </div>

@@ -14,7 +14,6 @@ import {
   parseDocFromText as kbParseDocFromText,
   walkRoot as kbWalkRoot,
   validateCandidateRoot as kbValidateCandidateRoot,
-  hasAllowedFiles as kbHasAllowedFiles,
   computeFileHash as kbComputeFileHash,
   ALLOWED_EXT as KB_ALLOWED_EXT,
   SKIP_DIRS as KB_SKIP_DIRS,
@@ -2230,15 +2229,18 @@ function createKbStore({ repoRoot: storeRepoRoot, dbPath = kbIndexDbPath, legacy
   }
 
   // ─── browse picker (drill-down filesystem chooser, no DB writes) ───
-
-  function browse(relPath, maxDepth = 3) {
+  //
+  // Dumb file-tree browser. Lists immediate child directories only — no
+  // recursive scan to "suggest" useful folders, no doc count, no content
+  // probing. Skips only obvious junk (node_modules, .git, dist...). If the
+  // user picks an empty folder, that's their call; the import will just
+  // produce 0 rows and they can pick something else.
+  function browse(relPath) {
     const safe = (relPath || '').replace(/^[/\\]+/, '').split(/[\\/]+/).filter(Boolean).join('/');
     const abs = safe ? path.join(storeRepoRoot, safe) : storeRepoRoot;
     if (!fs.existsSync(abs) || !fs.statSync(abs).isDirectory()) {
       return { ok: false, error: 'path is not a directory' };
     }
-    // List immediate child directories; only those with at least one allowed
-    // file at any depth ≤ maxDepth.
     let entries;
     try { entries = fs.readdirSync(abs, { withFileTypes: true }); } catch { return { ok: false, error: 'cannot read directory' }; }
     const children = [];
@@ -2246,33 +2248,18 @@ function createKbStore({ repoRoot: storeRepoRoot, dbPath = kbIndexDbPath, legacy
       if (!e.isDirectory()) continue;
       if (e.name.startsWith('.') && e.name !== '.github') continue;
       if (KB_SKIP_DIRS.has(e.name)) continue;
-      const childAbs = path.join(abs, e.name);
-      if (!kbHasAllowedFiles(childAbs)) continue;
       const childRel = safe ? `${safe}/${e.name}` : e.name;
-      // Count immediate-level docs (cheap).
-      let immediateDocs = 0;
-      try {
-        for (const ee of fs.readdirSync(childAbs, { withFileTypes: true })) {
-          if (ee.isFile()) {
-            const dot = ee.name.lastIndexOf('.');
-            const ext = dot >= 0 ? ee.name.slice(dot).toLowerCase() : '';
-            if (KB_ALLOWED_EXT.has(ext)) immediateDocs += 1;
-          }
-        }
-      } catch {}
-      // Mark whether this child is already a known root (active or inactive).
       const existing = kbDb.getRoot(db, childRel);
       children.push({
         name: e.name,
         path: childRel,
-        immediateDocs,
         isRoot: !!existing,
         active: existing ? existing.active === 1 : false,
       });
     }
     children.sort((a, b) => a.name.localeCompare(b.name));
     const parent = safe ? safe.split('/').slice(0, -1).join('/') : null;
-    return { ok: true, path: safe, parent, maxDepth, children };
+    return { ok: true, path: safe, parent, children };
   }
 
   // ─── drift detection (slice C-2) ───
@@ -3172,15 +3159,12 @@ export function createApp(commandRunner = executeBridgeCommand) {
     }
   });
 
-  // Drill-down picker for the AddFolderDialog. Returns immediate child
-  // directories of `path` (relative to repo root) that contain ≥1 .md/.html
-  // anywhere ≤ maxDepth levels deep. Folders without allowed files hidden.
-  // Each row also flags whether it is already a known root + its active state.
+  // Dumb file-tree browser. Lists immediate child directories of `path`,
+  // skipping obvious junk dirs. No content probing — user picks, server
+  // imports, user waits.
   app.get('/api/kb/browse', (req, res) => {
     const requested = typeof req.query.path === 'string' ? req.query.path : '';
-    const raw = Number(req.query.maxDepth);
-    const maxDepth = Number.isFinite(raw) && raw > 0 ? Math.min(raw, 5) : 3;
-    const result = kbStore.browse(requested, maxDepth);
+    const result = kbStore.browse(requested);
     if (!result.ok) { res.status(400).json(result); return; }
     res.status(200).json(result);
   });

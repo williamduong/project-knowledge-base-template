@@ -21,7 +21,6 @@ export const kbRootsQueryKey = ['kb', 'roots'] as const
 export type KbBrowseChild = {
   name: string
   path: string
-  immediateDocs: number
   isRoot: boolean
   active: boolean
 }
