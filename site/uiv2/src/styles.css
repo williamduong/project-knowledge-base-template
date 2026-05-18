@@ -817,11 +817,13 @@
   border: 1px solid var(--line);
   border-radius: 4px;
   background: rgba(11, 16, 23, 0.72);
+  align-content: start;
 }
 
 .system-info-title {
   font-size: 15px;
   line-height: 1.4;
+  font-weight: 400;
 }
 
 .system-info-card p {
@@ -2097,13 +2099,13 @@
 }
 
 .intent-record-meta strong,
-.intent-relation-group strong {
+.intent-metadata-chip-card strong {
   color: #f8fafc;
   word-break: break-word;
 }
 
 .intent-detail-drawer {
-  width: min(780px, 100vw);
+  width: min(80vw, 1440px);
   overflow-y: auto;
 }
 
@@ -2118,6 +2120,19 @@
 
 .intent-registry-row {
   cursor: pointer;
+}
+
+.intent-registry-row.intent-lifecycle-backlog {
+  border-left: 3px solid rgba(251, 191, 36, 0.8);
+}
+
+.intent-registry-row.intent-lifecycle-active {
+  border-left: 3px solid rgba(56, 189, 248, 0.85);
+}
+
+.intent-registry-row.intent-lifecycle-closed,
+.intent-registry-row.intent-lifecycle-archived {
+  border-left: 3px solid rgba(74, 222, 128, 0.8);
 }
 
 .intent-registry-row.selected,
@@ -2174,6 +2189,7 @@
   padding: 10px;
   border-radius: 10px;
   border: 1px solid rgba(120, 144, 167, 0.2);
+  align-content: start;
 }
 
 .intent-lifecycle-step-done {
@@ -2207,9 +2223,9 @@
 .intent-task-grid-header,
 .intent-task-grid-button {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1.9fr) 120px 100px;
+  grid-template-columns: 64px minmax(0, 1fr) 120px;
   gap: 10px;
-  align-items: center;
+  align-items: start;
 }
 
 .intent-task-grid-header {
@@ -2226,6 +2242,26 @@
   border: 1px solid rgba(120, 144, 167, 0.16);
   border-radius: 10px;
   background: rgba(15, 23, 36, 0.66);
+  align-content: start;
+}
+
+.intent-task-grid-row-backlog {
+  border-left: 3px solid rgba(251, 191, 36, 0.8);
+}
+
+.intent-task-grid-row-open,
+.intent-task-grid-row-active {
+  border-left: 3px solid rgba(56, 189, 248, 0.85);
+}
+
+.intent-task-grid-row-done,
+.intent-task-grid-row-closed {
+  border-left: 3px solid rgba(74, 222, 128, 0.8);
+}
+
+.intent-task-grid-row-blocked,
+.intent-task-grid-row-warning {
+  border-left: 3px solid rgba(248, 113, 113, 0.8);
 }
 
 .intent-task-grid-button {
@@ -2236,6 +2272,7 @@
   background: transparent;
   border: 0;
   cursor: pointer;
+  align-items: start;
 }
 
 .intent-task-grid-button:hover {
@@ -2248,6 +2285,7 @@
   padding: 0 12px 12px;
   color: #c9d5e2;
   font-size: 13px;
+  align-content: start;
 }
 
 .intent-task-id {
@@ -2325,12 +2363,14 @@
   border: 1px solid rgba(120, 144, 167, 0.14);
   border-radius: 10px;
   background: rgba(15, 23, 36, 0.66);
+  align-content: start;
 }
 
 .intent-relation-row-head {
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: flex-start;
 }
 
 .intent-relation-type,
@@ -2342,6 +2382,7 @@
 .intent-relation-object {
   color: #f8fafc;
   word-break: break-word;
+  font-weight: 400;
 }
 
 .shell-status-bar {

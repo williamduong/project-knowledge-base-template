@@ -413,12 +413,11 @@ function TaskRow({
 }) {
   const taskId = `T-${String(index + 1).padStart(2, '0')}`
   return (
-    <div className={`intent-task-grid-row${expanded ? ' expanded' : ''}`}>
+    <div className={`intent-task-grid-row intent-task-grid-row-${normalizeLifecycle(task.status)}${expanded ? ' expanded' : ''}`}>
       <button className="intent-task-grid-button" type="button" onClick={onToggle}>
         <span className="intent-task-id">{taskId}</span>
         <span>{task.title ?? `Task ${index + 1}`}</span>
         <span className={`status-pill ${taskStateTone(task.status)}`}>{task.status ?? 'open'}</span>
-        <span>{task.source ?? 'intent.md'}</span>
       </button>
       {expanded ? (
         <div className="intent-task-grid-detail">
@@ -699,15 +698,17 @@ export function IntentsListPage() {
     await intentUpdateMutation.mutateAsync({ id: selectedIntentId, body: bodyMap[field] })
   }
 
-  const selectedIntent = intents.find((intent) => intent.id === selectedIntentId) ?? null
   const detailDescription = detail ? (detail.decisionSummary ?? detail.summary ?? detail.goal ?? '') : ''
   const detailProgress = detail ? computeIntentProgress(detail.lifecycle) : 0
+  const detailTaskCount = detail?.tasks.length ?? 0
+  const detailTaskDoneCount = detail?.tasks.filter((task) => task.done || normalizeLifecycle(task.status) === 'done').length ?? 0
   const metadataEntries = detail ? [
     { label: 'Lifecycle', value: detail.lifecycle ?? detail.status ?? 'unknown', icon: circleDashed },
     { label: 'Scope', value: detail.scope ?? 'n/a', icon: listTree },
     { label: 'Mode', value: detail.mode ?? 'n/a', icon: circleDashed },
     { label: 'Change type', value: detail.changeType ?? 'n/a', icon: target },
     { label: 'Milestone', value: intentVersionLabel(detail.id ?? selectedIntentId ?? ''), icon: archive },
+    { label: 'Progress', value: `${detailProgress}% · ${detailTaskDoneCount}/${detailTaskCount} tasks done`, icon: activity },
     { label: 'Source file', value: compactPath(detail.sourceFile), icon: fileText },
     ...(detail.workspacePath ? [{ label: 'Workspace', value: compactPath(detail.workspacePath), icon: folderTree }] : []),
     ...(detail.stagedFiles.length ? [{ label: 'Staged', value: `${detail.stagedFiles.length} files`, icon: fileText }] : []),
@@ -824,7 +825,7 @@ export function IntentsListPage() {
               return (
                 <article
                   key={intent.id}
-                  className={`rules-table-row intent-registry-row${selectedIntentId === intent.id ? ' selected' : ''}`}
+                  className={`rules-table-row intent-registry-row intent-lifecycle-${lifecycle}${selectedIntentId === intent.id ? ' selected' : ''}`}
                   role="row"
                   onClick={() => openDrawerForIntent(intent.id)}
                 >
@@ -873,7 +874,7 @@ export function IntentsListPage() {
             <div className="panel-toolbar">
               <div>
                 <p className="workspace-eyebrow">Intent Detail</p>
-                <h2>{selectedIntent?.title?.replace(/^"|"$/g, '') || selectedIntentId}</h2>
+                <h2>{selectedIntentId}</h2>
               </div>
               <button className="icon-tool-button" type="button" onClick={() => setDrawerOpen(false)} aria-label="Close intent drawer">
                 <Icon icon={xIcon} />
@@ -898,9 +899,8 @@ export function IntentsListPage() {
                   sectionKey="summary"
                   collapsed={collapsedSections.summary}
                   onToggle={toggleSection}
-                  subtitle="Title and description are editable here."
+                  subtitle="Title and lifecycle only."
                 >
-                  <p className="intent-id">{detail.id ?? selectedIntentId}</p>
                   <InlineEditableText
                     label="Title"
                     value={detail.title ?? ''}
@@ -914,31 +914,6 @@ export function IntentsListPage() {
                     saving={intentUpdateMutation.isPending}
                     error={editorError}
                   />
-                  <InlineEditableText
-                    label="Description"
-                    value={detailDescription}
-                    field="summaryText"
-                    activeField={activeEditor}
-                    draftValue={editorDraft}
-                    onStartEdit={startEdit}
-                    onChangeDraft={setEditorDraft}
-                    onCancel={cancelEdit}
-                    onSave={() => void saveEdit('summaryText')}
-                    saving={intentUpdateMutation.isPending}
-                    error={editorError}
-                    multiline
-                  />
-                  <div className="intent-summary-metrics">
-                    <div className="system-info-card">
-                      <span className="runtime-overview-label">Intent progress</span>
-                      <div className="intent-grid-progress">
-                        <div className="intent-progress-track" aria-hidden="true">
-                          <span style={{ width: `${detailProgress}%` }} />
-                        </div>
-                        <strong>{detailProgress}%</strong>
-                      </div>
-                    </div>
-                  </div>
                   <LifecycleRail lifecycle={detail.lifecycle ?? detail.status} />
                 </CollapsibleBlock>
 
@@ -948,7 +923,7 @@ export function IntentsListPage() {
                   sectionKey="detail"
                   collapsed={collapsedSections.detail}
                   onToggle={toggleSection}
-                  subtitle="Operational fields only. No duplicated summary content."
+                  subtitle="Editable operational fields and narrative."
                 >
                   <div className="intent-drawer-detail-grid">
                     <div className="system-info-card">
@@ -1001,6 +976,20 @@ export function IntentsListPage() {
                       />
                     </div>
                   </div>
+                  <InlineEditableText
+                    label="Description"
+                    value={detailDescription}
+                    field="summaryText"
+                    activeField={activeEditor}
+                    draftValue={editorDraft}
+                    onStartEdit={startEdit}
+                    onChangeDraft={setEditorDraft}
+                    onCancel={cancelEdit}
+                    onSave={() => void saveEdit('summaryText')}
+                    saving={intentUpdateMutation.isPending}
+                    error={editorError}
+                    multiline
+                  />
                 </CollapsibleBlock>
 
                 <CollapsibleBlock
@@ -1047,7 +1036,6 @@ export function IntentsListPage() {
                         <span>ID</span>
                         <span>Task</span>
                         <span>Status</span>
-                        <span>Source</span>
                       </div>
                       {detail.tasks.map((task, index) => (
                         <TaskRow
