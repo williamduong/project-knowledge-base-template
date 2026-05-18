@@ -209,10 +209,11 @@ export function ShellFrame() {
             <Route
               path="/rules"
               element={
-                <PlaceholderPage
+                <RuntimeServicesPage
                   title="Rules"
-                  subtitle="Rules stay deferred until document and intent contexts are trustworthy enough for findings interpretation."
-                  next="Start with registry and domain grouping once upstream module contracts stabilize."
+                  eyebrow="Rules Workspace"
+                  subtitle="Rule registry, findings, packs, dependencies, precedence, and tool coverage."
+                  mode="rules"
                 />
               }
             />

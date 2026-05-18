@@ -470,6 +470,10 @@
   gap: 8px;
 }
 
+.system-shell-layout-rules {
+  grid-template-columns: 1fr;
+}
+
 .system-sidebar,
 .system-detail-panel {
   min-height: 0;

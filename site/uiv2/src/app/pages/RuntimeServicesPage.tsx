@@ -111,6 +111,7 @@ type RuntimeServicesPageProps = {
   title: string
   eyebrow: string
   subtitle: string
+  mode?: 'system' | 'rules'
 }
 
 function toneClass(service: { running: boolean; healthy: boolean }) {
@@ -240,6 +241,7 @@ function GateHealthBar({
 }
 
 export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
+  const isRulesWorkspace = props.mode === 'rules'
   const runtimeServicesQuery = useRuntimeServices()
   const systemSnapshotQuery = useSystemSnapshot()
   const homeSummaryQuery = useHomeSummary()
@@ -278,7 +280,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   const goalSummary = dashboard?.goal
   const currentIntent = dashboard?.session.intent
   const currentTask = dashboard?.session.currentTask
-  const [activeSection, setActiveSection] = useState<SystemWorkspaceSection>('services')
+  const [activeSection, setActiveSection] = useState<SystemWorkspaceSection>(isRulesWorkspace ? 'rules' : 'services')
   const [ruleKindFilter, setRuleKindFilter] = useState<'all' | 'hard' | 'master' | 'soft'>('all')
   const [rulePackFilter, setRulePackFilter] = useState<string>('all')
   const [ruleSourceFilter, setRuleSourceFilter] = useState<string>('all')
@@ -420,6 +422,8 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
     resetRegistryPage()
   }
 
+  const currentSection: SystemWorkspaceSection = isRulesWorkspace ? 'rules' : activeSection
+
   return (
     <section className="workspace-page">
       <header className="workspace-toolbar">
@@ -440,7 +444,8 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
         </div>
       </header>
 
-      <div className="system-shell-layout">
+      <div className={`system-shell-layout${isRulesWorkspace ? ' system-shell-layout-rules' : ''}`}>
+        {!isRulesWorkspace ? (
         <aside className="system-sidebar surface-panel compact-note-panel">
           <div className="panel-toolbar">
             <div>
@@ -509,17 +514,6 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
               </span>
               <small>{gateFailCount > 0 ? `${gateFailCount} blocking` : `${gates.length} tracked`}</small>
             </button>
-            <button
-              className={`system-menu-item${activeSection === 'rules' ? ' active' : ''}`}
-              type="button"
-              onClick={() => setActiveSection('rules')}
-            >
-              <span className="system-menu-item-label">
-                <Icon icon={shield} aria-hidden="true" />
-                <span>Rules</span>
-              </span>
-              <small>{rules?.violationCount ?? 0} findings</small>
-            </button>
           </div>
           <ul className="signal-list">
             <li>System owns runtime detail and recovery actions.</li>
@@ -527,9 +521,10 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
             <li>Sidebar changes the detail pane and should expose operator truth, not duplicate Home layout.</li>
           </ul>
         </aside>
+        ) : null}
 
         <section className="surface-panel surface-panel-primary system-detail-panel">
-          {activeSection === 'services' ? (
+          {currentSection === 'services' ? (
             <>
               <div className="panel-toolbar">
                 <div>
@@ -599,7 +594,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                 })}
               </div>
             </>
-          ) : activeSection === 'cron' ? (
+          ) : currentSection === 'cron' ? (
             <>
               <div className="panel-toolbar">
                 <div>
@@ -645,7 +640,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                 <li>Failures in cron should degrade this pane, not spawn duplicate services.</li>
               </ul>
             </>
-          ) : activeSection === 'goal' ? (
+          ) : currentSection === 'goal' ? (
             <>
               <div className="panel-toolbar">
                 <div>
@@ -686,7 +681,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                 </article>
               </div>
             </>
-          ) : activeSection === 'pipeline' ? (
+          ) : currentSection === 'pipeline' ? (
             <>
               <div className="panel-toolbar">
                 <div>
@@ -732,7 +727,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
 
               {pipeline && !pipeline.ok ? <p className="runtime-error-text">Pipeline error: {pipeline.error ?? 'unknown error'}</p> : null}
             </>
-          ) : activeSection === 'gates' ? (
+          ) : currentSection === 'gates' ? (
             <>
               <div className="panel-toolbar">
                 <div>
