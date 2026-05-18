@@ -71,6 +71,41 @@ type KbSyncResponse = { ok: boolean; results: KbSyncResult[] }
 
 // Slice C-3 sync ops. "import" makes DB match disk; "restore" makes disk
 // match DB. Both accept a single path or an array via the same hook.
+// Slice C-4: DB-first edit. expectedHash sent so the server can reject
+// (409) if disk was edited externally since the editor opened.
+export type KbUpdateDocResult = {
+  ok: boolean
+  path?: string
+  contentHash?: string
+  diskWritten?: boolean
+  diskError?: string | null
+  title?: string | null
+  conflict?: boolean
+  diskHash?: string
+  error?: string
+}
+export function useUpdateKbDoc() {
+  const qc = useQueryClient()
+  return useMutation<KbUpdateDocResult, Error, { path: string; body: string; expectedHash?: string }>({
+    mutationFn: async (vars) => {
+      const r = await fetch('/api/kb/doc', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(vars),
+      })
+      const body = (await r.json()) as KbUpdateDocResult
+      if (r.status === 409) return { ...body, ok: false, conflict: true }
+      if (!r.ok) throw new Error(body.error || `PUT failed: ${r.status}`)
+      return body
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['kb', 'doc', vars.path] })
+      qc.invalidateQueries({ queryKey: ['kb', 'tree'] })
+      qc.invalidateQueries({ queryKey: ['kb', 'drift'] })
+    },
+  })
+}
+
 export function useKbSync(op: 'import' | 'restore') {
   const qc = useQueryClient()
   return useMutation<KbSyncResponse, Error, string | string[]>({

@@ -360,7 +360,43 @@ Verified live: induced all three drift states → applied corresponding
 sync action → drift returns to `total: 0`. Restore of a `db-only` file
 recreated the deleted markdown byte-for-byte from DB body.
 
-### Open follow-ups (beyond Slice C-3)
+### Slice C-4 shipped (2026-05-18)
+
+DB-first edit flow with optimistic concurrency.
+
+- L4 adds `parseDocFromText(rawText, relPath)` — same shape as
+  `parseDocFromDisk` but takes the body as a string instead of reading
+  from disk. Both share `_parseInner` so frontmatter parsing, markdown
+  rendering, heading extraction, and hash computation stay identical
+  between the read and write paths.
+- L3 `kbStore.updateDoc({ path, body, expectedHash })`:
+  1. Validates path is inside workspace and ends in .md/.html
+  2. Optional conflict check: if `expectedHash` is given and the file on
+     disk has a different hash, return `{ ok: false, conflict: true,
+     diskHash }`. UI surfaces this as 409 and prompts the user.
+  3. Parses the new body, UPSERTs the kb_files row (DB-first — intent
+     persisted before disk).
+  4. Atomic disk write (tmp + rename). If the write fails, the response
+     carries `diskWritten: false` + `diskError`; DB stays ahead and
+     drift detection surfaces the mismatch.
+- L2 `PUT /api/kb/doc` (`express.json({ limit: '4mb' })`). 409 on
+  conflict, 400 on validation, 200 with `{ contentHash, diskWritten,
+  diskError, title, indexedAt }` on success.
+- L1 `useUpdateKbDoc()` mutation invalidates `kb/doc/:path`, tree, and
+  drift on success. KnowledgeBasePage reader now has an "Edit" button
+  next to the right-rail toggle that swaps the rendered HTML for a
+  monospace `<textarea>` over the raw markdown body. Save sends
+  `expectedHash = doc.contentHash`. Conflict and disk-failure surface
+  inline as warning banners. Switching documents cancels the edit.
+
+`/api/kb/doc` GET response now includes `body` and `contentHash` so the
+editor can prefill content without a second fetch.
+
+Verified live: PUT with correct hash → 200 + diskWritten:true + drift
+returns to 0. PUT with stale expectedHash → 409 with the current
+diskHash. Disk content matches the saved body byte-for-byte.
+
+### Open follow-ups (beyond Slice C-4)
 
 - mtime-based dirty check on tree walk (frontmatter re-parse only when file mtime changed).
 - Scoped refresh for `POST /api/kb/refresh { path }` (currently always full re-walk).

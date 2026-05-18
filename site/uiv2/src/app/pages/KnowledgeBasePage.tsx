@@ -15,7 +15,9 @@ import xIcon from '@iconify-icons/lucide/x'
 import filterX from '@iconify-icons/lucide/filter-x'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useKbTree, useKbDoc, useKbRoots, useAddKbRoot, useRemoveKbRoot, useKbBrowse, useKbDrift, useKbSync, type KbDriftEntry, type KbRootCandidate } from '../hooks/useKb'
+import { useKbTree, useKbDoc, useKbRoots, useAddKbRoot, useRemoveKbRoot, useKbBrowse, useKbDrift, useKbSync, useUpdateKbDoc, type KbDriftEntry, type KbRootCandidate } from '../hooks/useKb'
+import editIcon from '@iconify-icons/lucide/pencil'
+import saveIcon from '@iconify-icons/lucide/save'
 import chevronLeftIcon from '@iconify-icons/lucide/chevron-left'
 import alertCircle from '@iconify-icons/lucide/alert-circle'
 import type { KbDocStatus, KbDocType, KbTimeState, KbTreeDocNode, KbTreeFolderNode, KbTreeNode, KbVerification } from '../mock/kb-mock'
@@ -637,6 +639,19 @@ export function KnowledgeBasePage() {
   const [driftOpen, setDriftOpen] = useState(false)
   const [rootError, setRootError] = useState<string | null>(null)
 
+  // Edit mode for the currently selected doc (slice C-4)
+  const [editMode, setEditMode] = useState(false)
+  const [draftBody, setDraftBody] = useState('')
+  const [draftBaseHash, setDraftBaseHash] = useState<string | null>(null)
+  const updateDoc = useUpdateKbDoc()
+  useEffect(() => {
+    // Leaving the doc cancels any open edit.
+    setEditMode(false)
+    setDraftBody('')
+    setDraftBaseHash(null)
+    updateDoc.reset()
+  }, [selectedPath]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Roots to show in tree — server already filters by activeRoots, but we
   // double-filter so a stale tree cache doesn't surface a recently-removed root.
   const visibleRoots = useMemo(() => {
@@ -809,6 +824,16 @@ export function KnowledgeBasePage() {
                   {fm.released_in ? <span>Released {fm.released_in}</span> : null}
                 </div>
                 <div className="kb-meta-actions">
+                  {!editMode ? (
+                    <button className="icon-tool-button" type="button" aria-label="Edit document" title="Edit"
+                      onClick={() => {
+                        setDraftBody(doc!.body ?? '')
+                        setDraftBaseHash(doc!.contentHash ?? null)
+                        setEditMode(true)
+                      }}>
+                      <Icon icon={editIcon} />
+                    </button>
+                  ) : null}
                   <button className="icon-tool-button" type="button" aria-label="Open side panel" onClick={toggleRight}>
                     <Icon icon={panelRightOpen} />
                   </button>
@@ -821,7 +846,43 @@ export function KnowledgeBasePage() {
               ) : null}
               {fm.time_state === 'mixed' ? <div className="kb-banner kb-banner-warn">Doc trộn Current State và Target State — đọc kỹ.</div> : null}
 
-              <article className="kb-doc-body" dangerouslySetInnerHTML={{ __html: doc!.html }} />
+              {editMode ? (
+                <div className="kb-edit-shell">
+                  <div className="kb-edit-toolbar">
+                    <span className="runtime-overview-label">Editing</span>
+                    <span className="kb-edit-hint">DB-first save. expectedHash khoá conflict; nếu file đổi ngoài UI bạn sẽ thấy 409.</span>
+                    <div className="prototype-action-row">
+                      <button type="button" className="tool-button tool-button-primary" disabled={updateDoc.isPending}
+                        onClick={() => updateDoc.mutate({ path: selectedPath!, body: draftBody, expectedHash: draftBaseHash ?? undefined }, {
+                          onSuccess: (r) => { if (r.ok) { setEditMode(false) } },
+                        })}>
+                        <Icon icon={saveIcon} /> {updateDoc.isPending ? 'Saving…' : 'Save'}
+                      </button>
+                      <button type="button" className="tool-button" disabled={updateDoc.isPending}
+                        onClick={() => { setEditMode(false); updateDoc.reset() }}>Cancel</button>
+                    </div>
+                  </div>
+                  {updateDoc.data && !updateDoc.data.ok && updateDoc.data.conflict ? (
+                    <div className="kb-banner kb-banner-warn">
+                      Conflict: file đã bị sửa bên ngoài kể từ khi mở editor. Mở Drift panel hoặc reload doc trước khi save lại.
+                    </div>
+                  ) : null}
+                  {updateDoc.data && updateDoc.data.ok && updateDoc.data.diskWritten === false ? (
+                    <div className="kb-banner kb-banner-warn">
+                      DB đã update nhưng ghi file thất bại: {updateDoc.data.diskError}. Mở Drift để fix.
+                    </div>
+                  ) : null}
+                  <textarea
+                    className="kb-edit-textarea"
+                    value={draftBody}
+                    onChange={(e) => setDraftBody(e.target.value)}
+                    spellCheck={false}
+                    disabled={updateDoc.isPending}
+                  />
+                </div>
+              ) : (
+                <article className="kb-doc-body" dangerouslySetInnerHTML={{ __html: doc!.html }} />
+              )}
 
               {(fm.related_strong.length > 0 || fm.related_weak.length > 0) ? (
                 <footer className="kb-related">

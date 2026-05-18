@@ -3120,3 +3120,28 @@
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
 .kb-drift-confirm p { margin: 0; color: #ebf2fa; font-size: 13px; }
+
+/* KB inline editor (slice C-4) */
+.kb-edit-shell { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; padding: 0 16px 16px; }
+.kb-edit-toolbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 0; border-bottom: 1px solid var(--line); margin-bottom: 8px;
+}
+.kb-edit-toolbar .runtime-overview-label { color: #fbbf24; }
+.kb-edit-hint { color: #94a3b8; font-size: 11.5px; flex: 1 1 auto; }
+.kb-edit-textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 280px;
+  background: var(--bg-panel-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: #ebf2fa;
+  padding: 12px;
+  font-family: ui-monospace, "Cascadia Mono", "JetBrains Mono", monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  resize: none;
+  outline: none;
+}
+.kb-edit-textarea:focus { border-color: #38bdf8; box-shadow: 0 0 0 1px rgba(56,189,248,0.4); }

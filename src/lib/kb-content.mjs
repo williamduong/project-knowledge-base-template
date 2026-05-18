@@ -212,10 +212,22 @@ export function parseDocSummary(absPath, relPath, today = new Date()) {
   };
 }
 
+// Parse a doc from raw text (no fs read). Slice C-4 calls this when the
+// UI POSTs new body content — we need to re-derive frontmatter / html /
+// hash before persisting.
+export function parseDocFromText(rawText, relPath, today = new Date()) {
+  const contentHash = computeFileHashFromBuffer(Buffer.from(rawText, 'utf8'));
+  return _parseInner(rawText, relPath, contentHash, today);
+}
+
 export function parseDocFromDisk(absPath, relPath, today = new Date()) {
   const raw = readFileSync(absPath);
   const contentHash = computeFileHashFromBuffer(raw);
   const text = raw.toString('utf8');
+  return _parseInner(text, relPath, contentHash, today);
+}
+
+function _parseInner(text, relPath, contentHash, today) {
   const isMd = relPath.endsWith('.md');
   const isHtml = relPath.endsWith('.html');
   const { fm, body } = isMd ? parseFrontmatter(text) : { fm: {}, body: text };

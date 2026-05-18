@@ -11,6 +11,7 @@ import { createSystemSnapshotStore } from './system-snapshot-store.mjs';
 import {
   DEFAULT_CANDIDATE_ROOTS as KB_CANDIDATE_ROOTS,
   parseDocFromDisk as kbParseDocFromDisk,
+  parseDocFromText as kbParseDocFromText,
   walkRoot as kbWalkRoot,
   validateCandidateRoot as kbValidateCandidateRoot,
   hasAllowedFiles as kbHasAllowedFiles,
@@ -2176,6 +2177,8 @@ function createKbStore({ repoRoot: storeRepoRoot, dbPath = kbIndexDbPath, legacy
         },
         headings: [], // not stored in slice C-1; client TOC is empty until C-2 stores them
         html: row.html || '',
+        body: row.body || '',
+        contentHash: row.content_hash || null,
         fromCache: true,
         snapshotAt: row.indexed_at,
       };
@@ -2458,7 +2461,95 @@ function createKbStore({ repoRoot: storeRepoRoot, dbPath = kbIndexDbPath, legacy
     return results;
   }
 
-  return { getTree, getRootCandidates, getActiveRoots, getDoc, refresh, addRoot, removeRoot, browse, detectDrift, syncImport, syncRestore, syncMany };
+  // ─── doc mutation (slice C-4) ───
+  //
+  // DB-first edit flow: UPSERT row with the new body + re-parsed
+  // frontmatter + fresh hash, then write the file atomically (tmp +
+  // rename). The DB row reflects user intent the moment the response
+  // returns; file may briefly lag if the disk write fails (surfaced via
+  // drift detection on the next check).
+  //
+  // Conflict detection: if the client sends expectedHash and the disk
+  // hash differs (someone edited the file behind our back since the
+  // editor loaded), reject with 409 so the UI can surface the conflict.
+  function updateDoc({ path: relPath, body, expectedHash } = {}) {
+    if (typeof relPath !== 'string' || !relPath) return { ok: false, error: 'path required' };
+    if (typeof body !== 'string') return { ok: false, error: 'body must be a string' };
+    const safe = relPath.replace(/^[/\\]+/, '').split(/[\\/]+/).join('/');
+    const abs = path.resolve(storeRepoRoot, safe);
+    const rel = path.relative(storeRepoRoot, abs).split(path.sep).join('/');
+    if (rel.startsWith('..') || path.isAbsolute(rel)) return { ok: false, error: 'path outside workspace' };
+    if (!/\.(md|html)$/i.test(rel)) return { ok: false, error: 'only .md / .html supported' };
+
+    // Conflict check: disk-side
+    if (typeof expectedHash === 'string' && expectedHash) {
+      if (fs.existsSync(abs)) {
+        const onDisk = kbComputeFileHash(abs);
+        if (onDisk && onDisk !== expectedHash) {
+          return { ok: false, conflict: true, error: 'file on disk changed since editor opened', diskHash: onDisk };
+        }
+      }
+    }
+
+    const root = rootOf(rel);
+    if (!root) return { ok: false, error: 'path is not under any active root' };
+
+    // 1) Parse the new body (no fs read)
+    const parsed = kbParseDocFromText(body, rel, new Date());
+
+    // 2) DB-first UPSERT
+    const parentPath = rel.split('/').slice(0, -1).join('/');
+    const indexedAt = new Date().toISOString();
+    kbDb.upsertFileRow(db, {
+      path: rel,
+      root_path: root.path,
+      parent_path: parentPath,
+      basename: rel.split('/').pop(),
+      kind: rel.endsWith('.html') ? 'html' : 'md',
+      size: Buffer.byteLength(body, 'utf8'),
+      mtime_ms: Date.now(),
+      content_hash: parsed.contentHash,
+      title: parsed.doc.frontmatter.title || rel.split('/').pop(),
+      type: parsed.doc.frontmatter.type,
+      status: parsed.doc.frontmatter.status,
+      verification: parsed.doc.frontmatter.verification,
+      time_state: parsed.doc.frontmatter.time_state,
+      owner: parsed.doc.frontmatter.owner,
+      last_updated: parsed.doc.frontmatter.last_updated,
+      last_verified: parsed.doc.frontmatter.last_verified,
+      days_since_verified: 0,
+      tags: parsed.doc.frontmatter.tags,
+      body: parsed.rawText,
+      html: parsed.doc.html,
+      indexed_at: indexedAt,
+    });
+
+    // 3) Atomic disk write (tmp + rename). If this fails, DB stays ahead;
+    // drift detection will show it. We surface the warning to the client.
+    let diskWritten = true;
+    let diskError = null;
+    try {
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      const tmp = `${abs}.tmp-${Date.now()}`;
+      fs.writeFileSync(tmp, body, 'utf8');
+      fs.renameSync(tmp, abs);
+    } catch (err) {
+      diskWritten = false;
+      diskError = err?.message || String(err);
+    }
+
+    return {
+      ok: true,
+      path: rel,
+      contentHash: parsed.contentHash,
+      diskWritten,
+      diskError,
+      title: parsed.doc.frontmatter.title || null,
+      indexedAt,
+    };
+  }
+
+  return { getTree, getRootCandidates, getActiveRoots, getDoc, refresh, addRoot, removeRoot, browse, detectDrift, syncImport, syncRestore, syncMany, updateDoc };
 }
 
 export function createApp(commandRunner = executeBridgeCommand) {
@@ -2997,6 +3088,17 @@ export function createApp(commandRunner = executeBridgeCommand) {
       return;
     }
     res.status(200).json({ ok: true, ...doc });
+  });
+
+  // Slice C-4: DB-first edit. Body { path, body, expectedHash? }. The DB
+  // row is UPSERTed before the disk write so the DB always reflects user
+  // intent. If the disk write fails, the response carries diskWritten:false
+  // and the UI can prompt the user (typically: open DriftPanel to retry).
+  app.put('/api/kb/doc', express.json({ limit: '4mb' }), (req, res) => {
+    const result = kbStore.updateDoc(req.body || {});
+    if (!result.ok && result.conflict) { res.status(409).json(result); return; }
+    if (!result.ok) { res.status(400).json(result); return; }
+    res.status(200).json(result);
   });
 
   app.get('/api/kb/impact', (req, res) => {

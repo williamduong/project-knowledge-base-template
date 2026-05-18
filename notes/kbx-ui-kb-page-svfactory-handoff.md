@@ -1,6 +1,6 @@
 # SVFactory Handoff — KB Page Runtime Wiring
 
-> Status: Slice A shipped 2026-05-18. Slice B shipped 2026-05-18. Slice C-1 (DB source of truth) shipped 2026-05-18. Slice C-2 (drift detection) shipped 2026-05-18. Slice C-3 (sync ops, both directions) shipped 2026-05-18. Slice C-4 (DB-first mutation flow / inline editor) still open. Audit details in `notes/kbx-ui-kb-page-runtime-contract.md` audit log.
+> Status: Slices A, B, C-1, C-2, C-3, C-4 all shipped 2026-05-18. Live KB page is now DB-first with drift detection, two-way sync, and inline edit. See `notes/kbx-ui-kb-page-runtime-contract.md` audit log for per-slice detail.
 > Triggered by: KBX UI Builder (slice 3 of the /kb page is mock-backed and ready to switch to live data)
 > Authority: KBX UI Builder may not expand the bridge from a UI slice; this note hands the work off explicitly so SVFactory owns the L2/L3/L4/L5 changes.
 > Read together with: `notes/kbx-ui-kb-page-runtime-contract.md` (the contract this handoff implements)

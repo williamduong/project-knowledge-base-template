@@ -83,6 +83,8 @@ export type KbDocResponse = {
   }
   headings: Array<{ id: string; level: number; text: string }>
   html: string
+  body?: string
+  contentHash?: string | null
   fromCache: boolean
   snapshotAt: string
 }
