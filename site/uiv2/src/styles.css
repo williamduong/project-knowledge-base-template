@@ -2329,37 +2329,38 @@
   margin: 0;
 }
 
-.intent-relation-table,
-.intent-relation-table-header,
-.intent-relation-table-row {
+.intent-relation-list {
   display: grid;
-  grid-template-columns: 140px minmax(0, 1.4fr) 140px minmax(0, 1.2fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
 
-.intent-relation-table {
+.intent-relation-row-card {
+  display: grid;
   gap: 8px;
-}
-
-.intent-relation-table-header {
-  padding: 0 10px 6px;
-  color: #8ca0b6;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.intent-relation-table-row {
-  padding: 10px;
+  min-width: 0;
+  padding: 12px;
   border: 1px solid rgba(120, 144, 167, 0.12);
   border-radius: 10px;
   background: rgba(11, 16, 23, 0.66);
+}
+
+.intent-relation-row-head {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .intent-relation-type,
 .intent-relation-evidence {
   color: #c9d5e2;
+  word-break: break-word;
+}
+
+.intent-relation-object {
+  color: #f8fafc;
   word-break: break-word;
 }
 
@@ -2597,9 +2598,7 @@
 
   .intent-task-grid-header,
   .intent-task-grid-button,
-  .intent-relation-table,
-  .intent-relation-table-header,
-  .intent-relation-table-row {
+  .intent-relation-list {
     grid-template-columns: 1fr;
   }
 

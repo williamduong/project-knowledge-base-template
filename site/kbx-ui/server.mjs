@@ -768,7 +768,7 @@ function extractIntentNarrative(text) {
 
   const sections = String(text).split(/^---\s*$/m);
   const body = sections.length >= 3 ? sections.slice(2).join('---').trim() : String(text).trim();
-  const goalMatch = body.match(/^\*\*Goal:\*\*\s*(.+)$/im);
+  const goalMatch = body.match(/^(?:\*\*Goal:\*\*|Goal:)\s*(.+)$/im);
   const summaryMatch = body.match(/^## Summary\s+([\s\S]*?)(?:\n## |$)/m);
 
   return {
@@ -844,7 +844,7 @@ function extractIntentTasks(text, source) {
     }
 
     const numberedMatch = line.match(/^\d+\.\s+(.+)$/);
-    if (numberedMatch && /summary|plan|task|checklist|verification/i.test(currentSection || '')) {
+    if (numberedMatch && (source === 'plan.md' || /summary|plan|task|checklist|verification|phase|goal/i.test(currentSection || ''))) {
       const parsed = parseTaskText(numberedMatch[1], false);
       tasks.push({
         ...parsed,
@@ -854,7 +854,7 @@ function extractIntentTasks(text, source) {
       continue;
     }
 
-    if (!inTaskSection) {
+    if (!inTaskSection && source !== 'plan.md') {
       continue;
     }
 

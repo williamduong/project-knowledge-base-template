@@ -78,6 +78,21 @@ function formatTimestamp(value: string | null) {
   }).format(date)
 }
 
+function compactText(value: string | null | undefined, fallback: string, maxLength = 120) {
+  const text = String(value || '').trim()
+  if (!text) return fallback
+  if (text.length <= maxLength) return text
+  return `${text.slice(0, maxLength - 1).trimEnd()}…`
+}
+
+function compactPath(value: string | null | undefined) {
+  const text = String(value || '').trim()
+  if (!text) return 'none'
+  const parts = text.split(/[\\/]/).filter(Boolean)
+  if (parts.length <= 3) return text
+  return `.../${parts.slice(-3).join('/')}`
+}
+
 function clampProgress(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)))
 }
@@ -684,16 +699,16 @@ export function IntentsListPage() {
     {
       title: 'Intent Topology',
       rows: [
-        { type: 'Goal', object: detail.goal ?? 'No explicit goal extracted yet', state: detail.goal ? 'declared' : 'missing', evidence: detail.sourceFile ?? 'intent.md' },
+        { type: 'Goal', object: compactText(detail.goal, 'No explicit goal extracted yet', 150), state: detail.goal ? 'declared' : 'missing', evidence: compactPath(detail.sourceFile ?? 'intent.md') },
         { type: 'Milestone / Version', object: intentVersionLabel(detail.id ?? selectedIntentId ?? ''), state: normalizeLifecycle(detail.lifecycle), evidence: detail.id ?? selectedIntentId ?? 'unknown' },
-        { type: 'Document (KB)', object: detail.sourceFile ?? 'none', state: detail.sourceFile ? 'linked' : 'missing', evidence: `${detail.stagedFiles.length} staged files` },
+        { type: 'Document (KB)', object: compactPath(detail.sourceFile), state: detail.sourceFile ? 'linked' : 'missing', evidence: detail.stagedFiles.length ? `${detail.stagedFiles.length} staged files` : 'No staged files attached' },
       ],
     },
     {
       title: 'Governance & Flow',
       rows: [
         { type: 'Pipeline', object: 'release pipeline', state: `${((snapshot?.homeSummary as { summary?: { pipeline?: { stepCount?: number } } } | undefined)?.summary?.pipeline?.stepCount ?? 0)} steps`, evidence: 'workspace snapshot' },
-        { type: 'Rules', object: `${rulesSummary?.count ?? 0} rules`, state: `${rulesSummary?.packCount ?? 0} packs`, evidence: rulesSummary?.topRules?.[0]?.id ?? 'registry summary' },
+        { type: 'Rules', object: `${rulesSummary?.count ?? 0} rules`, state: `${rulesSummary?.packCount ?? 0} packs`, evidence: compactText(rulesSummary?.topRules?.[0]?.id, 'registry summary', 60) },
         { type: 'Gates', object: `${gatesSummary?.items?.length ?? 0} operator gates`, state: gatesSummary?.readiness ?? 'unknown', evidence: 'system snapshot' },
       ],
     },
@@ -703,7 +718,7 @@ export function IntentsListPage() {
         { type: 'Services', object: `${runtimeSummary?.summary?.runningCount ?? 0} runtime services`, state: 'managed', evidence: 'runtime-services summary' },
         { type: 'Cron', object: `${runtimeSummary?.schedules?.length ?? 0} schedules`, state: 'registered', evidence: 'runtime-services summary' },
         { type: 'Database', object: 'focus-state.db', state: 'sqlite-backed', evidence: 'focus-state resolver' },
-        { type: 'Chaos', object: String(detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'), state: detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'unknown', evidence: detail.chaosEstimate?.warning ?? 'intent metadata' },
+        { type: 'Chaos', object: String(detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'), state: detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'unknown', evidence: compactText(detail.chaosEstimate?.warning, 'intent metadata', 120) },
       ],
     },
     {
@@ -1027,20 +1042,16 @@ export function IntentsListPage() {
                             <p className="system-card-subtle">Type, object, state, and evidence.</p>
                           </div>
                         </div>
-                        <div className="intent-relation-table" role="table" aria-label={section.title}>
-                          <div className="intent-relation-table-header" role="row">
-                            <span role="columnheader">Type</span>
-                            <span role="columnheader">Object</span>
-                            <span role="columnheader">State</span>
-                            <span role="columnheader">Evidence</span>
-                          </div>
+                        <div className="intent-relation-list" role="list" aria-label={section.title}>
                           {section.rows.map((row) => (
-                            <div key={`${section.title}-${row.type}`} className="intent-relation-table-row" role="row">
-                              <span role="cell" className="intent-relation-type">{row.type}</span>
-                              <span role="cell">{row.object}</span>
-                              <span role="cell"><span className={`status-pill ${statusTone(normalizeLifecycle(row.state))}`}>{row.state}</span></span>
-                              <span role="cell" className="intent-relation-evidence">{row.evidence}</span>
-                            </div>
+                            <article key={`${section.title}-${row.type}`} className="intent-relation-row-card" role="listitem">
+                              <div className="intent-relation-row-head">
+                                <span className="intent-relation-type">{row.type}</span>
+                                <span className={`status-pill ${statusTone(normalizeLifecycle(row.state))}`}>{row.state}</span>
+                              </div>
+                              <strong className="intent-relation-object">{row.object}</strong>
+                              <p className="intent-relation-evidence">{row.evidence}</p>
+                            </article>
                           ))}
                         </div>
                       </article>
