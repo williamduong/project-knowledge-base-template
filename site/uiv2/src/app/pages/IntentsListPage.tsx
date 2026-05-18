@@ -1,14 +1,33 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Icon } from '@iconify/react'
 import flag from '@iconify-icons/lucide/flag'
 import flagTriangleRight from '@iconify-icons/lucide/flag-triangle-right'
-import layers3 from '@iconify-icons/lucide/layers-3'
-import files from '@iconify-icons/lucide/files'
-import shieldAlert from '@iconify-icons/lucide/shield-alert'
-import { useIntentsList } from '../hooks/useIntentsList'
-import { useIntentDetail } from '../hooks/useIntentDetail'
+import listTodo from '@iconify-icons/lucide/list-todo'
+import network from '@iconify-icons/lucide/network'
+import xIcon from '@iconify-icons/lucide/x'
+import { useIntentsList, type IntentListItem } from '../hooks/useIntentsList'
+import { useIntentDetail, type IntentTask } from '../hooks/useIntentDetail'
 import { useSystemSnapshot, systemSnapshotQueryKey } from '../hooks/useSystemSnapshot'
+
+type GoalCard = {
+  id: string
+  label: string
+  metric: string
+  state: string
+  progress: number
+  caption: string
+}
+
+type MilestoneBlock = {
+  id: string
+  label: string
+  progress: number
+  state: string
+  metrics: string
+  objectives: string[]
+  intents: IntentListItem[]
+}
 
 function normalizeLifecycle(value: string | null | undefined) {
   const text = String(value || '').trim().toLowerCase()
@@ -43,6 +62,222 @@ function formatTimestamp(value: string | null) {
   }).format(date)
 }
 
+function clampProgress(value: number) {
+  return Math.max(0, Math.min(100, Math.round(value)))
+}
+
+function deriveVersionBucket(intentId: string) {
+  const match = intentId.match(/^(v\d+(?:-\d+)?)/i)
+  return match?.[1]?.toLowerCase() ?? 'legacy'
+}
+
+function summarizeMilestoneState(intents: IntentListItem[]) {
+  const total = intents.length || 1
+  const active = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
+  const backlog = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length
+  const closed = intents.filter((intent) => ['closed', 'archived'].includes(normalizeLifecycle(intent.lifecycle))).length
+  const progress = clampProgress((closed / total) * 100)
+
+  if (active > 0) return { state: 'active', progress }
+  if (backlog > 0) return { state: 'backlog', progress }
+  return { state: 'closed', progress: closed === total ? 100 : progress }
+}
+
+function buildGoalCards(intents: IntentListItem[], focusIntentId: string | null, activeIntentId: string | null, snapshotMetadata: { generatedAt?: string | null; reloadRecommended?: boolean | null } | undefined): GoalCard[] {
+  const total = intents.length || 1
+  const active = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
+  const backlog = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length
+  const completed = intents.filter((intent) => ['closed', 'archived'].includes(normalizeLifecycle(intent.lifecycle))).length
+  const focusAligned = focusIntentId ? intents.some((intent) => intent.id === focusIntentId) : false
+  const snapshotLive = snapshotMetadata?.generatedAt ? true : false
+
+  return [
+    {
+      id: 'active-delivery',
+      label: 'Active Delivery',
+      metric: `${active} intents`,
+      state: active > 0 ? 'in-flight' : 'idle',
+      progress: clampProgress((active / total) * 100),
+      caption: `${backlog} backlog waiting behind the active stream.`,
+    },
+    {
+      id: 'focus-alignment',
+      label: 'Focus Alignment',
+      metric: focusIntentId ?? 'missing focus',
+      state: focusAligned ? 'aligned' : 'drift',
+      progress: focusAligned ? 100 : 38,
+      caption: activeIntentId ? `Current active record: ${activeIntentId}.` : 'No active intent surfaced by snapshot.',
+    },
+    {
+      id: 'completion-flow',
+      label: 'Completion Flow',
+      metric: `${completed}/${intents.length} done`,
+      state: completed > 0 ? 'moving' : 'starting',
+      progress: clampProgress((completed / total) * 100),
+      caption: 'Counts archive and closed intents as delivered milestones.',
+    },
+    {
+      id: 'snapshot-readiness',
+      label: 'Snapshot Readiness',
+      metric: snapshotLive ? 'live contract' : 'pending',
+      state: snapshotMetadata?.reloadRecommended ? 'reload' : 'fresh',
+      progress: snapshotMetadata?.reloadRecommended ? 62 : 100,
+      caption: snapshotMetadata?.reloadRecommended ? 'Bridge says UI should reload signals.' : 'Bridge snapshot is healthy enough for live intent browsing.',
+    },
+  ]
+}
+
+function buildMilestones(intents: IntentListItem[]) {
+  const buckets = new Map<string, IntentListItem[]>()
+
+  for (const intent of intents) {
+    const bucket = deriveVersionBucket(intent.id)
+    const current = buckets.get(bucket) ?? []
+    current.push(intent)
+    buckets.set(bucket, current)
+  }
+
+  return Array.from(buckets.entries())
+    .map(([id, bucketIntents]) => {
+      const { progress, state } = summarizeMilestoneState(bucketIntents)
+      const active = bucketIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
+      const backlog = bucketIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length
+      const objectives = bucketIntents
+        .slice(0, 4)
+        .map((intent) => intent.title?.replace(/^"|"$/g, '') || intent.id)
+
+      return {
+        id,
+        label: id === 'legacy' ? 'Legacy' : id.toUpperCase(),
+        progress,
+        state,
+        metrics: `${bucketIntents.length} intents · ${active} active · ${backlog} backlog`,
+        objectives,
+        intents: bucketIntents,
+      } satisfies MilestoneBlock
+    })
+    .sort((a, b) => a.id.localeCompare(b.id))
+}
+
+function statusTone(value: string) {
+  if (value === 'active' || value === 'aligned' || value === 'fresh') return 'status-good'
+  if (value === 'backlog' || value === 'moving' || value === 'in-flight') return 'status-neutral'
+  if (value === 'closed') return 'status-good'
+  if (value === 'archived') return 'status-offline'
+  if (value === 'dropped' || value === 'reload' || value === 'drift') return 'status-warn'
+  return 'status-neutral'
+}
+
+function GoalCardView({ card }: { card: GoalCard }) {
+  return (
+    <article className="intent-goal-card">
+      <div className="intent-goal-head">
+        <div>
+          <p className="workspace-eyebrow">{card.label}</p>
+          <strong>{card.metric}</strong>
+        </div>
+        <span className={`status-pill ${statusTone(card.state)}`}>{card.state}</span>
+      </div>
+      <div className="intent-progress-track" aria-hidden="true">
+        <span style={{ width: `${card.progress}%` }} />
+      </div>
+      <div className="intent-goal-foot">
+        <span>{card.progress}%</span>
+        <p>{card.caption}</p>
+      </div>
+    </article>
+  )
+}
+
+function IntentHealthBar({
+  total,
+  active,
+  backlog,
+  closed,
+  archived,
+  dropped,
+  selected,
+}: {
+  total: number
+  active: number
+  backlog: number
+  closed: number
+  archived: number
+  dropped: number
+  selected: string | null
+}) {
+  return (
+    <div className="kb-health-bar intent-health-bar">
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Total</span>
+        <span className="count-pill kb-health-total">{total} intents</span>
+      </div>
+      <div className="kb-health-group">
+        <span className="runtime-overview-label">Lifecycle</span>
+        <span className="status-pill status-good">active {active}</span>
+        <span className="status-pill status-neutral">backlog {backlog}</span>
+        <span className="status-pill status-good">closed {closed}</span>
+        <span className="status-pill status-offline">archived {archived}</span>
+        {dropped > 0 ? <span className="status-pill status-warn">dropped {dropped}</span> : null}
+      </div>
+      <div className="kb-health-next">
+        <span className="runtime-overview-label">Selection</span>
+        <span className="kb-health-next-text">{selected ?? 'Choose an intent to inspect detail drawer'}</span>
+      </div>
+    </div>
+  )
+}
+
+function TaskRow({
+  task,
+  index,
+  expanded,
+  onToggle,
+}: {
+  task: IntentTask
+  index: number
+  expanded: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className={`intent-task-grid-row${expanded ? ' expanded' : ''}`}>
+      <button className="intent-task-grid-button" type="button" onClick={onToggle}>
+        <span>{task.title ?? `Task ${index + 1}`}</span>
+        <span className={`status-pill ${statusTone(normalizeLifecycle(task.status))}`}>{task.status ?? 'unknown'}</span>
+        <span>{task.source ?? 'No source'}</span>
+      </button>
+      {expanded ? (
+        <div className="intent-task-grid-detail">
+          <p>{task.source ?? 'Task detail source unavailable.'}</p>
+          {task.explicitCommits?.length ? (
+            <div>
+              <strong>Explicit commits</strong>
+              <div className="intent-staged-list">
+                {task.explicitCommits.map((commit) => (
+                  <code key={commit} className="intent-staged-chip">{commit}</code>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {task.relatedCommits?.length ? (
+            <div>
+              <strong>Related commits</strong>
+              <div className="intent-related-list">
+                {task.relatedCommits.map((commit, commitIndex) => (
+                  <div key={`${commit.sha ?? 'commit'}-${commitIndex}`} className="intent-related-item">
+                    <code>{commit.sha ?? 'no-sha'}</code>
+                    <span>{commit.subject ?? 'No subject'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function IntentsListPage() {
   const queryClient = useQueryClient()
   const intentsQuery = useIntentsList()
@@ -52,6 +287,8 @@ export function IntentsListPage() {
   const focusIntentId = snapshotMetadata?.focusIntentId ?? null
   const activeIntentId = snapshotMetadata?.activeIntentId ?? null
   const [selectedIntentId, setSelectedIntentId] = useState<string | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [expandedTaskIndex, setExpandedTaskIndex] = useState<number | null>(null)
 
   useEffect(() => {
     if (!intents.length) {
@@ -68,17 +305,26 @@ export function IntentsListPage() {
     }
   }, [activeIntentId, focusIntentId, intents, selectedIntentId])
 
+  useEffect(() => {
+    setExpandedTaskIndex(null)
+  }, [selectedIntentId])
+
   const detailQuery = useIntentDetail(selectedIntentId)
   const detail = detailQuery.data?.detail ?? null
 
-  const activeCount = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
-  const backlogCount = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length
-  const closedCount = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'closed').length
-  const droppedCount = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'dropped').length
-  const selectedTaskCount = detail?.tasks?.length ?? 0
-  const selectedStagedFilesCount = detail?.stagedFiles?.length ?? 0
-  const selectedPendingTask = detail?.tasks?.find((task) => task.status !== 'done') ?? detail?.tasks?.[0] ?? null
-  const detailStatus = detail ? formatIntentStatus(detail) : 'Select an intent'
+  const lifecycleCounts = useMemo(() => ({
+    active: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length,
+    backlog: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length,
+    closed: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'closed').length,
+    archived: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'archived').length,
+    dropped: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'dropped').length,
+  }), [intents])
+
+  const goalCards = useMemo(
+    () => buildGoalCards(intents, focusIntentId, activeIntentId, snapshotMetadata),
+    [activeIntentId, focusIntentId, intents, snapshotMetadata],
+  )
+  const milestones = useMemo(() => buildMilestones(intents), [intents])
 
   const refreshAll = async () => {
     await Promise.all([
@@ -88,6 +334,20 @@ export function IntentsListPage() {
     ])
   }
 
+  const openDrawerForIntent = (intentId: string) => {
+    setSelectedIntentId(intentId)
+    setDrawerOpen(true)
+  }
+
+  const selectedIntent = intents.find((intent) => intent.id === selectedIntentId) ?? null
+  const detailStatus = detail ? formatIntentStatus(detail) : 'Select an intent'
+  const relationEntries = detail ? [
+    { label: 'Intent file', value: detail.sourceFile ?? 'none' },
+    { label: 'Workspace node', value: detail.workspacePath ?? 'none' },
+    { label: 'Focus relation', value: detail.id === focusIntentId ? 'Current workspace focus' : 'Not current focus' },
+    { label: 'Active relation', value: detail.id === activeIntentId ? 'Current active intent' : 'Not active runtime intent' },
+  ] : []
+
   return (
     <section className="workspace-page">
       <header className="workspace-toolbar">
@@ -95,7 +355,7 @@ export function IntentsListPage() {
           <p className="workspace-eyebrow">Intent Workspace</p>
           <h1>Intents</h1>
           <p className="intent-page-summary">
-            Live queue and detail now read from the bridge. Mutations stay intentionally deferred until the runtime contract is fully real.
+            Goals, milestone progress, live intent health, and a drawer-based operator detail surface now share the same bridge-backed inventory.
           </p>
         </div>
         <div className="toolbar-actions">
@@ -108,268 +368,246 @@ export function IntentsListPage() {
         </div>
       </header>
 
-      <div className="workspace-grid intent-workspace-grid intent-workspace-live-grid">
-        <section className="surface-panel surface-panel-primary">
-          <div className="panel-toolbar">
-            <div>
-              <p className="workspace-eyebrow">Inventory</p>
-              <h2>Intent Queue</h2>
-            </div>
-            <div className="panel-toolbar-meta">
-              <span className="count-pill">{intents.length} total</span>
-              <span className="count-pill">{activeCount} active</span>
-              <span className="count-pill">{focusIntentId ?? 'no focus'}</span>
-            </div>
-          </div>
+      <section className="intent-section-shell">
+        <div className="intent-goal-grid">
+          {goalCards.map((card) => (
+            <GoalCardView key={card.id} card={card} />
+          ))}
+        </div>
 
-          <div className="intent-runtime-summary">
-            <div className="runtime-overview-card">
-              <span className="runtime-overview-label">Backlog</span>
-              <strong>{backlogCount}</strong>
-            </div>
-            <div className="runtime-overview-card">
-              <span className="runtime-overview-label">Closed</span>
-              <strong>{closedCount}</strong>
-            </div>
-            <div className="runtime-overview-card">
-              <span className="runtime-overview-label">Dropped</span>
-              <strong>{droppedCount}</strong>
-            </div>
-            <div className="runtime-overview-card">
-              <span className="runtime-overview-label">Snapshot</span>
-              <strong>{snapshotMetadata?.generatedAt ? 'live' : 'pending'}</strong>
-            </div>
-          </div>
-
-          {intentsQuery.isLoading ? (
-            <div className="intent-empty-state">
-              <h3>Loading intent queue</h3>
-              <p>Fetching live intent inventory from the bridge.</p>
-            </div>
-          ) : intentsQuery.isError ? (
-            <div className="intent-empty-state intent-empty-state-danger">
-              <h3>Intent queue unavailable</h3>
-              <p>{intentsQuery.error instanceof Error ? intentsQuery.error.message : 'Unknown intent list error.'}</p>
-            </div>
-          ) : !intents.length ? (
-            <div className="intent-empty-state">
-              <h3>No intents found</h3>
-              <p>The workspace did not return any intent records yet.</p>
-            </div>
-          ) : (
-            <div className="intent-table" role="table" aria-label="Intent list">
-              <div className="intent-table-header" role="row">
-                <span role="columnheader">Intent</span>
-                <span role="columnheader">Lifecycle</span>
-                <span role="columnheader">Priority</span>
-                <span role="columnheader">Mode</span>
-                <span role="columnheader">Block</span>
+        <div className="intent-milestone-rail">
+          {milestones.map((milestone) => (
+            <article key={milestone.id} className="intent-milestone-card">
+              <div className="intent-milestone-head">
+                <div>
+                  <p className="workspace-eyebrow">Milestone</p>
+                  <h3>{milestone.label}</h3>
+                </div>
+                <span className={`status-pill ${statusTone(milestone.state)}`}>{milestone.state}</span>
               </div>
-              {intents.map((intent) => {
-                const lifecycle = normalizeLifecycle(intent.lifecycle)
-                const isFocused = intent.id === focusIntentId
-                const isSelected = intent.id === selectedIntentId
-                return (
-                  <button
-                    key={intent.id}
-                    className={`intent-row intent-row-button${isSelected ? ' selected' : ''}`}
-                    role="row"
-                    type="button"
-                    onClick={() => setSelectedIntentId(intent.id)}
-                  >
-                    <div className="intent-main-cell" role="cell">
-                      <div className="intent-title-row">
-                        <h3>{intent.title}</h3>
-                        {isFocused ? <span className="meta-pill meta-pill-focus">Focus</span> : null}
-                      </div>
-                      <p className="intent-id">{intent.id}</p>
-                      <p className="intent-focus">
-                        {intent.strategic_mode ?? 'No strategic mode metadata'}
-                      </p>
-                    </div>
-                    <div role="cell">
-                      <span className={`status-pill status-${lifecycle}`}>{intent.lifecycle ?? 'unknown'}</span>
-                    </div>
-                    <div role="cell">
-                      <span className="meta-pill">{intent.priority ?? 'n/a'}</span>
-                    </div>
-                    <p role="cell">{intent.mode ?? 'normal'}</p>
-                    <p role="cell">{intent.blocks ?? 'No blocking note'}</p>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </section>
+              <p className="intent-milestone-metrics">{milestone.metrics}</p>
+              <div className="intent-progress-track" aria-hidden="true">
+                <span style={{ width: `${milestone.progress}%` }} />
+              </div>
+              <span className="intent-milestone-progress">{milestone.progress}% complete</span>
+              <div className="intent-milestone-objectives">
+                {milestone.objectives.map((objective) => (
+                  <div key={objective} className="intent-milestone-objective">{objective}</div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
 
-        <section className="surface-panel surface-panel-primary intent-detail-panel">
-          <div className="panel-toolbar">
-            <div>
-              <p className="workspace-eyebrow">Selection</p>
-              <h2>Intent Detail</h2>
-            </div>
-            <div className="panel-toolbar-meta">
-              <span className="count-pill">{selectedIntentId ?? 'no selection'}</span>
-              <span className="count-pill">{detailStatus}</span>
-            </div>
+        <IntentHealthBar
+          total={intents.length}
+          active={lifecycleCounts.active}
+          backlog={lifecycleCounts.backlog}
+          closed={lifecycleCounts.closed}
+          archived={lifecycleCounts.archived}
+          dropped={lifecycleCounts.dropped}
+          selected={selectedIntentId}
+        />
+
+        {intentsQuery.isLoading ? (
+          <div className="intent-empty-state">
+            <h3>Loading intent inventory</h3>
+            <p>Fetching live queue and milestone blocks from the bridge.</p>
           </div>
+        ) : intentsQuery.isError ? (
+          <div className="intent-empty-state intent-empty-state-danger">
+            <h3>Intent inventory unavailable</h3>
+            <p>{intentsQuery.error instanceof Error ? intentsQuery.error.message : 'Unknown intent list error.'}</p>
+          </div>
+        ) : !intents.length ? (
+          <div className="intent-empty-state">
+            <h3>No intents found</h3>
+            <p>The workspace did not return any intent records yet.</p>
+          </div>
+        ) : (
+          <div className="intent-record-grid">
+            {intents.map((intent) => {
+              const lifecycle = normalizeLifecycle(intent.lifecycle)
+              const isFocused = intent.id === focusIntentId
+              const isActive = intent.id === activeIntentId
+              return (
+                <button
+                  key={intent.id}
+                  className={`intent-record-card${selectedIntentId === intent.id ? ' selected' : ''}`}
+                  type="button"
+                  onClick={() => openDrawerForIntent(intent.id)}
+                >
+                  <div className="intent-record-head">
+                    <div>
+                      <h3>{intent.title?.replace(/^"|"$/g, '') || intent.id}</h3>
+                      <p className="intent-id">{intent.id}</p>
+                    </div>
+                    <span className={`status-pill ${statusTone(lifecycle)}`}>{intent.lifecycle ?? 'unknown'}</span>
+                  </div>
+                  <div className="intent-record-pills">
+                    {isFocused ? <span className="meta-pill meta-pill-focus">Focus</span> : null}
+                    {isActive ? <span className="meta-pill">Active runtime</span> : null}
+                    <span className="meta-pill">{intent.mode ?? 'normal'}</span>
+                    <span className="meta-pill">{intent.strategic_mode ?? 'no strategic mode'}</span>
+                  </div>
+                  <div className="intent-record-meta">
+                    <div>
+                      <span className="runtime-overview-label">Priority</span>
+                      <strong>{intent.priority ?? 'n/a'}</strong>
+                    </div>
+                    <div>
+                      <span className="runtime-overview-label">Blockers</span>
+                      <strong>{intent.blocks ?? 'none'}</strong>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </section>
 
-          {!selectedIntentId ? (
-            <div className="intent-empty-state">
-              <h3>Select an intent</h3>
-              <p>Choose a row from the live queue to inspect focus, tasks, chaos, and staged files.</p>
+      {drawerOpen && selectedIntentId ? (
+        <div className="prototype-overlay-backdrop" onClick={() => setDrawerOpen(false)}>
+          <aside className="prototype-drawer intent-detail-drawer" onClick={(event) => event.stopPropagation()}>
+            <div className="panel-toolbar">
+              <div>
+                <p className="workspace-eyebrow">Intent Detail</p>
+                <h2>{selectedIntent?.title?.replace(/^"|"$/g, '') || selectedIntentId}</h2>
+              </div>
+              <button className="icon-tool-button" type="button" onClick={() => setDrawerOpen(false)} aria-label="Close intent drawer">
+                <Icon icon={xIcon} />
+              </button>
             </div>
-          ) : detailQuery.isLoading ? (
-            <div className="intent-empty-state">
-              <h3>Loading detail</h3>
-              <p>Hydrating the selected intent from the bridge detail route.</p>
-            </div>
-          ) : detailQuery.isError || !detail ? (
-            <div className="intent-empty-state intent-empty-state-danger">
-              <h3>Detail unavailable</h3>
-              <p>{detailQuery.error instanceof Error ? detailQuery.error.message : 'Bridge detail route did not return a usable payload.'}</p>
-            </div>
-          ) : (
-            <div className="intent-detail-stack">
-              <article className="intent-hero-card">
-                <div className="intent-hero-copy">
+
+            {!selectedIntentId ? null : detailQuery.isLoading ? (
+              <div className="intent-empty-state">
+                <h3>Loading detail</h3>
+                <p>Hydrating the selected intent from the bridge detail route.</p>
+              </div>
+            ) : detailQuery.isError || !detail ? (
+              <div className="intent-empty-state intent-empty-state-danger">
+                <h3>Detail unavailable</h3>
+                <p>{detailQuery.error instanceof Error ? detailQuery.error.message : 'Bridge detail route did not return a usable payload.'}</p>
+              </div>
+            ) : (
+              <div className="intent-drawer-stack">
+                <article className="intent-drawer-block">
                   <div className="section-title-row">
                     <span className="section-icon section-icon-intent" aria-hidden="true">
                       <Icon icon={flag} />
                     </span>
                     <div>
-                      <h3>{detail.title ?? detail.id ?? 'Untitled intent'}</h3>
+                      <h3>Summary & Lifecycle</h3>
                       <p className="intent-id">{detail.id ?? selectedIntentId}</p>
                     </div>
+                  </div>
+                  <div className="intent-hero-badges">
+                    <span className={`status-pill ${statusTone(normalizeLifecycle(detail.lifecycle))}`}>{detail.lifecycle ?? 'unknown'}</span>
+                    <span className="meta-pill">{detailStatus}</span>
+                    <span className="meta-pill">{detail.mode ?? 'normal'}</span>
+                    <span className="meta-pill">{detail.changeType ?? 'unspecified'}</span>
                   </div>
                   <p className="intent-detail-summary">
                     {detail.summary ?? detail.goal ?? 'No narrative summary has been extracted from intent.md yet.'}
                   </p>
-                </div>
-                <div className="intent-hero-badges">
-                  <span className={`status-pill status-${normalizeLifecycle(detail.lifecycle)}`}>{detail.lifecycle ?? 'unknown'}</span>
-                  <span className="meta-pill">{detail.mode ?? 'normal'}</span>
-                  <span className="meta-pill">{detail.changeType ?? 'unspecified'}</span>
-                </div>
-              </article>
-
-              <div className="system-info-grid two-column-grid">
-                <article className="system-info-card">
-                  <div className="section-title-row">
-                    <span className="section-icon section-icon-intent" aria-hidden="true">
-                      <Icon icon={flagTriangleRight} />
-                    </span>
-                    <h3>Focus</h3>
+                  <div className="intent-progress-track" aria-hidden="true">
+                    <span style={{ width: `${detail.lifecycle === 'active' ? 56 : detail.lifecycle === 'backlog' ? 22 : 100}%` }} />
                   </div>
-                  <strong className="system-info-title">{detail.focusCurrent ?? 'No current focus recorded'}</strong>
-                  <p>Next action: {detail.focusNextAction ?? 'pending'}</p>
-                  <p className="system-card-subtle">Updated: {formatTimestamp(detail.focusUpdatedAt)}</p>
                 </article>
 
-                <article className="system-info-card">
+                <article className="intent-drawer-block">
                   <div className="section-title-row">
                     <span className="section-icon section-icon-runtime" aria-hidden="true">
-                      <Icon icon={shieldAlert} />
+                      <Icon icon={flagTriangleRight} />
                     </span>
-                    <h3>Chaos Estimate</h3>
+                    <h3>Detail</h3>
                   </div>
-                  <strong className="system-info-title">
-                    {detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'}
-                  </strong>
-                  <p>
-                    {detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'No live chaos estimate attached to this intent.'}
-                  </p>
-                  {detail.chaosEstimate?.warning ? <p className="runtime-warning-text">{detail.chaosEstimate.warning}</p> : null}
+                  <div className="intent-drawer-detail-grid">
+                    <div className="system-info-card">
+                      <strong className="system-info-title">{detail.focusCurrent ?? 'No current focus recorded'}</strong>
+                      <p>Next action: {detail.focusNextAction ?? 'pending'}</p>
+                      <p className="system-card-subtle">Updated: {formatTimestamp(detail.focusUpdatedAt)}</p>
+                    </div>
+                    <div className="system-info-card">
+                      <strong className="system-info-title">
+                        {detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'}
+                      </strong>
+                      <p>{detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel ?? 'No live chaos estimate attached.'}</p>
+                      {detail.chaosEstimate?.warning ? <p className="runtime-warning-text">{detail.chaosEstimate.warning}</p> : null}
+                    </div>
+                  </div>
+                  <p className="rules-cell-copy">{detail.decisionSummary ?? 'No decision summary captured yet.'}</p>
+                </article>
+
+                <article className="intent-drawer-block">
+                  <div className="section-title-row">
+                    <span className="section-icon section-icon-kb" aria-hidden="true">
+                      <Icon icon={network} />
+                    </span>
+                    <h3>Metadata & Relations</h3>
+                  </div>
+                  <div className="intent-relations-grid">
+                    {relationEntries.map((entry) => (
+                      <div key={entry.label} className="intent-relation-card">
+                        <span className="runtime-overview-label">{entry.label}</span>
+                        <strong>{entry.value}</strong>
+                      </div>
+                    ))}
+                    <div className="intent-relation-card">
+                      <span className="runtime-overview-label">Staged modules</span>
+                      <strong>{detail.stagedFiles.length}</strong>
+                    </div>
+                    <div className="intent-relation-card">
+                      <span className="runtime-overview-label">Task nodes</span>
+                      <strong>{detail.tasks.length}</strong>
+                    </div>
+                  </div>
+                  {detail.stagedFiles.length ? (
+                    <div className="intent-staged-list">
+                      {detail.stagedFiles.map((file) => (
+                        <code key={file} className="intent-staged-chip">{file}</code>
+                      ))}
+                    </div>
+                  ) : null}
+                </article>
+
+                <article className="intent-drawer-block">
+                  <div className="section-title-row">
+                    <span className="section-icon section-icon-runtime" aria-hidden="true">
+                      <Icon icon={listTodo} />
+                    </span>
+                    <div>
+                      <h3>Tasks Grid</h3>
+                      <p className="system-card-subtle">Click a task row to expand row detail inline.</p>
+                    </div>
+                  </div>
+                  {detail.tasks.length ? (
+                    <div className="intent-task-grid">
+                      <div className="intent-task-grid-header">
+                        <span>Task</span>
+                        <span>Status</span>
+                        <span>Source</span>
+                      </div>
+                      {detail.tasks.map((task, index) => (
+                        <TaskRow
+                          key={`${task.title ?? 'task'}-${index}`}
+                          task={task}
+                          index={index}
+                          expanded={expandedTaskIndex === index}
+                          onToggle={() => setExpandedTaskIndex((current) => current === index ? null : index)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="rules-cell-copy">No task lines were extracted from `intent.md` or `plan.md` for this intent.</p>
+                  )}
                 </article>
               </div>
-
-              <article className="surface-panel compact-note-panel intent-detail-card">
-                <div className="panel-toolbar">
-                  <div>
-                    <p className="workspace-eyebrow">Work Breakdown</p>
-                    <h3>Tasks</h3>
-                  </div>
-                  <span className="count-pill">{selectedTaskCount} tracked</span>
-                </div>
-                {selectedTaskCount ? (
-                  <div className="intent-task-list">
-                    {detail.tasks.slice(0, 6).map((task, index) => (
-                      <article key={`${task.title ?? 'task'}-${index}`} className="intent-task-card">
-                        <div className="intent-task-head">
-                          <strong>{task.title ?? 'Untitled task'}</strong>
-                          <span className={`status-pill status-${normalizeLifecycle(task.status)}`}>{task.status ?? 'unknown'}</span>
-                        </div>
-                        <p>{task.source ?? 'Task source unavailable'}</p>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="rules-cell-copy">No task lines were extracted from `intent.md` or `plan.md` for this intent.</p>
-                )}
-                {selectedPendingTask ? (
-                  <p className="intent-inline-note">Current task candidate: {selectedPendingTask.title ?? 'No title'}.</p>
-                ) : null}
-              </article>
-
-              <article className="surface-panel compact-note-panel intent-detail-card">
-                <div className="panel-toolbar">
-                  <div>
-                    <p className="workspace-eyebrow">Workspace Provenance</p>
-                    <h3>Sources</h3>
-                  </div>
-                  <span className="count-pill">{selectedStagedFilesCount} staged</span>
-                </div>
-                <div className="intent-source-grid">
-                  <div className="system-info-card">
-                    <div className="section-title-row">
-                      <span className="section-icon section-icon-kb" aria-hidden="true">
-                        <Icon icon={layers3} />
-                      </span>
-                      <h3>Decision Summary</h3>
-                    </div>
-                    <p>{detail.decisionSummary ?? 'No decision summary captured yet.'}</p>
-                  </div>
-                  <div className="system-info-card">
-                    <div className="section-title-row">
-                      <span className="section-icon section-icon-runtime" aria-hidden="true">
-                        <Icon icon={files} />
-                      </span>
-                      <h3>Source Files</h3>
-                    </div>
-                    <p><code>{detail.sourceFile ?? 'none'}</code></p>
-                    <p><code>{detail.workspacePath ?? 'none'}</code></p>
-                  </div>
-                </div>
-                {selectedStagedFilesCount ? (
-                  <div className="intent-staged-list">
-                    {detail.stagedFiles.map((file) => (
-                      <code key={file} className="intent-staged-chip">{file}</code>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="rules-cell-copy">No staged file list was extracted from the current intent metadata.</p>
-                )}
-              </article>
-            </div>
-          )}
-        </section>
-
-        <section className="surface-panel compact-note-panel">
-          <div className="panel-toolbar">
-            <div>
-              <p className="workspace-eyebrow">Phase 1 Boundary</p>
-              <h2>Deferred Actions</h2>
-            </div>
-          </div>
-          <ul className="signal-list">
-            <li>Create draft remains deferred because bridge create still passes unsupported CLI flags.</li>
-            <li>Inline edit stays hidden until `kbx intent update` becomes a real deterministic surface.</li>
-            <li>Approve and apply-preview remain deferred because the bridge contracts are ahead of CLI truth.</li>
-            <li>Apply can be promoted next because `kbx intent apply` is already real and gate-aware.</li>
-            <li>Search still uses mock intent rows and should be re-based after this page is stabilized.</li>
-          </ul>
-        </section>
-      </div>
+            )}
+          </aside>
+        </div>
+      ) : null}
     </section>
   )
 }
