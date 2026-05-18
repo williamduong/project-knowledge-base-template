@@ -99,7 +99,6 @@ packs:
       - KBX-S023
       - KBX-S026
       - KBX-S029
-      
   - id: multi-project
     title: Multi-Project Packet
     context: multi-project
@@ -125,7 +124,6 @@ packs:
       - KBX-S017
       - KBX-S025
 rules:
-  
   - id: KBX-GB001
     title: KBX-GB001
     description: Intent IDs must follow vX-Y-slug pattern (e.g., v2-7-nl-rules-to-cli-logic)
@@ -144,6 +142,7 @@ rules:
     checkerId: KBX-GB001
     enforcement:
       level: validate
+      actor: runtime
     status: active
   - id: KBX-I001
     title: KBX-I001
@@ -163,6 +162,7 @@ rules:
     checkerId: KBX-I001
     enforcement:
       level: validate
+      actor: runtime
     status: active
   - id: KBX-I002
     title: KBX-I002
@@ -182,6 +182,7 @@ rules:
     checkerId: KBX-I002
     enforcement:
       level: validate
+      actor: runtime
     status: active
   - id: KBX-I003
     title: KBX-I003
@@ -201,6 +202,7 @@ rules:
     checkerId: KBX-I003
     enforcement:
       level: validate
+      actor: runtime
     status: active
   - id: KBX-M001
     title: KBX-M001
@@ -220,6 +222,7 @@ rules:
     checkerId: KBX-M001
     enforcement:
       level: validate
+      actor: runtime
     status: active
   - id: KBX-M002
     title: KBX-M002
@@ -239,6 +242,7 @@ rules:
     checkerId: KBX-M002
     enforcement:
       level: validate
+      actor: runtime
     status: active
   - id: KBX-M003
     title: KBX-M003
@@ -260,6 +264,7 @@ rules:
     checkerId: KBX-M003
     enforcement:
       level: validate
+      actor: runtime
     status: active
   - id: KBX-M004
     title: KBX-M004
@@ -281,6 +286,7 @@ rules:
     checkerId: KBX-M004
     enforcement:
       level: validate
+      actor: runtime
     status: active
   - id: KBX-MR001
     title: Constitutional Separation
@@ -303,6 +309,10 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx init
+        - kbx doctor
+        - kbx chaos
     status: active
   - id: KBX-MR002
     title: Deterministic First
@@ -326,6 +336,10 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx status
+        - kbx intent
+        - kbx workspace
     status: active
   - id: KBX-MR003
     title: Intent First
@@ -350,6 +364,10 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx intent create
+        - kbx intent list
+        - kbx intent apply
     status: active
   - id: KBX-MR004
     title: Verify Baseline First
@@ -372,6 +390,9 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx status
+        - git
     status: active
   - id: KBX-S001
     title: Cite Or Abstain
@@ -415,6 +436,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - semantic_search
     status: active
   - id: KBX-S003
     title: Register First
@@ -457,6 +480,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx intent list
     status: active
   - id: KBX-S005
     title: Session Continuity
@@ -500,6 +525,9 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx status
+        - npx @williamduong/kbx status
     status: active
   - id: KBX-S007
     title: Multi-Project Mutation Guard
@@ -524,6 +552,10 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx workspace detect
+        - kbx workspace promote
+        - kbx workspace verify
     status: active
   - id: KBX-S008
     title: Version Capability Guard
@@ -566,6 +598,9 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx intent apply
+        - kbx intent suggest-lessons
     status: active
   - id: KBX-S010
     title: Status Header First
@@ -608,6 +643,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx status
     status: active
   - id: KBX-S012
     title: Advisory Metadata Autofill
@@ -629,6 +666,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx status
     status: active
   - id: KBX-S013
     title: No Silent Re-Init
@@ -654,6 +693,11 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx status
+        - kbx doctor
+        - kbx uninstall
+        - kbx init
     status: active
   - id: KBX-S014
     title: Auto Onboarding
@@ -678,6 +722,10 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx init
+        - kbx bootstrap
+        - kbx intent create
     status: active
   - id: KBX-S015
     title: Advanced Plan Boundaries
@@ -699,6 +747,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - /kbx-plan
     status: active
   - id: KBX-S016
     title: Batch Non-Blocking Run
@@ -723,6 +773,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - /kbx-run
     status: active
   - id: KBX-S017
     title: Unknown Flags Stop Flow
@@ -745,6 +797,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - /kbx-run
     status: active
   - id: KBX-S018
     title: Low Confidence Threshold
@@ -767,6 +821,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx intent suggest-lessons
     status: active
   - id: KBX-S019
     title: Downstream Acceptance Boundary
@@ -792,6 +848,9 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx init
+        - kbx update
     status: active
   - id: KBX-S020
     title: Chaos Gate Before New Intent
@@ -816,6 +875,9 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx chaos
+        - kbx intent create
     status: active
   - id: KBX-S021
     title: Large Intent Branch Gate
@@ -837,6 +899,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - git
     status: active
   - id: KBX-S022
     title: Graph Work Requires Graph Context
@@ -858,6 +922,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx graph
     status: active
   - id: KBX-S023
     title: Public CLI Only
@@ -879,6 +945,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx
     status: active
   - id: KBX-S024
     title: Maintainer Three-Layer Separation
@@ -901,6 +969,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - /svfactory-plan
     status: active
   - id: KBX-S025
     title: Maintainer Runtime-Step Discipline
@@ -923,6 +993,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - /svfactory-run
     status: active
   - id: KBX-S026
     title: Downstream Acceptance Redirect
@@ -950,6 +1022,10 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - /svfactory-run
+        - /svfactory-plan
+        - /svfactory-ask
     status: active
   - id: KBX-S027
     title: Phase Naming Must Be Versioned
@@ -1019,6 +1095,10 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - npm pack
+        - kbx init
+        - kbx update
     status: active
   - id: KBX-S030
     title: Version-Prefixed Intent IDs
@@ -1042,6 +1122,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx intent create
     status: active
   - id: KBX-S031
     title: Wave Equals Target Release
@@ -1064,6 +1146,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx intent create
     status: active
   - id: KBX-S032
     title: Layer C Must Not Ship
@@ -1087,6 +1171,9 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - npm pack
+        - git
     status: active
   - id: KBX-S033
     title: Machine-Readable Command Output
@@ -1110,6 +1197,8 @@ rules:
     checkerId: null
     enforcement:
       level: assist
+      surface:
+        - kbx
     status: active
   - id: KBX-V001
     title: KBX-V001
@@ -1130,6 +1219,7 @@ rules:
     checkerId: KBX-V001
     enforcement:
       level: validate
+      actor: runtime
     status: active
   - id: KBX-V002
     title: KBX-V002
@@ -1140,7 +1230,8 @@ rules:
     priority: P0
     scope:
       - kb-mutation
-    dependsOn: []
+    dependsOn:
+      - KBX-M004
     overrideMode: none
     tools: []
     precedence: 2
@@ -1149,4 +1240,5 @@ rules:
     checkerId: KBX-V002
     enforcement:
       level: validate
+      actor: runtime
     status: active

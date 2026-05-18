@@ -106,12 +106,44 @@ function listRuleCatalog() {
   return [...listHardRules(), ...listSoftRules()].sort((left, right) => left.id.localeCompare(right.id));
 }
 
+function hasToolAssociation(rule) {
+  if (Array.isArray(rule.tools) && rule.tools.length > 0) {
+    return true;
+  }
+
+  return Boolean(
+    rule.enforcement
+      && Array.isArray(rule.enforcement.surface)
+      && rule.enforcement.surface.length > 0
+  );
+}
+
+function hasTechnicalEnforcement(rule, runtimeRuleIds) {
+  const level = rule?.enforcement?.level;
+  if (!['check', 'validate', 'block'].includes(level)) {
+    return false;
+  }
+
+  // Checker-backed rules are technically enforced by the runtime rule-engine.
+  if (typeof rule.checkerId === 'string' && runtimeRuleIds.has(rule.checkerId)) {
+    return true;
+  }
+
+  // Actor only counts when explicitly marked as technical enforcement actor.
+  const actor = rule?.enforcement?.actor;
+  return ['cli', 'runtime', 'tool'].includes(actor);
+}
+
 function listRulePacks() {
   const registry = loadRuleRegistry();
   const byId = new Map(listRuleCatalog().map((rule) => [rule.id, rule]));
+  const runtimeRuleIds = new Set(loadRules().map((rule) => rule.id));
 
   return registry.packs.map((pack) => {
     const rules = pack.ruleIds.map((ruleId) => byId.get(ruleId)).filter(Boolean);
+    const toolAssociationCoverage = rules.filter(hasToolAssociation).length;
+    const enforcementCoverage = rules.filter((rule) => hasTechnicalEnforcement(rule, runtimeRuleIds)).length;
+
     return {
       id: pack.id,
       title: pack.title,
@@ -123,16 +155,10 @@ function listRulePacks() {
         hardCount: rules.filter((rule) => rule.kind === RULE_KIND.HARD).length,
         masterCount: rules.filter((rule) => rule.kind === RULE_KIND.MASTER).length,
         softCount: rules.filter((rule) => rule.kind === RULE_KIND.SOFT).length,
-        toolCoverage: rules.filter((rule) => {
-          // Consider a rule covered by tools when its enforcement requires tool/cli/runtime enforcement
-          if (!rule.enforcement || !rule.enforcement.level) return false;
-          const level = rule.enforcement.level;
-          if (!['check', 'validate', 'block'].includes(level)) return false;
-          const actor = rule.enforcement.actor || 'agent';
-          if (['cli', 'runtime', 'tool'].includes(actor)) return true;
-          if (Array.isArray(rule.enforcement.surface) && rule.enforcement.surface.length > 0) return true;
-          return false;
-        }).length,
+        toolAssociationCoverage,
+        enforcementCoverage,
+        // Backward-compatible alias for existing UI/CLI consumers.
+        toolCoverage: enforcementCoverage,
       },
     };
   });

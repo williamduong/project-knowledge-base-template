@@ -1991,7 +1991,8 @@
 
 .intent-goal-foot p,
 .intent-milestone-metrics,
-.intent-milestone-objective {
+.intent-milestone-objective,
+.intent-milestone-objective-inline {
   margin: 0;
   color: #9fb0c3;
   font-size: 12.5px;
@@ -2013,6 +2014,12 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.intent-milestone-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .intent-milestone-card-done {
   background: rgba(22, 101, 52, 0.18);
   border-color: rgba(74, 222, 128, 0.28);
@@ -2030,16 +2037,10 @@
   border-color: rgba(148, 163, 184, 0.3);
 }
 
-.intent-milestone-objectives {
-  display: grid;
-  gap: 6px;
-}
-
-.intent-milestone-objective {
-  padding: 8px 10px;
-  background: rgba(15, 23, 36, 0.72);
-  border: 1px solid rgba(120, 144, 167, 0.18);
-  border-radius: 8px;
+.intent-milestone-objective-inline {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .intent-health-bar {
@@ -2170,6 +2171,19 @@
   margin: 0;
   color: #c9d5e2;
   line-height: 1.5;
+}
+
+.intent-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.intent-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .intent-drawer-stack {
@@ -2674,6 +2688,11 @@
   .intent-task-grid-button,
   .intent-metadata-compact {
     grid-template-columns: 1fr;
+  }
+
+  .intent-pagination-bar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .intent-detail-drawer {

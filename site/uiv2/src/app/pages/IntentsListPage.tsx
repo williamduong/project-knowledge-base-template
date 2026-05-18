@@ -9,6 +9,8 @@ import target from '@iconify-icons/lucide/target'
 import activity from '@iconify-icons/lucide/activity'
 import archive from '@iconify-icons/lucide/archive'
 import chevronDown from '@iconify-icons/lucide/chevron-down'
+import chevronLeft from '@iconify-icons/lucide/chevron-left'
+import chevronRight from '@iconify-icons/lucide/chevron-right'
 import chevronUp from '@iconify-icons/lucide/chevron-up'
 import clock3 from '@iconify-icons/lucide/clock-3'
 import xIcon from '@iconify-icons/lucide/x'
@@ -44,6 +46,9 @@ type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' |
 type IntentSortKey = 'title' | 'milestone' | 'lifecycle' | 'progress' | 'runtime'
 type DetailSectionKey = 'summary' | 'detail' | 'relations' | 'tasks'
 type EditableField = 'title' | 'summaryText' | 'focusCurrent' | 'focusNextAction' | 'closeCondition'
+
+const INTENTS_PER_PAGE = 20
+const MILESTONES_PER_VIEW = 3
 
 type IntentPatchResponse = {
   ok: boolean
@@ -549,10 +554,11 @@ export function IntentsListPage() {
   const [selectedIntentId, setSelectedIntentId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [expandedTaskIndex, setExpandedTaskIndex] = useState<number | null>(null)
-  const [showAllMilestones, setShowAllMilestones] = useState(false)
+  const [milestoneStartIndex, setMilestoneStartIndex] = useState(0)
   const [healthFilter, setHealthFilter] = useState<IntentHealthFilter>('all')
   const [intentSortKey, setIntentSortKey] = useState<IntentSortKey>('milestone')
   const [intentSortDirection, setIntentSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [intentPage, setIntentPage] = useState(1)
   const [collapsedSections, setCollapsedSections] = useState<Record<DetailSectionKey, boolean>>({
     summary: false,
     detail: false,
@@ -627,7 +633,10 @@ export function IntentsListPage() {
     [activeIntentId, focusIntentId, intents, snapshotMetadata],
   )
   const milestones = useMemo(() => buildMilestones(intents), [intents])
-  const visibleMilestones = showAllMilestones ? milestones : milestones.slice(0, 3)
+  const visibleMilestones = useMemo(
+    () => milestones.slice(milestoneStartIndex, milestoneStartIndex + MILESTONES_PER_VIEW),
+    [milestoneStartIndex, milestones],
+  )
 
   const filteredIntents = useMemo(() => {
     return intents.filter((intent) => {
@@ -669,6 +678,33 @@ export function IntentsListPage() {
     })
     return items
   }, [activeIntentId, filteredIntents, focusIntentId, intentSortDirection, intentSortKey])
+
+  useEffect(() => {
+    setIntentPage(1)
+  }, [healthFilter, intentSortDirection, intentSortKey])
+
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(sortedIntents.length / INTENTS_PER_PAGE))
+    if (intentPage > maxPage) {
+      setIntentPage(maxPage)
+    }
+  }, [intentPage, sortedIntents.length])
+
+  useEffect(() => {
+    const maxStart = Math.max(0, milestones.length - MILESTONES_PER_VIEW)
+    if (milestoneStartIndex > maxStart) {
+      setMilestoneStartIndex(maxStart)
+    }
+  }, [milestoneStartIndex, milestones.length])
+
+  const intentPageCount = Math.max(1, Math.ceil(sortedIntents.length / INTENTS_PER_PAGE))
+  const pagedIntents = useMemo(() => {
+    const startIndex = (intentPage - 1) * INTENTS_PER_PAGE
+    return sortedIntents.slice(startIndex, startIndex + INTENTS_PER_PAGE)
+  }, [intentPage, sortedIntents])
+  const intentPageStart = sortedIntents.length ? (intentPage - 1) * INTENTS_PER_PAGE + 1 : 0
+  const intentPageEnd = sortedIntents.length ? Math.min(intentPage * INTENTS_PER_PAGE, sortedIntents.length) : 0
+  const milestoneWindowEnd = Math.min(milestoneStartIndex + MILESTONES_PER_VIEW, milestones.length)
 
   const refreshAll = async () => {
     await Promise.all([
@@ -832,14 +868,36 @@ export function IntentsListPage() {
               <p className="workspace-eyebrow">Milestones</p>
               <h2>Version rail</h2>
             </div>
-            <button className="tool-button" type="button" onClick={() => setShowAllMilestones((current) => !current)}>
-              <Icon icon={showAllMilestones ? chevronUp : chevronDown} aria-hidden="true" />
-              {showAllMilestones ? 'Collapse' : 'Expand'}
-            </button>
+            <div className="intent-milestone-nav">
+              <span className="runtime-overview-label">{milestones.length ? `${milestoneStartIndex + 1}-${milestoneWindowEnd} of ${milestones.length}` : 'No milestones'}</span>
+              <button
+                className="icon-tool-button"
+                type="button"
+                onClick={() => setMilestoneStartIndex((current) => Math.max(0, current - 1))}
+                disabled={milestoneStartIndex === 0}
+                aria-label="Previous milestones"
+              >
+                <Icon icon={chevronLeft} aria-hidden="true" />
+              </button>
+              <button
+                className="icon-tool-button"
+                type="button"
+                onClick={() => setMilestoneStartIndex((current) => Math.min(Math.max(0, milestones.length - MILESTONES_PER_VIEW), current + 1))}
+                disabled={milestoneWindowEnd >= milestones.length}
+                aria-label="Next milestones"
+              >
+                <Icon icon={chevronRight} aria-hidden="true" />
+              </button>
+            </div>
           </div>
           <div className="intent-milestone-rail compact">
             {visibleMilestones.map((milestone) => (
-              <article key={milestone.id} className={`intent-milestone-card intent-milestone-card-${milestoneVisualState(milestone.state)}`}>
+              <article
+                key={milestone.id}
+                className={`intent-milestone-card intent-milestone-card-${milestoneVisualState(milestone.state)}`}
+                data-tooltip={`${milestone.metrics} | ${milestone.objectives.join(' · ')}`}
+                tabIndex={0}
+              >
                 <div className="intent-milestone-head">
                   <div>
                     <p className="workspace-eyebrow">Milestone</p>
@@ -852,10 +910,8 @@ export function IntentsListPage() {
                   <span style={{ width: `${milestone.progress}%` }} />
                 </div>
                 <span className="intent-milestone-progress">{milestone.progress}% complete</span>
-                <div className="intent-milestone-objectives">
-                  {milestone.objectives.map((objective) => (
-                    <div key={objective} className="intent-milestone-objective">{objective}</div>
-                  ))}
+                <div className="intent-milestone-objective-inline">
+                  {milestone.objectives[0] ?? 'No milestone objective captured yet.'}
                 </div>
               </article>
             ))}
@@ -899,7 +955,7 @@ export function IntentsListPage() {
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('runtime')}>Runtime{sortIndicator('runtime', intentSortKey, intentSortDirection)}</button>
               <span role="columnheader">Blockers</span>
             </div>
-            {sortedIntents.map((intent) => {
+            {pagedIntents.map((intent) => {
               const lifecycle = normalizeLifecycle(intent.lifecycle)
               const isFocused = intent.id === focusIntentId
               const isActive = intent.id === activeIntentId
@@ -940,7 +996,7 @@ export function IntentsListPage() {
                 </article>
               )
             })}
-            {!sortedIntents.length ? (
+            {!pagedIntents.length ? (
               <article className="rules-table-empty" role="row">
                 <h3>No intents match this filter</h3>
                 <p>Try another lifecycle pill in the intent health bar.</p>
@@ -948,6 +1004,30 @@ export function IntentsListPage() {
             ) : null}
           </div>
         )}
+        {sortedIntents.length ? (
+          <div className="intent-pagination-bar">
+            <span className="runtime-overview-label">Showing {intentPageStart}-{intentPageEnd} of {sortedIntents.length}</span>
+            <div className="intent-pagination-actions">
+              <button
+                className="tool-button"
+                type="button"
+                onClick={() => setIntentPage((current) => Math.max(1, current - 1))}
+                disabled={intentPage === 1}
+              >
+                Previous
+              </button>
+              <span className="meta-pill">Page {intentPage} / {intentPageCount}</span>
+              <button
+                className="tool-button"
+                type="button"
+                onClick={() => setIntentPage((current) => Math.min(intentPageCount, current + 1))}
+                disabled={intentPage >= intentPageCount}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       {drawerOpen && selectedIntentId ? (
