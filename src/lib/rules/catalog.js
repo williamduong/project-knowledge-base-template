@@ -149,6 +149,7 @@ function listRulePacks() {
       title: pack.title,
       context: pack.context,
       description: pack.description,
+      promptSummary: pack.promptSummary || null,
       ruleIds: [...pack.ruleIds],
       stats: {
         count: rules.length,

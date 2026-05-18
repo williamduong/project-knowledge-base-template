@@ -115,6 +115,9 @@ function normalizePack(pack, index, knownRuleIds) {
   assertString(pack.title, `packs[${index}].title`);
   assertString(pack.context, `packs[${index}].context`);
   assertString(pack.description, `packs[${index}].description`);
+  if (pack.promptSummary !== undefined && pack.promptSummary !== null) {
+    assertString(pack.promptSummary, `packs[${index}].promptSummary`);
+  }
   assertArray(pack.ruleIds, `packs[${index}].ruleIds`);
 
   for (const ruleId of pack.ruleIds) {
@@ -129,6 +132,7 @@ function normalizePack(pack, index, knownRuleIds) {
     title: pack.title,
     context: pack.context,
     description: pack.description,
+    promptSummary: pack.promptSummary ?? null,
     ruleIds: [...pack.ruleIds],
   };
 }

@@ -24,6 +24,7 @@ packs:
     title: Core Packet
     context: always
     description: Minimal always-load packet for anti-hallucination, deterministic boundaries, and source precedence.
+    promptSummary: Enforce constitutional boundaries, deterministic action preference, and baseline verification before any claim.
     ruleIds:
       - KBX-MR001
       - KBX-MR002
@@ -38,6 +39,7 @@ packs:
     description: >-
       Load only the rules required to answer questions from KB first, cite carefully, and stay provisional when evidence
       is thin.
+    promptSummary: For read-only Q&A, consult KB first, cite evidence, and mark low-confidence recommendations explicitly.
     ruleIds:
       - KBX-MR004
       - KBX-S001
@@ -50,6 +52,7 @@ packs:
     description: >-
       Controls intent-first behavior, register-first edits, metadata discipline, and deterministic command preference
       during KB changes.
+    promptSummary: Before mutations, enforce intent-first workflow, register-first edits, and strict metadata and verification checks.
     ruleIds:
       - KBX-MR002
       - KBX-MR003
@@ -66,6 +69,7 @@ packs:
     title: Onboarding Packet
     context: onboarding
     description: Fresh-install and recovery rules, including no-silent-reinit and full onboarding automation.
+    promptSummary: Onboarding must probe state through CLI, prevent silent re-init, and complete full setup flow.
     ruleIds:
       - KBX-S006
       - KBX-S013
@@ -76,6 +80,7 @@ packs:
     title: Intent Packet
     context: intent
     description: Intent creation, chaos gating, branch strategy, evidence-backed recommendations, and deterministic intent hygiene.
+    promptSummary: Intent operations must pass chaos gates, maintain branch discipline, and preserve evidence-backed decision quality.
     ruleIds:
       - KBX-MR003
       - KBX-S004
@@ -93,6 +98,7 @@ packs:
     title: Release Packet
     context: release
     description: Release-time boundary checks, downstream acceptance discipline, and mutation-safe governance rules.
+    promptSummary: Release flows require downstream clean-workspace acceptance and strict separation of maintainer versus ship surfaces.
     ruleIds:
       - KBX-MR001
       - KBX-S019
@@ -103,6 +109,7 @@ packs:
     title: Multi-Project Packet
     context: multi-project
     description: Workspace disambiguation and target resolution before any mutation in multi-project sessions.
+    promptSummary: Resolve one explicit project target before mutation and block ambiguous multi-project operations.
     ruleIds:
       - KBX-S006
       - KBX-S007
@@ -110,6 +117,7 @@ packs:
     title: Session Packet
     context: session
     description: Presentation and continuity packet for chat sessions, including headers, resume blocks, and persona-aware output.
+    promptSummary: Keep responses resumable with status context and persona-aware language depth across sessions.
     ruleIds:
       - KBX-S005
       - KBX-S010
@@ -118,6 +126,7 @@ packs:
     title: Advanced Plan Packet
     context: advanced-plan
     description: Special packet for explicit /kbx-plan and /kbx-run modes where planning and execution boundaries matter.
+    promptSummary: Keep planning and execution boundaries explicit for advanced plan/run modes and avoid mode leakage.
     ruleIds:
       - KBX-S015
       - KBX-S016
@@ -143,6 +152,9 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active
   - id: KBX-I001
     title: KBX-I001
@@ -163,6 +175,9 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active
   - id: KBX-I002
     title: KBX-I002
@@ -183,6 +198,9 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active
   - id: KBX-I003
     title: KBX-I003
@@ -203,6 +221,9 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active
   - id: KBX-M001
     title: KBX-M001
@@ -223,6 +244,9 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active
   - id: KBX-M002
     title: KBX-M002
@@ -243,6 +267,9 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active
   - id: KBX-M003
     title: KBX-M003
@@ -265,6 +292,9 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active
   - id: KBX-M004
     title: KBX-M004
@@ -287,6 +317,9 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active
   - id: KBX-MR001
     title: Constitutional Separation
@@ -1220,6 +1253,9 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active
   - id: KBX-V002
     title: KBX-V002
@@ -1230,8 +1266,7 @@ rules:
     priority: P0
     scope:
       - kb-mutation
-    dependsOn:
-      - KBX-M004
+    dependsOn: []
     overrideMode: none
     tools: []
     precedence: 2
@@ -1241,4 +1276,7 @@ rules:
     enforcement:
       level: validate
       actor: runtime
+      surface:
+        - kbx rules lint
+        - kbx rules check
     status: active

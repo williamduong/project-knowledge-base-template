@@ -99,6 +99,7 @@ export type HomeSummaryResponse = {
         title: string | null
         context: string | null
         description: string | null
+        promptSummary: string | null
         ruleIds: string[]
         stats: {
           count: number
