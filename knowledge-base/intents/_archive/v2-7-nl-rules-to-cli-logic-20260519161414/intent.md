@@ -2,8 +2,7 @@
 id: v2-7-nl-rules-to-cli-logic
 title: "NL Rules -> CLI Hard Logic"
 mode: full
-lifecycle: active
-status: open
+lifecycle: closed
 created_at: "2026-05-08T18:21:21.154Z"
 focus:
   current: "Phase 4 complete (all template docs updated with rule IDs, 710/710 tests pass). v2.7 ready for release."
@@ -28,6 +27,11 @@ chaos_estimate:
   projected_score: 62
   projected_level: unstable
   warning: "Closing this intent and shipping v2.7 reduces intent overhead and converts rule debt into enforced runtime policy, but broader repo drift still keeps the score above manageable."
+legacy_status: open
+close_type: released
+closed_at: "2026-05-19T16:13:57.010Z"
+release_ref: v2.7.0-beta.2
+drop_reason: null
 ---
 
 # Intent: v2-7-nl-rules-to-cli-logic

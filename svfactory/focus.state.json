@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
-  "source_type": "state-file",
+  "source_type": "intent-cli",
   "maintainer_focus": {
-    "version_target": "Workspace grounding pass — branch-local v2.9 UI shell work on top of unresolved v2.7/v2.8 maintainer drift",
+    "version_target": "v2-7",
     "current_phase": "Maintainer sync checkpoint — branch intent/v2-9-uiv2-shadcn-admin-shell-adoption",
     "current_branch": "intent/v2-9-uiv2-shadcn-admin-shell-adoption"
   },
@@ -14,9 +14,9 @@
     "label": "API writer path verified"
   },
   "checkpoint": {
-    "intent_id": "v2-9-uiv2-shadcn-admin-shell-adoption",
-    "event": "phase-3-api-write",
-    "timestamp": "2026-05-16T16:45:00Z",
+    "intent_id": "v2-7-nl-rules-to-cli-logic",
+    "event": "intent-archived",
+    "timestamp": "2026-05-19T16:14:15.206Z",
     "branch": "intent/v2-9-uiv2-shadcn-admin-shell-adoption"
   },
   "source_files": {

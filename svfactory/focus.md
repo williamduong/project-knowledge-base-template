@@ -103,8 +103,8 @@ Workspace grounding pass — branch-local `v2.9` UI shell work on top of unresol
 - State: `active`
 - Source: `api`
 - Branch: `intent/v2-9-uiv2-shadcn-admin-shell-adoption`
-- Checkpoint Intent: `v2-9-uiv2-shadcn-admin-shell-adoption`
-- Checkpoint Event: `phase-3-api-write`
-- Checkpoint Timestamp: `2026-05-16T16:45:00Z`
-- Maintainer Version Target: Workspace grounding pass — branch-local v2.9 UI shell work on top of unresolved v2.7/v2.8 maintainer drift
+- Checkpoint Intent: `v2-7-nl-rules-to-cli-logic`
+- Checkpoint Event: `intent-archived`
+- Checkpoint Timestamp: `2026-05-19T16:14:15.206Z`
+- Maintainer Version Target: v2-7
 <!-- FOCUS_STATE_AUTO_END -->
