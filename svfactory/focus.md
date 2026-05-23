@@ -99,12 +99,12 @@ Workspace grounding pass — branch-local `v2.9` UI shell work on top of unresol
 ## Runtime Focus Projection
 
 <!-- FOCUS_STATE_AUTO_START -->
-- Intent: `v2-9-uiv2-shadcn-admin-shell-adoption`
+- Intent: `v2-10-code-graph`
 - State: `active`
-- Source: `api`
-- Branch: `intent/v2-9-uiv2-shadcn-admin-shell-adoption`
-- Checkpoint Intent: `v2-7-nl-rules-to-cli-logic`
-- Checkpoint Event: `intent-archived`
-- Checkpoint Timestamp: `2026-05-19T16:14:15.206Z`
-- Maintainer Version Target: v2-7
+- Source: `intent-cli`
+- Branch: `intent/v2-10-code-graph`
+- Checkpoint Intent: `v2-10-code-graph`
+- Checkpoint Event: `intent-created`
+- Checkpoint Timestamp: `2026-05-23T05:56:28.359Z`
+- Maintainer Version Target: v2-10
 <!-- FOCUS_STATE_AUTO_END -->
