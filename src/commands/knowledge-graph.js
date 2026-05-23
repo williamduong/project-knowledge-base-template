@@ -11,21 +11,35 @@ const path = require('path');
 const { connect, ping, resolveConfig, ensureSchema, getCollectionStats } = require('../graph-db/knowledge');
 const { createProvider } = require('../llm');
 const { ingestKnowledgeGraph } = require('../graph-db/knowledge/kg-ingester');
+const { getEntity, listEntities, getRelationships, traversePath, getImpactChain, searchEntities } = require('../graph-db/knowledge/query');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
 // ---------------------------------------------------------------------------
 
 function parseArgs(args) {
-  const options = { sub: null, json: false, verbose: false, path: null };
+  const options = { sub: null, json: false, verbose: false, path: null, entity: null, search: null, types: [], impact: null, path: null, from: null, to: null, depth: 3, list: null, limit: 100, offset: 0 };
   const rest = [];
 
   for (let i = 0; i < (args || []).length; i++) {
     const arg = args[i];
-    if (arg === '--json')      { options.json = true; continue; }
-    if (arg === '--verbose')   { options.verbose = true; continue; }
-    if (arg.startsWith('--path=')) { options.path = arg.slice('--path='.length); continue; }
+    if (arg === '--json')           { options.json = true; continue; }
+    if (arg === '--verbose')        { options.verbose = true; continue; }
+    if (arg.startsWith('--path='))  { options.path = arg.slice('--path='.length); continue; }
     if (arg === '--path' || arg === '-p') { options.path = args[++i]; continue; }
+    if (arg.startsWith('--entity=')) { options.entity = arg.slice('--entity='.length); continue; }
+    if (arg === '--entity')         { options.entity = args[++i]; continue; }
+    if (arg.startsWith('--search=')) { options.search = arg.slice('--search='.length); continue; }
+    if (arg === '--search')         { options.search = args[++i]; continue; }
+    if (arg.startsWith('--type='))  { options.types.push(arg.slice('--type='.length)); continue; }
+    if (arg === '--impact')         { options.impact = args[++i]; continue; }
+    if (arg === '--path-from')      { options.from = args[++i]; continue; }
+    if (arg === '--path-to')        { options.to = args[++i]; continue; }
+    if (arg.startsWith('--depth=')) { options.depth = parseInt(arg.slice('--depth='.length), 10); continue; }
+    if (arg.startsWith('--list='))  { options.list = arg.slice('--list='.length); continue; }
+    if (arg === '--list')           { options.list = args[++i]; continue; }
+    if (arg.startsWith('--limit=')) { options.limit = parseInt(arg.slice('--limit='.length), 10); continue; }
+    if (arg.startsWith('--offset=')) { options.offset = parseInt(arg.slice('--offset='.length), 10); continue; }
     if (!arg.startsWith('--')) { rest.push(arg); continue; }
     throw new Error(`Unknown knowledge-graph option "${arg}". Run "kbx knowledge-graph help" for usage.`);
   }
@@ -230,14 +244,28 @@ async function runIngest(options, cwd) {
 
 function printHelp() {
   console.log(`
-kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3-4)
+kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3-5)
 
 Usage:
-  kbx knowledge-graph init      [--json]               Init DB + KG schema (10 vertex + 14 edge types).
-  kbx knowledge-graph status    [--json]               Check connection + collection counts.
+  kbx knowledge-graph init      [--json]                  Init DB + KG schema (10 vertex + 14 edge types).
+  kbx knowledge-graph status    [--json]                  Check connection + collection counts.
   kbx knowledge-graph ingest    [--path=<dir>] [--verbose] [--json]
-                                                        Extract Intent/Goal/Decision from KB markdown → ArangoDB.
-  kbx knowledge-graph help                             Show this message.
+                                                           Extract Intent/Goal/Decision from KB markdown → ArangoDB.
+  kbx knowledge-graph query     [--entity=TYPE:ID] [--search=QUERY] [--impact=ID] [--json]
+                                                           Query entities, relationships, impact chains.
+  kbx knowledge-graph help                                Show this message.
+
+Query options:
+  --entity=TYPE:ID              Fetch single entity (TYPE: intent, goal, decision, etc.)
+  --search=QUERY                Search entities by title/description
+  --type=TYPE                   Filter search results by entity type (repeatable)
+  --impact=ID                   Get impact chain from entity (all reachable nodes)
+  --depth=N                     Traversal depth (default: 3)
+  --path-from=ID --path-to=ID   Find shortest path between entities
+  --list=TYPE                   List entities of given type
+  --limit=N                     Pagination limit (default: 100)
+  --offset=N                    Pagination offset (default: 0)
+  --json                        JSON output
 
 Entities (vertices):
   Intent, Goal, Milestone, Decision, Principle, Risk, Lesson, Version, Document, Agent
@@ -254,13 +282,73 @@ Config (env vars):
   KBX_ARANGODB_USER   Username                (default: root)
   KBX_ARANGODB_PASS   Password                (default: empty)
 
-Phase 3: Schema creation only. Phase 4+ adds extraction from KB markdown.
+Phase 3: Schema creation. Phase 4: Extraction. Phase 5: Query API.
   `.trim());
 }
 
 // ---------------------------------------------------------------------------
 // Main entry
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Subcommand: query
+// Query entities and relationships in the knowledge graph.
+// ---------------------------------------------------------------------------
+
+async function runQuery(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    let result;
+
+    if (options.entity) {
+      // Get single entity
+      const [type, id] = options.entity.split(':');
+      result = await getEntity(db, type, id);
+      if (!result && !options.json) console.log('Entity not found');
+    } else if (options.search) {
+      // Search entities
+      result = await searchEntities(db, options.search, options.types || []);
+    } else if (options.impact) {
+      // Impact chain
+      const depth = options.depth || 3;
+      result = await getImpactChain(db, options.entity || options.impact, depth);
+    } else if (options.path) {
+      // Path between entities
+      result = await traversePath(db, options.from, options.to, options.depth || 5);
+    } else if (options.list) {
+      // List entities
+      const type = options.list;
+      result = await listEntities(db, type, { limit: options.limit || 100, offset: options.offset || 0 });
+    } else {
+      if (!options.json) console.error('No query specified. Use --help for options.');
+      process.exit(1);
+    }
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, result }));
+    } else {
+      console.log(JSON.stringify(result, null, 2));
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Query failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
 
 async function runKnowledgeGraph(args) {
   let options;
@@ -275,6 +363,7 @@ async function runKnowledgeGraph(args) {
   if (options.sub === 'init')   { await runInit(options);                   return; }
   if (options.sub === 'status') { await runStatus(options);                 return; }
   if (options.sub === 'ingest') { await runIngest(options, process.cwd()); return; }
+  if (options.sub === 'query')  { await runQuery(options);                  return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);
   process.exit(1);

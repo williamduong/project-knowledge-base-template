@@ -124,25 +124,31 @@ async function getImpactChain(db, entityId, depth = 3) {
 
 // Search entities by title/description (simple substring match)
 async function searchEntities(db, query, types = []) {
-  const typeFilter = types.length > 0
-    ? `FILTER doc.kind IN ${JSON.stringify(types)}`
-    : '';
+  const collectionNames = types.length > 0
+    ? types.map(t => `kg_${t}s`)
+    : ['kg_intents', 'kg_goals', 'kg_decisions', 'kg_principles', 'kg_lessons', 'kg_documents', 'kg_agents'];
 
-  const aql = `
-    FOR doc IN ${types.length === 1 ? `kg_${types[0]}s` : 'kg_intents, kg_goals, kg_decisions, kg_principles, kg_lessons, kg_documents, kg_agents'}
-      ${typeFilter}
-      FILTER CONTAINS(LOWER(doc.title), LOWER(@query)) OR CONTAINS(LOWER(doc.description || ''), LOWER(@query))
-      RETURN doc
-  `;
+  const results = [];
 
-  try {
-    const cursor = await db.query(aql, { query });
-    const results = await cursor.all();
-    return results;
-  } catch (err) {
-    console.error(`Error searching entities:`, err.message);
-    return [];
+  // Query each collection separately and combine
+  for (const coll of collectionNames) {
+    const aql = `
+      FOR doc IN ${coll}
+        FILTER CONTAINS(LOWER(doc.title), LOWER(@query)) OR CONTAINS(LOWER(doc.description || ''), LOWER(@query))
+        RETURN doc
+    `;
+
+    try {
+      const cursor = await db.query(aql, { query });
+      const collResults = await cursor.all();
+      results.push(...collResults);
+    } catch (err) {
+      // Skip collections that have errors
+      console.error(`[Search] error querying ${coll}:`, err.message);
+    }
   }
+
+  return results;
 }
 
 // Get collection statistics
