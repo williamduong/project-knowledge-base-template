@@ -53,6 +53,7 @@ When working as a generic coding agent in this repository:
 - Verify before asserting. Read real files and git/CLI state instead of inferring from stale notes.
 - Do not treat local self-host validation as downstream acceptance for shipped `KBAgent` behavior.
 - For broad maintenance, upgrades, or repo-wide edits, compare current git `HEAD` with the baseline recorded in `knowledge-base/00-start-here/repository-revision-state.md` before trusting KB freshness.
+- **Graph-first for governance entities (Phase 5+):** Goals, Decisions, Principles, and Lessons must be created in the Knowledge Graph first (via CLI or direct insert). Old scattered files (`svfactory/goals.state.json`, `knowledge-base/03-architecture/adr/`, `svfactory/principles.md`) are deprecated as canonical source. See [DEPRECATED.md](DEPRECATED.md).
 
 ## Navigation shortcut
 

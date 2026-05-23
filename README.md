@@ -6,8 +6,9 @@ It is designed for teams that want a consistent documentation baseline across di
 
 ## Current Runtime Focus
 
-- Runtime focus: `v2.4.x (solo-first + intent schema maintenance)`
+- Runtime focus: `v2.4.x (solo-first + intent schema maintenance)` + `Phase 5 (Knowledge Graph canonicalization)`
 - Current messaging baseline: prioritize executable now-path (`init -> bootstrap -> index -> next`) and avoid over-claiming deferred phases
+- **New:** Knowledge Graph is canonical source for governance entities (goals, decisions, principles, lessons). See [DEPRECATED.md](DEPRECATED.md) for graph-first workflow.
 - License: GNU AGPL v3 with separate commercial licensing available
 - Baseline state file for downstream projects: [template/00-start-here/repository-revision-state.md](template/00-start-here/repository-revision-state.md)
 

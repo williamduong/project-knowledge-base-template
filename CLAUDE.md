@@ -41,6 +41,7 @@ Then print the 5-line session summary (Workflow 7 in process.md):
 - **Intent-first:** For non-trivial tasks, check `node ./bin/kbx.js intent list` first. Resume or create an intent before doing work.
 - **Minimal change:** Prefer the smallest change that solves the problem. Do not expand scope without explicit request.
 - **Backward compat:** Minor bumps must not break downstream users of prior minor.
+- **Graph-first for governance entities:** Goals, Decisions, Principles, and Lessons are created in the Knowledge Graph first (via CLI or direct insert). Old scattered files (`svfactory/goals.state.json`, `knowledge-base/03-architecture/adr/`, `svfactory/principles.md`) are deprecated as canonical source. See [DEPRECATED.md](DEPRECATED.md).
 
 ## CLI in This Workspace
 
