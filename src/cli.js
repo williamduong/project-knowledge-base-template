@@ -30,6 +30,7 @@ const { runIntent } = require('./commands/intent');
 const { runChaos } = require('./commands/chaos');
 const { runGraph } = require('./commands/graph');
 const { runCodeGraph } = require('./commands/code-graph');
+const { runLlm }       = require('./commands/llm');
 const { runExtract } = require('./commands/extract');
 const { runIngest } = require('./commands/ingest');
 const { runNext } = require('./commands/next');
@@ -145,6 +146,11 @@ async function run(argv) {
 
   if (command === 'code-graph') {
     await runCodeGraph(rest);
+    return;
+  }
+
+  if (command === 'llm') {
+    await runLlm(rest);
     return;
   }
 
