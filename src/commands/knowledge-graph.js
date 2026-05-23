@@ -15,6 +15,7 @@ const { getEntity, listEntities, getRelationships, traversePath, getImpactChain,
 const { ensureBridgeEdges, linkIntentToFile, linkDecisionToSymbol, getBridgesFromEntity } = require('../graph-db/bridge');
 const { validateGraph } = require('../graph-db/knowledge/validate');
 const { getHealthReport } = require('../graph-db/knowledge/monitor');
+const { seedGovernanceEntities } = require('../graph-db/transformers/seed-governance');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -259,13 +260,14 @@ async function runIngest(options, cwd) {
 
 function printHelp() {
   console.log(`
-kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3-5.75)
+kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3-5.75 + Transformation)
 
 Usage:
   kbx knowledge-graph init      [--json]                  Init DB + KG schema (10 vertex + 14 edge types).
   kbx knowledge-graph status    [--json]                  Check connection + collection counts.
   kbx knowledge-graph ingest    [--path=<dir>] [--verbose] [--json]
                                                            Extract Intent/Goal/Decision from KB markdown → ArangoDB.
+  kbx knowledge-graph seed      [--json]                  Seed governance entities (Goals, Principles) from svfactory/.
   kbx knowledge-graph query     [--entity=TYPE:ID] [--search=QUERY] [--impact=ID] [--json]
                                                            Query entities, relationships, impact chains.
   kbx knowledge-graph validate  [--json]                  Run consistency checks (dangling edges, orphaned nodes).
@@ -590,6 +592,47 @@ async function runLink(options) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Subcommand: seed
+// Seed governance entities (Goals, Principles) from svfactory docs.
+// ---------------------------------------------------------------------------
+
+async function runSeed(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    if (!options.json) console.log(`Seeding governance entities from svfactory/...`);
+
+    const stats = await seedGovernanceEntities(db);
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, stats }));
+    } else {
+      console.log(`\nSeeding complete:`);
+      console.log(`  Principles created: ${stats.principles_created}`);
+      console.log(`  Goals created:      ${stats.goals_created}`);
+      if (stats.errors > 0) console.log(`  Errors:             ${stats.errors}`);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Seed failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
 async function runKnowledgeGraph(args) {
   let options;
   try {
@@ -606,6 +649,7 @@ async function runKnowledgeGraph(args) {
   if (options.sub === 'query')    { await runQuery(options);                  return; }
   if (options.sub === 'validate') { await runValidate(options);               return; }
   if (options.sub === 'monitor')  { await runMonitor(options);                return; }
+  if (options.sub === 'seed')     { await runSeed(options);                   return; }
   if (options.sub === 'link')     { await runLink(options);                   return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);
