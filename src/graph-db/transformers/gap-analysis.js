@@ -47,7 +47,8 @@ async function analyzeIntentGoalGaps(db) {
 async function analyzeGoalDecisionGaps(db) {
   const stats = {
     goals_total: 0,
-    goals_with_decisions: 0,
+    goals_with_direct_decisions: 0,
+    goals_with_inherited_decisions: 0,
     goals_missing_decisions: [],
     gaps: 0,
   };
@@ -55,11 +56,19 @@ async function analyzeGoalDecisionGaps(db) {
   try {
     const cursor = await db.query(`
       FOR goal IN kg_goals
-        LET hasDecision = COUNT(FOR e IN kg_decides_for FILTER e._from == CONCAT('kg_goals/', goal._key) RETURN 1) > 0
+        LET directDecision = COUNT(FOR e IN kg_decides_for FILTER e._to == CONCAT('kg_goals/', goal._key) RETURN 1)
+        LET parentDecision = (
+          goal.parent_goal_id != null ?
+            COUNT(FOR e IN kg_decides_for FILTER e._to == CONCAT('kg_goals/', goal.parent_goal_id) RETURN 1)
+          : 0
+        )
+        LET hasDecision = directDecision > 0 OR parentDecision > 0
         RETURN {
           id: goal._key,
           title: goal.title,
           status: goal.status,
+          direct: directDecision > 0,
+          inherited: parentDecision > 0,
           hasDecision: hasDecision
         }
     `);
@@ -68,7 +77,8 @@ async function analyzeGoalDecisionGaps(db) {
 
     goals.forEach(goal => {
       if (goal.hasDecision) {
-        stats.goals_with_decisions++;
+        stats.goals_with_direct_decisions += goal.direct ? 1 : 0;
+        stats.goals_with_inherited_decisions += goal.inherited ? 1 : 0;
       } else {
         stats.goals_missing_decisions.push({
           id: goal.id,
@@ -160,9 +170,12 @@ async function analyzeOrphanedNodesDetail(db) {
     `);
     stats.principles_orphaned = await cursor.all();
 
-    // Get documents with no edges (all are orphaned since kg_describes doesn't exist)
+    // Get documents with no incoming or outgoing edges
     cursor = await db.query(`
       FOR doc IN kg_documents
+        LET inbound = COUNT(FOR e IN kg_describes FILTER e._to == CONCAT('kg_documents/', doc._key) RETURN 1)
+        LET outbound = COUNT(FOR e IN kg_describes FILTER e._from == CONCAT('kg_documents/', doc._key) RETURN 1)
+        FILTER inbound == 0 AND outbound == 0
         RETURN { id: doc._key, title: doc.title }
     `);
     stats.documents_orphaned = await cursor.all();
