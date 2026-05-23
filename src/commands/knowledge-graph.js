@@ -12,13 +12,19 @@ const { connect, ping, resolveConfig, ensureSchema, getCollectionStats } = requi
 const { createProvider } = require('../llm');
 const { ingestKnowledgeGraph } = require('../graph-db/knowledge/kg-ingester');
 const { getEntity, listEntities, getRelationships, traversePath, getImpactChain, searchEntities } = require('../graph-db/knowledge/query');
+const { ensureBridgeEdges, linkIntentToFile, linkDecisionToSymbol, getBridgesFromEntity } = require('../graph-db/bridge');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
 // ---------------------------------------------------------------------------
 
 function parseArgs(args) {
-  const options = { sub: null, json: false, verbose: false, path: null, entity: null, search: null, types: [], impact: null, path: null, from: null, to: null, depth: 3, list: null, limit: 100, offset: 0 };
+  const options = {
+    sub: null, json: false, verbose: false, path: null,
+    entity: null, search: null, types: [], impact: null, from: null, to: null, depth: 3,
+    list: null, limit: 100, offset: 0,
+    intentFile: null, decisionSymbol: null, getBridges: null, provenance: null,
+  };
   const rest = [];
 
   for (let i = 0; i < (args || []).length; i++) {
@@ -40,6 +46,13 @@ function parseArgs(args) {
     if (arg === '--list')           { options.list = args[++i]; continue; }
     if (arg.startsWith('--limit=')) { options.limit = parseInt(arg.slice('--limit='.length), 10); continue; }
     if (arg.startsWith('--offset=')) { options.offset = parseInt(arg.slice('--offset='.length), 10); continue; }
+    if (arg.startsWith('--intent-file=')) { options.intentFile = arg.slice('--intent-file='.length); continue; }
+    if (arg === '--intent-file')    { options.intentFile = args[++i]; continue; }
+    if (arg.startsWith('--decision-symbol=')) { options.decisionSymbol = arg.slice('--decision-symbol='.length); continue; }
+    if (arg === '--decision-symbol') { options.decisionSymbol = args[++i]; continue; }
+    if (arg.startsWith('--get-bridges=')) { options.getBridges = arg.slice('--get-bridges='.length); continue; }
+    if (arg === '--get-bridges')    { options.getBridges = args[++i]; continue; }
+    if (arg.startsWith('--provenance=')) { options.provenance = arg.slice('--provenance='.length); continue; }
     if (!arg.startsWith('--')) { rest.push(arg); continue; }
     throw new Error(`Unknown knowledge-graph option "${arg}". Run "kbx knowledge-graph help" for usage.`);
   }
@@ -244,7 +257,7 @@ async function runIngest(options, cwd) {
 
 function printHelp() {
   console.log(`
-kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3-5)
+kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3-5.5)
 
 Usage:
   kbx knowledge-graph init      [--json]                  Init DB + KG schema (10 vertex + 14 edge types).
@@ -253,6 +266,8 @@ Usage:
                                                            Extract Intent/Goal/Decision from KB markdown → ArangoDB.
   kbx knowledge-graph query     [--entity=TYPE:ID] [--search=QUERY] [--impact=ID] [--json]
                                                            Query entities, relationships, impact chains.
+  kbx knowledge-graph link      [--intent-file ID:FILE] [--decision-symbol ID:SYM] [--get-bridges ID] [--json]
+                                                           Create semantic bridges Code Graph ↔ Knowledge Graph.
   kbx knowledge-graph help                                Show this message.
 
 Query options:
@@ -265,7 +280,12 @@ Query options:
   --list=TYPE                   List entities of given type
   --limit=N                     Pagination limit (default: 100)
   --offset=N                    Pagination offset (default: 0)
-  --json                        JSON output
+
+Link options (Phase 5.5 — Bridge Layer):
+  --intent-file ID:FILE         Link Intent → Code File
+  --decision-symbol ID:SYM      Link Decision → Code Symbol
+  --get-bridges ID              Get all bridges from/to entity
+  --provenance STR              Annotation: 'manual', 'cli', 'lim' (default: cli)
 
 Entities (vertices):
   Intent, Goal, Milestone, Decision, Principle, Risk, Lesson, Version, Document, Agent
@@ -273,6 +293,10 @@ Entities (vertices):
 Relationships (edges):
   implements, has_milestone, has_phase, follows, decides_for, threatens, releases,
   learned_from, describes, authored_by, created_by, depends_on, blocks, related_to
+
+Bridge edges:
+  intent_describes_file, decision_constrains_symbol, goal_involves_file,
+  principle_applies_to_symbol, lesson_references_commit, document_documents_file
 
 Named graph: knowledge_graph
 
@@ -282,7 +306,7 @@ Config (env vars):
   KBX_ARANGODB_USER   Username                (default: root)
   KBX_ARANGODB_PASS   Password                (default: empty)
 
-Phase 3: Schema creation. Phase 4: Extraction. Phase 5: Query API.
+Phase 3: Schema. Phase 4: Extraction. Phase 5: Query API. Phase 5.5: Bridge Layer.
   `.trim());
 }
 
@@ -350,6 +374,79 @@ async function runQuery(options) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Subcommand: link
+// Create semantic bridges between Code Graph and Knowledge Graph.
+// ---------------------------------------------------------------------------
+
+async function runLink(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  // Ensure bridge collections exist
+  try {
+    const bridgeResult = await ensureBridgeEdges(db);
+    if (!options.json && (bridgeResult.created.length > 0 || bridgeResult.existing.length > 0)) {
+      console.log(`Bridge edges ready: ${bridgeResult.created.length} created, ${bridgeResult.existing.length} existing`);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'ensureBridges', error: err.message }));
+    } else {
+      console.error(`Failed to ensure bridge edges: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    let result;
+
+    // Manual link creation
+    if (options.intentFile) {
+      // Link Intent → File: --intent-file intent-id file-path
+      const [intentId, filePath] = options.intentFile.split(':');
+      result = await linkIntentToFile(db, intentId, filePath, { provenance: options.provenance || 'cli' });
+      if (!options.json) console.log(`Linked Intent ${intentId} → File ${filePath}`);
+    } else if (options.decisionSymbol) {
+      // Link Decision → Symbol: --decision-symbol decision-id symbol-name
+      const [decisionId, symbolName] = options.decisionSymbol.split(':');
+      result = await linkDecisionToSymbol(db, decisionId, symbolName, { provenance: options.provenance || 'cli' });
+      if (!options.json) console.log(`Linked Decision ${decisionId} → Symbol ${symbolName}`);
+    } else if (options.getBridges) {
+      // Get bridges FROM entity
+      result = await getBridgesFromEntity(db, options.getBridges);
+      if (!options.json) console.log(`Bridges from ${options.getBridges}:`);
+    } else {
+      if (!options.json) console.error('No link operation specified. Use --help for options.');
+      process.exit(1);
+    }
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, result }));
+    } else if (result && !options.getBridges) {
+      console.log(`Link created: ${result._id}`);
+    } else if (options.getBridges) {
+      console.log(JSON.stringify(result, null, 2));
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Link operation failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
 async function runKnowledgeGraph(args) {
   let options;
   try {
@@ -364,6 +461,7 @@ async function runKnowledgeGraph(args) {
   if (options.sub === 'status') { await runStatus(options);                 return; }
   if (options.sub === 'ingest') { await runIngest(options, process.cwd()); return; }
   if (options.sub === 'query')  { await runQuery(options);                  return; }
+  if (options.sub === 'link')   { await runLink(options);                   return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);
   process.exit(1);
