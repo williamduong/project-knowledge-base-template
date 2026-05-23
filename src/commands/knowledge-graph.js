@@ -21,6 +21,7 @@ const { runGapAnalysis } = require('../graph-db/transformers/gap-analysis');
 const { seedDecisions } = require('../graph-db/transformers/seed-decisions');
 const { seedDocumentBridges } = require('../graph-db/transformers/seed-document-bridges');
 const { seedSemanticDocumentBridges } = require('../graph-db/transformers/seed-semantic-document-bridges');
+const { seedSyntheticDecisions } = require('../graph-db/transformers/seed-synthetic-decisions');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -844,6 +845,47 @@ async function runSeedSemanticDocumentBridgesCmd(options) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: seed-synthetic-decisions
+// Create synthetic decisions for System Goals without ADRs (Problem 1).
+// ---------------------------------------------------------------------------
+
+async function runSeedSyntheticDecisionsCmd(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    if (!options.json) console.log(`Seeding synthetic decisions for System Goals (Problem 1 solution)...`);
+
+    const stats = await seedSyntheticDecisions(db);
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, stats }));
+    } else {
+      console.log(`\nSynthetic decisions seeding complete:`);
+      console.log(`  Decisions created: ${stats.decisions_created}`);
+      console.log(`  Edges created: ${stats.edges_created}`);
+      if (stats.errors > 0) console.log(`  Errors: ${stats.errors}`);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Synthetic decisions seed failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Subcommand: seed
 // Seed governance entities (Goals, Principles) from svfactory docs.
 // ---------------------------------------------------------------------------
@@ -904,6 +946,7 @@ async function runKnowledgeGraph(args) {
   if (options.sub === 'bridge-seed')                       { await runBridgeSeed(options);                 return; }
   if (options.sub === 'gap-analysis')                      { await runGapAnalysisCmd(options);             return; }
   if (options.sub === 'seed-decisions')                    { await runSeedDecisions(options);              return; }
+  if (options.sub === 'seed-synthetic-decisions')          { await runSeedSyntheticDecisionsCmd(options);  return; }
   if (options.sub === 'seed-document-bridges')             { await runSeedDocumentBridgesCmd(options);     return; }
   if (options.sub === 'seed-semantic-document-bridges')    { await runSeedSemanticDocumentBridgesCmd(options); return; }
   if (options.sub === 'link')                              { await runLink(options);                       return; }
