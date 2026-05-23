@@ -22,6 +22,7 @@ const { seedDecisions } = require('../graph-db/transformers/seed-decisions');
 const { seedDocumentBridges } = require('../graph-db/transformers/seed-document-bridges');
 const { seedSemanticDocumentBridges } = require('../graph-db/transformers/seed-semantic-document-bridges');
 const { seedSyntheticDecisions } = require('../graph-db/transformers/seed-synthetic-decisions');
+const { seedLessons } = require('../graph-db/transformers/seed-lessons');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -886,6 +887,47 @@ async function runSeedSyntheticDecisionsCmd(options) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: seed-lessons
+// Capture lessons learned from Phase 4 work (Phase 4.4).
+// ---------------------------------------------------------------------------
+
+async function runSeedLessonsCmd(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    if (!options.json) console.log(`Seeding lessons from Phase 4 transformation (Phase 4.4)...`);
+
+    const stats = await seedLessons(db);
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, stats }));
+    } else {
+      console.log(`\nLessons seeding complete:`);
+      console.log(`  Lessons created: ${stats.lessons_created}`);
+      console.log(`  Edges created: ${stats.edges_created}`);
+      if (stats.errors > 0) console.log(`  Errors: ${stats.errors}`);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Lessons seed failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Subcommand: seed
 // Seed governance entities (Goals, Principles) from svfactory docs.
 // ---------------------------------------------------------------------------
@@ -949,6 +991,7 @@ async function runKnowledgeGraph(args) {
   if (options.sub === 'seed-synthetic-decisions')          { await runSeedSyntheticDecisionsCmd(options);  return; }
   if (options.sub === 'seed-document-bridges')             { await runSeedDocumentBridgesCmd(options);     return; }
   if (options.sub === 'seed-semantic-document-bridges')    { await runSeedSemanticDocumentBridgesCmd(options); return; }
+  if (options.sub === 'seed-lessons')                      { await runSeedLessonsCmd(options);             return; }
   if (options.sub === 'link')                              { await runLink(options);                       return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);
