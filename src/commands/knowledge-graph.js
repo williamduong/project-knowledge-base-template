@@ -19,6 +19,7 @@ const { seedGovernanceEntities } = require('../graph-db/transformers/seed-govern
 const { seedBridges } = require('../graph-db/transformers/seed-bridges');
 const { runGapAnalysis } = require('../graph-db/transformers/gap-analysis');
 const { seedDecisions } = require('../graph-db/transformers/seed-decisions');
+const { seedDocumentBridges } = require('../graph-db/transformers/seed-document-bridges');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -747,6 +748,56 @@ async function runSeedDecisions(options) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: seed-document-bridges
+// Create Intent → Document edges by matching file references (Phase 4.2).
+// ---------------------------------------------------------------------------
+
+async function runSeedDocumentBridgesCmd(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    if (!options.json) console.log(`Seeding document bridges from intent file references (Phase 4.2)...`);
+
+    const stats = await seedDocumentBridges(db);
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, stats }));
+    } else {
+      console.log(`\nDocument bridges seeding complete:`);
+      console.log(`  Intents processed: ${stats.intents_processed}`);
+      console.log(`  Files referenced: ${stats.files_referenced}`);
+      console.log(`  Bridges created: ${stats.bridges_created}`);
+      if (stats.unmatched_files.length > 0) {
+        console.log(`  Unmatched files: ${stats.unmatched_files.length}`);
+        if (stats.unmatched_files.length <= 10) {
+          stats.unmatched_files.forEach(u => {
+            console.log(`    - ${u.intent_id}: ${u.file_path}`);
+          });
+        }
+      }
+      if (stats.errors > 0) console.log(`  Errors: ${stats.errors}`);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Document bridges seed failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Subcommand: seed
 // Seed governance entities (Goals, Principles) from svfactory docs.
 // ---------------------------------------------------------------------------
@@ -796,18 +847,19 @@ async function runKnowledgeGraph(args) {
     process.exit(1);
   }
 
-  if (options.sub === 'help')           { printHelp();                              return; }
-  if (options.sub === 'init')           { await runInit(options);                   return; }
-  if (options.sub === 'status')         { await runStatus(options);                 return; }
-  if (options.sub === 'ingest')         { await runIngest(options, process.cwd()); return; }
-  if (options.sub === 'query')          { await runQuery(options);                  return; }
-  if (options.sub === 'validate')       { await runValidate(options);               return; }
-  if (options.sub === 'monitor')        { await runMonitor(options);                return; }
-  if (options.sub === 'seed')           { await runSeed(options);                   return; }
-  if (options.sub === 'bridge-seed')    { await runBridgeSeed(options);             return; }
-  if (options.sub === 'gap-analysis')   { await runGapAnalysisCmd(options);         return; }
-  if (options.sub === 'seed-decisions') { await runSeedDecisions(options);          return; }
-  if (options.sub === 'link')           { await runLink(options);                   return; }
+  if (options.sub === 'help')                    { printHelp();                              return; }
+  if (options.sub === 'init')                    { await runInit(options);                   return; }
+  if (options.sub === 'status')                  { await runStatus(options);                 return; }
+  if (options.sub === 'ingest')                  { await runIngest(options, process.cwd()); return; }
+  if (options.sub === 'query')                   { await runQuery(options);                  return; }
+  if (options.sub === 'validate')                { await runValidate(options);               return; }
+  if (options.sub === 'monitor')                 { await runMonitor(options);                return; }
+  if (options.sub === 'seed')                    { await runSeed(options);                   return; }
+  if (options.sub === 'bridge-seed')             { await runBridgeSeed(options);             return; }
+  if (options.sub === 'gap-analysis')            { await runGapAnalysisCmd(options);         return; }
+  if (options.sub === 'seed-decisions')          { await runSeedDecisions(options);          return; }
+  if (options.sub === 'seed-document-bridges')   { await runSeedDocumentBridgesCmd(options); return; }
+  if (options.sub === 'link')                    { await runLink(options);                   return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);
   process.exit(1);
