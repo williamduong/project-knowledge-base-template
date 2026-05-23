@@ -7,19 +7,25 @@
 // Phase 3: schema creation only. Phase 4+ adds ingest/extraction.
 // ---------------------------------------------------------------------------
 
+const path = require('path');
 const { connect, ping, resolveConfig, ensureSchema, getCollectionStats } = require('../graph-db/knowledge');
+const { createProvider } = require('../llm');
+const { ingestKnowledgeGraph } = require('../graph-db/knowledge/kg-ingester');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
 // ---------------------------------------------------------------------------
 
 function parseArgs(args) {
-  const options = { sub: null, json: false };
+  const options = { sub: null, json: false, verbose: false, path: null };
   const rest = [];
 
   for (let i = 0; i < (args || []).length; i++) {
     const arg = args[i];
-    if (arg === '--json') { options.json = true; continue; }
+    if (arg === '--json')      { options.json = true; continue; }
+    if (arg === '--verbose')   { options.verbose = true; continue; }
+    if (arg.startsWith('--path=')) { options.path = arg.slice('--path='.length); continue; }
+    if (arg === '--path' || arg === '-p') { options.path = args[++i]; continue; }
     if (!arg.startsWith('--')) { rest.push(arg); continue; }
     throw new Error(`Unknown knowledge-graph option "${arg}". Run "kbx knowledge-graph help" for usage.`);
   }
@@ -130,17 +136,108 @@ async function runStatus(options) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: ingest
+// Extracts Intent/Goal/Decision/etc. from KB markdown using LLM.
+// ---------------------------------------------------------------------------
+
+async function runIngest(options, cwd) {
+  const kbRoot = options.path ? path.resolve(cwd, options.path) : path.join(cwd, 'knowledge-base');
+
+  if (!options.json) {
+    console.log(`Ingesting KB documents from: ${kbRoot}`);
+    console.log('Resolving LLM provider …');
+  }
+
+  let llmConfig;
+  try {
+    const { resolveConfig: resolveLlmConfig } = require('../llm');
+    llmConfig = resolveLlmConfig();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'llm_config', error: err.message }));
+    } else {
+      console.error(`LLM config error: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  let llmProvider;
+  try {
+    llmProvider = createProvider(llmConfig);
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'llm_provider', error: err.message }));
+    } else {
+      console.error(`LLM provider error: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  const onProgress = options.verbose && !options.json
+    ? ({ step, files, extracted, error }) => {
+        if (step === 'scan')  console.log(`  Scanning: ${files} files found`);
+        if (step === 'extract') console.log(`  Extracting: ${files} files scanned, ${extracted} entities extracted`);
+        if (step === 'error')  console.error(`  Error: ${error}`);
+      }
+    : null;
+
+  let result;
+  try {
+    result = await ingestKnowledgeGraph({
+      db,
+      kbRoot,
+      workspaceRoot: cwd,
+      llmProvider,
+      onProgress,
+    });
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'ingest', error: err.message }));
+    } else {
+      console.error(`Ingest failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  const { stats } = result;
+  if (options.json) {
+    console.log(JSON.stringify({ ok: true, kbRoot, ...stats }));
+    return;
+  }
+
+  console.log(`\nKB ingest complete:`);
+  console.log(`  files_scanned: ${stats.files_scanned}`);
+  console.log(`  extracted:     ${stats.extracted}`);
+  console.log(`  intents:       ${stats.intents}`);
+  if (stats.errors > 0) console.log(`  errors:        ${stats.errors}`);
+}
+
+// ---------------------------------------------------------------------------
 // Help
 // ---------------------------------------------------------------------------
 
 function printHelp() {
   console.log(`
-kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3)
+kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3-4)
 
 Usage:
-  kbx knowledge-graph init      [--json]    Init DB + KG schema (10 vertex + 14 edge types).
-  kbx knowledge-graph status    [--json]    Check connection + collection counts.
-  kbx knowledge-graph help                  Show this message.
+  kbx knowledge-graph init      [--json]               Init DB + KG schema (10 vertex + 14 edge types).
+  kbx knowledge-graph status    [--json]               Check connection + collection counts.
+  kbx knowledge-graph ingest    [--path=<dir>] [--verbose] [--json]
+                                                        Extract Intent/Goal/Decision from KB markdown → ArangoDB.
+  kbx knowledge-graph help                             Show this message.
 
 Entities (vertices):
   Intent, Goal, Milestone, Decision, Principle, Risk, Lesson, Version, Document, Agent
@@ -174,9 +271,10 @@ async function runKnowledgeGraph(args) {
     process.exit(1);
   }
 
-  if (options.sub === 'help')   { printHelp();              return; }
-  if (options.sub === 'init')   { await runInit(options);   return; }
-  if (options.sub === 'status') { await runStatus(options); return; }
+  if (options.sub === 'help')   { printHelp();                              return; }
+  if (options.sub === 'init')   { await runInit(options);                   return; }
+  if (options.sub === 'status') { await runStatus(options);                 return; }
+  if (options.sub === 'ingest') { await runIngest(options, process.cwd()); return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);
   process.exit(1);
