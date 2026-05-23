@@ -16,6 +16,7 @@ const { ensureBridgeEdges, linkIntentToFile, linkDecisionToSymbol, getBridgesFro
 const { validateGraph } = require('../graph-db/knowledge/validate');
 const { getHealthReport } = require('../graph-db/knowledge/monitor');
 const { seedGovernanceEntities } = require('../graph-db/transformers/seed-governance');
+const { seedBridges } = require('../graph-db/transformers/seed-bridges');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -593,6 +594,48 @@ async function runLink(options) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: bridge-seed
+// Seed semantic bridges between entities (Intent → Goal, Goal hierarchy).
+// ---------------------------------------------------------------------------
+
+async function runBridgeSeed(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    if (!options.json) console.log(`Seeding semantic bridges (Phase 2)...`);
+
+    const { results, total } = await seedBridges(db);
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, results, total }));
+    } else {
+      console.log(`\nBridge seeding complete:`);
+      console.log(`  Phase 2.1 (Intent → Goal): ${results.phase_2_1.edges_created} edges`);
+      console.log(`  Phase 2.2 (Goal hierarchy): ${results.phase_2_2.edges_created} edges`);
+      console.log(`  Total: ${total.edges_created} edges created`);
+      if (total.errors > 0) console.log(`  Errors: ${total.errors}`);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Bridge seed failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Subcommand: seed
 // Seed governance entities (Goals, Principles) from svfactory docs.
 // ---------------------------------------------------------------------------
@@ -642,15 +685,16 @@ async function runKnowledgeGraph(args) {
     process.exit(1);
   }
 
-  if (options.sub === 'help')     { printHelp();                              return; }
-  if (options.sub === 'init')     { await runInit(options);                   return; }
-  if (options.sub === 'status')   { await runStatus(options);                 return; }
-  if (options.sub === 'ingest')   { await runIngest(options, process.cwd()); return; }
-  if (options.sub === 'query')    { await runQuery(options);                  return; }
-  if (options.sub === 'validate') { await runValidate(options);               return; }
-  if (options.sub === 'monitor')  { await runMonitor(options);                return; }
-  if (options.sub === 'seed')     { await runSeed(options);                   return; }
-  if (options.sub === 'link')     { await runLink(options);                   return; }
+  if (options.sub === 'help')         { printHelp();                              return; }
+  if (options.sub === 'init')         { await runInit(options);                   return; }
+  if (options.sub === 'status')       { await runStatus(options);                 return; }
+  if (options.sub === 'ingest')       { await runIngest(options, process.cwd()); return; }
+  if (options.sub === 'query')        { await runQuery(options);                  return; }
+  if (options.sub === 'validate')     { await runValidate(options);               return; }
+  if (options.sub === 'monitor')      { await runMonitor(options);                return; }
+  if (options.sub === 'seed')         { await runSeed(options);                   return; }
+  if (options.sub === 'bridge-seed')  { await runBridgeSeed(options);             return; }
+  if (options.sub === 'link')         { await runLink(options);                   return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);
   process.exit(1);
