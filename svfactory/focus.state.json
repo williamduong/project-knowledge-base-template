@@ -2,22 +2,22 @@
   "schema_version": "1.0.0",
   "source_type": "intent-cli",
   "maintainer_focus": {
-    "version_target": "v2-7",
+    "version_target": "v2-10",
     "current_phase": "Maintainer sync checkpoint — branch intent/v2-9-uiv2-shadcn-admin-shell-adoption",
-    "current_branch": "intent/v2-9-uiv2-shadcn-admin-shell-adoption"
+    "current_branch": "intent/v2-10-code-graph"
   },
   "current_focus": {
-    "intent_id": "v2-9-uiv2-shadcn-admin-shell-adoption",
+    "intent_id": "v2-10-code-graph",
     "intent_state": "active",
-    "source": "api",
-    "branch_name": "intent/v2-9-uiv2-shadcn-admin-shell-adoption",
-    "label": "API writer path verified"
+    "source": "intent-cli",
+    "branch_name": "intent/v2-10-code-graph",
+    "label": "Intent created (feature)"
   },
   "checkpoint": {
-    "intent_id": "v2-7-nl-rules-to-cli-logic",
-    "event": "intent-archived",
-    "timestamp": "2026-05-19T16:14:15.206Z",
-    "branch": "intent/v2-9-uiv2-shadcn-admin-shell-adoption"
+    "intent_id": "v2-10-code-graph",
+    "event": "intent-created",
+    "timestamp": "2026-05-23T05:56:28.359Z",
+    "branch": "intent/v2-10-code-graph"
   },
   "source_files": {
     "sqlite": "D:\\Source\\template\\project-knowledge-base-template\\svfactory\\focus-state.db",
