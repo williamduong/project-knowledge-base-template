@@ -29,6 +29,7 @@ const { runRelease } = require('./commands/release');
 const { runIntent } = require('./commands/intent');
 const { runChaos } = require('./commands/chaos');
 const { runGraph } = require('./commands/graph');
+const { runCodeGraph } = require('./commands/code-graph');
 const { runExtract } = require('./commands/extract');
 const { runIngest } = require('./commands/ingest');
 const { runNext } = require('./commands/next');
@@ -139,6 +140,11 @@ async function run(argv) {
 
   if (command === 'graph') {
     runGraph(rest, { workspaceRoot: process.cwd() });
+    return;
+  }
+
+  if (command === 'code-graph') {
+    await runCodeGraph(rest);
     return;
   }
 
