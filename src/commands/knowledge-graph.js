@@ -13,6 +13,8 @@ const { createProvider } = require('../llm');
 const { ingestKnowledgeGraph } = require('../graph-db/knowledge/kg-ingester');
 const { getEntity, listEntities, getRelationships, traversePath, getImpactChain, searchEntities } = require('../graph-db/knowledge/query');
 const { ensureBridgeEdges, linkIntentToFile, linkDecisionToSymbol, getBridgesFromEntity } = require('../graph-db/bridge');
+const { validateGraph } = require('../graph-db/knowledge/validate');
+const { getHealthReport } = require('../graph-db/knowledge/monitor');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -257,7 +259,7 @@ async function runIngest(options, cwd) {
 
 function printHelp() {
   console.log(`
-kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3-5.5)
+kbx knowledge-graph — ArangoDB Knowledge Graph management (Phase 3-5.75)
 
 Usage:
   kbx knowledge-graph init      [--json]                  Init DB + KG schema (10 vertex + 14 edge types).
@@ -266,6 +268,8 @@ Usage:
                                                            Extract Intent/Goal/Decision from KB markdown → ArangoDB.
   kbx knowledge-graph query     [--entity=TYPE:ID] [--search=QUERY] [--impact=ID] [--json]
                                                            Query entities, relationships, impact chains.
+  kbx knowledge-graph validate  [--json]                  Run consistency checks (dangling edges, orphaned nodes).
+  kbx knowledge-graph monitor   [--json]                  Health report + analytics.
   kbx knowledge-graph link      [--intent-file ID:FILE] [--decision-symbol ID:SYM] [--get-bridges ID] [--json]
                                                            Create semantic bridges Code Graph ↔ Knowledge Graph.
   kbx knowledge-graph help                                Show this message.
@@ -375,6 +379,145 @@ async function runQuery(options) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: validate
+// Run consistency checks on the knowledge graph.
+// ---------------------------------------------------------------------------
+
+async function runValidate(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    const results = await validateGraph(db);
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, results }));
+      return;
+    }
+
+    console.log(`\nKnowledge Graph Validation Report`);
+    console.log(`Timestamp: ${results.timestamp}`);
+    console.log(`\nSummary:`);
+    console.log(`  Total issues:  ${results.summary.total_issues}`);
+    console.log(`  Critical:      ${results.summary.critical}`);
+    console.log(`  High:          ${results.summary.high}`);
+    console.log(`  Medium:        ${results.summary.medium}`);
+    console.log(`  Passed checks: ${results.summary.passed}`);
+
+    if (results.checks.length > 0) {
+      console.log(`\nIssues found:`);
+      results.checks.forEach(issue => {
+        console.log(`\n  [${issue.severity.toUpperCase()}] ${issue.check}`);
+        console.log(`    Type: ${issue.type || 'N/A'}`);
+        console.log(`    Count: ${issue.count}`);
+        if (issue.examples && issue.examples.length > 0) {
+          console.log(`    Examples:`);
+          issue.examples.forEach(ex => {
+            console.log(`      - ${ex.node_id || ex.edge_id || 'N/A'}`);
+          });
+        }
+      });
+    } else {
+      console.log(`\n✓ Graph is consistent! All checks passed.`);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Validation failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Subcommand: monitor
+// Get health report and analytics on the knowledge graph.
+// ---------------------------------------------------------------------------
+
+async function runMonitor(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    const report = await getHealthReport(db);
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, report }));
+      return;
+    }
+
+    console.log(`\nKnowledge Graph Health Report`);
+    console.log(`Status: ${report.status === 'healthy' ? '✓ Healthy' : '⚠ Degraded'}`);
+    console.log(`Timestamp: ${report.timestamp}`);
+
+    console.log(`\nStatistics:`);
+    console.log(`  Total entities: ${report.stats.entities.total}`);
+    console.log(`  Total edges:    ${report.stats.edges.total}`);
+    console.log(`  Graph density:  ${report.stats.density}`);
+
+    console.log(`\nEntity breakdown:`);
+    Object.entries(report.stats.entities.byType).forEach(([type, count]) => {
+      if (count > 0) console.log(`  ${type.padEnd(12)}: ${count}`);
+    });
+
+    if (report.orphaned.count > 0) {
+      console.log(`\n⚠ Orphaned nodes: ${report.orphaned.count}`);
+      report.orphaned.examples.forEach(node => {
+        console.log(`  - ${node.kind}: ${node.title}`);
+      });
+    }
+
+    if (report.dangling.count > 0) {
+      console.log(`\n⚠ Dangling edges: ${report.dangling.count}`);
+      report.dangling.examples.forEach(edge => {
+        console.log(`  - ${edge.from} → ${edge.to}`);
+      });
+    }
+
+    if (report.lastModified.length > 0) {
+      console.log(`\nRecent activity:`);
+      report.lastModified.forEach(item => {
+        const date = new Date(item.updated_at).toLocaleString();
+        console.log(`  - ${item.title.substring(0, 40).padEnd(40)} (${date})`);
+      });
+    }
+
+    if (report.hubs.length > 0) {
+      console.log(`\nMost connected nodes:`);
+      report.hubs.forEach(hub => {
+        console.log(`  - ${hub.title.substring(0, 35).padEnd(35)} (${hub.edge_count} edges)`);
+      });
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Monitor failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Subcommand: link
 // Create semantic bridges between Code Graph and Knowledge Graph.
 // ---------------------------------------------------------------------------
@@ -456,12 +599,14 @@ async function runKnowledgeGraph(args) {
     process.exit(1);
   }
 
-  if (options.sub === 'help')   { printHelp();                              return; }
-  if (options.sub === 'init')   { await runInit(options);                   return; }
-  if (options.sub === 'status') { await runStatus(options);                 return; }
-  if (options.sub === 'ingest') { await runIngest(options, process.cwd()); return; }
-  if (options.sub === 'query')  { await runQuery(options);                  return; }
-  if (options.sub === 'link')   { await runLink(options);                   return; }
+  if (options.sub === 'help')     { printHelp();                              return; }
+  if (options.sub === 'init')     { await runInit(options);                   return; }
+  if (options.sub === 'status')   { await runStatus(options);                 return; }
+  if (options.sub === 'ingest')   { await runIngest(options, process.cwd()); return; }
+  if (options.sub === 'query')    { await runQuery(options);                  return; }
+  if (options.sub === 'validate') { await runValidate(options);               return; }
+  if (options.sub === 'monitor')  { await runMonitor(options);                return; }
+  if (options.sub === 'link')     { await runLink(options);                   return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);
   process.exit(1);
