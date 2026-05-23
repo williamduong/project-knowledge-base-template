@@ -75,3 +75,7 @@ svfactory/*.db-wal
 # kb orchestrator reports (legacy root outputs)
 kb-orch-report-*.json
 project-knowledge-base-template.code-workspace
+
+# Local env — never commit real keys
+.env
+.env.local

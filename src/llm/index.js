@@ -20,9 +20,11 @@ const { register, createProvider, listProviders, hasProvider } = require('./regi
 // Register built-in adapters
 register('anthropic',  require('./adapters/anthropic').createAdapter);
 register('openai',     require('./adapters/openai').createAdapter);
-register('azure',      require('./adapters/openai').createAdapter); // same adapter, Azure config path
-register('openrouter', require('./adapters/openai').createAdapter); // OpenAI-compatible
+register('azure',      require('./adapters/openai').createAdapter);   // same adapter, Azure config path
+register('openrouter', require('./adapters/openai').createAdapter);   // OpenAI-compatible
 register('ollama',     require('./adapters/ollama').createAdapter);
+register('gemini',     require('./adapters/gemini').createAdapter);
+register('deepseek',   require('./adapters/deepseek').createAdapter); // OpenAI-compatible preset
 
 module.exports = {
   // Core

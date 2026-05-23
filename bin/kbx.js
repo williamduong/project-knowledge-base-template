@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+// Load .env before anything else — silently ignored if file not present
+require('dotenv').config();
+
 const { run } = require('../src/cli');
 
 run(process.argv.slice(2)).catch((error) => {
