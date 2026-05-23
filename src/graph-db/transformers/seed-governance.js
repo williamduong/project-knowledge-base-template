@@ -69,7 +69,8 @@ function extractGoals(goalsPath) {
 
   if (content.goals && Array.isArray(content.goals)) {
     content.goals.forEach(goal => {
-      if (goal.entity_level === 'milestone') {
+      // Extract both system-level and milestone goals (hierarchy requires both)
+      if (goal.entity_level === 'system' || goal.entity_level === 'milestone') {
         goals.push({
           id: goal.id,
           title: goal.title,

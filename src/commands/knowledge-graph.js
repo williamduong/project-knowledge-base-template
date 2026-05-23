@@ -17,6 +17,7 @@ const { validateGraph } = require('../graph-db/knowledge/validate');
 const { getHealthReport } = require('../graph-db/knowledge/monitor');
 const { seedGovernanceEntities } = require('../graph-db/transformers/seed-governance');
 const { seedBridges } = require('../graph-db/transformers/seed-bridges');
+const { runGapAnalysis } = require('../graph-db/transformers/gap-analysis');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -636,6 +637,74 @@ async function runBridgeSeed(options) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: gap-analysis
+// Identify missing relationships and entities needed for full semantic graph.
+// ---------------------------------------------------------------------------
+
+async function runGapAnalysisCmd(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    if (!options.json) console.log(`Analyzing graph gaps (Phase 3)...`);
+
+    const { results, summary } = await runGapAnalysis(db);
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, results, summary }));
+    } else {
+      console.log(`\nGap Analysis Report:`);
+      console.log(`\n  Intent → Goal relationships:`);
+      console.log(`    Total intents: ${results.intent_goal_gaps.intents_total}`);
+      console.log(`    With goals: ${results.intent_goal_gaps.intents_with_goals}`);
+      console.log(`    Missing goals: ${results.intent_goal_gaps.gaps}`);
+      if (results.intent_goal_gaps.intents_missing_goals.length > 0) {
+        console.log(`    Details:`);
+        results.intent_goal_gaps.intents_missing_goals.forEach(i => {
+          console.log(`      - ${i.id}: ${i.title}`);
+        });
+      }
+
+      console.log(`\n  Goal → Decision relationships:`);
+      console.log(`    Total goals: ${results.goal_decision_gaps.goals_total}`);
+      console.log(`    With decisions: ${results.goal_decision_gaps.goals_with_decisions}`);
+      console.log(`    Missing decisions: ${results.goal_decision_gaps.gaps}`);
+
+      console.log(`\n  Principle → Code relationships:`);
+      console.log(`    Total principles: ${results.principle_code_gaps.principles_total}`);
+      console.log(`    Linked to code: ${results.principle_code_gaps.principles_linked_to_code}`);
+      console.log(`    Unlinked: ${results.principle_code_gaps.gaps}`);
+
+      console.log(`\n  Orphaned nodes (no edges):`);
+      console.log(`    Intents: ${results.orphaned_detail.intents_orphaned.length}`);
+      console.log(`    Goals: ${results.orphaned_detail.goals_orphaned.length}`);
+      console.log(`    Principles: ${results.orphaned_detail.principles_orphaned.length}`);
+      console.log(`    Documents: ${results.orphaned_detail.documents_orphaned.length}`);
+      console.log(`    Total: ${results.orphaned_detail.total_orphaned}`);
+
+      console.log(`\n  Summary:`);
+      console.log(`    Total gaps: ${summary.total_gaps}`);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Gap analysis failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Subcommand: seed
 // Seed governance entities (Goals, Principles) from svfactory docs.
 // ---------------------------------------------------------------------------
@@ -694,6 +763,7 @@ async function runKnowledgeGraph(args) {
   if (options.sub === 'monitor')      { await runMonitor(options);                return; }
   if (options.sub === 'seed')         { await runSeed(options);                   return; }
   if (options.sub === 'bridge-seed')  { await runBridgeSeed(options);             return; }
+  if (options.sub === 'gap-analysis') { await runGapAnalysisCmd(options);         return; }
   if (options.sub === 'link')         { await runLink(options);                   return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);
