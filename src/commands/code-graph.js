@@ -6,22 +6,26 @@
 // ---------------------------------------------------------------------------
 
 const path = require('path');
-const { connect, ping, resolveConfig, ensureSchema, getCollectionStats, ingestDirectory } = require('../graph-db/code');
+const { connect, ping, resolveConfig, ensureSchema, getCollectionStats, ingestDirectory, ingestGit } = require('../graph-db/code');
 
 // ---------------------------------------------------------------------------
 // Arg parsing
 // ---------------------------------------------------------------------------
 
 function parseArgs(args) {
-  const options = { sub: null, json: false, path: null, verbose: false };
+  const options = { sub: null, json: false, path: null, verbose: false, limit: null, since: null, branch: null };
   const rest = [];
 
   for (let i = 0; i < (args || []).length; i++) {
     const arg = args[i];
     if (arg === '--json')    { options.json = true; continue; }
     if (arg === '--verbose') { options.verbose = true; continue; }
-    if (arg.startsWith('--path=')) { options.path = arg.slice('--path='.length); continue; }
-    if (arg === '--path' || arg === '-p') { options.path = args[++i]; continue; }
+    if (arg.startsWith('--path='))   { options.path   = arg.slice('--path='.length);   continue; }
+    if (arg.startsWith('--limit='))  { options.limit  = parseInt(arg.slice('--limit='.length), 10); continue; }
+    if (arg.startsWith('--since='))  { options.since  = arg.slice('--since='.length);  continue; }
+    if (arg.startsWith('--branch=')) { options.branch = arg.slice('--branch='.length); continue; }
+    if (arg === '--path'   || arg === '-p') { options.path   = args[++i]; continue; }
+    if (arg === '--limit'  || arg === '-n') { options.limit  = parseInt(args[++i], 10); continue; }
     if (!arg.startsWith('--')) { rest.push(arg); continue; }
     throw new Error(`Unknown code-graph option "${arg}". Run "kbx code-graph help" for usage.`);
   }
@@ -190,6 +194,71 @@ async function runIngest(options, cwd) {
 }
 
 // ---------------------------------------------------------------------------
+// Subcommand: ingest-git
+// ---------------------------------------------------------------------------
+
+async function runIngestGit(options, cwd) {
+  const repoRoot = options.path ? path.resolve(cwd, options.path) : cwd;
+
+  if (!options.json) {
+    const parts = ['Ingesting git log from:', repoRoot];
+    if (options.limit)  parts.push(`(limit: ${options.limit})`);
+    if (options.since)  parts.push(`(since: ${options.since})`);
+    if (options.branch) parts.push(`(branch: ${options.branch})`);
+    console.log(parts.join(' '));
+    console.log('Connecting to ArangoDB …');
+  }
+
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  const gitOptions = {
+    limit:  options.limit  || null,
+    since:  options.since  || null,
+    branch: options.branch || null,
+    onProgress: ({ step, commits }) => {
+      if (!options.json && options.verbose) console.log(`  git: ${step} — ${commits} commits`);
+    },
+  };
+
+  let result;
+  try {
+    result = await ingestGit({ db, repoRoot, options: gitOptions });
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'ingest-git', error: err.message }));
+    } else {
+      console.error(`Git ingest failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  const { stats } = result;
+  if (options.json) {
+    console.log(JSON.stringify({ ok: true, repoRoot, ...stats }));
+    return;
+  }
+
+  console.log('\nGit ingest complete:');
+  console.log(`  commits:      ${stats.commits}`);
+  console.log(`  hunks:        ${stats.hunks}`);
+  console.log(`  changed_in:   ${stats.changedIn}`);
+  console.log(`  contains_hunk:${stats.containsHunk}`);
+  if (stats.fileStubs > 0) {
+    console.log(`  file stubs:   ${stats.fileStubs}  (deleted/renamed files not in AST ingestion)`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Help
 // ---------------------------------------------------------------------------
 
@@ -200,7 +269,9 @@ kbx code-graph — ArangoDB Code Graph management (Phase 0 + 1)
 Usage:
   kbx code-graph init              [--json]               Init DB + schema.
   kbx code-graph status            [--json]               Check connection + collection counts.
-  kbx code-graph ingest [--path=<dir>] [--verbose] [--json]  Parse JS/TS and upsert to ArangoDB.
+  kbx code-graph ingest     [--path=<dir>] [--verbose] [--json]               Parse JS/TS files → ArangoDB.
+  kbx code-graph ingest-git [--path=<repo>] [--limit=<n>] [--since=<date>] [--branch=<ref>] [--json]
+                                                                              Parse git log → ArangoDB.
   kbx code-graph help                                     Show this message.
 
 Options for ingest:
@@ -238,7 +309,8 @@ async function runCodeGraph(args) {
 
   if (options.sub === 'init')   { await runInit(options);             return; }
   if (options.sub === 'status') { await runStatus(options);           return; }
-  if (options.sub === 'ingest') { await runIngest(options, process.cwd()); return; }
+  if (options.sub === 'ingest')     { await runIngest(options, process.cwd());    return; }
+  if (options.sub === 'ingest-git') { await runIngestGit(options, process.cwd()); return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx code-graph help" for usage.`);
   process.exit(1);

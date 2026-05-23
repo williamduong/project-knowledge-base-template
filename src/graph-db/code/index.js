@@ -7,7 +7,8 @@
 const schema      = require('./schema');
 const { connect, ping, resolveConfig } = require('./client');
 const { ensureSchema, getCollectionStats } = require('./collections');
-const { ingestDirectory } = require('./ingester');
+const { ingestDirectory }  = require('./ingester');
+const { ingestGit }        = require('./git-ingester');
 
 module.exports = {
   // Schema constants
@@ -22,6 +23,7 @@ module.exports = {
   ensureSchema,
   getCollectionStats,
 
-  // Ingester
+  // Ingesters
   ingestDirectory,
+  ingestGit,
 };
