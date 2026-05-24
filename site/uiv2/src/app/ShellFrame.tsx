@@ -20,6 +20,9 @@ import { PlaceholderPage } from './pages/PlaceholderPage'
 import { RuntimeServicesPage } from './pages/RuntimeServicesPage'
 import { PrototypePage } from './pages/PrototypePage'
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage'
+import { GoalsPage } from './pages/GoalsPage'
+import { DecisionsPage } from './pages/DecisionsPage'
+import { PrinciplesPage } from './pages/PrinciplesPage'
 import { SearchOverlay } from './SearchOverlay'
 import { productLabel, projectName, tabs } from './shell-data'
 
@@ -217,16 +220,10 @@ export function ShellFrame() {
                 />
               }
             />
-            <Route
-              path="/graph"
-              element={
-                <PlaceholderPage
-                  title="Graph"
-                  subtitle="Graph remains metrics-first in the early rebuild and should not pull the shell toward premature visualization work."
-                  next="Land graph metrics after Knowledge Base document contracts exist."
-                />
-              }
-            />
+            <Route path="/graph" element={<GoalsPage />} />
+            <Route path="/graph/goals" element={<GoalsPage />} />
+            <Route path="/graph/decisions" element={<DecisionsPage />} />
+            <Route path="/graph/principles" element={<PrinciplesPage />} />
             <Route
               path="/search"
               element={

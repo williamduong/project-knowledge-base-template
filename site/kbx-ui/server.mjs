@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { evaluatePhase2Gates } from './bridge-gates.mjs';
 import { createRuntimeServicesCron } from './runtime-services-cron.mjs';
 import { createSystemSnapshotStore } from './system-snapshot-store.mjs';
+import { createGraphApiRouter } from './api-graph.mjs';
 import {
   DEFAULT_CANDIDATE_ROOTS as KB_CANDIDATE_ROOTS,
   parseDocFromDisk as kbParseDocFromDisk,
@@ -3065,6 +3066,9 @@ export function createApp(commandRunner = executeBridgeCommand) {
 
   // Middleware
   app.use(express.json());
+
+  // Graph API routes (Phase 5.3b: on-demand generation from Knowledge Graph)
+  app.use('/api/graph', createGraphApiRouter());
 
   app.get('/', (_req, res) => {
     res.type('html').send(`<!doctype html>
