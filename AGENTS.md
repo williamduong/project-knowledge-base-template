@@ -3,6 +3,33 @@
 This repository uses a structured Knowledge Base (KB) to provide AI agents with
 architectural context, domain model, and governance rules.
 
+---
+
+## 🎯 STRATEGIC GOALS (CRITICAL — Read First)
+
+### Long-Term Vision (3-5 năm)
+
+**Xây dựng một factory có thể generate ra KBX.**
+
+KBX = Phần mềm quản lý tri thức có khả năng mở rộng, phát triển theo chỉ đạo con người, cho dữ liệu code và non-code của bất kỳ dự án đa lĩnh vực nào.
+
+### Current Phase (Factory Architecture Refactor)
+
+**Establish dual-graph + layered architecture:**
+1. **Data Layer:** GraphDB (semantic) + SQLite (utilities) if needed
+2. **Logic Layer:** Extraction, normalization, validation code
+3. **UI Layer:** Comprehensive factory management interface
+
+### Next Immediate Steps (KBX Production Pipeline)
+
+- DNA feature set (genetic code for KBX variants)
+- Production process: preparation → testing → release
+- On-demand generation from Knowledge Graph
+
+**Every task should advance this 3-5 year vision.**
+
+---
+
 ## Self-Host Agent Boundary
 
 - This repository is a self-host maintainer workspace.

@@ -5,13 +5,28 @@
 
 ---
 
+## 🎯 Strategic Direction
+
+**Long-term vision:** Build a factory that generates KBX (extensible knowledge management software).
+
+**Current work:** Establish dual-graph architecture (Code Graph + Knowledge Graph) + factory automation.
+
+See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
+
+---
+
 ## Active Version Target
 
-Workspace grounding pass — branch-local `v2.9` UI shell work on top of unresolved `v2.7`/`v2.8` maintainer drift
+**v2.10** — Code Graph foundation + Knowledge Graph canonicalization (dual-graph architecture)
+
+**Branch:** `intent/v2-10-code-graph`  
+**Status:** Phase 5 complete (Knowledge Graph canonicalization + deprecation)  
+**Next:** Phase 6 (Code Graph Phase 1 or code path migration)
 
 ## Current Phase
 
-**Version:** Maintainer sync checkpoint — branch `intent/v2-9-uiv2-shadcn-admin-shell-adoption`
+**Date:** 2026-05-24  
+**Completed:** Phase 5.3a-d (Normalize & Deprecate Old Patterns)
 
 **Chaos snapshot (2026-05-16):** 64.8 / unstable (`kbx chaos --json --scan-src src`)
 

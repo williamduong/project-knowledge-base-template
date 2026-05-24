@@ -2,6 +2,33 @@
 
 This file is the Claude Code equivalent of `AGENTS.md`. Read both together; they govern different surfaces but share the same maintainer contract.
 
+---
+
+## 🎯 STRATEGIC GOALS (CRITICAL — Read First)
+
+### Long-Term Vision
+
+**Build a factory that can generate KBX.**
+
+KBX = Extensible, human-directed knowledge management software for code and non-code data across any multi-domain project.
+
+### Current Phase (Factory Architecture Refactor)
+
+**Establish dual-graph + layered architecture:**
+1. **Data:** GraphDB (semantic governance) + SQLite (utilities)
+2. **Logic:** Extraction, normalization, validation pipelines
+3. **UI:** Comprehensive factory management interface
+
+### Next Steps (KBX Production Features)
+
+- DNA feature set (genetic code for KBX variants)
+- Production pipeline: prepare → test → release
+- On-demand generation from Knowledge Graph
+
+**This is the 3-5 year north star. Every task should move toward this vision.**
+
+---
+
 ## Self-Host Boundary
 
 - This is the **SVFactory maintainer workspace** for `@williamduong/kbx`.

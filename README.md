@@ -1,6 +1,13 @@
 # Project Knowledge Base Template
 
-This repository is a multi-project knowledge base template for documenting software systems, delivery decisions, architecture, operations, security, testing, and agent workflows.
+> **Strategic Vision:** Build a factory that can generate KBX — extensible knowledge management software for code and non-code data across any multi-domain project.
+> 
+> **Current Focus (v2.10):** Establish dual-graph architecture (Code Graph + Knowledge Graph) and factory automation framework.
+
+This repository is a multi-project knowledge base template for documenting software systems, delivery decisions, architecture, operations, security, testing, and agent workflows. It serves as the foundation for the larger KBX factory system.
+
+**Current Phase:** v2.10 (Code Graph + Knowledge Graph foundation)  
+**Status:** Phase 5 complete — Knowledge Graph is canonical for all governance data (goals, decisions, principles, lessons)
 
 It is designed for teams that want a consistent documentation baseline across different project archetypes such as web apps, API platforms, data and AI systems, internal enterprise tools, and extension or integration products.
 

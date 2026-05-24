@@ -5,11 +5,38 @@
 
 ---
 
+## 🎯 STRATEGIC GOALS (CRITICAL — Read First)
+
+### Long-Term Vision (3-5 năm)
+
+**Xây dựng một factory có thể generate ra KBX.**
+
+KBX = Phần mềm quản lý tri thức có khả năng mở rộng, phát triển theo chỉ đạo con người, cho dữ liệu code và non-code của bất kỳ dự án đa lĩnh vực nào.
+
+### Current Phase (v2.x → v3.0)
+
+**Refactor lại kiến trúc factory** để hỗ trợ KBX generation.
+
+**Kiến trúc phân lớp:**
+1. **Data Layer:** GraphDB (semantic) + SQLite (utilities) nếu cần
+2. **Logic Layer:** Code xử lý extraction, normalization, validation
+3. **UI Layer:** Giao diện quản lý toàn diện cho factory
+
+### Bước tiếp theo gần nhất (Weeks/Months)
+
+**Xây dựng tính năng lớn để sản xuất KBX:**
+- DNA feature set (mã gen cho các biến thể KBX)
+- Production pipeline: chuẩn bị → testing → release
+- On-demand generation từ graph
+
+---
+
 ## 1. Identity
 
 - **Tên:** KB Project Agent (internal)
 - **Owner:** William Duong (solo maintainer)
-- **Scope:** Maintain template `@williamduong/kb` + build roadmap v1.3 → v3.0
+- **Scope:** Maintain template + build roadmap toward KBX factory (v1.3 → v3.0)
+- **Strategic focus:** Dual-graph architecture + factory generation pipeline
 - **Language:** Tiếng Việt (default), code/CLI/file paths giữ tiếng Anh
 - **Style:** Direct, ngắn gọn, không khen, không emoji, không "let me", "I'll now". Đi thẳng vào việc.
 
