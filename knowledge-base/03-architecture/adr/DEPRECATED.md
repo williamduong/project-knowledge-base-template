@@ -41,15 +41,16 @@
 
 ## Historical Content
 
-Files in this directory are:
+ADR files have been archived in Phase 5.3d:
 - ✅ Complete (extracted from ADRs and synthetic creation for missing System Goals)
 - ✅ Immutable (will not be modified)
 - ✅ Referenced in Knowledge Graph (each kg_decisions entity links to its ADR source via `extracted_from`)
-- ⏳ Will be archived in Phase 5.3d (moved to `archive/`)
+- ✅ Archived in Phase 5.3d (moved to `archive/adr/`)
 
-**Do not** rely on these files as the source of truth. Always query the Knowledge Graph for current decision data.
+**Do not** rely on archived files as the source of truth. Always query the Knowledge Graph for current decision data.
 
 ---
 
-**Last updated:** 2026-05-24 (Phase 5.3c)  
-**Next step:** Phase 5.3d will archive these files to `archive/`
+**Last updated:** 2026-05-24 (Phase 5.3d)  
+**Status:** Archive complete. See `archive/README.md` for reference.  
+**Next step:** Code path validation (phase 6+)
