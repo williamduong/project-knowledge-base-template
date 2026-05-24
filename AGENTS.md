@@ -53,7 +53,36 @@ When working as a generic coding agent in this repository:
 - Verify before asserting. Read real files and git/CLI state instead of inferring from stale notes.
 - Do not treat local self-host validation as downstream acceptance for shipped `KBAgent` behavior.
 - For broad maintenance, upgrades, or repo-wide edits, compare current git `HEAD` with the baseline recorded in `knowledge-base/00-start-here/repository-revision-state.md` before trusting KB freshness.
-- **Graph-first for governance entities (Phase 5+):** Goals, Decisions, Principles, and Lessons must be created in the Knowledge Graph first (via CLI or direct insert). Old scattered files (`svfactory/goals.state.json`, `knowledge-base/03-architecture/adr/`, `svfactory/principles.md`) are deprecated as canonical source. See [DEPRECATED.md](DEPRECATED.md).
+
+## Knowledge Graph Agent Contract (Phase 5.3c+)
+
+**MANDATORY (Codex & all agents):** When creating Goals, Decisions, Principles, or Lessons:
+
+1. **Create in Knowledge Graph first** (primary source):
+   - Use graph API: `kbx knowledge-graph create goal/decision/principle/lesson`
+   - Or direct insert via graph seed scripts
+   - Entities are canonical in: kg_goals, kg_decisions, kg_principles, kg_lessons
+
+2. **Old scattered files are deprecated:**
+   - `svfactory/goals.state.json` → historical reference only
+   - `knowledge-base/03-architecture/adr/` → historical reference only
+   - `svfactory/principles.md` → historical reference only
+   - May optionally update for completeness, but graph is authoritative
+
+3. **Query from graph (not files):**
+   - Programmatic access: `src/graph-db/knowledge/api-*.js`
+   - UI renders from graph queries (GoalsPage, DecisionsPage, PrinciplesPage)
+   - Tests query graph collections
+
+4. **Never create scattered governance entities:**
+   - ❌ Do NOT add goals to goals.state.json
+   - ❌ Do NOT create standalone ADRs in adr/ expecting seeding
+   - ❌ Do NOT add principles only to principles.md
+   - ✅ Create in graph, optionally sync to files
+
+**Rationale:** Phase 5.3c unifies all governance under the Knowledge Graph. Files are historical records; graph is the single source of truth.
+
+See [DEPRECATED.md](DEPRECATED.md) for complete migration guide and examples.
 
 ## Navigation shortcut
 

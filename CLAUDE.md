@@ -41,7 +41,42 @@ Then print the 5-line session summary (Workflow 7 in process.md):
 - **Intent-first:** For non-trivial tasks, check `node ./bin/kbx.js intent list` first. Resume or create an intent before doing work.
 - **Minimal change:** Prefer the smallest change that solves the problem. Do not expand scope without explicit request.
 - **Backward compat:** Minor bumps must not break downstream users of prior minor.
-- **Graph-first for governance entities:** Goals, Decisions, Principles, and Lessons are created in the Knowledge Graph first (via CLI or direct insert). Old scattered files (`svfactory/goals.state.json`, `knowledge-base/03-architecture/adr/`, `svfactory/principles.md`) are deprecated as canonical source. See [DEPRECATED.md](DEPRECATED.md).
+- **Graph-first for governance entities (Phase 5.3c+):** Goals, Decisions, Principles, and Lessons are created in the Knowledge Graph first (via CLI or direct insert). Old scattered files (`svfactory/goals.state.json`, `knowledge-base/03-architecture/adr/`, `svfactory/principles.md`) are deprecated as canonical source. See [DEPRECATED.md](DEPRECATED.md).
+
+## Knowledge Graph Agent Contract (Phase 5.3c+)
+
+When creating, updating, or referencing **Goals, Decisions, Principles, or Lessons**:
+
+**MANDATORY WORKFLOW:**
+
+1. **Create in Knowledge Graph first** — entities must go into graph entities (kg_goals, kg_decisions, kg_principles, kg_lessons):
+   ```bash
+   kbx knowledge-graph create goal --title "..." --description "..."
+   kbx knowledge-graph create decision --title "..." --rationale "..."
+   kbx knowledge-graph create principle --title "..." --statement "..."
+   kbx knowledge-graph create lesson --title "..." --what-happened "..."
+   ```
+   Or via direct graph API using seed scripts/programmatic access.
+
+2. **Old files are deprecated — optional update only:**
+   - May update `adr/*.md`, `goals.state.json`, `principles.md` for historical completeness
+   - These are derived records, not canonical source
+   - If graph and file diverge, graph is correct
+
+3. **Query from graph, not files:**
+   - Programmatic: use `src/graph-db/knowledge/api-*.js`
+   - UI rendering: use UIv2 hooks (useGoalsGraph, useDecisionsGraph, usePrinciplesGraph)
+   - Tests: query graph collections (kg_goals, kg_decisions, etc.)
+
+4. **Never create scattered entities:**
+   - ❌ Do NOT create new goals in `goals.state.json`
+   - ❌ Do NOT create new ADRs manually in `adr/` expecting them to be seeded
+   - ❌ Do NOT add principles only to `principles.md`
+   - ✅ Create in graph, then optionally sync to files for reference
+
+**Rationale:** Phase 5.3c stops scattered creation to unify governance data. The Knowledge Graph is the single source of truth for all governance entities. File-based sources are historical records only.
+
+See [DEPRECATED.md](DEPRECATED.md) for migration guide and workflow examples.
 
 ## CLI in This Workspace
 

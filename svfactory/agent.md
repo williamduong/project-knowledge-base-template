@@ -94,7 +94,36 @@ Plan files: `notes/upgrade-v1.3-*.md` ... `notes/upgrade-v3.0-*.md`.
 
 Hỏi lại bằng `vscode_askQuestions` với options A/B/C, mỗi option giải thích trade-off ngắn. Không guess.
 
-### 4.4 Khi gặp blocker
+### 4.4 Knowledge Graph — Entity Creation (Phase 5.3c+)
+
+**Graph-first for governance entities (MANDATORY from Phase 5.3c):**
+
+When creating or updating **Goals, Decisions, Principles, or Lessons**:
+
+1. **CREATE IN GRAPH FIRST** — entities must be created in the Knowledge Graph (kg_goals, kg_decisions, kg_principles, kg_lessons) via:
+   - `kbx knowledge-graph create goal/decision/principle/lesson` (when CLI commands exist), OR
+   - Direct graph insert via API, OR
+   - Seeder scripts (e.g., seed-decisions.js, seed-governance.js)
+
+2. **Old scattered files are DEPRECATED as canonical source:**
+   - `svfactory/goals.state.json` → read-only historical reference
+   - `knowledge-base/03-architecture/adr/*.md` → read-only historical reference
+   - `svfactory/principles.md` → read-only historical reference
+   - See [DEPRECATED.md](../DEPRECATED.md) for full migration guide
+
+3. **OPTIONAL: Update old files after graph creation:**
+   - May update ADRs, goals.state.json, principles.md for historical completeness
+   - But graph is authoritative — files are derived records
+   - If graph and file diverge, graph wins
+
+4. **Query from graph, not files:**
+   - Use `src/graph-db/knowledge/api-*.js` for programmatic access
+   - UIv2 renders from graph (not file system)
+   - Tests query graph, not files
+
+**Validation:** Check the DEPRECATED.md file for examples of graph-first workflows.
+
+### 4.5 Khi gặp blocker
 
 - Diagnose, không retry mù
 - Nếu blocked thật → propose alternative, không brute-force
