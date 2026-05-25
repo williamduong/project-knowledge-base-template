@@ -9,11 +9,13 @@
 
 const path = require('path');
 const { connect, ping, resolveConfig, ensureSchema, getCollectionStats } = require('../graph-db/knowledge');
+const { ensureIndexes } = require('../graph-db/knowledge/initialize-indexes');
 const { createProvider } = require('../llm');
 const { ingestKnowledgeGraph } = require('../graph-db/knowledge/kg-ingester');
 const { getEntity, listEntities, getRelationships, traversePath, getImpactChain, searchEntities } = require('../graph-db/knowledge/query');
 const { ensureBridgeEdges, linkIntentToFile, linkDecisionToSymbol, getBridgesFromEntity } = require('../graph-db/bridge');
-const { validateGraph } = require('../graph-db/knowledge/validate');
+const { validateGraph, getEntityCoverage } = require('../graph-db/knowledge/validate');
+const { metricsCollector } = require('../lib/graph-query-metrics'); // Phase 6
 const { getHealthReport } = require('../graph-db/knowledge/monitor');
 const { seedGovernanceEntities } = require('../graph-db/transformers/seed-governance');
 const { seedBridges } = require('../graph-db/transformers/seed-bridges');
@@ -23,6 +25,7 @@ const { seedDocumentBridges } = require('../graph-db/transformers/seed-document-
 const { seedSemanticDocumentBridges } = require('../graph-db/transformers/seed-semantic-document-bridges');
 const { seedSyntheticDecisions } = require('../graph-db/transformers/seed-synthetic-decisions');
 const { seedLessons } = require('../graph-db/transformers/seed-lessons');
+const { seedPrincipleCodeLinks } = require('../graph-db/knowledge/transformers/seed-principle-code-links'); // Phase 6: Track A
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -108,8 +111,27 @@ async function runInit(options) {
     process.exit(1);
   }
 
+  // Phase 6: Ensure indexes (performance optimization)
+  let indexResult;
+  try {
+    indexResult = await ensureIndexes(db, { verbose: !options.json });
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'ensureIndexes', error: err.message }));
+    } else {
+      console.error(`Index init failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
   if (options.json) {
-    console.log(JSON.stringify({ ok: true, url: cfg.url, database: cfg.database, ...result }));
+    console.log(JSON.stringify({
+      ok: true,
+      url: cfg.url,
+      database: cfg.database,
+      schema: result,
+      indexes: indexResult,
+    }));
     return;
   }
 
@@ -968,6 +990,151 @@ async function runSeed(options) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Subcommand: doctor (Phase 6 Track C)
+// Health check: validation + coverage + performance metrics.
+// ---------------------------------------------------------------------------
+
+async function runDoctor(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    if (!options.json) {
+      console.log('Knowledge Graph Health Check');
+      console.log('============================\n');
+    }
+
+    // 1. Run validation
+    const validation = await validateGraph(db);
+
+    // 2. Get metrics
+    const metrics = metricsCollector.getMetrics();
+
+    // 3. Compile report
+    const report = {
+      ok: true,
+      timestamp: new Date().toISOString(),
+      status: validation.summary.total_issues === 0 ? 'healthy' : 'issues_found',
+      validation: {
+        summary: validation.summary,
+        checks: validation.checks,
+      },
+      coverage: validation.coverage,
+      performance: {
+        cache_hit_rate_percent: metrics.cacheStats.hit_rate_percent,
+        total_cache_hits: metrics.cacheStats.hits,
+        total_cache_misses: metrics.cacheStats.misses,
+        metrics_duration_ms: metrics.duration_ms,
+      },
+    };
+
+    if (options.json) {
+      console.log(JSON.stringify(report, null, 2));
+    } else {
+      // Text output
+      console.log(`Status: ${report.status === 'healthy' ? '✓ HEALTHY' : '✗ ISSUES FOUND'}`);
+      console.log(`Timestamp: ${report.timestamp}\n`);
+
+      console.log('Validation Summary:');
+      console.log(`  Total Issues: ${validation.summary.total_issues}`);
+      console.log(`  Critical: ${validation.summary.critical}, High: ${validation.summary.high}, Medium: ${validation.summary.medium}`);
+      console.log(`  Checks Passed: ${validation.summary.passed}\n`);
+
+      console.log('Entity Coverage:');
+      for (const [coll, count] of Object.entries(report.coverage.collections)) {
+        console.log(`  ${coll}: ${count}`);
+      }
+      console.log('');
+
+      console.log('Edge Coverage:');
+      for (const [coll, count] of Object.entries(report.coverage.edges)) {
+        console.log(`  ${coll}: ${count}`);
+      }
+      console.log('');
+
+      console.log('Performance Metrics:');
+      console.log(`  Cache Hit Rate: ${report.performance.cache_hit_rate_percent}%`);
+      console.log(`  Cache Hits: ${report.performance.total_cache_hits}`);
+      console.log(`  Cache Misses: ${report.performance.total_cache_misses}`);
+
+      if (validation.checks.length > 0) {
+        console.log('\nIssues Detected:');
+        validation.checks.forEach(check => {
+          console.log(`  [${check.severity.toUpperCase()}] ${check.check}`);
+          console.log(`    Count: ${check.count}`);
+          if (check.examples && check.examples.length > 0) {
+            console.log(`    Example: ${JSON.stringify(check.examples[0])}`);
+          }
+        });
+      }
+    }
+
+    // Exit code
+    if (options.strict && validation.summary.total_issues > 0) {
+      process.exit(1);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Doctor check failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Subcommand: seed-principle-code-links (Phase 6 Track A)
+// Link principles to code symbols via keyword matching.
+// ---------------------------------------------------------------------------
+
+async function runSeedPrincipleCodeLinksCmd(options) {
+  let db;
+  try {
+    db = await connect();
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, step: 'connect', error: err.message }));
+    } else {
+      console.error(`Connection failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+
+  try {
+    if (!options.json) console.log(`Seeding Principle→Code links (Phase 6 Track A)...`);
+
+    const stats = await seedPrincipleCodeLinks(db, { verbose: !options.json });
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, stats }));
+    } else {
+      console.log(`\nPrinciple→Code linking complete:`);
+      console.log(`  Principles processed: ${stats.principles_processed}`);
+      console.log(`  Links created: ${stats.links_created}`);
+      console.log(`  No matches: ${stats.no_matches}`);
+      if (stats.errors.length > 0) console.log(`  Errors: ${stats.errors.length}`);
+    }
+  } catch (err) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: false, error: err.message }));
+    } else {
+      console.error(`Principle→Code seeding failed: ${err.message}`);
+    }
+    process.exit(1);
+  }
+}
+
 async function runKnowledgeGraph(args) {
   let options;
   try {
@@ -992,6 +1159,8 @@ async function runKnowledgeGraph(args) {
   if (options.sub === 'seed-document-bridges')             { await runSeedDocumentBridgesCmd(options);     return; }
   if (options.sub === 'seed-semantic-document-bridges')    { await runSeedSemanticDocumentBridgesCmd(options); return; }
   if (options.sub === 'seed-lessons')                      { await runSeedLessonsCmd(options);             return; }
+  if (options.sub === 'seed-principle-code-links')         { await runSeedPrincipleCodeLinksCmd(options);  return; } // Phase 6
+  if (options.sub === 'doctor')                            { await runDoctor(options);                     return; } // Phase 6 Track C
   if (options.sub === 'link')                              { await runLink(options);                       return; }
 
   console.error(`Unknown subcommand "${options.sub}". Run "kbx knowledge-graph help" for usage.`);

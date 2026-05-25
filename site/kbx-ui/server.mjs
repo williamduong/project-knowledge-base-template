@@ -28,6 +28,8 @@ const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 const require = createRequire(import.meta.url);
 const { resolveIntentRecord, updateIntentFields } = require(path.join(repoRoot, 'src', 'lib', 'intent.js'));
 const { readFocusState, writeFocusState } = require(path.join(repoRoot, 'src', 'lib', 'focus-state.js'));
+const { syncValidator } = require(path.join(repoRoot, 'src', 'lib', 'goals-sync-validator.js')); // Phase 6: Track B
+const { metricsCollector } = require(path.join(repoRoot, 'src', 'lib', 'graph-query-metrics.js')); // Phase 6: Track B
 const {
   readGoalsState,
   createGoal,
@@ -3363,6 +3365,49 @@ export function createApp(commandRunner = executeBridgeCommand) {
     } catch (error) {
       const code = error && typeof error === 'object' ? error.code : null;
       res.status(code === 'GOAL_HAS_CHILDREN' ? 409 : 500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  // ============================================================================
+  // Phase 6 Track B: Goals Sync Validation Monitoring
+  // ============================================================================
+
+  // GET /api/goals/sync-status — Check sync between file and graph sources
+  app.get('/api/goals/sync-status', async (req, res) => {
+    try {
+      const fileGoals = syncValidator.loadGoalsFromFile();
+      res.status(200).json({
+        ok: true,
+        sync_status: {
+          file_count: fileGoals.length,
+          status: 'monitoring',
+          last_validation: syncValidator.lastValidation,
+          recent_discrepancies: syncValidator.discrepancies.slice(-5),
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  // GET /api/graph/cache/stats — Cache hit rate and metrics (Phase 6 Track B)
+  app.get('/api/graph/cache/stats', async (_req, res) => {
+    try {
+      const metrics = metricsCollector.getMetrics();
+      res.status(200).json({
+        ok: true,
+        cache_stats: metrics.cacheStats,
+        period_ms: metrics.duration_ms,
+        operations_tracked: Object.keys(metrics.operations).length,
+      });
+    } catch (error) {
+      res.status(500).json({
         ok: false,
         error: error instanceof Error ? error.message : String(error),
       });

@@ -10,7 +10,9 @@ const require = createRequire(import.meta.url);
 const apiGoals = require(path.join(repoRoot, 'src', 'graph-db', 'knowledge', 'api-goals.js'));
 const apiDecisions = require(path.join(repoRoot, 'src', 'graph-db', 'knowledge', 'api-decisions.js'));
 const apiPrinciples = require(path.join(repoRoot, 'src', 'graph-db', 'knowledge', 'api-principles.js'));
+const apiSymbols = require(path.join(repoRoot, 'src', 'graph-db', 'code', 'api-symbols.js')); // Phase 6: Track A
 const { getDatabase } = require(path.join(repoRoot, 'src', 'graph-db', 'db.js'));
+const { graphCache } = require(path.join(repoRoot, 'src', 'lib', 'graph-cache.js')); // Phase 6: caching layer
 
 // Lazily initialized graph database connection
 let graphDb = null;
@@ -30,10 +32,25 @@ function createGraphApiRouter() {
   // ============================================================================
 
   // GET /api/graph/goals/tree — fetch goals tree (with hierarchy)
+  // Phase 6: Cached for 5 minutes (expensive traversal)
   router.get('/goals/tree', async (req, res) => {
     try {
+      const cacheKey = 'goals:tree';
+
+      // Check cache first
+      let goals = graphCache.get(cacheKey);
+      if (goals) {
+        res.set('X-Cache', 'HIT');
+        return res.json(goals);
+      }
+
+      // Cache miss — fetch from DB
       const db = await getGraphDb();
-      const goals = await apiGoals.getGoalsTree(db);
+      goals = await apiGoals.getGoalsTree(db);
+
+      // Store in cache
+      graphCache.set(cacheKey, goals);
+      res.set('X-Cache', 'MISS');
       res.json(goals);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -81,18 +98,30 @@ function createGraphApiRouter() {
   // ============================================================================
 
   // GET /api/graph/decisions — fetch all decisions
+  // Phase 6: Cached when no status filter
   router.get('/decisions', async (req, res) => {
     try {
       const db = await getGraphDb();
       const status = req.query.status;
+      const cacheKey = status ? `decisions:status:${status}` : 'decisions:list';
 
-      let decisions;
+      // Check cache first
+      let decisions = graphCache.get(cacheKey);
+      if (decisions) {
+        res.set('X-Cache', 'HIT');
+        return res.json(decisions);
+      }
+
+      // Cache miss — fetch from DB
       if (status) {
         decisions = await apiDecisions.getDecisionsByStatus(db, status);
       } else {
         decisions = await apiDecisions.getDecisionsList(db);
       }
 
+      // Store in cache
+      graphCache.set(cacheKey, decisions);
+      res.set('X-Cache', 'MISS');
       res.json(decisions);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -157,18 +186,30 @@ function createGraphApiRouter() {
   // ============================================================================
 
   // GET /api/graph/principles — fetch all principles
+  // Phase 6: Cached when no domain filter
   router.get('/principles', async (req, res) => {
     try {
       const db = await getGraphDb();
       const domain = req.query.domain;
+      const cacheKey = domain ? `principles:domain:${domain}` : 'principles:list';
 
-      let principles;
+      // Check cache first
+      let principles = graphCache.get(cacheKey);
+      if (principles) {
+        res.set('X-Cache', 'HIT');
+        return res.json(principles);
+      }
+
+      // Cache miss — fetch from DB
       if (domain) {
         principles = await apiPrinciples.getPrinciplesByDomain(db, domain);
       } else {
         principles = await apiPrinciples.getPrinciplesList(db);
       }
 
+      // Store in cache
+      graphCache.set(cacheKey, principles);
+      res.set('X-Cache', 'MISS');
       res.json(principles);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -209,6 +250,115 @@ function createGraphApiRouter() {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
+  });
+
+  // ============================================================================
+  // SYMBOLS ENDPOINTS (Phase 6 — Track A)
+  // ============================================================================
+
+  // GET /api/graph/symbols — fetch all symbols with optional filtering
+  router.get('/symbols', async (req, res) => {
+    try {
+      const db = await getGraphDb();
+      const filters = {
+        kind: req.query.kind,
+        file: req.query.file,
+        exported: req.query.exported === 'true',
+      };
+
+      const cacheKey = `symbols:list:${JSON.stringify(filters)}`;
+      let symbols = graphCache.get(cacheKey);
+
+      if (!symbols) {
+        symbols = await apiSymbols.listSymbols(db, filters);
+        graphCache.set(cacheKey, symbols);
+        res.set('X-Cache', 'MISS');
+      } else {
+        res.set('X-Cache', 'HIT');
+      }
+
+      res.json(symbols);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // GET /api/graph/symbols/:id — fetch single symbol
+  router.get('/symbols/:id', async (req, res) => {
+    try {
+      const db = await getGraphDb();
+      const symbol = await apiSymbols.getSymbol(db, req.params.id);
+      if (!symbol) {
+        return res.status(404).json({ error: 'Symbol not found' });
+      }
+      res.json(symbol);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // GET /api/graph/symbols/stats — fetch symbol statistics
+  router.get('/symbols/stats', async (req, res) => {
+    try {
+      const db = await getGraphDb();
+      const cacheKey = 'symbols:stats';
+      let stats = graphCache.get(cacheKey);
+
+      if (!stats) {
+        stats = await apiSymbols.getSymbolsStats(db);
+        graphCache.set(cacheKey, stats);
+        res.set('X-Cache', 'MISS');
+      } else {
+        res.set('X-Cache', 'HIT');
+      }
+
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // GET /api/graph/symbols/:id/calls — fetch call graph for symbol
+  router.get('/symbols/:id/calls', async (req, res) => {
+    try {
+      const db = await getGraphDb();
+      const depth = parseInt(req.query.depth) || 2;
+      const callGraph = await apiSymbols.getCallGraph(db, req.params.id, depth);
+      res.json(callGraph);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================================================
+  // CACHE MONITORING & CONTROL (Phase 6)
+  // ============================================================================
+
+  // GET /api/graph/cache/stats — fetch cache health metrics
+  router.get('/cache/stats', (req, res) => {
+    const stats = graphCache.getStats();
+    res.json(stats);
+  });
+
+  // POST /api/graph/cache/invalidate — invalidate cache by pattern
+  // Example: POST /api/graph/cache/invalidate?pattern=goals/*
+  router.post('/cache/invalidate', express.json(), (req, res) => {
+    const pattern = req.query.pattern || '*';
+    const count = graphCache.invalidate(pattern);
+    res.json({
+      pattern,
+      invalidated_count: count,
+      cache_stats: graphCache.getStats(),
+    });
+  });
+
+  // POST /api/graph/cache/clear — clear entire cache
+  router.post('/cache/clear', express.json(), (req, res) => {
+    const count = graphCache.clear();
+    res.json({
+      cleared_count: count,
+      cache_stats: graphCache.getStats(),
+    });
   });
 
   return router;

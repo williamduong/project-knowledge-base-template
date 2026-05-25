@@ -39,6 +39,7 @@ const EDGE_COLLECTIONS = {
   CREATED_BY:     'kg_created_by',     // Intent → Agent
   DEPENDS_ON:     'kg_depends_on',     // Intent → Intent (dependency)
   BLOCKS:         'kg_blocks',         // Risk | Decision → Intent | Goal (blocks progress)
+  APPLIES_TO:     'kg_applies_to',     // Principle → Code Symbol (Phase 6)
   RELATED_TO:     'kg_related_to',     // Generic relation between entities
 };
 
@@ -126,11 +127,12 @@ const GRAPH_DEFINITION = {
     { collection: EDGE_COLLECTIONS.CREATED_BY,    from: [COLLECTIONS.INTENTS, COLLECTIONS.GOALS, COLLECTIONS.RISKS], to: [COLLECTIONS.AGENTS] },
     { collection: EDGE_COLLECTIONS.DEPENDS_ON,    from: [COLLECTIONS.INTENTS], to: [COLLECTIONS.INTENTS] },
     { collection: EDGE_COLLECTIONS.BLOCKS,        from: [COLLECTIONS.RISKS, COLLECTIONS.DECISIONS], to: [COLLECTIONS.INTENTS, COLLECTIONS.GOALS, COLLECTIONS.MILESTONES] },
+    { collection: EDGE_COLLECTIONS.APPLIES_TO,    from: [COLLECTIONS.PRINCIPLES], to: ['cg_symbols'] }, // Phase 6: Cross-graph edge
     { collection: EDGE_COLLECTIONS.RELATED_TO,    from: Object.values(COLLECTIONS), to: Object.values(COLLECTIONS) },
   ],
 };
 
-// Indexes — for common queries
+// Indexes — for common queries (Phase 6 optimized)
 const INDEXES = [
   // Intent lookups
   { collection: COLLECTIONS.INTENTS,  type: 'hash', fields: ['id'] },
@@ -138,11 +140,13 @@ const INDEXES = [
   { collection: COLLECTIONS.INTENTS,  type: 'hash', fields: ['lifecycle'] },
   { collection: COLLECTIONS.INTENTS,  type: 'skiplist', fields: ['created_at'] },
 
-  // Goal by status
+  // Goal: single field + composite for tree queries (Phase 6)
   { collection: COLLECTIONS.GOALS,    type: 'hash', fields: ['status'] },
+  { collection: COLLECTIONS.GOALS,    type: 'persistent', fields: ['parent_goal_id', 'status'], unique: false },
 
-  // Decision by status
+  // Decision: single field + composite for filtering (Phase 6)
   { collection: COLLECTIONS.DECISIONS, type: 'hash', fields: ['status'] },
+  { collection: COLLECTIONS.DECISIONS, type: 'persistent', fields: ['goal_id', 'status'], unique: false },
 
   // Principle by id (P0-P15)
   { collection: COLLECTIONS.PRINCIPLES, type: 'hash', fields: ['id'] },

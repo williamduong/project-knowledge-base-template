@@ -207,6 +207,84 @@ async function checkParentRelationships(db) {
   return issues;
 }
 
+// Check cross-graph edges (Phase 6: Principle → Code Symbol)
+async function checkCrossGraphEdges(db) {
+  const issues = [];
+
+  // Check kg_applies_to edges point to valid cg_symbols
+  const aql = `
+    FOR edge IN ${EDGE_COLLECTIONS.APPLIES_TO}
+      LET symbolExists = (
+        FOR s IN cg_symbols
+          FILTER s._id == edge._to
+          RETURN s._id
+      )
+      FILTER LENGTH(symbolExists) == 0
+      RETURN {
+        edge_id: edge._id,
+        source: edge._from,
+        target: edge._to,
+        issue: 'target_symbol_not_found'
+      }
+  `;
+
+  try {
+    const cursor = await db.query(aql);
+    const dangling = await cursor.all();
+    if (dangling.length > 0) {
+      issues.push({
+        check: 'cross_graph_edges',
+        severity: 'high',
+        count: dangling.length,
+        description: 'kg_applies_to edges with missing cg_symbols targets',
+        examples: dangling.slice(0, 3),
+      });
+    }
+  } catch (err) {
+    // cg_symbols collection may not exist yet (Phase 6 early stage)
+    if (err.code !== 1203) {
+      console.error(`Error checking cross-graph edges:`, err.message);
+    }
+  }
+
+  return issues;
+}
+
+// Get entity coverage statistics
+async function getEntityCoverage(db) {
+  const coverage = { collections: {}, edges: {} };
+
+  for (const [name, collName] of Object.entries(COLLECTIONS)) {
+    try {
+      const cursor = await db.query(`
+        FOR doc IN ${collName}
+          COLLECT WITH COUNT INTO count
+          RETURN count
+      `);
+      const [count] = await cursor.all();
+      coverage.collections[collName] = count || 0;
+    } catch (err) {
+      coverage.collections[collName] = 0;
+    }
+  }
+
+  for (const [name, collName] of Object.entries(EDGE_COLLECTIONS)) {
+    try {
+      const cursor = await db.query(`
+        FOR edge IN ${collName}
+          COLLECT WITH COUNT INTO count
+          RETURN count
+      `);
+      const [count] = await cursor.all();
+      coverage.edges[collName] = count || 0;
+    } catch (err) {
+      coverage.edges[collName] = 0;
+    }
+  }
+
+  return coverage;
+}
+
 // Run all validation checks
 async function validateGraph(db) {
   const results = {
@@ -220,7 +298,11 @@ async function validateGraph(db) {
       low: 0,
       passed: 0,
     },
+    coverage: {},
   };
+
+  // Get coverage stats
+  results.coverage = await getEntityCoverage(db);
 
   const checkFunctions = [
     { name: 'dangling_edges', fn: checkDanglingEdges },
@@ -229,6 +311,7 @@ async function validateGraph(db) {
     { name: 'invalid_statuses', fn: checkInvalidStatuses },
     { name: 'invalid_timestamps', fn: checkInvalidTimestamps },
     { name: 'parent_relationships', fn: checkParentRelationships },
+    { name: 'cross_graph_edges', fn: checkCrossGraphEdges }, // Phase 6
   ];
 
   for (const { name, fn } of checkFunctions) {
@@ -255,4 +338,6 @@ module.exports = {
   checkInvalidStatuses,
   checkInvalidTimestamps,
   checkParentRelationships,
+  checkCrossGraphEdges, // Phase 6
+  getEntityCoverage, // Phase 6
 };
