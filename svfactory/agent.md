@@ -22,12 +22,28 @@ KBX = Phần mềm quản lý tri thức có khả năng mở rộng, phát tri�
 2. **Logic Layer:** Code xử lý extraction, normalization, validation
 3. **UI Layer:** Giao diện quản lý toàn diện cho factory
 
-### Bước tiếp theo gần nhất (Weeks/Months)
+### Bước tiếp theo gần nhất (Phase 7 — Weeks/Months)
 
-**Xây dựng tính năng lớn để sản xuất KBX:**
-- DNA feature set (mã gen cho các biến thể KBX)
-- Production pipeline: chuẩn bị → testing → release
-- On-demand generation từ graph
+**DNA Framework: Xây dựng factory tạo KBX variants cho các domain khác nhau**
+
+DNA (Domain-specific Non-code Archetype) = Bộ mẫu GraphDB + ontology + governance rules cho từng loại org.
+
+Ví dụ DNAs:
+- **dna/kbx** (General) — KBX tự sử dụng, manage KBX project
+- **dna/kbx-saas** (SaaS) — Cho teams xây phần mềm SaaS (founder, product, code liên kết)
+- **dna/kbx-enterprise** (Enterprise) — Cho matrix organizations
+- **dna/kbx-solo-founder** (Solo) — Cho solo tech founders
+
+Mỗi DNA:
+- Là npm package riêng (`kbx-saas`, `kbx-enterprise`, etc.)
+- Có ontology + governance rules dành riêng (research-based)
+- Sử dụng agent-driven chat (chủ yếu) + UI (phụ)
+- Có thể được community fork/evolve
+
+**Phase 7 kickoff:**
+1. Design DNA Framework (specification) ✅ DONE
+2. Refactor current KBX → dna/kbx (General DNA)
+3. Build dna/kbx-saas (first user-facing DNA, dogfood for KBX team)
 
 ---
 
