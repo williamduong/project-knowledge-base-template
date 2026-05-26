@@ -8,6 +8,16 @@
 
 const { COLLECTIONS, EDGE_COLLECTIONS } = require('./schema');
 
+function normalizeCollectionCount(value) {
+  if (typeof value === 'number') {
+    return value;
+  }
+  if (value && typeof value.count === 'number') {
+    return value.count;
+  }
+  return 0;
+}
+
 // Get entity counts per collection
 async function getEntityCounts(db) {
   const counts = {};
@@ -15,7 +25,7 @@ async function getEntityCounts(db) {
   for (const [name, coll] of Object.entries(COLLECTIONS)) {
     try {
       const col = db.collection(coll);
-      counts[name] = await col.count();
+      counts[name] = normalizeCollectionCount(await col.count());
     } catch (err) {
       counts[name] = 0;
     }
@@ -31,7 +41,7 @@ async function getEdgeCounts(db) {
   for (const [name, coll] of Object.entries(EDGE_COLLECTIONS)) {
     try {
       const col = db.collection(coll);
-      counts[name] = await col.count();
+      counts[name] = normalizeCollectionCount(await col.count());
     } catch (err) {
       counts[name] = 0;
     }

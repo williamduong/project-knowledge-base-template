@@ -17,39 +17,22 @@ const { aql } = require('arangojs');
  * @returns {array} symbols
  */
 async function listSymbols(db, filters = {}) {
-  let query = aql`
+  const query = aql`
     FOR symbol IN cg_symbols
+      FILTER ${filters.kind ? aql`symbol.kind == ${filters.kind}` : aql`true`}
+      FILTER ${filters.file ? aql`symbol.file == ${filters.file}` : aql`true`}
+      FILTER ${filters.exported !== undefined ? aql`symbol.exported == ${filters.exported}` : aql`true`}
+      SORT symbol.file, symbol.line
+      RETURN {
+        id: symbol._key,
+        name: symbol.name,
+        kind: symbol.kind,
+        file: symbol.file,
+        line: symbol.line,
+        exported: symbol.exported,
+        location: CONCAT(symbol.file, ':', symbol.line)
+      }
   `;
-
-  // Apply filters
-  if (filters.kind) {
-    query = aql.append(query, aql`
-      FILTER symbol.kind == ${filters.kind}
-    `);
-  }
-  if (filters.file) {
-    query = aql.append(query, aql`
-      FILTER symbol.file == ${filters.file}
-    `);
-  }
-  if (filters.exported !== undefined) {
-    query = aql.append(query, aql`
-      FILTER symbol.exported == ${filters.exported}
-    `);
-  }
-
-  query = aql.append(query, aql`
-    SORT symbol.file, symbol.line
-    RETURN {
-      id: symbol._key,
-      name: symbol.name,
-      kind: symbol.kind,
-      file: symbol.file,
-      line: symbol.line,
-      exported: symbol.exported,
-      location: CONCAT(symbol.file, ':', symbol.line)
-    }
-  `);
 
   const cursor = await db.query(query);
   return cursor.all();

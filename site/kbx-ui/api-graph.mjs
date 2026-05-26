@@ -57,6 +57,17 @@ function createGraphApiRouter() {
     }
   });
 
+  // GET /api/graph/goals/stats — fetch goals statistics
+  router.get('/goals/stats', async (req, res) => {
+    try {
+      const db = await getGraphDb();
+      const stats = await apiGoals.getGoalsStats(db);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // GET /api/graph/goals/:id — fetch single goal
   router.get('/goals/:id', async (req, res) => {
     try {
@@ -66,17 +77,6 @@ function createGraphApiRouter() {
         return res.status(404).json({ error: 'Goal not found' });
       }
       res.json(goal);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // GET /api/graph/goals/stats — fetch goals statistics
-  router.get('/goals/stats', async (req, res) => {
-    try {
-      const db = await getGraphDb();
-      const stats = await apiGoals.getGoalsStats(db);
-      res.json(stats);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -128,6 +128,17 @@ function createGraphApiRouter() {
     }
   });
 
+  // GET /api/graph/decisions/stats — fetch decisions statistics
+  router.get('/decisions/stats', async (req, res) => {
+    try {
+      const db = await getGraphDb();
+      const stats = await apiDecisions.getDecisionsStats(db);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // GET /api/graph/decisions/:id — fetch single decision
   router.get('/decisions/:id', async (req, res) => {
     try {
@@ -137,17 +148,6 @@ function createGraphApiRouter() {
         return res.status(404).json({ error: 'Decision not found' });
       }
       res.json(decision);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // GET /api/graph/decisions/stats — fetch decisions statistics
-  router.get('/decisions/stats', async (req, res) => {
-    try {
-      const db = await getGraphDb();
-      const stats = await apiDecisions.getDecisionsStats(db);
-      res.json(stats);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -216,20 +216,6 @@ function createGraphApiRouter() {
     }
   });
 
-  // GET /api/graph/principles/:id — fetch single principle
-  router.get('/principles/:id', async (req, res) => {
-    try {
-      const db = await getGraphDb();
-      const principle = await apiPrinciples.getPrinciple(db, req.params.id);
-      if (!principle) {
-        return res.status(404).json({ error: 'Principle not found' });
-      }
-      res.json(principle);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
   // GET /api/graph/principles/domains — fetch principle domain statistics
   router.get('/principles/domains', async (req, res) => {
     try {
@@ -252,6 +238,20 @@ function createGraphApiRouter() {
     }
   });
 
+  // GET /api/graph/principles/:id — fetch single principle
+  router.get('/principles/:id', async (req, res) => {
+    try {
+      const db = await getGraphDb();
+      const principle = await apiPrinciples.getPrinciple(db, req.params.id);
+      if (!principle) {
+        return res.status(404).json({ error: 'Principle not found' });
+      }
+      res.json(principle);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ============================================================================
   // SYMBOLS ENDPOINTS (Phase 6 — Track A)
   // ============================================================================
@@ -263,8 +263,12 @@ function createGraphApiRouter() {
       const filters = {
         kind: req.query.kind,
         file: req.query.file,
-        exported: req.query.exported === 'true',
       };
+      if (req.query.exported === 'true') {
+        filters.exported = true;
+      } else if (req.query.exported === 'false') {
+        filters.exported = false;
+      }
 
       const cacheKey = `symbols:list:${JSON.stringify(filters)}`;
       let symbols = graphCache.get(cacheKey);
@@ -278,20 +282,6 @@ function createGraphApiRouter() {
       }
 
       res.json(symbols);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  // GET /api/graph/symbols/:id — fetch single symbol
-  router.get('/symbols/:id', async (req, res) => {
-    try {
-      const db = await getGraphDb();
-      const symbol = await apiSymbols.getSymbol(db, req.params.id);
-      if (!symbol) {
-        return res.status(404).json({ error: 'Symbol not found' });
-      }
-      res.json(symbol);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -325,6 +315,20 @@ function createGraphApiRouter() {
       const depth = parseInt(req.query.depth) || 2;
       const callGraph = await apiSymbols.getCallGraph(db, req.params.id, depth);
       res.json(callGraph);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // GET /api/graph/symbols/:id — fetch single symbol
+  router.get('/symbols/:id', async (req, res) => {
+    try {
+      const db = await getGraphDb();
+      const symbol = await apiSymbols.getSymbol(db, req.params.id);
+      if (!symbol) {
+        return res.status(404).json({ error: 'Symbol not found' });
+      }
+      res.json(symbol);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

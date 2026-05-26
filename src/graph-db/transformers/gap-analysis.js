@@ -101,23 +101,32 @@ async function analyzePrincipleCodeGaps(db) {
     principles_linked_to_code: 0,
     principles_unlinked: [],
     gaps: 0,
-    note: 'kg_applies_to collection not yet created (deferred to Phase 4)',
+    note: 'Tracks live kg_applies_to coverage in the current graph state.',
   };
 
   try {
     const cursor = await db.query(`
       FOR principle IN kg_principles
+        LET codeLinkCount = COUNT(
+          FOR edge IN kg_applies_to
+            FILTER edge._from == CONCAT('kg_principles/', principle._key)
+            RETURN 1
+        )
         RETURN {
           id: principle._key,
           title: principle.title,
-          domain: principle.domain
+          domain: principle.domain,
+          codeLinkCount: codeLinkCount
         }
     `);
     const principles = await cursor.all();
     stats.principles_total = principles.length;
 
-    // All principles are unlinked since kg_applies_to doesn't exist yet
     principles.forEach(principle => {
+      if (principle.codeLinkCount > 0) {
+        stats.principles_linked_to_code++;
+        return;
+      }
       stats.principles_unlinked.push({
         id: principle.id,
         title: principle.title,
@@ -163,9 +172,13 @@ async function analyzeOrphanedNodesDetail(db) {
     `);
     stats.goals_orphaned = await cursor.all();
 
-    // Get all principles with no edges (all are orphaned for now since kg_applies_to doesn't exist)
+    // Get principles with neither graph relationships nor code links
     cursor = await db.query(`
       FOR principle IN kg_principles
+        LET follows_in = COUNT(FOR e IN kg_follows FILTER e._to == CONCAT('kg_principles/', principle._key) RETURN 1)
+        LET describes_in = COUNT(FOR e IN kg_describes FILTER e._to == CONCAT('kg_principles/', principle._key) RETURN 1)
+        LET applies_out = COUNT(FOR e IN kg_applies_to FILTER e._from == CONCAT('kg_principles/', principle._key) RETURN 1)
+        FILTER follows_in == 0 AND describes_in == 0 AND applies_out == 0
         RETURN { id: principle._key, title: principle.title }
     `);
     stats.principles_orphaned = await cursor.all();
@@ -173,9 +186,9 @@ async function analyzeOrphanedNodesDetail(db) {
     // Get documents with no incoming or outgoing edges
     cursor = await db.query(`
       FOR doc IN kg_documents
-        LET inbound = COUNT(FOR e IN kg_describes FILTER e._to == CONCAT('kg_documents/', doc._key) RETURN 1)
-        LET outbound = COUNT(FOR e IN kg_describes FILTER e._from == CONCAT('kg_documents/', doc._key) RETURN 1)
-        FILTER inbound == 0 AND outbound == 0
+        LET in_count = COUNT(FOR e IN kg_describes FILTER e._to == CONCAT('kg_documents/', doc._key) RETURN 1)
+        LET out_count = COUNT(FOR e IN kg_describes FILTER e._from == CONCAT('kg_documents/', doc._key) RETURN 1)
+        FILTER in_count == 0 AND out_count == 0
         RETURN { id: doc._key, title: doc.title }
     `);
     stats.documents_orphaned = await cursor.all();
