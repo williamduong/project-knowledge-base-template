@@ -17,16 +17,18 @@ See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
 
 ## Active Version Target
 
-**v2.10** — Code Graph foundation + Knowledge Graph canonicalization (dual-graph architecture)
+**v2.10** — Code Graph Phase 1 + dual-graph architecture complete  
+**v3.0** — DNA Framework (multi-domain KBX variant generation)
 
 **Branch:** `intent/v2-10-code-graph`  
-**Status:** Phase 5 complete (Knowledge Graph canonicalization + deprecation)  
-**Next:** Phase 6 (Code Graph Phase 1 or code path migration)
+**Status:** Phase 6 COMPLETE (dual-graph + operational safety gates)  
+**Current:** Phase 7 Kickoff (DNA Framework design + KBX-SaaS DNA implementation)
 
 ## Current Phase
 
-**Date:** 2026-05-24  
-**Completed:** Phase 5.3a-d (Normalize & Deprecate Old Patterns)
+**Date:** 2026-05-25  
+**Completed:** Phase 6 (Dual-graph architecture + operational safety gates)  
+**Active:** Phase 7.0 (DNA Framework design + KBX-SaaS DNA specification)
 
 **Chaos snapshot (2026-05-16):** 64.8 / unstable (`kbx chaos --json --scan-src src`)
 
@@ -86,11 +88,13 @@ See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
 | Version | Status | Notes |
 |---|---|---|
 | v2.3.7 | Shipped 2026-05-06 | Hotfix: `intent list` fallback for missing `mode/status` in legacy intents |
-| v2.6.x | Active | Ontology foundation: NL -> glossary -> ontology lifecycle (no GraphDB) |
-| v2.7.x | Beta line in source | `package.json` currently reports `2.7.0-beta.1`; closeout status not yet reconciled in maintainer focus |
-| v2.8.x | Planning drift | Active intents exist, but no single focus is locked cleanly |
-| v2.9.x | Branch-local active work | Current branch and recent commits target UIV2/operator shell work |
-| v3.0 | Long-term | Monorepo split packages/svfactory + packages/kb-agent (KB-015) |
+| v2.6.x | Shipped | Ontology foundation: NL → glossary → ontology lifecycle |
+| v2.7.x | Shipped | Beta: agent contracts + bridge layer foundations |
+| v2.10 | Shipped 2026-05-25 | Phase 6 Complete: Code Graph Phase 1 + dual-graph + safety gates |
+| v3.0 | Phase 7 Active | DNA Framework: multi-domain KBX variant generation factory |
+|  | v3.0 Week 1-2 | KBX General DNA (refactor current KBX into dna/kbx/) |
+|  | v3.0 Week 3-8 | KBX-SaaS DNA (first user-facing DNA, dogfood for KBX team) |
+|  | v3.0 Week 9+ | Community release + prepare Enterprise/Solo Founder DNAs |
 
 - `kbx` không cài global — dùng `node ./bin/kbx.js` trong workspace này hoặc `npx @williamduong/kbx` cho downstream.
 - Current verified package version in source: `2.7.0-beta.1`.
