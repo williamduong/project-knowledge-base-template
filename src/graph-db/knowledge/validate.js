@@ -28,7 +28,7 @@ async function checkOrphanedNodes(db) {
     const aql = `
       FOR doc IN ${vertexColl}
         LET edges = (
-          FOR edge IN INBOUND doc GRAPH knowledge_graph
+          FOR vertex, edge IN 1..1 ANY doc GRAPH knowledge_graph
             RETURN edge._id
         )
         FILTER LENGTH(edges) == 0

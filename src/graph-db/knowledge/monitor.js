@@ -85,7 +85,7 @@ async function getOrphanedNodes(db) {
     const aql = `
       FOR doc IN ${coll}
         LET edges = (
-          FOR edge IN INBOUND doc GRAPH knowledge_graph
+          FOR vertex, edge IN 1..1 ANY doc GRAPH knowledge_graph
             RETURN edge._id
         )
         FILTER LENGTH(edges) == 0
@@ -165,7 +165,7 @@ async function getMostConnectedNodes(db, limit = 10) {
     const aql = `
       FOR doc IN ${coll}
         LET edges = (
-          FOR edge IN INBOUND doc GRAPH knowledge_graph
+          FOR vertex, edge IN 1..1 ANY doc GRAPH knowledge_graph
             RETURN edge._id
         )
         SORT LENGTH(edges) DESC
