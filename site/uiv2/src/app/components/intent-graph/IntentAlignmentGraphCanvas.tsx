@@ -256,6 +256,12 @@ function renderNodeLabel(node: IntentAlignmentNode) {
   )
 }
 
+function modeLabel(mode: GraphMode) {
+  if (mode === 'focus') return 'focus'
+  if (mode === 'alignment') return 'planning'
+  return 'full map'
+}
+
 export function IntentAlignmentGraphCanvas({
   graph,
   onSelectNode,
@@ -334,8 +340,8 @@ export function IntentAlignmentGraphCanvas({
     <section className="surface-panel surface-panel-primary intent-graph-shell">
       <div className="panel-toolbar">
         <div>
-          <p className="workspace-eyebrow">Alignment Graph</p>
-          <h2>Intent to goal visual map</h2>
+          <p className="workspace-eyebrow">Planning Graph</p>
+          <h2>Release, milestone, goal, intent, and task map</h2>
         </div>
         <div className="panel-toolbar-meta">
           <span className="count-pill">{visibleGraph.nodes.length} nodes</span>
@@ -353,7 +359,7 @@ export function IntentAlignmentGraphCanvas({
               className={`tool-button${mode === item ? ' active' : ''}`}
               onClick={() => updateMode(item)}
             >
-              {item}
+              {modeLabel(item)}
             </button>
           ))}
         </div>
@@ -390,7 +396,7 @@ export function IntentAlignmentGraphCanvas({
 
         {graph.focusNodeId ? (
           <button type="button" className="tool-button" onClick={() => updateMode('focus')}>
-            Focus current intent
+            Focus current planning intent
           </button>
         ) : null}
       </div>

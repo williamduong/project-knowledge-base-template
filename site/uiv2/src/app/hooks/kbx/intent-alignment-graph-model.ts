@@ -187,8 +187,6 @@ export function resolveIntentContextTarget({
 
 export function buildIntentContextPath({
   selectedIntentId,
-  focusIntentId,
-  activeIntentId,
   depth = 1,
   mode = 'alignment',
   includeTasks = true,

@@ -835,7 +835,6 @@ export function IntentsListPage() {
   )
   const currentFocusSummary = detail?.focusCurrent ?? currentIntentRecord?.focusCurrent ?? null
   const currentNextAction = detail?.focusNextAction ?? currentIntentRecord?.focusNextAction ?? null
-  const currentChaos = detail?.chaosEstimate ?? currentIntentRecord?.chaosEstimate ?? null
   const intentsWithGoals = goalsSummary?.coverage.intents ?? 0
   const milestonesWithGoals = goalsSummary?.coverage.milestones ?? 0
   const selectedTaskGoalCount = selectedIntentGoalNode?.children.filter((taskNode) => taskNode.status.code === 'aligned').length ?? 0
@@ -851,22 +850,38 @@ export function IntentsListPage() {
     : 0
   const goalCards = useMemo<GoalCard[]>(() => [
     {
-      id: 'system-goals',
-      label: 'System Goals',
-      metric: `${goalsTree?.goals.length ?? 0} system goals`,
+      id: 'planning-coverage',
+      label: 'Planning Coverage',
+      metric: `${goalsTree?.goals.length ?? 0} root goals`,
       state: goalsSummary?.missingCounts.milestones || goalsSummary?.missingCounts.intents || goalsSummary?.missingCounts.tasks ? 'needs coverage' : 'aligned',
       progress: goalHealthProgress,
-      caption: `Milestones ${milestonesWithGoals}/${(goalsSummary?.entityCounts.milestones ?? milestones.length ?? 0)} · Selected tasks ${selectedTaskGoalCount}/${(selectedIntentGoalNode?.children.length ?? detail?.tasks.length ?? 0)}`,
+      caption: `Milestones ${milestonesWithGoals}/${(goalsSummary?.entityCounts.milestones ?? milestones.length ?? 0)} · Intent goals ${intentsWithGoals}/${(goalsSummary?.entityCounts.intents ?? intents.length ?? 0)}`,
       detail: [
-        goalsTree?.goals.length ? `${goalsTree.goals.length} workspace-level goals are now tracked in the OKR tree.` : 'No system goals exist yet. Add at least one root goal.',
+        goalsTree?.goals.length ? `${goalsTree.goals.length} planning roots are tracked in the goal tree.` : 'No planning roots exist yet. Add at least one root goal.',
         selectedTaskMissingGoalCount > 0 ? `${selectedTaskMissingGoalCount} selected tasks still have no child goal.` : 'Selected tasks are linked into the goal tree.',
       ],
       icon: goal,
       tone: goalsTree?.goals.length && !goalsSummary?.missingCounts.milestones && !goalsSummary?.missingCounts.intents ? 'done' : 'warning',
     },
     {
+      id: 'release-planning',
+      label: 'Release Planning',
+      metric: `${releaseLines.length} release lines`,
+      state: releaseLines.length ? 'planned' : 'missing',
+      progress: releaseLines.length
+        ? clampProgress(releaseLines.reduce((total, line) => total + line.progress, 0) / releaseLines.length)
+        : 0,
+      caption: `${milestones.length} milestone buckets projected from the planning set.`,
+      detail: [
+        releaseLines.length ? `${releaseLines.filter((line) => line.state === 'active').length} release lines currently have active planning work.` : 'No release lines are projected yet.',
+        milestones.length ? `${milestones.filter((milestone) => milestone.state === 'active').length} milestone buckets are currently active.` : 'No milestone buckets are active yet.',
+      ],
+      icon: archive,
+      tone: releaseLines.length ? 'active' : 'warning',
+    },
+    {
       id: 'focus-details',
-      label: 'Focus Details',
+      label: 'Current Planning Focus',
       metric: currentIntentRecord?.id ?? 'no focus intent',
       state: currentFocusSummary ? 'tracked' : 'missing',
       progress: currentFocusSummary && currentNextAction ? 100 : currentFocusSummary ? 72 : 24,
@@ -879,24 +894,8 @@ export function IntentsListPage() {
       tone: currentFocusSummary ? 'active' : 'warning',
     },
     {
-      id: 'chaos-estimate',
-      label: 'Chaos & Estimate',
-      metric: currentChaos?.projectedScore != null || currentChaos?.currentScore != null
-        ? `${currentChaos?.projectedScore ?? currentChaos?.currentScore}`
-        : 'n/a',
-      state: currentChaos?.projectedLevel ?? currentChaos?.currentLevel ?? 'unknown',
-      progress: clampProgress(Number(currentChaos?.projectedScore ?? currentChaos?.currentScore ?? 0)),
-      caption: currentChaos?.warning ?? 'No chaos warning attached to the selected intent.',
-      detail: [
-        `Current: ${currentChaos?.currentScore ?? 'n/a'} · ${currentChaos?.currentLevel ?? 'n/a'}`,
-        `Projected: ${currentChaos?.projectedScore ?? 'n/a'} · ${currentChaos?.projectedLevel ?? 'n/a'}`,
-      ],
-      icon: activity,
-      tone: currentChaos?.warning ? 'warning' : currentChaos ? 'active' : 'neutral',
-    },
-    {
       id: 'intent-health',
-      label: 'Intent Health',
+      label: 'Planning Queue Health',
       metric: `${lifecycleCounts.active} active / ${intents.length || 0}`,
       state: lifecycleCounts.dropped > 0 ? 'attention' : snapshotMetadata?.reloadRecommended ? 'reload' : 'stable',
       progress: intentHealthProgress,
@@ -909,25 +908,27 @@ export function IntentsListPage() {
       tone: lifecycleCounts.dropped > 0 || snapshotMetadata?.reloadRecommended ? 'warning' : 'done',
     },
   ], [
-    currentChaos,
     currentFocusSummary,
     currentIntentRecord?.id,
     currentNextAction,
     detail?.focusUpdatedAt,
     goalHealthProgress,
     goalsSummary?.entityCounts.milestones,
+    goalsSummary?.entityCounts.intents,
     goalsSummary?.missingCounts.intents,
     goalsSummary?.missingCounts.milestones,
     goalsSummary?.missingCounts.tasks,
     goalsTree?.goals.length,
     intentHealthProgress,
     intents.length,
+    intentsWithGoals,
     lifecycleCounts.active,
     lifecycleCounts.archived,
     lifecycleCounts.backlog,
     lifecycleCounts.closed,
     lifecycleCounts.dropped,
     milestones.length,
+    releaseLines,
     selectedTaskGoalCount,
     selectedIntentGoalNode?.children.length,
     selectedTaskMissingGoalCount,
@@ -1250,14 +1251,6 @@ export function IntentsListPage() {
       icon: activity,
       tooltip: 'UI progress estimate derived from lifecycle plus extracted task completion count.',
     },
-    ...(detail.chaosEstimate?.projectedLevel || detail.chaosEstimate?.currentLevel
-      ? [{
-          label: 'Chaos',
-          value: `${detail.chaosEstimate?.projectedScore ?? detail.chaosEstimate?.currentScore ?? 'n/a'} · ${detail.chaosEstimate?.projectedLevel ?? detail.chaosEstimate?.currentLevel}`,
-          icon: activity,
-          tooltip: 'Risk or instability estimate attached to this intent when the runtime has one.',
-        }]
-      : []),
   ] : []
   const relationEntries: RelationEntry[] = detail ? [
     ...(detail.goal ? [{
@@ -1296,10 +1289,10 @@ export function IntentsListPage() {
     <section className="workspace-page">
       <header className="workspace-toolbar">
         <div>
-          <p className="workspace-eyebrow">Intent Workspace</p>
+          <p className="workspace-eyebrow">Planning Graph Workspace</p>
           <h1>Intents</h1>
           <p className="intent-page-summary">
-            Compact roadmap view on top, operator registry below, and intent detail kept in the drawer.
+            Planning-first view for goals, milestones, release lines, concrete intents, and task coverage. Registry stays available as the fallback operator surface.
           </p>
         </div>
         <div className="toolbar-actions">
@@ -1325,7 +1318,7 @@ export function IntentsListPage() {
           </div>
         </div>
         <p className="rules-cell-copy">
-          Goals seed from the locked official backlog pack first, then mirror into the knowledge graph. Intents stay filesystem-backed for now, but this pack defines which active and backlog intents belong to the official SVFactory operating set.
+          Goals seed from the locked official backlog pack first, then mirror into the planning graph. Intents stay filesystem-backed for now, but this pack defines which active and backlog intents belong to the official SVFactory planning set.
         </p>
         <div className="home-inline-summary-row">
           <span className="meta-pill">{officialBacklog?.packSummary.goalCount ?? 0} goals</span>
@@ -1346,7 +1339,7 @@ export function IntentsListPage() {
             <GoalCardView
               key={card.id}
               card={card}
-              onClick={card.id === 'system-goals' ? () => setGoalsDrawerOpen(true) : undefined}
+              onClick={card.id === 'planning-coverage' ? () => setGoalsDrawerOpen(true) : undefined}
             />
           ))}
         </div>
@@ -1454,7 +1447,7 @@ export function IntentsListPage() {
           <div className="panel-toolbar">
             <div>
               <p className="workspace-eyebrow">View Mode</p>
-              <h2>Graph-first intent workspace</h2>
+              <h2>Planning graph and registry</h2>
             </div>
             <div className="panel-toolbar-meta">
               <span className="count-pill">{alignmentGraph.summary.linkedIntents} linked</span>
@@ -1463,7 +1456,7 @@ export function IntentsListPage() {
           </div>
           <div className="home-inline-summary-row">
             <button className={`tool-button${intentView === 'graph' ? ' active' : ''}`} type="button" onClick={() => setIntentView('graph')}>
-              Alignment Graph
+              Planning Graph
             </button>
             <button className={`tool-button${intentView === 'registry' ? ' active' : ''}`} type="button" onClick={() => setIntentView('registry')}>
               Registry
@@ -1493,12 +1486,12 @@ export function IntentsListPage() {
         ) : intentView === 'graph' ? (
           alignmentGraphQuery.isLoading ? (
             <div className="intent-empty-state">
-              <h3>Loading alignment graph</h3>
-              <p>Querying live intent context from the graph bridge.</p>
+              <h3>Loading planning graph</h3>
+              <p>Querying live planning context from the graph bridge.</p>
             </div>
           ) : alignmentGraphQuery.isError ? (
             <div className="intent-empty-state intent-empty-state-danger">
-              <h3>Alignment graph unavailable</h3>
+              <h3>Planning graph unavailable</h3>
               <p>{alignmentGraphQuery.error instanceof Error ? alignmentGraphQuery.error.message : 'Context explorer query failed.'}</p>
               <p>Registry remains available as the fallback operator view while the graph route is recovering.</p>
               <div className="home-inline-summary-row">
@@ -1509,8 +1502,8 @@ export function IntentsListPage() {
             </div>
           ) : !alignmentGraph.nodes.length ? (
             <div className="intent-empty-state">
-              <h3>Alignment graph returned no nodes</h3>
-              <p>The context explorer responded, but no neighborhood nodes were available for this view yet.</p>
+              <h3>Planning graph returned no nodes</h3>
+              <p>The context explorer responded, but no planning neighborhood nodes were available for this view yet.</p>
               <div className="home-inline-summary-row">
                 <button className="tool-button" type="button" onClick={() => setIntentView('registry')}>
                   Open Registry
