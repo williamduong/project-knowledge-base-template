@@ -31,6 +31,7 @@ The current architecture direction is:
 See:
 - `svfactory/dna-framework-specification.md`
 - `knowledge-base/intents/_backlog/v3-0-dna-graph-ontology-boundary.md`
+- `svfactory/graph-domain-boundary.md`
 
 ---
 
@@ -85,6 +86,20 @@ This is enough to review:
 - whether React Flow should remain a relationship/map surface only
 - whether `Graph` should remain a top-level tab or become a cross-workspace lens
 
+### 2.4 Graph Domain Boundary
+
+The graph architecture is now conceptually split into:
+
+- `Planning Graph`
+- `Execution Graph`
+- `Code Graph`
+
+This is enough to review:
+
+- where concrete intents belong
+- where abstract intent types belong
+- how planning and execution should bridge without collapsing into one mixed graph
+
 ---
 
 ## 3. What Is Still Not Clean
@@ -131,6 +146,17 @@ Some older roadmap material still carries pre-boundary assumptions.
 
 `svfactory/phase-7-dna-roadmap.md` has now been marked as partially superseded, but older scattered references may still exist elsewhere.
 
+### 3.5 Intent / Flow Graph Mixing Risk
+
+The repo now has enough evidence that one mixed graph for planning, execution, and code reasoning becomes noisy very quickly.
+
+Current locked direction:
+
+- planning surfaces should stay in the `Planning Graph`
+- execution surfaces should stay in the `Execution Graph`
+- code reasoning should stay in the `Code Graph`
+- bridge edges must stay explicit and narrow
+
 ---
 
 ## 4. Review Questions To Use Next
@@ -151,6 +177,7 @@ Some older roadmap material still carries pre-boundary assumptions.
 
 - Should `DNA`, `Gate`, and `Pipeline` become graph primitives in v3.0 or later?
 - What must remain adapter-driven instead of Arango-specific?
+- Which entities are concrete planning records vs abstract execution interfaces?
 
 ### Mixing Cleanup
 
@@ -170,3 +197,4 @@ For the UI review baseline, use:
 
 - `svfactory/uiv2-information-architecture.md`
 - `svfactory/intent-context-explorer-contract.md`
+- `svfactory/graph-domain-boundary.md`

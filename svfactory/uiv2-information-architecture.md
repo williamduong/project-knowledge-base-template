@@ -205,6 +205,10 @@ This is where code graphdb should live visibly.
 
 This workspace owns intent administration and graph-backed followability.
 
+Primary graph domain:
+
+- `Planning Graph`
+
 Recommended local sections:
 
 - `Queue`
@@ -215,6 +219,12 @@ Recommended local sections:
 - `Intent Graph`
 
 This is where ontology-backed follow paths become operationally useful.
+
+Important boundary:
+
+- `Intent` works with concrete planning intents
+- `Intent` should not embed concrete execution flow machinery by default
+- any flow/rule references here should stay abstract and interface-level
 
 ### 5.4 Rules
 
@@ -237,6 +247,10 @@ Core idea:
 
 This should become the execution grammar of the factory.
 
+Primary graph domain:
+
+- `Execution Graph`
+
 Recommended local sections:
 
 - `Overview`
@@ -253,6 +267,11 @@ Recommended terminology:
 - inside it, keep `Pipeline`, `Gate`, `Trigger`, and `Process` as sub-concepts
 
 This avoids fighting over `pipe` vs `flow` vs `process` at the top level.
+
+Important boundary:
+
+- `Flow` should work with abstract intent types and execution families
+- `Flow` should not model concrete planning intents as first-class execution nodes
 
 ### 5.6 Tools
 
