@@ -18,6 +18,8 @@ Desktop.ini
 # Local logs and scratch directories
 logs/
 tmp/
+!dna/tmp/
+!dna/tmp/README.md
 temp/
 
 # Node and npm artifacts
