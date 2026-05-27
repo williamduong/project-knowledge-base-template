@@ -169,3 +169,4 @@ Some older roadmap material still carries pre-boundary assumptions.
 For the UI review baseline, use:
 
 - `svfactory/uiv2-information-architecture.md`
+- `svfactory/intent-context-explorer-contract.md`
