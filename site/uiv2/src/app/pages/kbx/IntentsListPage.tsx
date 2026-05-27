@@ -32,7 +32,9 @@ import {
   type GoalTreeNode,
 } from '../../hooks/kbx/useGoalsTree'
 import { buildMilestones, buildReleaseLines, deriveVersionBucket, versionRank } from '../../hooks/kbx/intent-workspace-model'
+import { useIntentAlignmentGraph, type IntentAlignmentNode } from '../../hooks/kbx/intent-alignment-graph-model'
 import { useCreateIntentMutation, useUpdateIntentMutation } from '../../hooks/kbx/useIntentMutations'
+import { IntentAlignmentGraphCanvas } from '../../components/intent-graph/IntentAlignmentGraphCanvas'
 
 type GoalCard = {
   id: string
@@ -50,6 +52,7 @@ type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' |
 type IntentSortKey = 'title' | 'milestone' | 'lifecycle' | 'progress' | 'runtime'
 type DetailSectionKey = 'summary' | 'detail' | 'relations' | 'tasks'
 type EditableField = 'title' | 'summaryText' | 'focusCurrent' | 'focusNextAction' | 'closeCondition'
+type IntentViewMode = 'graph' | 'registry'
 
 const INTENTS_PER_PAGE = 20
 
@@ -711,6 +714,7 @@ export function IntentsListPage() {
   const [intentSortKey, setIntentSortKey] = useState<IntentSortKey>('milestone')
   const [intentSortDirection, setIntentSortDirection] = useState<'asc' | 'desc'>('desc')
   const [intentPage, setIntentPage] = useState(1)
+  const [intentView, setIntentView] = useState<IntentViewMode>('graph')
   const [collapsedSections, setCollapsedSections] = useState<Record<DetailSectionKey, boolean>>({
     summary: false,
     detail: false,
@@ -807,6 +811,14 @@ export function IntentsListPage() {
   }), [intents])
   const milestones = useMemo(() => buildMilestones(intents), [intents])
   const releaseLines = useMemo(() => buildReleaseLines(milestones), [milestones])
+  const alignmentGraph = useIntentAlignmentGraph({
+    intents,
+    goalsTree,
+    goalsSummary,
+    snapshotMetadata,
+    selectedIntentId,
+    detail,
+  })
   const officialBacklog = officialBacklogQuery.data
   const officialBacklogWarnings = [
     ...(officialBacklog?.validation.missingGoalIds ?? []),
@@ -1014,6 +1026,18 @@ export function IntentsListPage() {
   const openDrawerForIntent = (intentId: string) => {
     setSelectedIntentId(intentId)
     setDrawerOpen(true)
+  }
+
+  const handleGraphNodeSelect = (node: IntentAlignmentNode) => {
+    if (node.kind === 'intent' && node.entityId) {
+      openDrawerForIntent(node.entityId)
+      return
+    }
+    if (node.ownerIntentId) {
+      openDrawerForIntent(node.ownerIntentId)
+      return
+    }
+    setGoalsDrawerOpen(true)
   }
 
   const toggleIntentSort = (nextKey: IntentSortKey) => {
@@ -1419,6 +1443,31 @@ export function IntentsListPage() {
           onFilterChange={setHealthFilter}
         />
 
+        <section className="surface-panel compact-note-panel">
+          <div className="panel-toolbar">
+            <div>
+              <p className="workspace-eyebrow">View Mode</p>
+              <h2>Graph-first intent workspace</h2>
+            </div>
+            <div className="panel-toolbar-meta">
+              <span className="count-pill">{alignmentGraph.summary.linkedIntents} linked</span>
+              <span className="count-pill">{alignmentGraph.summary.unlinkedIntents} unlinked</span>
+            </div>
+          </div>
+          <div className="home-inline-summary-row">
+            <button className={`tool-button${intentView === 'graph' ? ' active' : ''}`} type="button" onClick={() => setIntentView('graph')}>
+              Alignment Graph
+            </button>
+            <button className={`tool-button${intentView === 'registry' ? ' active' : ''}`} type="button" onClick={() => setIntentView('registry')}>
+              Registry
+            </button>
+            <span className="meta-pill">{alignmentGraph.summary.milestones} milestones</span>
+            <span className="meta-pill">{alignmentGraph.summary.goals} goal nodes</span>
+            <span className="meta-pill">{alignmentGraph.summary.tasks} task nodes</span>
+            <span className={`meta-pill${alignmentGraph.summary.warnings ? ' meta-pill-focus' : ''}`}>{alignmentGraph.summary.warnings} warnings</span>
+          </div>
+        </section>
+
         {intentsQuery.isLoading ? (
           <div className="intent-empty-state">
             <h3>Loading intent inventory</h3>
@@ -1434,6 +1483,8 @@ export function IntentsListPage() {
             <h3>No intents found</h3>
             <p>The workspace did not return any intent records yet.</p>
           </div>
+        ) : intentView === 'graph' ? (
+          <IntentAlignmentGraphCanvas graph={alignmentGraph} onSelectNode={handleGraphNodeSelect} />
         ) : (
           <div className="rules-table intent-registry-table" role="table" aria-label="Intent registry list">
             <div className="rules-table-header intent-registry-header" role="row">

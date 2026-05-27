@@ -35,6 +35,7 @@ export type IntentAlignmentNode = {
   state: string
   entityLevel?: GoalTreeNode['entityLevel']
   entityId?: string
+  ownerIntentId?: string | null
   focus?: boolean
   active?: boolean
   selected?: boolean
@@ -234,7 +235,7 @@ export function buildIntentAlignmentGraph({
     }
   }
 
-  function addGoalRecordNodes(ownerNodeId: string, goalRecords: GoalRecord[]) {
+  function addGoalRecordNodes(ownerNodeId: string, goalRecords: GoalRecord[], ownerIntentId: string | null) {
     for (const goalRecord of goalRecords) {
       const goalId = goalNodeId(goalRecord.id)
       goalNodeMap.set(goalRecord.id, goalRecord)
@@ -246,6 +247,7 @@ export function buildIntentAlignmentGraph({
         state: goalRecord.state,
         entityLevel: goalRecord.entityLevel,
         entityId: goalRecord.entityId,
+        ownerIntentId,
         metrics: [
           goalRecord.entityLevel,
           goalRecord.state,
@@ -261,11 +263,12 @@ export function buildIntentAlignmentGraph({
     }
   }
 
-  function walkTree(node: GoalTreeNode, parentNodeId: string | null) {
+  function walkTree(node: GoalTreeNode, parentNodeId: string | null, ownerIntentId: string | null) {
     const nodeId = entityNodeId(node.entityLevel, node.entityId)
     const existingIntent = node.entityLevel === 'intent'
       ? intents.find((intent) => intent.id === node.entityId) ?? null
       : null
+    const nextOwnerIntentId = node.entityLevel === 'intent' ? node.entityId : ownerIntentId
     const releaseBucket = node.entityLevel === 'milestone'
       ? String(node.entityId || '').toLowerCase()
       : node.entityLevel === 'intent'
@@ -286,6 +289,7 @@ export function buildIntentAlignmentGraph({
       state: existingIntent ? normalizeLifecycle(existingIntent.lifecycle) : node.runtimeState,
       entityLevel: node.entityLevel,
       entityId: node.entityId,
+      ownerIntentId: nextOwnerIntentId,
       focus: node.entityLevel === 'intent' && node.entityId === focusIntentId,
       active: node.entityLevel === 'intent' && node.entityId === activeIntentId,
       selected: node.entityLevel === 'intent' && node.entityId === selectedIntentId,
@@ -324,7 +328,7 @@ export function buildIntentAlignmentGraph({
       })
     }
 
-    addGoalRecordNodes(nodeId, node.goals)
+    addGoalRecordNodes(nodeId, node.goals, nextOwnerIntentId)
 
     if (node.entityLevel === 'milestone' && node.status.code === 'missing-goals') {
       registerWarnings(
@@ -354,12 +358,12 @@ export function buildIntentAlignmentGraph({
     }
 
     for (const child of node.children) {
-      walkTree(child, nodeId)
+      walkTree(child, nodeId, nextOwnerIntentId)
     }
   }
 
   if (goalsTree) {
-    walkTree(goalsTree, null)
+    walkTree(goalsTree, null, null)
   }
 
   for (const goalRecord of goalNodeMap.values()) {
@@ -405,6 +409,7 @@ export function buildIntentAlignmentGraph({
       state: normalizeLifecycle(intent.lifecycle),
       entityLevel: 'intent',
       entityId: intent.id,
+      ownerIntentId: intent.id,
       focus: intent.id === focusIntentId,
       active: intent.id === activeIntentId,
       selected: intent.id === selectedIntentId,
