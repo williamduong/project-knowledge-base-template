@@ -29,32 +29,30 @@ See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
 
 ## Current Phase
 
-**Date:** 2026-05-25  
-**Completed:** Phase 6 (Dual-graph architecture + operational safety gates)  
-**Active:** Phase 7.0 (DNA Framework design + KBX-SaaS DNA specification)
+**Date:** 2026-05-27  
+**Completed:** Phase 6 (Dual-graph architecture + operational safety gates) ✅
+**Active:** Phase 7.0 (DNA Framework design) + Phase 7.1 (KBX General DNA extraction)  
+**In Progress:** Phase 6 Track B monitoring (7-day dual-read validation)
 
 **Chaos snapshot (2026-05-16):** 64.8 / unstable (`kbx chaos --json --scan-src src`)
 
-**Session State (2026-05-16, Grounding pass):**
-- Package/runtime line in source is `@williamduong/kbx@2.7.0-beta.1` (`package.json`)
-- Current branch is `intent/v2-9-uiv2-shadcn-admin-shell-adoption`
-- Latest verified commits are UI/rules workspace work, not v2.7 closeout:
-  - `65fb22f` Refactor system snapshot read path to cached runtime state
-  - `7f6b060` Stabilize runtime focus state and bridge service refresh
-  - `8e7e2c6` Add new prototype styles and overlays
-  - `c85bebd` add prototype catalog and rules workspace controls
-  - `05d6915` resolve rules lint remediation clusters
-- Active intents recorded by CLI remain:
-  - `v2-7-nl-rules-to-cli-logic`
-  - `v2-8-downstream-agent-and-ontology`
-  - `v2-8-kbx-beta-bug-hunt`
-- All 3 active intents have `staged_count = 0`; `kbx intent cleanup --json` reports 12 warnings for missing `wave`, `type`, `strategic_mode`, and `urgency`
-- `kbx status --json` still reports:
-  - tracked KB state at template/CLI `v2.3.2`
-  - drift status `drift-detected`
-  - verdict `attention`
-  - `192` unbound changes
-- `kbx doctor --json` is `WARN`, not `PASS`
+**Session State (2026-05-27, Phase 6 Track B + Phase 7 kickoff):**
+- Package/runtime: `@williamduong/kbx@2.7.0-beta.1` (package.json)
+- Current branch: `intent/v2-10-code-graph` (Phase 6/7 main)
+- Latest commits (this session):
+  - `4b0e0cf` feat(phase-6): dual-read validation for goals (Track B)
+  - `863ab35` fix: correct Lucide icon in DecisionsPage
+  - `3a38beb` fix: add GET /api/goals endpoint + Vite proxy
+  - `8dcb0ae` docs(phase-7.1): KBX General DNA docs (3/5 complete)
+  - `0c9391c` refactor(phase-7.1): consolidate ontology schemas
+  - `2b6dfe6` refactor(phase-6): finalize validation + monitoring
+- Dev servers running:
+  - UIv2: http://localhost:5174 (Vite dev)
+  - Backend API: http://localhost:4177 (KBX bridge, testing)
+- Servers tested & verified:
+  - `/api/goals` returns validation metadata ✅
+  - `/api/goals/sync-status` shows monitoring state ✅
+  - `/intents` graph view operational ✅
 
 **Focus intent:**
 - None safely locked yet. Branch intent, active-intent registry, and focus state are out of sync.
@@ -90,14 +88,17 @@ See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
 
 | Version | Status | Notes |
 |---|---|---|
-| v2.3.7 | Shipped 2026-05-06 | Hotfix: `intent list` fallback for missing `mode/status` in legacy intents |
+| v2.3.7 | Shipped 2026-05-06 | Hotfix: `intent list` fallback |
 | v2.6.x | Shipped | Ontology foundation: NL → glossary → ontology lifecycle |
-| v2.7.x | Shipped | Beta: agent contracts + bridge layer foundations |
+| v2.7.x | Shipped | Beta: agent contracts + bridge layer |
 | v2.10 | Shipped 2026-05-25 | Phase 6 Complete: Code Graph Phase 1 + dual-graph + safety gates |
-| v3.0 | Phase 7 Active | DNA Framework: multi-domain KBX variant generation factory |
-|  | v3.0 Week 1-2 | KBX General DNA (refactor current KBX into dna/kbx/) |
-|  | v3.0 Week 3-8 | KBX-SaaS DNA (first user-facing DNA, dogfood for KBX team) |
-|  | v3.0 Week 9+ | Community release + prepare Enterprise/Solo Founder DNAs |
+| v2.10 (continued) | **In Progress** | Phase 6 Track B: dual-read goals validation (7-day observation) |
+| v2.10 (UI) | **In Progress** | Intent Alignment Graph (graph-first UI) + polish |
+| v3.0 | Phase 7 Active | DNA Framework: multi-domain KBX variant generation |
+|  | Phase 7.0 (done) | DNA Framework specification ✅ |
+|  | Phase 7.1 (active) | KBX General DNA: extract bindings + docs (3/5 docs) |
+|  | Phase 7.2 (planned) | KBX-SaaS DNA: dogfood for KBX team |
+|  | Phase 7.3 (planned) | Community release + Enterprise/Solo Founder DNAs |
 
 - `kbx` không cài global — dùng `node ./bin/kbx.js` trong workspace này hoặc `npx @williamduong/kbx` cho downstream.
 - Current verified package version in source: `2.7.0-beta.1`.
