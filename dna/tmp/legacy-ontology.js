@@ -10,7 +10,7 @@
  * This file preserves the old import surface while callers are migrated.
  */
 
-const compatibilityContracts = require('../../src/lib/dna/legacy-compat-contracts');
+const compatibilityContracts = require('../../src/lib/dna/ontology-contract');
 const legacyTerminology = require('../kbx/bindings/legacy-terminology');
 const legacyGovernance = require('../kbx/bindings/legacy-governance');
 

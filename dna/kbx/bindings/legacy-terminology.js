@@ -8,9 +8,9 @@
  */
 
 const {
-  GlossarySchema,
+  GlossaryEntrySchema: GlossarySchema,
   TerminologyRegistryEntry,
-} = require('../../../src/lib/dna/legacy-compat-contracts');
+} = require('../../../src/lib/dna/ontology-contract');
 
 const TerminologyRegistry_data = {
   Tenant: {
