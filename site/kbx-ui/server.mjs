@@ -3219,6 +3219,22 @@ export function createApp(commandRunner = executeBridgeCommand) {
     }
   });
 
+  app.get('/api/goals', async (_req, res) => {
+    try {
+      const tree = buildGoalsTreeSnapshot();
+      res.status(200).json({
+        ok: true,
+        goals: tree,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
   app.post('/api/goals', async (req, res) => {
     try {
       const body = req.body && typeof req.body === 'object' ? req.body : {};
