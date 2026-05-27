@@ -1,5 +1,5 @@
 import { Icon } from '@iconify/react'
-import decisionIcon from '@iconify-icons/lucide/balance-scale-3'
+import decisionIcon from '@iconify-icons/lucide/scale'
 import targetIcon from '@iconify-icons/lucide/target'
 import checkIcon from '@iconify-icons/lucide/check'
 import zoomIcon from '@iconify-icons/lucide/zoom-in'
