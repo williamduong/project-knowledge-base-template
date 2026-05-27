@@ -19,7 +19,7 @@ import circleDashed from '@iconify-icons/lucide/circle-dashed'
 import listTree from '@iconify-icons/lucide/list-tree'
 import plus from '@iconify-icons/lucide/plus'
 import trash2 from '@iconify-icons/lucide/trash-2'
-import { useIntentsList, type IntentListItem } from '../../hooks/kbx/useIntentsList'
+import { useIntentsList } from '../../hooks/kbx/useIntentsList'
 import { useIntentDetail, type IntentTask } from '../../hooks/kbx/useIntentDetail'
 import { useSystemSnapshot, systemSnapshotQueryKey } from '../../hooks/svfactory/useSystemSnapshot'
 import {
@@ -31,6 +31,7 @@ import {
   type GoalRecord,
   type GoalTreeNode,
 } from '../../hooks/kbx/useGoalsTree'
+import { buildMilestones, buildReleaseLines, deriveVersionBucket, versionRank } from '../../hooks/kbx/intent-workspace-model'
 import { apiPatch } from '../../../shared/api/client'
 
 type GoalCard = {
@@ -43,17 +44,6 @@ type GoalCard = {
   detail: string[]
   icon: typeof target
   tone: 'active' | 'warning' | 'neutral' | 'done'
-}
-
-type MilestoneBlock = {
-  id: string
-  label: string
-  progress: number
-  state: 'draft' | 'backlog' | 'active' | 'closed'
-  metrics: string
-  objectives: string[]
-  goals: string[]
-  goalCount: number
 }
 
 type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' | 'dropped' | 'selected'
@@ -189,16 +179,6 @@ function clampProgress(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)))
 }
 
-function deriveVersionBucket(intentId: string) {
-  const match = intentId.match(/^(v\d+(?:-\d+)?)/i)
-  return match?.[1]?.toLowerCase() ?? 'legacy'
-}
-
-function versionRank(versionId: string) {
-  const numbers = versionId.replace(/^v/i, '').split('-').map((part) => Number.parseInt(part, 10)).filter((part) => Number.isFinite(part))
-  return numbers.reduce((accumulator, value, index) => accumulator + value / 10 ** (index * 2), 0)
-}
-
 function computeIntentProgress(lifecycle: string | null | undefined) {
   const normalized = normalizeLifecycle(lifecycle)
   if (normalized === 'draft') return 10
@@ -217,56 +197,6 @@ function lifecycleRailState(value: string | null | undefined): 'draft' | 'backlo
   return 'backlog'
 }
 
-function summarizeMilestoneState(intents: IntentListItem[]) {
-  const total = intents.length || 1
-  const active = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
-  const draft = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'draft').length
-  const backlog = intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length
-  const closed = intents.filter((intent) => ['closed', 'archived'].includes(normalizeLifecycle(intent.lifecycle))).length
-  const progress = clampProgress((closed / total) * 100)
-
-  if (active > 0) return { state: 'active' as const, progress }
-  if (backlog > 0) return { state: 'backlog' as const, progress }
-  if (draft > 0) return { state: 'draft' as const, progress }
-  return { state: 'closed' as const, progress: closed === total ? 100 : progress }
-}
-
-function buildMilestones(intents: IntentListItem[]) {
-  const buckets = new Map<string, IntentListItem[]>()
-
-  for (const intent of intents) {
-    const bucket = deriveVersionBucket(intent.id)
-    const current = buckets.get(bucket) ?? []
-    current.push(intent)
-    buckets.set(bucket, current)
-  }
-
-  return Array.from(buckets.entries())
-    .map(([id, bucketIntents]) => {
-      const { progress, state } = summarizeMilestoneState(bucketIntents)
-      const active = bucketIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length
-      const backlog = bucketIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length
-      const objectives = bucketIntents
-        .slice(0, 3)
-        .map((intent) => intent.title?.replace(/^"|"$/g, '') || intent.id)
-      const goals = bucketIntents
-        .map((intent) => String(intent.goalText ?? intent.goal ?? '').trim())
-        .filter(Boolean)
-
-      return {
-        id,
-        label: id === 'legacy' ? 'Legacy' : id.toUpperCase(),
-        progress,
-        state,
-        metrics: `${bucketIntents.length} intents · ${active} active · ${backlog} backlog`,
-        objectives,
-        goals,
-        goalCount: goals.length,
-      } satisfies MilestoneBlock
-    })
-    .sort((left, right) => versionRank(left.id) - versionRank(right.id))
-}
-
 function statusTone(value: string) {
   if (value === 'active' || value === 'aligned' || value === 'fresh' || value === 'closed') return 'status-good'
   if (value === 'backlog' || value === 'moving' || value === 'in-flight' || value === 'draft') return 'status-neutral'
@@ -275,7 +205,7 @@ function statusTone(value: string) {
   return 'status-neutral'
 }
 
-function milestoneVisualState(value: MilestoneBlock['state']) {
+function milestoneVisualState(value: 'draft' | 'backlog' | 'active' | 'closed') {
   if (value === 'closed') return 'done'
   if (value === 'active') return 'active'
   return 'upcoming'
@@ -892,6 +822,7 @@ export function IntentsListPage() {
     dropped: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'dropped').length,
   }), [intents])
   const milestones = useMemo(() => buildMilestones(intents), [intents])
+  const releaseLines = useMemo(() => buildReleaseLines(milestones), [milestones])
   const currentIntentRecord = useMemo(
     () => intents.find((intent) => intent.id === selectedIntentId) ?? intents.find((intent) => intent.id === focusIntentId) ?? null,
     [focusIntentId, intents, selectedIntentId],
@@ -1378,6 +1309,36 @@ export function IntentsListPage() {
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="surface-panel compact-note-panel">
+          <div className="panel-toolbar">
+            <div>
+              <p className="workspace-eyebrow">Release Versions</p>
+              <h2>Release lines</h2>
+            </div>
+            <div className="panel-toolbar-meta">
+              <span className="meta-pill">{releaseLines.length} projected lines</span>
+            </div>
+          </div>
+          <p className="rules-cell-copy">
+            Release lines are currently projected from milestone buckets and intent ids. This section makes that
+            visible now, while we keep Release Version as a future first-class entity instead of faking it.
+          </p>
+          <div className="rules-pack-grid">
+            {releaseLines.map((line) => (
+              <article key={line.id} className="rules-pack-card">
+                <div className="rules-pack-header">
+                  <strong>{line.label}</strong>
+                  <span className={`status-pill ${statusTone(line.state)}`}>{line.state}</span>
+                </div>
+                <p className="rules-cell-copy">{line.summary}</p>
+                <p className="rules-cell-copy">{line.metrics}</p>
+                <p className="rules-cell-copy">Progress {line.progress}% · {line.milestoneCount} milestone bucket</p>
+              </article>
+            ))}
+            {!releaseLines.length ? <p className="rules-cell-copy">No release line projection is available yet.</p> : null}
           </div>
         </section>
 

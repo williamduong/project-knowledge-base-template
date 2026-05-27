@@ -7,15 +7,16 @@ const common = require('./common');
 const runtimeServices = require('./runtime-services.contract');
 const focus = require('./focus.contract');
 const goals = require('./goals.contract');
+const intents = require('./intents.contract');
 
 // Surface registry. Add new contracts here as they ship in Phase 1.
 const surfaces = Object.freeze({
   'runtime-services': runtimeServices,
   focus,
   goals,
+  intents,
   // Pending Phase 1 deliverables:
   //   rules:    require('./rules.contract'),
-  //   intents:  require('./intents.contract'),
   //   kb-tree:  require('./kb-tree.contract'),
 });
 
