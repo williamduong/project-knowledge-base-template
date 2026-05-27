@@ -19,7 +19,15 @@ export interface Decision {
   goal_count: number
 }
 
-export interface DecisionDetail extends Decision {
+export interface DecisionAffectedGoalDetail {
+  id: string
+  title: string
+  status: string
+  is_system_goal: boolean
+  child_goals: Array<{ id: string; title: string; status: string }>
+}
+
+export interface DecisionDetail extends Omit<Decision, 'affected_goals'> {
   affected_goals: Array<{
     id: string
     title: string

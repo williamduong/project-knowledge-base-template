@@ -1,8 +1,6 @@
 import { Icon } from '@iconify/react'
 import decisionIcon from '@iconify-icons/lucide/scale'
 import targetIcon from '@iconify-icons/lucide/target'
-import checkIcon from '@iconify-icons/lucide/check'
-import zoomIcon from '@iconify-icons/lucide/zoom-in'
 import { useState } from 'react'
 import { useDecisionsList, useDecision, useDecisionsStats, useDecisionImpact, type Decision, type DecisionDetail, type DecisionImpact } from '../../hooks/kbx/useDecisionsGraph'
 

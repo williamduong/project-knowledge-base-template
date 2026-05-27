@@ -12,7 +12,12 @@ export interface Principle {
   extracted_at: string
 }
 
-export interface PrincipleDetail extends Principle {
+export interface PrincipleCodeSymbolLink {
+  id: string
+  edge_provenance?: string
+}
+
+export interface PrincipleDetail extends Omit<Principle, 'code_symbols'> {
   code_symbols: Array<{
     id: string
     edge_provenance?: string

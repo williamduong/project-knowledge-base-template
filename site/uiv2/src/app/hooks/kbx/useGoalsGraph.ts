@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 export interface Goal {
   id: string
@@ -16,9 +16,15 @@ export interface Goal {
   decision_count: number
 }
 
-export interface GoalDetail extends Goal {
+export interface GoalSummaryChild {
+  id: string
+  title: string
+  status: string
+}
+
+export interface GoalDetail extends Omit<Goal, 'children'> {
   parent_goal: { id: string; title: string } | null
-  children: Array<{ id: string; title: string; status: string }>
+  children: GoalSummaryChild[]
   intents: Array<{ id: string; title: string; status: string }>
 }
 

@@ -1,7 +1,6 @@
 import { Icon } from '@iconify/react'
 import goalIcon from '@iconify-icons/lucide/target'
 import checkIcon from '@iconify-icons/lucide/check'
-import alertIcon from '@iconify-icons/lucide/alert-circle'
 import layersIcon from '@iconify-icons/lucide/layers'
 import chevronRightIcon from '@iconify-icons/lucide/chevron-right'
 import chevronDownIcon from '@iconify-icons/lucide/chevron-down'
