@@ -73,7 +73,45 @@ These are the primary surfaces the operator actually needs:
 
 ---
 
-## 3. Graph And Gate Positioning
+## 3. External Review Synthesis
+
+An external architecture review reached several conclusions that are worth keeping because they align with the current repo direction.
+
+### 3.1 Keep
+
+- `Code` should become a first-class workspace because Code Graph is already a real foundation, not a side feature.
+- `Intent` should become more graph-backed and ontology-aware so impact and followability are native rather than bolted on.
+- `Rules` should be treated explicitly as the agent harness.
+- `Tools` should become a real governed registry rather than remaining implicit behind commands and ad hoc behavior.
+- `DNA` should become a top-level management surface because the long-term product goal is KBX generation from DNA.
+- the two-mode interpretation is useful:
+  - build SVFactory
+  - build downstream KBX
+- `Dashboard` should stay thin until real workspaces mature.
+
+### 3.2 Adjust
+
+Some suggestions were useful in spirit but need architectural correction.
+
+- `Gates` should not become a standalone top-level workspace.
+  - Gates are first-class, but they only make sense inside `Flow`.
+- `Graph` should not remain the primary product center forever.
+  - Graph is foundational, but it is better treated as a lens across `Code`, `Intent`, and `DNA`.
+- "wait to refactor navigation until much later" is too conservative for the current repository state.
+  - The repo already has enough boundary clarity to start incremental shell cleanup now.
+
+### 3.3 Net Result
+
+The strongest reusable insight is:
+
+- make `Code`, `Flow`, `Tools`, and `DNA` visible
+- keep `Rules` as harness
+- treat `Intent` as graph-backed governance workflow
+- reduce `System` back to runtime/operator scope
+
+---
+
+## 4. Graph And Gate Positioning
 
 Two concepts must be repositioned carefully.
 
@@ -111,7 +149,7 @@ Recommended interpretation:
 
 ---
 
-## 4. Recommended Top Navigation
+## 5. Recommended Top Navigation
 
 For the production shell:
 
@@ -131,7 +169,7 @@ Utilities:
 
 ---
 
-## 5. Workspace Definitions
+## 6. Workspace Definitions
 
 ### 5.1 Dashboard
 
@@ -311,7 +349,7 @@ Recommended UI treatment:
 
 ---
 
-## 7. Immediate IA Changes Recommended Before Visual Redesign
+## 8. Immediate IA Changes Recommended Before Visual Redesign
 
 1. Remove `R&D Prototype` from primary production navigation.
 2. Demote `Search` from top-level route importance into overlay-first utility.
@@ -323,7 +361,7 @@ Recommended UI treatment:
 
 ---
 
-## 8. Implication For Current `site/uiv2` Refactor
+## 9. Implication For Current `site/uiv2` Refactor
 
 The current shell split should now evolve like this:
 
@@ -354,7 +392,7 @@ not as the neutral mother-shell of SVFactory.
 
 ---
 
-## 9. Decision Summary
+## 10. Decision Summary
 
 The UIV2 shell should no longer be organized around whatever pages happened to exist first.
 
