@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiDelete, apiGet, apiPatch, apiPost } from '../../../shared/api/client'
+import { intentContextQueryKey } from './intent-alignment-graph-model'
 
 export const goalsTreeQueryKey = ['goals-tree']
 
@@ -103,6 +104,7 @@ export function useCreateGoalMutation() {
       queryClient.setQueryData(goalsTreeQueryKey, response.tree)
       await queryClient.invalidateQueries({ queryKey: goalsTreeQueryKey })
       await queryClient.invalidateQueries({ queryKey: ['intents-list'] })
+      await queryClient.invalidateQueries({ queryKey: intentContextQueryKey })
     },
   })
 }
@@ -116,6 +118,7 @@ export function useUpdateGoalMutation() {
       await queryClient.invalidateQueries({ queryKey: goalsTreeQueryKey })
       await queryClient.invalidateQueries({ queryKey: ['intents-list'] })
       await queryClient.invalidateQueries({ queryKey: ['intent-detail'] })
+      await queryClient.invalidateQueries({ queryKey: intentContextQueryKey })
     },
   })
 }
@@ -129,6 +132,7 @@ export function useDeleteGoalMutation() {
       await queryClient.invalidateQueries({ queryKey: goalsTreeQueryKey })
       await queryClient.invalidateQueries({ queryKey: ['intents-list'] })
       await queryClient.invalidateQueries({ queryKey: ['intent-detail'] })
+      await queryClient.invalidateQueries({ queryKey: intentContextQueryKey })
     },
   })
 }

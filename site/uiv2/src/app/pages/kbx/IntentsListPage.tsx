@@ -32,7 +32,7 @@ import {
   type GoalTreeNode,
 } from '../../hooks/kbx/useGoalsTree'
 import { buildMilestones, buildReleaseLines, deriveVersionBucket, versionRank } from '../../hooks/kbx/intent-workspace-model'
-import { useIntentAlignmentGraph, type IntentAlignmentNode } from '../../hooks/kbx/intent-alignment-graph-model'
+import { emptyIntentAlignmentGraph, useIntentAlignmentGraph, type IntentAlignmentNode } from '../../hooks/kbx/intent-alignment-graph-model'
 import { useCreateIntentMutation, useUpdateIntentMutation } from '../../hooks/kbx/useIntentMutations'
 import { IntentAlignmentGraphCanvas } from '../../components/intent-graph/IntentAlignmentGraphCanvas'
 
@@ -811,14 +811,16 @@ export function IntentsListPage() {
   }), [intents])
   const milestones = useMemo(() => buildMilestones(intents), [intents])
   const releaseLines = useMemo(() => buildReleaseLines(milestones), [milestones])
-  const alignmentGraph = useIntentAlignmentGraph({
-    intents,
-    goalsTree,
-    goalsSummary,
-    snapshotMetadata,
+  const alignmentGraphQuery = useIntentAlignmentGraph({
     selectedIntentId,
-    detail,
+    focusIntentId,
+    activeIntentId,
+    depth: 1,
+    mode: 'alignment',
+    includeTasks: true,
+    includeUnlinked: true,
   })
+  const alignmentGraph = alignmentGraphQuery.data ?? emptyIntentAlignmentGraph
   const officialBacklog = officialBacklogQuery.data
   const officialBacklogWarnings = [
     ...(officialBacklog?.validation.missingGoalIds ?? []),

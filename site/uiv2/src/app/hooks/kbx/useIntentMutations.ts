@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { systemSnapshotQueryKey } from '../svfactory/useSystemSnapshot'
 import { apiGet, apiPatch, apiPost } from '../../../shared/api/client'
 import { goalsTreeQueryKey } from './useGoalsTree'
+import { intentContextQueryKey } from './intent-alignment-graph-model'
 
 export type IntentMutationResult = {
   id?: string
@@ -55,6 +56,7 @@ function invalidateIntentWorkspace(queryClient: ReturnType<typeof useQueryClient
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: ['intents-list'] }),
     queryClient.invalidateQueries({ queryKey: goalsTreeQueryKey }),
+    queryClient.invalidateQueries({ queryKey: intentContextQueryKey }),
     queryClient.invalidateQueries({ queryKey: systemSnapshotQueryKey }),
     ...(intentId ? [queryClient.invalidateQueries({ queryKey: ['intent-detail', intentId] })] : []),
   ])

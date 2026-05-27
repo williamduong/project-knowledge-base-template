@@ -47,6 +47,9 @@ const {
   buildOfficialBacklogStatus,
   runOfficialBacklogResetAndSeed,
 } = require(path.join(repoRoot, 'src', 'lib', 'svfactory-official-backlog.js'));
+const {
+  buildIntentContextExplorer,
+} = require(path.join(repoRoot, 'src', 'lib', 'intent-context-explorer.js'));
 
 const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
 const uiPort = Number(process.env.KBX_UI_PORT || 4173);
@@ -3273,6 +3276,65 @@ export function createApp(commandRunner = executeBridgeCommand) {
         exitCode: 1,
         stdout: '',
         stderr: String(error),
+      });
+    }
+  });
+
+  app.get('/api/intents/context', async (req, res) => {
+    try {
+      const intentsPayload = listIntentsWithPriority();
+      const intents = Array.isArray(intentsPayload?.intents) ? intentsPayload.intents : [];
+      const session = summarizeSessionContext({
+        parsed: {
+          activeIntents: {
+            intents: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active'),
+          },
+        },
+      });
+      const focusIntentId = normalizeIntentId(session.focusState?.current_focus?.intent_id ?? session.checkpointIntentId ?? null);
+      const activeIntentId = session.activeIntentIds.length === 1
+        ? session.activeIntentIds[0]
+        : normalizeIntentId(session.sessionIntentId ?? null);
+      const selectedIntentId = typeof req.query.id === 'string' && req.query.kind === 'intent'
+        ? normalizeIntentId(req.query.id)
+        : null;
+      const graphTree = buildGoalsTreeSnapshot();
+      const officialBacklogStatus = buildOfficialBacklogStatus(repoRoot);
+      const detailsByIntent = new Map(
+        intents.map((intent) => [
+          intent.id,
+          summarizeIntentDetail(intent.id, { includeGit: false }),
+        ]),
+      );
+
+      const graph = buildIntentContextExplorer({
+        query: {
+          id: String(req.query.id || '').trim() || 'workspace',
+          kind: typeof req.query.kind === 'string' && req.query.kind.trim()
+            ? String(req.query.kind).trim()
+            : (selectedIntentId ? 'intent' : 'workspace'),
+          depth: Number.isFinite(Number(req.query.depth)) ? Math.max(0, Math.min(3, Number(req.query.depth))) : 1,
+          mode: ['focus', 'alignment', 'full'].includes(String(req.query.mode || '').trim())
+            ? String(req.query.mode).trim()
+            : 'alignment',
+          include_tasks: req.query.include_tasks === 'false' ? false : true,
+          include_unlinked: req.query.include_unlinked === 'false' ? false : true,
+        },
+        intents,
+        goalsTree: graphTree.root ?? null,
+        goalsSummary: graphTree.summary ?? null,
+        focusIntentId,
+        activeIntentId,
+        selectedIntentId,
+        detailsByIntent,
+        officialReleaseLines: officialBacklogStatus.releaseLines ?? [],
+      });
+
+      res.status(200).json(graph);
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   });
