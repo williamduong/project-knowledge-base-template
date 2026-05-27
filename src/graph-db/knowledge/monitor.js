@@ -18,6 +18,28 @@ function normalizeCollectionCount(value) {
   return 0;
 }
 
+function isHistoricalDeprecatedGoal(orphanedNode) {
+  return orphanedNode.collection === COLLECTIONS.GOALS
+    && orphanedNode.status === 'archived'
+    && typeof orphanedNode.title === 'string'
+    && orphanedNode.title.startsWith('[DEPRECATED]');
+}
+
+function partitionOrphanedNodes(orphanedNodes) {
+  const actionable = [];
+  const ignored = [];
+
+  for (const orphanedNode of orphanedNodes) {
+    if (isHistoricalDeprecatedGoal(orphanedNode)) {
+      ignored.push(orphanedNode);
+      continue;
+    }
+    actionable.push(orphanedNode);
+  }
+
+  return { actionable, ignored };
+}
+
 // Get entity counts per collection
 async function getEntityCounts(db) {
   const counts = {};
@@ -91,8 +113,10 @@ async function getOrphanedNodes(db) {
         FILTER LENGTH(edges) == 0
         RETURN {
           node_id: doc._id,
+          collection: '${coll}',
           kind: doc.kind,
-          title: doc.title || doc.name || 'N/A'
+          title: doc.title || doc.name || 'N/A',
+          status: doc.status || null
         }
     `;
 
@@ -194,18 +218,24 @@ async function getMostConnectedNodes(db, limit = 10) {
 // Health check: summary report
 async function getHealthReport(db) {
   const stats = await getGraphStats(db);
-  const orphaned = await getOrphanedNodes(db);
+  const orphanedRaw = await getOrphanedNodes(db);
+  const orphaned = partitionOrphanedNodes(orphanedRaw);
   const dangling = await getDanglingEdges(db);
   const lastModified = await getLastModifiedEntities(db, 5);
   const hubs = await getMostConnectedNodes(db, 5);
 
   return {
     timestamp: new Date().toISOString(),
-    status: dangling.length === 0 && orphaned.length === 0 ? 'healthy' : 'degraded',
+    status: dangling.length === 0 && orphaned.actionable.length === 0 ? 'healthy' : 'degraded',
     stats,
     orphaned: {
-      count: orphaned.length,
-      examples: orphaned.slice(0, 3),
+      count: orphaned.actionable.length,
+      examples: orphaned.actionable.slice(0, 3),
+      ignored_count: orphaned.ignored.length,
+      ignored_examples: orphaned.ignored.slice(0, 3),
+      policy: orphaned.ignored.length > 0
+        ? 'Archived goals marked [DEPRECATED] are treated as historical tombstones and do not degrade runtime graph health.'
+        : undefined,
     },
     dangling: {
       count: dangling.length,

@@ -14,6 +14,17 @@
 
 const { aql } = require('arangojs');
 
+const CURATED_PRINCIPLE_BINDINGS = {
+  'principle-p1.': {
+    exactSymbolNames: ['runSync', 'runVerify', 'validateGraph', 'writeFocusState'],
+    marker: 'curated-runtime-truth',
+  },
+  'principle-p10.1': {
+    exactSymbolNames: ['runAllGates', 'buildDecisionRecord', 'DECISION_ACTIONS'],
+    marker: 'curated-incremental-scope',
+  },
+};
+
 /**
  * Extract keywords from principle text.
  *
@@ -88,6 +99,46 @@ async function findSymbolMatches(db, keywords) {
   return { exact_matches: deduped, partial_matches: partial };
 }
 
+async function findCuratedSymbolMatches(db, principleId) {
+  const binding = CURATED_PRINCIPLE_BINDINGS[principleId];
+  if (!binding || !Array.isArray(binding.exactSymbolNames) || binding.exactSymbolNames.length === 0) {
+    return [];
+  }
+
+  const query = aql`
+    FOR symbol IN cg_symbols
+      FILTER symbol.name IN ${binding.exactSymbolNames}
+      RETURN {
+        id: symbol._key,
+        name: symbol.name,
+        kind: symbol.kind,
+        file: symbol.file,
+        line: symbol.line
+      }
+  `;
+
+  try {
+    const cursor = await db.query(query);
+    return await cursor.all();
+  } catch (err) {
+    return [];
+  }
+}
+
+function dedupeMatches(matches) {
+  const seen = new Set();
+  const deduped = [];
+
+  for (const match of matches) {
+    if (!seen.has(match.id)) {
+      seen.add(match.id);
+      deduped.push(match);
+    }
+  }
+
+  return deduped;
+}
+
 /**
  * Seed principle→code links into Knowledge Graph.
  *
@@ -130,11 +181,17 @@ async function seedPrincipleCodeLinks(db, options = {}) {
   for (const principle of principles) {
     try {
       const keywords = extractKeywords(principle);
-      const matches = await findSymbolMatches(db, keywords);
+      const keywordMatches = await findSymbolMatches(db, keywords);
+      const curatedMatches = await findCuratedSymbolMatches(db, principle.id);
+      const exactMatches = dedupeMatches([
+        ...keywordMatches.exact_matches,
+        ...curatedMatches,
+      ]);
+      const curatedBinding = CURATED_PRINCIPLE_BINDINGS[principle.id] || null;
 
       stats.principles_processed++;
 
-      if (matches.exact_matches.length === 0) {
+      if (exactMatches.length === 0) {
         stats.no_matches++;
         if (verbose) {
           console.log(`  ✗ ${principle.title} — no symbol matches`);
@@ -144,16 +201,23 @@ async function seedPrincipleCodeLinks(db, options = {}) {
 
       // Create edges for each match
       const edgeCol = db.collection('kg_applies_to');
-      for (const symbol of matches.exact_matches) {
+      for (const symbol of exactMatches) {
         try {
           const edgeKey = `${principle.id}__applies_to__${symbol.id}`;
+          const matchedKeywords = keywords.filter(k => k === symbol.name.toLowerCase());
+          if (curatedBinding && curatedBinding.exactSymbolNames.includes(symbol.name)) {
+            matchedKeywords.push(curatedBinding.marker);
+          }
           const edge = {
             _key: edgeKey,
             _from: `kg_principles/${principle.id}`,
             _to: `cg_symbols/${symbol.id}`,
             type: 'APPLIES_TO',
             created_at: new Date().toISOString(),
-            matched_keywords: keywords.filter(k => k === symbol.name.toLowerCase()),
+            matched_keywords: matchedKeywords,
+            provenance: curatedBinding && curatedBinding.exactSymbolNames.includes(symbol.name)
+              ? 'curated'
+              : 'keyword',
           };
 
           // Use insertOne if available (ArangoDB 3.8+), else save
@@ -170,7 +234,7 @@ async function seedPrincipleCodeLinks(db, options = {}) {
       }
 
       if (verbose) {
-        console.log(`  ✓ ${principle.title} — ${matches.exact_matches.length} symbol(s)`);
+        console.log(`  ✓ ${principle.title} — ${exactMatches.length} symbol(s)`);
       }
     } catch (err) {
       stats.errors.push(`Error processing principle ${principle.id}: ${err.message}`);

@@ -9,6 +9,28 @@
 
 const { COLLECTIONS, EDGE_COLLECTIONS, INTENT_STATUS, INTENT_LIFECYCLE, DOCUMENT_TYPE } = require('./schema');
 
+function isHistoricalDeprecatedGoal(orphanedNode, type) {
+  return type === 'GOALS'
+    && orphanedNode.status === 'archived'
+    && typeof orphanedNode.title === 'string'
+    && orphanedNode.title.startsWith('[DEPRECATED]');
+}
+
+function partitionOrphanedNodes(orphanedNodes, type) {
+  const actionable = [];
+  const ignored = [];
+
+  for (const orphanedNode of orphanedNodes) {
+    if (isHistoricalDeprecatedGoal(orphanedNode, type)) {
+      ignored.push(orphanedNode);
+      continue;
+    }
+    actionable.push(orphanedNode);
+  }
+
+  return { actionable, ignored };
+}
+
 // Check for dangling edges (target nodes don't exist)
 async function checkDanglingEdges(db) {
   const issues = [];
@@ -35,20 +57,27 @@ async function checkOrphanedNodes(db) {
         RETURN {
           node_id: doc._id,
           title: doc.title || doc.name || 'N/A',
-          type: '${name}'
+          type: '${name}',
+          status: doc.status || null
         }
     `;
 
     try {
       const cursor = await db.query(aql);
       const orphaned = await cursor.all();
-      if (orphaned.length > 0) {
+      const { actionable, ignored } = partitionOrphanedNodes(orphaned, name);
+      if (actionable.length > 0) {
         issues.push({
           check: 'orphaned_nodes',
           severity: 'medium',
-          count: orphaned.length,
+          count: actionable.length,
           type: name,
-          examples: orphaned.slice(0, 3),
+          examples: actionable.slice(0, 3),
+          ignored_count: ignored.length,
+          ignored_examples: ignored.slice(0, 3),
+          policy: ignored.length > 0
+            ? 'Archived goals marked [DEPRECATED] are preserved as historical tombstones and excluded from actionable orphan debt.'
+            : undefined,
         });
       }
     } catch (err) {
