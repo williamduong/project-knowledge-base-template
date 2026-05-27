@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0.0",
+  "mode": "svfactory-only",
+  "seed_scope": "official-backlog",
+  "notes": [
+    "This pack locks the official SVFactory operating backlog while KBX-generation mode stays disabled.",
+    "Goals are sourced from svfactory/goals.state.json, then mirrored into the knowledge graph through the governance seed flow.",
+    "Intents remain filesystem-backed for now; this pack only locks which active and backlog intents belong to the official SVFactory operating set."
+  ],
+  "goal_ids": [
+    "g-milestone-legacy-v1-4-impact-engine-deprecated",
+    "g-milestone-legacy-v1-5-catalog-deprecated",
+    "g-milestone-legacy-v1-6-release-orchestrator-deprecated",
+    "g-milestone-legacy-v2-0-intent-layer-original-deprecated",
+    "g-milestone-legacy-v2-1-intent-extras-deprecated",
+    "g-milestone-v3-0-m0-foundation-reset-deliverable",
+    "g-milestone-v3-0-m1-dna-schema-spec",
+    "g-milestone-v3-0-m1-example-dna",
+    "g-milestone-v3-0-m1-cli-skeleton",
+    "g-milestone-v3-0-m2-admin-ui-clickable",
+    "g-milestone-v3-0-m2-dna-library-browser",
+    "g-milestone-v3-0-m3-compiler-pipeline",
+    "g-milestone-v3-0-m3-agent-skeleton-runnable",
+    "g-milestone-v3-0-m4-rebrand-publish",
+    "g-milestone-v3-0-m4-legacy-frozen",
+    "g-milestone-v3-0-m5-context-to-dna",
+    "g-milestone-v3-0-m5-fork-mutate-proven",
+    "g-milestone-v3-0-m6-pha7-distribution",
+    "g-milestone-v3-0-m6-downstream-smoke",
+    "g-milestone-v3-0-m6-ga-release",
+    "g-milestone-v3-1-graphdb-persistent",
+    "g-milestone-v3-1-impact-chain-api",
+    "g-milestone-v3-2-template-dna-2-3",
+    "g-milestone-v3-2-hybrid-proven",
+    "g-milestone-v3-3-daemon-framework",
+    "g-milestone-v3-3-runtime-bootstrap",
+    "g-milestone-v3-4-chat-ui-native",
+    "g-milestone-v3-4-rules-llm-bridge",
+    "g-milestone-v3-5-mcp-channels",
+    "g-milestone-v3-5-partner-connector",
+    "g-milestone-v4-0-fractal-cap-2",
+    "g-system-svfactory-sg1-build-to-build",
+    "g-system-svfactory-sg2-dna-library-fractal",
+    "g-system-svfactory-sg3-twin-storage-impact-chain",
+    "g-system-svfactory-sg4-vibe-governance",
+    "g-system-svfactory-sg5-self-maintenance",
+    "g-system-svfactory-sg6-deterministic-foundation",
+    "g-system-svfactory-sg7-domain-agnosticism"
+  ],
+  "release_lines": [
+    {
+      "id": "legacy",
+      "label": "Legacy",
+      "sources": [
+        "goals"
+      ]
+    },
+    {
+      "id": "v2-5",
+      "label": "v2.5",
+      "sources": [
+        "intents"
+      ]
+    },
+    {
+      "id": "v2-7",
+      "label": "v2.7",
+      "sources": [
+        "intents"
+      ]
+    },
+    {
+      "id": "v2-8",
+      "label": "v2.8",
+      "sources": [
+        "intents"
+      ]
+    },
+    {
+      "id": "v2-9",
+      "label": "v2.9",
+      "sources": [
+        "intents"
+      ]
+    },
+    {
+      "id": "v2-10",
+      "label": "v2.10",
+      "sources": [
+        "intents"
+      ]
+    },
+    {
+      "id": "v3-0",
+      "label": "v3.0",
+      "sources": [
+        "goals",
+        "intents"
+      ]
+    },
+    {
+      "id": "v3-1",
+      "label": "v3.1",
+      "sources": [
+        "goals"
+      ]
+    },
+    {
+      "id": "v3-2",
+      "label": "v3.2",
+      "sources": [
+        "goals"
+      ]
+    },
+    {
+      "id": "v3-3",
+      "label": "v3.3",
+      "sources": [
+        "goals"
+      ]
+    },
+    {
+      "id": "v3-4",
+      "label": "v3.4",
+      "sources": [
+        "goals"
+      ]
+    },
+    {
+      "id": "v3-5",
+      "label": "v3.5",
+      "sources": [
+        "goals"
+      ]
+    },
+    {
+      "id": "v4-0",
+      "label": "v4.0",
+      "sources": [
+        "goals"
+      ]
+    }
+  ],
+  "active_intent_ids": [
+    "v2-10-code-graph",
+    "v2-7-0-1-ui-state-contract"
+  ],
+  "backlog_intent_ids": [
+    "v2-10-research-driven-kb-intelligence",
+    "v2-5-user-customization-framework",
+    "v2-7-1-flow-and-gates-ui-planning",
+    "v2-8-kbagent-minimal-db-schema",
+    "v2-8-kbagent-structured-store-spike",
+    "v2-8-svfactory-rule-catalog-hardening",
+    "v2-9-db-and-intent-web-ui",
+    "v3-0-dna-graph-ontology-boundary"
+  ]
+}
