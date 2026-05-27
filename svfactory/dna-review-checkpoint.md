@@ -76,12 +76,14 @@ The UI is ready for architectural review, but not feature-complete DNA review:
 - `site/uiv2` already has the shell and workspace structure
 - `R&D Prototype` already includes `reactflow`
 - `Rules`, `Graph`, and `System` surfaces already exist
+- `svfactory/uiv2-information-architecture.md` now captures the goal-aligned shell rewrite direction
 
 This is enough to review:
 
 - where `Flow` should live in the operator shell
 - what belongs in `Rules` vs `Flow` vs later `DNA`
 - whether React Flow should remain a relationship/map surface only
+- whether `Graph` should remain a top-level tab or become a cross-workspace lens
 
 ---
 
@@ -164,3 +166,6 @@ Some older roadmap material still carries pre-boundary assumptions.
 3. Review `dna/kbx/*` as the first reference DNA package.
 4. Review `src/lib/ontology.js` only as legacy extraction input, not as target architecture.
 
+For the UI review baseline, use:
+
+- `svfactory/uiv2-information-architecture.md`
