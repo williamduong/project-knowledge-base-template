@@ -11,6 +11,8 @@
 
 **Current work:** Establish dual-graph architecture (Code Graph + Knowledge Graph) + factory automation.
 
+**Execution policy now:** SVFactory-only mode until factory workspaces are complete enough to unlock downstream KBX generation mode.
+
 See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
 
 ---
@@ -23,6 +25,7 @@ See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
 **Branch:** `intent/v2-10-code-graph`  
 **Status:** Phase 6 COMPLETE (dual-graph + operational safety gates)  
 **Current:** Phase 7 Kickoff (DNA Framework design + KBX-SaaS DNA implementation)
+**Execution mode:** SVFactory-only mode
 
 ## Current Phase
 
