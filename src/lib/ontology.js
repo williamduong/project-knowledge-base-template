@@ -1,6 +1,26 @@
 'use strict';
 
 /**
+ * MIXED-BOUNDARY LEGACY MODULE
+ *
+ * Status (2026-05-27):
+ * - Preserved for backward compatibility with current KBX/runtime behavior.
+ * - Not the target architecture for SVFactory v3 DNA work.
+ *
+ * Boundary note:
+ * - `SVFactory core` must remain neutral and should evolve under `src/lib/dna/*`.
+ * - `dna/kbx/*` should hold KBX-specific worldview, bindings, graph profile,
+ *   templates, and governance assets.
+ * - Downstream KBX instances should be materialized from DNA contracts rather
+ *   than expanding this file further.
+ *
+ * Maintenance rule:
+ * - Do not add new mixed-boundary concepts here.
+ * - If a new concept is needed, first classify it as one of:
+ *   1. SVFactory core primitive
+ *   2. DNA worldview asset
+ *   3. Downstream KBX instance data/runtime behavior
+ *
  * Ontology Schema & DNA Registry for KB v2.6
  *
  * This module defines the type-safe contract for ontology entities using Zod schemas.
