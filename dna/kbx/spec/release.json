@@ -1,0 +1,31 @@
+{
+  "version": "0.1.0",
+  "package_name": "@williamduong/dna-kbx",
+  "display_name": "KBX Reference DNA",
+  "compatibility": {
+    "svfactory": "^3.0.0"
+  },
+  "artifacts": [
+    {
+      "kind": "contract",
+      "path": "spec/dna.json",
+      "required": true
+    },
+    {
+      "kind": "contract",
+      "path": "spec/ontology.json",
+      "required": true
+    },
+    {
+      "kind": "contract",
+      "path": "spec/governance.json",
+      "required": true
+    },
+    {
+      "kind": "contract",
+      "path": "spec/release.json",
+      "required": true
+    }
+  ],
+  "notes": "Initial design scaffold for the KBX reference DNA."
+}

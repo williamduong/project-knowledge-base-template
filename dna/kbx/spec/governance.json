@@ -1,0 +1,135 @@
+{
+  "version": "0.1.0",
+  "rules": [
+    {
+      "id": "intent-must-implement-goal",
+      "subject": "Intent",
+      "require": [
+        "Goal"
+      ],
+      "forbid": [],
+      "severity": "error",
+      "description": "Every intent should map to at least one goal."
+    },
+    {
+      "id": "decision-must-link-principle",
+      "subject": "Decision",
+      "require": [
+        "Principle"
+      ],
+      "forbid": [],
+      "severity": "error",
+      "description": "Every decision should be grounded in at least one principle."
+    },
+    {
+      "id": "lesson-must-trace-back",
+      "subject": "Lesson",
+      "require": [
+        "Intent",
+        "Decision"
+      ],
+      "forbid": [],
+      "severity": "warn",
+      "description": "Lessons should trace back to intent or decision context."
+    }
+  ],
+  "gates": [
+    {
+      "id": "pre-compile-contract-validation",
+      "stage": "pre-compile",
+      "requires": [
+        "dna-contract-valid",
+        "ontology-contract-valid",
+        "governance-contract-valid"
+      ],
+      "block_on_fail": true,
+      "description": "Block compilation if any DNA contract file is structurally invalid."
+    },
+    {
+      "id": "pre-release-doctor",
+      "stage": "pre-release",
+      "requires": [
+        "doctor-pass",
+        "impact-reviewed"
+      ],
+      "block_on_fail": true,
+      "description": "Require doctor and impact validation before release."
+    },
+    {
+      "id": "audit-governance-traceability",
+      "stage": "audit",
+      "requires": [
+        "decision-principle-links",
+        "principle-code-links"
+      ],
+      "block_on_fail": false,
+      "description": "Audit governance traceability across decisions and code."
+    }
+  ],
+  "pipelines": [
+    {
+      "id": "default-change-flow",
+      "steps": [
+        {
+          "id": "intent",
+          "uses_gates": [],
+          "emits": [
+            "Intent"
+          ],
+          "description": "Declare the intended change."
+        },
+        {
+          "id": "decision",
+          "uses_gates": [],
+          "emits": [
+            "Decision"
+          ],
+          "description": "Record key choices and rationale."
+        },
+        {
+          "id": "implementation",
+          "uses_gates": [
+            "pre-compile-contract-validation"
+          ],
+          "emits": [
+            "CodeSymbol",
+            "Document"
+          ],
+          "description": "Implement and document the change."
+        },
+        {
+          "id": "lesson",
+          "uses_gates": [
+            "audit-governance-traceability"
+          ],
+          "emits": [
+            "Lesson"
+          ],
+          "description": "Capture reusable learning after delivery."
+        }
+      ],
+      "description": "Reference KBX flow from intent declaration to lesson capture."
+    }
+  ],
+  "evidence_policy": {
+    "required_for": [
+      "release",
+      "high-risk-change"
+    ],
+    "requirements": [
+      {
+        "kind": "document-ref",
+        "required_for": [
+          "release"
+        ]
+      },
+      {
+        "kind": "decision-record",
+        "required_for": [
+          "high-risk-change",
+          "release"
+        ]
+      }
+    ]
+  }
+}

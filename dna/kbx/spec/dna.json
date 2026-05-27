@@ -1,0 +1,11 @@
+{
+  "dna_id": "kbx",
+  "name": "KBX Reference DNA",
+  "version": "0.1.0",
+  "kind": "reference",
+  "extends": null,
+  "description": "Reference DNA extracted from legacy KBX semantics for SVFactory-driven generation.",
+  "ontology_ref": "./ontology.json",
+  "governance_ref": "./governance.json",
+  "release_ref": "./release.json"
+}

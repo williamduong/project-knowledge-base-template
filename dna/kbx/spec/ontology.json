@@ -1,0 +1,233 @@
+{
+  "version": "0.1.0",
+  "entities": {
+    "Intent": {
+      "description": "A declared unit of intended change or focus.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "required": true,
+          "description": "Stable intent identifier."
+        },
+        "title": {
+          "type": "string",
+          "required": true,
+          "description": "Human-readable intent title."
+        },
+        "status": {
+          "type": "string",
+          "required": false,
+          "description": "Intent lifecycle status."
+        }
+      }
+    },
+    "Goal": {
+      "description": "A target outcome the system is trying to reach.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "Decision": {
+      "description": "A recorded choice with architectural or governance impact.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "rationale": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    "Principle": {
+      "description": "A non-negotiable guiding rule for the DNA worldview.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        },
+        "statement": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    "Lesson": {
+      "description": "A learning extracted from project behavior or delivery.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "title": {
+          "type": "string",
+          "required": true
+        }
+      }
+    },
+    "Document": {
+      "description": "A knowledge artifact used as traceable evidence or explanation.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "path": {
+          "type": "string",
+          "required": true
+        },
+        "type": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    "Agent": {
+      "description": "A human or system actor participating in knowledge operations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "kind": {
+          "type": "string",
+          "required": false
+        }
+      }
+    },
+    "CodeSymbol": {
+      "description": "A code-level symbol linked from governance or impact analysis.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "required": true
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "file": {
+          "type": "string",
+          "required": false
+        }
+      }
+    }
+  },
+  "edges": {
+    "IMPLEMENTS": {
+      "from": [
+        "Intent"
+      ],
+      "to": [
+        "Goal"
+      ],
+      "description": "Intent implements goal.",
+      "properties": {}
+    },
+    "DECIDES_FOR": {
+      "from": [
+        "Decision"
+      ],
+      "to": [
+        "Intent",
+        "Goal"
+      ],
+      "description": "Decision is made for an intent or goal.",
+      "properties": {}
+    },
+    "FOLLOWS": {
+      "from": [
+        "Decision",
+        "Intent"
+      ],
+      "to": [
+        "Principle"
+      ],
+      "description": "Intent or decision follows a principle.",
+      "properties": {}
+    },
+    "LEARNED_FROM": {
+      "from": [
+        "Lesson"
+      ],
+      "to": [
+        "Intent",
+        "Decision"
+      ],
+      "description": "Lesson is learned from an intent or decision trail.",
+      "properties": {}
+    },
+    "DESCRIBES": {
+      "from": [
+        "Document"
+      ],
+      "to": [
+        "Intent",
+        "Goal",
+        "Decision",
+        "Principle"
+      ],
+      "description": "Document describes governance or knowledge entities.",
+      "properties": {}
+    },
+    "APPLIES_TO": {
+      "from": [
+        "Principle"
+      ],
+      "to": [
+        "CodeSymbol"
+      ],
+      "description": "Principle applies to code-level symbol behavior.",
+      "properties": {}
+    }
+  },
+  "glossary": [
+    {
+      "term": "Intent",
+      "canonical_name": "Intent",
+      "definition": "A declared unit of intended change or focus.",
+      "aliases": [
+        "Task",
+        "Proposal",
+        "Change"
+      ]
+    },
+    {
+      "term": "Principle",
+      "canonical_name": "Principle",
+      "definition": "A guiding rule that constrains decisions and code.",
+      "aliases": [
+        "Rule",
+        "Policy"
+      ]
+    },
+    {
+      "term": "Lesson",
+      "canonical_name": "Lesson",
+      "definition": "A reusable learning captured after work or release.",
+      "aliases": [
+        "Learning"
+      ]
+    }
+  ]
+}
