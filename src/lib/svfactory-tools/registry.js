@@ -2,6 +2,42 @@
 
 const TOOL_REGISTRY = Object.freeze([
   {
+    id: 'svfactory.official_backlog_status',
+    label: 'Inspect Official Backlog Pack',
+    workspace: 'intent',
+    kind: 'inspection',
+    status: 'ready',
+    allowedContexts: ['svfactory'],
+    allowedActors: ['human', 'codex', 'claude', 'copilot'],
+    execution: {
+      transport: 'http',
+      method: 'GET',
+      path: '/api/svfactory/official-backlog/status',
+    },
+    inputContract: 'none',
+    outputContract: 'svfactory.officialBacklogStatus',
+    summary: 'Inspect the locked official SVFactory backlog pack before mutating goals or intent inventory.',
+    sideEffects: [],
+  },
+  {
+    id: 'svfactory.official_backlog_reset_seed',
+    label: 'Reset And Seed Official Backlog',
+    workspace: 'intent',
+    kind: 'mutation',
+    status: 'ready',
+    allowedContexts: ['svfactory'],
+    allowedActors: ['human', 'codex', 'claude', 'copilot'],
+    execution: {
+      transport: 'http',
+      method: 'POST',
+      path: '/api/svfactory/official-backlog/reset-seed',
+    },
+    inputContract: 'svfactory.officialBacklogResetSeed',
+    outputContract: 'svfactory.officialBacklogResetSeed',
+    summary: 'Backup current goal artifacts, rebuild the official SVFactory backlog projection, and reseed governance goals into the knowledge graph.',
+    sideEffects: ['backs up goals.state.json and goals-state.db before reseeding the official backlog'],
+  },
+  {
     id: 'intent.create_draft',
     label: 'Create Draft Intent',
     workspace: 'intent',

@@ -43,6 +43,10 @@ const { runGitCommand } = require(path.join(repoRoot, 'src', 'lib', 'git.js'));
 const { readPipeline } = require(path.join(repoRoot, 'src', 'lib', 'pipeline.js'));
 const { run: runCli } = require(path.join(repoRoot, 'src', 'cli.js'));
 const { listTools, summarizeTools } = require(path.join(repoRoot, 'src', 'lib', 'svfactory-tools', 'registry.js'));
+const {
+  buildOfficialBacklogStatus,
+  runOfficialBacklogResetAndSeed,
+} = require(path.join(repoRoot, 'src', 'lib', 'svfactory-official-backlog.js'));
 
 const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
 const uiPort = Number(process.env.KBX_UI_PORT || 4173);
@@ -3188,6 +3192,46 @@ export function createApp(commandRunner = executeBridgeCommand) {
       tools: listTools(),
       summary: summarizeTools(),
     });
+  });
+
+  app.get('/api/svfactory/official-backlog/status', async (_req, res) => {
+    try {
+      res.status(200).json(buildOfficialBacklogStatus(repoRoot));
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.post('/api/svfactory/official-backlog/reset-seed', async (req, res) => {
+    try {
+      const confirmed = req.body?.confirmed === true;
+      if (!confirmed) {
+        res.status(400).json({
+          ok: false,
+          error: 'Official backlog reset requires confirmed=true.',
+        });
+        return;
+      }
+
+      const result = await runOfficialBacklogResetAndSeed(repoRoot, {
+        confirmed: true,
+        backupTag: req.body?.backup_tag,
+      });
+
+      res.status(200).json({
+        ok: true,
+        result,
+        tree: buildGoalsTreeSnapshot(),
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   });
 
   app.get('/api/intents', async (_req, res) => {

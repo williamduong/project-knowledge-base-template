@@ -70,6 +70,7 @@ site/kbx-ui/.runtime-state/
 svfactory/*.db
 svfactory/*.db-shm
 svfactory/*.db-wal
+svfactory/backups/
 
 # Temp process watch scripts
 .tmp-*

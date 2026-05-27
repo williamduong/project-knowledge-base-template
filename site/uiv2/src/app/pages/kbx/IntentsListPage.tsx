@@ -21,6 +21,7 @@ import plus from '@iconify-icons/lucide/plus'
 import trash2 from '@iconify-icons/lucide/trash-2'
 import { useIntentsList } from '../../hooks/kbx/useIntentsList'
 import { useIntentDetail, type IntentTask } from '../../hooks/kbx/useIntentDetail'
+import { useOfficialBacklogStatus } from '../../hooks/svfactory/useOfficialBacklogStatus'
 import { useSystemSnapshot, systemSnapshotQueryKey } from '../../hooks/svfactory/useSystemSnapshot'
 import {
   useGoalsTree,
@@ -690,6 +691,7 @@ function GoalTreeNodeView({
 export function IntentsListPage() {
   const queryClient = useQueryClient()
   const intentsQuery = useIntentsList()
+  const officialBacklogQuery = useOfficialBacklogStatus()
   const systemSnapshotQuery = useSystemSnapshot()
   const goalsTreeQuery = useGoalsTree()
   const intents = intentsQuery.data?.parsed?.intents ?? []
@@ -805,6 +807,12 @@ export function IntentsListPage() {
   }), [intents])
   const milestones = useMemo(() => buildMilestones(intents), [intents])
   const releaseLines = useMemo(() => buildReleaseLines(milestones), [milestones])
+  const officialBacklog = officialBacklogQuery.data
+  const officialBacklogWarnings = [
+    ...(officialBacklog?.validation.missingGoalIds ?? []),
+    ...(officialBacklog?.validation.activeIntents.missing ?? []),
+    ...(officialBacklog?.validation.backlogIntents.missing ?? []),
+  ]
   const currentIntentRecord = useMemo(
     () => intents.find((intent) => intent.id === selectedIntentId) ?? intents.find((intent) => intent.id === focusIntentId) ?? null,
     [focusIntentId, intents, selectedIntentId],
@@ -1272,6 +1280,34 @@ export function IntentsListPage() {
           </button>
         </div>
       </header>
+
+      <section className="surface-panel compact-note-panel">
+        <div className="panel-toolbar">
+          <div>
+            <p className="workspace-eyebrow">Official backlog</p>
+            <h2>SVFactory operating set</h2>
+          </div>
+          <div className="panel-toolbar-meta">
+            <span className={`status-pill ${officialBacklog?.ok ? 'status-good' : 'status-warn'}`}>
+              {officialBacklogQuery.isLoading ? 'loading' : officialBacklog?.ok ? 'locked' : 'drift'}
+            </span>
+          </div>
+        </div>
+        <p className="rules-cell-copy">
+          Goals seed from the locked official backlog pack first, then mirror into the knowledge graph. Intents stay filesystem-backed for now, but this pack defines which active and backlog intents belong to the official SVFactory operating set.
+        </p>
+        <div className="home-inline-summary-row">
+          <span className="meta-pill">{officialBacklog?.packSummary.goalCount ?? 0} goals</span>
+          <span className="meta-pill">{officialBacklog?.packSummary.releaseLineCount ?? 0} release lines</span>
+          <span className="meta-pill">{officialBacklog?.packSummary.activeIntentCount ?? 0} active intents</span>
+          <span className="meta-pill">{officialBacklog?.packSummary.backlogIntentCount ?? 0} backlog intents</span>
+        </div>
+        {officialBacklogWarnings.length ? (
+          <p className="rules-cell-copy">
+            Pack drift detected: {officialBacklogWarnings.slice(0, 4).join(' · ')}
+          </p>
+        ) : null}
+      </section>
 
       <section className="intent-section-shell">
         <div className="intent-goal-grid compact">
