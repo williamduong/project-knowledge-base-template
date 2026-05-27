@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { Icon } from '@iconify/react'
 import flag from '@iconify-icons/lucide/flag'
 import flagTriangleRight from '@iconify-icons/lucide/flag-triangle-right'
@@ -23,7 +23,6 @@ import { useIntentsList } from '../../hooks/kbx/useIntentsList'
 import { useIntentDetail, type IntentTask } from '../../hooks/kbx/useIntentDetail'
 import { useSystemSnapshot, systemSnapshotQueryKey } from '../../hooks/svfactory/useSystemSnapshot'
 import {
-  goalsTreeQueryKey,
   useGoalsTree,
   useCreateGoalMutation,
   useDeleteGoalMutation,
@@ -32,7 +31,7 @@ import {
   type GoalTreeNode,
 } from '../../hooks/kbx/useGoalsTree'
 import { buildMilestones, buildReleaseLines, deriveVersionBucket, versionRank } from '../../hooks/kbx/intent-workspace-model'
-import { apiPatch } from '../../../shared/api/client'
+import { useCreateIntentMutation, useUpdateIntentMutation } from '../../hooks/kbx/useIntentMutations'
 
 type GoalCard = {
   id: string
@@ -52,14 +51,6 @@ type DetailSectionKey = 'summary' | 'detail' | 'relations' | 'tasks'
 type EditableField = 'title' | 'summaryText' | 'focusCurrent' | 'focusNextAction' | 'closeCondition'
 
 const INTENTS_PER_PAGE = 20
-type IntentPatchResponse = {
-  ok: boolean
-  result?: {
-    id?: string
-    updated_fields?: string[]
-    status?: string
-  }
-}
 
 type MetadataEntry = {
   label: string
@@ -711,6 +702,7 @@ export function IntentsListPage() {
   const [selectedIntentId, setSelectedIntentId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [goalsDrawerOpen, setGoalsDrawerOpen] = useState(false)
+  const [createDraftOpen, setCreateDraftOpen] = useState(false)
   const [expandedTaskIndex, setExpandedTaskIndex] = useState<number | null>(null)
   const [milestoneActiveIndex, setMilestoneActiveIndex] = useState(0)
   const [healthFilter, setHealthFilter] = useState<IntentHealthFilter>('all')
@@ -726,6 +718,13 @@ export function IntentsListPage() {
   const [activeEditor, setActiveEditor] = useState<EditableField | null>(null)
   const [editorDraft, setEditorDraft] = useState('')
   const [editorError, setEditorError] = useState<string | null>(null)
+  const [createDraftError, setCreateDraftError] = useState<string | null>(null)
+  const [createDraftForm, setCreateDraftForm] = useState({
+    title: '',
+    focus: '',
+    nextAction: '',
+    decisionSummary: '',
+  })
   const [goalComposer, setGoalComposer] = useState<GoalComposerState>({
     nodeKey: null,
     parentGoalId: null,
@@ -779,36 +778,19 @@ export function IntentsListPage() {
   }, [goalsTree, selectedIntentId])
 
   useEffect(() => {
-    if (!drawerOpen && !goalsDrawerOpen) return
+    if (!drawerOpen && !goalsDrawerOpen && !createDraftOpen) return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = previousOverflow
     }
-  }, [drawerOpen, goalsDrawerOpen])
+  }, [createDraftOpen, drawerOpen, goalsDrawerOpen])
 
   const detailQuery = useIntentDetail(selectedIntentId)
   const detail = detailQuery.data?.detail ?? null
 
-  const intentUpdateMutation = useMutation({
-    mutationFn: async (payload: { id: string; body: Record<string, string> }) => {
-      return apiPatch<IntentPatchResponse>(`/api/intents/${encodeURIComponent(payload.id)}`, payload.body)
-    },
-    onSuccess: async () => {
-      setActiveEditor(null)
-      setEditorError(null)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['intent-detail', selectedIntentId] }),
-        queryClient.invalidateQueries({ queryKey: ['intents-list'] }),
-        queryClient.invalidateQueries({ queryKey: systemSnapshotQueryKey }),
-        queryClient.invalidateQueries({ queryKey: goalsTreeQueryKey }),
-      ])
-    },
-    onError: (error) => {
-      const message = error instanceof Error ? error.message : 'Intent update failed.'
-      setEditorError(message)
-    },
-  })
+  const createIntentMutation = useCreateIntentMutation()
+  const intentUpdateMutation = useUpdateIntentMutation()
 
   const createGoalMutation = useCreateGoalMutation()
   const updateGoalMutation = useUpdateGoalMutation()
@@ -1098,7 +1080,54 @@ export function IntentsListPage() {
       focusNextAction: { next_action: editorDraft.trim() },
       closeCondition: { close_condition: editorDraft.trim() },
     }
-    await intentUpdateMutation.mutateAsync({ id: selectedIntentId, body: bodyMap[field] })
+    try {
+      await intentUpdateMutation.mutateAsync({ id: selectedIntentId, body: bodyMap[field] })
+      setActiveEditor(null)
+      setEditorError(null)
+    } catch (error) {
+      setEditorError(error instanceof Error ? error.message : 'Intent update failed.')
+    }
+  }
+
+  const openCreateDraft = () => {
+    setCreateDraftError(null)
+    setCreateDraftOpen(true)
+  }
+
+  const closeCreateDraft = () => {
+    setCreateDraftOpen(false)
+    setCreateDraftError(null)
+    setCreateDraftForm({
+      title: '',
+      focus: '',
+      nextAction: '',
+      decisionSummary: '',
+    })
+  }
+
+  const submitCreateDraft = async () => {
+    const title = createDraftForm.title.trim()
+    if (title.length < 3) {
+      setCreateDraftError('Title required (min 3 characters).')
+      return
+    }
+
+    try {
+      const response = await createIntentMutation.mutateAsync({
+        title,
+        focus: createDraftForm.focus.trim() || undefined,
+        next_action: createDraftForm.nextAction.trim() || undefined,
+        decision_summary: createDraftForm.decisionSummary.trim() || undefined,
+      })
+      const createdIntentId = String(response.result?.id ?? response.result?.intent_id ?? '').trim() || null
+      if (createdIntentId) {
+        setSelectedIntentId(createdIntentId)
+        setDrawerOpen(true)
+      }
+      closeCreateDraft()
+    } catch (error) {
+      setCreateDraftError(error instanceof Error ? error.message : 'Create draft intent failed.')
+    }
   }
 
   const createGoalForNode = async (node: GoalTreeNode) => {
@@ -1238,7 +1267,7 @@ export function IntentsListPage() {
           <button className="tool-button" type="button" onClick={() => void refreshAll()}>
             Refresh List
           </button>
-          <button className="tool-button tool-button-primary" type="button" disabled title="Draft/create stays deferred until bridge mutations are backed by real CLI contracts.">
+          <button className="tool-button tool-button-primary" type="button" onClick={openCreateDraft}>
             Create Draft Intent
           </button>
         </div>
@@ -1459,6 +1488,78 @@ export function IntentsListPage() {
           </div>
         ) : null}
       </section>
+
+      {createDraftOpen ? (
+        <div className="prototype-overlay-backdrop" onClick={closeCreateDraft}>
+          <aside className="prototype-drawer intent-detail-drawer" onClick={(event) => event.stopPropagation()}>
+            <div className="panel-toolbar intent-detail-toolbar">
+              <div>
+                <p className="workspace-eyebrow">Intent Mutation</p>
+                <h2>Create Draft Intent</h2>
+              </div>
+              <button className="icon-tool-button" type="button" onClick={closeCreateDraft} aria-label="Close create draft drawer">
+                <Icon icon={xIcon} />
+              </button>
+            </div>
+
+            <div className="mutation-form compact-form">
+              <div className="form-field intent-detail-span">
+                <label htmlFor="intent-create-title">Title</label>
+                <input
+                  id="intent-create-title"
+                  type="text"
+                  value={createDraftForm.title}
+                  onChange={(event) => setCreateDraftForm((current) => ({ ...current, title: event.target.value }))}
+                  disabled={createIntentMutation.isPending}
+                />
+              </div>
+              <div className="form-field intent-detail-span">
+                <label htmlFor="intent-create-focus">Focus</label>
+                <input
+                  id="intent-create-focus"
+                  type="text"
+                  value={createDraftForm.focus}
+                  onChange={(event) => setCreateDraftForm((current) => ({ ...current, focus: event.target.value }))}
+                  disabled={createIntentMutation.isPending}
+                />
+              </div>
+              <div className="form-field intent-detail-span">
+                <label htmlFor="intent-create-next-action">Next Action</label>
+                <input
+                  id="intent-create-next-action"
+                  type="text"
+                  value={createDraftForm.nextAction}
+                  onChange={(event) => setCreateDraftForm((current) => ({ ...current, nextAction: event.target.value }))}
+                  disabled={createIntentMutation.isPending}
+                />
+              </div>
+              <div className="form-field intent-detail-span">
+                <label htmlFor="intent-create-summary">Decision Summary</label>
+                <textarea
+                  id="intent-create-summary"
+                  rows={4}
+                  value={createDraftForm.decisionSummary}
+                  onChange={(event) => setCreateDraftForm((current) => ({ ...current, decisionSummary: event.target.value }))}
+                  disabled={createIntentMutation.isPending}
+                />
+              </div>
+              <div className="intent-action-row intent-detail-span intent-actions-right">
+                <button className="secondary-btn" type="button" onClick={closeCreateDraft} disabled={createIntentMutation.isPending}>
+                  Cancel
+                </button>
+                <button className="submit-btn" type="button" onClick={() => void submitCreateDraft()} disabled={createIntentMutation.isPending}>
+                  {createIntentMutation.isPending ? 'Creating...' : 'Create Draft'}
+                </button>
+              </div>
+              {createDraftError ? (
+                <div className="form-result error intent-detail-span">
+                  <p>{createDraftError}</p>
+                </div>
+              ) : null}
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
       {goalsDrawerOpen ? (
         <div className="prototype-overlay-backdrop" onClick={() => setGoalsDrawerOpen(false)}>
