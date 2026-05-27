@@ -7,6 +7,8 @@
  * KBX DNA's preferred guard hints for future governance/runtime binding.
  */
 
+const legacyGovernance = require('./legacy-governance');
+
 const stateGuards = [
   {
     id: 'intent-needs-goal-link',
@@ -33,6 +35,7 @@ function getStateGuardDescriptors() {
 }
 
 module.exports = {
+  ...legacyGovernance,
   stateGuards,
   getStateGuardDescriptors,
 };

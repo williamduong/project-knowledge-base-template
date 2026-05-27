@@ -53,6 +53,7 @@ Most of that work has already started under:
 - `src/lib/dna/contract-schema.js`
 - `src/lib/dna/ontology-contract.js`
 - `src/lib/dna/governance-primitives.js`
+- `src/lib/dna/legacy-compat-contracts.js`
 
 ### Move toward `dna/kbx`
 
@@ -63,13 +64,15 @@ The KBX-worldview parts should be extracted toward:
 - `dna/kbx/bindings/terminology.js`
 - `dna/kbx/bindings/state-guards.js`
 - `dna/kbx/bindings/runtime-profile.js`
+- `dna/kbx/bindings/legacy-terminology.js`
+- `dna/kbx/bindings/legacy-governance.js`
 
 ---
 
 ## What Still Blocks Final Placement
 
 - current commands and tests still import `src/lib/ontology.js`
-- the legacy file still bundles multiple concepts in one module
+- the compatibility aggregator still preserves one import surface for old callers
 - some semantics are clearly KBX-specific, but some helper logic still needs neutralization before a final split
 
 ---
@@ -82,4 +85,3 @@ Any new ontology-related work must go into one of:
 
 1. `src/lib/dna/*` for neutral SVFactory primitives
 2. `dna/kbx/*` for KBX reference worldview assets
-

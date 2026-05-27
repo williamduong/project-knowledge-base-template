@@ -7,10 +7,14 @@
  * domain concepts, not what SVFactory core believes universally.
  */
 
+const legacyTerminology = require('./legacy-terminology');
+
 const terminology = {
-  Intent: ['Task', 'Proposal', 'Change'],
+  Intent: legacyTerminology.TerminologyRegistry.Intent.aliases,
   Principle: ['Rule', 'Policy'],
   Lesson: ['Learning'],
+  Policy: legacyTerminology.TerminologyRegistry.Policy.aliases,
+  Evidence: legacyTerminology.TerminologyRegistry.Evidence.aliases,
 };
 
 function getTerminologyBinding() {
@@ -18,6 +22,7 @@ function getTerminologyBinding() {
 }
 
 module.exports = {
+  ...legacyTerminology,
   terminology,
   getTerminologyBinding,
 };
