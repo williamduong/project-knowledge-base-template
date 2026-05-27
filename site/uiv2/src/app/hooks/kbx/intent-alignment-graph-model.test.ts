@@ -8,8 +8,6 @@ describe('intent alignment graph query model', () => {
   it('prefers selected intent, then focus intent, then active intent when resolving context target', () => {
     expect(resolveIntentContextTarget({
       selectedIntentId: 'v2-10-code-graph',
-      focusIntentId: 'v2-7-0-1-ui-state-contract',
-      activeIntentId: 'v2-8-kbx-beta-bug-hunt',
     })).toEqual({
       id: 'v2-10-code-graph',
       kind: 'intent',
@@ -17,17 +15,13 @@ describe('intent alignment graph query model', () => {
 
     expect(resolveIntentContextTarget({
       selectedIntentId: null,
-      focusIntentId: 'v2-7-0-1-ui-state-contract',
-      activeIntentId: 'v2-8-kbx-beta-bug-hunt',
     })).toEqual({
-      id: 'v2-7-0-1-ui-state-contract',
-      kind: 'intent',
+      id: 'workspace',
+      kind: 'workspace',
     })
 
     expect(resolveIntentContextTarget({
       selectedIntentId: null,
-      focusIntentId: null,
-      activeIntentId: null,
     })).toEqual({
       id: 'workspace',
       kind: 'workspace',

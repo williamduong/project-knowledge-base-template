@@ -66,6 +66,7 @@ const kbRootsStatePath = path.join(__dirname, '.runtime-state', 'kb-roots.json')
 const ensureInFlight = new Map();
 let inProcessCommandQueue = Promise.resolve();
 const SYSTEM_SNAPSHOT_TTL_MS = 15000;
+const INTENT_CONTEXT_SYNC_TTL_MS = 30000;
 const CHILD_ENV_BLOCKLIST_KEYS = new Set([
   'ELECTRON_RUN_AS_NODE',
   'NODE_OPTIONS',
@@ -73,6 +74,8 @@ const CHILD_ENV_BLOCKLIST_KEYS = new Set([
 const CHILD_ENV_BLOCKLIST_PREFIXES = [
   'VSCODE_',
 ];
+let lastIntentContextProjectionFingerprint = null;
+let lastIntentContextSyncAt = 0;
 
 function buildChildProcessEnv(baseEnv = process.env) {
   const nextEnv = {};
@@ -125,6 +128,41 @@ function runKbx(args, timeoutMs = 15000) {
       clearTimeout(timeout);
       resolve({ code: code ?? 1, stdout: stdout.trim(), stderr: stderr.trim() });
     });
+  });
+}
+
+function buildIntentContextProjectionFingerprint({ intents, goalsState, releaseLines }) {
+  const intentParts = (intents || [])
+    .map((intent) => [
+      intent.id,
+      intent.lifecycle,
+      intent.taskCount ?? 0,
+      intent.taskDoneCount ?? 0,
+      intent.title ?? '',
+    ].join(':'))
+    .sort();
+  const goalParts = (Array.isArray(goalsState?.goals) ? goalsState.goals : [])
+    .map((goal) => [
+      goal.id,
+      goal.entity_level,
+      goal.entity_id,
+      goal.parent_goal_id ?? '',
+      goal.state ?? '',
+      goal.updated_at ?? '',
+    ].join(':'))
+    .sort();
+  const releaseParts = (releaseLines || [])
+    .map((releaseLine) => [
+      releaseLine.id ?? '',
+      releaseLine.label ?? '',
+      Array.isArray(releaseLine.sources) ? releaseLine.sources.join(',') : '',
+    ].join(':'))
+    .sort();
+
+  return JSON.stringify({
+    intents: intentParts,
+    goals: goalParts,
+    releases: releaseParts,
   });
 }
 
@@ -3329,12 +3367,26 @@ export function createApp(commandRunner = executeBridgeCommand) {
       try {
         const goalsState = readGoalsState({ workspaceRoot: repoRoot });
         const graphDb = await connectKnowledgeGraph();
+        const projectionFingerprint = buildIntentContextProjectionFingerprint({
+          intents,
+          goalsState,
+          releaseLines: officialBacklogStatus.releaseLines ?? [],
+        });
+        const now = Date.now();
         const projection = buildIntentGraphProjection({
           intents,
           goalsState,
           officialReleaseLines: officialBacklogStatus.releaseLines ?? [],
         });
-        await synchronizeIntentContextGraph(graphDb, projection);
+        const shouldSyncProjection =
+          projectionFingerprint !== lastIntentContextProjectionFingerprint ||
+          now - lastIntentContextSyncAt > INTENT_CONTEXT_SYNC_TTL_MS;
+
+        if (shouldSyncProjection) {
+          await synchronizeIntentContextGraph(graphDb, projection);
+          lastIntentContextProjectionFingerprint = projectionFingerprint;
+          lastIntentContextSyncAt = now;
+        }
         graph = await fetchIntentContextFromGraph(graphDb, {
           id: contextQuery.id,
           kind: contextQuery.kind,

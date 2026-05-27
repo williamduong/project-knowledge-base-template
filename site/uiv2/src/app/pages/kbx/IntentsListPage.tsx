@@ -755,14 +755,10 @@ export function IntentsListPage() {
       return
     }
 
-    const preferredId = [selectedIntentId, focusIntentId, activeIntentId, intents[0]?.id].find((id) =>
-      Boolean(id) && intents.some((intent) => intent.id === id),
-    ) ?? intents[0]?.id ?? null
-
-    if (preferredId !== selectedIntentId) {
-      setSelectedIntentId(preferredId)
+    if (selectedIntentId && !intents.some((intent) => intent.id === selectedIntentId)) {
+      setSelectedIntentId(null)
     }
-  }, [activeIntentId, focusIntentId, intents, selectedIntentId])
+  }, [intents, selectedIntentId])
 
   useEffect(() => {
     setExpandedTaskIndex(null)

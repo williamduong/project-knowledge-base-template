@@ -171,10 +171,8 @@ export const emptyIntentAlignmentGraph: IntentAlignmentGraph = {
 
 export function resolveIntentContextTarget({
   selectedIntentId,
-  focusIntentId,
-  activeIntentId,
-}: Pick<UseIntentAlignmentGraphInput, 'selectedIntentId' | 'focusIntentId' | 'activeIntentId'>): IntentAlignmentGraphTarget {
-  const intentId = selectedIntentId ?? focusIntentId ?? activeIntentId ?? null
+}: Pick<UseIntentAlignmentGraphInput, 'selectedIntentId'>): IntentAlignmentGraphTarget {
+  const intentId = selectedIntentId ?? null
   if (intentId) {
     return {
       id: intentId,
@@ -198,8 +196,6 @@ export function buildIntentContextPath({
 }: UseIntentAlignmentGraphInput) {
   const target = resolveIntentContextTarget({
     selectedIntentId,
-    focusIntentId,
-    activeIntentId,
   })
 
   const searchParams = new URLSearchParams()
@@ -225,8 +221,6 @@ export function useIntentAlignmentGraph(input: UseIntentAlignmentGraphInput) {
 
   const target = resolveIntentContextTarget({
     selectedIntentId,
-    focusIntentId,
-    activeIntentId,
   })
 
   return useQuery({

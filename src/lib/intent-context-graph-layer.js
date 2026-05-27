@@ -568,7 +568,7 @@ async function fetchIntentContextFromGraph(db, { id, kind, depth, mode, includeT
         activeIntentId: activeIntentId ?? null,
       },
       focusNodeId: focusIntentId ? `intent:${focusIntentId}` : null,
-      defaultMode: focusIntentId ? 'focus' : mode,
+      defaultMode: mode,
       sources: {
         intent: 'knowledge-graph+filesystem-projection',
         goals: 'knowledge-graph+goals-state-projection',
@@ -740,7 +740,7 @@ async function fetchIntentContextFromGraph(db, { id, kind, depth, mode, includeT
       activeIntentId: activeIntentId ?? null,
     },
     focusNodeId: focusIntentId ? `intent:${focusIntentId}` : null,
-    defaultMode: focusIntentId ? 'focus' : mode,
+    defaultMode: kind === 'intent' && focusIntentId ? 'focus' : mode,
     sources: {
       intent: 'knowledge-graph+filesystem-projection',
       goals: 'knowledge-graph+goals-state-projection',
