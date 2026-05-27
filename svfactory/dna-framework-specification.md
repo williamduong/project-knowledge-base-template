@@ -23,6 +23,31 @@ A DNA contains:
 2. **Each DNA** = specific declarative package for a specific org type
 3. **Community** = can research, design, fork, and contribute new DNAs
 
+### Worldview Layers
+
+This document assumes three different layers of "seeing the world":
+
+1. **SVFactory worldview** — the world of system generation and validation:
+   - `DNA`
+   - ontology contract
+   - rule
+   - gate
+   - pipeline
+   - evidence
+   - compiler
+   - variant
+   - release contract
+2. **DNA worldview** — the world of one specific domain or industry:
+   - SaaS, legal, research, manufacturing, internal KBX, etc.
+3. **KBX instance worldview** — one concrete downstream project:
+   - inherits DNA, then becomes unique through real user data, docs, code, graph state, and history
+
+Design rule:
+
+- SVFactory core must remain neutral across domains.
+- Domain-specific worldview belongs in DNA packages.
+- Project-specific truth belongs in downstream KBX instances.
+
 ### Boundary Note (important)
 
 This document is intentionally **pre-boundary-lock**:
@@ -36,6 +61,16 @@ Short-term interpretation:
 - `DNA` is a declarative contract first.
 - `Gate` and `Pipeline` remain runtime/operator contracts first.
 - Promotion of those concepts into first-class graph or ontology primitives happens only after a separate boundary decision.
+
+### Direction Checkpoint
+
+This spec is on the right track if we keep the following interpretation stable:
+
+- `SVFactory core` owns compiler, orchestrator, graph adapters, runtime services, and release flow.
+- A `DNA package` owns domain contract material: ontology, governance defaults, graph/storage profile, bindings, and release metadata.
+- `dna/kbx` is the reference contract for KBX itself, not a dump of the full current engine.
+- `dna/kbx-saas` is the first serious pilot DNA because it gives a concrete product-workflow testbed.
+- `Gate` and `Pipeline` should be visible in runtime/UI now, but promoted into graph primitives only when their cross-domain semantics are proven.
 
 ---
 
@@ -482,40 +517,236 @@ Notes:
 - Avoid using the same package name for both core engine and a specific DNA.
 - The exact naming can still change, but the separation of **factory core** vs **DNA packages** should remain.
 
-### 4.2 Phase 7 Implementation Roadmap
+### 4.2 Phase 7 Implementation Tracks
 
-**Week 1-2: KBX General DNA Foundation**
-- [ ] Create directory structure `dna/kbx/`
-- [ ] Document ontology + governance
-- [ ] Extract graph/storage profile
-- [ ] Create package.json
+The implementation should move by **capability tracks**, not by vague weekly buckets.
 
-**Week 3-4: KBX-SaaS DNA Design**
-- [ ] Research SaaS best practices
-- [ ] Design SaaS ontology
-- [ ] Design SaaS governance rules
-- [ ] Create SaaS documentation
-- [ ] Create GraphDB template for SaaS
+**Phase 7A — Boundary Lock + Contract Schema**
+- [ ] Freeze the short-term boundary: DNA declarative-first, Gate/Pipeline runtime-first
+- [ ] Define `dna.json`, `ontology.json`, `governance.json`, and `release.json` minimal schemas
+- [ ] Define validation rules for required DNA fields and versioning
+- [ ] Document what is universal core vs what stays DNA-specific
 
-**Week 5-6: KBX-SaaS DNA Integration**
-- [ ] Implement compiler/runtime bindings for SaaS DNA
-- [ ] Implement SaaS agent presets
-- [ ] Create SaaS UI overlays if needed
-- [ ] Package as DNA contract package
+### 4.2.1 Minimal Contract Design
 
-**Week 7-8: Testing & Documentation**
-- [ ] Dogfood: Use `kbx-saas` for KBX product management
-- [ ] Create setup guides
-- [ ] Create example scenarios
-- [ ] Record video tutorials
+Before implementation, the first stable contract should be intentionally small.
 
-**Week 9+: Community & Iteration**
-- [ ] Release `kbx-saas@1.0` to npm
-- [ ] Publish video tutorials
-- [ ] Gather user feedback
-- [ ] Plan Enterprise DNA + Solo Founder DNA
+**`dna.json`**
 
-### 4.3 Success Criteria for Phase 7
+Purpose:
+- identity of the DNA package
+- compatibility and composition metadata
+
+Minimal fields:
+
+```json
+{
+  "dna_id": "kbx",
+  "name": "KBX Reference DNA",
+  "version": "0.1.0",
+  "kind": "reference",
+  "extends": null,
+  "description": "Reference DNA extracted from legacy KBX semantics.",
+  "ontology_ref": "./ontology.json",
+  "governance_ref": "./governance.json",
+  "release_ref": "./release.json"
+}
+```
+
+Rules:
+- `dna_id`, `name`, `version`, and refs are required
+- `extends` is optional and allows future DNA inheritance/composition
+- no runtime-specific user data belongs here
+
+**`ontology.json`**
+
+Purpose:
+- define the worldview of one DNA
+- declare entity types, edge types, and optional glossary/aliases
+
+Minimal fields:
+
+```json
+{
+  "version": "0.1.0",
+  "entities": {
+    "Intent": {
+      "description": "A declared unit of intended change or focus.",
+      "properties": {
+        "id": { "type": "string", "required": true }
+      }
+    }
+  },
+  "edges": {
+    "IMPLEMENTS": {
+      "from": ["Intent"],
+      "to": ["Goal"],
+      "properties": {}
+    }
+  },
+  "glossary": []
+}
+```
+
+Rules:
+- `entities` and `edges` are required, even if small
+- this file describes domain worldview, not runtime mutation policy
+- aliases/glossary are optional and DNA-specific
+
+**`governance.json`**
+
+Purpose:
+- declare rules, gates, pipelines, and evidence expectations for one DNA
+
+Minimal fields:
+
+```json
+{
+  "version": "0.1.0",
+  "rules": [
+    {
+      "id": "decision-must-link-principle",
+      "subject": "Decision",
+      "require": ["Principle"],
+      "severity": "error"
+    }
+  ],
+  "gates": [
+    {
+      "id": "pre-release-doctor",
+      "stage": "pre-release",
+      "requires": ["doctor-pass"],
+      "block_on_fail": true
+    }
+  ],
+  "pipelines": [
+    {
+      "id": "default-change-flow",
+      "steps": ["intent", "decision", "implementation", "lesson"]
+    }
+  ],
+  "evidence_policy": {
+    "required_for": ["release", "high-risk-change"]
+  }
+}
+```
+
+Rules:
+- this file owns DNA-specific governance defaults
+- `rules`, `gates`, and `pipelines` should be declarative, not executable code
+- execution logic belongs to SVFactory core
+
+**`release.json`**
+
+Purpose:
+- declare packaging, compatibility, and release-level metadata
+
+Minimal fields:
+
+```json
+{
+  "version": "0.1.0",
+  "package_name": "@williamduong/dna-kbx",
+  "display_name": "KBX Reference DNA",
+  "compatibility": {
+    "svfactory": "^3.0.0"
+  },
+  "artifacts": [],
+  "notes": "Initial reference DNA release."
+}
+```
+
+Rules:
+- this file should stay release-oriented
+- no ontology or governance duplication belongs here
+- compatibility must target SVFactory core, not one downstream project instance
+
+**Phase 7B — `dna/kbx` Reference Contract Extraction**
+- [ ] Create `dna/kbx/` scaffold
+- [ ] Extract current KBX ontology into `dna/kbx/spec/ontology.json`
+- [ ] Extract governance defaults into `dna/kbx/spec/governance.json`
+- [ ] Extract graph/storage assumptions into `dna/kbx/graph/*`
+- [ ] Write `MIGRATION.md` explaining contract-vs-engine separation
+- [ ] Freeze legacy mixed-boundary modules (for example `src/lib/ontology.js`) and stop extending them during extraction
+
+**Phase 7C — Factory Compiler + Init Flow**
+- [ ] Add factory command surface for DNA discovery (`list`, `show`, `validate`)
+- [ ] Add initialization path that consumes a DNA contract instead of a raw template copy
+- [ ] Add compiler step that produces configured runtime/project outputs from DNA spec
+- [ ] Add materialization step that generates a KBX-shaped downstream instance from validated DNA
+- [ ] Keep backward compatibility while old template flow is still alive
+
+**Phase 7D — `dna/kbx-saas` Pilot DNA**
+- [ ] Research and write SaaS-specific ontology
+- [ ] Encode SaaS governance defaults, gates, and pipes
+- [ ] Define SaaS bindings for compiler/runtime/agents
+- [ ] Create example scenarios proving Feature → Decision → Code → Metric flow
+
+**Phase 7E — Operator UI for DNA / Flow**
+- [ ] Add `Flow` workspace for pipelines, gates, map, and registry views
+- [ ] Add `DNA` surfaces for package summary, ontology, governance, and release metadata
+- [ ] Start with mock/derived data, then switch to runtime-backed data
+- [ ] Use graph/map views only where relationships matter; keep registry/detail views table/card-first
+
+**Phase 7F — Graph / Ontology Promotion Decision**
+- [ ] Decide whether `DNA`, `Gate`, and `Pipeline` become first-class graph entities in v3.0
+- [ ] If yes, design graph schema extension and ontology artifact changes
+- [ ] If no, keep them as compiler/runtime contracts and avoid premature graph migration
+- [ ] Record the decision in backlog/architecture artifacts before broad implementation expands
+
+### 4.3 Immediate Build Order
+
+To start building without architectural drift, the recommended order is:
+
+1. `Phase 7A` — lock boundary + schemas
+2. `Phase 7B` — extract `dna/kbx`
+3. `Phase 7C` — make factory consume DNA
+4. `Phase 7D` — build `dna/kbx-saas`
+5. `Phase 7E` — expose DNA/Flow in UI
+6. `Phase 7F` — decide graph promotion after real usage pressure appears
+
+### 4.4 Refactor Shape Before Generation
+
+The ontology/governance refactor should converge on a structure like:
+
+```text
+src/lib/dna/
+  contract-schema.js
+  ontology-contract.js
+  governance-primitives.js
+  graph-adapter.js
+  compiler/
+    load-dna.js
+    validate-dna.js
+    compile-dna.js
+    materialize-kbx.js
+
+dna/kbx/
+  spec/
+    dna.json
+    ontology.json
+    governance.json
+    release.json
+  graph/
+    schema.json
+    entities.json
+    graph-profile.json
+  bindings/
+    terminology.js
+    state-guards.js
+    runtime-profile.js
+  templates/
+    knowledge-base/
+    documents/
+```
+
+Interpretation:
+
+- `src/lib/dna/*` remains neutral SVFactory core.
+- `dna/kbx/*` becomes the first reference DNA extracted from legacy KBX semantics.
+- Downstream KBX generation should be produced through compiler/materializer flow, not by treating legacy monolith files as permanent core truth.
+
+### 4.5 Success Criteria for Phase 7
 
 **KBX General DNA:**
 - [ ] `dna/kbx` captures KBX ontology, governance, graph/storage profile, and release metadata

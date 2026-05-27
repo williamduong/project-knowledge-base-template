@@ -103,6 +103,196 @@ Potential relationship candidates:
    - UI/Flow/DNA pages
 5. Decide whether package distribution mirrors graph primitives or remains compiler-oriented only.
 
+## `src/lib/ontology.js` decomposition (working decision)
+
+Current assessment: `src/lib/ontology.js` is **mixed-boundary legacy**. It currently blends:
+
+1. neutral ontology-contract tooling,
+2. KBX/SaaS-specific worldview and terminology,
+3. governance/runtime mutation logic.
+
+### Keep in SVFactory core
+
+These pieces fit the neutral factory worldview and should survive in a rewritten core module:
+
+- `GlossaryEntrySchema` and `GlossarySchema`
+- `PropertySpecSchema`
+- `NodeTypeContractSchema`
+- `EdgeTypeContractSchema`
+- `OntologyContractSchema`
+- `validateOntologyContract`
+- `evaluateUnknownPropertyRejectionMatrix`
+- `createOntologyValidator` (after its registry is updated to neutral schemas only)
+
+Interpretation:
+
+- Core should keep an **ontology contract toolkit**.
+- Core should not keep one downstream ontology as if it were universal truth.
+
+### Keep in core only after generic rewrite
+
+These concepts are important to SVFactory, but the current implementation is too KBX/SaaS-shaped:
+
+- `StateTransitionGuards`
+- `verifyStateTransition`
+- `hasEvidencePath`
+- `verifyMutation`
+- `ToolCallInterceptor`
+
+Interpretation:
+
+- The ideas belong to factory-level governance.
+- The current semantics must be rewritten around neutral primitives such as `MutationProposal`, `Evidence`, `Gate`, `ValidationResult`, and graph adapter abstractions.
+
+### Relocate to `dna/kbx` or another DNA package
+
+These pieces encode a specific worldview and should not remain in neutral core:
+
+- `SaaSNodeDNA` and `SaaSNodeDNA_spec`
+- `IntentSchema` and `IntentSchema_spec` in their current form
+- `TerminologyRegistryEntry`
+- `TerminologyRegistry_data`
+- `aliasToCanonical`
+- `resolveTerminology`
+- `validateTerminology`
+- `buildGlossaryLookup`
+- `resolveAgainstGovernedGlossary`
+- `validateGlossary`
+- `auditNaturalLanguageTerms`
+
+Interpretation:
+
+- These define how one specific system names the world.
+- They belong in a reference DNA such as `dna/kbx` unless later generalized into neutral primitives.
+
+### Move out of ontology into governance/runtime bindings
+
+These pieces may still belong to SVFactory or a DNA package, but they should not stay inside ontology-contract code:
+
+- `CypherTemplates`
+- `checkCrossRepoGrant`
+- `validateIntent`
+- `validateSaaSNode`
+
+Interpretation:
+
+- They are not ontology declarations.
+- They are storage-query, policy, or runtime validation concerns.
+
+### Immediate rule for future work
+
+- Do not extend `src/lib/ontology.js` with more mixed-boundary behavior.
+- Any new ontology work must first declare whether it belongs to:
+  - `SVFactory core worldview`
+  - `DNA worldview`
+  - `KBX instance data`
+
+## Proposed refactor file structure
+
+This is the preferred split before building DNA generation features:
+
+```text
+src/lib/dna/
+  contract-schema.js          # Neutral DNA contract schemas used by SVFactory core
+  ontology-contract.js        # Entity/edge/property/glossary toolkit
+  governance-primitives.js    # Neutral Rule/Gate/Pipeline/Evidence/Mutation primitives
+  graph-adapter.js            # Core adapter interface for graph-backed validation
+  compiler/
+    load-dna.js               # Read DNA package from disk/npm form
+    validate-dna.js           # Deterministic validation against contract schemas
+    compile-dna.js            # Produce configured variant/runtime payload
+    materialize-kbx.js        # Generate downstream KBX instance structure
+
+dna/kbx/
+  spec/
+    dna.json
+    ontology.json
+    governance.json
+    release.json
+  graph/
+    schema.json
+    entities.json
+    graph-profile.json
+  bindings/
+    terminology.js
+    state-guards.js
+    runtime-profile.js
+  templates/
+    knowledge-base/
+    documents/
+  MIGRATION.md
+```
+
+Interpretation:
+
+- `src/lib/dna/*` is neutral SVFactory core.
+- `dna/kbx/*` is the reference DNA worldview extracted from legacy KBX.
+- Downstream KBX generation should consume `dna/kbx/*`, not import legacy mixed-boundary modules directly.
+
+## Recommended implementation tracks after boundary lock
+
+1. `Phase 7A` — lock boundary assumptions and define minimal DNA contract schemas.
+2. `Phase 7B` — extract `dna/kbx` as reference contract, not engine copy.
+3. `Phase 7C` — make SVFactory consume DNA packages through deterministic compiler/init flows.
+4. `Phase 7D` — build `dna/kbx-saas` as the first real pilot DNA.
+5. `Phase 7E` — expose DNA + Flow in operator UI using registry/detail views plus graph/map surfaces.
+6. `Phase 7F` — only then decide whether `DNA`, `Gate`, and `Pipeline` are promoted into first-class graph primitives.
+
+## Refactor-to-generation execution path
+
+The intended path is:
+
+1. **Split legacy ontology**
+   - Freeze `src/lib/ontology.js`
+   - Extract neutral tooling into `src/lib/dna/ontology-contract.js`
+   - Move KBX-specific worldview and guards into `dna/kbx/`
+2. **Define neutral DNA contracts**
+   - `dna.json`
+   - `ontology.json`
+   - `governance.json`
+   - `release.json`
+3. **Build deterministic DNA compiler flow**
+   - load DNA
+   - validate DNA
+   - compile DNA
+   - materialize downstream KBX structure
+4. **Use `dna/kbx` as first real proof**
+   - reference extraction from legacy KBX
+   - verify that SVFactory can regenerate a KBX-shaped output from DNA instead of copying monolith assumptions
+5. **Only after that, expand to new DNAs**
+   - `dna/kbx-saas`
+   - other industry DNAs
+
+## Minimal DNA contract set (design-first)
+
+Phase 7A should start with four small declarative files:
+
+1. `dna.json`
+   - DNA identity and composition metadata
+   - required: `dna_id`, `name`, `version`, refs to ontology/governance/release
+   - optional: `extends`, `description`
+
+2. `ontology.json`
+   - DNA worldview declaration
+   - required: `version`, `entities`, `edges`
+   - optional: `glossary`, aliases, descriptions
+
+3. `governance.json`
+   - DNA rule/gate/pipeline defaults
+   - required: `version`, `rules`, `gates`, `pipelines`
+   - optional: `evidence_policy`, severity defaults, stage metadata
+
+4. `release.json`
+   - package/release metadata
+   - required: `version`, `package_name`, compatibility target for SVFactory
+   - optional: `artifacts`, `notes`
+
+Immediate design rule:
+
+- Keep these files declarative.
+- Execution belongs to SVFactory core compiler/materializer.
+- User/project data must not appear inside these four contracts.
+
 ## Non-goals
 
 - Do not implement DNA compiler/runtime here.

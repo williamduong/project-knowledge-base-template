@@ -43,6 +43,16 @@ KBX = Phần mềm quản lý tri thức có khả năng mở rộng, phát tri�
 - SVFactory is the meta-factory that defines governance contracts, templates, workflows, schemas, prompts, and deterministic gates.
 - KBAgent is a downstream agent family instantiated from that contract to help users operate and evolve a reference-accurate knowledge base.
 - kbx CLI is the deterministic enforcement bridge between SVFactory and KBAgent.
+- SVFactory is **not** KBX. SVFactory is the neutral factory core that defines how worldviews are generated.
+- A DNA package defines a **specific worldview** for a downstream KBX variant (domain ontology, rules, gates, pipes, graph/storage profile, templates).
+- KBX instances inherit a DNA worldview but are further shaped by real user data, documents, code, and graph state.
+- Legacy KBX semantics must be treated as a **reference DNA / downstream form**, not as the architectural core of SVFactory.
+
+## Worldview Layering
+
+- `SVFactory core worldview`: how systems are generated and validated (`DNA`, ontology contract, rule, gate, pipeline, evidence, compiler, variant, release contract).
+- `DNA worldview`: how one domain sees its world (for example SaaS, legal, research, manufacturing).
+- `KBX instance worldview`: one concrete downstream knowledge base, shaped by the chosen DNA plus live user/project data.
 
 ## Naming Taxonomy
 

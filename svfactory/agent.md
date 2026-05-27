@@ -45,6 +45,14 @@ Mỗi DNA:
 2. Refactor current KBX → dna/kbx (General DNA)
 3. Build dna/kbx-saas (first user-facing DNA, dogfood for KBX team)
 
+### Phase 7 Boundary Lock (Read Before Any DNA Work)
+
+- **SVFactory is not KBX.**
+- **SVFactory** nhìn thế giới như một cỗ máy sinh ra worldview: `DNA`, ontology contract, rule, gate, pipeline, evidence, compiler, variant, release contract.
+- **DNA** nhìn thế giới theo một góc nhìn domain cụ thể: ontology, governance defaults, graph/storage profile, templates, bindings.
+- **KBX instance** thừa hưởng worldview của DNA nhưng bị uốn bởi dữ liệu thật của user/project (docs, code, graph state, history).
+- Vì vậy, các semantics KBX cũ phải được đọc như **reference DNA + downstream form**, không phải lõi kiến trúc của SVFactory.
+
 ---
 
 ## 1. Identity
@@ -165,6 +173,15 @@ When creating or updating **Goals, Decisions, Principles, or Lessons**:
    - Tests query graph, not files
 
 **Validation:** Check the DEPRECATED.md file for examples of graph-first workflows.
+
+### 4.4.1 DNA / Ontology Interpretation Guard
+
+- Khi đọc ontology, rules, gates, pipes, templates, luôn phân loại trước:
+  - `SVFactory core primitive`
+  - `DNA-specific worldview`
+  - `KBX instance data`
+- Không được mặc định coi ontology/rules của KBX cũ là ontology/rules lõi của SVFactory.
+- Nếu gặp code/file đang trộn 3 lớp trên trong cùng một module, phải gọi đó là **mixed-boundary legacy** và propose tách lớp trước khi mở rộng.
 
 ### 4.5 Khi gặp blocker
 
