@@ -1495,14 +1495,42 @@ export function IntentsListPage() {
             <p>The workspace did not return any intent records yet.</p>
           </div>
         ) : intentView === 'graph' ? (
-          <IntentAlignmentGraphCanvas
-            graph={alignmentGraph}
-            onSelectNode={handleGraphNodeSelect}
-            queryMode={graphQueryMode}
-            onQueryModeChange={setGraphQueryMode}
-            queryDepth={graphQueryDepth}
-            onQueryDepthChange={setGraphQueryDepth}
-          />
+          alignmentGraphQuery.isLoading ? (
+            <div className="intent-empty-state">
+              <h3>Loading alignment graph</h3>
+              <p>Querying live intent context from the graph bridge.</p>
+            </div>
+          ) : alignmentGraphQuery.isError ? (
+            <div className="intent-empty-state intent-empty-state-danger">
+              <h3>Alignment graph unavailable</h3>
+              <p>{alignmentGraphQuery.error instanceof Error ? alignmentGraphQuery.error.message : 'Context explorer query failed.'}</p>
+              <p>Registry remains available as the fallback operator view while the graph route is recovering.</p>
+              <div className="home-inline-summary-row">
+                <button className="tool-button" type="button" onClick={() => setIntentView('registry')}>
+                  Open Registry
+                </button>
+              </div>
+            </div>
+          ) : !alignmentGraph.nodes.length ? (
+            <div className="intent-empty-state">
+              <h3>Alignment graph returned no nodes</h3>
+              <p>The context explorer responded, but no neighborhood nodes were available for this view yet.</p>
+              <div className="home-inline-summary-row">
+                <button className="tool-button" type="button" onClick={() => setIntentView('registry')}>
+                  Open Registry
+                </button>
+              </div>
+            </div>
+          ) : (
+            <IntentAlignmentGraphCanvas
+              graph={alignmentGraph}
+              onSelectNode={handleGraphNodeSelect}
+              queryMode={graphQueryMode}
+              onQueryModeChange={setGraphQueryMode}
+              queryDepth={graphQueryDepth}
+              onQueryDepthChange={setGraphQueryDepth}
+            />
+          )
         ) : (
           <div className="rules-table intent-registry-table" role="table" aria-label="Intent registry list">
             <div className="rules-table-header intent-registry-header" role="row">
