@@ -1,6 +1,19 @@
 # Phase 7: DNA Framework Implementation Roadmap
 
-**Status:** Active (2026-05-25)  
+> Historical roadmap note (2026-05-27):
+> This document is preserved as phase-planning history, but parts of Phase 7.1
+> are now superseded by the neutral-boundary direction locked in:
+> - `svfactory/dna-framework-specification.md`
+> - `knowledge-base/intents/_backlog/v3-0-dna-graph-ontology-boundary.md`
+>
+> Do not treat this file as the current source of truth for package boundaries.
+> In particular, the older "move current engine into `dna/kbx/src/*`" direction
+> is no longer the preferred architecture. The current direction is:
+> - `SVFactory core` stays neutral
+> - `dna/kbx` is a reference DNA contract + assets package
+> - downstream KBX instances are produced through compiler/materializer flow
+
+**Status:** Historical / superseded in parts (2026-05-27)  
 **Version Target:** v3.0  
 **Duration:** 9-12 weeks (Phase 7.0 → 7.3)  
 **Strategic Goal:** Build factory that generates KBX variants for multi-domain use
@@ -54,7 +67,13 @@ Phase 7 transforms KBX from a single template into a **DNA Framework Factory** w
 
 ### Goals
 
-Refactor current KBX codebase into `dna/kbx/` directory structure while maintaining backward compatibility.
+Original goal in this draft: refactor the current KBX codebase into `dna/kbx/`
+while maintaining backward compatibility.
+
+Current interpretation:
+- Keep `SVFactory core` in neutral compiler/schema/runtime-adapter modules.
+- Extract `dna/kbx` as reference DNA contracts, bindings, graph profile, and templates.
+- Do not relocate the whole current engine into `dna/kbx/src/*` as the primary target shape.
 
 ### Deliverables
 
@@ -96,23 +115,23 @@ dna/kbx/
 - [ ] Write `docs/research-foundation.md` (design rationale)
 
 **Week 4 (Refactoring & GraphDB):**
-- [ ] Move `src/commands/` → `dna/kbx/src/cli/`
-- [ ] Move `src/graph-db/` → `dna/kbx/src/lib/`
-- [ ] Move `site/kbx-ui/` → `dna/kbx/src/ui/`
-- [ ] Move `site/uiv2/` → `dna/kbx/src/ui-react/`
-- [ ] Extract GraphDB schema → `dna/kbx/graphdb/schema.json`
-- [ ] Create pre-seeded entities → `dna/kbx/graphdb/entities.json`
-- [ ] Define governance rules → `dna/kbx/graphdb/governance-rules.json`
-- [ ] Update `package.json` to point to new locations
-- [ ] Test: `npm install && npm run help` still works
+- [ ] Historical draft item: Move `src/commands/` → `dna/kbx/src/cli/` (superseded by neutral core split)
+- [ ] Historical draft item: Move `src/graph-db/` → `dna/kbx/src/lib/` (superseded by neutral core split)
+- [ ] Historical draft item: Move `site/kbx-ui/` → `dna/kbx/src/ui/` (superseded by workspace/UI boundary review)
+- [ ] Historical draft item: Move `site/uiv2/` → `dna/kbx/src/ui-react/` (superseded by workspace/UI boundary review)
+- [ ] Extract GraphDB schema → `dna/kbx/graph/schema.json`
+- [ ] Create pre-seeded entities/profile → `dna/kbx/graph/entities.json`, `dna/kbx/graph/graph-profile.json`
+- [ ] Define governance assets in DNA contract/bindings instead of `graphdb/governance-rules.json`
+- [ ] Keep package/runtime migration separate from DNA extraction
+- [ ] Test compiler/materializer flow against `dna/kbx/spec/*`
 
 ### Success Criteria
 
-- All KBX code lives in `dna/kbx/src/`
+- `dna/kbx` captures the KBX reference worldview without becoming the permanent home of the whole current engine
 - Documentation explains KBX ontology + governance
-- GraphDB template captures KBX governance model
-- Backward compatibility: `npm install kbx` still works
-- CLI commands unchanged: `kbx init`, `kbx status`, etc. still work
+- Graph assets capture the KBX reference worldview and storage profile
+- SVFactory compiler/materializer can consume `dna/kbx/spec/*`
+- Any backward-compatibility plan is handled explicitly, not by collapsing SVFactory into KBX
 
 ---
 
