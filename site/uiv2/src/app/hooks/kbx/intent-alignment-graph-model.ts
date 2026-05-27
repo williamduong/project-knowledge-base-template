@@ -117,6 +117,7 @@ export type IntentAlignmentGraphTarget = {
 }
 
 type UseIntentAlignmentGraphInput = {
+  target?: IntentAlignmentGraphTarget | null
   selectedIntentId?: string | null
   focusIntentId?: string | null
   activeIntentId?: string | null
@@ -186,19 +187,20 @@ export function resolveIntentContextTarget({
 }
 
 export function buildIntentContextPath({
+  target,
   selectedIntentId,
   depth = 1,
   mode = 'alignment',
   includeTasks = true,
   includeUnlinked = true,
 }: UseIntentAlignmentGraphInput) {
-  const target = resolveIntentContextTarget({
+  const resolvedTarget = target ?? resolveIntentContextTarget({
     selectedIntentId,
   })
 
   const searchParams = new URLSearchParams()
-  searchParams.set('id', target.id)
-  searchParams.set('kind', target.kind)
+  searchParams.set('id', resolvedTarget.id)
+  searchParams.set('kind', resolvedTarget.kind)
   searchParams.set('depth', String(depth))
   searchParams.set('mode', mode)
   searchParams.set('include_tasks', includeTasks ? 'true' : 'false')
@@ -208,6 +210,7 @@ export function buildIntentContextPath({
 
 export function useIntentAlignmentGraph(input: UseIntentAlignmentGraphInput) {
   const {
+    target,
     selectedIntentId,
     focusIntentId,
     activeIntentId,
@@ -217,21 +220,22 @@ export function useIntentAlignmentGraph(input: UseIntentAlignmentGraphInput) {
     includeUnlinked = true,
   } = input
 
-  const target = resolveIntentContextTarget({
+  const resolvedTarget = target ?? resolveIntentContextTarget({
     selectedIntentId,
   })
 
   return useQuery({
     queryKey: [
       ...intentContextQueryKey,
-      target.id,
-      target.kind,
+      resolvedTarget.id,
+      resolvedTarget.kind,
       depth,
       mode,
       includeTasks,
       includeUnlinked,
     ],
     queryFn: () => apiGet<IntentAlignmentGraph>(buildIntentContextPath({
+      target,
       selectedIntentId,
       focusIntentId,
       activeIntentId,

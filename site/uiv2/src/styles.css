@@ -1990,6 +1990,85 @@
   gap: 14px;
 }
 
+.intent-planning-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.65fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.intent-planning-sidebar,
+.intent-planning-main {
+  display: grid;
+  gap: 14px;
+}
+
+.intent-planning-tree {
+  display: grid;
+  gap: 10px;
+}
+
+.intent-tree-branch {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(49, 72, 99, 0.45);
+  background: rgba(11, 16, 23, 0.6);
+}
+
+.intent-tree-release-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.intent-tree-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(49, 72, 99, 0.5);
+  background: rgba(19, 28, 41, 0.72);
+  color: var(--text);
+  text-align: left;
+}
+
+.intent-tree-row small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+}
+
+.intent-tree-row.selected {
+  border-color: rgba(69, 189, 155, 0.44);
+  background: rgba(10, 31, 40, 0.9);
+}
+
+.intent-tree-row-root {
+  background: linear-gradient(180deg, rgba(15, 52, 45, 0.92), rgba(11, 16, 23, 0.82));
+}
+
+.intent-tree-row-milestone {
+  margin-left: 14px;
+}
+
+.intent-tree-row-intent {
+  margin-left: 28px;
+}
+
+.intent-tree-intents {
+  display: grid;
+  gap: 8px;
+}
+
+.intent-toolbar-search {
+  min-width: min(280px, 100%);
+}
+
 .intent-goal-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

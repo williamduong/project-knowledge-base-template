@@ -40,6 +40,20 @@ describe('intent alignment graph query model', () => {
     })).toBe('/api/intents/context?id=v2-10-code-graph&kind=intent&depth=2&mode=focus&include_tasks=false&include_unlinked=false')
   })
 
+  it('respects explicit graph target overrides', () => {
+    expect(buildIntentContextPath({
+      target: {
+        id: 'v2-10',
+        kind: 'milestone',
+      },
+      selectedIntentId: 'v2-10-code-graph',
+      depth: 1,
+      mode: 'alignment',
+      includeTasks: true,
+      includeUnlinked: true,
+    })).toBe('/api/intents/context?id=v2-10&kind=milestone&depth=1&mode=alignment&include_tasks=true&include_unlinked=true')
+  })
+
   it('exposes an empty graph placeholder while the query is loading', () => {
     expect(emptyIntentAlignmentGraph.center.id).toBe('workspace:svfactory')
     expect(emptyIntentAlignmentGraph.query.kind).toBe('workspace')

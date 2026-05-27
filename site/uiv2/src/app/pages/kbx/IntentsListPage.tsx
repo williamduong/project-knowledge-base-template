@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Icon } from '@iconify/react'
 import flag from '@iconify-icons/lucide/flag'
@@ -10,7 +10,6 @@ import target from '@iconify-icons/lucide/target'
 import activity from '@iconify-icons/lucide/activity'
 import archive from '@iconify-icons/lucide/archive'
 import chevronDown from '@iconify-icons/lucide/chevron-down'
-import chevronLeft from '@iconify-icons/lucide/chevron-left'
 import chevronRight from '@iconify-icons/lucide/chevron-right'
 import chevronUp from '@iconify-icons/lucide/chevron-up'
 import xIcon from '@iconify-icons/lucide/x'
@@ -32,7 +31,7 @@ import {
   type GoalTreeNode,
 } from '../../hooks/kbx/useGoalsTree'
 import { buildMilestones, buildReleaseLines, deriveVersionBucket, versionRank } from '../../hooks/kbx/intent-workspace-model'
-import { emptyIntentAlignmentGraph, useIntentAlignmentGraph, type IntentAlignmentNode } from '../../hooks/kbx/intent-alignment-graph-model'
+import { emptyIntentAlignmentGraph, useIntentAlignmentGraph, type IntentAlignmentGraphTarget, type IntentAlignmentNode } from '../../hooks/kbx/intent-alignment-graph-model'
 import { useCreateIntentMutation, useUpdateIntentMutation } from '../../hooks/kbx/useIntentMutations'
 import { IntentAlignmentGraphCanvas } from '../../components/intent-graph/IntentAlignmentGraphCanvas'
 
@@ -48,11 +47,20 @@ type GoalCard = {
   tone: 'active' | 'warning' | 'neutral' | 'done'
 }
 
+type PlanningFilterCard = {
+  id: PlanningSidebarTab
+  label: string
+  metric: string
+  caption: string
+  tone: PlanningCardTone
+}
+
 type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' | 'dropped' | 'selected'
 type IntentSortKey = 'title' | 'milestone' | 'lifecycle' | 'progress' | 'runtime'
 type DetailSectionKey = 'summary' | 'detail' | 'relations' | 'tasks'
 type EditableField = 'title' | 'summaryText' | 'focusCurrent' | 'focusNextAction' | 'closeCondition'
-type IntentViewMode = 'graph' | 'registry'
+type PlanningSidebarTab = 'system-goals' | 'backlog' | 'focus' | 'active' | 'closed' | 'archived' | 'milestones'
+type PlanningCardTone = 'active' | 'warning' | 'neutral' | 'done'
 
 const INTENTS_PER_PAGE = 20
 
@@ -200,12 +208,6 @@ function statusTone(value: string) {
   return 'status-neutral'
 }
 
-function milestoneVisualState(value: 'draft' | 'backlog' | 'active' | 'closed') {
-  if (value === 'closed') return 'done'
-  if (value === 'active') return 'active'
-  return 'upcoming'
-}
-
 function intentVersionLabel(intentId: string) {
   const bucket = deriveVersionBucket(intentId)
   return bucket === 'legacy' ? 'legacy' : bucket.toUpperCase()
@@ -263,6 +265,37 @@ function GoalCardView({ card, onClick }: { card: GoalCard; onClick?: () => void 
     <article className={`intent-goal-card intent-goal-card-${card.tone}`}>
       {content}
     </article>
+  )
+}
+
+function PlanningFilterCardView({
+  card,
+  active,
+  onClick,
+}: {
+  card: PlanningFilterCard
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className={`intent-goal-card intent-goal-card-${card.tone} intent-goal-card-button${active ? ' intent-goal-card-active' : ''}`}
+      onClick={onClick}
+    >
+      <div className="intent-goal-head">
+        <div className="intent-goal-head-copy">
+          <div>
+            <p className="workspace-eyebrow">{card.label}</p>
+            <strong>{card.metric}</strong>
+          </div>
+        </div>
+        <span className={`status-pill ${active ? 'status-live' : 'status-neutral'}`}>{active ? 'selected' : 'view'}</span>
+      </div>
+      <div className="intent-goal-foot">
+        <p>{card.caption}</p>
+      </div>
+    </button>
   )
 }
 
@@ -714,7 +747,10 @@ export function IntentsListPage() {
   const [intentSortKey, setIntentSortKey] = useState<IntentSortKey>('milestone')
   const [intentSortDirection, setIntentSortDirection] = useState<'asc' | 'desc'>('desc')
   const [intentPage, setIntentPage] = useState(1)
-  const [intentView, setIntentView] = useState<IntentViewMode>('graph')
+  const [showRegistry, setShowRegistry] = useState(false)
+  const [planningSearch, setPlanningSearch] = useState('')
+  const [sidebarTab, setSidebarTab] = useState<PlanningSidebarTab>('system-goals')
+  const [graphTarget, setGraphTarget] = useState<IntentAlignmentGraphTarget | null>(null)
   const [graphQueryMode, setGraphQueryMode] = useState<'focus' | 'alignment' | 'full'>('alignment')
   const [graphQueryDepth, setGraphQueryDepth] = useState(1)
   const [collapsedSections, setCollapsedSections] = useState<Record<DetailSectionKey, boolean>>({
@@ -747,7 +783,6 @@ export function IntentsListPage() {
   })
   const [goalTreeError, setGoalTreeError] = useState<string | null>(null)
   const [expandedGoalNodes, setExpandedGoalNodes] = useState<Set<string>>(new Set(['system:workspace']))
-  const milestoneRailRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!intents.length) {
@@ -810,6 +845,7 @@ export function IntentsListPage() {
   const milestones = useMemo(() => buildMilestones(intents), [intents])
   const releaseLines = useMemo(() => buildReleaseLines(milestones), [milestones])
   const alignmentGraphQuery = useIntentAlignmentGraph({
+    target: graphTarget,
     selectedIntentId,
     focusIntentId,
     activeIntentId,
@@ -936,14 +972,95 @@ export function IntentsListPage() {
     snapshotMetadata?.reloadRecommended,
   ])
 
+  const planningFilterCards = useMemo<PlanningFilterCard[]>(() => [
+    {
+      id: 'system-goals',
+      label: 'System Goals',
+      metric: `${goalsTree?.goals.length ?? 0}`,
+      caption: 'View the full planning graph from the workspace root.',
+      tone: 'done',
+    },
+    {
+      id: 'backlog',
+      label: 'Backlog',
+      metric: `${lifecycleCounts.backlog}`,
+      caption: 'Show planning work that has not started yet.',
+      tone: lifecycleCounts.backlog ? 'neutral' : 'done',
+    },
+    {
+      id: 'focus',
+      label: 'Focus',
+      metric: focusIntentId ?? 'none',
+      caption: 'Center the graph on the current planning focus.',
+      tone: focusIntentId ? 'active' : 'warning',
+    },
+    {
+      id: 'active',
+      label: 'Active',
+      metric: `${lifecycleCounts.active}`,
+      caption: 'Highlight intents currently in progress.',
+      tone: lifecycleCounts.active ? 'active' : 'neutral',
+    },
+    {
+      id: 'closed',
+      label: 'Closed',
+      metric: `${lifecycleCounts.closed}`,
+      caption: 'Review completed planning work and linked goals.',
+      tone: lifecycleCounts.closed ? 'done' : 'neutral',
+    },
+    {
+      id: 'archived',
+      label: 'Archive',
+      metric: `${lifecycleCounts.archived}`,
+      caption: 'Inspect archived intents without cluttering active work.',
+      tone: lifecycleCounts.archived ? 'neutral' : 'done',
+    },
+  ], [focusIntentId, goalsTree?.goals.length, lifecycleCounts.active, lifecycleCounts.archived, lifecycleCounts.backlog, lifecycleCounts.closed])
+
+  const planningBreadcrumb = useMemo(() => {
+    if (!graphTarget) return ['SVFactory', 'Planning Graph']
+    if (graphTarget.kind === 'workspace') return ['SVFactory', 'Planning Graph']
+    if (graphTarget.kind === 'release-line') return ['SVFactory', `Release ${graphTarget.id.toUpperCase()}`]
+    if (graphTarget.kind === 'milestone') return ['SVFactory', `Milestone ${graphTarget.id.toUpperCase()}`]
+    if (graphTarget.kind === 'intent') return ['SVFactory', 'Intent', graphTarget.id]
+    return ['SVFactory', graphTarget.id]
+  }, [graphTarget])
+
   const filteredIntents = useMemo(() => {
     return intents.filter((intent) => {
       const lifecycle = normalizeLifecycle(intent.lifecycle)
+      const search = planningSearch.trim().toLowerCase()
+      const matchesSearch = !search || [intent.id, intent.title ?? '', intent.goalText ?? '', intent.goal ?? '']
+        .some((value) => String(value || '').toLowerCase().includes(search))
+      if (!matchesSearch) return false
       if (healthFilter === 'all') return true
       if (healthFilter === 'selected') return intent.id === selectedIntentId
       return lifecycle === healthFilter
     })
-  }, [healthFilter, intents, selectedIntentId])
+  }, [healthFilter, intents, planningSearch, selectedIntentId])
+
+  const sidebarIntents = useMemo(() => {
+    switch (sidebarTab) {
+      case 'focus':
+        return filteredIntents.filter((intent) => intent.id === focusIntentId)
+      case 'active':
+        return filteredIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active')
+      case 'backlog':
+        return filteredIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog')
+      case 'closed':
+        return filteredIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'closed')
+      case 'archived':
+        return filteredIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'archived')
+      default:
+        return filteredIntents
+    }
+  }, [filteredIntents, focusIntentId, sidebarTab])
+
+  const planningTreeGroups = useMemo(() => milestones.map((milestone) => ({
+    milestone,
+    releaseLine: releaseLines.find((line) => line.id === milestone.id) ?? null,
+    intents: sidebarIntents.filter((intent) => deriveVersionBucket(intent.id) === milestone.id),
+  })), [milestones, releaseLines, sidebarIntents])
 
   const sortedIntents = useMemo(() => {
     const items = [...filteredIntents]
@@ -996,16 +1113,10 @@ export function IntentsListPage() {
   }, [milestoneActiveIndex, milestones.length])
 
   useEffect(() => {
-    const rail = milestoneRailRef.current
-    if (!rail) return
-    const target = rail.querySelector<HTMLElement>(`[data-milestone-index="${milestoneActiveIndex}"]`)
-    if (!target) return
-    target.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'start',
-    })
-  }, [milestoneActiveIndex, milestones.length])
+    if (sidebarTab !== 'milestones') return
+    const milestoneTarget = milestones[milestoneActiveIndex]
+    setGraphTarget(milestoneTarget ? { id: milestoneTarget.id, kind: 'milestone' } : { id: 'workspace', kind: 'workspace' })
+  }, [milestoneActiveIndex, milestones, sidebarTab])
 
   const intentPageCount = Math.max(1, Math.ceil(sortedIntents.length / INTENTS_PER_PAGE))
   const pagedIntents = useMemo(() => {
@@ -1026,6 +1137,8 @@ export function IntentsListPage() {
 
   const openDrawerForIntent = (intentId: string) => {
     setSelectedIntentId(intentId)
+    setGraphTarget({ id: intentId, kind: 'intent' })
+    setSidebarTab('focus')
     setDrawerOpen(true)
   }
 
@@ -1039,6 +1152,56 @@ export function IntentsListPage() {
       return
     }
     setGoalsDrawerOpen(true)
+  }
+
+  const selectPlanningTarget = (target: IntentAlignmentGraphTarget | null, options?: { selectedIntentId?: string | null; queryMode?: 'focus' | 'alignment' | 'full'; health?: IntentHealthFilter }) => {
+    setGraphTarget(target)
+    if (options?.selectedIntentId !== undefined) {
+      setSelectedIntentId(options.selectedIntentId)
+    }
+    if (options?.queryMode) {
+      setGraphQueryMode(options.queryMode)
+    }
+    if (options?.health) {
+      setHealthFilter(options.health)
+    }
+  }
+
+  const applySidebarTab = (tab: PlanningSidebarTab) => {
+    setSidebarTab(tab)
+    if (tab === 'system-goals') {
+      selectPlanningTarget({ id: 'workspace', kind: 'workspace' }, { selectedIntentId: null, queryMode: 'alignment', health: 'all' })
+      return
+    }
+    if (tab === 'milestones') {
+      const milestoneTarget = milestones[milestoneActiveIndex]
+      selectPlanningTarget(
+        milestoneTarget ? { id: milestoneTarget.id, kind: 'milestone' } : { id: 'workspace', kind: 'workspace' },
+        { selectedIntentId: null, queryMode: 'alignment', health: 'all' },
+      )
+      return
+    }
+    if (tab === 'focus') {
+      if (focusIntentId) {
+        selectPlanningTarget({ id: focusIntentId, kind: 'intent' }, { selectedIntentId: focusIntentId, queryMode: 'focus', health: 'selected' })
+      }
+      return
+    }
+    if (tab === 'active') {
+      selectPlanningTarget(activeIntentId ? { id: activeIntentId, kind: 'intent' } : { id: 'workspace', kind: 'workspace' }, { selectedIntentId: activeIntentId ?? null, queryMode: activeIntentId ? 'focus' : 'alignment', health: 'active' })
+      return
+    }
+    if (tab === 'backlog') {
+      selectPlanningTarget({ id: 'workspace', kind: 'workspace' }, { selectedIntentId: null, queryMode: 'alignment', health: 'backlog' })
+      return
+    }
+    if (tab === 'closed') {
+      selectPlanningTarget({ id: 'workspace', kind: 'workspace' }, { selectedIntentId: null, queryMode: 'alignment', health: 'closed' })
+      return
+    }
+    if (tab === 'archived') {
+      selectPlanningTarget({ id: 'workspace', kind: 'workspace' }, { selectedIntentId: null, queryMode: 'alignment', health: 'archived' })
+    }
   }
 
   useEffect(() => {
@@ -1296,6 +1459,18 @@ export function IntentsListPage() {
           </p>
         </div>
         <div className="toolbar-actions">
+          <label className="rules-filter-search intent-toolbar-search">
+            <span className="workspace-eyebrow">Find intent</span>
+            <input
+              type="search"
+              value={planningSearch}
+              onChange={(event) => setPlanningSearch(event.target.value)}
+              placeholder="Search intent, goal, or milestone"
+            />
+          </label>
+          <button className={`tool-button${showRegistry ? ' active' : ''}`} type="button" onClick={() => setShowRegistry((current) => !current)}>
+            {showRegistry ? 'Hide Registry' : 'Open Registry'}
+          </button>
           <button className="tool-button" type="button" onClick={() => void refreshAll()}>
             Refresh List
           </button>
@@ -1335,101 +1510,173 @@ export function IntentsListPage() {
 
       <section className="intent-section-shell">
         <div className="intent-goal-grid compact">
-          {goalCards.map((card) => (
-            <GoalCardView
+          {planningFilterCards.map((card) => (
+            <PlanningFilterCardView
               key={card.id}
               card={card}
-              onClick={card.id === 'planning-coverage' ? () => setGoalsDrawerOpen(true) : undefined}
+              active={sidebarTab === card.id}
+              onClick={() => applySidebarTab(card.id)}
             />
           ))}
         </div>
 
-        <section className="surface-panel surface-panel-primary intent-milestone-strip-shell">
-          <div className="panel-toolbar">
-            <div>
-              <p className="workspace-eyebrow">Milestones</p>
-              <h2>Version rail</h2>
+        <div className="intent-planning-grid">
+          <aside className="surface-panel compact-note-panel intent-planning-sidebar">
+            <div className="panel-toolbar">
+              <div>
+                <p className="workspace-eyebrow">Planning Structure</p>
+                <h2>Tree and breadcrumbs</h2>
+              </div>
+              <div className="panel-toolbar-meta">
+                <span className="meta-pill">{planningBreadcrumb.join(' / ')}</span>
+              </div>
             </div>
-            <div className="intent-milestone-nav">
-              <span className="runtime-overview-label">{milestones.length ? `${milestoneActiveIndex + 1} / ${milestones.length}` : 'No milestones'}</span>
-              <button
-                className="icon-tool-button"
-                type="button"
-                onClick={() => setMilestoneActiveIndex((current) => Math.max(0, current - 1))}
-                disabled={milestoneActiveIndex === 0}
-                aria-label="Previous milestones"
-              >
-                <Icon icon={chevronLeft} aria-hidden="true" />
-              </button>
-              <button
-                className="icon-tool-button"
-                type="button"
-                onClick={() => setMilestoneActiveIndex((current) => Math.min(Math.max(0, milestones.length - 1), current + 1))}
-                disabled={milestoneActiveIndex >= Math.max(0, milestones.length - 1)}
-                aria-label="Next milestones"
-              >
-                <Icon icon={chevronRight} aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-          <div className="intent-milestone-rail compact" ref={milestoneRailRef}>
-            {milestones.map((milestone, index) => (
-              <article
-                key={milestone.id}
-                className={`intent-milestone-card intent-milestone-card-${milestoneVisualState(milestone.state)}`}
-                data-tooltip={`${milestone.metrics} | ${milestone.objectives.join(' · ')}`}
-                data-milestone-index={index}
-                tabIndex={0}
-              >
-                <div className="intent-milestone-head">
-                  <div>
-                    <p className="workspace-eyebrow">Milestone</p>
-                    <h3>{milestone.label}</h3>
-                  </div>
-                  <span className={`status-pill ${statusTone(milestone.state)}`}>{milestone.state}</span>
-                </div>
-                <p className="intent-milestone-metrics">{milestone.metrics}</p>
-                <div className="intent-progress-track" aria-hidden="true">
-                  <span style={{ width: `${milestone.progress}%` }} />
-                </div>
-                <span className="intent-milestone-progress">{milestone.progress}% complete</span>
-                <div className="intent-milestone-objective-inline">
-                  {milestone.objectives[0] ?? 'No milestone objective captured yet.'}
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
 
-        <section className="surface-panel compact-note-panel">
-          <div className="panel-toolbar">
-            <div>
-              <p className="workspace-eyebrow">Release Versions</p>
-              <h2>Release lines</h2>
+            <div className="intent-graph-pill-row">
+              <button className={`tool-button${sidebarTab === 'system-goals' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('system-goals')}>System Goals</button>
+              <button className={`tool-button${sidebarTab === 'milestones' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('milestones')}>Milestones</button>
+              <button className={`tool-button${sidebarTab === 'focus' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('focus')}>Focus</button>
+              <button className={`tool-button${sidebarTab === 'active' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('active')}>Active</button>
+              <button className={`tool-button${sidebarTab === 'backlog' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('backlog')}>Backlog</button>
+              <button className={`tool-button${sidebarTab === 'closed' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('closed')}>Closed</button>
+              <button className={`tool-button${sidebarTab === 'archived' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('archived')}>Archive</button>
             </div>
-            <div className="panel-toolbar-meta">
-              <span className="meta-pill">{releaseLines.length} projected lines</span>
-            </div>
-          </div>
-          <p className="rules-cell-copy">
-            Release lines are currently projected from milestone buckets and intent ids. This section makes that
-            visible now, while we keep Release Version as a future first-class entity instead of faking it.
-          </p>
-          <div className="rules-pack-grid">
-            {releaseLines.map((line) => (
-              <article key={line.id} className="rules-pack-card">
-                <div className="rules-pack-header">
-                  <strong>{line.label}</strong>
-                  <span className={`status-pill ${statusTone(line.state)}`}>{line.state}</span>
+
+            <div className="intent-planning-tree">
+              <button type="button" className="intent-tree-row intent-tree-row-root" onClick={() => applySidebarTab('system-goals')}>
+                <strong>SVFactory</strong>
+                <span className="meta-pill">{goalsTree?.goals.length ?? 0} system goals</span>
+              </button>
+
+              {planningTreeGroups.map(({ milestone, releaseLine, intents: milestoneIntents }, index) => (
+                <div key={milestone.id} className="intent-tree-branch">
+                  <div className="intent-tree-release-row">
+                    <button
+                      type="button"
+                      className={`intent-tree-row${graphTarget?.kind === 'release-line' && graphTarget.id === milestone.id ? ' selected' : ''}`}
+                      onClick={() => {
+                        setMilestoneActiveIndex(index)
+                        setSidebarTab('milestones')
+                        selectPlanningTarget({ id: milestone.id, kind: 'release-line' }, { selectedIntentId: null, queryMode: 'alignment', health: 'all' })
+                      }}
+                    >
+                      <span>
+                        <strong>{releaseLine?.label ?? milestone.label}</strong>
+                        <small>{releaseLine?.summary ?? 'Projected release line'}</small>
+                      </span>
+                      <span className={`status-pill ${statusTone(releaseLine?.state ?? milestone.state)}`}>{releaseLine?.state ?? milestone.state}</span>
+                    </button>
+                    <button className="icon-tool-button" type="button" aria-label="Open release notes" onClick={() => setGoalsDrawerOpen(true)}>
+                      <Icon icon={listTodo} />
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={`intent-tree-row intent-tree-row-milestone${graphTarget?.kind === 'milestone' && graphTarget.id === milestone.id ? ' selected' : ''}`}
+                    onClick={() => {
+                      setMilestoneActiveIndex(index)
+                      setSidebarTab('milestones')
+                      selectPlanningTarget({ id: milestone.id, kind: 'milestone' }, { selectedIntentId: null, queryMode: 'alignment', health: 'all' })
+                    }}
+                  >
+                    <span>
+                      <strong>{milestone.label}</strong>
+                      <small>{milestone.metrics}</small>
+                    </span>
+                    <span className="meta-pill">{milestone.progress}%</span>
+                  </button>
+
+                  <div className="intent-tree-intents">
+                    {milestoneIntents.length ? milestoneIntents.map((intent) => (
+                      <button
+                        key={intent.id}
+                        type="button"
+                        className={`intent-tree-row intent-tree-row-intent${selectedIntentId === intent.id ? ' selected' : ''}`}
+                        onClick={() => openDrawerForIntent(intent.id)}
+                      >
+                        <span>
+                          <strong>{intent.title?.replace(/^\"|\"$/g, '') || intent.id}</strong>
+                          <small>{(intent.taskDoneCount ?? 0)}/{(intent.taskCount ?? 0)} tasks · {normalizeLifecycle(intent.lifecycle)}</small>
+                        </span>
+                        <span className="meta-pill">{intentVersionLabel(intent.id)}</span>
+                      </button>
+                    )) : (
+                      <p className="rules-cell-copy">No intents in this branch for the current planning filter.</p>
+                    )}
+                  </div>
                 </div>
-                <p className="rules-cell-copy">{line.summary}</p>
-                <p className="rules-cell-copy">{line.metrics}</p>
-                <p className="rules-cell-copy">Progress {line.progress}% · {line.milestoneCount} milestone bucket</p>
-              </article>
-            ))}
-            {!releaseLines.length ? <p className="rules-cell-copy">No release line projection is available yet.</p> : null}
-          </div>
-        </section>
+              ))}
+            </div>
+          </aside>
+
+          <section className="intent-planning-main">
+            <div className="intent-goal-grid compact">
+              {goalCards.map((card) => (
+                <GoalCardView
+                  key={card.id}
+                  card={card}
+                  onClick={card.id === 'planning-coverage' ? () => setGoalsDrawerOpen(true) : undefined}
+                />
+              ))}
+            </div>
+
+            <section className="surface-panel compact-note-panel">
+              <div className="panel-toolbar">
+                <div>
+                  <p className="workspace-eyebrow">Planning Graph</p>
+                  <h2>Linked planning map</h2>
+                </div>
+                <div className="panel-toolbar-meta">
+                  <span className="count-pill">{alignmentGraph.summary.linkedIntents} linked</span>
+                  <span className="count-pill">{alignmentGraph.summary.unlinkedIntents} unlinked</span>
+                  <span className="count-pill">{alignmentGraph.summary.milestones} milestones</span>
+                </div>
+              </div>
+            </section>
+
+            {intentsQuery.isLoading ? (
+              <div className="intent-empty-state">
+                <h3>Loading intent inventory</h3>
+                <p>Fetching live queue and milestone blocks from the bridge.</p>
+              </div>
+            ) : intentsQuery.isError ? (
+              <div className="intent-empty-state intent-empty-state-danger">
+                <h3>Intent inventory unavailable</h3>
+                <p>{intentsQuery.error instanceof Error ? intentsQuery.error.message : 'Unknown intent list error.'}</p>
+              </div>
+            ) : !intents.length ? (
+              <div className="intent-empty-state">
+                <h3>No intents found</h3>
+                <p>The workspace did not return any intent records yet.</p>
+              </div>
+            ) : alignmentGraphQuery.isLoading ? (
+              <div className="intent-empty-state">
+                <h3>Loading planning graph</h3>
+                <p>Querying live planning context from the graph bridge.</p>
+              </div>
+            ) : alignmentGraphQuery.isError ? (
+              <div className="intent-empty-state intent-empty-state-danger">
+                <h3>Planning graph unavailable</h3>
+                <p>{alignmentGraphQuery.error instanceof Error ? alignmentGraphQuery.error.message : 'Context explorer query failed.'}</p>
+              </div>
+            ) : !alignmentGraph.nodes.length ? (
+              <div className="intent-empty-state">
+                <h3>Planning graph returned no nodes</h3>
+                <p>The context explorer responded, but no planning neighborhood nodes were available for this view yet.</p>
+              </div>
+            ) : (
+              <IntentAlignmentGraphCanvas
+                graph={alignmentGraph}
+                onSelectNode={handleGraphNodeSelect}
+                queryMode={graphQueryMode}
+                onQueryModeChange={setGraphQueryMode}
+                queryDepth={graphQueryDepth}
+                onQueryDepthChange={setGraphQueryDepth}
+              />
+            )}
+          </section>
+        </div>
 
         <IntentHealthBar
           total={intents.length}
@@ -1443,85 +1690,18 @@ export function IntentsListPage() {
           onFilterChange={setHealthFilter}
         />
 
-        <section className="surface-panel compact-note-panel">
-          <div className="panel-toolbar">
-            <div>
-              <p className="workspace-eyebrow">View Mode</p>
-              <h2>Planning graph and registry</h2>
-            </div>
-            <div className="panel-toolbar-meta">
-              <span className="count-pill">{alignmentGraph.summary.linkedIntents} linked</span>
-              <span className="count-pill">{alignmentGraph.summary.unlinkedIntents} unlinked</span>
-            </div>
-          </div>
-          <div className="home-inline-summary-row">
-            <button className={`tool-button${intentView === 'graph' ? ' active' : ''}`} type="button" onClick={() => setIntentView('graph')}>
-              Planning Graph
-            </button>
-            <button className={`tool-button${intentView === 'registry' ? ' active' : ''}`} type="button" onClick={() => setIntentView('registry')}>
-              Registry
-            </button>
-            <span className="meta-pill">{alignmentGraph.summary.milestones} milestones</span>
-            <span className="meta-pill">{alignmentGraph.summary.goals} goal nodes</span>
-            <span className="meta-pill">{alignmentGraph.summary.tasks} task nodes</span>
-            <span className={`meta-pill${alignmentGraph.summary.warnings ? ' meta-pill-focus' : ''}`}>{alignmentGraph.summary.warnings} warnings</span>
-          </div>
-        </section>
-
-        {intentsQuery.isLoading ? (
-          <div className="intent-empty-state">
-            <h3>Loading intent inventory</h3>
-            <p>Fetching live queue and milestone blocks from the bridge.</p>
-          </div>
-        ) : intentsQuery.isError ? (
-          <div className="intent-empty-state intent-empty-state-danger">
-            <h3>Intent inventory unavailable</h3>
-            <p>{intentsQuery.error instanceof Error ? intentsQuery.error.message : 'Unknown intent list error.'}</p>
-          </div>
-        ) : !intents.length ? (
-          <div className="intent-empty-state">
-            <h3>No intents found</h3>
-            <p>The workspace did not return any intent records yet.</p>
-          </div>
-        ) : intentView === 'graph' ? (
-          alignmentGraphQuery.isLoading ? (
-            <div className="intent-empty-state">
-              <h3>Loading planning graph</h3>
-              <p>Querying live planning context from the graph bridge.</p>
-            </div>
-          ) : alignmentGraphQuery.isError ? (
-            <div className="intent-empty-state intent-empty-state-danger">
-              <h3>Planning graph unavailable</h3>
-              <p>{alignmentGraphQuery.error instanceof Error ? alignmentGraphQuery.error.message : 'Context explorer query failed.'}</p>
-              <p>Registry remains available as the fallback operator view while the graph route is recovering.</p>
-              <div className="home-inline-summary-row">
-                <button className="tool-button" type="button" onClick={() => setIntentView('registry')}>
-                  Open Registry
-                </button>
+        {showRegistry ? (
+          <section className="surface-panel compact-note-panel">
+            <div className="panel-toolbar">
+              <div>
+                <p className="workspace-eyebrow">Registry</p>
+                <h2>Planning registry backup view</h2>
+              </div>
+              <div className="panel-toolbar-meta">
+                <span className="meta-pill">{sortedIntents.length} intents</span>
               </div>
             </div>
-          ) : !alignmentGraph.nodes.length ? (
-            <div className="intent-empty-state">
-              <h3>Planning graph returned no nodes</h3>
-              <p>The context explorer responded, but no planning neighborhood nodes were available for this view yet.</p>
-              <div className="home-inline-summary-row">
-                <button className="tool-button" type="button" onClick={() => setIntentView('registry')}>
-                  Open Registry
-                </button>
-              </div>
-            </div>
-          ) : (
-            <IntentAlignmentGraphCanvas
-              graph={alignmentGraph}
-              onSelectNode={handleGraphNodeSelect}
-              queryMode={graphQueryMode}
-              onQueryModeChange={setGraphQueryMode}
-              queryDepth={graphQueryDepth}
-              onQueryDepthChange={setGraphQueryDepth}
-            />
-          )
-        ) : (
-          <div className="rules-table intent-registry-table" role="table" aria-label="Intent registry list">
+            <div className="rules-table intent-registry-table" role="table" aria-label="Intent registry list">
             <div className="rules-table-header intent-registry-header" role="row">
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('title')}>Intent{sortIndicator('title', intentSortKey, intentSortDirection)}</button>
               <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('milestone')}>Milestone{sortIndicator('milestone', intentSortKey, intentSortDirection)}</button>
@@ -1583,9 +1763,11 @@ export function IntentsListPage() {
                 <p>Try another lifecycle pill in the intent health bar.</p>
               </article>
             ) : null}
-          </div>
-        )}
-        {sortedIntents.length ? (
+            </div>
+          </section>
+        ) : null}
+
+        {showRegistry && sortedIntents.length ? (
           <div className="intent-pagination-bar">
             <span className="runtime-overview-label">Showing {intentPageStart}-{intentPageEnd} of {sortedIntents.length}</span>
             <div className="intent-pagination-actions">
