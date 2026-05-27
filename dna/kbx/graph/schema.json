@@ -1,0 +1,23 @@
+{
+  "version": "0.1.0",
+  "profile": "kbx-reference",
+  "node_collections": [
+    "kg_intents",
+    "kg_goals",
+    "kg_decisions",
+    "kg_principles",
+    "kg_lessons",
+    "kg_documents",
+    "kg_agents",
+    "cg_symbols"
+  ],
+  "edge_collections": [
+    "kg_implements",
+    "kg_decides_for",
+    "kg_follows",
+    "kg_learned_from",
+    "kg_describes",
+    "kg_applies_to"
+  ],
+  "notes": "Reference graph schema scaffold for the KBX DNA. Collection names mirror current dual-graph conventions without making them permanent core truth."
+}

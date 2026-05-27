@@ -1,0 +1,19 @@
+{
+  "version": "0.1.0",
+  "profile_id": "kbx-reference-dual-graph",
+  "adapter_kind": "dual-graph",
+  "semantic_store": {
+    "kind": "arangodb",
+    "role": "knowledge-graph"
+  },
+  "code_store": {
+    "kind": "arangodb",
+    "role": "code-graph"
+  },
+  "capabilities": [
+    "impact-analysis",
+    "governance-traceability",
+    "principle-code-linking"
+  ],
+  "notes": "Reference graph/storage profile for KBX-shaped downstream instances generated from the kbx DNA."
+}

@@ -1,0 +1,46 @@
+{
+  "version": "0.1.0",
+  "entities": [
+    {
+      "name": "Intent",
+      "collection": "kg_intents",
+      "key_field": "id"
+    },
+    {
+      "name": "Goal",
+      "collection": "kg_goals",
+      "key_field": "id"
+    },
+    {
+      "name": "Decision",
+      "collection": "kg_decisions",
+      "key_field": "id"
+    },
+    {
+      "name": "Principle",
+      "collection": "kg_principles",
+      "key_field": "id"
+    },
+    {
+      "name": "Lesson",
+      "collection": "kg_lessons",
+      "key_field": "id"
+    },
+    {
+      "name": "Document",
+      "collection": "kg_documents",
+      "key_field": "id"
+    },
+    {
+      "name": "Agent",
+      "collection": "kg_agents",
+      "key_field": "id"
+    },
+    {
+      "name": "CodeSymbol",
+      "collection": "cg_symbols",
+      "key_field": "id"
+    }
+  ],
+  "notes": "Entity-to-collection mapping scaffold used by future graph adapters and materializers."
+}
