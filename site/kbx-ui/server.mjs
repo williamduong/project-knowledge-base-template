@@ -3152,6 +3152,22 @@ export function createApp(commandRunner = executeBridgeCommand) {
     return collectIntentsWithPriority();
   }
 
+  // Helper function to flatten goals tree for comparison (Phase 6 Track B)
+  function flattenGoalsTree(node, result = []) {
+    if (!node) return result;
+    result.push({
+      _key: node.entityId,
+      id: node.entityId,
+      title: node.label,
+      name: node.label,
+      status: node.runtimeState,
+    });
+    if (node.children && Array.isArray(node.children)) {
+      node.children.forEach(child => flattenGoalsTree(child, result));
+    }
+    return result;
+  }
+
   app.get('/api/rules', async (_req, res) => {
     res.status(200).json(systemSnapshotStore.read().rulesCatalog);
   });
@@ -3275,10 +3291,31 @@ export function createApp(commandRunner = executeBridgeCommand) {
   app.get('/api/goals', async (_req, res) => {
     try {
       const tree = buildGoalsTreeSnapshot();
+
+      // Phase 6 Track B: Dual-read validation
+      // Compare graph-based (tree) with file-based (goals.state.json)
+      const graphGoals = Array.isArray(tree) ? tree : tree.root ? flattenGoalsTree(tree.root) : [];
+      const validation = await syncValidator.compareGoals(graphGoals);
+
+      // Log any discrepancies for monitoring
+      if (!validation.match && validation.differences.length > 0) {
+        validation.differences.forEach(diff => {
+          syncValidator.logDiscrepancy('goals_mismatch', { detail: diff, timestamp: new Date().toISOString() });
+        });
+      }
+
       res.status(200).json({
         ok: true,
         goals: tree,
         timestamp: new Date().toISOString(),
+        // Phase 6 Track B: Include validation metadata
+        validation: {
+          match: validation.match,
+          file_count: validation.count_file,
+          graph_count: validation.count_graph,
+          discrepancy_count: validation.differences.length,
+          discrepancies: validation.match ? [] : validation.differences.slice(0, 5), // First 5 only
+        },
       });
     } catch (error) {
       res.status(500).json({
@@ -3444,17 +3481,30 @@ export function createApp(commandRunner = executeBridgeCommand) {
   // Phase 6 Track B: Goals Sync Validation Monitoring
   // ============================================================================
 
-  // GET /api/goals/sync-status — Check sync between file and graph sources
+  // GET /api/goals/sync-status — Check sync between file and graph sources (Phase 6 Track B)
   app.get('/api/goals/sync-status', async (req, res) => {
     try {
       const fileGoals = syncValidator.loadGoalsFromFile();
+      const tree = buildGoalsTreeSnapshot();
+      const graphGoals = Array.isArray(tree) ? tree : tree.root ? flattenGoalsTree(tree.root) : [];
+      const validation = await syncValidator.compareGoals(graphGoals);
+
+      // Phase 6 Track B: Full validation report for monitoring
       res.status(200).json({
         ok: true,
-        sync_status: {
-          file_count: fileGoals.length,
-          status: 'monitoring',
-          last_validation: syncValidator.lastValidation,
-          recent_discrepancies: syncValidator.discrepancies.slice(-5),
+        phase: 'Phase 6 Track B - Dual-Read Validation',
+        sync_status: validation.match ? 'synced' : 'drift-detected',
+        file_count: validation.count_file,
+        graph_count: validation.count_graph,
+        discrepancy_count: validation.differences.length,
+        status: validation.match ? 'clean' : 'needs-review',
+        last_validation: syncValidator.lastValidation,
+        recent_discrepancies: validation.differences.slice(0, 10),
+        all_discrepancies: validation.differences,
+        monitoring: {
+          period_days: 7,
+          next_decision_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          criteria: 'Archive goals.state.json when discrepancy_count = 0 for 7 consecutive days',
         },
       });
     } catch (error) {
