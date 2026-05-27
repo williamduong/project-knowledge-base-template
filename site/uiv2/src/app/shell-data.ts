@@ -16,25 +16,30 @@ export const shellStatusFallback = {
 } as const
 
 export const tabs = [
-  { label: 'Home', path: '/' },
-  { label: 'Intents', path: '/intents' },
-  { label: 'Knowledge Base', path: '/kb' },
+  { label: 'Dashboard', path: '/' },
+  { label: 'Code', path: '/code' },
+  { label: 'Intent', path: '/intents' },
   { label: 'Rules', path: '/rules' },
-  { label: 'Graph', path: '/graph' },
-  { label: 'Search', path: '/search' },
+  { label: 'Flow', path: '/flow' },
+  { label: 'Tools', path: '/tools' },
+  { label: 'DNA', path: '/dna' },
   { label: 'System', path: '/system' },
-  { label: 'R&D Prototype', path: '/prototype' },
 ] as const
 
 export const routeMeta: Record<string, { eyebrow: string; summary: string; selection: string }> = {
   '/': {
-    eyebrow: 'Home Aggregation Deferred',
-    summary: 'Home stays thin until module surfaces become trustworthy.',
+    eyebrow: 'Dashboard Deferred',
+    summary: 'Dashboard stays intentionally thin until mature workspaces can provide trustworthy summaries.',
     selection: 'No pinned entity. Shell-first mode remains active.',
+  },
+  '/code': {
+    eyebrow: 'Code Workspace',
+    summary: 'Code Graph is the first completed factory workspace because it becomes substrate for impact, rules, and DNA generation checks.',
+    selection: 'Symbol and coverage slices are active.',
   },
   '/intents': {
     eyebrow: 'Intent Workspace',
-    summary: 'Intent list is the first real domain slice inside the compact shell.',
+    summary: 'Intent remains the graph-backed governance workflow surface and will mature after Code.',
     selection: 'List-only selection. Detail and actions are deferred to the next slice.',
   },
   '/kb': {
@@ -44,22 +49,37 @@ export const routeMeta: Record<string, { eyebrow: string; summary: string; selec
   },
   '/rules': {
     eyebrow: 'Rules Workspace',
-    summary: 'Rule registry and findings stay deferred until core document and intent context stabilizes.',
+    summary: 'Rules are the harness for agents and become the policy backbone for Flow, Tools, and DNA.',
     selection: 'No rule domain selected.',
+  },
+  '/flow': {
+    eyebrow: 'Flow Workspace',
+    summary: 'Flow is the future execution grammar: pipelines, gates, triggers, runs, and maps.',
+    selection: 'No flow surface selected.',
+  },
+  '/tools': {
+    eyebrow: 'Tools Workspace',
+    summary: 'Tools will become the governed registry of approved agent action surfaces.',
+    selection: 'No tool contract selected.',
+  },
+  '/dna': {
+    eyebrow: 'DNA Workspace',
+    summary: 'DNA will package ontology, rules, flow, tools, templates, checklist, and release readiness for KBX variants.',
+    selection: 'No DNA package selected.',
   },
   '/graph': {
     eyebrow: 'Graph Workspace',
-    summary: 'Graph remains a later module with metrics first and exploration later.',
+    summary: 'Graph remains a compatibility bridge while graph lenses move into Code, Intent, and later DNA.',
     selection: 'No graph focus selected.',
   },
   '/search': {
     eyebrow: 'Search Workspace',
-    summary: 'Cross-surface retrieval depends on stable result contracts from other modules.',
+    summary: 'Search is now treated primarily as a utility overlay rather than a first-class workspace.',
     selection: 'No result selected.',
   },
   '/system': {
     eyebrow: 'System Workspace',
-    summary: 'Runtime and repository diagnostics will sit in a dedicated operator workspace.',
+    summary: 'System owns runtime services, health, snapshots, cron, and recovery only.',
     selection: 'No runtime artifact selected.',
   },
   '/prototype': {

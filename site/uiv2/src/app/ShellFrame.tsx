@@ -1,20 +1,23 @@
 import { Icon } from '@iconify/react'
 import chartColumn from '@iconify-icons/lucide/bar-chart-3'
-import bookOpen from '@iconify-icons/lucide/book-open'
 import bot from '@iconify-icons/lucide/bot'
+import braces from '@iconify-icons/lucide/braces'
+import dna from '@iconify-icons/lucide/dna'
 import flag from '@iconify-icons/lucide/flag'
 import gauge from '@iconify-icons/lucide/gauge'
+import gitBranch from '@iconify-icons/lucide/git-branch'
 import network from '@iconify-icons/lucide/network'
 import refreshCw from '@iconify-icons/lucide/refresh-cw'
 import searchIcon from '@iconify-icons/lucide/search'
 import server from '@iconify-icons/lucide/server'
 import settings2 from '@iconify-icons/lucide/settings-2'
-import blocks from '@iconify-icons/lucide/blocks'
+import wrench from '@iconify-icons/lucide/wrench'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Route, Routes } from 'react-router-dom'
 import { useShellStatus } from './hooks/useShellStatus'
 import { useRefreshSystemSnapshot } from './hooks/useSystemSnapshot'
 import { IntentsListPage } from './pages/kbx/IntentsListPage'
+import { CodeWorkspacePage } from './pages/svfactory/CodeWorkspacePage'
 import { HomePage } from './pages/svfactory/HomePage'
 import { PlaceholderPage } from './pages/svfactory/PlaceholderPage'
 import { RuntimeServicesPage } from './pages/svfactory/RuntimeServicesPage'
@@ -30,13 +33,13 @@ const projectNameStorageKey = 'kbx-ui-project-name'
 
 const tabIcons = {
   '/': gauge,
+  '/code': braces,
   '/intents': flag,
-  '/kb': bookOpen,
   '/rules': bot,
-  '/graph': chartColumn,
-  '/search': searchIcon,
+  '/flow': gitBranch,
+  '/tools': wrench,
+  '/dna': dna,
   '/system': settings2,
-  '/prototype': blocks,
 } as const
 
 function statusItemIcon(key: string, label: string) {
@@ -207,6 +210,7 @@ export function ShellFrame() {
               path="/"
               element={<HomePage />}
             />
+            <Route path="/code" element={<CodeWorkspacePage />} />
             <Route path="/intents" element={<IntentsListPage />} />
             <Route path="/kb" element={<KnowledgeBasePage />} />
             <Route
@@ -217,6 +221,36 @@ export function ShellFrame() {
                   eyebrow="Rules Workspace"
                   subtitle="Rule registry, findings, packs, dependencies, precedence, and tool coverage."
                   mode="rules"
+                />
+              }
+            />
+            <Route
+              path="/flow"
+              element={
+                <PlaceholderPage
+                  title="Flow"
+                  subtitle="Flow will become the execution grammar of the factory: pipelines, gates, triggers, runs, and map views all belong here."
+                  next="Build this after Rules is stable enough to act as the harness for gates and process contracts."
+                />
+              }
+            />
+            <Route
+              path="/tools"
+              element={
+                <PlaceholderPage
+                  title="Tools"
+                  subtitle="Tools will become the governed action registry that agents use instead of improvising direct mutation paths."
+                  next="Build this after Flow starts depending on explicit tool contracts and allowed contexts."
+                />
+              }
+            />
+            <Route
+              path="/dna"
+              element={
+                <PlaceholderPage
+                  title="DNA"
+                  subtitle="DNA will become the release-ready management surface for KBX variants: ontology, rules, flow, tools, templates, checklist, and release."
+                  next="Build this after Code, Intent, Rules, Flow, and Tools have stable contracts to package."
                 />
               }
             />
