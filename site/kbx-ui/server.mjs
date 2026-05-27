@@ -42,6 +42,7 @@ const kbIndexDbPath = path.join(repoRoot, 'svfactory', 'kb-index.db');
 const { runGitCommand } = require(path.join(repoRoot, 'src', 'lib', 'git.js'));
 const { readPipeline } = require(path.join(repoRoot, 'src', 'lib', 'pipeline.js'));
 const { run: runCli } = require(path.join(repoRoot, 'src', 'cli.js'));
+const { listTools, summarizeTools } = require(path.join(repoRoot, 'src', 'lib', 'svfactory-tools', 'registry.js'));
 
 const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
 const uiPort = Number(process.env.KBX_UI_PORT || 4173);
@@ -3179,6 +3180,14 @@ export function createApp(commandRunner = executeBridgeCommand) {
         },
       }
     );
+  });
+
+  app.get('/api/tools-registry', async (_req, res) => {
+    res.status(200).json({
+      ok: true,
+      tools: listTools(),
+      summary: summarizeTools(),
+    });
   });
 
   app.get('/api/intents', async (_req, res) => {

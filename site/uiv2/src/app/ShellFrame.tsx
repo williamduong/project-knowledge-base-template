@@ -22,6 +22,7 @@ import { HomePage } from './pages/svfactory/HomePage'
 import { PlaceholderPage } from './pages/svfactory/PlaceholderPage'
 import { RuntimeServicesPage } from './pages/svfactory/RuntimeServicesPage'
 import { PrototypePage } from './pages/svfactory/PrototypePage'
+import { ToolsWorkspacePage } from './pages/svfactory/ToolsWorkspacePage'
 import { KnowledgeBasePage } from './pages/kbx/KnowledgeBasePage'
 import { GoalsPage } from './pages/kbx/GoalsPage'
 import { DecisionsPage } from './pages/kbx/DecisionsPage'
@@ -236,13 +237,7 @@ export function ShellFrame() {
             />
             <Route
               path="/tools"
-              element={
-                <PlaceholderPage
-                  title="Tools"
-                  subtitle="Tools will become the governed action registry that agents use instead of improvising direct mutation paths."
-                  next="Build this after Flow starts depending on explicit tool contracts and allowed contexts."
-                />
-              }
+              element={<ToolsWorkspacePage />}
             />
             <Route
               path="/dna"

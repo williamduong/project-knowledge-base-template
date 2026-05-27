@@ -48,6 +48,10 @@ vi.mock('./pages/svfactory/PrototypePage', () => ({
   PrototypePage: () => <h1>Prototype</h1>,
 }))
 
+vi.mock('./pages/svfactory/ToolsWorkspacePage', () => ({
+  ToolsWorkspacePage: () => <h1>Tools</h1>,
+}))
+
 vi.mock('./pages/kbx/IntentsListPage', () => ({
   IntentsListPage: () => <h1>Intent</h1>,
 }))
