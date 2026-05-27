@@ -22,6 +22,10 @@ type LifecycleFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived'
 type IntentAlignmentGraphCanvasProps = {
   graph: IntentAlignmentGraph
   onSelectNode?: (node: IntentAlignmentNode) => void
+  queryMode?: GraphMode
+  onQueryModeChange?: (mode: GraphMode) => void
+  queryDepth?: number
+  onQueryDepthChange?: (depth: number) => void
 }
 
 type PositionedNode = Node<{ modelNode: IntentAlignmentNode; label: ReactNode }>
@@ -252,16 +256,23 @@ function renderNodeLabel(node: IntentAlignmentNode) {
   )
 }
 
-export function IntentAlignmentGraphCanvas({ graph, onSelectNode }: IntentAlignmentGraphCanvasProps) {
-  const [mode, setMode] = useState<GraphMode>(graph.defaultMode)
+export function IntentAlignmentGraphCanvas({
+  graph,
+  onSelectNode,
+  queryMode,
+  onQueryModeChange,
+  queryDepth = 1,
+  onQueryDepthChange,
+}: IntentAlignmentGraphCanvasProps) {
+  const [mode, setMode] = useState<GraphMode>(queryMode ?? graph.defaultMode)
   const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>('all')
   const [showTasks, setShowTasks] = useState(true)
   const [linkedOnly, setLinkedOnly] = useState(false)
   const [instance, setInstance] = useState<ReactFlowInstance | null>(null)
 
   useEffect(() => {
-    setMode(graph.defaultMode)
-  }, [graph.defaultMode, graph.focusNodeId])
+    setMode(queryMode ?? graph.defaultMode)
+  }, [graph.defaultMode, graph.focusNodeId, queryMode])
 
   const visibleGraph = useMemo(() => buildVisibleGraph(graph, {
     mode,
@@ -307,6 +318,11 @@ export function IntentAlignmentGraphCanvas({ graph, onSelectNode }: IntentAlignm
     return () => window.cancelAnimationFrame(handle)
   }, [flowNodes, instance, mode])
 
+  const updateMode = (nextMode: GraphMode) => {
+    setMode(nextMode)
+    onQueryModeChange?.(nextMode)
+  }
+
   const handleNodeClick: NodeMouseHandler = (_event, node) => {
     const modelNode = (node as PositionedNode).data?.modelNode
     if (modelNode) {
@@ -335,12 +351,21 @@ export function IntentAlignmentGraphCanvas({ graph, onSelectNode }: IntentAlignm
               key={item}
               type="button"
               className={`tool-button${mode === item ? ' active' : ''}`}
-              onClick={() => setMode(item)}
+              onClick={() => updateMode(item)}
             >
               {item}
             </button>
           ))}
         </div>
+
+        <label className="rules-filter-field">
+          <span>Depth</span>
+          <select value={queryDepth} onChange={(event) => onQueryDepthChange?.(Number(event.target.value))}>
+            <option value={1}>1 hop</option>
+            <option value={2}>2 hops</option>
+            <option value={3}>3 hops</option>
+          </select>
+        </label>
 
         <label className="rules-filter-field">
           <span>Lifecycle</span>
@@ -364,7 +389,7 @@ export function IntentAlignmentGraphCanvas({ graph, onSelectNode }: IntentAlignm
         </label>
 
         {graph.focusNodeId ? (
-          <button type="button" className="tool-button" onClick={() => setMode('focus')}>
+          <button type="button" className="tool-button" onClick={() => updateMode('focus')}>
             Focus current intent
           </button>
         ) : null}

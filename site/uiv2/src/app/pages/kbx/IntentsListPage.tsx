@@ -715,6 +715,8 @@ export function IntentsListPage() {
   const [intentSortDirection, setIntentSortDirection] = useState<'asc' | 'desc'>('desc')
   const [intentPage, setIntentPage] = useState(1)
   const [intentView, setIntentView] = useState<IntentViewMode>('graph')
+  const [graphQueryMode, setGraphQueryMode] = useState<'focus' | 'alignment' | 'full'>('alignment')
+  const [graphQueryDepth, setGraphQueryDepth] = useState(1)
   const [collapsedSections, setCollapsedSections] = useState<Record<DetailSectionKey, boolean>>({
     summary: false,
     detail: false,
@@ -815,8 +817,8 @@ export function IntentsListPage() {
     selectedIntentId,
     focusIntentId,
     activeIntentId,
-    depth: 1,
-    mode: 'alignment',
+    depth: graphQueryDepth,
+    mode: graphQueryMode,
     includeTasks: true,
     includeUnlinked: true,
   })
@@ -1041,6 +1043,13 @@ export function IntentsListPage() {
     }
     setGoalsDrawerOpen(true)
   }
+
+  useEffect(() => {
+    if (!alignmentGraph.focusNodeId) return
+    if (graphQueryMode !== 'alignment') return
+    if (alignmentGraph.defaultMode === 'alignment') return
+    setGraphQueryMode(alignmentGraph.defaultMode)
+  }, [alignmentGraph.defaultMode, alignmentGraph.focusNodeId, graphQueryMode])
 
   const toggleIntentSort = (nextKey: IntentSortKey) => {
     setIntentSortDirection((current) => (intentSortKey === nextKey ? (current === 'asc' ? 'desc' : 'asc') : nextKey === 'milestone' || nextKey === 'progress' ? 'desc' : 'asc'))
@@ -1486,7 +1495,14 @@ export function IntentsListPage() {
             <p>The workspace did not return any intent records yet.</p>
           </div>
         ) : intentView === 'graph' ? (
-          <IntentAlignmentGraphCanvas graph={alignmentGraph} onSelectNode={handleGraphNodeSelect} />
+          <IntentAlignmentGraphCanvas
+            graph={alignmentGraph}
+            onSelectNode={handleGraphNodeSelect}
+            queryMode={graphQueryMode}
+            onQueryModeChange={setGraphQueryMode}
+            queryDepth={graphQueryDepth}
+            onQueryDepthChange={setGraphQueryDepth}
+          />
         ) : (
           <div className="rules-table intent-registry-table" role="table" aria-label="Intent registry list">
             <div className="rules-table-header intent-registry-header" role="row">

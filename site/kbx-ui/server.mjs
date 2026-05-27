@@ -50,6 +50,12 @@ const {
 const {
   buildIntentContextExplorer,
 } = require(path.join(repoRoot, 'src', 'lib', 'intent-context-explorer.js'));
+const { connect: connectKnowledgeGraph } = require(path.join(repoRoot, 'src', 'graph-db', 'knowledge'));
+const {
+  buildIntentGraphProjection,
+  synchronizeIntentContextGraph,
+  fetchIntentContextFromGraph,
+} = require(path.join(repoRoot, 'src', 'lib', 'intent-context-graph-layer.js'));
 
 const uiHost = process.env.KBX_UI_HOST || 'kbx.local';
 const uiPort = Number(process.env.KBX_UI_PORT || 4173);
@@ -3306,29 +3312,57 @@ export function createApp(commandRunner = executeBridgeCommand) {
           summarizeIntentDetail(intent.id, { includeGit: false }),
         ]),
       );
+      const contextQuery = {
+        id: String(req.query.id || '').trim() || 'workspace',
+        kind: typeof req.query.kind === 'string' && req.query.kind.trim()
+          ? String(req.query.kind).trim()
+          : (selectedIntentId ? 'intent' : 'workspace'),
+        depth: Number.isFinite(Number(req.query.depth)) ? Math.max(0, Math.min(3, Number(req.query.depth))) : 1,
+        mode: ['focus', 'alignment', 'full'].includes(String(req.query.mode || '').trim())
+          ? String(req.query.mode).trim()
+          : 'alignment',
+        include_tasks: req.query.include_tasks === 'false' ? false : true,
+        include_unlinked: req.query.include_unlinked === 'false' ? false : true,
+      };
 
-      const graph = buildIntentContextExplorer({
-        query: {
-          id: String(req.query.id || '').trim() || 'workspace',
-          kind: typeof req.query.kind === 'string' && req.query.kind.trim()
-            ? String(req.query.kind).trim()
-            : (selectedIntentId ? 'intent' : 'workspace'),
-          depth: Number.isFinite(Number(req.query.depth)) ? Math.max(0, Math.min(3, Number(req.query.depth))) : 1,
-          mode: ['focus', 'alignment', 'full'].includes(String(req.query.mode || '').trim())
-            ? String(req.query.mode).trim()
-            : 'alignment',
-          include_tasks: req.query.include_tasks === 'false' ? false : true,
-          include_unlinked: req.query.include_unlinked === 'false' ? false : true,
-        },
-        intents,
-        goalsTree: graphTree.root ?? null,
-        goalsSummary: graphTree.summary ?? null,
-        focusIntentId,
-        activeIntentId,
-        selectedIntentId,
-        detailsByIntent,
-        officialReleaseLines: officialBacklogStatus.releaseLines ?? [],
-      });
+      let graph = null;
+      try {
+        const goalsState = readGoalsState({ workspaceRoot: repoRoot });
+        const graphDb = await connectKnowledgeGraph();
+        const projection = buildIntentGraphProjection({
+          intents,
+          goalsState,
+          officialReleaseLines: officialBacklogStatus.releaseLines ?? [],
+        });
+        await synchronizeIntentContextGraph(graphDb, projection);
+        graph = await fetchIntentContextFromGraph(graphDb, {
+          id: contextQuery.id,
+          kind: contextQuery.kind,
+          depth: contextQuery.depth,
+          mode: contextQuery.mode,
+          includeTasks: contextQuery.include_tasks,
+          includeUnlinked: contextQuery.include_unlinked,
+          detailsByIntent,
+          focusIntentId,
+          activeIntentId,
+        });
+      } catch (_graphError) {
+        graph = null;
+      }
+
+      if (!graph) {
+        graph = buildIntentContextExplorer({
+          query: contextQuery,
+          intents,
+          goalsTree: graphTree.root ?? null,
+          goalsSummary: graphTree.summary ?? null,
+          focusIntentId,
+          activeIntentId,
+          selectedIntentId,
+          detailsByIntent,
+          officialReleaseLines: officialBacklogStatus.releaseLines ?? [],
+        });
+      }
 
       res.status(200).json(graph);
     } catch (error) {
