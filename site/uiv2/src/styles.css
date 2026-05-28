@@ -2313,16 +2313,16 @@
 }
 
 .intent-milestone-card-done {
-  background: linear-gradient(180deg, rgba(238, 242, 247, 0.88), rgba(140, 150, 165, 0.28));
-  border-color: rgba(226, 232, 240, 0.5);
-  color: #071122;
+  background: linear-gradient(180deg, rgba(30, 50, 40, 0.88), rgba(20, 35, 28, 0.65));
+  border-color: rgba(74, 222, 128, 0.3);
+  color: #d9e2ec;
 }
 
 .intent-milestone-card-done .workspace-eyebrow,
 .intent-milestone-card-done .intent-milestone-metrics,
 .intent-milestone-card-done .intent-milestone-objective-inline,
 .intent-milestone-card-done .intent-milestone-progress {
-  color: #0f172a;
+  color: #8ea3bb;
 }
 
 .intent-milestone-card-active {
@@ -3744,12 +3744,12 @@
 .planning-workspace-page {
   display: grid;
   gap: 1.25rem;
-  color: #0f172a;
+  color: #ebf2fa;
 }
 
 .planning-workspace-page .workspace-eyebrow,
 .planning-workspace-page .runtime-overview-label {
-  color: #7c8fb3;
+  color: #8ea3bb;
 }
 
 .planning-workspace-page p,
@@ -3769,11 +3769,11 @@
   padding: 1.5rem;
   border-radius: 28px;
   background:
-    radial-gradient(circle at top left, rgba(11, 95, 255, 0.14), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(255, 122, 0, 0.18), transparent 36%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 251, 0.96));
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  color: #0f172a;
+    radial-gradient(circle at top left, rgba(11, 95, 255, 0.18), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(255, 122, 0, 0.22), transparent 36%),
+    linear-gradient(135deg, rgba(15, 20, 30, 0.98), rgba(10, 14, 20, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #ebf2fa;
 }
 
 .planning-hero-copy h1 {
@@ -3785,7 +3785,7 @@
 .planning-hero-copy p {
   margin: 0;
   max-width: 62ch;
-  color: #475569;
+  color: #8ea3bb;
 }
 
 .planning-hero-meta,
@@ -3808,16 +3808,16 @@
 .planning-metric-card {
   padding: 1rem;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  color: #0f172a;
+  background: rgba(15, 20, 30, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #ebf2fa;
 }
 
 .planning-metric-card strong {
   display: block;
   margin-top: 0.55rem;
   font-size: 1.45rem;
-  color: #16a34a;
+  color: #6ee7b7;
 }
 
 .planning-metric-head {
@@ -3837,12 +3837,12 @@
 .planning-story-card,
 .planning-list-card {
   border-radius: 24px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .planning-focus-card {
   padding: 1rem 1.15rem;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(15, 20, 30, 0.94);
   display: grid;
   gap: 0.7rem;
 }
@@ -3854,11 +3854,11 @@
 
 .planning-focus-card p {
   margin: 0;
-  color: #475569;
+  color: #8ea3bb;
 }
 
 .planning-focus-card-warn {
-  background: linear-gradient(180deg, rgba(255, 248, 242, 0.98), rgba(255, 255, 255, 0.96));
+  background: linear-gradient(180deg, rgba(40, 30, 20, 0.98), rgba(15, 20, 30, 0.96));
 }
 
 .planning-inline-action {
@@ -3869,7 +3869,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  color: #0b5fff;
+  color: #3b82f6;
   cursor: pointer;
   font-weight: 600;
 }
@@ -3879,7 +3879,7 @@
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.75rem;
   padding: 0.45rem;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(15, 20, 30, 0.92);
 }
 
 .planning-stage-tab {
@@ -3888,7 +3888,7 @@
   padding: 0.95rem 1rem;
   text-align: left;
   cursor: pointer;
-  background: rgba(15, 23, 42, 0.03);
+  background: rgba(255, 255, 255, 0.04);
   display: grid;
   gap: 0.2rem;
 }
@@ -3898,13 +3898,13 @@
 }
 
 .planning-stage-tab span {
-  color: #64748b;
+  color: #8ea3bb;
   font-size: 0.86rem;
 }
 
 .planning-stage-tab.active {
-  background: linear-gradient(135deg, rgba(11, 95, 255, 0.1), rgba(255, 122, 0, 0.08));
-  box-shadow: inset 0 0 0 1px rgba(11, 95, 255, 0.16);
+  background: linear-gradient(135deg, rgba(11, 95, 255, 0.14), rgba(255, 122, 0, 0.1));
+  box-shadow: inset 0 0 0 1px rgba(11, 95, 255, 0.2);
 }
 
 .planning-warning-strip,
@@ -3914,9 +3914,9 @@
 .planning-intent-board {
   padding: 1rem 1.15rem;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  color: #0f172a;
+  background: rgba(15, 20, 30, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #ebf2fa;
 }
 
 .planning-warning-strip {
@@ -3948,9 +3948,9 @@
   gap: 0.6rem;
   padding: 0.8rem 1rem;
   border-radius: 16px;
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.05);
   min-width: min(440px, 100%);
-  color: #334155;
+  color: #8ea3bb;
 }
 
 .planning-search input {
@@ -3962,7 +3962,7 @@
 }
 
 .planning-search input::placeholder {
-  color: #94a3b8;
+  color: #5a7088;
 }
 
 .planning-story-grid {
@@ -3973,7 +3973,7 @@
 
 .planning-story-card {
   padding: 1rem 1.15rem;
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(15, 20, 30, 0.94);
 }
 
 .planning-stage-layout {
@@ -4003,8 +4003,8 @@
 
 .planning-list-card {
   width: 100%;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(15, 20, 30, 0.92);
   padding: 0.95rem 1rem;
   text-align: left;
   cursor: pointer;
@@ -4013,7 +4013,7 @@
 .planning-list-card.selected,
 .planning-list-card:hover,
 .planning-link-row:hover {
-  box-shadow: inset 0 0 0 1px rgba(11, 95, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.18);
 }
 
 .planning-list-card-head {
@@ -4028,14 +4028,14 @@
 .planning-link-row p,
 .planning-section-copy {
   margin: 0;
-  color: #475569;
+  color: #8ea3bb;
 }
 
 .planning-link-row {
   width: 100%;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
-  background: rgba(248, 250, 252, 0.95);
+  background: rgba(15, 20, 30, 0.95);
   padding: 0.8rem 0.9rem;
   display: flex;
   align-items: center;
@@ -4059,10 +4059,10 @@
 
 .planning-inline-secondary-action {
   width: fit-content;
-  border: 1px solid rgba(11, 95, 255, 0.16);
+  border: 1px solid rgba(59, 130, 246, 0.16);
   border-radius: 14px;
-  background: rgba(11, 95, 255, 0.08);
-  color: #0b3db8;
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
   padding: 0.7rem 0.95rem;
   display: inline-flex;
   align-items: center;
@@ -4082,14 +4082,14 @@
 
 .planning-inline-assistant-copy {
   margin: 0;
-  color: #64748b;
+  color: #8ea3bb;
   font-size: 0.9rem;
   line-height: 1.45;
 }
 
 .planning-inline-assistant-result {
   margin: 0;
-  color: #0f172a;
+  color: #ebf2fa;
   font-size: 0.9rem;
   line-height: 1.4;
   font-weight: 600;
@@ -4103,11 +4103,11 @@
 
 .planning-inline-editor select {
   width: 100%;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
-  background: rgba(248, 250, 252, 0.98);
+  background: rgba(15, 20, 30, 0.98);
   padding: 0.75rem 0.85rem;
-  color: #0f172a;
+  color: #ebf2fa;
 }
 
 .planning-assistant-dialog {
@@ -4122,7 +4122,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .planning-assistant-dialog-header h2 {
@@ -4144,9 +4144,9 @@
 }
 
 .planning-assistant-outcome-card {
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 18px;
-  background: rgba(248, 250, 252, 0.94);
+  background: rgba(15, 20, 30, 0.94);
   padding: 1rem;
   display: grid;
   gap: 0.45rem;
@@ -4155,12 +4155,12 @@
 .planning-assistant-outcome-card strong {
   font-size: 1rem;
   line-height: 1.35;
-  color: #0f172a;
+  color: #ebf2fa;
 }
 
 .planning-assistant-outcome-card p {
   margin: 0;
-  color: #475569;
+  color: #8ea3bb;
   font-size: 0.93rem;
   line-height: 1.5;
 }
@@ -4170,13 +4170,13 @@
   justify-content: flex-end;
   gap: 0.75rem;
   padding-top: 0.25rem;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .planning-assistant-card,
 .planning-assistant-summary,
 .planning-assistant-option {
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(15, 20, 30, 0.94);
 }
 
 .planning-assistant-actions,
@@ -4199,7 +4199,7 @@
 }
 
 .planning-assistant-summary {
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 18px;
   padding: 1rem;
 }
@@ -4230,13 +4230,13 @@
 }
 
 .planning-assistant-option {
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 18px;
   overflow: hidden;
 }
 
 .planning-assistant-option.selected {
-  box-shadow: inset 0 0 0 1px rgba(11, 95, 255, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.28);
 }
 
 .planning-assistant-option-main {
@@ -4287,8 +4287,8 @@
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  background: rgba(248, 250, 252, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(15, 20, 30, 0.96);
   overflow: hidden;
 }
 
@@ -4312,7 +4312,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-left: 1px solid rgba(15, 23, 42, 0.08);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .planning-intent-list-card-main,
@@ -4390,8 +4390,8 @@
   gap: 0.8rem;
   padding: 0.9rem 1rem;
   border-radius: 18px;
-  background: rgba(15, 23, 42, 0.04);
-  color: #0f172a;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ebf2fa;
 }
 
 .planning-objective-button.selected,
@@ -4399,13 +4399,13 @@
 .planning-release-card.selected,
 .planning-intent-card.selected,
 .planning-list-card.selected {
-  box-shadow: inset 0 0 0 1px rgba(11, 95, 255, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.25);
 }
 
 .planning-objective-children {
   margin-left: 1rem;
   padding-left: 0.9rem;
-  border-left: 1px solid rgba(15, 23, 42, 0.08);
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
   display: grid;
   gap: 0.75rem;
 }
@@ -4424,12 +4424,12 @@
   cursor: pointer;
   padding: 0.45rem 0.7rem;
   border-radius: 999px;
-  background: rgba(11, 95, 255, 0.08);
-  color: #0f172a;
+  background: rgba(59, 130, 246, 0.1);
+  color: #ebf2fa;
 }
 
 .planning-key-result-chip.selected {
-  background: rgba(11, 95, 255, 0.16);
+  background: rgba(59, 130, 246, 0.2);
 }
 
 .planning-remediation-card {
@@ -4439,8 +4439,8 @@
   gap: 0.75rem;
   padding: 0.85rem 0.95rem;
   border-radius: 18px;
-  background: rgba(255, 122, 0, 0.08);
-  color: #0f172a;
+  background: rgba(255, 122, 0, 0.1);
+  color: #ebf2fa;
 }
 
 .planning-panel-graph {
@@ -4459,11 +4459,11 @@
   border-radius: 24px;
   overflow: auto;
   background:
-    linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-    linear-gradient(160deg, rgba(248, 250, 252, 0.96), rgba(239, 244, 252, 0.94));
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(160deg, rgba(15, 20, 30, 0.96), rgba(10, 16, 26, 0.94));
   background-size: 32px 32px, 32px 32px, auto;
-  color: #0f172a;
+  color: #ebf2fa;
 }
 
 .planning-graph-edges {
@@ -4477,20 +4477,20 @@
   padding: 0.8rem;
   border: 0;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  background: rgba(15, 22, 35, 0.96);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
   text-align: left;
   cursor: pointer;
-  color: #0f172a;
+  color: #ebf2fa;
 }
 
 .planning-graph-node.selected {
-  box-shadow: 0 18px 44px rgba(11, 95, 255, 0.18);
-  outline: 2px solid rgba(11, 95, 255, 0.22);
+  box-shadow: 0 18px 44px rgba(59, 130, 246, 0.22);
+  outline: 2px solid rgba(59, 130, 246, 0.28);
 }
 
 .planning-graph-node.warning {
-  background: rgba(255, 244, 236, 0.98);
+  background: rgba(40, 30, 20, 0.98);
 }
 
 .planning-graph-node-head {
@@ -4508,7 +4508,7 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: #8ea3bb;
 }
 
 .planning-graph-node strong {
@@ -4519,7 +4519,7 @@
 
 .planning-graph-node-metrics span {
   font-size: 0.78rem;
-  color: #64748b;
+  color: #8ea3bb;
 }
 
 .planning-detail-card,
@@ -4529,13 +4529,13 @@
 .planning-intent-card {
   padding: 1rem;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  color: #0f172a;
+  background: rgba(15, 20, 30, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #ebf2fa;
 }
 
 .planning-detail-note {
-  color: #64748b;
+  color: #8ea3bb;
 }
 
 .planning-detail-stack,
@@ -4577,7 +4577,7 @@
 .planning-release-progress {
   height: 10px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
   margin: 0.85rem 0 0.55rem;
 }
@@ -4585,7 +4585,7 @@
 .planning-release-progress span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #0b5fff, #ff7a00);
+  background: linear-gradient(90deg, #3b82f6, #ff7a00);
 }
 
 .planning-release-intent-pill {
@@ -4593,16 +4593,16 @@
   cursor: pointer;
   border-radius: 14px;
   padding: 0.7rem 0.8rem;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(15, 22, 35, 0.88);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
-  color: #0f172a;
+  color: #ebf2fa;
 }
 
 .planning-release-intent-pill.selected {
-  box-shadow: inset 0 0 0 1px rgba(11, 95, 255, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.22);
 }
 
 .planning-intent-grid {
@@ -4610,7 +4610,7 @@
 }
 
 .planning-intent-card {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(15, 20, 30, 0.92);
 }
 
 .planning-intent-card-head,
@@ -4628,15 +4628,15 @@
 }
 
 .planning-warning-card {
-  background: rgba(255, 244, 236, 0.95);
+  background: rgba(40, 30, 20, 0.95);
 }
 
 .planning-warning-info {
-  background: rgba(236, 244, 255, 0.95);
+  background: rgba(20, 30, 45, 0.95);
 }
 
 .planning-error-card {
-  background: rgba(255, 244, 236, 0.96);
+  background: rgba(40, 20, 20, 0.96);
 }
 
 @media (max-width: 1200px) {
