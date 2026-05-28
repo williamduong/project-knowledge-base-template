@@ -92,23 +92,6 @@ function validationLabel(intent: PlanningIntent, linkedKeyResultCount: number) {
   return 'key result required'
 }
 
-function formatAssistantDecisionLabel(value: AssistantDecision) {
-  if (value === 'bind-existing') return 'Bind existing KR'
-  if (value === 'propose-new-okr') return 'Create new O/KR'
-  return 'Mark out of scope'
-}
-
-function assistantActionLabel(
-  intentId: string,
-  suggestions: Record<string, PlanningAssistantResponse>,
-  pendingIntentId: string | undefined,
-  isPending: boolean,
-) {
-  if (isPending && pendingIntentId === intentId) return 'AI deciding...'
-  if (suggestions[intentId]) return 'Open AI plan'
-  return 'AI decide'
-}
-
 function parsePlanningView(value: string | null | undefined) {
   if (value === 'overview' || value === 'okr' || value === 'releases' || value === 'intents' || value === 'graph') {
     return value
@@ -160,162 +143,225 @@ function StageTab({
   )
 }
 
-function AssistantDecisionDialog({
+function UpdateKRDialog({
   open,
   intent,
-  suggestion,
-  isPending,
+  availableKeyResults,
+  isRunning,
   isApplying,
   error,
-  nextTopLevelObjectiveCode,
-  selectedDecision,
-  selectedKeyResultId,
-  selectedReleaseId,
+  aiResult,
   onClose,
-  onRerun,
-  onAccept,
+  onRunAI,
+  onAcceptManual,
+  onAcceptAI,
 }: {
   open: boolean
   intent: PlanningIntent | null
-  suggestion: PlanningAssistantResponse | null
-  isPending: boolean
+  availableKeyResults: PlanningKeyResult[]
+  isRunning: boolean
   isApplying: boolean
   error: string | null
-  nextTopLevelObjectiveCode: string
-  selectedDecision: AssistantDecision
-  selectedKeyResultId: string
-  selectedReleaseId: string
+  aiResult: PlanningAssistantResponse | null
   onClose: () => void
-  onRerun: () => void
-  onAccept: () => void
+  onRunAI: () => void
+  onAcceptManual: (krId: string | null) => void
+  onAcceptAI: (krId: string, releaseId: string, decision: AssistantDecision) => void
 }) {
+  const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('ai')
+  const [manualKRId, setManualKRId] = useState('')
+  const [aiKRId, setAiKRId] = useState('')
+  const [aiReleaseId, setAiReleaseId] = useState('')
+
   if (!open || !intent) return null
 
-  const chosenKeyResult = suggestion?.suggestion.key_result_candidates.find((candidate) => candidate.id === selectedKeyResultId)
-    ?? suggestion?.suggestion.key_result_candidates.find((candidate) => candidate.id === suggestion.suggestion.primary_key_result_id)
-    ?? suggestion?.suggestion.key_result_candidates[0]
-    ?? null
-  const chosenRelease = suggestion?.suggestion.release_candidates.find((candidate) => candidate.id === selectedReleaseId)
-    ?? suggestion?.suggestion.release_candidates.find((candidate) => candidate.id === suggestion.suggestion.primary_release_id)
-    ?? suggestion?.suggestion.release_candidates[0]
-    ?? null
+  const unusedKRs = availableKeyResults.filter((kr) => !intent.linked_key_result_ids.includes(kr.id))
+  const decision = aiResult?.suggestion.decision
+  const aiKRCandidates = aiResult?.suggestion.key_result_candidates ?? []
+  const aiReleaseCandidates = aiResult?.suggestion.release_candidates ?? []
+
+  const canAccept = activeTab === 'manual'
+    ? Boolean(manualKRId)
+    : Boolean(aiResult && (decision === 'out-of-scope' || decision === 'propose-new-okr' || aiKRId))
+
+  function handleAccept() {
+    if (activeTab === 'manual') {
+      onAcceptManual(manualKRId === MANUAL_OUT_OF_SCOPE_OPTION ? null : manualKRId || null)
+    } else if (aiResult) {
+      onAcceptAI(aiKRId || '', aiReleaseId || '', decision || 'bind-existing')
+    }
+  }
 
   return (
-    <div className="prototype-overlay-backdrop" role="dialog" aria-modal="true" aria-label="AI planning decision" onClick={onClose}>
+    <div className="prototype-overlay-backdrop" role="dialog" aria-modal="true" aria-label="Update key result" onClick={onClose}>
       <div className="prototype-dialog planning-assistant-dialog" onClick={(event) => event.stopPropagation()}>
         <div className="planning-assistant-dialog-header">
           <div>
-            <p className="workspace-eyebrow">AI Planning Decision</p>
+            <p className="workspace-eyebrow">Update Key Result</p>
             <h2>{intent.title}</h2>
           </div>
           <button type="button" className="tool-button" aria-label="Close dialog" onClick={onClose}>Close</button>
         </div>
 
-        {isPending ? (
-          <div className="planning-assistant-dialog-body">
-            <article className="planning-assistant-summary">
-              <strong>AI is evaluating this intent</strong>
-              <p>Reviewing the current intent, release lanes, and OKR graph to decide whether this should bind to an existing KR, create a new O/KR, or stay out of scope.</p>
-            </article>
-          </div>
-        ) : null}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+          <button type="button" className={`planning-stage-tab${activeTab === 'ai' ? ' active' : ''}`} onClick={() => setActiveTab('ai')}>
+            <strong>AI Assisted</strong>
+            <span>Let AI suggest the best KR</span>
+          </button>
+          <button type="button" className={`planning-stage-tab${activeTab === 'manual' ? ' active' : ''}`} onClick={() => setActiveTab('manual')}>
+            <strong>Manual</strong>
+            <span>Pick a KR yourself</span>
+          </button>
+        </div>
 
-        {!isPending && error ? (
-          <div className="planning-assistant-dialog-body">
-            <article className="planning-warning-card planning-error-card">
-              <strong>Assistant planning failed</strong>
-              <p>{error}</p>
-            </article>
-          </div>
-        ) : null}
-
-        {!isPending && suggestion ? (
-          <div className="planning-assistant-dialog-body">
-            <article className="planning-assistant-summary">
-              <strong>{formatAssistantDecisionLabel(selectedDecision)}</strong>
-              <p>{suggestion.suggestion.summary}</p>
-              <p className="planning-detail-note">{suggestion.suggestion.why_now}</p>
-            </article>
-
-            {selectedDecision === 'bind-existing' ? (
-              <div className="planning-assistant-outcome-grid">
-                <article className="planning-assistant-outcome-card">
-                  <span className="runtime-overview-label">Goal / Objective</span>
-                  <strong>{chosenKeyResult?.objective_code ? `${chosenKeyResult.objective_code} — ${chosenKeyResult.objective_title}` : 'No objective match found'}</strong>
-                  <p>{chosenKeyResult?.rationale || 'No strong rationale returned.'}</p>
-                </article>
-                <article className="planning-assistant-outcome-card">
-                  <span className="runtime-overview-label">Key Result</span>
-                  <strong>{chosenKeyResult ? `${chosenKeyResult.code} — ${chosenKeyResult.title}` : 'No KR selected'}</strong>
-                  <p>{chosenKeyResult ? `${chosenKeyResult.metric || 'metric pending'} · ${chosenKeyResult.target || 'target pending'}` : 'Assistant did not return a KR candidate.'}</p>
-                </article>
-                <article className="planning-assistant-outcome-card">
-                  <span className="runtime-overview-label">Release</span>
-                  <strong>{chosenRelease ? `${chosenRelease.code} — ${chosenRelease.title}` : 'No release change required'}</strong>
-                  <p>{chosenRelease?.rationale || 'No release update is needed for this decision.'}</p>
-                </article>
+        <div className="planning-assistant-dialog-body">
+          {activeTab === 'manual' ? (
+            <div className="planning-detail-stack">
+              <article className="planning-assistant-summary">
+                <strong>Bind this intent to a key result</strong>
+                <p>Choose an existing key result or mark this intent as out of scope.</p>
+              </article>
+              <div className="planning-inline-editor">
+                <select
+                  value={manualKRId}
+                  onChange={(event) => setManualKRId(event.target.value)}
+                >
+                  <option value="">Select a key result…</option>
+                  <option value={MANUAL_OUT_OF_SCOPE_OPTION}>Mark out of scope</option>
+                  {unusedKRs.map((kr) => (
+                    <option key={kr.id} value={kr.id}>
+                      {kr.code} — {kr.title}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ) : null}
+            </div>
+          ) : (
+            <>
+              <article className="planning-assistant-summary">
+                <strong>AI-assisted key result binding</strong>
+                <p>Let AI analyze this intent and recommend the best key result, or propose a new objective and key result if nothing fits.</p>
+              </article>
 
-            {selectedDecision === 'propose-new-okr' ? (
-              <div className="planning-assistant-outcome-grid">
-                <article className="planning-assistant-outcome-card">
-                  <span className="runtime-overview-label">Placement</span>
-                  <strong>Create new top-level objective {nextTopLevelObjectiveCode}</strong>
-                  <p>This will be created as a new top-level goal in the planning workspace, not nested under an existing objective.</p>
-                </article>
-                <article className="planning-assistant-outcome-card">
-                  <span className="runtime-overview-label">Objective</span>
-                  <strong>{suggestion.suggestion.proposed_objective?.title || 'No objective proposed'}</strong>
-                  <p>{suggestion.suggestion.proposed_objective?.description || 'Missing objective description.'}</p>
-                </article>
-                <article className="planning-assistant-outcome-card">
-                  <span className="runtime-overview-label">Key Result</span>
-                  <strong>{suggestion.suggestion.proposed_key_result?.title || 'No key result proposed'}</strong>
-                  <p>{suggestion.suggestion.proposed_key_result ? `${suggestion.suggestion.proposed_key_result.metric} · ${suggestion.suggestion.proposed_key_result.target}` : 'Missing KR definition.'}</p>
-                </article>
-              </div>
-            ) : null}
+              {!aiResult && !isRunning && !error ? (
+                <div className="planning-assistant-dialog-body">
+                  <button type="button" className="planning-mini-action" onClick={onRunAI}>
+                    <Icon icon={sparkles} />
+                    Run AI Decide
+                  </button>
+                  <p className="planning-inline-assistant-copy">AI will review the current intent, release lanes, and OKR graph to decide the best binding.</p>
+                </div>
+              ) : null}
 
-            {selectedDecision === 'out-of-scope' ? (
-              <div className="planning-assistant-outcome-grid">
-                <article className="planning-assistant-outcome-card">
-                  <span className="runtime-overview-label">Reason</span>
-                  <strong>Keep this intent outside the current goals</strong>
-                  <p>{suggestion.suggestion.out_of_scope_reason || 'No out-of-scope reason returned.'}</p>
-                </article>
-                <article className="planning-assistant-outcome-card">
-                  <span className="runtime-overview-label">After acceptance</span>
-                  <strong>Filterable in the intent workspace</strong>
-                  <p>This intent will stay visible with the `out-of-scope` state so you can filter it later instead of forcing a weak KR mapping.</p>
-                </article>
-              </div>
-            ) : null}
-
-            {suggestion.suggestion.warnings.length ? (
-              <div className="planning-validation-list">
-                {suggestion.suggestion.warnings.map((warning) => (
-                  <article key={warning} className="planning-warning-card planning-warning-info">
-                    <p>{warning}</p>
+              {isRunning ? (
+                <div className="planning-assistant-dialog-body">
+                  <article className="planning-assistant-summary">
+                    <strong>AI is evaluating this intent</strong>
+                    <p>Reviewing the current intent, release lanes, and OKR graph to decide whether this should bind to an existing KR, create a new O/KR, or stay out of scope.</p>
                   </article>
-                ))}
-              </div>
-            ) : null}
+                </div>
+              ) : null}
 
-            <article className="planning-assistant-summary">
-              <strong>Next action if accepted</strong>
-              <p>{suggestion.suggestion.next_action}</p>
-            </article>
-          </div>
-        ) : null}
+              {!isRunning && error ? (
+                <div className="planning-assistant-dialog-body">
+                  <article className="planning-warning-card planning-error-card">
+                    <strong>Assistant planning failed</strong>
+                    <p>{error}</p>
+                  </article>
+                </div>
+              ) : null}
+
+              {!isRunning && aiResult ? (
+                <>
+                  <article className="planning-assistant-summary">
+                    <strong>{decision === 'bind-existing' ? 'Bind existing KR' : decision === 'propose-new-okr' ? 'Create new O/KR' : 'Mark out of scope'}</strong>
+                    <p>{aiResult.suggestion.summary}</p>
+                    <p className="planning-detail-note">{aiResult.suggestion.why_now}</p>
+                  </article>
+
+                  {decision === 'bind-existing' ? (
+                    <div className="planning-detail-stack">
+                      <span className="runtime-overview-label">Select a key result</span>
+                      <div className="planning-list-stack">
+                        {aiKRCandidates.slice(0, 3).map((candidate) => (
+                          <button
+                            key={candidate.id}
+                            type="button"
+                            className={`planning-list-card${aiKRId === candidate.id ? ' selected' : ''}`}
+                            onClick={() => {
+                              setAiKRId(candidate.id)
+                              const release = aiReleaseCandidates.find((r) => r.id === candidate.id) || aiReleaseCandidates[0]
+                              if (release) setAiReleaseId(release.id)
+                            }}
+                          >
+                            <div className="planning-list-card-head">
+                              <div>
+                                <span className="workspace-eyebrow">{candidate.objective_code} — {candidate.code}</span>
+                                <strong>{candidate.title}</strong>
+                              </div>
+                              <span className={`status-pill ${candidate.confidence === 'high' ? 'status-good' : candidate.confidence === 'medium' ? 'status-neutral' : 'status-warn'}`}>
+                                {candidate.confidence}
+                              </span>
+                            </div>
+                            <p>{candidate.rationale}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {decision === 'propose-new-okr' ? (
+                    <div className="planning-assistant-outcome-grid">
+                      <article className="planning-assistant-outcome-card">
+                        <span className="runtime-overview-label">New Objective</span>
+                        <strong>{aiResult.suggestion.proposed_objective?.title || 'No objective proposed'}</strong>
+                        <p>{aiResult.suggestion.proposed_objective?.description || 'Missing objective description.'}</p>
+                      </article>
+                      <article className="planning-assistant-outcome-card">
+                        <span className="runtime-overview-label">New Key Result</span>
+                        <strong>{aiResult.suggestion.proposed_key_result?.title || 'No key result proposed'}</strong>
+                        <p>{aiResult.suggestion.proposed_key_result ? `${aiResult.suggestion.proposed_key_result.metric} · ${aiResult.suggestion.proposed_key_result.target}` : 'Missing KR definition.'}</p>
+                      </article>
+                    </div>
+                  ) : null}
+
+                  {decision === 'out-of-scope' ? (
+                    <article className="planning-assistant-outcome-card">
+                      <span className="runtime-overview-label">Out of Scope</span>
+                      <strong>This intent is outside the current goals</strong>
+                      <p>{aiResult.suggestion.out_of_scope_reason || 'No reason provided.'}</p>
+                    </article>
+                  ) : null}
+
+                  {aiResult.suggestion.warnings.length ? (
+                    <div className="planning-validation-list">
+                      {aiResult.suggestion.warnings.map((warning) => (
+                        <article key={warning} className="planning-warning-card planning-warning-info">
+                          <p>{warning}</p>
+                        </article>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <article className="planning-assistant-summary">
+                    <strong>Next action if accepted</strong>
+                    <p>{aiResult.suggestion.next_action}</p>
+                  </article>
+                </>
+              ) : null}
+            </>
+          )}
+        </div>
 
         <div className="planning-assistant-dialog-actions">
-          <button type="button" className="tool-button" onClick={onRerun} disabled={isPending || isApplying}>Re-run</button>
-          <button type="button" className="planning-mini-action" onClick={onAccept} disabled={!suggestion || isPending || isApplying}>
+          <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
+          {activeTab === 'ai' && aiResult && !isRunning ? (
+            <button type="button" className="tool-button" onClick={onRunAI} disabled={isRunning || isApplying}>Re-run AI</button>
+          ) : null}
+          <button type="button" className="planning-mini-action" onClick={handleAccept} disabled={!canAccept || isApplying}>
             <Icon icon={plus} />
             {isApplying ? 'Applying...' : 'Accept'}
           </button>
-          <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
         </div>
       </div>
     </div>
@@ -583,11 +629,9 @@ export function IntentsListPage() {
     return parsePlanningView(new URLSearchParams(window.location.search).get('view'))
   })
   const [searchText, setSearchText] = useState('')
-  const [intentKeyResultDrafts, setIntentKeyResultDrafts] = useState<Record<string, string>>({})
   const [releaseIntentDrafts, setReleaseIntentDrafts] = useState<Record<string, string>>({})
-  const [assistantSuggestions, setAssistantSuggestions] = useState<Record<string, PlanningAssistantResponse>>({})
-  const [assistantApprovals, setAssistantApprovals] = useState<Record<string, { decision: AssistantDecision; keyResultId: string; releaseId: string }>>({})
-  const [assistantDialogIntentId, setAssistantDialogIntentId] = useState<string | null>(null)
+  const [updateKRDialogIntentId, setUpdateKRDialogIntentId] = useState<string | null>(null)
+  const [aiResult, setAiResult] = useState<PlanningAssistantResponse | null>(null)
   const deferredSearch = useDeferredValue(searchText)
 
   const data = workspaceQuery.data
@@ -712,10 +756,7 @@ export function IntentsListPage() {
   const topObjectives = useMemo(() => objectiveList.slice(0, 4), [objectiveList])
   const activeIntents = useMemo(() => filteredIntents.filter((intent) => intent.lifecycle === 'active').slice(0, 5), [filteredIntents])
   const linkedCoverage = data ? Math.round((data.summary.mappedIntents / Math.max(data.summary.intents, 1)) * 100) : 0
-  const nextTopLevelObjectiveCode = `G${(data?.objectives.length ?? 0) + 1}`
-  const assistantDialogIntent = assistantDialogIntentId ? intentMap.get(assistantDialogIntentId) ?? null : null
-  const assistantDialogSuggestion = assistantDialogIntentId ? assistantSuggestions[assistantDialogIntentId] ?? null : null
-  const assistantDialogApproval = assistantDialogIntentId ? assistantApprovals[assistantDialogIntentId] : null
+  const updateKRDialogIntent = updateKRDialogIntentId ? intentMap.get(updateKRDialogIntentId) ?? null : null
 
   function syncWorkspace(nextWorkspace: typeof data) {
     queryClient.setQueryData(['planning-workspace'], nextWorkspace)
@@ -723,9 +764,10 @@ export function IntentsListPage() {
 
   const addIntentKeyResultMutation = useMutation({
     mutationFn: ({ intentId, keyResultId }: { intentId: string; keyResultId: string }) => addIntentKeyResultLink(intentId, keyResultId),
-    onSuccess: (result, variables) => {
+    onSuccess: (result) => {
       syncWorkspace(result.workspace)
-      setIntentKeyResultDrafts((current) => ({ ...current, [variables.intentId]: '' }))
+      setUpdateKRDialogIntentId(null)
+      setAiResult(null)
     },
   })
 
@@ -754,20 +796,7 @@ export function IntentsListPage() {
   const assistantPlanMutation = useMutation({
     mutationFn: (intentId: string) => generateIntentAssistantPlan(intentId),
     onSuccess: (result) => {
-      setSelectedNodeId(result.intent_id)
-      setActiveView('intents')
-      setAssistantDialogIntentId(result.intent_id)
-      setAssistantSuggestions((current) => ({ ...current, [result.intent_id]: result }))
-      const firstReleaseCandidate = result.suggestion.release_candidates.find((candidate) => !candidate.already_included)
-        ?? result.suggestion.release_candidates[0]
-      setAssistantApprovals((current) => ({
-        ...current,
-        [result.intent_id]: {
-          decision: result.suggestion.decision,
-          keyResultId: result.suggestion.primary_key_result_id || result.suggestion.key_result_candidates[0]?.id || '',
-          releaseId: result.suggestion.primary_release_id || firstReleaseCandidate?.id || '',
-        },
-      }))
+      setAiResult(result)
     },
   })
 
@@ -775,18 +804,35 @@ export function IntentsListPage() {
     mutationFn: ({ intentId, body }: { intentId: string; body: PlanningAssistantResponse['suggestion'] }) => applyIntentAssistantPlan(intentId, body),
     onSuccess: (result) => {
       syncWorkspace(result.workspace)
-      setAssistantDialogIntentId(null)
+      setUpdateKRDialogIntentId(null)
+      setAiResult(null)
     },
   })
 
-  function launchAssistant(intentId: string) {
+  function openUpdateKRDailog(intentId: string) {
     openView('intents', intentId)
-    setSelectedNodeId(intentId)
-    setAssistantDialogIntentId(intentId)
-    if (assistantPlanMutation.variables === intentId && assistantPlanMutation.isPending) {
-      return
+    setUpdateKRDialogIntentId(intentId)
+    setAiResult(null)
+  }
+
+  function runAIForDialog() {
+    if (updateKRDialogIntentId) {
+      assistantPlanMutation.mutate(updateKRDialogIntentId)
     }
-    assistantPlanMutation.mutate(intentId)
+  }
+
+  function handleAcceptManual(krId: string | null) {
+    if (!updateKRDialogIntent) return
+    if (!krId) {
+      markIntentOutOfScope(updateKRDialogIntent.id)
+    } else {
+      addIntentKeyResultMutation.mutate({ intentId: updateKRDialogIntent.id, keyResultId: krId })
+    }
+  }
+
+  function handleAcceptAI(krId: string, releaseId: string, decision: AssistantDecision) {
+    if (!updateKRDialogIntent || !aiResult) return
+    void adoptAssistantRecommendation(updateKRDialogIntent, krId, releaseId, decision)
   }
 
   function openView(view: PlanningView, nodeId?: string | null) {
@@ -794,10 +840,6 @@ export function IntentsListPage() {
     if (nodeId) {
       setSelectedNodeId(nodeId)
     }
-  }
-
-  function keyResultOptionsForIntent(intent: PlanningIntent) {
-    return (data?.keyResults ?? []).filter((keyResult) => !intent.linked_key_result_ids.includes(keyResult.id))
   }
 
   function intentOptionsForRelease(release: PlanningRelease) {
@@ -825,51 +867,7 @@ export function IntentsListPage() {
         warnings: [],
       },
     })
-  }
-
-  async function adoptAssistantRecommendation(intent: PlanningIntent) {
-    const approval = assistantApprovals[intent.id]
-    const suggestion = assistantSuggestions[intent.id]?.suggestion
-    if (!approval && !suggestion) return
-
-    const fallbackReleaseId = suggestion?.release_candidates.find((candidate) => !candidate.already_included)?.id
-      || suggestion?.release_candidates[0]?.id
-      || ''
-    const fallbackKeyResultId = suggestion?.key_result_candidates[0]?.id || ''
-    const decision = approval?.decision || suggestion?.decision || 'bind-existing'
-    await assistantApplyMutation.mutateAsync({
-      intentId: intent.id,
-      body: {
-        ...(suggestion || {
-          decision,
-          summary: '',
-          why_now: '',
-          next_action: '',
-          primary_key_result_id: null,
-          primary_release_id: null,
-          key_result_candidates: [],
-          release_candidates: [],
-          proposed_objective: null,
-          proposed_key_result: null,
-          out_of_scope_reason: null,
-          warnings: [],
-        }),
-        decision,
-        primary_key_result_id: decision === 'bind-existing' ? (approval?.keyResultId || fallbackKeyResultId || null) : null,
-        primary_release_id: approval?.releaseId || fallbackReleaseId || null,
-      },
-    })
-  }
-
-  async function applyManualIntentKeyResult(intent: PlanningIntent) {
-    const draft = intentKeyResultDrafts[intent.id] ?? ''
-    if (!draft) return
-    if (draft === MANUAL_OUT_OF_SCOPE_OPTION) {
-      setIntentKeyResultDrafts((current) => ({ ...current, [intent.id]: '' }))
-      await markIntentOutOfScope(intent.id)
-      return
-    }
-    addIntentKeyResultMutation.mutate({ intentId: intent.id, keyResultId: draft })
+    setUpdateKRDialogIntentId(null)
   }
 
   if (workspaceQuery.isLoading) {
@@ -1023,45 +1021,23 @@ export function IntentsListPage() {
                     <button
                       type="button"
                       className="planning-inline-secondary-action"
-                      disabled={assistantPlanMutation.isPending && assistantPlanMutation.variables === intent.id}
-                      onClick={() => launchAssistant(intent.id)}
+                      onClick={() => openUpdateKRDailog(intent.id)}
                     >
                       <Icon icon={sparkles} />
-                      <strong>{assistantActionLabel(intent.id, assistantSuggestions, assistantPlanMutation.variables, assistantPlanMutation.isPending)}</strong>
+                      <strong>Update KR</strong>
                     </button>
                     <p className="planning-inline-assistant-copy">
-                      AI will open a review dialog, explain one decision, then let you accept, re-run, or cancel.
+                      Open a dialog to bind this intent to a key result, manually or with AI assistance.
                     </p>
-                    {assistantSuggestions[intent.id] ? (
+                    {intent.validation_state === 'proposed-new-key-result' ? (
                       <p className="planning-inline-assistant-result">
-                        AI decided: {assistantSuggestions[intent.id]?.suggestion.decision.replace(/-/g, ' ')}
+                        New O/KR proposed and pending acceptance
+                      </p>
+                    ) : intent.validation_state === 'out-of-scope' ? (
+                      <p className="planning-inline-assistant-result">
+                        Marked out of scope
                       </p>
                     ) : null}
-                  </div>
-                  <div className="planning-inline-editor">
-                    <select
-                      id={`remediation-kr-${intent.id}`}
-                      name={`remediation_kr_${intent.id}`}
-                      value={intentKeyResultDrafts[intent.id] ?? ''}
-                      onChange={(event) => setIntentKeyResultDrafts((current) => ({ ...current, [intent.id]: event.target.value }))}
-                    >
-                      <option value="">Bind manually instead</option>
-                      <option value={MANUAL_OUT_OF_SCOPE_OPTION}>Mark out of scope</option>
-                      {keyResultOptionsForIntent(intent).map((keyResult) => (
-                        <option key={keyResult.id} value={keyResult.id}>
-                          {keyResult.code} - {keyResult.title}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="planning-mini-action"
-                      disabled={!intentKeyResultDrafts[intent.id] || addIntentKeyResultMutation.isPending}
-                      onClick={() => void applyManualIntentKeyResult(intent)}
-                    >
-                      <Icon icon={plus} />
-                      {intentKeyResultDrafts[intent.id] === MANUAL_OUT_OF_SCOPE_OPTION ? 'Mark scope' : 'Bind KR'}
-                    </button>
                   </div>
                 </article>
               ))}
@@ -1255,18 +1231,21 @@ export function IntentsListPage() {
                           <button
                             type="button"
                             className="planning-inline-secondary-action"
-                            disabled={assistantPlanMutation.isPending && assistantPlanMutation.variables === intent.id}
-                            onClick={() => launchAssistant(intent.id)}
+                            onClick={() => openUpdateKRDailog(intent.id)}
                           >
                             <Icon icon={sparkles} />
-                            <strong>{assistantActionLabel(intent.id, assistantSuggestions, assistantPlanMutation.variables, assistantPlanMutation.isPending)}</strong>
+                            <strong>Update KR</strong>
                           </button>
                           <p className="planning-inline-assistant-copy">
-                            Let AI choose the next move before using the manual bind controls below.
+                            Open a dialog to bind this intent to a key result, manually or with AI assistance.
                           </p>
-                          {assistantSuggestions[intent.id] ? (
+                          {intent.validation_state === 'proposed-new-key-result' ? (
                             <p className="planning-inline-assistant-result">
-                              AI decided: {assistantSuggestions[intent.id]?.suggestion.decision.replace(/-/g, ' ')}
+                              New O/KR proposed and pending acceptance
+                            </p>
+                          ) : intent.validation_state === 'out-of-scope' ? (
+                            <p className="planning-inline-assistant-result">
+                              Marked out of scope
                             </p>
                           ) : null}
                         </div>
@@ -1292,35 +1271,6 @@ export function IntentsListPage() {
                           })}
                         </div>
                       ) : null}
-                      <div className="planning-inline-editor">
-                        <select
-                          id={`intent-kr-${intent.id}`}
-                          name={`intent_kr_${intent.id}`}
-                          value={intentKeyResultDrafts[intent.id] ?? ''}
-                          onChange={(event) => setIntentKeyResultDrafts((current) => ({ ...current, [intent.id]: event.target.value }))}
-                        >
-                          <option value="">{intent.validation_state === 'linked' ? 'Add another key result' : 'Bind manually instead'}</option>
-                          <option value={MANUAL_OUT_OF_SCOPE_OPTION}>Mark out of scope</option>
-                          {keyResultOptionsForIntent(intent).map((keyResult) => (
-                            <option key={keyResult.id} value={keyResult.id}>
-                              {keyResult.code} - {keyResult.title}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          className="planning-mini-action"
-                          disabled={!intentKeyResultDrafts[intent.id] || addIntentKeyResultMutation.isPending}
-                          onClick={() => void applyManualIntentKeyResult(intent)}
-                        >
-                          <Icon icon={plus} />
-                          {intentKeyResultDrafts[intent.id] === MANUAL_OUT_OF_SCOPE_OPTION
-                            ? 'Mark scope'
-                            : intent.validation_state === 'linked'
-                              ? 'Add KR'
-                              : 'Bind KR'}
-                        </button>
-                      </div>
                     </div>
                   </article>
                 ))}
@@ -1393,30 +1343,20 @@ export function IntentsListPage() {
         </div>
       ) : null}
 
-      <AssistantDecisionDialog
-        open={Boolean(assistantDialogIntentId && assistantDialogIntent)}
-        intent={assistantDialogIntent}
-        suggestion={assistantDialogSuggestion}
-        isPending={assistantPlanMutation.isPending && assistantPlanMutation.variables === assistantDialogIntentId}
+      <UpdateKRDialog
+        open={Boolean(updateKRDialogIntentId && updateKRDialogIntent)}
+        intent={updateKRDialogIntent}
+        availableKeyResults={data?.keyResults ?? []}
+        isRunning={assistantPlanMutation.isPending && assistantPlanMutation.variables === updateKRDialogIntentId}
         isApplying={assistantApplyMutation.isPending}
-        error={assistantPlanMutation.isError && assistantPlanMutation.variables === assistantDialogIntentId
+        error={assistantPlanMutation.isError && assistantPlanMutation.variables === updateKRDialogIntentId
           ? (assistantPlanMutation.error instanceof Error ? assistantPlanMutation.error.message : 'Assistant planning failed.')
           : null}
-        nextTopLevelObjectiveCode={nextTopLevelObjectiveCode}
-        selectedDecision={assistantDialogApproval?.decision ?? assistantDialogSuggestion?.suggestion.decision ?? 'bind-existing'}
-        selectedKeyResultId={assistantDialogApproval?.keyResultId ?? ''}
-        selectedReleaseId={assistantDialogApproval?.releaseId ?? ''}
-        onClose={() => setAssistantDialogIntentId(null)}
-        onRerun={() => {
-          if (assistantDialogIntentId) {
-            assistantPlanMutation.mutate(assistantDialogIntentId)
-          }
-        }}
-        onAccept={() => {
-          if (assistantDialogIntent) {
-            void adoptAssistantRecommendation(assistantDialogIntent)
-          }
-        }}
+        aiResult={aiResult}
+        onClose={() => { setUpdateKRDialogIntentId(null); setAiResult(null) }}
+        onRunAI={runAIForDialog}
+        onAcceptManual={handleAcceptManual}
+        onAcceptAI={handleAcceptAI}
       />
     </section>
   )
