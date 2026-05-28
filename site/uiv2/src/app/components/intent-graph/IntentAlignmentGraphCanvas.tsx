@@ -18,6 +18,7 @@ import type {
 
 type GraphMode = 'focus' | 'alignment' | 'full'
 type LifecycleFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived'
+type PlanningSidebarTab = 'system-goals' | 'backlog' | 'focus' | 'active' | 'closed' | 'archived' | 'milestones'
 
 type IntentAlignmentGraphCanvasProps = {
   graph: IntentAlignmentGraph
@@ -26,6 +27,8 @@ type IntentAlignmentGraphCanvasProps = {
   onQueryModeChange?: (mode: GraphMode) => void
   queryDepth?: number
   onQueryDepthChange?: (depth: number) => void
+  sidebarTab?: PlanningSidebarTab
+  onSidebarTabChange?: (tab: PlanningSidebarTab) => void
 }
 
 type PositionedNode = Node<{ modelNode: IntentAlignmentNode; label: ReactNode }>
@@ -269,6 +272,8 @@ export function IntentAlignmentGraphCanvas({
   onQueryModeChange,
   queryDepth = 1,
   onQueryDepthChange,
+  sidebarTab,
+  onSidebarTabChange,
 }: IntentAlignmentGraphCanvasProps) {
   const [mode, setMode] = useState<GraphMode>(queryMode ?? graph.defaultMode)
   const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>('all')
@@ -363,6 +368,18 @@ export function IntentAlignmentGraphCanvas({
             </button>
           ))}
         </div>
+
+        {onSidebarTabChange ? (
+          <div className="intent-graph-pill-row">
+            <button className={`tool-button${sidebarTab === 'system-goals' ? ' active' : ''}`} type="button" onClick={() => onSidebarTabChange('system-goals')}>System Goals</button>
+            <button className={`tool-button${sidebarTab === 'milestones' ? ' active' : ''}`} type="button" onClick={() => onSidebarTabChange('milestones')}>Milestones</button>
+            <button className={`tool-button${sidebarTab === 'focus' ? ' active' : ''}`} type="button" onClick={() => onSidebarTabChange('focus')}>Focus</button>
+            <button className={`tool-button${sidebarTab === 'active' ? ' active' : ''}`} type="button" onClick={() => onSidebarTabChange('active')}>Active</button>
+            <button className={`tool-button${sidebarTab === 'backlog' ? ' active' : ''}`} type="button" onClick={() => onSidebarTabChange('backlog')}>Backlog</button>
+            <button className={`tool-button${sidebarTab === 'closed' ? ' active' : ''}`} type="button" onClick={() => onSidebarTabChange('closed')}>Closed</button>
+            <button className={`tool-button${sidebarTab === 'archived' ? ' active' : ''}`} type="button" onClick={() => onSidebarTabChange('archived')}>Archive</button>
+          </div>
+        ) : null}
 
         <label className="rules-filter-field">
           <span>Depth</span>

@@ -89,30 +89,61 @@ Sau khi bootstrap xong (trước khi nhận task):
 
 ## 3. Context dự án (snapshot)
 
-**Repo:** `d:\Source\template\project-knowledge-base-template`
-**Package:** `@williamduong/kb` (npm)
-**Hiện tại:** v1.2.11 (stable, đã publish)
-**Architecture:**
+**Repo:** `d:\Source\template\project-knowledge-base-template`  
+**Package/runtime:** `@williamduong/kbx`  
+**Current direction:** `v3.0` operator workspace + DNA extraction foundation  
+**Current branch (verify every session):** `intent/v3-0-okr-native-graph-workspace`
 
-- CLI Node.js, 4 core commands (init/update/maintain/uninstall) + 13 advanced
-- Template content: `template/` (16 tier folders)
-- Runtime state: `knowledge-base/.kb/state.json` (or `.git/project-kb/`)
-- 2 storage modes: `tracked` vs `private-git`
-- Source repo baseline tracking qua `state.sourceRepositoryGitBaseline`
+**Current architecture layers:**
 
-**Roadmap đã lock:**
+- Data layer:
+  - GraphDB is authoritative for knowledge and planning projections
+  - Local planning source content currently lives in `svfactory/planning.seed.json`
+- Logic layer:
+  - `src/graph-db/knowledge/` for governance entities
+  - `src/graph-db/planning/` for OKR/intent/release/task workspace projection
+  - deterministic planning mutations in `src/lib/svfactory-planning-seed.js`
+- UI layer:
+  - `site/uiv2`
+  - `/intents` is the native planning workspace
+  - `System > AI Settings` stores encrypted DeepSeek runtime context
 
+**Current planning ontology (authoritative mental model):**
+
+```text
+workspace
+  -> objective
+    -> key_result
+      -> intent
+        -> task
+  -> release
+    -> intent
 ```
-v1.3 Git Binding + kb status unified entry  (target tới đây trước)
-v1.4 Impact Engine + Estimator (graphology in-memory)
-v1.5 Catalog + Release Notes (deterministic)
-v1.6 Release Pipeline Orchestrator (skippable, có decision gate)
-v2.0 Intent Layer + KB Agent (7-step workflow, breaking)
-v2.1 Intent Extras (extract + release notes enrichment)
-v3.0 3-tier Platform (DRAFT, gated by trigger conditions)
-```
 
-Plan files: `notes/upgrade-v1.3-*.md` ... `notes/upgrade-v3.0-*.md`.
+Rules:
+- Goals are now represented in this workspace as OKR entities, independent from legacy goal phrasing.
+- Every intent must bind to at least one key result, or be explicitly triaged as:
+  - `proposed-new-key-result`
+  - `out-of-scope`
+- Tasks still belong to intents.
+- Releases/milestones are collections of intents.
+
+**Current operator surfaces to remember:**
+
+- `GET /api/graph/planning/workspace`
+- `POST /api/graph/planning/intents/:intentId/assistant-plan`
+- `POST /api/graph/planning/intents/:intentId/assistant-apply`
+- `GET/POST /api/system/ai-settings`
+
+**AI-assisted planning contract:**
+
+- Provider: DeepSeek
+- Local encrypted key storage under `site/kbx-ui/.runtime-state/`
+- Assistant decisions are constrained to:
+  - `bind-existing`
+  - `propose-new-okr`
+  - `out-of-scope`
+- Applying an accepted `propose-new-okr` must create canonical objective + key result content, not only a review note.
 
 ## 4. Quy tắc tương tác
 

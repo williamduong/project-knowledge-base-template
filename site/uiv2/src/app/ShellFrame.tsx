@@ -135,7 +135,7 @@ export function ShellFrame() {
     <div className="shell-root">
       <header className="shell-command-bar">
         <div className="shell-brand">
-          <span className="brand-mark">KBX</span>
+          <span className="brand-mark">SV</span>
           <div className="brand-copy">
             {isEditingProjectName ? (
               <input

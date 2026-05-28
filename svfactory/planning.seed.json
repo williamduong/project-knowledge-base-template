@@ -1,0 +1,274 @@
+{
+  "schema_version": "0.1.0",
+  "mode": "svfactory-only",
+  "north_star": {
+    "id": "ns-svfactory-build-kbx-from-dna",
+    "title": "Build SVFactory as the factory that generates KBX agents from DNA",
+    "description": "SVFactory must generate installable KBX agent packages from domain-specific DNA so end users can manage their own workspaces. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua for the first native graph planning workspace demo."
+  },
+  "goals": [
+    {
+      "id": "g-sf-g1-build-factory-core",
+      "code": "G1",
+      "kind": "objective",
+      "title": "Build factory core",
+      "description": "Build the neutral SVFactory core that can load, validate, compile, and materialize KBX agents from DNA.",
+      "success_criteria": "SVFactory can generate a KBX agent package skeleton from a valid DNA spec.",
+      "state": "active",
+      "sub_goals": [
+        {
+          "id": "g-sf-g1-s1-dna-loader-validator-compiler",
+          "code": "G1.1",
+          "kind": "objective",
+          "title": "Ship the DNA loader, validator, and compiler path",
+          "description": "Make DNA ingestion deterministic from contract loading through compiled manifest generation.",
+          "success_criteria": "A valid DNA package can be loaded, validated, and compiled without manual intervention.",
+          "state": "active",
+          "sub_goals": [],
+          "key_results": [
+            {
+              "id": "kr-sf-g1-s1-k1-load-dna-contracts",
+              "code": "KR1.1.1",
+              "title": "Load all four DNA contracts",
+              "description": "Support dna.json, ontology.json, governance.json, and release.json loading from one spec root.",
+              "success_criteria": "One command resolves all four contract files from a spec root with zero missing references.",
+              "metric": "contract loading",
+              "target": "4/4 contracts resolve successfully",
+              "state": "active"
+            },
+            {
+              "id": "kr-sf-g1-s1-k2-compile-manifest",
+              "code": "KR1.1.2",
+              "title": "Compile a deterministic DNA manifest",
+              "description": "Produce a compiled manifest that downstream materialization can consume.",
+              "success_criteria": "The compiler emits one deterministic manifest per valid DNA spec.",
+              "metric": "compiled manifest",
+              "target": "1 deterministic manifest per spec root",
+              "state": "active"
+            }
+          ]
+        },
+        {
+          "id": "g-sf-g1-s2-materialize-kbx-package",
+          "code": "G1.2",
+          "kind": "objective",
+          "title": "Materialize a KBX package skeleton",
+          "description": "Turn the compiled manifest into a KBX-shaped output plan and package skeleton.",
+          "success_criteria": "SVFactory produces a valid KBX package skeleton from the compiled manifest.",
+          "state": "planned",
+          "sub_goals": [],
+          "key_results": [
+            {
+              "id": "kr-sf-g1-s2-k1-output-plan",
+              "code": "KR1.2.1",
+              "title": "Generate a KBX output plan",
+              "description": "Map compiled DNA into package directories, assets, bindings, and templates.",
+              "success_criteria": "The materializer outputs one complete filesystem plan for a KBX package.",
+              "metric": "output plan",
+              "target": "1 complete KBX filesystem plan",
+              "state": "planned"
+            },
+            {
+              "id": "kr-sf-g1-s2-k2-bootstrap-package",
+              "code": "KR1.2.2",
+              "title": "Bootstrap a runnable KBX package shell",
+              "description": "Emit the first runnable package scaffold from SVFactory.",
+              "success_criteria": "The generated package installs and exposes its initial CLI/UI shell.",
+              "metric": "runnable package shell",
+              "target": "1 installable scaffold",
+              "state": "planned"
+            }
+          ]
+        }
+      ],
+      "key_results": []
+    },
+    {
+      "id": "g-sf-g2-define-kbx-dna-schema-v0-1",
+      "code": "G2",
+      "kind": "objective",
+      "title": "Define KBX DNA schema v0.1",
+      "description": "Standardize how domain DNA is described so KBX agents can be generated repeatably.",
+      "success_criteria": "A domain DNA can be authored and validated using a stable v0.1 schema contract.",
+      "state": "active",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g2-k1-four-contract-files",
+          "code": "KR2.1",
+          "title": "Lock the four contract files",
+          "description": "Use dna.json, ontology.json, governance.json, and release.json as the canonical v0.1 contract set.",
+          "success_criteria": "Every KBX DNA package declares the same four canonical files.",
+          "metric": "contract set",
+          "target": "4 canonical contract files",
+          "state": "active"
+        },
+        {
+          "id": "kr-sf-g2-k2-domain-dna-roundtrip",
+          "code": "KR2.2",
+          "title": "Roundtrip one reference DNA through validation",
+          "description": "Use dna/kbx as the first reference DNA package for schema proof.",
+          "success_criteria": "The reference DNA validates with zero contract errors.",
+          "metric": "reference DNA validation",
+          "target": "1 passing reference DNA",
+          "state": "active"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g3-publish-first-kbx-agent-package",
+      "code": "G3",
+      "kind": "objective",
+      "title": "Publish first KBX agent npm package",
+      "description": "Ship the first user-installable KBX agent package generated by SVFactory.",
+      "success_criteria": "An end user can install and run the first generated KBX agent package.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g3-k1-package-installable",
+          "code": "KR3.1",
+          "title": "Make the generated package installable",
+          "description": "Ensure the generated KBX package can be installed from an npm tarball.",
+          "success_criteria": "npm install succeeds for the generated agent package.",
+          "metric": "installability",
+          "target": "1 installable npm package",
+          "state": "planned"
+        },
+        {
+          "id": "kr-sf-g3-k2-first-release-path",
+          "code": "KR3.2",
+          "title": "Complete the first publish path",
+          "description": "Prove the package can move from generated artifact to published package.",
+          "success_criteria": "One generated agent package reaches a publish-ready release candidate state.",
+          "metric": "publish path",
+          "target": "1 publish-ready KBX package",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g4-build-quality-gate",
+      "code": "G4",
+      "kind": "objective",
+      "title": "Build quality gate",
+      "description": "Make sure a KBX package does not only build, but also validates and tests successfully.",
+      "success_criteria": "Every generated package passes a deterministic quality gate before release.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g4-k1-schema-and-compile-gates",
+          "code": "KR4.1",
+          "title": "Enforce schema and compile gates",
+          "description": "Stop invalid DNA packages before materialization or release.",
+          "success_criteria": "Invalid DNA cannot pass contract validation or compile gates.",
+          "metric": "validation gate",
+          "target": "100% invalid DNA blocked",
+          "state": "planned"
+        },
+        {
+          "id": "kr-sf-g4-k2-generated-package-tests",
+          "code": "KR4.2",
+          "title": "Run generated package smoke tests",
+          "description": "Add smoke tests proving the generated package can start and expose its expected shell.",
+          "success_criteria": "Every release candidate package passes smoke tests before publish.",
+          "metric": "smoke test pass rate",
+          "target": "100% release candidates tested",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g5-build-maintainability-flow",
+      "code": "G5",
+      "kind": "objective",
+      "title": "Build maintainability flow",
+      "description": "Design the generated package and the factory itself so they can be fixed, upgraded, versioned, and released sustainably.",
+      "success_criteria": "SVFactory and generated KBX packages have deterministic upgrade and maintenance paths.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g5-k1-versioning-and-upgrade-path",
+          "code": "KR5.1",
+          "title": "Define versioning and upgrade contracts",
+          "description": "Version both DNA and generated package outputs with clear compatibility rules.",
+          "success_criteria": "A maintainer can tell what version changed and how to upgrade it.",
+          "metric": "versioning contract",
+          "target": "1 documented upgrade path per release",
+          "state": "planned"
+        },
+        {
+          "id": "kr-sf-g5-k2-bugfix-and-release-flow",
+          "code": "KR5.2",
+          "title": "Define bugfix and release maintenance flow",
+          "description": "Make bugfix, patch, and release work part of the canonical factory process.",
+          "success_criteria": "Generated KBX packages can be patched and released without manual ad hoc steps.",
+          "metric": "maintenance flow",
+          "target": "1 deterministic maintenance flow",
+          "state": "planned"
+        }
+      ]
+    }
+  ],
+  "releases": [
+    {
+      "id": "release-v3-0-native-graph-workspace",
+      "code": "v3.0",
+      "title": "Native graph workspace rollout",
+      "description": "Bring the new OKR-first planning workspace online across ontology, graph projection, and the first end-to-end UI slice. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      "state": "active",
+      "intent_ids": [
+        "v2-10-code-graph",
+        "v2-7-0-1-ui-state-contract",
+        "v3-0-dna-graph-ontology-boundary"
+      ],
+      "target_goal_ids": [
+        "g-sf-g1-build-factory-core",
+        "g-sf-g2-define-kbx-dna-schema-v0-1"
+      ]
+    },
+    {
+      "id": "release-v2-9-execution-ui-foundation",
+      "code": "v2.9",
+      "title": "Execution and UI foundation",
+      "description": "Consolidate the maintainability surfaces required for the downstream execution UI, runtime bridge, and release evidence flow. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+      "state": "planned",
+      "intent_ids": [
+        "v2-9-db-and-intent-web-ui",
+        "v2-8-kbagent-minimal-db-schema"
+      ],
+      "target_goal_ids": [
+        "g-sf-g4-build-quality-gate",
+        "g-sf-g5-build-maintainability-flow"
+      ]
+    }
+  ],
+  "intent_goal_links": [
+    {
+      "intent_id": "v2-10-code-graph",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g1-s1-k1-load-dna-contracts",
+      "notes": "Schema-first graph work unlocks the factory data plane for future DNA compilation paths."
+    },
+    {
+      "intent_id": "v2-7-0-1-ui-state-contract",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g4-k1-schema-and-compile-gates",
+      "notes": "Contract hardening is the direct quality gate for typed FE and BE boundaries."
+    },
+    {
+      "intent_id": "v3-0-dna-graph-ontology-boundary",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g2-k2-domain-dna-roundtrip",
+      "notes": "Boundary definition clarifies how the first reference DNA package can validate and roundtrip."
+    },
+    {
+      "intent_id": "kb-agent-centric-docs",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g2-k2-domain-dna-roundtrip",
+      "notes": ""
+    }
+  ]
+}

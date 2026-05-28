@@ -1,0 +1,76 @@
+{
+  "generated_at": "2026-05-28T09:22:51.297Z",
+  "north_star": "Build SVFactory as the factory that generates KBX agents from DNA",
+  "active_intent_ids": [
+    "v2-10-code-graph",
+    "v2-7-0-1-ui-state-contract"
+  ],
+  "backlog_intent_ids": [
+    "v2-10-research-driven-kb-intelligence",
+    "v2-5-user-customization-framework",
+    "v2-7-1-flow-and-gates-ui-planning",
+    "v2-8-kbagent-minimal-db-schema",
+    "v2-8-kbagent-structured-store-spike",
+    "v2-8-svfactory-rule-catalog-hardening",
+    "v2-9-db-and-intent-web-ui",
+    "v3-0-dna-graph-ontology-boundary"
+  ],
+  "linked_intent_ids": [
+    "kb-agent-centric-docs",
+    "v2-10-code-graph",
+    "v2-7-0-1-ui-state-contract",
+    "v3-0-dna-graph-ontology-boundary"
+  ],
+  "assistant_triage": {},
+  "intents_missing_goal_mapping": [
+    {
+      "intent_id": "v2-10-research-driven-kb-intelligence",
+      "suggested_relation": "advances",
+      "suggested_goal_id": null,
+      "suggested_key_result_id": null,
+      "status": "manual-review-required"
+    },
+    {
+      "intent_id": "v2-5-user-customization-framework",
+      "suggested_relation": "advances",
+      "suggested_goal_id": null,
+      "suggested_key_result_id": null,
+      "status": "manual-review-required"
+    },
+    {
+      "intent_id": "v2-7-1-flow-and-gates-ui-planning",
+      "suggested_relation": "advances",
+      "suggested_goal_id": null,
+      "suggested_key_result_id": null,
+      "status": "manual-review-required"
+    },
+    {
+      "intent_id": "v2-8-kbagent-minimal-db-schema",
+      "suggested_relation": "advances",
+      "suggested_goal_id": null,
+      "suggested_key_result_id": null,
+      "status": "manual-review-required"
+    },
+    {
+      "intent_id": "v2-8-kbagent-structured-store-spike",
+      "suggested_relation": "advances",
+      "suggested_goal_id": null,
+      "suggested_key_result_id": null,
+      "status": "manual-review-required"
+    },
+    {
+      "intent_id": "v2-8-svfactory-rule-catalog-hardening",
+      "suggested_relation": "advances",
+      "suggested_goal_id": null,
+      "suggested_key_result_id": null,
+      "status": "manual-review-required"
+    },
+    {
+      "intent_id": "v2-9-db-and-intent-web-ui",
+      "suggested_relation": "advances",
+      "suggested_goal_id": null,
+      "suggested_key_result_id": null,
+      "status": "manual-review-required"
+    }
+  ]
+}

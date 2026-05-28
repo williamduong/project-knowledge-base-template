@@ -11,8 +11,19 @@ const apiGoals = require(path.join(repoRoot, 'src', 'graph-db', 'knowledge', 'ap
 const apiDecisions = require(path.join(repoRoot, 'src', 'graph-db', 'knowledge', 'api-decisions.js'));
 const apiPrinciples = require(path.join(repoRoot, 'src', 'graph-db', 'knowledge', 'api-principles.js'));
 const apiSymbols = require(path.join(repoRoot, 'src', 'graph-db', 'code', 'api-symbols.js')); // Phase 6: Track A
+const planningGraph = require(path.join(repoRoot, 'src', 'graph-db', 'planning'));
 const { getDatabase } = require(path.join(repoRoot, 'src', 'graph-db', 'db.js'));
 const { graphCache } = require(path.join(repoRoot, 'src', 'lib', 'graph-cache.js')); // Phase 6: caching layer
+const {
+  addIntentKeyResultLink,
+  removeIntentKeyResultLink,
+  addIntentToRelease,
+  removeIntentFromRelease,
+  applyAssistantDecision,
+} = require(path.join(repoRoot, 'src', 'lib', 'svfactory-planning-seed.js'));
+const {
+  generateIntentPlanSuggestion,
+} = require(path.join(repoRoot, 'src', 'lib', 'planning-assistant.js'));
 
 // Lazily initialized graph database connection
 let graphDb = null;
@@ -26,6 +37,130 @@ async function getGraphDb() {
 
 function createGraphApiRouter() {
   const router = express.Router();
+  const planningCacheKey = 'planning:workspace';
+
+  async function refreshPlanningWorkspace({ forceRefresh = true } = {}) {
+    const db = await getGraphDb();
+    const workspace = await planningGraph.getPlanningWorkspace(db, {
+      workspaceRoot: repoRoot,
+      forceRefresh,
+    });
+    graphCache.set(planningCacheKey, workspace);
+    return workspace;
+  }
+
+  // ============================================================================
+  // PLANNING WORKSPACE (OKR + INTENT + RELEASE + TASK)
+  // ============================================================================
+
+  router.get('/planning/workspace', async (req, res) => {
+    try {
+      const forceRefresh = req.query.refresh === 'true';
+
+      if (!forceRefresh) {
+        const cached = graphCache.get(planningCacheKey);
+        if (cached) {
+          res.set('X-Cache', 'HIT');
+          return res.json(cached);
+        }
+      }
+
+      const workspace = await refreshPlanningWorkspace({ forceRefresh });
+      res.set('X-Cache', 'MISS');
+      res.json(workspace);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.post('/planning/intents/:intentId/key-results/:keyResultId', async (req, res) => {
+    try {
+      const relation = typeof req.body?.relation === 'string' ? req.body.relation : 'advances';
+      const notes = typeof req.body?.notes === 'string' ? req.body.notes : '';
+      addIntentKeyResultLink(repoRoot, {
+        intentId: req.params.intentId,
+        keyResultId: req.params.keyResultId,
+        relation,
+        notes,
+      });
+      const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
+      res.json({ ok: true, workspace });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.delete('/planning/intents/:intentId/key-results/:keyResultId', async (req, res) => {
+    try {
+      removeIntentKeyResultLink(repoRoot, {
+        intentId: req.params.intentId,
+        keyResultId: req.params.keyResultId,
+      });
+      const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
+      res.json({ ok: true, workspace });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.post('/planning/releases/:releaseId/intents/:intentId', async (req, res) => {
+    try {
+      addIntentToRelease(repoRoot, {
+        releaseId: req.params.releaseId,
+        intentId: req.params.intentId,
+      });
+      const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
+      res.json({ ok: true, workspace });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.delete('/planning/releases/:releaseId/intents/:intentId', async (req, res) => {
+    try {
+      removeIntentFromRelease(repoRoot, {
+        releaseId: req.params.releaseId,
+        intentId: req.params.intentId,
+      });
+      const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
+      res.json({ ok: true, workspace });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.post('/planning/intents/:intentId/assistant-plan', express.json(), async (req, res) => {
+    try {
+      const workspace = graphCache.get(planningCacheKey) || await refreshPlanningWorkspace({ forceRefresh: false });
+      const suggestion = await generateIntentPlanSuggestion(repoRoot, workspace, req.params.intentId);
+      res.json(suggestion);
+    } catch (error) {
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  });
+
+  router.post('/planning/intents/:intentId/assistant-apply', express.json(), async (req, res) => {
+    try {
+      const body = req.body || {};
+      const result = applyAssistantDecision(repoRoot, {
+        intentId: req.params.intentId,
+        decision: body.decision,
+        summary: body.summary,
+        whyNow: body.why_now,
+        nextAction: body.next_action,
+        keyResultId: body.primary_key_result_id,
+        releaseId: body.primary_release_id,
+        proposedObjective: body.proposed_objective,
+        proposedKeyResult: body.proposed_key_result,
+        outOfScopeReason: body.out_of_scope_reason,
+        warnings: body.warnings,
+      });
+      const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
+      res.json({ ok: true, workspace, review: result.review });
+    } catch (error) {
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  });
 
   // ============================================================================
   // GOALS ENDPOINTS

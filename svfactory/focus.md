@@ -19,62 +19,65 @@ See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
 
 ## Active Version Target
 
-**v2.10** — Code Graph Phase 1 + dual-graph architecture complete  
-**v3.0** — DNA Framework (multi-domain KBX variant generation)
+**v3.0** — OKR-native planning workspace + AI-assisted intent operations + DNA Framework foundation
 
-**Branch:** `intent/v2-10-code-graph`  
+**Branch:** `intent/v3-0-okr-native-graph-workspace`  
 **Status:** Phase 6 COMPLETE (dual-graph + operational safety gates)  
-**Current:** Phase 7 Kickoff (DNA Framework design + KBX-SaaS DNA implementation)
+**Current:** v3.0 operator workspace refactor on top of Phase 7 DNA direction
 **Execution mode:** SVFactory-only mode
 
 ## Current Phase
 
-**Date:** 2026-05-27  
+**Date:** 2026-05-28  
 **Completed:** Phase 6 (Dual-graph architecture + operational safety gates) ✅
-**Active:** Phase 7.0 (DNA Framework design) + Phase 7.1 (KBX General DNA extraction)  
-**In Progress:** Phase 6 Track B monitoring (7-day dual-read validation)
+**Active:** v3.0 planning workspace rebuild + Phase 7.1 (KBX General DNA extraction)  
+**In Progress:** Graph-native OKR/intent/release workspace + AI-assisted remediation flow
 
 **Chaos snapshot (2026-05-16):** 64.8 / unstable (`kbx chaos --json --scan-src src`)
 
-**Session State (2026-05-27, Phase 6 Track B + Phase 7 kickoff):**
+**Session State (2026-05-28, v3.0 planning workspace operator pass):**
 - Package/runtime: `@williamduong/kbx@2.7.0-beta.1` (package.json)
-- Current branch: `intent/v2-10-code-graph` (Phase 6/7 main)
-- Latest commits (this session):
-  - `4b0e0cf` feat(phase-6): dual-read validation for goals (Track B)
-  - `863ab35` fix: correct Lucide icon in DecisionsPage
-  - `3a38beb` fix: add GET /api/goals endpoint + Vite proxy
-  - `8dcb0ae` docs(phase-7.1): KBX General DNA docs (3/5 complete)
-  - `0c9391c` refactor(phase-7.1): consolidate ontology schemas
-  - `2b6dfe6` refactor(phase-6): finalize validation + monitoring
+- Current branch: `intent/v3-0-okr-native-graph-workspace`
+- Planning workspace source of truth:
+  - `svfactory/planning.seed.json` for OKR/release/link content
+  - graph-native projection in `src/graph-db/planning/`
+  - review/triage states include `missing-key-result`, `proposed-new-key-result`, `out-of-scope`
+- New operator surfaces verified:
+  - `/intents` staged flow: Overview -> OKR -> Releases -> Intents -> Graph
+  - AI Settings with encrypted DeepSeek API key storage
+  - Assistant planning dialog with `Re-run / Accept / Cancel`
+  - deterministic assistant apply path for:
+    - bind existing KR
+    - promote new canonical objective/KR
+    - mark out of scope
 - Dev servers running:
-  - UIv2: http://localhost:5174 (Vite dev)
-  - Backend API: http://localhost:4177 (KBX bridge, testing)
+  - UIv2: http://localhost:5173 or http://localhost:5174 (Vite dev, depends on active session)
+  - Backend API: http://localhost:4174 (graph/planning bridge)
 - Servers tested & verified:
-  - `/api/goals` returns validation metadata ✅
-  - `/api/goals/sync-status` shows monitoring state ✅
-  - `/intents` graph view operational ✅
+  - `/api/graph/planning/workspace` returns graph-native workspace ✅
+  - `/api/system/ai-settings` save/ping flow operational ✅
+  - `/api/graph/planning/intents/:intentId/assistant-plan` returns live DeepSeek suggestion ✅
+  - `/intents` dialog-based AI planning flow operational ✅
 
 **Focus intent:**
-- None safely locked yet. Branch intent, active-intent registry, and focus state are out of sync.
+- `v3-0-okr-native-graph-workspace` — operator-facing planning workspace consolidation
 
 **Tracked parallel intents:**
-- `v2-7-nl-rules-to-cli-logic` — active in registry, estimated chaos delta `-6`
-- `v2-8-downstream-agent-and-ontology` — active in registry, estimated chaos delta `+8` (`spike` risk band)
-- `v2-8-kbx-beta-bug-hunt` — active in registry, estimated chaos delta `0`
-- Branch-local UI stream `v2-9-uiv2-shadcn-admin-shell-adoption` exists in git/UI mocks but has no matching active intent record
+- `v2-7-0-1-ui-state-contract` — still present as supporting UI contract work
+- legacy active intents may still need explicit reconcile/archive pass outside the current operator refactor
 
 **Next action:**
-  1. Reconcile branch vs intent registry: either create/register the `v2.9` UI intent or move the branch back under an existing tracked intent
-  2. Resolve the 3 stale active intents explicitly (close, archive, merge, or keep-active with rationale) so session focus can become exactly one intent or none
-  3. Decide whether runtime priority is still `v2.7` beta stabilization or has moved to `v2.9` UI/operator work; update plan surface to match that decision
-  4. Run a real baseline reconciliation/update pass before trusting KB freshness claims beyond this checkpoint
+  1. Reconcile active-intent registry and focus-state so `v3.0` is canonical across branch, focus, and registry
+  2. Add canonical create/edit UX for new objectives and key results, not only AI-assisted proposal promotion
+  3. Map current planning workspace semantics into Phase 7 DNA extraction so OKR/intent ontology becomes a reusable worldview primitive
+  4. Run a KB baseline reconciliation/update pass before trusting stale repository-revision snapshots
 
 ## Active Blockers
 
-1. Branch/intents mismatch: active branch names a `v2.9` intent that is not registered under `knowledge-base/intents/_active/`.
-2. Focus mismatch: `focus.md` previously pointed at `v2.8 Phase 0` while git HEAD is on recent UI shell work.
-3. Drift remains unresolved: `repository-revision-state.md` and `state.json` still point to `v2.3.2` / baseline `e157d9c...`.
-4. Active-intent hygiene is degraded: 3 active intents, 0 staged files each, 12 cleanup warnings total.
+1. Focus-state JSON and markdown were stale against the actual `intent/v3-0-okr-native-graph-workspace` branch until this pass.
+2. Drift remains unresolved: `repository-revision-state.md` and `state.json` still point to older baselines.
+3. Active-intent hygiene still needs an explicit reconcile/archive pass.
+4. Planning ontology is implemented, but downstream DNA extraction has not yet absorbed it as a formal reusable worldview layer.
 
 ## Recent Decisions (last 5)
 
@@ -92,11 +95,11 @@ See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
 | v2.6.x | Shipped | Ontology foundation: NL → glossary → ontology lifecycle |
 | v2.7.x | Shipped | Beta: agent contracts + bridge layer |
 | v2.10 | Shipped 2026-05-25 | Phase 6 Complete: Code Graph Phase 1 + dual-graph + safety gates |
-| v2.10 (continued) | **In Progress** | Phase 6 Track B: dual-read goals validation (7-day observation) |
-| v2.10 (UI) | **In Progress** | Intent Alignment Graph (graph-first UI) + polish |
-| v3.0 | Phase 7 Active | DNA Framework: multi-domain KBX variant generation |
+| v2.10 (continued) | Supporting | Phase 6 Track B: dual-read goals validation (observation) |
+| v2.10 (UI) | Folded forward | Graph-first intent UI evolved into the v3.0 planning workspace |
+| v3.0 | **In Progress** | OKR-native planning workspace + AI-assisted intent operations |
 |  | Phase 7.0 (done) | DNA Framework specification ✅ |
-|  | Phase 7.1 (active) | KBX General DNA: extract bindings + docs (3/5 docs) |
+|  | Phase 7.1 (active) | KBX General DNA: extract bindings + planning worldview docs |
 |  | Phase 7.2 (planned) | KBX-SaaS DNA: dogfood for KBX team |
 |  | Phase 7.3 (planned) | Community release + Enterprise/Solo Founder DNAs |
 
@@ -122,12 +125,12 @@ See strategic goals in `svfactory/agent.md`, `CLAUDE.md`, `AGENTS.md`.
 ## Runtime Focus Projection
 
 <!-- FOCUS_STATE_AUTO_START -->
-- Intent: `v2-10-code-graph`
+- Intent: `v3-0-okr-native-graph-workspace`
 - State: `active`
 - Source: `intent-cli`
-- Branch: `intent/v2-10-code-graph`
-- Checkpoint Intent: `v2-10-code-graph`
-- Checkpoint Event: `intent-created`
-- Checkpoint Timestamp: `2026-05-23T05:56:28.359Z`
-- Maintainer Version Target: v2-10
+- Branch: `intent/v3-0-okr-native-graph-workspace`
+- Checkpoint Intent: `v3-0-okr-native-graph-workspace`
+- Checkpoint Event: `maintainer-sync`
+- Checkpoint Timestamp: `2026-05-28T00:00:00.000Z`
+- Maintainer Version Target: v3-0
 <!-- FOCUS_STATE_AUTO_END -->

@@ -172,6 +172,8 @@ Built-in providers:
   azure       — Azure OpenAI (requires --endpoint + azureDeployment config)
   openrouter  — OpenRouter (openrouter.ai, OpenAI-compatible)
   ollama      — Ollama local (http://localhost:11434)
+  gemini      — Google Gemini
+  deepseek    — DeepSeek (api.deepseek.com)
 
 Config (env vars):
   KBX_LLM_PROVIDER     Provider name          (default: anthropic)

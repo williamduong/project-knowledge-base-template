@@ -7,8 +7,10 @@
 
 const codeGraph      = require('./code');
 const knowledgeGraph = require('./knowledge');
+const planningGraph  = require('./planning');
 
 module.exports = {
   code:      codeGraph,
   knowledge: knowledgeGraph,
+  planning:  planningGraph,
 };

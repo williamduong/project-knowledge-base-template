@@ -2,22 +2,22 @@
   "schema_version": "1.0.0",
   "source_type": "intent-cli",
   "maintainer_focus": {
-    "version_target": "v2-10",
-    "current_phase": "Maintainer sync checkpoint — branch intent/v2-9-uiv2-shadcn-admin-shell-adoption",
-    "current_branch": "intent/v2-10-code-graph"
+    "version_target": "v3-0",
+    "current_phase": "Maintainer sync checkpoint — OKR-native planning workspace + AI-assisted intent operations",
+    "current_branch": "intent/v3-0-okr-native-graph-workspace"
   },
   "current_focus": {
-    "intent_id": "v2-10-code-graph",
+    "intent_id": "v3-0-okr-native-graph-workspace",
     "intent_state": "active",
     "source": "intent-cli",
-    "branch_name": "intent/v2-10-code-graph",
-    "label": "Intent created (feature)"
+    "branch_name": "intent/v3-0-okr-native-graph-workspace",
+    "label": "Maintainer sync after planning workspace refactor"
   },
   "checkpoint": {
-    "intent_id": "v2-10-code-graph",
-    "event": "intent-created",
-    "timestamp": "2026-05-23T05:56:28.359Z",
-    "branch": "intent/v2-10-code-graph"
+    "intent_id": "v3-0-okr-native-graph-workspace",
+    "event": "maintainer-sync",
+    "timestamp": "2026-05-28T00:00:00.000Z",
+    "branch": "intent/v3-0-okr-native-graph-workspace"
   },
   "source_files": {
     "sqlite": "D:\\Source\\template\\project-knowledge-base-template\\svfactory\\focus-state.db",

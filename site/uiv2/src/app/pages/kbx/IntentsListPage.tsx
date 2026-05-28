@@ -1,2166 +1,1423 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 import { Icon } from '@iconify/react'
-import flag from '@iconify-icons/lucide/flag'
-import flagTriangleRight from '@iconify-icons/lucide/flag-triangle-right'
-import listTodo from '@iconify-icons/lucide/list-todo'
-import network from '@iconify-icons/lucide/network'
-import goal from '@iconify-icons/lucide/goal'
 import target from '@iconify-icons/lucide/target'
-import activity from '@iconify-icons/lucide/activity'
-import archive from '@iconify-icons/lucide/archive'
-import chevronDown from '@iconify-icons/lucide/chevron-down'
+import blocks from '@iconify-icons/lucide/blocks'
+import waypoints from '@iconify-icons/lucide/waypoints'
+import listTodo from '@iconify-icons/lucide/list-todo'
+import alertTriangle from '@iconify-icons/lucide/alert-triangle'
+import search from '@iconify-icons/lucide/search'
 import chevronRight from '@iconify-icons/lucide/chevron-right'
-import chevronUp from '@iconify-icons/lucide/chevron-up'
-import xIcon from '@iconify-icons/lucide/x'
-import pencilLine from '@iconify-icons/lucide/pencil-line'
-import circleDashed from '@iconify-icons/lucide/circle-dashed'
-import listTree from '@iconify-icons/lucide/list-tree'
+import x from '@iconify-icons/lucide/x'
 import plus from '@iconify-icons/lucide/plus'
-import trash2 from '@iconify-icons/lucide/trash-2'
-import { useIntentsList } from '../../hooks/kbx/useIntentsList'
-import { useIntentDetail, type IntentTask } from '../../hooks/kbx/useIntentDetail'
-import { useOfficialBacklogStatus } from '../../hooks/svfactory/useOfficialBacklogStatus'
-import { useSystemSnapshot, systemSnapshotQueryKey } from '../../hooks/svfactory/useSystemSnapshot'
+import sparkles from '@iconify-icons/lucide/sparkles'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { PlanningNativeGraph } from '../../components/intents/PlanningNativeGraph'
 import {
-  useGoalsTree,
-  useCreateGoalMutation,
-  useDeleteGoalMutation,
-  useUpdateGoalMutation,
-  type GoalRecord,
-  type GoalTreeNode,
-} from '../../hooks/kbx/useGoalsTree'
-import { buildMilestones, buildReleaseLines, deriveVersionBucket, versionRank } from '../../hooks/kbx/intent-workspace-model'
-import { emptyIntentAlignmentGraph, useIntentAlignmentGraph, type IntentAlignmentGraphTarget, type IntentAlignmentNode } from '../../hooks/kbx/intent-alignment-graph-model'
-import { useCreateIntentMutation, useUpdateIntentMutation } from '../../hooks/kbx/useIntentMutations'
-import { IntentAlignmentGraphCanvas } from '../../components/intent-graph/IntentAlignmentGraphCanvas'
+  addIntentKeyResultLink,
+  addIntentToRelease,
+  applyIntentAssistantPlan,
+  generateIntentAssistantPlan,
+  removeIntentFromRelease,
+  removeIntentKeyResultLink,
+  type PlanningAssistantResponse,
+  usePlanningWorkspace,
+  type PlanningIntent,
+  type PlanningKeyResult,
+  type PlanningObjective,
+  type PlanningRelease,
+  type PlanningTask,
+} from '../../hooks/kbx/usePlanningWorkspace'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-type GoalCard = {
-  id: string
-  label: string
-  metric: string
-  state: string
-  progress: number
-  caption: string
-  detail: string[]
-  icon: typeof target
-  tone: 'active' | 'warning' | 'neutral' | 'done'
+type IntentFilter = 'all' | 'linked' | 'missing-kr' | 'proposed' | 'out-of-scope' | 'active' | 'backlog' | 'closed'
+type PlanningView = 'overview' | 'okr' | 'releases' | 'intents' | 'graph'
+type AssistantDecision = 'bind-existing' | 'propose-new-okr' | 'out-of-scope'
+const MANUAL_OUT_OF_SCOPE_OPTION = '__out_of_scope__'
+
+type DetailRecord =
+  | { kind: 'workspace'; title: string; summary: string; metrics: string[] }
+  | { kind: 'objective'; objective: PlanningObjective }
+  | { kind: 'key_result'; keyResult: PlanningKeyResult; intents: PlanningIntent[] }
+  | { kind: 'release'; release: PlanningRelease }
+  | { kind: 'intent'; intent: PlanningIntent; keyResults: PlanningKeyResult[] }
+  | { kind: 'task'; task: PlanningTask; intent: PlanningIntent | null }
+
+const SAMPLE_EDITORIAL_COPY =
+  'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+const SAMPLE_SUPPORTING_COPY =
+  'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.'
+
+function withSampleCopy(value: string | null | undefined, fallback = SAMPLE_EDITORIAL_COPY) {
+  const text = String(value ?? '').trim()
+  return text || fallback
 }
 
-type PlanningFilterCard = {
-  id: PlanningSidebarTab
-  label: string
-  metric: string
-  caption: string
-  tone: PlanningCardTone
+function excerpt(value: string | null | undefined, max = 150) {
+  const text = withSampleCopy(value, SAMPLE_SUPPORTING_COPY).replace(/\s+/g, ' ').trim()
+  if (text.length <= max) return text
+  return `${text.slice(0, max - 1).trim()}…`
 }
 
-type IntentHealthFilter = 'all' | 'active' | 'backlog' | 'closed' | 'archived' | 'dropped' | 'selected'
-type IntentSortKey = 'title' | 'milestone' | 'lifecycle' | 'progress' | 'runtime'
-type DetailSectionKey = 'summary' | 'detail' | 'relations' | 'tasks'
-type EditableField = 'title' | 'summaryText' | 'focusCurrent' | 'focusNextAction' | 'closeCondition'
-type PlanningSidebarTab = 'system-goals' | 'backlog' | 'focus' | 'active' | 'closed' | 'archived' | 'milestones'
-type PlanningCardTone = 'active' | 'warning' | 'neutral' | 'done'
-
-const INTENTS_PER_PAGE = 20
-
-type MetadataEntry = {
-  label: string
-  value: string
-  icon: typeof activity
-  tooltip: string
+function countObjectiveBranches(objective: PlanningObjective): number {
+  return objective.children.reduce((count, child) => count + 1 + countObjectiveBranches(child), 0)
 }
 
-type RelationEntry = {
-  label: string
-  value: string
-  evidence?: string
-  tooltip: string
-}
-
-type GoalComposerState = {
-  nodeKey: string | null
-  parentGoalId: string | null
-  title: string
-  description: string
-}
-
-type GoalEditorState = {
-  goalId: string | null
-  parentGoalId: string | null
-  title: string
-  description: string
-}
-
-function goalNodeKey(node: { entityLevel: string; entityId: string }) {
-  return `${node.entityLevel}:${node.entityId}`
-}
-
-function goalStatusTone(code: string) {
-  if (code === 'aligned') return 'status-good'
-  if (code === 'mixed') return 'status-live'
-  if (code === 'outside-main') return 'status-warn'
-  return 'status-offline'
-}
-
-function goalProcessLabel(state: string | null | undefined) {
-  const normalized = String(state || '').trim().toLowerCase()
-  if (!normalized) return 'active'
-  return normalized.replace(/[-_]+/g, ' ')
-}
-
-function flattenGoalNodes(root: GoalTreeNode | null): GoalTreeNode[] {
-  if (!root) return []
-  const queue = [root]
-  const nodes: GoalTreeNode[] = []
-  while (queue.length) {
-    const current = queue.shift()
-    if (!current) continue
-    nodes.push(current)
-    queue.push(...current.children)
+function flattenObjectives(objectives: PlanningObjective[]): PlanningObjective[] {
+  const bucket: PlanningObjective[] = []
+  const walk = (nodes: PlanningObjective[]) => {
+    nodes.forEach((node) => {
+      bucket.push(node)
+      walk(node.children)
+    })
   }
-  return nodes
+  walk(objectives)
+  return bucket
 }
 
-function findGoalNode(root: GoalTreeNode | null, entityLevel: string, entityId: string) {
-  return flattenGoalNodes(root).find((node) => node.entityLevel === entityLevel && node.entityId === entityId) ?? null
-}
-
-function normalizeLifecycle(value: string | null | undefined) {
-  const text = String(value || '').trim().toLowerCase()
-  if (!text) return 'unknown'
-  if (text === 'active') return 'active'
-  if (text === 'backlog') return 'backlog'
-  if (text === 'closed' || text === 'released') return 'closed'
-  if (text === 'dropped' || text === 'cancelled' || text === 'canceled') return 'dropped'
-  if (text === 'archive' || text === 'archived') return 'archived'
-  if (text === 'draft') return 'draft'
-  if (text === 'open') return 'backlog'
-  return text.replace(/\s+/g, '-')
-}
-
-function formatTimestamp(value: string | null) {
-  if (!value) return 'Unavailable'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
-}
-
-function compactPath(value: string | null | undefined) {
-  const text = String(value || '').trim()
-  if (!text) return 'none'
-  const parts = text.split(/[\\/]/).filter(Boolean)
-  if (parts.length <= 3) return text
-  return `.../${parts.slice(-3).join('/')}`
-}
-
-function sentenceCase(value: string | null | undefined) {
-  const text = String(value || '').trim()
-  if (!text) return 'n/a'
-  return text.replace(/[-_]+/g, ' ')
-}
-
-function taskStateTone(value: string | null | undefined) {
-  const normalized = normalizeLifecycle(value)
-  if (normalized === 'done' || normalized === 'closed') return 'status-good'
-  if (normalized === 'blocked' || normalized === 'dropped') return 'status-warn'
-  if (normalized === 'warning') return 'status-warn'
+function intentTone(intent: PlanningIntent) {
+  if (intent.validation_state === 'out-of-scope') return 'status-neutral'
+  if (intent.validation_state !== 'linked') return 'status-warn'
+  if (intent.lifecycle === 'active') return 'status-good'
+  if (intent.lifecycle === 'closed' || intent.lifecycle === 'done' || intent.lifecycle === 'archived') return 'status-offline'
   return 'status-neutral'
 }
 
-function summarizeTaskDetail(task: IntentTask) {
-  return task.description ?? task.text ?? 'No task detail available.'
+function lifecycleLabel(value: string) {
+  return String(value || 'unknown').replace(/[-_]+/g, ' ')
 }
 
-function clampProgress(value: number) {
-  return Math.max(0, Math.min(100, Math.round(value)))
+function validationLabel(intent: PlanningIntent, linkedKeyResultCount: number) {
+  if (intent.validation_state === 'linked') return `${linkedKeyResultCount} KR linked`
+  if (intent.validation_state === 'proposed-new-key-result') return 'new O/KR proposed'
+  if (intent.validation_state === 'out-of-scope') return 'out of current goals'
+  return 'key result required'
 }
 
-function computeIntentProgress(lifecycle: string | null | undefined) {
-  const normalized = normalizeLifecycle(lifecycle)
-  if (normalized === 'draft') return 10
-  if (normalized === 'backlog') return 25
-  if (normalized === 'active') return 60
-  if (normalized === 'closed' || normalized === 'archived') return 100
-  if (normalized === 'dropped') return 0
-  return 15
+function formatAssistantDecisionLabel(value: AssistantDecision) {
+  if (value === 'bind-existing') return 'Bind existing KR'
+  if (value === 'propose-new-okr') return 'Create new O/KR'
+  return 'Mark out of scope'
 }
 
-function lifecycleRailState(value: string | null | undefined): 'draft' | 'backlog' | 'active' | 'closed' {
-  const normalized = normalizeLifecycle(value)
-  if (normalized === 'active') return 'active'
-  if (normalized === 'closed' || normalized === 'archived') return 'closed'
-  if (normalized === 'draft') return 'draft'
-  return 'backlog'
+function assistantActionLabel(
+  intentId: string,
+  suggestions: Record<string, PlanningAssistantResponse>,
+  pendingIntentId: string | undefined,
+  isPending: boolean,
+) {
+  if (isPending && pendingIntentId === intentId) return 'AI deciding...'
+  if (suggestions[intentId]) return 'Open AI plan'
+  return 'AI decide'
 }
 
-function statusTone(value: string) {
-  if (value === 'active' || value === 'aligned' || value === 'fresh' || value === 'closed') return 'status-good'
-  if (value === 'backlog' || value === 'moving' || value === 'in-flight' || value === 'draft') return 'status-neutral'
-  if (value === 'archived') return 'status-offline'
-  if (value === 'dropped' || value === 'reload' || value === 'drift') return 'status-warn'
-  return 'status-neutral'
+function parsePlanningView(value: string | null | undefined) {
+  if (value === 'overview' || value === 'okr' || value === 'releases' || value === 'intents' || value === 'graph') {
+    return value
+  }
+
+  return 'overview'
 }
 
-function intentVersionLabel(intentId: string) {
-  const bucket = deriveVersionBucket(intentId)
-  return bucket === 'legacy' ? 'legacy' : bucket.toUpperCase()
+function MetricCard({
+  label,
+  value,
+  tone,
+  icon,
+}: {
+  label: string
+  value: string
+  tone: string
+  icon: typeof target
+}) {
+  return (
+    <article className={`planning-metric-card ${tone}`}>
+      <div className="planning-metric-head">
+        <span className="section-icon section-icon-intent" aria-hidden="true">
+          <Icon icon={icon} />
+        </span>
+        <span className="runtime-overview-label">{label}</span>
+      </div>
+      <strong>{value}</strong>
+    </article>
+  )
 }
 
-function intentRuntimeLabel(intentId: string, focusIntentId: string | null, activeIntentId: string | null) {
-  if (intentId === focusIntentId && intentId === activeIntentId) return 'focus + active'
-  if (intentId === focusIntentId) return 'focus'
-  if (intentId === activeIntentId) return 'active'
-  return 'queued'
+function StageTab({
+  active,
+  label,
+  caption,
+  onClick,
+}: {
+  active: boolean
+  label: string
+  caption: string
+  onClick: () => void
+}) {
+  return (
+    <button type="button" className={`planning-stage-tab${active ? ' active' : ''}`} onClick={onClick}>
+      <strong>{label}</strong>
+      <span>{caption}</span>
+    </button>
+  )
 }
 
-function sortIndicator(active: string, current: string, direction: 'asc' | 'desc') {
-  if (active !== current) return ' ⇅'
-  return direction === 'asc' ? ' ↑' : ' ↓'
-}
+function AssistantDecisionDialog({
+  open,
+  intent,
+  suggestion,
+  isPending,
+  isApplying,
+  error,
+  nextTopLevelObjectiveCode,
+  selectedDecision,
+  selectedKeyResultId,
+  selectedReleaseId,
+  onClose,
+  onRerun,
+  onAccept,
+}: {
+  open: boolean
+  intent: PlanningIntent | null
+  suggestion: PlanningAssistantResponse | null
+  isPending: boolean
+  isApplying: boolean
+  error: string | null
+  nextTopLevelObjectiveCode: string
+  selectedDecision: AssistantDecision
+  selectedKeyResultId: string
+  selectedReleaseId: string
+  onClose: () => void
+  onRerun: () => void
+  onAccept: () => void
+}) {
+  if (!open || !intent) return null
 
-function GoalCardView({ card, onClick }: { card: GoalCard; onClick?: () => void }) {
-  const content = (
-    <>
-      <div className="intent-goal-head">
-        <div className="intent-goal-head-copy">
-          <span className="intent-goal-icon" aria-hidden="true">
-            <Icon icon={card.icon} />
-          </span>
+  const chosenKeyResult = suggestion?.suggestion.key_result_candidates.find((candidate) => candidate.id === selectedKeyResultId)
+    ?? suggestion?.suggestion.key_result_candidates.find((candidate) => candidate.id === suggestion.suggestion.primary_key_result_id)
+    ?? suggestion?.suggestion.key_result_candidates[0]
+    ?? null
+  const chosenRelease = suggestion?.suggestion.release_candidates.find((candidate) => candidate.id === selectedReleaseId)
+    ?? suggestion?.suggestion.release_candidates.find((candidate) => candidate.id === suggestion.suggestion.primary_release_id)
+    ?? suggestion?.suggestion.release_candidates[0]
+    ?? null
+
+  return (
+    <div className="prototype-overlay-backdrop" role="dialog" aria-modal="true" aria-label="AI planning decision" onClick={onClose}>
+      <div className="prototype-dialog planning-assistant-dialog" onClick={(event) => event.stopPropagation()}>
+        <div className="planning-assistant-dialog-header">
           <div>
-            <p className="workspace-eyebrow">{card.label}</p>
-            <strong>{card.metric}</strong>
+            <p className="workspace-eyebrow">AI Planning Decision</p>
+            <h2>{intent.title}</h2>
+          </div>
+          <button type="button" className="tool-button" aria-label="Close dialog" onClick={onClose}>Close</button>
+        </div>
+
+        {isPending ? (
+          <div className="planning-assistant-dialog-body">
+            <article className="planning-assistant-summary">
+              <strong>AI is evaluating this intent</strong>
+              <p>Reviewing the current intent, release lanes, and OKR graph to decide whether this should bind to an existing KR, create a new O/KR, or stay out of scope.</p>
+            </article>
+          </div>
+        ) : null}
+
+        {!isPending && error ? (
+          <div className="planning-assistant-dialog-body">
+            <article className="planning-warning-card planning-error-card">
+              <strong>Assistant planning failed</strong>
+              <p>{error}</p>
+            </article>
+          </div>
+        ) : null}
+
+        {!isPending && suggestion ? (
+          <div className="planning-assistant-dialog-body">
+            <article className="planning-assistant-summary">
+              <strong>{formatAssistantDecisionLabel(selectedDecision)}</strong>
+              <p>{suggestion.suggestion.summary}</p>
+              <p className="planning-detail-note">{suggestion.suggestion.why_now}</p>
+            </article>
+
+            {selectedDecision === 'bind-existing' ? (
+              <div className="planning-assistant-outcome-grid">
+                <article className="planning-assistant-outcome-card">
+                  <span className="runtime-overview-label">Goal / Objective</span>
+                  <strong>{chosenKeyResult?.objective_code ? `${chosenKeyResult.objective_code} — ${chosenKeyResult.objective_title}` : 'No objective match found'}</strong>
+                  <p>{chosenKeyResult?.rationale || 'No strong rationale returned.'}</p>
+                </article>
+                <article className="planning-assistant-outcome-card">
+                  <span className="runtime-overview-label">Key Result</span>
+                  <strong>{chosenKeyResult ? `${chosenKeyResult.code} — ${chosenKeyResult.title}` : 'No KR selected'}</strong>
+                  <p>{chosenKeyResult ? `${chosenKeyResult.metric || 'metric pending'} · ${chosenKeyResult.target || 'target pending'}` : 'Assistant did not return a KR candidate.'}</p>
+                </article>
+                <article className="planning-assistant-outcome-card">
+                  <span className="runtime-overview-label">Release</span>
+                  <strong>{chosenRelease ? `${chosenRelease.code} — ${chosenRelease.title}` : 'No release change required'}</strong>
+                  <p>{chosenRelease?.rationale || 'No release update is needed for this decision.'}</p>
+                </article>
+              </div>
+            ) : null}
+
+            {selectedDecision === 'propose-new-okr' ? (
+              <div className="planning-assistant-outcome-grid">
+                <article className="planning-assistant-outcome-card">
+                  <span className="runtime-overview-label">Placement</span>
+                  <strong>Create new top-level objective {nextTopLevelObjectiveCode}</strong>
+                  <p>This will be created as a new top-level goal in the planning workspace, not nested under an existing objective.</p>
+                </article>
+                <article className="planning-assistant-outcome-card">
+                  <span className="runtime-overview-label">Objective</span>
+                  <strong>{suggestion.suggestion.proposed_objective?.title || 'No objective proposed'}</strong>
+                  <p>{suggestion.suggestion.proposed_objective?.description || 'Missing objective description.'}</p>
+                </article>
+                <article className="planning-assistant-outcome-card">
+                  <span className="runtime-overview-label">Key Result</span>
+                  <strong>{suggestion.suggestion.proposed_key_result?.title || 'No key result proposed'}</strong>
+                  <p>{suggestion.suggestion.proposed_key_result ? `${suggestion.suggestion.proposed_key_result.metric} · ${suggestion.suggestion.proposed_key_result.target}` : 'Missing KR definition.'}</p>
+                </article>
+              </div>
+            ) : null}
+
+            {selectedDecision === 'out-of-scope' ? (
+              <div className="planning-assistant-outcome-grid">
+                <article className="planning-assistant-outcome-card">
+                  <span className="runtime-overview-label">Reason</span>
+                  <strong>Keep this intent outside the current goals</strong>
+                  <p>{suggestion.suggestion.out_of_scope_reason || 'No out-of-scope reason returned.'}</p>
+                </article>
+                <article className="planning-assistant-outcome-card">
+                  <span className="runtime-overview-label">After acceptance</span>
+                  <strong>Filterable in the intent workspace</strong>
+                  <p>This intent will stay visible with the `out-of-scope` state so you can filter it later instead of forcing a weak KR mapping.</p>
+                </article>
+              </div>
+            ) : null}
+
+            {suggestion.suggestion.warnings.length ? (
+              <div className="planning-validation-list">
+                {suggestion.suggestion.warnings.map((warning) => (
+                  <article key={warning} className="planning-warning-card planning-warning-info">
+                    <p>{warning}</p>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+
+            <article className="planning-assistant-summary">
+              <strong>Next action if accepted</strong>
+              <p>{suggestion.suggestion.next_action}</p>
+            </article>
+          </div>
+        ) : null}
+
+        <div className="planning-assistant-dialog-actions">
+          <button type="button" className="tool-button" onClick={onRerun} disabled={isPending || isApplying}>Re-run</button>
+          <button type="button" className="planning-mini-action" onClick={onAccept} disabled={!suggestion || isPending || isApplying}>
+            <Icon icon={plus} />
+            {isApplying ? 'Applying...' : 'Accept'}
+          </button>
+          <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ObjectiveTree({
+  objective,
+  selectedId,
+  onSelect,
+}: {
+  objective: PlanningObjective
+  selectedId: string | null
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div className="planning-objective-node">
+      <button
+        type="button"
+        className={`planning-objective-button${selectedId === objective.id ? ' selected' : ''}`}
+        onClick={() => onSelect(objective.id)}
+      >
+        <div>
+          <span className="workspace-eyebrow">{objective.code}</span>
+          <strong>{objective.title}</strong>
+        </div>
+        <span className="status-pill status-neutral">{objective.key_results.length} KR</span>
+      </button>
+      {objective.key_results.length ? (
+        <div className="planning-objective-kr-list">
+          {objective.key_results.map((keyResult) => (
+            <button
+              key={keyResult.id}
+              type="button"
+              className={`planning-key-result-chip${selectedId === keyResult.id ? ' selected' : ''}`}
+              onClick={() => onSelect(keyResult.id)}
+            >
+              <Icon icon={blocks} />
+              {keyResult.code}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {objective.children.length ? (
+        <div className="planning-objective-children">
+          {objective.children.map((child) => (
+            <ObjectiveTree key={child.id} objective={child} selectedId={selectedId} onSelect={onSelect} />
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function DetailPanel({
+  detail,
+  onSelectNode,
+}: {
+  detail: DetailRecord | null
+  onSelectNode: (id: string) => void
+}) {
+  if (!detail) {
+    return (
+      <article className="planning-detail-card">
+        <p className="workspace-eyebrow">Selection</p>
+        <h3>Pick one item to drill down</h3>
+        <p>Start from overview, then move into OKR, releases, intents, or the native graph only when you need detail.</p>
+      </article>
+    )
+  }
+
+  if (detail.kind === 'workspace') {
+    return (
+      <article className="planning-detail-card">
+        <p className="workspace-eyebrow">Workspace</p>
+        <h3>{detail.title}</h3>
+        <p>{excerpt(detail.summary, 220)}</p>
+        <div className="planning-detail-metrics">
+          {detail.metrics.map((metric) => (
+            <span key={metric} className="meta-pill">{metric}</span>
+          ))}
+        </div>
+      </article>
+    )
+  }
+
+  if (detail.kind === 'objective') {
+    return (
+      <article className="planning-detail-card">
+        <p className="workspace-eyebrow">Objective {detail.objective.code}</p>
+        <h3>{detail.objective.title}</h3>
+        <p>{excerpt(detail.objective.description, 200)}</p>
+        <p className="planning-detail-note">{excerpt(detail.objective.success_criteria, 160)}</p>
+        <div className="planning-detail-metrics">
+          <span className="meta-pill">{detail.objective.key_results.length} key results</span>
+          <span className="meta-pill">{countObjectiveBranches(detail.objective)} child objectives</span>
+        </div>
+        {detail.objective.key_results.length ? (
+          <div className="planning-detail-list">
+            <span className="runtime-overview-label">Key results</span>
+            <div className="planning-chip-row">
+              {detail.objective.key_results.map((keyResult) => (
+                <button key={keyResult.id} type="button" className="planning-key-result-chip" onClick={() => onSelectNode(keyResult.id)}>
+                  {keyResult.code}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </article>
+    )
+  }
+
+  if (detail.kind === 'key_result') {
+    return (
+      <article className="planning-detail-card">
+        <p className="workspace-eyebrow">Key Result {detail.keyResult.code}</p>
+        <h3>{detail.keyResult.title}</h3>
+        <p>{excerpt(detail.keyResult.description, 200)}</p>
+        <div className="planning-detail-stack">
+          <div>
+            <span className="runtime-overview-label">Metric</span>
+            <strong>{detail.keyResult.metric || 'Not set'}</strong>
+          </div>
+          <div>
+            <span className="runtime-overview-label">Target</span>
+            <strong>{detail.keyResult.target || 'Not set'}</strong>
           </div>
         </div>
-        <span className={`status-pill ${statusTone(card.state)}`}>{card.state}</span>
-      </div>
-      <div className="intent-progress-track" aria-hidden="true">
-        <span style={{ width: `${card.progress}%` }} />
-      </div>
-      <div className="intent-goal-foot">
-        <span>{card.progress}%</span>
-        <p>{card.caption}</p>
-        {card.detail.map((line) => (
-          <p key={`${card.id}-${line}`} className="intent-goal-detail-line">{line}</p>
-        ))}
-      </div>
-    </>
-  )
+        <p className="planning-detail-note">{excerpt(detail.keyResult.success_criteria, 160)}</p>
+        <div className="planning-detail-list">
+          <span className="runtime-overview-label">Linked intents</span>
+          <div className="planning-chip-row">
+            {detail.intents.length ? detail.intents.map((intent) => (
+              <button key={intent.id} type="button" className={`meta-pill ${intentTone(intent)}`} onClick={() => onSelectNode(intent.id)}>
+                {intent.title}
+              </button>
+            )) : <span className="meta-pill status-warn">No intent mapped yet</span>}
+          </div>
+        </div>
+      </article>
+    )
+  }
 
-  if (onClick) {
+  if (detail.kind === 'release') {
     return (
-      <button type="button" className={`intent-goal-card intent-goal-card-${card.tone} intent-goal-card-button`} onClick={onClick}>
-        {content}
-      </button>
+      <article className="planning-detail-card">
+        <p className="workspace-eyebrow">Release {detail.release.code}</p>
+        <h3>{detail.release.title}</h3>
+        <p>{excerpt(detail.release.description, 200)}</p>
+        <div className="planning-detail-metrics">
+          <span className="meta-pill">{detail.release.progress}% complete</span>
+          <span className="meta-pill">{detail.release.intents.length} intents</span>
+          <span className="meta-pill">{detail.release.state}</span>
+        </div>
+        <div className="planning-detail-list">
+          <span className="runtime-overview-label">Included intents</span>
+          <div className="planning-link-list">
+            {detail.release.intents.slice(0, 6).map((intent) => (
+              <button key={intent.id} type="button" className="planning-link-row" onClick={() => onSelectNode(intent.id)}>
+                <span>{intent.title}</span>
+                <span className={`status-pill ${intentTone(intent)}`}>{lifecycleLabel(intent.lifecycle)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </article>
+    )
+  }
+
+  if (detail.kind === 'intent') {
+    return (
+      <article className="planning-detail-card">
+        <p className="workspace-eyebrow">Intent</p>
+        <h3>{detail.intent.title}</h3>
+        <p>{excerpt(detail.intent.summary || detail.intent.goal_text, 220)}</p>
+        <div className="planning-detail-metrics">
+          <span className={`meta-pill ${intentTone(detail.intent)}`}>{lifecycleLabel(detail.intent.lifecycle)}</span>
+          <span className="meta-pill">{detail.intent.task_count} tasks</span>
+          <span className={`meta-pill ${detail.intent.validation_state === 'linked' ? 'status-good' : 'status-warn'}`}>
+            {validationLabel(detail.intent, detail.keyResults.length)}
+          </span>
+        </div>
+        {(detail.intent.focus_current || detail.intent.focus_next_action) ? (
+          <div className="planning-detail-stack">
+            <div>
+              <span className="runtime-overview-label">Current focus</span>
+              <p>{detail.intent.focus_current || 'Not set'}</p>
+            </div>
+            <div>
+              <span className="runtime-overview-label">Next action</span>
+              <p>{detail.intent.focus_next_action || 'Not set'}</p>
+            </div>
+          </div>
+        ) : null}
+        {detail.intent.out_of_scope_reason ? (
+          <div className="planning-detail-list">
+            <span className="runtime-overview-label">Out of scope reason</span>
+            <p>{detail.intent.out_of_scope_reason}</p>
+          </div>
+        ) : null}
+        {detail.intent.proposed_objective || detail.intent.proposed_key_result ? (
+          <div className="planning-detail-list">
+            <span className="runtime-overview-label">Pending proposal</span>
+            <div className="planning-detail-stack">
+              {detail.intent.proposed_objective ? <p>Objective: {detail.intent.proposed_objective.title}</p> : null}
+              {detail.intent.proposed_key_result ? <p>Key result: {detail.intent.proposed_key_result.title}</p> : null}
+            </div>
+          </div>
+        ) : null}
+        {detail.keyResults.length ? (
+          <div className="planning-detail-list">
+            <span className="runtime-overview-label">Linked key results</span>
+            <div className="planning-chip-row">
+              {detail.keyResults.map((keyResult) => (
+                <button key={keyResult.id} type="button" className="planning-key-result-chip" onClick={() => onSelectNode(keyResult.id)}>
+                  {keyResult.code}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {detail.intent.tasks.length ? (
+          <div className="planning-detail-list">
+            <span className="runtime-overview-label">Tasks</span>
+            <div className="planning-link-list">
+              {detail.intent.tasks.slice(0, 5).map((task) => (
+                <button key={task.id} type="button" className="planning-link-row" onClick={() => onSelectNode(task.id)}>
+                  <span>{task.title}</span>
+                  <span className="status-pill status-neutral">{lifecycleLabel(task.state)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </article>
     )
   }
 
   return (
-    <article className={`intent-goal-card intent-goal-card-${card.tone}`}>
-      {content}
+    <article className="planning-detail-card">
+      <p className="workspace-eyebrow">Task</p>
+      <h3>{detail.task.title}</h3>
+      <p>{excerpt(detail.task.description, 220)}</p>
+      <div className="planning-detail-metrics">
+        <span className="meta-pill">{lifecycleLabel(detail.task.state)}</span>
+        <span className="meta-pill">{detail.task.section}</span>
+        <span className="meta-pill">{detail.task.source}</span>
+        {detail.intent ? <button type="button" className="meta-pill" onClick={() => onSelectNode(detail.intent!.id)}>{detail.intent.title}</button> : null}
+      </div>
     </article>
-  )
-}
-
-function PlanningFilterCardView({
-  card,
-  active,
-  onClick,
-}: {
-  card: PlanningFilterCard
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      className={`intent-goal-card intent-goal-card-${card.tone} intent-goal-card-button${active ? ' intent-goal-card-active' : ''}`}
-      onClick={onClick}
-    >
-      <div className="intent-goal-head">
-        <div className="intent-goal-head-copy">
-          <div>
-            <p className="workspace-eyebrow">{card.label}</p>
-            <strong>{card.metric}</strong>
-          </div>
-        </div>
-        <span className={`status-pill ${active ? 'status-live' : 'status-neutral'}`}>{active ? 'selected' : 'view'}</span>
-      </div>
-      <div className="intent-goal-foot">
-        <p>{card.caption}</p>
-      </div>
-    </button>
-  )
-}
-
-function IntentHealthBar({
-  total,
-  active,
-  backlog,
-  closed,
-  archived,
-  dropped,
-  selected,
-  filter,
-  onFilterChange,
-}: {
-  total: number
-  active: number
-  backlog: number
-  closed: number
-  archived: number
-  dropped: number
-  selected: string | null
-  filter: IntentHealthFilter
-  onFilterChange: (next: IntentHealthFilter) => void
-}) {
-  const pill = (id: IntentHealthFilter, label: string, tone: string) => (
-    <button
-      type="button"
-      className={`status-pill intent-filter-pill ${tone}${filter === id ? ' intent-filter-pill-active' : ''}`}
-      onClick={() => onFilterChange(filter === id ? 'all' : id)}
-    >
-      {label}
-    </button>
-  )
-
-  return (
-    <div className="kb-health-bar intent-health-bar">
-      <div className="kb-health-group">
-        <span className="runtime-overview-label">Total</span>
-        <button type="button" className={`count-pill kb-health-total intent-filter-total${filter === 'all' ? ' intent-filter-pill-active' : ''}`} onClick={() => onFilterChange('all')}>
-          {total} intents
-        </button>
-      </div>
-      <div className="kb-health-group">
-        <span className="runtime-overview-label">Lifecycle</span>
-        {pill('active', `active ${active}`, 'status-good')}
-        {pill('backlog', `backlog ${backlog}`, 'status-neutral')}
-        {pill('closed', `closed ${closed}`, 'status-good')}
-        {pill('archived', `archived ${archived}`, 'status-offline')}
-        {dropped > 0 ? pill('dropped', `dropped ${dropped}`, 'status-warn') : null}
-        {selected ? pill('selected', 'selected', 'status-live') : null}
-      </div>
-      <div className="kb-health-next">
-        <span className="runtime-overview-label">Filter</span>
-        <span className="kb-health-next-text">{filter === 'all' ? (selected ?? 'All intents visible') : `Showing ${filter} intents`}</span>
-      </div>
-    </div>
-  )
-}
-
-function LifecycleRail({ lifecycle }: { lifecycle: string | null | undefined }) {
-  const current = lifecycleRailState(lifecycle)
-  const steps: Array<'draft' | 'backlog' | 'active' | 'closed'> = ['draft', 'backlog', 'active', 'closed']
-  const currentIndex = steps.indexOf(current)
-
-  return (
-    <div className="intent-lifecycle-rail" role="list" aria-label="Intent lifecycle">
-      {steps.map((step, index) => {
-        const state = index < currentIndex ? 'done' : index === currentIndex ? 'active' : 'upcoming'
-        return (
-          <div key={step} className={`intent-lifecycle-step intent-lifecycle-step-${state}`} role="listitem">
-            <span className="intent-lifecycle-dot" aria-hidden="true" />
-            <strong>{step}</strong>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function CollapsibleBlock({
-  title,
-  icon,
-  sectionKey,
-  collapsed,
-  onToggle,
-  subtitle,
-  children,
-}: {
-  title: string
-  icon: typeof flag
-  sectionKey: DetailSectionKey
-  collapsed: boolean
-  onToggle: (key: DetailSectionKey) => void
-  subtitle?: string
-  children: ReactNode
-}) {
-  return (
-    <article className="intent-drawer-block">
-      <button className="intent-section-toggle" type="button" onClick={() => onToggle(sectionKey)}>
-        <span className="section-title-row">
-          <span className="section-icon section-icon-intent" aria-hidden="true">
-            <Icon icon={icon} />
-          </span>
-          <span>
-            <h3>{title}</h3>
-            {subtitle ? <p className="system-card-subtle">{subtitle}</p> : null}
-          </span>
-        </span>
-        <Icon icon={collapsed ? chevronDown : chevronUp} aria-hidden="true" />
-      </button>
-      {!collapsed ? children : null}
-    </article>
-  )
-}
-
-function TaskRow({
-  task,
-  index,
-  expanded,
-  onToggle,
-}: {
-  task: IntentTask
-  index: number
-  expanded: boolean
-  onToggle: () => void
-}) {
-  const taskId = `T-${String(index + 1).padStart(2, '0')}`
-  return (
-    <div className={`intent-task-grid-row intent-task-grid-row-${normalizeLifecycle(task.status)}${expanded ? ' expanded' : ''}`}>
-      <button className="intent-task-grid-button" type="button" onClick={onToggle}>
-        <span className="intent-task-id">{taskId}</span>
-        <span>{task.title ?? `Task ${index + 1}`}</span>
-        <span className={`status-pill ${taskStateTone(task.status)}`}>{task.status ?? 'open'}</span>
-      </button>
-      {expanded ? (
-        <div className="intent-task-grid-detail">
-          <p>{summarizeTaskDetail(task)}</p>
-          <div className="intent-task-detail-meta">
-            {task.section ? <span className="intent-path-chip">group: {task.section}</span> : null}
-            <span className="intent-path-chip">source: {task.source ?? 'unknown'}</span>
-            <span className="intent-path-chip">state: {task.done ? 'done' : task.status ?? 'open'}</span>
-          </div>
-          {task.tags?.length ? (
-            <div className="intent-staged-list">
-              {task.tags.map((tag) => (
-                <span key={`${task.title ?? 'task'}-${tag}`} className="intent-task-tag">{tag}</span>
-              ))}
-            </div>
-          ) : null}
-          {task.explicitCommits?.length ? (
-            <div>
-              <strong>Explicit commits</strong>
-              <div className="intent-staged-list">
-                {task.explicitCommits.map((commit) => (
-                  <code key={commit} className="intent-staged-chip">{commit}</code>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {task.relatedCommits?.length ? (
-            <div>
-              <strong>Related commits</strong>
-              <div className="intent-related-list">
-                {task.relatedCommits.map((commit, commitIndex) => (
-                  <div key={`${commit.sha ?? 'commit'}-${commitIndex}`} className="intent-related-item">
-                    <code>{commit.sha ?? 'no-sha'}</code>
-                    <span>{commit.subject ?? 'No subject'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-function InlineEditableText({
-  label,
-  value,
-  field,
-  activeField,
-  draftValue,
-  onStartEdit,
-  onChangeDraft,
-  onCancel,
-  onSave,
-  saving,
-  error,
-  multiline = false,
-}: {
-  label: string
-  value: string
-  field: EditableField
-  activeField: EditableField | null
-  draftValue: string
-  onStartEdit: (field: EditableField, currentValue: string) => void
-  onChangeDraft: (value: string) => void
-  onCancel: () => void
-  onSave: () => void
-  saving: boolean
-  error: string | null
-  multiline?: boolean
-}) {
-  const isEditing = activeField === field
-  return (
-    <div className="intent-editable-field">
-      <span className="runtime-overview-label">{label}</span>
-      {isEditing ? (
-        <div className="intent-inline-editor">
-          {multiline ? (
-            <textarea value={draftValue} onChange={(event) => onChangeDraft(event.target.value)} rows={4} />
-          ) : (
-            <input value={draftValue} onChange={(event) => onChangeDraft(event.target.value)} />
-          )}
-          <div className="intent-inline-editor-actions">
-            <button className="tool-button tool-button-primary" type="button" onClick={onSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-            <button className="tool-button" type="button" onClick={onCancel}>Cancel</button>
-          </div>
-          {error ? <p className="runtime-warning-text">{error}</p> : null}
-        </div>
-      ) : (
-        <button className="intent-editable-display" type="button" onDoubleClick={() => onStartEdit(field, value)}>
-          <span>{value || 'Double-click to edit'}</span>
-          <Icon icon={pencilLine} aria-hidden="true" />
-        </button>
-      )}
-    </div>
-  )
-}
-
-function GoalTreeNodeView({
-  node,
-  depth,
-  expandedNodes,
-  onToggle,
-  composerState,
-  onComposerOpen,
-  onComposerCancel,
-  onComposerChange,
-  onCreateGoal,
-  editorState,
-  onEditorOpen,
-  onEditorCancel,
-  onEditorChange,
-  onUpdateGoal,
-  onDeleteGoal,
-  pending,
-  error,
-  parentGoalOptions,
-}: {
-  node: GoalTreeNode
-  depth: number
-  expandedNodes: Set<string>
-  onToggle: (nodeKey: string) => void
-  composerState: GoalComposerState
-  onComposerOpen: (node: GoalTreeNode, parentGoalId?: string | null) => void
-  onComposerCancel: () => void
-  onComposerChange: (patch: Partial<GoalComposerState>) => void
-  onCreateGoal: (node: GoalTreeNode) => void
-  editorState: GoalEditorState
-  onEditorOpen: (goal: GoalRecord) => void
-  onEditorCancel: () => void
-  onEditorChange: (patch: Partial<GoalEditorState>) => void
-  onUpdateGoal: (goal: GoalRecord) => void
-  onDeleteGoal: (goal: GoalRecord) => void
-  pending: boolean
-  error: string | null
-  parentGoalOptions: GoalRecord[]
-}) {
-  const nodeKey = goalNodeKey(node)
-  const isOpen = expandedNodes.has(nodeKey)
-  const isComposing = composerState.nodeKey === nodeKey
-  const hasChildren = node.children.length > 0
-  const paddingLeft = `${depth * 18}px`
-  const activeEditorGoal = node.goals.find((goalItem) => goalItem.id === editorState.goalId) ?? null
-
-  return (
-    <div className={`goal-tree-node goal-tree-node-${node.entityLevel}`}>
-      <div className="goal-tree-row" style={{ paddingLeft }}>
-        <button type="button" className="goal-tree-toggle" onClick={() => onToggle(nodeKey)} aria-label={isOpen ? 'Collapse goals node' : 'Expand goals node'}>
-          <Icon icon={hasChildren ? (isOpen ? chevronDown : chevronRight) : circleDashed} />
-        </button>
-        <div className="goal-tree-copy">
-          <div className="goal-tree-head">
-            <strong>{node.label}</strong>
-            <span className={`status-pill ${goalStatusTone(node.status.code)}`}>{node.status.label}</span>
-            <span className={`status-pill ${statusTone(normalizeLifecycle(node.runtimeState))}`}>{node.runtimeState}</span>
-          </div>
-          {node.summary ? <p className="goal-tree-summary">{node.summary}</p> : null}
-
-          <div className="goal-tree-goal-list">
-            {node.goals.map((goalItem) => {
-              const isEditing = editorState.goalId === goalItem.id
-              return (
-                <div key={goalItem.id} className="goal-tree-goal-item">
-                  {isEditing ? (
-                    <div className="goal-tree-goal-editor">
-                      <input
-                        value={editorState.title}
-                        onChange={(event) => onEditorChange({ title: event.target.value })}
-                        placeholder="Goal title"
-                      />
-                      <textarea
-                        rows={2}
-                        value={editorState.description}
-                        onChange={(event) => onEditorChange({ description: event.target.value })}
-                        placeholder="Goal detail"
-                      />
-                      {node.entityLevel !== 'system' && parentGoalOptions.length ? (
-                        <select
-                          value={editorState.parentGoalId ?? ''}
-                          onChange={(event) => onEditorChange({ parentGoalId: event.target.value || null })}
-                        >
-                          <option value="">Outside main goals</option>
-                          {parentGoalOptions.map((option) => (
-                            <option key={option.id} value={option.id}>{option.title}</option>
-                          ))}
-                        </select>
-                      ) : null}
-                      <div className="goal-tree-actions">
-                        <button className="tool-button tool-button-primary" type="button" onClick={() => onUpdateGoal({ ...goalItem, parentGoalId: editorState.parentGoalId, title: editorState.title, description: editorState.description })} disabled={pending}>
-                          {pending ? 'Saving...' : 'Save'}
-                        </button>
-                        <button className="tool-button" type="button" onClick={onEditorCancel}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="goal-tree-goal-copy">
-                        <div className="goal-tree-goal-copy-head">
-                          <span>{goalItem.title}</span>
-                          <span className={`status-pill ${statusTone(normalizeLifecycle(goalItem.state))}`}>{goalProcessLabel(goalItem.state)}</span>
-                          {goalItem.childGoalCount > 0 ? <span className="intent-path-chip">{goalItem.childGoalCount} child</span> : null}
-                        </div>
-                        {goalItem.description ? <p>{goalItem.description}</p> : null}
-                      </div>
-                      <div className="goal-tree-actions">
-                        <button className="icon-tool-button" type="button" onClick={() => onEditorOpen(goalItem)} aria-label="Edit goal">
-                          <Icon icon={pencilLine} />
-                        </button>
-                        <button className="icon-tool-button" type="button" onClick={() => onDeleteGoal(goalItem)} disabled={!goalItem.canDelete} aria-label="Delete goal">
-                          <Icon icon={trash2} />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )
-            })}
-            {!node.goals.length ? <p className="goal-tree-empty">{node.entityLevel === 'system' ? 'No system goals yet.' : 'No goals on this object yet.'}</p> : null}
-          </div>
-
-          {isComposing ? (
-            <div className="goal-tree-goal-editor goal-tree-compose">
-              <input
-                value={composerState.title}
-                onChange={(event) => onComposerChange({ title: event.target.value })}
-                placeholder="Goal title"
-              />
-              <textarea
-                rows={2}
-                value={composerState.description}
-                onChange={(event) => onComposerChange({ description: event.target.value })}
-                placeholder="Goal detail"
-              />
-              {node.entityLevel !== 'system' && parentGoalOptions.length ? (
-                <select
-                  value={composerState.parentGoalId ?? ''}
-                  onChange={(event) => onComposerChange({ parentGoalId: event.target.value || null })}
-                >
-                  <option value="">Outside main goals</option>
-                  {parentGoalOptions.map((option) => (
-                    <option key={option.id} value={option.id}>{option.title}</option>
-                  ))}
-                </select>
-              ) : null}
-              <div className="goal-tree-actions">
-                <button className="tool-button tool-button-primary" type="button" onClick={() => onCreateGoal(node)} disabled={pending}>
-                  {pending ? 'Adding...' : 'Add goal'}
-                </button>
-                <button className="tool-button" type="button" onClick={onComposerCancel}>Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <button className="tool-button goal-tree-add-button" type="button" onClick={() => onComposerOpen(node, parentGoalOptions[0]?.id ?? null)}>
-              <Icon icon={plus} />
-              Add {node.entityLevel} goal
-            </button>
-          )}
-
-          {error && (isComposing || Boolean(activeEditorGoal)) ? <p className="runtime-warning-text">{error}</p> : null}
-        </div>
-      </div>
-      {isOpen && hasChildren ? (
-        <div className="goal-tree-children">
-          {node.children.map((child) => (
-            <GoalTreeNodeView
-              key={goalNodeKey(child)}
-              node={child}
-              depth={depth + 1}
-              expandedNodes={expandedNodes}
-              onToggle={onToggle}
-              composerState={composerState}
-              onComposerOpen={onComposerOpen}
-              onComposerCancel={onComposerCancel}
-              onComposerChange={onComposerChange}
-              onCreateGoal={onCreateGoal}
-              editorState={editorState}
-              onEditorOpen={onEditorOpen}
-              onEditorCancel={onEditorCancel}
-              onEditorChange={onEditorChange}
-              onUpdateGoal={onUpdateGoal}
-              onDeleteGoal={onDeleteGoal}
-              pending={pending}
-              error={error}
-              parentGoalOptions={node.goals}
-            />
-          ))}
-        </div>
-      ) : null}
-    </div>
   )
 }
 
 export function IntentsListPage() {
+  const workspaceQuery = usePlanningWorkspace()
   const queryClient = useQueryClient()
-  const intentsQuery = useIntentsList()
-  const officialBacklogQuery = useOfficialBacklogStatus()
-  const systemSnapshotQuery = useSystemSnapshot()
-  const goalsTreeQuery = useGoalsTree()
-  const intents = intentsQuery.data?.parsed?.intents ?? []
-  const snapshot = systemSnapshotQuery.data
-  const goalsTree = goalsTreeQuery.data?.root ?? null
-  const goalsSummary = goalsTreeQuery.data?.summary ?? null
-  const snapshotMetadata = snapshot?.metadata
-  const focusIntentId = snapshotMetadata?.focusIntentId ?? null
-  const activeIntentId = snapshotMetadata?.activeIntentId ?? null
-  const [selectedIntentId, setSelectedIntentId] = useState<string | null>(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [goalsDrawerOpen, setGoalsDrawerOpen] = useState(false)
-  const [createDraftOpen, setCreateDraftOpen] = useState(false)
-  const [expandedTaskIndex, setExpandedTaskIndex] = useState<number | null>(null)
-  const [milestoneActiveIndex, setMilestoneActiveIndex] = useState(0)
-  const [healthFilter, setHealthFilter] = useState<IntentHealthFilter>('all')
-  const [intentSortKey, setIntentSortKey] = useState<IntentSortKey>('milestone')
-  const [intentSortDirection, setIntentSortDirection] = useState<'asc' | 'desc'>('desc')
-  const [intentPage, setIntentPage] = useState(1)
-  const [showRegistry, setShowRegistry] = useState(false)
-  const [planningSearch, setPlanningSearch] = useState('')
-  const [sidebarTab, setSidebarTab] = useState<PlanningSidebarTab>('system-goals')
-  const [graphTarget, setGraphTarget] = useState<IntentAlignmentGraphTarget | null>(null)
-  const [graphQueryMode, setGraphQueryMode] = useState<'focus' | 'alignment' | 'full'>('alignment')
-  const [graphQueryDepth, setGraphQueryDepth] = useState(1)
-  const [collapsedSections, setCollapsedSections] = useState<Record<DetailSectionKey, boolean>>({
-    summary: false,
-    detail: false,
-    relations: false,
-    tasks: false,
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    return new URLSearchParams(window.location.search).get('node')
   })
-  const [activeEditor, setActiveEditor] = useState<EditableField | null>(null)
-  const [editorDraft, setEditorDraft] = useState('')
-  const [editorError, setEditorError] = useState<string | null>(null)
-  const [createDraftError, setCreateDraftError] = useState<string | null>(null)
-  const [createDraftForm, setCreateDraftForm] = useState({
-    title: '',
-    focus: '',
-    nextAction: '',
-    decisionSummary: '',
+  const [intentFilter, setIntentFilter] = useState<IntentFilter>('all')
+  const [activeView, setActiveView] = useState<PlanningView>(() => {
+    if (typeof window === 'undefined') return 'overview'
+    return parsePlanningView(new URLSearchParams(window.location.search).get('view'))
   })
-  const [goalComposer, setGoalComposer] = useState<GoalComposerState>({
-    nodeKey: null,
-    parentGoalId: null,
-    title: '',
-    description: '',
-  })
-  const [goalEditor, setGoalEditor] = useState<GoalEditorState>({
-    goalId: null,
-    parentGoalId: null,
-    title: '',
-    description: '',
-  })
-  const [goalTreeError, setGoalTreeError] = useState<string | null>(null)
-  const [expandedGoalNodes, setExpandedGoalNodes] = useState<Set<string>>(new Set(['system:workspace']))
+  const [searchText, setSearchText] = useState('')
+  const [intentKeyResultDrafts, setIntentKeyResultDrafts] = useState<Record<string, string>>({})
+  const [releaseIntentDrafts, setReleaseIntentDrafts] = useState<Record<string, string>>({})
+  const [assistantSuggestions, setAssistantSuggestions] = useState<Record<string, PlanningAssistantResponse>>({})
+  const [assistantApprovals, setAssistantApprovals] = useState<Record<string, { decision: AssistantDecision; keyResultId: string; releaseId: string }>>({})
+  const [assistantDialogIntentId, setAssistantDialogIntentId] = useState<string | null>(null)
+  const deferredSearch = useDeferredValue(searchText)
+
+  const data = workspaceQuery.data
 
   useEffect(() => {
-    if (!intents.length) {
-      setSelectedIntentId(null)
-      return
-    }
-
-    if (selectedIntentId && !intents.some((intent) => intent.id === selectedIntentId)) {
-      setSelectedIntentId(null)
-    }
-  }, [intents, selectedIntentId])
+    if (!data?.graph.nodes.length) return
+    if (selectedNodeId && data.graph.nodes.some((node) => node.id === selectedNodeId)) return
+    setSelectedNodeId(data.workspace.id)
+  }, [data, selectedNodeId])
 
   useEffect(() => {
-    setExpandedTaskIndex(null)
-    setActiveEditor(null)
-    setEditorError(null)
-    setGoalEditor({ goalId: null, parentGoalId: null, title: '', description: '' })
-    setGoalComposer({ nodeKey: null, parentGoalId: null, title: '', description: '' })
-    setGoalTreeError(null)
-  }, [selectedIntentId])
-
-  useEffect(() => {
-    if (!goalsTree) return
-    const next = new Set<string>(['system:workspace'])
-    for (const milestone of goalsTree.children) {
-      next.add(goalNodeKey(milestone))
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (activeView === 'overview') {
+      url.searchParams.delete('view')
+    } else {
+      url.searchParams.set('view', activeView)
     }
-    if (selectedIntentId) {
-      next.add(`intent:${selectedIntentId}`)
+
+    if (selectedNodeId) {
+      url.searchParams.set('node', selectedNodeId)
+    } else {
+      url.searchParams.delete('node')
     }
-    setExpandedGoalNodes((current) => new Set([...current, ...next]))
-  }, [goalsTree, selectedIntentId])
 
-  useEffect(() => {
-    if (!drawerOpen && !goalsDrawerOpen && !createDraftOpen) return
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = previousOverflow
-    }
-  }, [createDraftOpen, drawerOpen, goalsDrawerOpen])
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+  }, [activeView, selectedNodeId])
 
-  const detailQuery = useIntentDetail(selectedIntentId)
-  const detail = detailQuery.data?.detail ?? null
-
-  const createIntentMutation = useCreateIntentMutation()
-  const intentUpdateMutation = useUpdateIntentMutation()
-
-  const createGoalMutation = useCreateGoalMutation()
-  const updateGoalMutation = useUpdateGoalMutation()
-  const deleteGoalMutation = useDeleteGoalMutation()
-
-  const lifecycleCounts = useMemo(() => ({
-    active: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active').length,
-    backlog: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog').length,
-    closed: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'closed').length,
-    archived: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'archived').length,
-    dropped: intents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'dropped').length,
-  }), [intents])
-  const milestones = useMemo(() => buildMilestones(intents), [intents])
-  const releaseLines = useMemo(() => buildReleaseLines(milestones), [milestones])
-  const alignmentGraphQuery = useIntentAlignmentGraph({
-    target: graphTarget,
-    selectedIntentId,
-    focusIntentId,
-    activeIntentId,
-    depth: graphQueryDepth,
-    mode: graphQueryMode,
-    includeTasks: true,
-    includeUnlinked: true,
-  })
-  const alignmentGraph = alignmentGraphQuery.data ?? emptyIntentAlignmentGraph
-  const officialBacklog = officialBacklogQuery.data
-  const officialBacklogWarnings = [
-    ...(officialBacklog?.validation.missingGoalIds ?? []),
-    ...(officialBacklog?.validation.activeIntents.missing ?? []),
-    ...(officialBacklog?.validation.backlogIntents.missing ?? []),
-  ]
-  const currentIntentRecord = useMemo(
-    () => intents.find((intent) => intent.id === selectedIntentId) ?? intents.find((intent) => intent.id === focusIntentId) ?? null,
-    [focusIntentId, intents, selectedIntentId],
-  )
-  const selectedIntentGoalNode = useMemo(
-    () => findGoalNode(goalsTree, 'intent', selectedIntentId ?? ''),
-    [goalsTree, selectedIntentId],
-  )
-  const currentFocusSummary = detail?.focusCurrent ?? currentIntentRecord?.focusCurrent ?? null
-  const currentNextAction = detail?.focusNextAction ?? currentIntentRecord?.focusNextAction ?? null
-  const intentsWithGoals = goalsSummary?.coverage.intents ?? 0
-  const milestonesWithGoals = goalsSummary?.coverage.milestones ?? 0
-  const selectedTaskGoalCount = selectedIntentGoalNode?.children.filter((taskNode) => taskNode.status.code === 'aligned').length ?? 0
-  const selectedTaskMissingGoalCount = selectedIntentGoalNode?.children.filter((taskNode) => taskNode.status.code === 'missing-goals').length ?? 0
-  const goalHealthProgress = useMemo(() => {
-    if (!goalsSummary) return 0
-    const totalEntities = goalsSummary.entityCounts.milestones + goalsSummary.entityCounts.intents + goalsSummary.entityCounts.tasks
-    const alignedEntities = goalsSummary.coverage.milestones + goalsSummary.coverage.intents + goalsSummary.coverage.tasks
-    return totalEntities ? clampProgress((alignedEntities / totalEntities) * 100) : 0
-  }, [goalsSummary])
-  const intentHealthProgress = intents.length
-    ? clampProgress(((lifecycleCounts.active + lifecycleCounts.closed + lifecycleCounts.archived) / intents.length) * 100)
-    : 0
-  const goalCards = useMemo<GoalCard[]>(() => [
-    {
-      id: 'planning-coverage',
-      label: 'Planning Coverage',
-      metric: `${goalsTree?.goals.length ?? 0} root goals`,
-      state: goalsSummary?.missingCounts.milestones || goalsSummary?.missingCounts.intents || goalsSummary?.missingCounts.tasks ? 'needs coverage' : 'aligned',
-      progress: goalHealthProgress,
-      caption: `Milestones ${milestonesWithGoals}/${(goalsSummary?.entityCounts.milestones ?? milestones.length ?? 0)} · Intent goals ${intentsWithGoals}/${(goalsSummary?.entityCounts.intents ?? intents.length ?? 0)}`,
-      detail: [
-        goalsTree?.goals.length ? `${goalsTree.goals.length} planning roots are tracked in the goal tree.` : 'No planning roots exist yet. Add at least one root goal.',
-        selectedTaskMissingGoalCount > 0 ? `${selectedTaskMissingGoalCount} selected tasks still have no child goal.` : 'Selected tasks are linked into the goal tree.',
-      ],
-      icon: goal,
-      tone: goalsTree?.goals.length && !goalsSummary?.missingCounts.milestones && !goalsSummary?.missingCounts.intents ? 'done' : 'warning',
-    },
-    {
-      id: 'release-planning',
-      label: 'Release Planning',
-      metric: `${releaseLines.length} release lines`,
-      state: releaseLines.length ? 'planned' : 'missing',
-      progress: releaseLines.length
-        ? clampProgress(releaseLines.reduce((total, line) => total + line.progress, 0) / releaseLines.length)
-        : 0,
-      caption: `${milestones.length} milestone buckets projected from the planning set.`,
-      detail: [
-        releaseLines.length ? `${releaseLines.filter((line) => line.state === 'active').length} release lines currently have active planning work.` : 'No release lines are projected yet.',
-        milestones.length ? `${milestones.filter((milestone) => milestone.state === 'active').length} milestone buckets are currently active.` : 'No milestone buckets are active yet.',
-      ],
-      icon: archive,
-      tone: releaseLines.length ? 'active' : 'warning',
-    },
-    {
-      id: 'focus-details',
-      label: 'Current Planning Focus',
-      metric: currentIntentRecord?.id ?? 'no focus intent',
-      state: currentFocusSummary ? 'tracked' : 'missing',
-      progress: currentFocusSummary && currentNextAction ? 100 : currentFocusSummary ? 72 : 24,
-      caption: currentFocusSummary ?? 'No detailed focus summary surfaced yet.',
-      detail: [
-        currentNextAction ? `Next: ${currentNextAction}` : 'Next action is not recorded yet.',
-        detail?.focusUpdatedAt ? `Updated: ${formatTimestamp(detail.focusUpdatedAt)}` : 'Focus timestamp unavailable.',
-      ],
-      icon: flagTriangleRight,
-      tone: currentFocusSummary ? 'active' : 'warning',
-    },
-    {
-      id: 'intent-health',
-      label: 'Planning Queue Health',
-      metric: `${lifecycleCounts.active} active / ${intents.length || 0}`,
-      state: lifecycleCounts.dropped > 0 ? 'attention' : snapshotMetadata?.reloadRecommended ? 'reload' : 'stable',
-      progress: intentHealthProgress,
-      caption: `Backlog ${lifecycleCounts.backlog} · Closed ${lifecycleCounts.closed} · Archived ${lifecycleCounts.archived}`,
-      detail: [
-        lifecycleCounts.dropped > 0 ? `${lifecycleCounts.dropped} dropped intents still need review.` : 'No dropped intents in the current workspace slice.',
-        snapshotMetadata?.reloadRecommended ? `Snapshot reload recommended: ${snapshotMetadata.reloadReasons.join(', ')}` : 'Snapshot and intent list are currently aligned enough for operator work.',
-      ],
-      icon: network,
-      tone: lifecycleCounts.dropped > 0 || snapshotMetadata?.reloadRecommended ? 'warning' : 'done',
-    },
-  ], [
-    currentFocusSummary,
-    currentIntentRecord?.id,
-    currentNextAction,
-    detail?.focusUpdatedAt,
-    goalHealthProgress,
-    goalsSummary?.entityCounts.milestones,
-    goalsSummary?.entityCounts.intents,
-    goalsSummary?.missingCounts.intents,
-    goalsSummary?.missingCounts.milestones,
-    goalsSummary?.missingCounts.tasks,
-    goalsTree?.goals.length,
-    intentHealthProgress,
-    intents.length,
-    intentsWithGoals,
-    lifecycleCounts.active,
-    lifecycleCounts.archived,
-    lifecycleCounts.backlog,
-    lifecycleCounts.closed,
-    lifecycleCounts.dropped,
-    milestones.length,
-    releaseLines,
-    selectedTaskGoalCount,
-    selectedIntentGoalNode?.children.length,
-    selectedTaskMissingGoalCount,
-    snapshotMetadata?.reloadReasons,
-    snapshotMetadata?.reloadRecommended,
-  ])
-
-  const planningFilterCards = useMemo<PlanningFilterCard[]>(() => [
-    {
-      id: 'system-goals',
-      label: 'System Goals',
-      metric: `${goalsTree?.goals.length ?? 0}`,
-      caption: 'View the full planning graph from the workspace root.',
-      tone: 'done',
-    },
-    {
-      id: 'backlog',
-      label: 'Backlog',
-      metric: `${lifecycleCounts.backlog}`,
-      caption: 'Show planning work that has not started yet.',
-      tone: lifecycleCounts.backlog ? 'neutral' : 'done',
-    },
-    {
-      id: 'focus',
-      label: 'Focus',
-      metric: focusIntentId ?? 'none',
-      caption: 'Center the graph on the current planning focus.',
-      tone: focusIntentId ? 'active' : 'warning',
-    },
-    {
-      id: 'active',
-      label: 'Active',
-      metric: `${lifecycleCounts.active}`,
-      caption: 'Highlight intents currently in progress.',
-      tone: lifecycleCounts.active ? 'active' : 'neutral',
-    },
-    {
-      id: 'closed',
-      label: 'Closed',
-      metric: `${lifecycleCounts.closed}`,
-      caption: 'Review completed planning work and linked goals.',
-      tone: lifecycleCounts.closed ? 'done' : 'neutral',
-    },
-    {
-      id: 'archived',
-      label: 'Archive',
-      metric: `${lifecycleCounts.archived}`,
-      caption: 'Inspect archived intents without cluttering active work.',
-      tone: lifecycleCounts.archived ? 'neutral' : 'done',
-    },
-  ], [focusIntentId, goalsTree?.goals.length, lifecycleCounts.active, lifecycleCounts.archived, lifecycleCounts.backlog, lifecycleCounts.closed])
-
-  const planningBreadcrumb = useMemo(() => {
-    if (!graphTarget) return ['SVFactory', 'Planning Graph']
-    if (graphTarget.kind === 'workspace') return ['SVFactory', 'Planning Graph']
-    if (graphTarget.kind === 'release-line') return ['SVFactory', `Release ${graphTarget.id.toUpperCase()}`]
-    if (graphTarget.kind === 'milestone') return ['SVFactory', `Milestone ${graphTarget.id.toUpperCase()}`]
-    if (graphTarget.kind === 'intent') return ['SVFactory', 'Intent', graphTarget.id]
-    return ['SVFactory', graphTarget.id]
-  }, [graphTarget])
+  const objectiveList = useMemo(() => flattenObjectives(data?.objectives ?? []), [data?.objectives])
+  const keyResultMap = useMemo(() => new Map((data?.keyResults ?? []).map((keyResult) => [keyResult.id, keyResult])), [data?.keyResults])
+  const intentMap = useMemo(() => new Map((data?.intents ?? []).map((intent) => [intent.id, intent])), [data?.intents])
+  const releaseMap = useMemo(() => new Map((data?.releases ?? []).map((release) => [release.id, release])), [data?.releases])
+  const taskMap = useMemo(() => new Map((data?.intents ?? []).flatMap((intent) => intent.tasks.map((task) => [task.id, { task, intent }] as const))), [data?.intents])
 
   const filteredIntents = useMemo(() => {
-    return intents.filter((intent) => {
-      const lifecycle = normalizeLifecycle(intent.lifecycle)
-      const search = planningSearch.trim().toLowerCase()
-      const matchesSearch = !search || [intent.id, intent.title ?? '', intent.goalText ?? '', intent.goal ?? '']
-        .some((value) => String(value || '').toLowerCase().includes(search))
-      if (!matchesSearch) return false
-      if (healthFilter === 'all') return true
-      if (healthFilter === 'selected') return intent.id === selectedIntentId
-      return lifecycle === healthFilter
+    const query = deferredSearch.trim().toLowerCase()
+    return (data?.intents ?? []).filter((intent) => {
+      if (intentFilter === 'linked' && intent.validation_state !== 'linked') return false
+      if (intentFilter === 'missing-kr' && intent.validation_state !== 'missing-key-result') return false
+      if (intentFilter === 'proposed' && intent.validation_state !== 'proposed-new-key-result') return false
+      if (intentFilter === 'out-of-scope' && intent.validation_state !== 'out-of-scope') return false
+      if (intentFilter === 'active' && intent.lifecycle !== 'active') return false
+      if (intentFilter === 'backlog' && intent.lifecycle !== 'backlog' && intent.lifecycle !== 'draft') return false
+      if (intentFilter === 'closed' && !['closed', 'done', 'archived'].includes(intent.lifecycle)) return false
+      if (!query) return true
+      return `${intent.id} ${intent.title} ${intent.summary} ${intent.goal_text}`.toLowerCase().includes(query)
     })
-  }, [healthFilter, intents, planningSearch, selectedIntentId])
+  }, [data?.intents, deferredSearch, intentFilter])
 
-  const sidebarIntents = useMemo(() => {
-    switch (sidebarTab) {
-      case 'focus':
-        return filteredIntents.filter((intent) => intent.id === focusIntentId)
-      case 'active':
-        return filteredIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'active')
-      case 'backlog':
-        return filteredIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'backlog')
-      case 'closed':
-        return filteredIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'closed')
-      case 'archived':
-        return filteredIntents.filter((intent) => normalizeLifecycle(intent.lifecycle) === 'archived')
-      default:
-        return filteredIntents
+  const graphNodes = useMemo(() => {
+    if (!data) return []
+    if (!deferredSearch.trim()) return data.graph.nodes
+    const searchQuery = deferredSearch.trim().toLowerCase()
+    return data.graph.nodes.filter((node) => `${node.label} ${node.detail} ${node.metrics.join(' ')}`.toLowerCase().includes(searchQuery))
+  }, [data, deferredSearch])
+
+  const graphNodeIds = useMemo(() => new Set(graphNodes.map((node) => node.id)), [graphNodes])
+  const graphEdges = useMemo(() => {
+    if (!data) return []
+    return data.graph.edges.filter((edge) => graphNodeIds.has(edge.source) && graphNodeIds.has(edge.target))
+  }, [data, graphNodeIds])
+
+  const detail = useMemo<DetailRecord | null>(() => {
+    if (!data || !selectedNodeId) return null
+    if (selectedNodeId === data.workspace.id) {
+      return {
+        kind: 'workspace',
+        title: data.workspace.title,
+        summary: data.workspace.description,
+        metrics: [
+          `${data.summary.objectives} objectives`,
+          `${data.summary.keyResults} key results`,
+          `${data.summary.intents} intents`,
+          `${data.summary.tasks} tasks`,
+        ],
+      }
     }
-  }, [filteredIntents, focusIntentId, sidebarTab])
 
-  const planningTreeGroups = useMemo(() => milestones.map((milestone) => ({
-    milestone,
-    releaseLine: releaseLines.find((line) => line.id === milestone.id) ?? null,
-    intents: sidebarIntents.filter((intent) => deriveVersionBucket(intent.id) === milestone.id),
-  })), [milestones, releaseLines, sidebarIntents])
+    const objective = objectiveList.find((item) => item.id === selectedNodeId)
+    if (objective) return { kind: 'objective', objective }
 
-  const sortedIntents = useMemo(() => {
-    const items = [...filteredIntents]
-    items.sort((left, right) => {
-      const leftRuntime = intentRuntimeLabel(left.id, focusIntentId, activeIntentId)
-      const rightRuntime = intentRuntimeLabel(right.id, focusIntentId, activeIntentId)
-      const leftProgress = computeIntentProgress(left.lifecycle)
-      const rightProgress = computeIntentProgress(right.lifecycle)
-      const leftValues: Record<IntentSortKey, string | number> = {
-        title: String(left.title ?? left.id),
-        milestone: versionRank(deriveVersionBucket(left.id)),
-        lifecycle: String(left.lifecycle ?? ''),
-        progress: leftProgress,
-        runtime: leftRuntime,
-      }
-      const rightValues: Record<IntentSortKey, string | number> = {
-        title: String(right.title ?? right.id),
-        milestone: versionRank(deriveVersionBucket(right.id)),
-        lifecycle: String(right.lifecycle ?? ''),
-        progress: rightProgress,
-        runtime: rightRuntime,
-      }
-      let comparison = 0
-      if (typeof leftValues[intentSortKey] === 'number' && typeof rightValues[intentSortKey] === 'number') {
-        comparison = Number(leftValues[intentSortKey]) - Number(rightValues[intentSortKey])
-      } else {
-        comparison = String(leftValues[intentSortKey]).localeCompare(String(rightValues[intentSortKey]))
-      }
-      return comparison * (intentSortDirection === 'asc' ? 1 : -1)
+    const keyResult = keyResultMap.get(selectedNodeId)
+    if (keyResult) {
+      const intents = (data.intents ?? []).filter((intent) => intent.linked_key_result_ids.includes(keyResult.id))
+      return { kind: 'key_result', keyResult, intents }
+    }
+
+    const release = releaseMap.get(selectedNodeId)
+    if (release) return { kind: 'release', release }
+
+    const intent = intentMap.get(selectedNodeId)
+    if (intent) {
+      const linkedKeyResults = intent.linked_key_result_ids.map((id) => keyResultMap.get(id)).filter((item): item is PlanningKeyResult => Boolean(item))
+      return { kind: 'intent', intent, keyResults: linkedKeyResults }
+    }
+
+    const taskRecord = taskMap.get(selectedNodeId)
+    if (taskRecord) return { kind: 'task', task: taskRecord.task, intent: taskRecord.intent }
+
+    return null
+  }, [data, selectedNodeId, objectiveList, keyResultMap, releaseMap, intentMap, taskMap])
+
+  const missingKeyResultIntents = useMemo(
+    () => filteredIntents.filter((intent) => intent.validation_state === 'missing-key-result'),
+    [filteredIntents],
+  )
+
+  const featuredRelease = useMemo(
+    () => (data?.releases ?? []).find((release) => release.state === 'active') ?? (data?.releases ?? [])[0] ?? null,
+    [data?.releases],
+  )
+
+  const prioritizedIntents = useMemo(() => {
+    const bucket = [...filteredIntents]
+    return bucket.sort((left, right) => {
+      const leftScore = (left.validation_state === 'missing-key-result' ? 3 : left.validation_state === 'proposed-new-key-result' ? 2 : 0) + (left.lifecycle === 'active' ? 2 : 0)
+      const rightScore = (right.validation_state === 'missing-key-result' ? 3 : right.validation_state === 'proposed-new-key-result' ? 2 : 0) + (right.lifecycle === 'active' ? 2 : 0)
+      return rightScore - leftScore || left.id.localeCompare(right.id)
     })
-    return items
-  }, [activeIntentId, filteredIntents, focusIntentId, intentSortDirection, intentSortKey])
+  }, [filteredIntents])
 
-  useEffect(() => {
-    setIntentPage(1)
-  }, [healthFilter, intentSortDirection, intentSortKey])
+  const topObjectives = useMemo(() => objectiveList.slice(0, 4), [objectiveList])
+  const activeIntents = useMemo(() => filteredIntents.filter((intent) => intent.lifecycle === 'active').slice(0, 5), [filteredIntents])
+  const linkedCoverage = data ? Math.round((data.summary.mappedIntents / Math.max(data.summary.intents, 1)) * 100) : 0
+  const nextTopLevelObjectiveCode = `G${(data?.objectives.length ?? 0) + 1}`
+  const assistantDialogIntent = assistantDialogIntentId ? intentMap.get(assistantDialogIntentId) ?? null : null
+  const assistantDialogSuggestion = assistantDialogIntentId ? assistantSuggestions[assistantDialogIntentId] ?? null : null
+  const assistantDialogApproval = assistantDialogIntentId ? assistantApprovals[assistantDialogIntentId] : null
 
-  useEffect(() => {
-    const maxPage = Math.max(1, Math.ceil(sortedIntents.length / INTENTS_PER_PAGE))
-    if (intentPage > maxPage) {
-      setIntentPage(maxPage)
-    }
-  }, [intentPage, sortedIntents.length])
-
-  useEffect(() => {
-    const maxIndex = Math.max(0, milestones.length - 1)
-    if (milestoneActiveIndex > maxIndex) {
-      setMilestoneActiveIndex(maxIndex)
-    }
-  }, [milestoneActiveIndex, milestones.length])
-
-  useEffect(() => {
-    if (sidebarTab !== 'milestones') return
-    const milestoneTarget = milestones[milestoneActiveIndex]
-    setGraphTarget(milestoneTarget ? { id: milestoneTarget.id, kind: 'milestone' } : { id: 'workspace', kind: 'workspace' })
-  }, [milestoneActiveIndex, milestones, sidebarTab])
-
-  const intentPageCount = Math.max(1, Math.ceil(sortedIntents.length / INTENTS_PER_PAGE))
-  const pagedIntents = useMemo(() => {
-    const startIndex = (intentPage - 1) * INTENTS_PER_PAGE
-    return sortedIntents.slice(startIndex, startIndex + INTENTS_PER_PAGE)
-  }, [intentPage, sortedIntents])
-  const intentPageStart = sortedIntents.length ? (intentPage - 1) * INTENTS_PER_PAGE + 1 : 0
-  const intentPageEnd = sortedIntents.length ? Math.min(intentPage * INTENTS_PER_PAGE, sortedIntents.length) : 0
-
-  const refreshAll = async () => {
-    await Promise.all([
-      intentsQuery.refetch(),
-      detailQuery.refetch(),
-      goalsTreeQuery.refetch(),
-      queryClient.invalidateQueries({ queryKey: systemSnapshotQueryKey }),
-    ])
+  function syncWorkspace(nextWorkspace: typeof data) {
+    queryClient.setQueryData(['planning-workspace'], nextWorkspace)
   }
 
-  const openDrawerForIntent = (intentId: string) => {
-    setSelectedIntentId(intentId)
-    setGraphTarget({ id: intentId, kind: 'intent' })
-    setSidebarTab('focus')
-    setDrawerOpen(true)
-  }
+  const addIntentKeyResultMutation = useMutation({
+    mutationFn: ({ intentId, keyResultId }: { intentId: string; keyResultId: string }) => addIntentKeyResultLink(intentId, keyResultId),
+    onSuccess: (result, variables) => {
+      syncWorkspace(result.workspace)
+      setIntentKeyResultDrafts((current) => ({ ...current, [variables.intentId]: '' }))
+    },
+  })
 
-  const handleGraphNodeSelect = (node: IntentAlignmentNode) => {
-    if (node.kind === 'intent' && node.entityId) {
-      openDrawerForIntent(node.entityId)
+  const removeIntentKeyResultMutation = useMutation({
+    mutationFn: ({ intentId, keyResultId }: { intentId: string; keyResultId: string }) => removeIntentKeyResultLink(intentId, keyResultId),
+    onSuccess: (result) => {
+      syncWorkspace(result.workspace)
+    },
+  })
+
+  const addIntentToReleaseMutation = useMutation({
+    mutationFn: ({ releaseId, intentId }: { releaseId: string; intentId: string }) => addIntentToRelease(releaseId, intentId),
+    onSuccess: (result, variables) => {
+      syncWorkspace(result.workspace)
+      setReleaseIntentDrafts((current) => ({ ...current, [variables.releaseId]: '' }))
+    },
+  })
+
+  const removeIntentFromReleaseMutation = useMutation({
+    mutationFn: ({ releaseId, intentId }: { releaseId: string; intentId: string }) => removeIntentFromRelease(releaseId, intentId),
+    onSuccess: (result) => {
+      syncWorkspace(result.workspace)
+    },
+  })
+
+  const assistantPlanMutation = useMutation({
+    mutationFn: (intentId: string) => generateIntentAssistantPlan(intentId),
+    onSuccess: (result) => {
+      setSelectedNodeId(result.intent_id)
+      setActiveView('intents')
+      setAssistantDialogIntentId(result.intent_id)
+      setAssistantSuggestions((current) => ({ ...current, [result.intent_id]: result }))
+      const firstReleaseCandidate = result.suggestion.release_candidates.find((candidate) => !candidate.already_included)
+        ?? result.suggestion.release_candidates[0]
+      setAssistantApprovals((current) => ({
+        ...current,
+        [result.intent_id]: {
+          decision: result.suggestion.decision,
+          keyResultId: result.suggestion.primary_key_result_id || result.suggestion.key_result_candidates[0]?.id || '',
+          releaseId: result.suggestion.primary_release_id || firstReleaseCandidate?.id || '',
+        },
+      }))
+    },
+  })
+
+  const assistantApplyMutation = useMutation({
+    mutationFn: ({ intentId, body }: { intentId: string; body: PlanningAssistantResponse['suggestion'] }) => applyIntentAssistantPlan(intentId, body),
+    onSuccess: (result) => {
+      syncWorkspace(result.workspace)
+      setAssistantDialogIntentId(null)
+    },
+  })
+
+  function launchAssistant(intentId: string) {
+    openView('intents', intentId)
+    setSelectedNodeId(intentId)
+    setAssistantDialogIntentId(intentId)
+    if (assistantPlanMutation.variables === intentId && assistantPlanMutation.isPending) {
       return
     }
-    if (node.ownerIntentId) {
-      openDrawerForIntent(node.ownerIntentId)
-      return
-    }
-    setGoalsDrawerOpen(true)
+    assistantPlanMutation.mutate(intentId)
   }
 
-  const selectPlanningTarget = (target: IntentAlignmentGraphTarget | null, options?: { selectedIntentId?: string | null; queryMode?: 'focus' | 'alignment' | 'full'; health?: IntentHealthFilter }) => {
-    setGraphTarget(target)
-    if (options?.selectedIntentId !== undefined) {
-      setSelectedIntentId(options.selectedIntentId)
-    }
-    if (options?.queryMode) {
-      setGraphQueryMode(options.queryMode)
-    }
-    if (options?.health) {
-      setHealthFilter(options.health)
+  function openView(view: PlanningView, nodeId?: string | null) {
+    setActiveView(view)
+    if (nodeId) {
+      setSelectedNodeId(nodeId)
     }
   }
 
-  const applySidebarTab = (tab: PlanningSidebarTab) => {
-    setSidebarTab(tab)
-    if (tab === 'system-goals') {
-      selectPlanningTarget({ id: 'workspace', kind: 'workspace' }, { selectedIntentId: null, queryMode: 'alignment', health: 'all' })
-      return
-    }
-    if (tab === 'milestones') {
-      const milestoneTarget = milestones[milestoneActiveIndex]
-      selectPlanningTarget(
-        milestoneTarget ? { id: milestoneTarget.id, kind: 'milestone' } : { id: 'workspace', kind: 'workspace' },
-        { selectedIntentId: null, queryMode: 'alignment', health: 'all' },
-      )
-      return
-    }
-    if (tab === 'focus') {
-      if (focusIntentId) {
-        selectPlanningTarget({ id: focusIntentId, kind: 'intent' }, { selectedIntentId: focusIntentId, queryMode: 'focus', health: 'selected' })
-      }
-      return
-    }
-    if (tab === 'active') {
-      selectPlanningTarget(activeIntentId ? { id: activeIntentId, kind: 'intent' } : { id: 'workspace', kind: 'workspace' }, { selectedIntentId: activeIntentId ?? null, queryMode: activeIntentId ? 'focus' : 'alignment', health: 'active' })
-      return
-    }
-    if (tab === 'backlog') {
-      selectPlanningTarget({ id: 'workspace', kind: 'workspace' }, { selectedIntentId: null, queryMode: 'alignment', health: 'backlog' })
-      return
-    }
-    if (tab === 'closed') {
-      selectPlanningTarget({ id: 'workspace', kind: 'workspace' }, { selectedIntentId: null, queryMode: 'alignment', health: 'closed' })
-      return
-    }
-    if (tab === 'archived') {
-      selectPlanningTarget({ id: 'workspace', kind: 'workspace' }, { selectedIntentId: null, queryMode: 'alignment', health: 'archived' })
-    }
+  function keyResultOptionsForIntent(intent: PlanningIntent) {
+    return (data?.keyResults ?? []).filter((keyResult) => !intent.linked_key_result_ids.includes(keyResult.id))
   }
 
-  useEffect(() => {
-    if (!alignmentGraph.focusNodeId) return
-    if (graphQueryMode !== 'alignment') return
-    if (alignmentGraph.defaultMode === 'alignment') return
-    setGraphQueryMode(alignmentGraph.defaultMode)
-  }, [alignmentGraph.defaultMode, alignmentGraph.focusNodeId, graphQueryMode])
-
-  const toggleIntentSort = (nextKey: IntentSortKey) => {
-    setIntentSortDirection((current) => (intentSortKey === nextKey ? (current === 'asc' ? 'desc' : 'asc') : nextKey === 'milestone' || nextKey === 'progress' ? 'desc' : 'asc'))
-    setIntentSortKey(nextKey)
+  function intentOptionsForRelease(release: PlanningRelease) {
+    const currentIntentIds = new Set(release.intents.map((intent) => intent.id))
+    return (data?.intents ?? []).filter((intent) => !currentIntentIds.has(intent.id))
   }
 
-  const toggleSection = (key: DetailSectionKey) => {
-    setCollapsedSections((current) => ({ ...current, [key]: !current[key] }))
-  }
-
-  const startEdit = (field: EditableField, currentValue: string) => {
-    setActiveEditor(field)
-    setEditorDraft(currentValue)
-    setEditorError(null)
-  }
-
-  const cancelEdit = () => {
-    setActiveEditor(null)
-    setEditorDraft('')
-    setEditorError(null)
-  }
-
-  const toggleGoalNode = (nodeKey: string) => {
-    setExpandedGoalNodes((current) => {
-      const next = new Set(current)
-      if (next.has(nodeKey)) {
-        next.delete(nodeKey)
-      } else {
-        next.add(nodeKey)
-      }
-      return next
+  async function markIntentOutOfScope(intentId: string) {
+    const intent = intentMap.get(intentId)
+    if (!intent) return
+    await assistantApplyMutation.mutateAsync({
+      intentId,
+      body: {
+        decision: 'out-of-scope',
+        summary: `Intent ${intent.title} is intentionally kept outside the current OKR scope.`,
+        why_now: 'This intent does not map cleanly to an existing key result, and the operator explicitly chose to keep it outside the active OKR system.',
+        next_action: 'Keep it visible through the out-of-scope filter and revisit only if workspace goals change.',
+        primary_key_result_id: null,
+        primary_release_id: null,
+        key_result_candidates: [],
+        release_candidates: [],
+        proposed_objective: null,
+        proposed_key_result: null,
+        out_of_scope_reason: 'Manually marked out of scope from the intent workspace.',
+        warnings: [],
+      },
     })
   }
 
-  const openGoalComposer = (node: GoalTreeNode, parentGoalId?: string | null) => {
-    setGoalComposer({
-      nodeKey: goalNodeKey(node),
-      parentGoalId: parentGoalId ?? null,
-      title: '',
-      description: '',
-    })
-    setGoalTreeError(null)
-  }
+  async function adoptAssistantRecommendation(intent: PlanningIntent) {
+    const approval = assistantApprovals[intent.id]
+    const suggestion = assistantSuggestions[intent.id]?.suggestion
+    if (!approval && !suggestion) return
 
-  const cancelGoalComposer = () => {
-    setGoalComposer({ nodeKey: null, parentGoalId: null, title: '', description: '' })
-    setGoalTreeError(null)
-  }
-
-  const openGoalEditor = (goalItem: GoalRecord) => {
-    setGoalEditor({
-      goalId: goalItem.id,
-      parentGoalId: goalItem.parentGoalId,
-      title: goalItem.title,
-      description: goalItem.description,
-    })
-    setGoalTreeError(null)
-  }
-
-  const cancelGoalEditor = () => {
-    setGoalEditor({ goalId: null, parentGoalId: null, title: '', description: '' })
-    setGoalTreeError(null)
-  }
-
-  const saveEdit = async (field: EditableField) => {
-    if (!selectedIntentId) return
-    const bodyMap: Record<EditableField, Record<string, string>> = {
-      title: { title: editorDraft.trim() },
-      summaryText: { decision_summary: editorDraft.trim() },
-      focusCurrent: { focus: editorDraft.trim() },
-      focusNextAction: { next_action: editorDraft.trim() },
-      closeCondition: { close_condition: editorDraft.trim() },
-    }
-    try {
-      await intentUpdateMutation.mutateAsync({ id: selectedIntentId, body: bodyMap[field] })
-      setActiveEditor(null)
-      setEditorError(null)
-    } catch (error) {
-      setEditorError(error instanceof Error ? error.message : 'Intent update failed.')
-    }
-  }
-
-  const openCreateDraft = () => {
-    setCreateDraftError(null)
-    setCreateDraftOpen(true)
-  }
-
-  const closeCreateDraft = () => {
-    setCreateDraftOpen(false)
-    setCreateDraftError(null)
-    setCreateDraftForm({
-      title: '',
-      focus: '',
-      nextAction: '',
-      decisionSummary: '',
+    const fallbackReleaseId = suggestion?.release_candidates.find((candidate) => !candidate.already_included)?.id
+      || suggestion?.release_candidates[0]?.id
+      || ''
+    const fallbackKeyResultId = suggestion?.key_result_candidates[0]?.id || ''
+    const decision = approval?.decision || suggestion?.decision || 'bind-existing'
+    await assistantApplyMutation.mutateAsync({
+      intentId: intent.id,
+      body: {
+        ...(suggestion || {
+          decision,
+          summary: '',
+          why_now: '',
+          next_action: '',
+          primary_key_result_id: null,
+          primary_release_id: null,
+          key_result_candidates: [],
+          release_candidates: [],
+          proposed_objective: null,
+          proposed_key_result: null,
+          out_of_scope_reason: null,
+          warnings: [],
+        }),
+        decision,
+        primary_key_result_id: decision === 'bind-existing' ? (approval?.keyResultId || fallbackKeyResultId || null) : null,
+        primary_release_id: approval?.releaseId || fallbackReleaseId || null,
+      },
     })
   }
 
-  const submitCreateDraft = async () => {
-    const title = createDraftForm.title.trim()
-    if (title.length < 3) {
-      setCreateDraftError('Title required (min 3 characters).')
+  async function applyManualIntentKeyResult(intent: PlanningIntent) {
+    const draft = intentKeyResultDrafts[intent.id] ?? ''
+    if (!draft) return
+    if (draft === MANUAL_OUT_OF_SCOPE_OPTION) {
+      setIntentKeyResultDrafts((current) => ({ ...current, [intent.id]: '' }))
+      await markIntentOutOfScope(intent.id)
       return
     }
-
-    try {
-      const response = await createIntentMutation.mutateAsync({
-        title,
-        focus: createDraftForm.focus.trim() || undefined,
-        next_action: createDraftForm.nextAction.trim() || undefined,
-        decision_summary: createDraftForm.decisionSummary.trim() || undefined,
-      })
-      const createdIntentId = String(response.result?.id ?? response.result?.intent_id ?? '').trim() || null
-      if (createdIntentId) {
-        setSelectedIntentId(createdIntentId)
-        setDrawerOpen(true)
-      }
-      closeCreateDraft()
-    } catch (error) {
-      setCreateDraftError(error instanceof Error ? error.message : 'Create draft intent failed.')
-    }
+    addIntentKeyResultMutation.mutate({ intentId: intent.id, keyResultId: draft })
   }
 
-  const createGoalForNode = async (node: GoalTreeNode) => {
-    try {
-      await createGoalMutation.mutateAsync({
-        entity_level: node.entityLevel,
-        entity_id: node.entityId,
-        title: goalComposer.title.trim(),
-        description: goalComposer.description.trim(),
-        parent_goal_id: goalComposer.parentGoalId ?? null,
-      })
-      cancelGoalComposer()
-    } catch (error) {
-      setGoalTreeError(error instanceof Error ? error.message : 'Create goal failed.')
-    }
+  if (workspaceQuery.isLoading) {
+    return (
+      <section className="workspace-page planning-workspace-page">
+        <div className="prototype-skeleton-stack">
+          <span />
+          <span />
+          <span />
+        </div>
+      </section>
+    )
   }
 
-  const saveGoalUpdate = async (goalItem: GoalRecord) => {
-    try {
-      await updateGoalMutation.mutateAsync({
-        goalId: goalItem.id,
-        title: goalItem.title,
-        description: goalItem.description,
-        parent_goal_id: goalItem.parentGoalId ?? null,
-      })
-      cancelGoalEditor()
-    } catch (error) {
-      setGoalTreeError(error instanceof Error ? error.message : 'Update goal failed.')
-    }
+  if (workspaceQuery.isError || !data) {
+    return (
+      <section className="workspace-page planning-workspace-page">
+        <article className="planning-detail-card planning-error-card">
+          <h2>Planning workspace unavailable</h2>
+          <p>{workspaceQuery.error instanceof Error ? workspaceQuery.error.message : 'Graph workspace could not be loaded.'}</p>
+        </article>
+      </section>
+    )
   }
-
-  const removeGoal = async (goalItem: GoalRecord) => {
-    try {
-      await deleteGoalMutation.mutateAsync(goalItem.id)
-      if (goalEditor.goalId === goalItem.id) {
-        cancelGoalEditor()
-      }
-    } catch (error) {
-      setGoalTreeError(error instanceof Error ? error.message : 'Delete goal failed.')
-    }
-  }
-
-  const detailDescription = detail ? (detail.decisionSummary ?? detail.summary ?? detail.goal ?? '') : ''
-  const detailProgress = detail ? computeIntentProgress(detail.lifecycle) : 0
-  const detailTaskCount = detail?.tasks.length ?? 0
-  const detailTaskDoneCount = detail?.tasks.filter((task) => task.done || normalizeLifecycle(task.status) === 'done').length ?? 0
-  const metadataEntries: MetadataEntry[] = detail ? [
-    {
-      label: 'Lifecycle',
-      value: sentenceCase(detail.lifecycle ?? detail.status ?? 'unknown'),
-      icon: circleDashed,
-      tooltip: 'Current process state of the intent in the lifecycle rail.',
-    },
-    {
-      label: 'Scope',
-      value: sentenceCase(detail.scope),
-      icon: listTree,
-      tooltip: 'Declared operating scope of the intent, such as repo-wide or feature-local.',
-    },
-    {
-      label: 'Mode',
-      value: sentenceCase(detail.mode),
-      icon: circleDashed,
-      tooltip: 'Execution mode recorded for this intent, usually how strictly it should be governed.',
-    },
-    {
-      label: 'Change type',
-      value: sentenceCase(detail.changeType),
-      icon: target,
-      tooltip: 'Nature of the intended change, such as feature, refactor, governance, or docs.',
-    },
-    {
-      label: 'Milestone',
-      value: intentVersionLabel(detail.id ?? selectedIntentId ?? ''),
-      icon: archive,
-      tooltip: 'Version or milestone bucket inferred from the intent id.',
-    },
-    {
-      label: 'Progress',
-      value: `${detailProgress}% · ${detailTaskDoneCount}/${detailTaskCount} tasks done`,
-      icon: activity,
-      tooltip: 'UI progress estimate derived from lifecycle plus extracted task completion count.',
-    },
-  ] : []
-  const relationEntries: RelationEntry[] = detail ? [
-    ...(detail.goal ? [{
-      label: 'Goal',
-      value: detail.goal,
-      evidence: compactPath(detail.sourceFile),
-      tooltip: 'Primary outcome the intent is trying to achieve, extracted from the intent record.',
-    }] : []),
-    {
-      label: 'Milestone / Version',
-      value: intentVersionLabel(detail.id ?? selectedIntentId ?? ''),
-      evidence: detail.id ?? 'unknown',
-      tooltip: 'Version line or milestone bucket this intent belongs to.',
-    },
-    ...(detail.workspacePath ? [{
-      label: 'Workspace',
-      value: compactPath(detail.workspacePath),
-      evidence: 'intent workspace',
-      tooltip: 'Intent-owned workspace folder where plan, impact, and proposed changes live.',
-    }] : []),
-    ...(detail.sourceFile ? [{
-      label: 'Source document',
-      value: compactPath(detail.sourceFile),
-      evidence: 'intent record',
-      tooltip: 'The canonical source file that defines this intent entry.',
-    }] : []),
-    ...(detail.stagedFiles.length ? [{
-      label: 'Staged files',
-      value: `${detail.stagedFiles.length} linked file${detail.stagedFiles.length === 1 ? '' : 's'}`,
-      evidence: detail.stagedFiles.slice(0, 3).map((file) => compactPath(file)).join(' · '),
-      tooltip: 'Files explicitly attached to the intent as staged or governed evidence.',
-    }] : []),
-  ] : []
 
   return (
-    <section className="workspace-page">
-      <header className="workspace-toolbar">
-        <div>
-          <p className="workspace-eyebrow">Planning Graph Workspace</p>
-          <h1>Intents</h1>
-          <p className="intent-page-summary">
-            Planning-first view for goals, milestones, release lines, concrete intents, and task coverage. Registry stays available as the fallback operator surface.
-          </p>
-        </div>
-        <div className="toolbar-actions">
-          <label className="rules-filter-search intent-toolbar-search">
-            <span className="workspace-eyebrow">Find intent</span>
-            <input
-              type="search"
-              value={planningSearch}
-              onChange={(event) => setPlanningSearch(event.target.value)}
-              placeholder="Search intent, goal, or milestone"
-            />
-          </label>
-          <button className={`tool-button${showRegistry ? ' active' : ''}`} type="button" onClick={() => setShowRegistry((current) => !current)}>
-            {showRegistry ? 'Hide Registry' : 'Open Registry'}
-          </button>
-          <button className="tool-button" type="button" onClick={() => void refreshAll()}>
-            Refresh List
-          </button>
-          <button className="tool-button tool-button-primary" type="button" onClick={openCreateDraft}>
-            Create Draft Intent
-          </button>
-        </div>
-      </header>
-
-      <section className="surface-panel compact-note-panel">
-        <div className="panel-toolbar">
-          <div>
-            <p className="workspace-eyebrow">Official backlog</p>
-            <h2>SVFactory operating set</h2>
-          </div>
-          <div className="panel-toolbar-meta">
-            <span className={`status-pill ${officialBacklog?.ok ? 'status-good' : 'status-warn'}`}>
-              {officialBacklogQuery.isLoading ? 'loading' : officialBacklog?.ok ? 'locked' : 'drift'}
-            </span>
+    <section className="workspace-page planning-workspace-page">
+      <div className="planning-hero">
+        <div className="planning-hero-copy">
+          <p className="workspace-eyebrow">Intent Workspace v3.0</p>
+          <h1>{data.northStar.title}</h1>
+          <p>{withSampleCopy(data.northStar.description)}</p>
+          <div className="planning-hero-meta">
+            <span className="meta-pill">{data.workspace.mode}</span>
+            <span className="meta-pill">GraphDB native</span>
+            <span className="meta-pill">Checked {new Date(data.checkedAt).toLocaleString()}</span>
           </div>
         </div>
-        <p className="rules-cell-copy">
-          Goals seed from the locked official backlog pack first, then mirror into the planning graph. Intents stay filesystem-backed for now, but this pack defines which active and backlog intents belong to the official SVFactory planning set.
-        </p>
-        <div className="home-inline-summary-row">
-          <span className="meta-pill">{officialBacklog?.packSummary.goalCount ?? 0} goals</span>
-          <span className="meta-pill">{officialBacklog?.packSummary.releaseLineCount ?? 0} release lines</span>
-          <span className="meta-pill">{officialBacklog?.packSummary.activeIntentCount ?? 0} active intents</span>
-          <span className="meta-pill">{officialBacklog?.packSummary.backlogIntentCount ?? 0} backlog intents</span>
+        <div className="planning-metrics-grid">
+          <MetricCard label="Objectives" value={String(data.summary.objectives)} tone="status-neutral" icon={target} />
+          <MetricCard label="Key Results" value={String(data.summary.keyResults)} tone="status-good" icon={blocks} />
+          <MetricCard label="Intents" value={String(data.summary.intents)} tone="status-live" icon={waypoints} />
+          <MetricCard label="Tasks" value={String(data.summary.tasks)} tone="status-neutral" icon={listTodo} />
         </div>
-        {officialBacklogWarnings.length ? (
-          <p className="rules-cell-copy">
-            Pack drift detected: {officialBacklogWarnings.slice(0, 4).join(' · ')}
-          </p>
-        ) : null}
-      </section>
+      </div>
 
-      <section className="intent-section-shell">
-        <div className="intent-goal-grid compact">
-          {planningFilterCards.map((card) => (
-            <PlanningFilterCardView
-              key={card.id}
-              card={card}
-              active={sidebarTab === card.id}
-              onClick={() => applySidebarTab(card.id)}
-            />
-          ))}
-        </div>
+      <div className="planning-focus-strip">
+        <article className="planning-focus-card">
+          <p className="workspace-eyebrow">What matters now</p>
+          <h3>{featuredRelease ? featuredRelease.title : 'Release view is ready'}</h3>
+          <p>{featuredRelease ? excerpt(featuredRelease.description, 140) : 'Use releases as the first aggregation layer before drilling into individual intents.'}</p>
+          <button type="button" className="planning-inline-action" onClick={() => openView('releases', featuredRelease?.id ?? null)}>
+            Open releases
+            <Icon icon={chevronRight} />
+          </button>
+        </article>
+        <article className="planning-focus-card">
+          <p className="workspace-eyebrow">Coverage</p>
+          <h3>{linkedCoverage}% of intents mapped to KR</h3>
+          <p>{data.summary.mappedIntents} linked intents already anchor execution to a measurable key result.</p>
+          <button type="button" className="planning-inline-action" onClick={() => openView('okr')}>
+            Open OKR explorer
+            <Icon icon={chevronRight} />
+          </button>
+        </article>
+        <article className="planning-focus-card planning-focus-card-warn">
+          <p className="workspace-eyebrow">Needs action</p>
+          <h3>{data.summary.intentsWithoutKeyResult} intents still missing KR</h3>
+          <p>These stay visible as remediation work instead of blending into healthy execution records.</p>
+          <button type="button" className="planning-inline-action" onClick={() => openView('intents', missingKeyResultIntents[0]?.id ?? null)}>
+            Review remediation queue
+            <Icon icon={chevronRight} />
+          </button>
+        </article>
+      </div>
 
-        <div className="intent-planning-grid">
-          <aside className="surface-panel compact-note-panel intent-planning-sidebar">
-            <div className="panel-toolbar">
+      <div className="planning-stage-nav">
+        <StageTab active={activeView === 'overview'} label="Overview" caption="Start broad, then drill down" onClick={() => openView('overview', data.workspace.id)} />
+        <StageTab active={activeView === 'okr'} label="OKR" caption="Objectives first, key results second" onClick={() => openView('okr')} />
+        <StageTab active={activeView === 'releases'} label="Releases" caption="Milestones are intent bundles" onClick={() => openView('releases')} />
+        <StageTab active={activeView === 'intents'} label="Intents" caption="Execution records and remediation" onClick={() => openView('intents')} />
+        <StageTab active={activeView === 'graph'} label="Graph" caption="Native graph only when needed" onClick={() => openView('graph')} />
+      </div>
+
+      {activeView === 'overview' ? (
+        <div className="planning-story-grid">
+          <article className="planning-panel planning-story-card">
+            <div className="planning-panel-head">
               <div>
-                <p className="workspace-eyebrow">Planning Structure</p>
-                <h2>Tree and breadcrumbs</h2>
-              </div>
-              <div className="panel-toolbar-meta">
-                <span className="meta-pill">{planningBreadcrumb.join(' / ')}</span>
+                <p className="workspace-eyebrow">Top level</p>
+                <h2>Overview before detail</h2>
               </div>
             </div>
-
-            <div className="intent-graph-pill-row">
-              <button className={`tool-button${sidebarTab === 'system-goals' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('system-goals')}>System Goals</button>
-              <button className={`tool-button${sidebarTab === 'milestones' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('milestones')}>Milestones</button>
-              <button className={`tool-button${sidebarTab === 'focus' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('focus')}>Focus</button>
-              <button className={`tool-button${sidebarTab === 'active' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('active')}>Active</button>
-              <button className={`tool-button${sidebarTab === 'backlog' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('backlog')}>Backlog</button>
-              <button className={`tool-button${sidebarTab === 'closed' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('closed')}>Closed</button>
-              <button className={`tool-button${sidebarTab === 'archived' ? ' active' : ''}`} type="button" onClick={() => applySidebarTab('archived')}>Archive</button>
-            </div>
-
-            <div className="intent-planning-tree">
-              <button type="button" className="intent-tree-row intent-tree-row-root" onClick={() => applySidebarTab('system-goals')}>
-                <strong>SVFactory</strong>
-                <span className="meta-pill">{goalsTree?.goals.length ?? 0} system goals</span>
+            <div className="planning-overview-list">
+              <button type="button" className="planning-link-row" onClick={() => openView('releases', featuredRelease?.id ?? null)}>
+                <span>{featuredRelease ? featuredRelease.title : 'No release highlighted yet'}</span>
+                <span className="meta-pill">{featuredRelease ? `${featuredRelease.intents.length} intents` : 'release'}</span>
               </button>
+              <button type="button" className="planning-link-row" onClick={() => openView('okr', topObjectives[0]?.id ?? null)}>
+                <span>{topObjectives[0] ? `${topObjectives[0].code} — ${topObjectives[0].title}` : 'No objective loaded'}</span>
+                <span className="meta-pill">{topObjectives[0]?.key_results.length ?? 0} KR</span>
+              </button>
+              <button type="button" className="planning-link-row" onClick={() => openView('intents', activeIntents[0]?.id ?? null)}>
+                <span>{activeIntents[0] ? activeIntents[0].title : 'No active intent in current filter'}</span>
+                <span className={`meta-pill ${activeIntents[0] ? intentTone(activeIntents[0]) : 'status-neutral'}`}>{activeIntents[0] ? lifecycleLabel(activeIntents[0].lifecycle) : 'intent'}</span>
+              </button>
+            </div>
+          </article>
 
-              {planningTreeGroups.map(({ milestone, releaseLine, intents: milestoneIntents }, index) => (
-                <div key={milestone.id} className="intent-tree-branch">
-                  <div className="intent-tree-release-row">
+          <article className="planning-panel planning-story-card">
+            <div className="planning-panel-head">
+              <div>
+                <p className="workspace-eyebrow">Objectives</p>
+                <h2>What the OKR layer is driving</h2>
+              </div>
+            </div>
+            <div className="planning-list-stack">
+              {topObjectives.map((objective) => (
+                <button key={objective.id} type="button" className="planning-list-card" onClick={() => openView('okr', objective.id)}>
+                  <div className="planning-list-card-head">
+                    <div>
+                      <span className="workspace-eyebrow">{objective.code}</span>
+                      <strong>{objective.title}</strong>
+                    </div>
+                    <span className="status-pill status-neutral">{objective.key_results.length} KR</span>
+                  </div>
+                  <p>{excerpt(objective.description, 120)}</p>
+                </button>
+              ))}
+            </div>
+          </article>
+
+          <article className="planning-panel planning-story-card">
+            <div className="planning-panel-head">
+              <div>
+                <p className="workspace-eyebrow">Remediation</p>
+                <h2>Intent must bind to KR</h2>
+              </div>
+            </div>
+            <div className="planning-list-stack">
+              {missingKeyResultIntents.slice(0, 5).map((intent) => (
+                <article key={intent.id} className="planning-remediation-card planning-remediation-inline-card">
+                  <button type="button" className="planning-remediation-summary" onClick={() => openView('intents', intent.id)}>
+                    <div>
+                      <strong>{intent.title}</strong>
+                      <p>{intent.id}</p>
+                    </div>
+                    <Icon icon={chevronRight} />
+                  </button>
+                  <div className="planning-inline-assistant-row">
                     <button
                       type="button"
-                      className={`intent-tree-row${graphTarget?.kind === 'release-line' && graphTarget.id === milestone.id ? ' selected' : ''}`}
-                      onClick={() => {
-                        setMilestoneActiveIndex(index)
-                        setSidebarTab('milestones')
-                        selectPlanningTarget({ id: milestone.id, kind: 'release-line' }, { selectedIntentId: null, queryMode: 'alignment', health: 'all' })
-                      }}
+                      className="planning-inline-secondary-action"
+                      disabled={assistantPlanMutation.isPending && assistantPlanMutation.variables === intent.id}
+                      onClick={() => launchAssistant(intent.id)}
                     >
-                      <span>
-                        <strong>{releaseLine?.label ?? milestone.label}</strong>
-                        <small>{releaseLine?.summary ?? 'Projected release line'}</small>
-                      </span>
-                      <span className={`status-pill ${statusTone(releaseLine?.state ?? milestone.state)}`}>{releaseLine?.state ?? milestone.state}</span>
+                      <Icon icon={sparkles} />
+                      <strong>{assistantActionLabel(intent.id, assistantSuggestions, assistantPlanMutation.variables, assistantPlanMutation.isPending)}</strong>
                     </button>
-                    <button className="icon-tool-button" type="button" aria-label="Open release notes" onClick={() => setGoalsDrawerOpen(true)}>
-                      <Icon icon={listTodo} />
+                    <p className="planning-inline-assistant-copy">
+                      AI will open a review dialog, explain one decision, then let you accept, re-run, or cancel.
+                    </p>
+                    {assistantSuggestions[intent.id] ? (
+                      <p className="planning-inline-assistant-result">
+                        AI decided: {assistantSuggestions[intent.id]?.suggestion.decision.replace(/-/g, ' ')}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="planning-inline-editor">
+                    <select
+                      id={`remediation-kr-${intent.id}`}
+                      name={`remediation_kr_${intent.id}`}
+                      value={intentKeyResultDrafts[intent.id] ?? ''}
+                      onChange={(event) => setIntentKeyResultDrafts((current) => ({ ...current, [intent.id]: event.target.value }))}
+                    >
+                      <option value="">Bind manually instead</option>
+                      <option value={MANUAL_OUT_OF_SCOPE_OPTION}>Mark out of scope</option>
+                      {keyResultOptionsForIntent(intent).map((keyResult) => (
+                        <option key={keyResult.id} value={keyResult.id}>
+                          {keyResult.code} - {keyResult.title}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="planning-mini-action"
+                      disabled={!intentKeyResultDrafts[intent.id] || addIntentKeyResultMutation.isPending}
+                      onClick={() => void applyManualIntentKeyResult(intent)}
+                    >
+                      <Icon icon={plus} />
+                      {intentKeyResultDrafts[intent.id] === MANUAL_OUT_OF_SCOPE_OPTION ? 'Mark scope' : 'Bind KR'}
                     </button>
-                  </div>
-
-                  <button
-                    type="button"
-                    className={`intent-tree-row intent-tree-row-milestone${graphTarget?.kind === 'milestone' && graphTarget.id === milestone.id ? ' selected' : ''}`}
-                    onClick={() => {
-                      setMilestoneActiveIndex(index)
-                      setSidebarTab('milestones')
-                      selectPlanningTarget({ id: milestone.id, kind: 'milestone' }, { selectedIntentId: null, queryMode: 'alignment', health: 'all' })
-                    }}
-                  >
-                    <span>
-                      <strong>{milestone.label}</strong>
-                      <small>{milestone.metrics}</small>
-                    </span>
-                    <span className="meta-pill">{milestone.progress}%</span>
-                  </button>
-
-                  <div className="intent-tree-intents">
-                    {milestoneIntents.length ? milestoneIntents.map((intent) => (
-                      <button
-                        key={intent.id}
-                        type="button"
-                        className={`intent-tree-row intent-tree-row-intent${selectedIntentId === intent.id ? ' selected' : ''}`}
-                        onClick={() => openDrawerForIntent(intent.id)}
-                      >
-                        <span>
-                          <strong>{intent.title?.replace(/^\"|\"$/g, '') || intent.id}</strong>
-                          <small>{(intent.taskDoneCount ?? 0)}/{(intent.taskCount ?? 0)} tasks · {normalizeLifecycle(intent.lifecycle)}</small>
-                        </span>
-                        <span className="meta-pill">{intentVersionLabel(intent.id)}</span>
-                      </button>
-                    )) : (
-                      <p className="rules-cell-copy">No intents in this branch for the current planning filter.</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </aside>
-
-          <section className="intent-planning-main">
-            <div className="intent-goal-grid compact">
-              {goalCards.map((card) => (
-                <GoalCardView
-                  key={card.id}
-                  card={card}
-                  onClick={card.id === 'planning-coverage' ? () => setGoalsDrawerOpen(true) : undefined}
-                />
-              ))}
-            </div>
-
-            <section className="surface-panel compact-note-panel">
-              <div className="panel-toolbar">
-                <div>
-                  <p className="workspace-eyebrow">Planning Graph</p>
-                  <h2>Linked planning map</h2>
-                </div>
-                <div className="panel-toolbar-meta">
-                  <span className="count-pill">{alignmentGraph.summary.linkedIntents} linked</span>
-                  <span className="count-pill">{alignmentGraph.summary.unlinkedIntents} unlinked</span>
-                  <span className="count-pill">{alignmentGraph.summary.milestones} milestones</span>
-                </div>
-              </div>
-            </section>
-
-            {intentsQuery.isLoading ? (
-              <div className="intent-empty-state">
-                <h3>Loading intent inventory</h3>
-                <p>Fetching live queue and milestone blocks from the bridge.</p>
-              </div>
-            ) : intentsQuery.isError ? (
-              <div className="intent-empty-state intent-empty-state-danger">
-                <h3>Intent inventory unavailable</h3>
-                <p>{intentsQuery.error instanceof Error ? intentsQuery.error.message : 'Unknown intent list error.'}</p>
-              </div>
-            ) : !intents.length ? (
-              <div className="intent-empty-state">
-                <h3>No intents found</h3>
-                <p>The workspace did not return any intent records yet.</p>
-              </div>
-            ) : alignmentGraphQuery.isLoading ? (
-              <div className="intent-empty-state">
-                <h3>Loading planning graph</h3>
-                <p>Querying live planning context from the graph bridge.</p>
-              </div>
-            ) : alignmentGraphQuery.isError ? (
-              <div className="intent-empty-state intent-empty-state-danger">
-                <h3>Planning graph unavailable</h3>
-                <p>{alignmentGraphQuery.error instanceof Error ? alignmentGraphQuery.error.message : 'Context explorer query failed.'}</p>
-              </div>
-            ) : !alignmentGraph.nodes.length ? (
-              <div className="intent-empty-state">
-                <h3>Planning graph returned no nodes</h3>
-                <p>The context explorer responded, but no planning neighborhood nodes were available for this view yet.</p>
-              </div>
-            ) : (
-              <IntentAlignmentGraphCanvas
-                graph={alignmentGraph}
-                onSelectNode={handleGraphNodeSelect}
-                queryMode={graphQueryMode}
-                onQueryModeChange={setGraphQueryMode}
-                queryDepth={graphQueryDepth}
-                onQueryDepthChange={setGraphQueryDepth}
-              />
-            )}
-          </section>
-        </div>
-
-        <IntentHealthBar
-          total={intents.length}
-          active={lifecycleCounts.active}
-          backlog={lifecycleCounts.backlog}
-          closed={lifecycleCounts.closed}
-          archived={lifecycleCounts.archived}
-          dropped={lifecycleCounts.dropped}
-          selected={selectedIntentId}
-          filter={healthFilter}
-          onFilterChange={setHealthFilter}
-        />
-
-        {showRegistry ? (
-          <section className="surface-panel compact-note-panel">
-            <div className="panel-toolbar">
-              <div>
-                <p className="workspace-eyebrow">Registry</p>
-                <h2>Planning registry backup view</h2>
-              </div>
-              <div className="panel-toolbar-meta">
-                <span className="meta-pill">{sortedIntents.length} intents</span>
-              </div>
-            </div>
-            <div className="rules-table intent-registry-table" role="table" aria-label="Intent registry list">
-            <div className="rules-table-header intent-registry-header" role="row">
-              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('title')}>Intent{sortIndicator('title', intentSortKey, intentSortDirection)}</button>
-              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('milestone')}>Milestone{sortIndicator('milestone', intentSortKey, intentSortDirection)}</button>
-              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('lifecycle')}>Lifecycle{sortIndicator('lifecycle', intentSortKey, intentSortDirection)}</button>
-              <span role="columnheader">Tasks</span>
-              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('progress')}>Progress{sortIndicator('progress', intentSortKey, intentSortDirection)}</button>
-              <button className="rules-column-button" type="button" role="columnheader" onClick={() => toggleIntentSort('runtime')}>Runtime{sortIndicator('runtime', intentSortKey, intentSortDirection)}</button>
-              <span role="columnheader">Blockers</span>
-            </div>
-            {pagedIntents.map((intent) => {
-              const lifecycle = normalizeLifecycle(intent.lifecycle)
-              const isFocused = intent.id === focusIntentId
-              const isActive = intent.id === activeIntentId
-              const progress = computeIntentProgress(intent.lifecycle)
-              return (
-                <article
-                  key={intent.id}
-                  className={`rules-table-row intent-registry-row intent-lifecycle-${lifecycle}${selectedIntentId === intent.id ? ' selected' : ''}`}
-                  role="row"
-                  onClick={() => openDrawerForIntent(intent.id)}
-                >
-                  <div role="cell" className="intent-registry-title-cell">
-                    <strong>{intent.title?.replace(/^"|"$/g, '') || intent.id}</strong>
-                    <p className="intent-id">{intent.id}</p>
-                  </div>
-                  <div role="cell">
-                    <span className="meta-pill">{intentVersionLabel(intent.id)}</span>
-                  </div>
-                  <div role="cell">
-                    <span className={`status-pill ${statusTone(lifecycle)}`}>{intent.lifecycle ?? 'unknown'}</span>
-                  </div>
-                  <div role="cell">
-                    <span className="meta-pill">
-                      {(intent.taskDoneCount ?? 0)}/{(intent.taskCount ?? 0)}
-                    </span>
-                  </div>
-                  <div role="cell">
-                    <div className="intent-grid-progress">
-                      <div className="intent-progress-track" aria-hidden="true">
-                        <span style={{ width: `${progress}%` }} />
-                      </div>
-                      <strong>{progress}%</strong>
-                    </div>
-                  </div>
-                  <div role="cell" className="intent-runtime-cell">
-                    {isFocused ? <span className="meta-pill meta-pill-focus">Focus</span> : null}
-                    {isActive ? <span className="meta-pill">Active</span> : null}
-                    {!isFocused && !isActive ? <span className="meta-pill">Queued</span> : null}
-                  </div>
-                  <div role="cell">
-                    <p className="intent-registry-blockers">{intent.blocks ?? 'none'}</p>
                   </div>
                 </article>
-              )
-            })}
-            {!pagedIntents.length ? (
-              <article className="rules-table-empty" role="row">
-                <h3>No intents match this filter</h3>
-                <p>Try another lifecycle pill in the intent health bar.</p>
-              </article>
-            ) : null}
-            </div>
-          </section>
-        ) : null}
-
-        {showRegistry && sortedIntents.length ? (
-          <div className="intent-pagination-bar">
-            <span className="runtime-overview-label">Showing {intentPageStart}-{intentPageEnd} of {sortedIntents.length}</span>
-            <div className="intent-pagination-actions">
-              <button
-                className="tool-button"
-                type="button"
-                onClick={() => setIntentPage((current) => Math.max(1, current - 1))}
-                disabled={intentPage === 1}
-              >
-                Previous
-              </button>
-              <span className="meta-pill">Page {intentPage} / {intentPageCount}</span>
-              <button
-                className="tool-button"
-                type="button"
-                onClick={() => setIntentPage((current) => Math.min(intentPageCount, current + 1))}
-                disabled={intentPage >= intentPageCount}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </section>
-
-      {createDraftOpen ? (
-        <div className="prototype-overlay-backdrop" onClick={closeCreateDraft}>
-          <aside className="prototype-drawer intent-detail-drawer" onClick={(event) => event.stopPropagation()}>
-            <div className="panel-toolbar intent-detail-toolbar">
-              <div>
-                <p className="workspace-eyebrow">Intent Mutation</p>
-                <h2>Create Draft Intent</h2>
-              </div>
-              <button className="icon-tool-button" type="button" onClick={closeCreateDraft} aria-label="Close create draft drawer">
-                <Icon icon={xIcon} />
-              </button>
-            </div>
-
-            <div className="mutation-form compact-form">
-              <div className="form-field intent-detail-span">
-                <label htmlFor="intent-create-title">Title</label>
-                <input
-                  id="intent-create-title"
-                  type="text"
-                  value={createDraftForm.title}
-                  onChange={(event) => setCreateDraftForm((current) => ({ ...current, title: event.target.value }))}
-                  disabled={createIntentMutation.isPending}
-                />
-              </div>
-              <div className="form-field intent-detail-span">
-                <label htmlFor="intent-create-focus">Focus</label>
-                <input
-                  id="intent-create-focus"
-                  type="text"
-                  value={createDraftForm.focus}
-                  onChange={(event) => setCreateDraftForm((current) => ({ ...current, focus: event.target.value }))}
-                  disabled={createIntentMutation.isPending}
-                />
-              </div>
-              <div className="form-field intent-detail-span">
-                <label htmlFor="intent-create-next-action">Next Action</label>
-                <input
-                  id="intent-create-next-action"
-                  type="text"
-                  value={createDraftForm.nextAction}
-                  onChange={(event) => setCreateDraftForm((current) => ({ ...current, nextAction: event.target.value }))}
-                  disabled={createIntentMutation.isPending}
-                />
-              </div>
-              <div className="form-field intent-detail-span">
-                <label htmlFor="intent-create-summary">Decision Summary</label>
-                <textarea
-                  id="intent-create-summary"
-                  rows={4}
-                  value={createDraftForm.decisionSummary}
-                  onChange={(event) => setCreateDraftForm((current) => ({ ...current, decisionSummary: event.target.value }))}
-                  disabled={createIntentMutation.isPending}
-                />
-              </div>
-              <div className="intent-action-row intent-detail-span intent-actions-right">
-                <button className="secondary-btn" type="button" onClick={closeCreateDraft} disabled={createIntentMutation.isPending}>
-                  Cancel
-                </button>
-                <button className="submit-btn" type="button" onClick={() => void submitCreateDraft()} disabled={createIntentMutation.isPending}>
-                  {createIntentMutation.isPending ? 'Creating...' : 'Create Draft'}
-                </button>
-              </div>
-              {createDraftError ? (
-                <div className="form-result error intent-detail-span">
-                  <p>{createDraftError}</p>
-                </div>
+              ))}
+              {!missingKeyResultIntents.length ? (
+                <p className="system-card-subtle">No visible remediation item in the current scope.</p>
               ) : null}
             </div>
+          </article>
+
+          <article className="planning-panel planning-story-card">
+            <div className="planning-panel-head">
+              <div>
+                <p className="workspace-eyebrow">Selection</p>
+                <h2>Current drilldown</h2>
+              </div>
+            </div>
+            <DetailPanel detail={detail} onSelectNode={setSelectedNodeId} />
+          </article>
+        </div>
+      ) : null}
+
+      {activeView === 'okr' ? (
+        <div className="planning-stage-layout">
+          <section className="planning-stage-primary">
+            <article className="planning-panel">
+              <div className="planning-panel-head">
+                <div>
+                  <p className="workspace-eyebrow">OKR Explorer</p>
+                  <h2>Objectives first, then Key Results</h2>
+                </div>
+              </div>
+              <p className="planning-section-copy">Start from the objective tree. Only after selecting an objective should the key results and linked intents become visible.</p>
+              <div className="planning-objective-tree">
+                {data.objectives.map((objective) => (
+                  <ObjectiveTree key={objective.id} objective={objective} selectedId={selectedNodeId} onSelect={setSelectedNodeId} />
+                ))}
+              </div>
+            </article>
+          </section>
+          <aside className="planning-stage-aside">
+            <DetailPanel detail={detail} onSelectNode={setSelectedNodeId} />
           </aside>
         </div>
       ) : null}
 
-      {goalsDrawerOpen ? (
-        <div className="prototype-overlay-backdrop" onClick={() => setGoalsDrawerOpen(false)}>
-          <aside className="prototype-drawer intent-goal-drawer" onClick={(event) => event.stopPropagation()}>
-            <div className="panel-toolbar intent-detail-toolbar">
-              <div>
-                <p className="workspace-eyebrow">Goal Module</p>
-                <h2>System Goals</h2>
-              </div>
-              <button className="icon-tool-button" type="button" onClick={() => setGoalsDrawerOpen(false)} aria-label="Close goals drawer">
-                <Icon icon={xIcon} />
-              </button>
-            </div>
-
-            <div className="intent-drawer-stack">
-              <article className="intent-drawer-block">
-                <div className="panel-toolbar">
-                  <div>
-                    <p className="workspace-eyebrow">Goal Health</p>
-                    <h3>Coverage across the 4-layer OKR tree</h3>
-                  </div>
+      {activeView === 'releases' ? (
+        <div className="planning-stage-layout">
+          <section className="planning-stage-primary">
+            <article className="planning-panel">
+              <div className="planning-panel-head">
+                <div>
+                  <p className="workspace-eyebrow">Release Lanes</p>
+                  <h2>Milestones are collections of intents</h2>
                 </div>
-                <div className="kb-health-bar intent-health-bar">
-                  <div className="kb-health-group">
-                    <span className="runtime-overview-label">System</span>
-                    <span className={`status-pill ${goalsTree?.goals.length ? 'status-good' : 'status-warn'}`}>
-                      {goalsTree?.goals.length ?? 0} root goals
-                    </span>
-                  </div>
-                  <div className="kb-health-group">
-                    <span className="runtime-overview-label">Milestones</span>
-                    <span className={`status-pill ${goalsSummary?.missingCounts.milestones ? 'status-warn' : 'status-good'}`}>
-                      {milestonesWithGoals}/{goalsSummary?.entityCounts.milestones ?? 0} aligned
-                    </span>
-                  </div>
-                  <div className="kb-health-group">
-                    <span className="runtime-overview-label">Intents</span>
-                    <span className={`status-pill ${goalsSummary?.missingCounts.intents ? 'status-warn' : 'status-good'}`}>
-                      {intentsWithGoals}/{goalsSummary?.entityCounts.intents ?? 0} aligned
-                    </span>
-                  </div>
-                  <div className="kb-health-group">
-                    <span className="runtime-overview-label">Tasks</span>
-                    <span className={`status-pill ${selectedTaskMissingGoalCount === 0 ? 'status-good' : 'status-warn'}`}>
-                      {selectedTaskGoalCount}/{selectedIntentGoalNode?.children.length ?? detail?.tasks.length ?? 0} selected aligned
-                    </span>
-                  </div>
-                  <div className="kb-health-next">
-                    <span className="runtime-overview-label">Tree rule</span>
-                    <span className="kb-health-next-text">System &gt; milestone &gt; intent &gt; task. Child goals can link upward; parent goals cannot be deleted while child goals exist.</span>
-                  </div>
-                </div>
-              </article>
-
-              <article className="intent-drawer-block">
-                <div className="panel-toolbar">
-                  <div>
-                    <p className="workspace-eyebrow">Goal Tree</p>
-                    <h3>System &gt; milestone &gt; intent &gt; task</h3>
-                  </div>
-                </div>
-                {goalsTreeQuery.isLoading ? (
-                  <p className="rules-cell-copy">Loading goal tree...</p>
-                ) : goalsTree ? (
-                  <div className="goal-tree-shell">
-                    <GoalTreeNodeView
-                      node={goalsTree}
-                      depth={0}
-                      expandedNodes={expandedGoalNodes}
-                      onToggle={toggleGoalNode}
-                      composerState={goalComposer}
-                      onComposerOpen={openGoalComposer}
-                      onComposerCancel={cancelGoalComposer}
-                      onComposerChange={(patch) => setGoalComposer((current) => ({ ...current, ...patch }))}
-                      onCreateGoal={(node) => void createGoalForNode(node)}
-                      editorState={goalEditor}
-                      onEditorOpen={openGoalEditor}
-                      onEditorCancel={cancelGoalEditor}
-                      onEditorChange={(patch) => setGoalEditor((current) => ({ ...current, ...patch }))}
-                      onUpdateGoal={(goalItem) => void saveGoalUpdate(goalItem)}
-                      onDeleteGoal={(goalItem) => void removeGoal(goalItem)}
-                      pending={createGoalMutation.isPending || updateGoalMutation.isPending || deleteGoalMutation.isPending}
-                      error={goalTreeError}
-                      parentGoalOptions={[]}
-                    />
-                  </div>
-                ) : (
-                  <p className="rules-cell-copy">Goal tree is unavailable right now.</p>
-                )}
-              </article>
-            </div>
-          </aside>
-        </div>
-      ) : null}
-
-      {drawerOpen && selectedIntentId ? (
-        <div className="prototype-overlay-backdrop" onClick={() => setDrawerOpen(false)}>
-          <aside className="prototype-drawer intent-detail-drawer" onClick={(event) => event.stopPropagation()}>
-            <div className="panel-toolbar intent-detail-toolbar">
-              <div>
-                <p className="workspace-eyebrow">Intent Detail</p>
-                <h2>{selectedIntentId}</h2>
               </div>
-              <button className="icon-tool-button" type="button" onClick={() => setDrawerOpen(false)} aria-label="Close intent drawer">
-                <Icon icon={xIcon} />
-              </button>
-            </div>
-
-            {!selectedIntentId ? null : detailQuery.isLoading ? (
-              <div className="intent-empty-state">
-                <h3>Loading detail</h3>
-                <p>Hydrating the selected intent from the bridge detail route.</p>
-              </div>
-            ) : detailQuery.isError || !detail ? (
-              <div className="intent-empty-state intent-empty-state-danger">
-                <h3>Detail unavailable</h3>
-                <p>{detailQuery.error instanceof Error ? detailQuery.error.message : 'Bridge detail route did not return a usable payload.'}</p>
-              </div>
-            ) : (
-              <div className="intent-drawer-stack">
-                <CollapsibleBlock
-                  title="Summary & Lifecycle"
-                  icon={flag}
-                  sectionKey="summary"
-                  collapsed={collapsedSections.summary}
-                  onToggle={toggleSection}
-                  subtitle="Title and lifecycle only."
-                >
-                  <InlineEditableText
-                    label="Title"
-                    value={detail.title ?? ''}
-                    field="title"
-                    activeField={activeEditor}
-                    draftValue={editorDraft}
-                    onStartEdit={startEdit}
-                    onChangeDraft={setEditorDraft}
-                    onCancel={cancelEdit}
-                    onSave={() => void saveEdit('title')}
-                    saving={intentUpdateMutation.isPending}
-                    error={editorError}
-                  />
-                  <LifecycleRail lifecycle={detail.lifecycle ?? detail.status} />
-                </CollapsibleBlock>
-
-                <CollapsibleBlock
-                  title="Detail"
-                  icon={flagTriangleRight}
-                  sectionKey="detail"
-                  collapsed={collapsedSections.detail}
-                  onToggle={toggleSection}
-                  subtitle="Editable operational fields and narrative."
-                >
-                  <div className="intent-drawer-detail-grid">
-                    <div className="system-info-card">
-                      <InlineEditableText
-                        label="Current focus area"
-                        value={detail.focusCurrent ?? ''}
-                        field="focusCurrent"
-                        activeField={activeEditor}
-                        draftValue={editorDraft}
-                        onStartEdit={startEdit}
-                        onChangeDraft={setEditorDraft}
-                        onCancel={cancelEdit}
-                        onSave={() => void saveEdit('focusCurrent')}
-                        saving={intentUpdateMutation.isPending}
-                        error={editorError}
-                        multiline
-                      />
-                      <p className="system-card-subtle">Updated: {formatTimestamp(detail.focusUpdatedAt)}</p>
-                    </div>
-                    <div className="system-info-card">
-                      <InlineEditableText
-                        label="Next action"
-                        value={detail.focusNextAction ?? ''}
-                        field="focusNextAction"
-                        activeField={activeEditor}
-                        draftValue={editorDraft}
-                        onStartEdit={startEdit}
-                        onChangeDraft={setEditorDraft}
-                        onCancel={cancelEdit}
-                        onSave={() => void saveEdit('focusNextAction')}
-                        saving={intentUpdateMutation.isPending}
-                        error={editorError}
-                        multiline
-                      />
-                    </div>
-                    <div className="system-info-card">
-                      <InlineEditableText
-                        label="Close condition"
-                        value={detail.closeCondition ?? ''}
-                        field="closeCondition"
-                        activeField={activeEditor}
-                        draftValue={editorDraft}
-                        onStartEdit={startEdit}
-                        onChangeDraft={setEditorDraft}
-                        onCancel={cancelEdit}
-                        onSave={() => void saveEdit('closeCondition')}
-                        saving={intentUpdateMutation.isPending}
-                        error={editorError}
-                        multiline
-                      />
-                    </div>
-                    <div className="system-info-card">
-                      <span className="runtime-overview-label">Source file</span>
-                      <div className="intent-static-value">
-                        <span>{compactPath(detail.sourceFile)}</span>
+              <div className="planning-release-grid">
+                {data.releases.map((release) => (
+                  <article key={release.id} className={`planning-release-card${selectedNodeId === release.id ? ' selected' : ''}`}>
+                    <button type="button" className="planning-release-head" onClick={() => setSelectedNodeId(release.id)}>
+                      <div>
+                        <span className="workspace-eyebrow">{release.code}</span>
+                        <h3>{release.title}</h3>
                       </div>
+                      <span className={`status-pill ${release.state === 'active' ? 'status-good' : 'status-neutral'}`}>{release.state}</span>
+                    </button>
+                    <p>{excerpt(release.description, 140)}</p>
+                    <div className="planning-release-progress">
+                      <span style={{ width: `${release.progress}%` }} />
                     </div>
-                  </div>
-                  <InlineEditableText
-                    label="Description"
-                    value={detailDescription}
-                    field="summaryText"
-                    activeField={activeEditor}
-                    draftValue={editorDraft}
-                    onStartEdit={startEdit}
-                    onChangeDraft={setEditorDraft}
-                    onCancel={cancelEdit}
-                    onSave={() => void saveEdit('summaryText')}
-                    saving={intentUpdateMutation.isPending}
-                    error={editorError}
-                    multiline
-                  />
-                </CollapsibleBlock>
-
-                <CollapsibleBlock
-                  title="Metadata"
-                  icon={network}
-                  sectionKey="relations"
-                  collapsed={collapsedSections.relations}
-                  onToggle={toggleSection}
-                  subtitle="Runtime metadata first. Related objects only appear when the intent actually links to them."
-                >
-                  <div className="intent-metadata-compact">
-                    {metadataEntries.map((entry) => (
-                      <article key={entry.label} className="intent-metadata-chip-card">
-                        <div className="intent-relation-row-head">
-                          <span className="section-icon section-icon-kb" aria-hidden="true">
-                            <Icon icon={entry.icon} />
-                          </span>
-                          <span className="runtime-overview-label" data-tooltip={entry.tooltip} tabIndex={0}>{entry.label}</span>
-                        </div>
-                        <span className="intent-relation-object">{entry.value}</span>
-                      </article>
-                    ))}
-                  </div>
-                  {relationEntries.length ? (
-                    <div className="intent-relation-compact-list">
-                      {relationEntries.map((entry) => (
-                        <div key={`${entry.label}-${entry.value}`} className="intent-relation-compact-row">
-                          <span className="runtime-overview-label" data-tooltip={entry.tooltip} tabIndex={0}>{entry.label}</span>
-                          <div className="intent-relation-compact-copy">
-                            <span className="intent-relation-object">{entry.value}</span>
-                            {entry.evidence ? <span className="intent-relation-evidence">{entry.evidence}</span> : null}
-                          </div>
+                    <div className="planning-release-meta">
+                      <span>{release.progress}% complete</span>
+                      <span>{release.intents.length} intents</span>
+                    </div>
+                    <div className="planning-release-members">
+                      {release.intents.map((intent) => (
+                        <div key={`${release.id}-${intent.id}`} className="planning-inline-chip">
+                          <button type="button" className="planning-inline-chip-label" onClick={() => setSelectedNodeId(intent.id)}>
+                            {intent.title}
+                          </button>
+                          {release.source_kind === 'declared' ? (
+                            <button
+                              type="button"
+                              className="planning-inline-chip-remove"
+                              onClick={() => removeIntentFromReleaseMutation.mutate({ releaseId: release.id, intentId: intent.id })}
+                            >
+                              <Icon icon={x} />
+                            </button>
+                          ) : null}
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="rules-cell-copy">No explicit linked objects were extracted for this intent yet.</p>
-                  )}
-                </CollapsibleBlock>
-
-                <CollapsibleBlock
-                  title="Tasks Grid"
-                  icon={listTodo}
-                  sectionKey="tasks"
-                  collapsed={collapsedSections.tasks}
-                  onToggle={toggleSection}
-                  subtitle="Legacy-style compact task board with expandable row detail."
-                >
-                  {detail.tasks.length ? (
-                    <div className="intent-task-grid">
-                      <div className="intent-task-grid-header">
-                        <span>ID</span>
-                        <span>Task</span>
-                        <span>Status</span>
+                    {release.source_kind === 'declared' ? (
+                      <div className="planning-inline-editor">
+                        <select
+                          id={`release-intent-${release.id}`}
+                          name={`release_intent_${release.id}`}
+                          value={releaseIntentDrafts[release.id] ?? ''}
+                          onChange={(event) => setReleaseIntentDrafts((current) => ({ ...current, [release.id]: event.target.value }))}
+                        >
+                          <option value="">Add intent to release</option>
+                          {intentOptionsForRelease(release).map((intent) => (
+                            <option key={intent.id} value={intent.id}>
+                              {intent.id} - {intent.title}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="planning-mini-action"
+                          disabled={!releaseIntentDrafts[release.id] || addIntentToReleaseMutation.isPending}
+                          onClick={() => addIntentToReleaseMutation.mutate({ releaseId: release.id, intentId: releaseIntentDrafts[release.id] ?? '' })}
+                        >
+                          <Icon icon={plus} />
+                          Add intent
+                        </button>
                       </div>
-                      {detail.tasks.map((task, index) => (
-                        <TaskRow
-                          key={`${task.title ?? 'task'}-${index}`}
-                          task={task}
-                          index={index}
-                          expanded={expandedTaskIndex === index}
-                          onToggle={() => setExpandedTaskIndex((current) => current === index ? null : index)}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="rules-cell-copy">No task lines were extracted from `intent.md` or `plan.md` for this intent.</p>
-                  )}
-                </CollapsibleBlock>
+                    ) : (
+                      <p className="planning-section-copy">This release is derived from version buckets, so membership here is read-only.</p>
+                    )}
+                  </article>
+                ))}
               </div>
-            )}
+            </article>
+          </section>
+          <aside className="planning-stage-aside">
+            <DetailPanel detail={detail} onSelectNode={setSelectedNodeId} />
           </aside>
         </div>
       ) : null}
+
+      {activeView === 'intents' ? (
+        <div className="planning-stage-layout">
+          <section className="planning-stage-primary">
+            <article className="planning-toolbar">
+              <label className="planning-search">
+                <Icon icon={search} />
+                <input
+                  id="planning-intent-search"
+                  name="planning_intent_search"
+                  type="search"
+                  placeholder="Search intents, summaries, or goal text"
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                />
+              </label>
+              <div className="planning-filter-row">
+                {(['all', 'linked', 'missing-kr', 'proposed', 'out-of-scope', 'active', 'backlog', 'closed'] as IntentFilter[]).map((filter) => (
+                  <button
+                    key={filter}
+                    type="button"
+                    className={`status-pill planning-filter-pill${intentFilter === filter ? ' active' : ''}`}
+                    onClick={() => setIntentFilter(filter)}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+            </article>
+
+            <article className="planning-panel">
+              <div className="planning-panel-head">
+                <div>
+                  <p className="workspace-eyebrow">Intent Registry</p>
+                  <h2>Execution records with remediation first</h2>
+                </div>
+              </div>
+              <div className="planning-list-stack">
+                {prioritizedIntents.map((intent) => (
+                  <article
+                    key={intent.id}
+                    className={`planning-list-card planning-intent-list-card${selectedNodeId === intent.id ? ' selected' : ''}`}
+                  >
+                    <button type="button" className="planning-intent-list-card-main" onClick={() => setSelectedNodeId(intent.id)}>
+                      <div className="planning-list-card-head">
+                        <div>
+                          <span className="workspace-eyebrow">{intent.id}</span>
+                          <strong>{intent.title}</strong>
+                        </div>
+                        <span className={`status-pill ${intentTone(intent)}`}>{lifecycleLabel(intent.lifecycle)}</span>
+                      </div>
+                      <p>{excerpt(intent.summary || intent.goal_text, 150)}</p>
+                      <div className="planning-intent-card-meta">
+                        <span>{intent.task_count} tasks</span>
+                        <span>{intent.release_bucket}</span>
+                        <span>{validationLabel(intent, intent.linked_key_result_ids.length)}</span>
+                      </div>
+                    </button>
+                    <div className="planning-inline-editor-stack">
+                      {intent.validation_state !== 'linked' ? (
+                        <div className="planning-inline-assistant-row">
+                          <button
+                            type="button"
+                            className="planning-inline-secondary-action"
+                            disabled={assistantPlanMutation.isPending && assistantPlanMutation.variables === intent.id}
+                            onClick={() => launchAssistant(intent.id)}
+                          >
+                            <Icon icon={sparkles} />
+                            <strong>{assistantActionLabel(intent.id, assistantSuggestions, assistantPlanMutation.variables, assistantPlanMutation.isPending)}</strong>
+                          </button>
+                          <p className="planning-inline-assistant-copy">
+                            Let AI choose the next move before using the manual bind controls below.
+                          </p>
+                          {assistantSuggestions[intent.id] ? (
+                            <p className="planning-inline-assistant-result">
+                              AI decided: {assistantSuggestions[intent.id]?.suggestion.decision.replace(/-/g, ' ')}
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                      {intent.linked_key_result_ids.length ? (
+                        <div className="planning-release-members">
+                          {intent.linked_key_result_ids.map((keyResultId) => {
+                            const keyResult = keyResultMap.get(keyResultId)
+                            return keyResult ? (
+                              <div key={`${intent.id}-${keyResult.id}`} className="planning-inline-chip">
+                                <button type="button" className="planning-inline-chip-label" onClick={() => setSelectedNodeId(keyResult.id)}>
+                                  {keyResult.code}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="planning-inline-chip-remove"
+                                  onClick={() => removeIntentKeyResultMutation.mutate({ intentId: intent.id, keyResultId: keyResult.id })}
+                                >
+                                  <Icon icon={x} />
+                                </button>
+                              </div>
+                            ) : null
+                          })}
+                        </div>
+                      ) : null}
+                      <div className="planning-inline-editor">
+                        <select
+                          id={`intent-kr-${intent.id}`}
+                          name={`intent_kr_${intent.id}`}
+                          value={intentKeyResultDrafts[intent.id] ?? ''}
+                          onChange={(event) => setIntentKeyResultDrafts((current) => ({ ...current, [intent.id]: event.target.value }))}
+                        >
+                          <option value="">{intent.validation_state === 'linked' ? 'Add another key result' : 'Bind manually instead'}</option>
+                          <option value={MANUAL_OUT_OF_SCOPE_OPTION}>Mark out of scope</option>
+                          {keyResultOptionsForIntent(intent).map((keyResult) => (
+                            <option key={keyResult.id} value={keyResult.id}>
+                              {keyResult.code} - {keyResult.title}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="planning-mini-action"
+                          disabled={!intentKeyResultDrafts[intent.id] || addIntentKeyResultMutation.isPending}
+                          onClick={() => void applyManualIntentKeyResult(intent)}
+                        >
+                          <Icon icon={plus} />
+                          {intentKeyResultDrafts[intent.id] === MANUAL_OUT_OF_SCOPE_OPTION
+                            ? 'Mark scope'
+                            : intent.validation_state === 'linked'
+                              ? 'Add KR'
+                              : 'Bind KR'}
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </article>
+          </section>
+          <aside className="planning-stage-aside">
+            <DetailPanel detail={detail} onSelectNode={setSelectedNodeId} />
+          </aside>
+        </div>
+      ) : null}
+
+      {activeView === 'graph' ? (
+        <div className="planning-stage-layout">
+          <section className="planning-stage-primary">
+            <article className="planning-toolbar">
+              <label className="planning-search">
+                <Icon icon={search} />
+                <input
+                  id="planning-graph-search"
+                  name="planning_graph_search"
+                  type="search"
+                  placeholder="Search graph nodes"
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                />
+              </label>
+              <div className="planning-filter-row">
+                <span className={`status-pill ${data.summary.intentsWithoutKeyResult ? 'status-warn' : 'status-good'}`}>
+                  <Icon icon={alertTriangle} />
+                  {data.summary.intentsWithoutKeyResult ? `${data.summary.intentsWithoutKeyResult} intents missing key result` : 'Graph workspace aligned'}
+                </span>
+              </div>
+            </article>
+
+            <article className="planning-panel planning-panel-graph">
+              <div className="planning-panel-head">
+                <div>
+                  <p className="workspace-eyebrow">Native Graph</p>
+                  <h2>Use only when structure matters</h2>
+                </div>
+              </div>
+              <PlanningNativeGraph
+                nodes={graphNodes}
+                edges={graphEdges}
+                selectedNodeId={selectedNodeId}
+                onSelectNode={setSelectedNodeId}
+              />
+            </article>
+          </section>
+          <aside className="planning-stage-aside">
+            <DetailPanel detail={detail} onSelectNode={setSelectedNodeId} />
+            <article className="planning-panel">
+              <div className="planning-panel-head">
+                <div>
+                  <p className="workspace-eyebrow">Warnings</p>
+                  <h2>Graph validations</h2>
+                </div>
+              </div>
+              <div className="planning-validation-list">
+                {data.validation.warnings.slice(0, 10).map((warning) => (
+                  <article key={warning.id} className={`planning-warning-card planning-warning-${warning.level}`}>
+                    <strong>{warning.code}</strong>
+                    <p>{warning.message}</p>
+                  </article>
+                ))}
+              </div>
+            </article>
+          </aside>
+        </div>
+      ) : null}
+
+      <AssistantDecisionDialog
+        open={Boolean(assistantDialogIntentId && assistantDialogIntent)}
+        intent={assistantDialogIntent}
+        suggestion={assistantDialogSuggestion}
+        isPending={assistantPlanMutation.isPending && assistantPlanMutation.variables === assistantDialogIntentId}
+        isApplying={assistantApplyMutation.isPending}
+        error={assistantPlanMutation.isError && assistantPlanMutation.variables === assistantDialogIntentId
+          ? (assistantPlanMutation.error instanceof Error ? assistantPlanMutation.error.message : 'Assistant planning failed.')
+          : null}
+        nextTopLevelObjectiveCode={nextTopLevelObjectiveCode}
+        selectedDecision={assistantDialogApproval?.decision ?? assistantDialogSuggestion?.suggestion.decision ?? 'bind-existing'}
+        selectedKeyResultId={assistantDialogApproval?.keyResultId ?? ''}
+        selectedReleaseId={assistantDialogApproval?.releaseId ?? ''}
+        onClose={() => setAssistantDialogIntentId(null)}
+        onRerun={() => {
+          if (assistantDialogIntentId) {
+            assistantPlanMutation.mutate(assistantDialogIntentId)
+          }
+        }}
+        onAccept={() => {
+          if (assistantDialogIntent) {
+            void adoptAssistantRecommendation(assistantDialogIntent)
+          }
+        }}
+      />
     </section>
   )
 }

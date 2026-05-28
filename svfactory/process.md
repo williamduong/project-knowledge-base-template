@@ -261,6 +261,40 @@ Khi Gate 3 được áp dụng, chỉ tiếp tục sau khi branch decision đã 
 
 ---
 
+## Workflow 9: SVFactory Context Refresh For New Operator Surfaces
+
+**Trigger:** Sau khi đổi maintainer surface lớn, ontology/planning model, AI runtime contract, hoặc branch/version focus thực tế.
+
+**Applies especially to:**
+- graph-native planning workspace changes
+- OKR / intent / release ontology changes
+- AI settings / provider / prompt harness changes
+- bootstrap or focus surfaces that future agents read first
+
+**Steps:**
+
+1. Update `.github/agents/SVFactory.agent.md` when the maintainer surface or default operator workflow changes.
+2. Update `svfactory/agent.md` when the architectural snapshot, canonical data model, or operator API surface changes.
+3. Update `svfactory/focus.md` and `svfactory/focus.state.json` together so branch, version target, and current phase agree.
+4. Append durable lessons to `svfactory/knowledge.md`:
+   - trick if it is a repeatable pattern
+   - risk if it caused confusion or silent drift
+   - decision if it locked a new contract
+5. If the new surface changes how future coding agents should reason, update `knowledge-base/12-ai-skills/agent-operating-manual.md`.
+6. If the change materially affects navigation, quick-start interpretation, or index routing, update `knowledge-base/INDEX.md` or the nearest folder index.
+7. Verify with real files and runtime surfaces before declaring the refresh done:
+   - current branch
+   - primary API route(s)
+   - primary UI route(s)
+   - source-of-truth file(s)
+
+**Minimum completion record:**
+- new branch/version target visible in focus surfaces
+- new ontology/operator surface named in `svfactory/agent.md`
+- at least one knowledge entry or decision recorded when behavior changed materially
+
+---
+
 ## Workflow 10: Deterministic-First Rule Placement (P23)
 
 **Trigger:** User đề nghị thêm governance/rule mới cho intent, CLI, hoặc KB Agent.

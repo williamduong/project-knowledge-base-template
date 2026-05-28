@@ -50,6 +50,11 @@ const {
 const {
   buildIntentContextExplorer,
 } = require(path.join(repoRoot, 'src', 'lib', 'intent-context-explorer.js'));
+const {
+  readAiSettings,
+  updateAiSettings,
+  pingAiSettings,
+} = require(path.join(repoRoot, 'src', 'lib', 'ai-settings.js'));
 const { connect: connectKnowledgeGraph } = require(path.join(repoRoot, 'src', 'graph-db', 'knowledge'));
 const {
   buildIntentGraphProjection,
@@ -3774,6 +3779,72 @@ export function createApp(commandRunner = executeBridgeCommand) {
 
   app.get('/api/system', async (_req, res) => {
     res.status(200).json(systemSnapshotStore.read().system);
+  });
+
+  app.get('/api/system/ai-settings', async (_req, res) => {
+    try {
+      const settings = readAiSettings(repoRoot);
+      res.status(200).json({
+        ok: true,
+        settings: {
+          schema_version: settings.schema_version,
+          provider: settings.provider,
+          model: settings.model,
+          endpoint: settings.endpoint,
+          system_prompt: settings.system_prompt,
+          planning_harness_prompt: settings.planning_harness_prompt,
+          app_primary_goals: settings.app_primary_goals,
+          app_description: settings.app_description,
+          has_api_key: settings.has_api_key,
+          api_key_masked: settings.api_key_masked,
+          updated_at: settings.updated_at,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.post('/api/system/ai-settings', express.json({ limit: '1mb' }), async (req, res) => {
+    try {
+      const settings = updateAiSettings(repoRoot, req.body || {});
+      res.status(200).json({
+        ok: true,
+        settings: {
+          schema_version: settings.schema_version,
+          provider: settings.provider,
+          model: settings.model,
+          endpoint: settings.endpoint,
+          system_prompt: settings.system_prompt,
+          planning_harness_prompt: settings.planning_harness_prompt,
+          app_primary_goals: settings.app_primary_goals,
+          app_description: settings.app_description,
+          has_api_key: settings.has_api_key,
+          api_key_masked: settings.api_key_masked,
+          updated_at: settings.updated_at,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.post('/api/system/ai-settings/ping', async (_req, res) => {
+    try {
+      const result = await pingAiSettings(repoRoot);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   });
 
   app.get('/api/home-summary', async (_req, res) => {

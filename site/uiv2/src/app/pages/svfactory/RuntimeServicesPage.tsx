@@ -9,7 +9,8 @@ import { useHomeSummary } from '../../hooks/svfactory/useHomeSummary'
 import { useRulesSummary } from '../../hooks/svfactory/useRulesSummary'
 import { useEnsureRuntimeService, useRuntimeServices } from '../../hooks/svfactory/useRuntimeServices'
 import { useRefreshSystemSnapshot, useSystemSnapshot } from '../../hooks/svfactory/useSystemSnapshot'
-import { useState } from 'react'
+import { useAiSettings, usePingAiSettings, useSaveAiSettings } from '../../hooks/svfactory/useAiSettings'
+import { useEffect, useState } from 'react'
 
 const RULES_PAGE_SIZE = 20
 
@@ -22,7 +23,7 @@ type RuleSourceCategory = {
 }
 
 type RegistrySortKey = 'id' | 'severity' | 'kind' | 'layer' | 'priority' | 'sourceType'
-type SystemWorkspaceSection = 'services' | 'cron' | 'pipeline' | 'gates' | 'rules'
+type SystemWorkspaceSection = 'services' | 'cron' | 'pipeline' | 'gates' | 'ai' | 'rules'
 type Phase2GateItem = {
   gate: string
   severity: string
@@ -58,6 +59,17 @@ function paginateItems<T>(items: T[], page: number, pageSize: number) {
 
 function tabCountLabel(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`
+}
+
+function parseSystemWorkspaceSection(
+  value: string | null | undefined,
+  fallback: SystemWorkspaceSection,
+) {
+  if (value === 'services' || value === 'cron' || value === 'pipeline' || value === 'gates' || value === 'ai' || value === 'rules') {
+    return value
+  }
+
+  return fallback
 }
 
 function sortIndicator(sortKey: RegistrySortKey, activeKey: RegistrySortKey, direction: 'asc' | 'desc') {
@@ -245,6 +257,9 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   const systemSnapshotQuery = useSystemSnapshot()
   const homeSummaryQuery = useHomeSummary()
   const rulesSummaryQuery = useRulesSummary()
+  const aiSettingsQuery = useAiSettings()
+  const saveAiSettings = useSaveAiSettings()
+  const pingAiSettings = usePingAiSettings()
   const ensureRuntimeService = useEnsureRuntimeService()
   const refreshSystemSnapshot = useRefreshSystemSnapshot()
   const snapshotMetadata = runtimeServicesQuery.snapshotMetadata
@@ -276,7 +291,27 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
       ?? gates.filter((gate) => !gate.ok && String(gate.severity).toLowerCase() === 'hard-fail').length,
   )
   const failingGate = gates.find((gate) => !gate.ok)
-  const [activeSection, setActiveSection] = useState<SystemWorkspaceSection>(isRulesWorkspace ? 'rules' : 'services')
+  const [activeSection, setActiveSection] = useState<SystemWorkspaceSection>(() => {
+    if (isRulesWorkspace) {
+      return 'rules'
+    }
+
+    if (typeof window === 'undefined') {
+      return 'services'
+    }
+
+    const search = new URLSearchParams(window.location.search)
+    return parseSystemWorkspaceSection(search.get('section'), 'services')
+  })
+  const [aiForm, setAiForm] = useState({
+    api_key: '',
+    model: 'deepseek-v4-flash',
+    endpoint: 'https://api.deepseek.com',
+    system_prompt: '',
+    planning_harness_prompt: '',
+    app_primary_goals: '',
+    app_description: '',
+  })
   const [ruleKindFilter, setRuleKindFilter] = useState<'all' | 'hard' | 'master' | 'soft'>('all')
   const [rulePackFilter, setRulePackFilter] = useState<string>('all')
   const [ruleSourceFilter, setRuleSourceFilter] = useState<string>('all')
@@ -299,6 +334,38 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   // Expansion state for registry rows (show detail panel)
   const [expandedRuleRows, setExpandedRuleRows] = useState<Record<string, boolean>>({})
   const toggleRuleExpand = (id: string) => setExpandedRuleRows((p) => ({ ...(p || {}), [id]: !p?.[id] }))
+
+  useEffect(() => {
+    const settings = aiSettingsQuery.data?.settings
+    if (!settings) return
+    setAiForm((current) => ({
+      ...current,
+      model: settings.model || 'deepseek-v4-flash',
+      endpoint: settings.endpoint || 'https://api.deepseek.com',
+      system_prompt: settings.system_prompt || '',
+      planning_harness_prompt: settings.planning_harness_prompt || '',
+      app_primary_goals: settings.app_primary_goals || '',
+      app_description: settings.app_description || '',
+    }))
+  }, [aiSettingsQuery.data?.settings])
+
+  useEffect(() => {
+    if (!saveAiSettings.isSuccess) return
+    setAiForm((current) => ({ ...current, api_key: '' }))
+  }, [saveAiSettings.isSuccess])
+
+  useEffect(() => {
+    if (isRulesWorkspace || typeof window === 'undefined') return
+
+    const url = new URL(window.location.href)
+    if (activeSection === 'services') {
+      url.searchParams.delete('section')
+    } else {
+      url.searchParams.set('section', activeSection)
+    }
+
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+  }, [activeSection, isRulesWorkspace])
 
   const allRules = rules?.rules ?? []
   const allPacks = rules?.packs ?? []
@@ -498,6 +565,17 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                 <span>Gates</span>
               </span>
               <small>{gateFailCount > 0 ? `${gateFailCount} blocking` : `${gates.length} tracked`}</small>
+            </button>
+            <button
+              className={`system-menu-item${activeSection === 'ai' ? ' active' : ''}`}
+              type="button"
+              onClick={() => setActiveSection('ai')}
+            >
+              <span className="system-menu-item-label">
+                <Icon icon={settings2} aria-hidden="true" />
+                <span>AI Settings</span>
+              </span>
+              <small>{aiSettingsQuery.data?.settings.has_api_key ? 'key configured' : 'key missing'}</small>
             </button>
           </div>
           <ul className="signal-list">
@@ -769,6 +847,151 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                         <p className="rules-cell-copy">Refresh the runtime snapshot to hydrate operational gates into this pane.</p>
                       </article>
                     ) : null}
+                  </div>
+                </article>
+              </div>
+            </>
+          ) : currentSection === 'ai' ? (
+            <>
+              <div className="panel-toolbar">
+                <div>
+                  <p className="workspace-eyebrow">DeepSeek Runtime</p>
+                  <div className="section-title-row">
+                    <span className="section-icon section-icon-system" aria-hidden="true">
+                      <Icon icon={settings2} />
+                    </span>
+                    <h2>AI Settings</h2>
+                  </div>
+                </div>
+                <div className="panel-toolbar-meta">
+                  <span className="count-pill">{aiSettingsQuery.data?.settings.has_api_key ? 'encrypted key stored' : 'no key yet'}</span>
+                  <span className="count-pill">{aiSettingsQuery.data?.settings.updated_at ?? 'not saved'}</span>
+                </div>
+              </div>
+
+              <div className="runtime-summary-bar">
+                <span className="meta-pill">Provider deepseek</span>
+                <span className="meta-pill">Model {aiForm.model || 'deepseek-v4-flash'}</span>
+                <span className="meta-pill">{aiSettingsQuery.data?.settings.api_key_masked ?? 'API key not set'}</span>
+              </div>
+
+              <div className="system-module-stack">
+                <article className="system-info-card ai-settings-shell">
+                  <p className="runtime-card-copy">
+                    Store one DeepSeek key locally, tune the base prompts, then keep the app goals and description close to the runtime so suggestions stay grounded.
+                  </p>
+                  <div className="ai-settings-grid">
+                    <label className="rules-filter-select ai-settings-field">
+                      <span>DeepSeek API Key</span>
+                      <input
+                        id="ai-settings-api-key"
+                        name="ai_settings_api_key"
+                        type="password"
+                        value={aiForm.api_key}
+                        placeholder={aiSettingsQuery.data?.settings.has_api_key ? 'Stored key is encrypted locally. Paste new key to replace.' : 'Paste DeepSeek API key'}
+                        onChange={(event) => setAiForm((current) => ({ ...current, api_key: event.target.value }))}
+                      />
+                    </label>
+                    <label className="rules-filter-select ai-settings-field">
+                      <span>Model</span>
+                      <input
+                        id="ai-settings-model"
+                        name="ai_settings_model"
+                        type="text"
+                        value={aiForm.model}
+                        onChange={(event) => setAiForm((current) => ({ ...current, model: event.target.value }))}
+                      />
+                    </label>
+                    <label className="rules-filter-select ai-settings-field">
+                      <span>Endpoint</span>
+                      <input
+                        id="ai-settings-endpoint"
+                        name="ai_settings_endpoint"
+                        type="text"
+                        value={aiForm.endpoint}
+                        onChange={(event) => setAiForm((current) => ({ ...current, endpoint: event.target.value }))}
+                      />
+                    </label>
+                    <label className="rules-filter-select ai-settings-field ai-settings-field-wide">
+                      <span>System Prompt</span>
+                      <textarea
+                        id="ai-settings-system-prompt"
+                        name="ai_settings_system_prompt"
+                        value={aiForm.system_prompt}
+                        onChange={(event) => setAiForm((current) => ({ ...current, system_prompt: event.target.value }))}
+                        placeholder="Base instruction for DeepSeek when acting inside this control plane."
+                      />
+                    </label>
+                    <label className="rules-filter-select ai-settings-field ai-settings-field-wide">
+                      <span>Planning Harness</span>
+                      <textarea
+                        id="ai-settings-planning-harness"
+                        name="ai_settings_planning_harness"
+                        value={aiForm.planning_harness_prompt}
+                        onChange={(event) => setAiForm((current) => ({ ...current, planning_harness_prompt: event.target.value }))}
+                        placeholder="Short harness prompt for planning / suggestion actions."
+                      />
+                    </label>
+                    <label className="rules-filter-select ai-settings-field ai-settings-field-wide">
+                      <span>Primary Goals</span>
+                      <textarea
+                        id="ai-settings-primary-goals"
+                        name="ai_settings_primary_goals"
+                        value={aiForm.app_primary_goals}
+                        onChange={(event) => setAiForm((current) => ({ ...current, app_primary_goals: event.target.value }))}
+                        placeholder="High-level goals that the AI should respect."
+                      />
+                    </label>
+                    <label className="rules-filter-select ai-settings-field ai-settings-field-wide">
+                      <span>App Description</span>
+                      <textarea
+                        id="ai-settings-app-description"
+                        name="ai_settings_app_description"
+                        value={aiForm.app_description}
+                        onChange={(event) => setAiForm((current) => ({ ...current, app_description: event.target.value }))}
+                        placeholder="Describe the app and workspace in one grounded paragraph."
+                      />
+                    </label>
+                  </div>
+
+                  <div className="ai-settings-actions">
+                    <button
+                      className="tool-button"
+                      type="button"
+                      onClick={() => saveAiSettings.mutate({
+                        ...aiForm,
+                        api_key: aiForm.api_key.trim() ? aiForm.api_key : undefined,
+                      })}
+                    >
+                      {saveAiSettings.isPending ? 'Saving...' : 'Save Settings'}
+                    </button>
+                    <button className="tool-button secondary" type="button" onClick={() => pingAiSettings.mutate()}>
+                      {pingAiSettings.isPending ? 'Testing...' : 'Test DeepSeek'}
+                    </button>
+                    <button
+                      className="tool-button subtle"
+                      type="button"
+                      onClick={() => {
+                        setAiForm((current) => ({ ...current, api_key: '' }))
+                        saveAiSettings.mutate({ clear_api_key: true })
+                      }}
+                    >
+                      Clear Key
+                    </button>
+                  </div>
+
+                  <div className="ai-settings-feedback">
+                    {saveAiSettings.data?.ok ? <span className="status-pill status-good">Saved</span> : null}
+                    {pingAiSettings.data?.ok ? (
+                      <span className="status-pill status-good">
+                        Connected {pingAiSettings.data.provider} {pingAiSettings.data.model ? `(${pingAiSettings.data.model})` : ''} {pingAiSettings.data.latencyMs ? `· ${pingAiSettings.data.latencyMs}ms` : ''}
+                      </span>
+                    ) : null}
+                    {pingAiSettings.data && !pingAiSettings.data.ok ? (
+                      <span className="status-pill status-warn">{pingAiSettings.data.error || 'Ping failed'}</span>
+                    ) : null}
+                    {saveAiSettings.error instanceof Error ? <span className="status-pill status-offline">{saveAiSettings.error.message}</span> : null}
+                    {pingAiSettings.error instanceof Error ? <span className="status-pill status-offline">{pingAiSettings.error.message}</span> : null}
                   </div>
                 </article>
               </div>

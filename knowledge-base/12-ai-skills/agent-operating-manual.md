@@ -111,6 +111,27 @@ Do not create files first and register them later.
 - If no first-party UI exists, document the external tools that operators or users actually rely on.
 - Recommend one primary interaction tool when several exist.
 
+## Planning Workspace Interpretation Rule
+
+When this repository exposes the native planning workspace, future agents should treat it as the primary operator surface for execution alignment:
+
+- `/intents` is not just a list page. It is the graph-native planning workspace for:
+  - `objective`
+  - `key_result`
+  - `release`
+  - `intent`
+  - `task`
+- In this workspace, "goals" should be interpreted as OKR structures, not vague aspirations.
+- Every intent must either:
+  - bind to at least one key result
+  - propose a new O/KR through review
+  - be explicitly marked `out-of-scope`
+- If AI-assisted planning is enabled, agents must preserve the review boundary:
+  - generate suggestion
+  - show rationale
+  - require explicit accept/cancel
+  - apply accepted decisions deterministically to source-of-truth content
+
 ## Prompting Rules For Agents
 
 - Ask for missing constraints early.

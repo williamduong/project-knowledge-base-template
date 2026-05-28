@@ -10,7 +10,7 @@
 
 const { z } = require('zod');
 
-const PROVIDERS = ['anthropic', 'openai', 'azure', 'openrouter', 'ollama'];
+const PROVIDERS = ['anthropic', 'openai', 'azure', 'openrouter', 'ollama', 'gemini', 'deepseek'];
 
 const ConfigSchema = z.object({
   provider:   z.string().min(1),

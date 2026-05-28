@@ -281,6 +281,24 @@
 **Tác động:** Kết luận sai về "trải nghiệm user thật" do persona/prompt context collision
 **Phòng:** Split test matrix: downstream clean workspace (KB Agent-only) = user UX acceptance; self-host workspace = maintainer/governance smoke only.
 
+### T11. Dialog-based AI remediation is easier to trust than inline intent controls
+**Ngày:** 2026-05-28
+**Context:** Inline `AI decide` + manual bind controls on the same card caused user confusion because the result existed but had no clear review boundary.
+**Tại sao work:** A dialog can show loading state, one clear decision, rationale, and `Re-run / Accept / Cancel` without competing with the rest of the page.
+**Apply:** For AI-assisted planning or governance decisions, prefer explicit review surfaces over mixing AI and manual controls inline by default.
+
+### T12. Manual `out-of-scope` must use the same ontology state as AI triage
+**Ngày:** 2026-05-28
+**Context:** Users still need manual control after AI flows ship.
+**Tại sao work:** Adding `out-of-scope` as a manual selection keeps filtering, reporting, and remediation semantics consistent instead of creating a second unofficial state.
+**Apply:** Any triage state introduced by AI should also be representable manually if humans will maintain the system later.
+
+### R21. Assistant UX can look broken even when the API succeeds
+**Ngày:** 2026-05-28
+**Trigger:** `assistant-plan` returned `200 OK` with a valid suggestion, but the UI kept the user on the list card without a strong state transition, so it looked like "nothing happened".
+**Tác động:** Users lose trust in the feature and assume the AI action is stuck or disabled.
+**Phòng:** When AI actions are asynchronous, always pair them with a visible state transition: loading surface, result surface, and explicit accept/cancel affordances.
+
 ---
 
 ## Decisions (v2.3.x locked)
@@ -312,6 +330,18 @@
 **Rule:** MANDATORY — dùng `npm version <bump> --no-git-tag-version`. Tag tạo SAU `npm publish` exit 0.
 **Enforce:** Workflow R6 = manual commit + tag sau publish success.
 
+### D20. OKR-native planning workspace becomes the canonical operator lens for goals/intents
+**Ngày:** 2026-05-28
+**Lý do:** Legacy "goals" wording was too loose for operator use. The v3.0 planning surface needs measurable structure, explicit intent-to-KR binding, release aggregation, and native graph projection.
+**Rule:** In the planning workspace, represent goals as independent OKR entities (`objective`, `key_result`), require every intent to bind to a KR or be triaged, and treat releases/milestones as collections of intents.
+**Apply:** `svfactory/planning.seed.json`, `src/graph-db/planning/*`, `/api/graph/planning/*`, and `/intents` UI.
+
+### D21. AI-assisted planning decisions must apply deterministically to canonical content
+**Ngày:** 2026-05-28
+**Lý do:** Suggestion-only UX is not enough for maintainers. Once the operator accepts an AI decision, the system must update real source-of-truth content in a reviewable deterministic way.
+**Rule:** `bind-existing` adds canonical links, `propose-new-okr` promotes to canonical objective/KR content, and `out-of-scope` records a filterable triage state.
+**Apply:** `src/lib/svfactory-planning-seed.js` and `/api/graph/planning/intents/:intentId/assistant-apply`.
+
 ### R19. npm publish interactive auth — agent tự gửi Enter
 **Ngày:** 2026-05-04
 **Trigger:** `npm publish` in ra "Press ENTER to open in the browser..." và chờ input → npm sẽ tự mở browser khi nhận Enter
@@ -330,3 +360,4 @@
 | 2026-05-04 | T8-T10, R15-R18, D10-D14 | v2.3.x refactor complete + three-layer locked |
 | 2026-05-04 | R19 | npm publish auth — agent tự send Enter mở browser |
 | 2026-05-07 | D17-D18 | Thêm gate branch cho intent lớn + deterministic-first cho rule placement |
+| 2026-05-28 | T11-T12, R21, D20-D21 | v3.0 planning workspace + AI-assisted intent operations |
