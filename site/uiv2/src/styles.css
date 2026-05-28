@@ -3056,6 +3056,12 @@
   background: rgba(141, 163, 187, 0.08);
 }
 
+.status-out-of-scope {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.06);
+  color: #94a3b8;
+}
+
 .search-overlay-backdrop {
   position: fixed;
   inset: 0;

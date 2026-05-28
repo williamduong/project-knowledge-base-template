@@ -32,7 +32,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 type IntentFilter = 'all' | 'linked' | 'missing-kr' | 'proposed' | 'out-of-scope' | 'active' | 'backlog' | 'closed'
 type PlanningView = 'overview' | 'okr' | 'releases' | 'intents' | 'graph'
 type AssistantDecision = 'bind-existing' | 'propose-new-okr' | 'out-of-scope'
-const MANUAL_OUT_OF_SCOPE_OPTION = '__out_of_scope__'
 
 type DetailRecord =
   | { kind: 'workspace'; title: string; summary: string; metrics: string[] }
@@ -171,6 +170,7 @@ function UpdateKRDialog({
 }) {
   const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('ai')
   const [manualKRId, setManualKRId] = useState('')
+  const [manualOutOfScope, setManualOutOfScope] = useState(false)
   const [aiKRId, setAiKRId] = useState('')
   const [aiReleaseId, setAiReleaseId] = useState('')
 
@@ -182,12 +182,12 @@ function UpdateKRDialog({
   const aiReleaseCandidates = aiResult?.suggestion.release_candidates ?? []
 
   const canAccept = activeTab === 'manual'
-    ? Boolean(manualKRId)
+    ? Boolean(manualKRId || manualOutOfScope)
     : Boolean(aiResult && (decision === 'out-of-scope' || decision === 'propose-new-okr' || aiKRId))
 
   function handleAccept() {
     if (activeTab === 'manual') {
-      onAcceptManual(manualKRId === MANUAL_OUT_OF_SCOPE_OPTION ? null : manualKRId || null)
+      onAcceptManual(manualOutOfScope ? null : manualKRId || null)
     } else if (aiResult) {
       onAcceptAI(aiKRId || '', aiReleaseId || '', decision || 'bind-existing')
     }
@@ -220,15 +220,15 @@ function UpdateKRDialog({
             <div className="planning-detail-stack">
               <article className="planning-assistant-summary">
                 <strong>Bind this intent to a key result</strong>
-                <p>Choose an existing key result or mark this intent as out of scope.</p>
+                <p>Choose an existing key result below.</p>
               </article>
               <div className="planning-inline-editor">
                 <select
                   value={manualKRId}
                   onChange={(event) => setManualKRId(event.target.value)}
+                  disabled={manualOutOfScope}
                 >
                   <option value="">Select a key result…</option>
-                  <option value={MANUAL_OUT_OF_SCOPE_OPTION}>Mark out of scope</option>
                   {unusedKRs.map((kr) => (
                     <option key={kr.id} value={kr.id}>
                       {kr.code} — {kr.title}
@@ -236,6 +236,18 @@ function UpdateKRDialog({
                   ))}
                 </select>
               </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', cursor: 'pointer', padding: '0.5rem 0' }}>
+                <input
+                  type="checkbox"
+                  checked={manualOutOfScope}
+                  onChange={(event) => {
+                    setManualOutOfScope(event.target.checked)
+                    if (event.target.checked) setManualKRId('')
+                  }}
+                  style={{ width: 16, height: 16, accentColor: '#6ee7b7' }}
+                />
+                <span>Mark this intent as out of scope</span>
+              </label>
             </div>
           ) : (
             <>
@@ -1053,9 +1065,6 @@ export function IntentsListPage() {
                       <Icon icon={sparkles} />
                       <strong>Update KR</strong>
                     </button>
-                    <p className="planning-inline-assistant-copy">
-                      Open a dialog to bind this intent to a key result, manually or with AI assistance.
-                    </p>
                     {intent.validation_state === 'proposed-new-key-result' ? (
                       <p className="planning-inline-assistant-result">
                         New O/KR proposed and pending acceptance
@@ -1244,6 +1253,9 @@ export function IntentsListPage() {
                           <strong>{intent.title}</strong>
                         </div>
                         <span className={`status-pill ${intentTone(intent)}`}>{lifecycleLabel(intent.lifecycle)}</span>
+                        {intent.validation_state === 'out-of-scope' ? (
+                          <span className="status-pill status-out-of-scope">out of scope</span>
+                        ) : null}
                       </div>
                       <p>{excerpt(intent.summary || intent.goal_text, 150)}</p>
                       <div className="planning-intent-card-meta">
@@ -1263,9 +1275,6 @@ export function IntentsListPage() {
                             <Icon icon={sparkles} />
                             <strong>Update KR</strong>
                           </button>
-                          <p className="planning-inline-assistant-copy">
-                            Open a dialog to bind this intent to a key result, manually or with AI assistance.
-                          </p>
                           {intent.validation_state === 'proposed-new-key-result' ? (
                             <p className="planning-inline-assistant-result">
                               New O/KR proposed and pending acceptance
