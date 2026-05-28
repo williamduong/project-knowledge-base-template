@@ -9,6 +9,7 @@ import chevronRight from '@iconify-icons/lucide/chevron-right'
 import x from '@iconify-icons/lucide/x'
 import plus from '@iconify-icons/lucide/plus'
 import sparkles from '@iconify-icons/lucide/sparkles'
+import loader from '@iconify-icons/lucide/loader'
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { PlanningNativeGraph } from '../../components/intents/PlanningNativeGraph'
 import {
@@ -256,7 +257,10 @@ function UpdateKRDialog({
               {isRunning ? (
                 <div className="planning-assistant-dialog-body">
                   <article className="planning-assistant-summary">
-                    <strong>AI is evaluating this intent</strong>
+                    <strong style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Icon icon={loader} style={{ animation: 'spin 0.85s linear infinite' }} />
+                      AI is evaluating this intent
+                    </strong>
                     <p>Reviewing the current intent, release lanes, and OKR graph to decide whether this should bind to an existing KR, create a new O/KR, or stay out of scope.</p>
                   </article>
                 </div>
@@ -356,7 +360,16 @@ function UpdateKRDialog({
         <div className="planning-assistant-dialog-actions">
           <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
           {activeTab === 'ai' && aiResult && !isRunning ? (
-            <button type="button" className="tool-button" onClick={onRunAI} disabled={isRunning || isApplying}>Re-run AI</button>
+            <button type="button" className="tool-button" onClick={onRunAI} disabled={isRunning || isApplying}>
+              <Icon icon={sparkles} />
+              Re-run AI
+            </button>
+          ) : null}
+          {activeTab === 'ai' && isRunning ? (
+            <button type="button" className="tool-button" disabled>
+              <Icon icon={loader} style={{ animation: 'spin 0.85s linear infinite' }} />
+              Running…
+            </button>
           ) : null}
           <button type="button" className="planning-mini-action" onClick={handleAccept} disabled={!canAccept || isApplying}>
             <Icon icon={plus} />
@@ -845,6 +858,20 @@ export function IntentsListPage() {
   function intentOptionsForRelease(release: PlanningRelease) {
     const currentIntentIds = new Set(release.intents.map((intent) => intent.id))
     return (data?.intents ?? []).filter((intent) => !currentIntentIds.has(intent.id))
+  }
+
+  async function adoptAssistantRecommendation(intent: PlanningIntent, krId: string, releaseId: string, decision: AssistantDecision) {
+    const suggestion = aiResult?.suggestion
+    if (!suggestion) return
+    await assistantApplyMutation.mutateAsync({
+      intentId: intent.id,
+      body: {
+        ...suggestion,
+        decision,
+        primary_key_result_id: decision === 'bind-existing' ? (krId || null) : null,
+        primary_release_id: releaseId || null,
+      },
+    })
   }
 
   async function markIntentOutOfScope(intentId: string) {
