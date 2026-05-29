@@ -1151,6 +1151,39 @@
   line-height: 1.45;
 }
 
+.inline-translate-block {
+  display: grid;
+  gap: 8px;
+}
+
+.inline-translate-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inline-translate-button {
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.08);
+  color: #93c5fd;
+  font: inherit;
+  font-size: 11px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.inline-translate-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.inline-translate-error {
+  color: #fca5a5;
+  font-size: 11px;
+}
+
 .ai-settings-field-wide {
   grid-column: 1 / -1;
 }
