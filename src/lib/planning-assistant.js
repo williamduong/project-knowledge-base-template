@@ -325,10 +325,10 @@ function buildPrompt({ settings, workspace, intent, keyResults, releases }) {
     }, null, 2),
     '',
     'KEY RESULT CANDIDATES',
-    JSON.stringify(keyResults, null, 2),
+    JSON.stringify(keyResults.map((kr) => ({ id: kr.id, code: kr.code, title: kr.title, metric: kr.metric, target: kr.target, parent_objective_id: kr.parent_objective_id })), null, 2),
     '',
     'RELEASE CANDIDATES',
-    JSON.stringify(releases, null, 2),
+    JSON.stringify(releases.map((r) => ({ id: r.id, code: r.code, title: r.title, state: r.state, release_bucket: r.release_bucket, progress: r.progress })), null, 2),
     '',
     'TASK',
     [
@@ -423,8 +423,8 @@ function repairJson(json) {
   // Also fix when they're directly adjacent: }{
   repaired = repaired.replace(/([}\]])([{\[])/g, '$1, $2');
 
-  // 3. Fix missing commas between string values: "..." "..."
-  repaired = repaired.replace(/("\s+")/g, '", "');
+  // 3. Fix missing commas between quoted strings (both array values and object properties)
+  repaired = repaired.replace(/(")\s+(")/g, '$1, $2');
 
   // 4. Fix missing commas after number/boolean/null before next value
   repaired = repaired.replace(/(\d|true|false|null)\s+("|{|\[)/g, '$1, $2');

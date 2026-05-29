@@ -279,6 +279,11 @@ test('parseJsonBlock fixes duplicate commas', () => {
   assert.deepEqual(result, { a: 1, b: 2 });
 });
 
+test('parseJsonBlock fixes missing comma between object properties', () => {
+  const result = parseJsonBlock('{"a":"x"\n"b":"y"}');
+  assert.deepEqual(result, { a: 'x', b: 'y' });
+});
+
 test('parseJsonBlock handles mixed errors: missing commas + trailing comma + comments', () => {
   // JSON that has: missing comma between objects, trailing comma, and a single-line comment
   const input = '{\n  "items": [\n    {"a": 1}\n    {"b": 2},\n  ],\n  // this comment should be removed\n  "tags": ["x",]\n}';
