@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-28T09:22:51.297Z",
+  "generated_at": "2026-05-29T14:22:09.342Z",
   "north_star": "Build SVFactory as the factory that generates KBX agents from DNA",
   "active_intent_ids": [
     "v2-10-code-graph",
@@ -18,25 +18,166 @@
   "linked_intent_ids": [
     "kb-agent-centric-docs",
     "v2-10-code-graph",
+    "v2-10-research-driven-kb-intelligence",
+    "v2-10-v2-10-intent-lifecycle-domain-separation",
+    "v2-10-v2-10-kbagent-roadmap-gap-p0-alignment",
+    "v2-4-intent-governance",
+    "v2-4-svfactory-rename",
+    "v2-5-1-deterministic-multi-project-model",
+    "v2-5-cli-first-intent-orchestration",
+    "v2-5-user-customization-framework",
+    "v2-6-kb-ontology-foundation",
     "v2-7-0-1-ui-state-contract",
+    "v2-8-kbagent-structured-store-spike",
+    "v2-8-svfactory-rule-catalog-hardening",
+    "v2-8-v2-8-4-generative-loop-contract",
+    "v2-8-v2-8-5-dispatch-integration-test-plan",
+    "v2-8-v2-8-svfactory-rule-catalog-hardening",
+    "v2-9-db-and-intent-web-ui",
+    "v2-9-graph-ingest-reconstruction",
+    "v2-9-v2-9-0-dispatch-runtime-test-harness",
+    "v2-9-v2-9-natural-rules-foundation-file-architecture",
     "v3-0-dna-graph-ontology-boundary"
   ],
-  "assistant_triage": {},
-  "intents_missing_goal_mapping": [
-    {
+  "assistant_triage": {
+    "v2-10-research-driven-kb-intelligence": {
+      "decision": "propose-new-okr",
+      "status": "applied",
+      "summary": "This intent (research-driven KB intelligence) does not align with any existing key result, which all focus on DNA schema and compilation. It requires a new OKR to capture the autonomous repo scanning and GraphDB persistence capability.",
+      "why_now": "The intent is in backlog, validated as missing-key-result, and is blocked on v2.9 completion. Defining a measurable key result now prevents drift and clarifies the path to v2.10 delivery.",
+      "next_action": "Create a new objective 'Enable autonomous repository research for KBX agents' with key result 'Auto-scan one reference repo and persist structured knowledge graph to GraphDB (pass/fail).' Then link this intent and its tasks to that KR.",
+      "key_result_id": "kr-sf-g6-k1-auto-scan-reference-repo-and-persist-to-graphdb",
+      "release_id": null,
+      "objective_id": "g-sf-g6-enable-autonomous-repository-research-for-kbx-agents",
+      "proposed_objective": {
+        "title": "Enable autonomous repository research for KBX agents",
+        "description": "KBAgent can autonomously scan repository content (dependencies, structure, code patterns, docs) and persist findings as a knowledge graph to GraphDB for downstream query and visualization.",
+        "success_criteria": "One end-to-end flow: `kbx research` on a target repo produces a GraphDB-backed knowledge graph that can be served via `kbx serve`."
+      },
+      "proposed_key_result": {
+        "title": "Auto-scan reference repo and persist to GraphDB",
+        "description": "Validate the research pipeline by running `kbx research` on a known reference repo (e.g., a KBX agent repo) and confirming all findings are stored in GraphDB with cited evidence sources.",
+        "success_criteria": "Pipeline runs without error, GraphDB contains nodes for dependencies, folder structure, code patterns, docs, and configuration. Each node includes confidence score and evidence source.",
+        "metric": "Reference repo successfully scanned",
+        "target": "1 complete knowledge graph in GraphDB"
+      },
+      "out_of_scope_reason": null,
+      "warnings": [
+        "This intent is one of 25 without a key result — aligning it now reduces orphan work.",
+        "v2.9 completion is a prerequisite; ensure that release is on track before committing to v2.10 delivery.",
+        "Consider whether this research capability overlaps with existing DNA schema work or is a separate track."
+      ],
       "intent_id": "v2-10-research-driven-kb-intelligence",
-      "suggested_relation": "advances",
-      "suggested_goal_id": null,
-      "suggested_key_result_id": null,
-      "status": "manual-review-required"
+      "updated_at": "2026-05-28T17:59:14.983Z"
     },
-    {
+    "v2-8-kbagent-structured-store-spike": {
+      "decision": "propose-new-okr",
+      "status": "applied",
+      "summary": "The intent 'KBAgent structured store spike' explores a queryable state layer but has no linked key result. No existing KR matches; the closest (KR7.1) is about file architecture, not the spike itself.",
+      "why_now": "This spike reduces ambiguity in KBAgent state querying. Without a key result, the work lacks traceability to measurable outcomes. Defining a new OKR now ensures alignment before execution starts.",
+      "next_action": "Add a new objective and key result for this spike, then update the intent’s validation state and link. The spike should remain in backlog until its activation trigger (rule catalog hardening) is done.",
+      "key_result_id": "kr-sf-g9-k1-structured-store-spike-with-backward-compatibility-verified",
+      "release_id": "release-v2-8",
+      "objective_id": "g-sf-g9-enable-queryable-kbagent-state-without-breaking-backward-compatibility",
+      "proposed_objective": {
+        "title": "Enable queryable KBAgent state without breaking backward compatibility",
+        "description": "Create a minimal structured store layer that makes KBAgent state (rules, documents, intent status) queryable via simple queries, while keeping all existing Markdown/JSON file outputs unchanged.",
+        "success_criteria": "Spike produces an adapter and query model that passes at least 3 test queries (e.g., latest failed rules by intent, documents stale by verification window, active intents by release)."
+      },
+      "proposed_key_result": {
+        "title": "Structured store spike with backward compatibility verified",
+        "description": "Design and implement a storage adapter and query model that mirrors current JSON/Markdown outputs, then validate with 3 representative queries.",
+        "success_criteria": "All 3 test queries return correct results; existing file outputs remain unchanged",
+        "metric": "Number of test queries passed",
+        "target": "3 queries passed with zero regression in file outputs"
+      },
+      "out_of_scope_reason": null,
+      "warnings": [
+        "Intent lacks a linked key result — gap in traceability.",
+        "Activation trigger (rule catalog hardening) must be completed before this spike can begin; no progress on that trigger is visible in the workspace.",
+        "No existing KR directly matches this spike; proposing a new OKR is the clearest path."
+      ],
+      "intent_id": "v2-8-kbagent-structured-store-spike",
+      "updated_at": "2026-05-29T10:57:44.997Z"
+    },
+    "v2-8-svfactory-rule-catalog-hardening": {
+      "decision": "bind-existing",
+      "status": "applied",
+      "summary": "Bind the SVFactory rule catalog hardening intent to existing key result KR7.1 (Lock the natural‑rules file architecture v0.1) and keep it in release v2.8.",
+      "why_now": "The intent's focus on locking rule ID schema, ownership metadata, and source‑doc mapping is the concrete next step to deliver KR7.1, which directly defines the canonical natural‑rules file architecture. v2.8 is already the intent's bucket with 67% progress, so binding now resolves the missing‑key‑result gap and keeps traceability intact.",
+      "next_action": "Link this intent to KR7.1 in the workspace and update the intent's validation_state to 'mapped'. Review KR7.1's acceptance criteria to ensure they cover deterministic registry contract (ID schema, ownership, source‑doc mapping).",
+      "key_result_id": "kr-sf-g7-k1-lock-the-natural-rules-file-architecture-v0-1",
+      "release_id": "release-v2-8",
+      "objective_id": null,
+      "proposed_objective": null,
+      "proposed_key_result": null,
+      "out_of_scope_reason": null,
+      "warnings": [
+        "KR7.1 is currently in 'planned' state. Ensure its scope explicitly includes rule ID schema, ownership metadata, and source‑doc mapping before finalizing the binding."
+      ],
+      "intent_id": "v2-8-svfactory-rule-catalog-hardening",
+      "updated_at": "2026-05-29T10:59:02.144Z"
+    },
+    "v2-5-user-customization-framework": {
+      "decision": "propose-new-okr",
+      "status": "applied",
+      "summary": "Intent 'User customization framework' is in backlog with missing key result. It aims to deliver a config layer for overridable defaults. No existing key result covers this area; a new Objective and Key Result are needed to align and track this work.",
+      "why_now": "The intent is gated on v2.4 being stable and shipped as @latest. Once that triggers, the customization framework will be the first V2.5 feature. Without a key result, the work is untraceable and risks drifting from measurable outcomes.",
+      "next_action": "Create a new Objective and Key Result for the customization framework, then bind the intent to the new KR and confirm release alignment (V2.5).",
+      "key_result_id": "kr-sf-g12-k1-config-layer-implemented-for-all-six-default-categories",
+      "release_id": "release-v2-4",
+      "objective_id": "g-sf-g12-enable-project-level-customization-of-intent-governance-defaults",
+      "proposed_objective": {
+        "title": "Enable project-level customization of intent governance defaults",
+        "description": "Make KBX agent templates configurable per project so teams can override opinionated defaults (stale threshold, required fields, ID format, branch prefix, wave field, release reference format) without forking the template, while still receiving upgrade patches.",
+        "success_criteria": "Config layer is documented, implemented, and ships as part of V2.5 with at least one migration path for existing projects."
+      },
+      "proposed_key_result": {
+        "title": "Config layer implemented for all six default categories",
+        "description": "Deliver a config file (or equivalent) that allows overriding stale threshold, required fields, ID format, branch prefix, wave field, and release reference format. Must include an override log for auditability.",
+        "success_criteria": "All six defaults overridable; config file schema published; upgrade path verified for at least one existing project.",
+        "metric": "Number of default categories overridable",
+        "target": "6 (all six categories) by V2.5 release"
+      },
+      "out_of_scope_reason": null,
+      "warnings": [
+        "Intent is missing key result linkage — propose-new-okr resolves this.",
+        "Intent is in backlog with activation trigger waiting on v2.4 stable — ensure OKR is created before activation."
+      ],
       "intent_id": "v2-5-user-customization-framework",
-      "suggested_relation": "advances",
-      "suggested_goal_id": null,
-      "suggested_key_result_id": null,
-      "status": "manual-review-required"
+      "updated_at": "2026-05-29T11:09:33.743Z"
     },
+    "v2-9-db-and-intent-web-ui": {
+      "decision": "propose-new-okr",
+      "status": "applied",
+      "summary": "This intent delivers a DB layer and Intent Web UI as an inseparable bundle, but currently has no linked OKR. No existing key result candidate matches this scope.",
+      "why_now": "Foundational for operational visibility and data persistence; without an OKR, the work is untethered from strategic outcomes and risks orphan shipping.",
+      "next_action": "Create a new Objective under the north star and a Key Result that measures successful bundled shipment of DB + UI, then link this intent to that KR.",
+      "key_result_id": "kr-sf-g13-k1-db-layer-and-intent-web-ui-shipped-as-a-single-bundled-release",
+      "release_id": null,
+      "objective_id": "g-sf-g13-enable-operational-visibility-and-data-persistence-for-kbx-agents",
+      "proposed_objective": {
+        "title": "Enable operational visibility and data persistence for KBX agents",
+        "description": "Provide a production-grade database layer for KBX agent data and a web UI to manage intents, chaos scores, rule results, and audit events without requiring CLI commands for routine inspection.",
+        "success_criteria": "DB layer with SQLite adapter is feature-flagged and production-ready; Intent Web UI serves at least three core management views (list, detail, audit)."
+      },
+      "proposed_key_result": {
+        "title": "DB layer and Intent Web UI shipped as a single bundled release",
+        "description": "SQLite adapter with migrations and seed logic, plus a local web server (`kbx serve`) providing intent management UI; governance UI reads from production DB.",
+        "success_criteria": "Both components shipped together as release v2.9; `kbx init` creates empty .kb workspace; `kbx serve` runs without CLI-only inspection.",
+        "metric": "Number of functional UI views shipped",
+        "target": "3 (intent list, intent detail, audit log)"
+      },
+      "out_of_scope_reason": null,
+      "warnings": [
+        "No existing OKRs match this intent; creating a new OKR will improve traceability and prevent orphan work.",
+        "Intent is already assigned to v2.9 release bucket; consider aligning it to the 'Execution and UI foundation' release for a clearer thematic grouping."
+      ],
+      "intent_id": "v2-9-db-and-intent-web-ui",
+      "updated_at": "2026-05-29T11:14:23.888Z"
+    }
+  },
+  "intents_missing_goal_mapping": [
     {
       "intent_id": "v2-7-1-flow-and-gates-ui-planning",
       "suggested_relation": "advances",
@@ -46,27 +187,6 @@
     },
     {
       "intent_id": "v2-8-kbagent-minimal-db-schema",
-      "suggested_relation": "advances",
-      "suggested_goal_id": null,
-      "suggested_key_result_id": null,
-      "status": "manual-review-required"
-    },
-    {
-      "intent_id": "v2-8-kbagent-structured-store-spike",
-      "suggested_relation": "advances",
-      "suggested_goal_id": null,
-      "suggested_key_result_id": null,
-      "status": "manual-review-required"
-    },
-    {
-      "intent_id": "v2-8-svfactory-rule-catalog-hardening",
-      "suggested_relation": "advances",
-      "suggested_goal_id": null,
-      "suggested_key_result_id": null,
-      "status": "manual-review-required"
-    },
-    {
-      "intent_id": "v2-9-db-and-intent-web-ui",
       "suggested_relation": "advances",
       "suggested_goal_id": null,
       "suggested_key_result_id": null,

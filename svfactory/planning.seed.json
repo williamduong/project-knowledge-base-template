@@ -210,6 +210,270 @@
           "state": "planned"
         }
       ]
+    },
+    {
+      "id": "g-sf-g6-enable-autonomous-repository-research-for-kbx-agents",
+      "code": "G6",
+      "kind": "objective",
+      "title": "Enable autonomous repository research for KBX agents",
+      "description": "KBAgent can autonomously scan repository content (dependencies, structure, code patterns, docs) and persist findings as a knowledge graph to GraphDB for downstream query and visualization.",
+      "success_criteria": "One end-to-end flow: `kbx research` on a target repo produces a GraphDB-backed knowledge graph that can be served via `kbx serve`.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g6-k1-auto-scan-reference-repo-and-persist-to-graphdb",
+          "code": "KR6.1",
+          "title": "Auto-scan reference repo and persist to GraphDB",
+          "description": "Validate the research pipeline by running `kbx research` on a known reference repo (e.g., a KBX agent repo) and confirming all findings are stored in GraphDB with cited evidence sources.",
+          "success_criteria": "Pipeline runs without error, GraphDB contains nodes for dependencies, folder structure, code patterns, docs, and configuration. Each node includes confidence score and evidence source.",
+          "metric": "Reference repo successfully scanned",
+          "target": "1 complete knowledge graph in GraphDB",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g7-define-the-natural-rules-foundation-for-svfactory",
+      "code": "G7",
+      "kind": "objective",
+      "title": "Define the natural‑rules foundation for SVFactory",
+      "description": "Establish the file architecture and schema for domain‑specific natural rules, enabling rule‑based agent generation alongside DNA contracts.",
+      "success_criteria": "Natural rules file architecture is documented, validated, and integrated into the SVFactory DNA pipeline.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g7-k1-lock-the-natural-rules-file-architecture-v0-1",
+          "code": "KR7.1",
+          "title": "Lock the natural‑rules file architecture v0.1",
+          "description": "Define the canonical file structure, naming conventions, and integration points for natural rules within SVFactory.",
+          "success_criteria": "One reference natural‑rules package passes structural validation and is consumable by downstream compilation.",
+          "metric": "File architecture spec and validation",
+          "target": "1 validated natural‑rules package",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g8-runtime-test-harness-for-generated-kbx-agents",
+      "code": "G8",
+      "kind": "objective",
+      "title": "Runtime test harness for generated KBX agents",
+      "description": "Ensure that generated KBX agents can be tested at the dispatch runtime level, validating agent lifecycle and integration with the SVFactory pipeline.",
+      "success_criteria": "A test harness exists and passes smoke tests for at least one generated agent type.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g8-k1-dispatch-runtime-test-harness-operational",
+          "code": "KR8.1",
+          "title": "Dispatch runtime test harness operational",
+          "description": "A test harness that validates the runtime dispatch of generated KBX agents, including agent startup, execution, and shutdown.",
+          "success_criteria": "Test harness runs and validates at least one full agent lifecycle with no critical failures.",
+          "metric": "Test harness execution",
+          "target": "Passing smoke test on a reference agent",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g9-enable-queryable-kbagent-state-without-breaking-backward-compatibility",
+      "code": "G9",
+      "kind": "objective",
+      "title": "Enable queryable KBAgent state without breaking backward compatibility",
+      "description": "Create a minimal structured store layer that makes KBAgent state (rules, documents, intent status) queryable via simple queries, while keeping all existing Markdown/JSON file outputs unchanged.",
+      "success_criteria": "Spike produces an adapter and query model that passes at least 3 test queries (e.g., latest failed rules by intent, documents stale by verification window, active intents by release).",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g9-k1-structured-store-spike-with-backward-compatibility-verified",
+          "code": "KR9.1",
+          "title": "Structured store spike with backward compatibility verified",
+          "description": "Design and implement a storage adapter and query model that mirrors current JSON/Markdown outputs, then validate with 3 representative queries.",
+          "success_criteria": "All 3 test queries return correct results; existing file outputs remain unchanged",
+          "metric": "Number of test queries passed",
+          "target": "3 queries passed with zero regression in file outputs",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g10-ensure-cli-and-concept-naming-consistency",
+      "code": "G10",
+      "kind": "objective",
+      "title": "Ensure CLI and concept naming consistency",
+      "description": "Maintain clear, non‑conflicting naming across the KBX ecosystem. The CLI binary and npm package must not collide with existing packages (e.g., kb), and the internal concept name (SV Factory) must be distinguishable from the executive layer (KB Agent) to avoid confusion in documentation and governance.",
+      "success_criteria": "All user‑facing surfaces (binary, npm package, template files, prompts, source paths) use the new names. Internal docs use the clarified concept name. No deprecated aliases remain. Downstream migration treated as separate work.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g10-k1-complete-the-cli-and-concept-rename-kb-kbx-sv-factory-sv-factory",
+          "code": "KR10.1",
+          "title": "Complete the CLI and concept rename (kb→kbx, SV Factory→SV Factory)",
+          "description": "Two parallel renames: (1) CLI binary `kb` → `kbx` and npm package `@williamduong/kb` → `@williamduong/kbx` across all user‑facing surfaces. (2) Internal concept rename 'SV Factory' → 'SV Factory' (sfact) in governance and self‑host docs. Hard cut – no deprecated aliases. Downstream migration is a separate intent.",
+          "success_criteria": "v2.4.0 shipped with all rename changes. No regressions in CI. Package published under new name. Internal docs updated.",
+          "metric": "Intents and packages using new names",
+          "target": "v2.4.0 release shipped with zero backward‑compatibility shims",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g11-define-and-implement-domain-lifecycle-separation-for-kbx-dna-packages",
+      "code": "G11",
+      "kind": "objective",
+      "title": "Define and implement domain lifecycle separation for KBX DNA packages",
+      "description": "Establish clear lifecycle stages (e.g., draft, active, deprecated, retired) for domain-specific DNA packages managed by SVFactory, ensuring each domain can evolve independently without affecting others.",
+      "success_criteria": "Lifecycle stages documented, implemented in SVFactory's schema and CLI, and validated with at least one reference domain package.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g11-k1-domain-lifecycle-stages-documented-and-implemented-in-svfactory",
+          "code": "KR11.1",
+          "title": "Domain lifecycle stages documented and implemented in SVFactory",
+          "description": "Define lifecycle stages (draft, active, deprecated, retired) for KBX DNA packages, add lifecycle field to dna.json contract, and implement hooks in the factory for stage transitions.",
+          "success_criteria": "Lifecycle stages published in governance guide, dna.json schema v0.2 includes lifecycle field, and at least one domain package transitions through all stages via SVFactory CLI.",
+          "metric": "Documented stages and schema implementation",
+          "target": "Lifecycle field in dna.json; one package transitions draft → active",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g12-enable-project-level-customization-of-intent-governance-defaults",
+      "code": "G12",
+      "kind": "objective",
+      "title": "Enable project-level customization of intent governance defaults",
+      "description": "Make KBX agent templates configurable per project so teams can override opinionated defaults (stale threshold, required fields, ID format, branch prefix, wave field, release reference format) without forking the template, while still receiving upgrade patches.",
+      "success_criteria": "Config layer is documented, implemented, and ships as part of V2.5 with at least one migration path for existing projects.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g12-k1-config-layer-implemented-for-all-six-default-categories",
+          "code": "KR12.1",
+          "title": "Config layer implemented for all six default categories",
+          "description": "Deliver a config file (or equivalent) that allows overriding stale threshold, required fields, ID format, branch prefix, wave field, and release reference format. Must include an override log for auditability.",
+          "success_criteria": "All six defaults overridable; config file schema published; upgrade path verified for at least one existing project.",
+          "metric": "Number of default categories overridable",
+          "target": "6 (all six categories) by V2.5 release",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g13-enable-operational-visibility-and-data-persistence-for-kbx-agents",
+      "code": "G13",
+      "kind": "objective",
+      "title": "Enable operational visibility and data persistence for KBX agents",
+      "description": "Provide a production-grade database layer for KBX agent data and a web UI to manage intents, chaos scores, rule results, and audit events without requiring CLI commands for routine inspection.",
+      "success_criteria": "DB layer with SQLite adapter is feature-flagged and production-ready; Intent Web UI serves at least three core management views (list, detail, audit).",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g13-k1-db-layer-and-intent-web-ui-shipped-as-a-single-bundled-release",
+          "code": "KR13.1",
+          "title": "DB layer and Intent Web UI shipped as a single bundled release",
+          "description": "SQLite adapter with migrations and seed logic, plus a local web server (`kbx serve`) providing intent management UI; governance UI reads from production DB.",
+          "success_criteria": "Both components shipped together as release v2.9; `kbx init` creates empty .kb workspace; `kbx serve` runs without CLI-only inspection.",
+          "metric": "Number of functional UI views shipped",
+          "target": "3 (intent list, intent detail, audit log)",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g14-establish-generative-loop-for-kbx-agent-generation",
+      "code": "G14",
+      "kind": "objective",
+      "title": "Establish generative loop for KBX agent generation",
+      "description": "Define and implement the feedback loop that allows SVFactory to iteratively generate and improve KBX agents from DNA specifications.",
+      "success_criteria": "Generative loop contract is defined, implemented, and validated with at least one end-to-end cycle.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g14-k1-define-and-validate-the-generative-loop-contract",
+          "code": "KR14.1",
+          "title": "Define and validate the generative loop contract",
+          "description": "Create the contract (API, data flow, triggers) that governs how the generative loop operates between DNA compilation and agent materialization.",
+          "success_criteria": "Contract is documented, reviewed, and passes a simulated generative cycle.",
+          "metric": "Contract completeness",
+          "target": "1 validated generative loop contract",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g15-resolve-kbx-agent-roadmap-p0-alignment-gaps",
+      "code": "G15",
+      "kind": "objective",
+      "title": "Resolve KBX agent roadmap P0 alignment gaps",
+      "description": "Ensure every P0-priority intent in the KBX agent roadmap is clearly aligned to a measurable key result and traceable to the north star. This includes closing the 11 unmapped intents and validating that their goals fit the overall SVFactory mission.",
+      "success_criteria": "All P0 intents have a linked key result with a defined metric and target; zero intents in 'missing-key-result' validation state for P0.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g15-k1-all-p0-intents-mapped-to-key-results-and-validated-against-north-star",
+          "code": "KR15.1",
+          "title": "All P0 intents mapped to key results and validated against north star",
+          "description": "For each P0 intent currently without a key result, either create a new KR or bind to an existing one. Validate that the linked KR directly advances the north star (Build SVFactory as the factory that generates KBX agents from DNA).",
+          "success_criteria": "100% of P0 intents have a linked KR; no P0 intent remains in 'missing-key-result' state.",
+          "metric": "Percentage of P0 intents with a linked key result",
+          "target": "100%",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g16-establish-ontology-lifecycle-foundation-for-kbx-agents",
+      "code": "G16",
+      "kind": "objective",
+      "title": "Establish ontology lifecycle foundation for KBX agents",
+      "description": "Deliver the ontology model as a living schema module with deterministic steps from natural language to ontology schema, enabling lifecycle management for KBX agents.",
+      "success_criteria": "All three steps (NL capture, glossary, schema) are functional and documented; the ontology module passes close-condition sweep.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g16-k1-ontology-foundation-v2-6-shipped",
+          "code": "KR16.1",
+          "title": "Ontology foundation v2.6 shipped",
+          "description": "Natural-language capture, governed glossary, and ontology schema implemented per intent v2-6-kb-ontology-foundation.",
+          "success_criteria": "Intent closed with 6/6 close-condition sweep passed; template/docs aligned.",
+          "metric": "Close-condition pass rate",
+          "target": "6/6 (100%)",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g17-establish-architectural-governance-for-cli-command-layer-ownership-sv-fa",
+      "code": "G17",
+      "kind": "objective",
+      "title": "Establish architectural governance for CLI command layer ownership (SV Factory vs KBAgent)",
+      "description": "Define and ratify which CLI commands belong to SV Factory (Legislative, deterministic) vs KBAgent (Executive, soft-first) per the 5 architectural axioms. This ensures every future command carries an explicit layer assignment before implementation.",
+      "success_criteria": "All v2.5 commands have a documented layer assignment; soft-first governance policy is textually locked as KBAgent-only contract; no ambiguity remains for the monorepo split.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g17-k1-layer-classification-table-approved-and-soft-first-governance-policy-doc",
+          "code": "KR17.1",
+          "title": "Layer classification table approved and soft-first governance policy documented as KBAgent-only contract",
+          "description": "Produce a single authoritative table mapping each v2.5 CLI command to its layer (SV Factory or KBAgent) with rationale per axiom. Document the soft-first governance policy explicitly as applying only to KBAgent commands. Both artifacts reviewed and approved by owner.",
+          "success_criteria": "Table published in notes/; policy text committed; zero commands with ambiguous layer; owner sign-off.",
+          "metric": "Number of commands with explicit layer assignment",
+          "target": "All v2.5 commands (>=4) assigned; soft-first policy text merged.",
+          "state": "planned"
+        }
+      ]
     }
   ],
   "releases": [
@@ -269,6 +533,114 @@
       "relation": "advances",
       "key_result_id": "kr-sf-g2-k2-domain-dna-roundtrip",
       "notes": ""
+    },
+    {
+      "intent_id": "v2-10-research-driven-kb-intelligence",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g6-k1-auto-scan-reference-repo-and-persist-to-graphdb",
+      "notes": "Assistant promoted new O/KR: Enable autonomous repository research for KBX agents"
+    },
+    {
+      "intent_id": "v2-9-v2-9-natural-rules-foundation-file-architecture",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g7-k1-lock-the-natural-rules-file-architecture-v0-1",
+      "notes": "Assistant promoted new O/KR: Define the natural‑rules foundation for SVFactory"
+    },
+    {
+      "intent_id": "v2-9-v2-9-0-dispatch-runtime-test-harness",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g8-k1-dispatch-runtime-test-harness-operational",
+      "notes": "Assistant promoted new O/KR: Runtime test harness for generated KBX agents"
+    },
+    {
+      "intent_id": "v2-9-graph-ingest-reconstruction",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g1-s1-k1-load-dna-contracts",
+      "notes": "Assistant decision: Intent v2-9-graph-ingest-reconstruction (closed) is currently missing key result binding. It likely contributed to loading DNA contracts into the graph, aligning with KR1.1.1 (Load all four DNA contracts)."
+    },
+    {
+      "intent_id": "v2-8-v2-8-svfactory-rule-catalog-hardening",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g7-k1-lock-the-natural-rules-file-architecture-v0-1",
+      "notes": "Assistant decision: Intent 'v2-8-v2-8-svfactory-rule-catalog-hardening' is closed but lacks a key result link. It aligns with locking the natural‑rules file architecture (KR7.1) under Objective G7. Binding to KR7.1 and release v2.8 improves traceability."
+    },
+    {
+      "intent_id": "v2-8-kbagent-structured-store-spike",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g9-k1-structured-store-spike-with-backward-compatibility-verified",
+      "notes": "Assistant promoted new O/KR: Enable queryable KBAgent state without breaking backward compatibility"
+    },
+    {
+      "intent_id": "v2-8-svfactory-rule-catalog-hardening",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g7-k1-lock-the-natural-rules-file-architecture-v0-1",
+      "notes": "Assistant decision: Bind the SVFactory rule catalog hardening intent to existing key result KR7.1 (Lock the natural‑rules file architecture v0.1) and keep it in release v2.8."
+    },
+    {
+      "intent_id": "v2-4-svfactory-rename",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g10-k1-complete-the-cli-and-concept-rename-kb-kbx-sv-factory-sv-factory",
+      "notes": "Assistant promoted new O/KR: Ensure CLI and concept naming consistency"
+    },
+    {
+      "intent_id": "v2-10-v2-10-intent-lifecycle-domain-separation",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g11-k1-domain-lifecycle-stages-documented-and-implemented-in-svfactory",
+      "notes": "Assistant promoted new O/KR: Define and implement domain lifecycle separation for KBX DNA packages"
+    },
+    {
+      "intent_id": "v2-4-intent-governance",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g11-k1-domain-lifecycle-stages-documented-and-implemented-in-svfactory",
+      "notes": "Assistant decision: Link closed intent 'v2-4-intent-governance' to existing key result KR2.1 (Lock the four contract files) under release v2.4, since the governance model defined the canonical contract set that underpins the v2.4 schema/lifecycle/CLI semantics."
+    },
+    {
+      "intent_id": "v2-5-user-customization-framework",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g12-k1-config-layer-implemented-for-all-six-default-categories",
+      "notes": "Assistant promoted new O/KR: Enable project-level customization of intent governance defaults"
+    },
+    {
+      "intent_id": "v2-9-db-and-intent-web-ui",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g13-k1-db-layer-and-intent-web-ui-shipped-as-a-single-bundled-release",
+      "notes": "Assistant promoted new O/KR: Enable operational visibility and data persistence for KBX agents"
+    },
+    {
+      "intent_id": "v2-8-v2-8-5-dispatch-integration-test-plan",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g8-k1-dispatch-runtime-test-harness-operational",
+      "notes": "Assistant decision: The closed intent 'v2-8-v2-8-5-dispatch-integration-test-plan' validates runtime dispatch of generated KBX agents. It has no linked key result and should be bound to KR8.1 (Dispatch runtime test harness operational) under objective G8."
+    },
+    {
+      "intent_id": "v2-8-v2-8-4-generative-loop-contract",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g14-k1-define-and-validate-the-generative-loop-contract",
+      "notes": "Assistant promoted new O/KR: Establish generative loop for KBX agent generation"
+    },
+    {
+      "intent_id": "v2-10-v2-10-kbagent-roadmap-gap-p0-alignment",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g15-k1-all-p0-intents-mapped-to-key-results-and-validated-against-north-star",
+      "notes": "Assistant promoted new O/KR: Resolve KBX agent roadmap P0 alignment gaps"
+    },
+    {
+      "intent_id": "v2-5-1-deterministic-multi-project-model",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g15-k1-all-p0-intents-mapped-to-key-results-and-validated-against-north-star",
+      "notes": "Assistant decision: Bind the closed intent 'v2-5-1-deterministic-multi-project-model' to KR15.1 ('All P0 intents mapped to key results') to close the missing-key-result gap and improve traceability."
+    },
+    {
+      "intent_id": "v2-6-kb-ontology-foundation",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g16-k1-ontology-foundation-v2-6-shipped",
+      "notes": "Assistant promoted new O/KR: Establish ontology lifecycle foundation for KBX agents"
+    },
+    {
+      "intent_id": "v2-5-cli-first-intent-orchestration",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g17-k1-layer-classification-table-approved-and-soft-first-governance-policy-doc",
+      "notes": "Assistant promoted new O/KR: Establish architectural governance for CLI command layer ownership (SV Factory vs KBAgent)"
     }
   ]
 }

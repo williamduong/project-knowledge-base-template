@@ -12,6 +12,7 @@ const {
   updateGoal,
   deleteGoal,
   listGoalsForEntity,
+  replaceAllGoals,
 } = require('../../src/lib/goals-state');
 
 function tmpWorkspace() {
@@ -97,4 +98,49 @@ test('goals-state blocks deleting a parent goal while child goals still exist', 
     () => deleteGoal({ workspaceRoot, goalId: parent.id }),
     /Cannot delete parent goal/,
   );
+});
+
+test('goals-state persists objective and key result metadata', () => {
+  const workspaceRoot = tmpWorkspace();
+
+  replaceAllGoals({
+    workspaceRoot,
+    goals: [
+      {
+        id: 'g-sample-objective',
+        entity_level: 'system',
+        entity_id: 'workspace',
+        goal_kind: 'objective',
+        title: 'Build the factory core',
+        description: 'Canonical objective',
+        success_criteria: 'A KBX package skeleton can be generated.',
+        state: 'active',
+        rank: 0,
+      },
+      {
+        id: 'kr-sample-1',
+        entity_level: 'system',
+        entity_id: 'workspace',
+        parent_goal_id: 'g-sample-objective',
+        goal_kind: 'key_result',
+        title: 'KR1 — Compile DNA manifest',
+        description: 'Canonical key result',
+        success_criteria: 'One deterministic manifest is emitted.',
+        key_result_metric: 'manifest generation',
+        key_result_target: '1 deterministic manifest',
+        state: 'planned',
+        rank: 1,
+      },
+    ],
+  });
+
+  const state = readGoalsState({ workspaceRoot });
+  const objective = state.goals.find((goal) => goal.id === 'g-sample-objective');
+  const keyResult = state.goals.find((goal) => goal.id === 'kr-sample-1');
+
+  assert.equal(objective.goal_kind, 'objective');
+  assert.equal(objective.success_criteria, 'A KBX package skeleton can be generated.');
+  assert.equal(keyResult.goal_kind, 'key_result');
+  assert.equal(keyResult.key_result_metric, 'manifest generation');
+  assert.equal(keyResult.key_result_target, '1 deterministic manifest');
 });

@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 
-const GOALS_STATE_SCHEMA_VERSION = '1.0.0';
+const GOALS_STATE_SCHEMA_VERSION = '1.1.0';
 const GOALS_STATE_DB_FILENAME = 'goals-state.db';
 const GOALS_STATE_JSON_FILENAME = 'goals.state.json';
 
@@ -63,8 +63,12 @@ function ensureGoalsDb(sqlitePath) {
       entity_level TEXT NOT NULL,
       entity_id TEXT NOT NULL,
       parent_goal_id TEXT,
+      goal_kind TEXT NOT NULL DEFAULT 'objective',
       title TEXT NOT NULL,
       description TEXT,
+      success_criteria TEXT NOT NULL DEFAULT '',
+      key_result_metric TEXT NOT NULL DEFAULT '',
+      key_result_target TEXT NOT NULL DEFAULT '',
       state TEXT NOT NULL,
       rank INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL,
@@ -76,6 +80,20 @@ function ensureGoalsDb(sqlitePath) {
     CREATE INDEX IF NOT EXISTS idx_goals_registry_parent
       ON goals_registry (parent_goal_id);
   `);
+  const columns = db.prepare(`PRAGMA table_info(goals_registry)`).all();
+  const columnNames = new Set(columns.map((column) => String(column.name)));
+  if (!columnNames.has('goal_kind')) {
+    db.exec(`ALTER TABLE goals_registry ADD COLUMN goal_kind TEXT NOT NULL DEFAULT 'objective';`);
+  }
+  if (!columnNames.has('success_criteria')) {
+    db.exec(`ALTER TABLE goals_registry ADD COLUMN success_criteria TEXT NOT NULL DEFAULT '';`);
+  }
+  if (!columnNames.has('key_result_metric')) {
+    db.exec(`ALTER TABLE goals_registry ADD COLUMN key_result_metric TEXT NOT NULL DEFAULT '';`);
+  }
+  if (!columnNames.has('key_result_target')) {
+    db.exec(`ALTER TABLE goals_registry ADD COLUMN key_result_target TEXT NOT NULL DEFAULT '';`);
+  }
   db.prepare(`
     INSERT OR IGNORE INTO goals_meta (key, value)
     VALUES ('schema_version', ?)
@@ -102,8 +120,12 @@ function normalizeGoalRecord(goal) {
     entity_level: String(record.entity_level || '').trim(),
     entity_id: String(record.entity_id || '').trim(),
     parent_goal_id: record.parent_goal_id ? String(record.parent_goal_id).trim() : null,
+    goal_kind: String(record.goal_kind || 'objective').trim() || 'objective',
     title: String(record.title || '').trim(),
     description: record.description == null ? '' : String(record.description).trim(),
+    success_criteria: record.success_criteria == null ? '' : String(record.success_criteria).trim(),
+    key_result_metric: record.key_result_metric == null ? '' : String(record.key_result_metric).trim(),
+    key_result_target: record.key_result_target == null ? '' : String(record.key_result_target).trim(),
     state: String(record.state || 'active').trim() || 'active',
     rank: Number.isFinite(Number(record.rank)) ? Number(record.rank) : 0,
     created_at: String(record.created_at || now).trim() || now,
@@ -128,8 +150,12 @@ function readAllGoalsFromDb(sqlitePath) {
         entity_level,
         entity_id,
         parent_goal_id,
+        goal_kind,
         title,
         description,
+        success_criteria,
+        key_result_metric,
+        key_result_target,
         state,
         rank,
         created_at,
@@ -160,13 +186,17 @@ function hydrateGoalsDbFromJson(sqlitePath, jsonState) {
         entity_level,
         entity_id,
         parent_goal_id,
+        goal_kind,
         title,
         description,
+        success_criteria,
+        key_result_metric,
+        key_result_target,
         state,
         rank,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const item of jsonState.goals) {
@@ -179,8 +209,12 @@ function hydrateGoalsDbFromJson(sqlitePath, jsonState) {
         goal.entity_level,
         goal.entity_id,
         goal.parent_goal_id,
+        goal.goal_kind,
         goal.title,
         goal.description,
+        goal.success_criteria,
+        goal.key_result_metric,
+        goal.key_result_target,
         goal.state,
         goal.rank,
         goal.created_at,
@@ -243,20 +277,28 @@ function createGoal({ workspaceRoot, goal }) {
         entity_level,
         entity_id,
         parent_goal_id,
+        goal_kind,
         title,
         description,
+        success_criteria,
+        key_result_metric,
+        key_result_target,
         state,
         rank,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       record.id,
       record.entity_level,
       record.entity_id,
       record.parent_goal_id,
+      record.goal_kind,
       record.title,
       record.description,
+      record.success_criteria,
+      record.key_result_metric,
+      record.key_result_target,
       record.state,
       record.rank,
       record.created_at,
@@ -295,16 +337,24 @@ function updateGoal({ workspaceRoot, goalId, patch }) {
       UPDATE goals_registry
       SET
         parent_goal_id = ?,
+        goal_kind = ?,
         title = ?,
         description = ?,
+        success_criteria = ?,
+        key_result_metric = ?,
+        key_result_target = ?,
         state = ?,
         rank = ?,
         updated_at = ?
       WHERE id = ?
     `).run(
       next.parent_goal_id,
+      next.goal_kind,
       next.title,
       next.description,
+      next.success_criteria,
+      next.key_result_metric,
+      next.key_result_target,
       next.state,
       next.rank,
       next.updated_at,
@@ -353,6 +403,58 @@ function listGoalsForEntity(state, entityLevel, entityId) {
   return goals.filter((goal) => goal.entity_level === entityLevel && goal.entity_id === entityId);
 }
 
+function replaceAllGoals({ workspaceRoot, goals }) {
+  const artifacts = resolveGoalsArtifacts(workspaceRoot);
+  const db = ensureGoalsDb(artifacts.sqlitePath);
+  try {
+    db.exec('DELETE FROM goals_registry;');
+    const insert = db.prepare(`
+      INSERT INTO goals_registry (
+        id,
+        entity_level,
+        entity_id,
+        parent_goal_id,
+        goal_kind,
+        title,
+        description,
+        success_criteria,
+        key_result_metric,
+        key_result_target,
+        state,
+        rank,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const item of Array.isArray(goals) ? goals : []) {
+      const goal = normalizeGoalRecord(item);
+      if (!goal.entity_level || !goal.entity_id || !goal.title) {
+        continue;
+      }
+      insert.run(
+        goal.id,
+        goal.entity_level,
+        goal.entity_id,
+        goal.parent_goal_id,
+        goal.goal_kind,
+        goal.title,
+        goal.description,
+        goal.success_criteria,
+        goal.key_result_metric,
+        goal.key_result_target,
+        goal.state,
+        goal.rank,
+        goal.created_at,
+        goal.updated_at,
+      );
+    }
+  } finally {
+    db.close();
+    syncGoalsProjection(workspaceRoot);
+  }
+}
+
 module.exports = {
   GOALS_STATE_SCHEMA_VERSION,
   GOALS_STATE_DB_FILENAME,
@@ -363,5 +465,6 @@ module.exports = {
   updateGoal,
   deleteGoal,
   listGoalsForEntity,
+  replaceAllGoals,
   generateGoalId,
 };
