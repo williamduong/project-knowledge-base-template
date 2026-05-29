@@ -125,18 +125,29 @@ function MetricCard({
 }
 
 function StageTab({
+  view,
   active,
   label,
   caption,
   onClick,
 }: {
+  view: PlanningView
   active: boolean
   label: string
   caption: string
   onClick: () => void
 }) {
   return (
-    <button type="button" className={`planning-stage-tab${active ? ' active' : ''}`} onClick={onClick}>
+    <button
+      id={`planning-tab-${view}`}
+      type="button"
+      role="tab"
+      aria-selected={active}
+      aria-controls={`planning-panel-${view}`}
+      tabIndex={active ? 0 : -1}
+      className={`planning-stage-tab${active ? ' active' : ''}`}
+      onClick={onClick}
+    >
       <strong>{label}</strong>
       <span>{caption}</span>
     </button>
@@ -1014,169 +1025,171 @@ export function IntentsListPage() {
 
   return (
     <section className="workspace-page planning-workspace-page">
-      <div className="planning-hero">
-        <div className="planning-hero-copy">
-          <p className="workspace-eyebrow">Intent Workspace v3.0</p>
-          <h1>{data.northStar.title}</h1>
-          <p>{withSampleCopy(data.northStar.description)}</p>
-          <div className="planning-hero-meta">
-            <span className="meta-pill">{data.workspace.mode}</span>
-            <span className="meta-pill">GraphDB native</span>
-            <span className="meta-pill">Checked {new Date(data.checkedAt).toLocaleString()}</span>
-          </div>
-        </div>
-        <div className="planning-metrics-grid">
-          <MetricCard label="Objectives" value={String(data.summary.objectives)} tone="status-neutral" icon={target} />
-          <MetricCard label="Key Results" value={String(data.summary.keyResults)} tone="status-good" icon={blocks} />
-          <MetricCard label="Intents" value={String(data.summary.intents)} tone="status-live" icon={waypoints} />
-          <MetricCard label="Tasks" value={String(data.summary.tasks)} tone="status-neutral" icon={listTodo} />
-        </div>
-      </div>
-
-      <div className="planning-focus-strip">
-        <article className="planning-focus-card">
-          <p className="workspace-eyebrow">What matters now</p>
-          <h3>{featuredRelease ? featuredRelease.title : 'Release view is ready'}</h3>
-          <p>{featuredRelease ? excerpt(featuredRelease.description, 140) : 'Use releases as the first aggregation layer before drilling into individual intents.'}</p>
-          <button type="button" className="planning-inline-action" onClick={() => openView('releases', featuredRelease?.id ?? null)}>
-            Open releases
-            <Icon icon={chevronRight} />
-          </button>
-        </article>
-        <article className="planning-focus-card">
-          <p className="workspace-eyebrow">Coverage</p>
-          <h3>{linkedCoverage}% of intents mapped to KR</h3>
-          <p>{data.summary.mappedIntents} linked intents already anchor execution to a measurable key result.</p>
-          <button type="button" className="planning-inline-action" onClick={() => openView('okr')}>
-            Open OKR explorer
-            <Icon icon={chevronRight} />
-          </button>
-        </article>
-        <article className="planning-focus-card planning-focus-card-warn">
-          <p className="workspace-eyebrow">Needs action</p>
-          <h3>{data.summary.intentsWithoutKeyResult} intents still missing KR</h3>
-          <p>These stay visible as remediation work instead of blending into healthy execution records.</p>
-          <button type="button" className="planning-inline-action" onClick={() => openView('intents', missingKeyResultIntents[0]?.id ?? null)}>
-            Review remediation queue
-            <Icon icon={chevronRight} />
-          </button>
-        </article>
-      </div>
-
-      <div className="planning-stage-nav">
-        <StageTab active={activeView === 'overview'} label="Overview" caption="Start broad, then drill down" onClick={() => openView('overview', data.workspace.id)} />
-        <StageTab active={activeView === 'okr'} label="OKR" caption="Objectives first, key results second" onClick={() => openView('okr')} />
-        <StageTab active={activeView === 'releases'} label="Releases" caption="Milestones are intent bundles" onClick={() => openView('releases')} />
-        <StageTab active={activeView === 'intents'} label="Intents" caption="Execution records and remediation" onClick={() => openView('intents')} />
-        <StageTab active={activeView === 'graph'} label="Graph" caption="Native graph only when needed" onClick={() => openView('graph')} />
+      <div className="planning-stage-nav" role="tablist" aria-label="Planning workspace views">
+        <StageTab view="overview" active={activeView === 'overview'} label="Overview" caption="Start broad, then drill down" onClick={() => openView('overview', data.workspace.id)} />
+        <StageTab view="okr" active={activeView === 'okr'} label="OKR" caption="Objectives first, key results second" onClick={() => openView('okr')} />
+        <StageTab view="releases" active={activeView === 'releases'} label="Releases" caption="Milestones are intent bundles" onClick={() => openView('releases')} />
+        <StageTab view="intents" active={activeView === 'intents'} label="Intents" caption="Execution records and remediation" onClick={() => openView('intents')} />
+        <StageTab view="graph" active={activeView === 'graph'} label="Graph" caption="Native graph only when needed" onClick={() => openView('graph')} />
       </div>
 
       {activeView === 'overview' ? (
-        <div className="planning-story-grid">
-          <article className="planning-panel planning-story-card">
-            <div className="planning-panel-head">
-              <div>
-                <p className="workspace-eyebrow">Top level</p>
-                <h2>Overview before detail</h2>
+        <div id="planning-panel-overview" role="tabpanel" aria-labelledby="planning-tab-overview" className="planning-overview-stack">
+          <div className="planning-hero">
+            <div className="planning-hero-copy">
+              <p className="workspace-eyebrow">Intent Workspace v3.0</p>
+              <h1>{data.northStar.title}</h1>
+              <p>{withSampleCopy(data.northStar.description)}</p>
+              <div className="planning-hero-meta">
+                <span className="meta-pill">{data.workspace.mode}</span>
+                <span className="meta-pill">GraphDB native</span>
+                <span className="meta-pill">Checked {new Date(data.checkedAt).toLocaleString()}</span>
               </div>
             </div>
-            <div className="planning-overview-list">
-              <button type="button" className="planning-link-row" onClick={() => openView('releases', featuredRelease?.id ?? null)}>
-                <span>{featuredRelease ? featuredRelease.title : 'No release highlighted yet'}</span>
-                <span className="meta-pill">{featuredRelease ? `${featuredRelease.intents.length} intents` : 'release'}</span>
-              </button>
-              <button type="button" className="planning-link-row" onClick={() => openView('okr', topObjectives[0]?.id ?? null)}>
-                <span>{topObjectives[0] ? `${topObjectives[0].code} — ${topObjectives[0].title}` : 'No objective loaded'}</span>
-                <span className="meta-pill">{topObjectives[0]?.key_results.length ?? 0} KR</span>
-              </button>
-              <button type="button" className="planning-link-row" onClick={() => openView('intents', activeIntents[0]?.id ?? null)}>
-                <span>{activeIntents[0] ? activeIntents[0].title : 'No active intent in current filter'}</span>
-                <span className={`meta-pill ${activeIntents[0] ? intentTone(activeIntents[0]) : 'status-neutral'}`}>{activeIntents[0] ? lifecycleLabel(activeIntents[0].lifecycle) : 'intent'}</span>
-              </button>
+            <div className="planning-metrics-grid">
+              <MetricCard label="Objectives" value={String(data.summary.objectives)} tone="status-neutral" icon={target} />
+              <MetricCard label="Key Results" value={String(data.summary.keyResults)} tone="status-good" icon={blocks} />
+              <MetricCard label="Intents" value={String(data.summary.intents)} tone="status-live" icon={waypoints} />
+              <MetricCard label="Tasks" value={String(data.summary.tasks)} tone="status-neutral" icon={listTodo} />
             </div>
-          </article>
+          </div>
 
-          <article className="planning-panel planning-story-card">
-            <div className="planning-panel-head">
-              <div>
-                <p className="workspace-eyebrow">Objectives</p>
-                <h2>What the OKR layer is driving</h2>
+          <div className="planning-focus-strip">
+            <article className="planning-focus-card">
+              <p className="workspace-eyebrow">What matters now</p>
+              <h3>{featuredRelease ? featuredRelease.title : 'Release view is ready'}</h3>
+              <p>{featuredRelease ? excerpt(featuredRelease.description, 140) : 'Use releases as the first aggregation layer before drilling into individual intents.'}</p>
+              <button type="button" className="planning-inline-action" onClick={() => openView('releases', featuredRelease?.id ?? null)}>
+                Open releases
+                <Icon icon={chevronRight} />
+              </button>
+            </article>
+            <article className="planning-focus-card">
+              <p className="workspace-eyebrow">Coverage</p>
+              <h3>{linkedCoverage}% of intents mapped to KR</h3>
+              <p>{data.summary.mappedIntents} linked intents already anchor execution to a measurable key result.</p>
+              <button type="button" className="planning-inline-action" onClick={() => openView('okr')}>
+                Open OKR explorer
+                <Icon icon={chevronRight} />
+              </button>
+            </article>
+            <article className="planning-focus-card planning-focus-card-warn">
+              <p className="workspace-eyebrow">Needs action</p>
+              <h3>{data.summary.intentsWithoutKeyResult} intents still missing KR</h3>
+              <p>These stay visible as remediation work instead of blending into healthy execution records.</p>
+              <button type="button" className="planning-inline-action" onClick={() => openView('intents', missingKeyResultIntents[0]?.id ?? null)}>
+                Review remediation queue
+                <Icon icon={chevronRight} />
+              </button>
+            </article>
+          </div>
+
+          <div className="planning-story-grid">
+            <article className="planning-panel planning-story-card">
+              <div className="planning-panel-head">
+                <div>
+                  <p className="workspace-eyebrow">Top level</p>
+                  <h2>Overview before detail</h2>
+                </div>
               </div>
-            </div>
-            <div className="planning-list-stack">
-              {topObjectives.map((objective) => (
-                <button key={objective.id} type="button" className="planning-list-card" onClick={() => openView('okr', objective.id)}>
-                  <div className="planning-list-card-head">
-                    <div>
-                      <span className="workspace-eyebrow">{objective.code}</span>
-                      <strong>{objective.title}</strong>
-                    </div>
-                    <span className="status-pill status-neutral">{objective.key_results.length} KR</span>
-                  </div>
-                  <p>{excerpt(objective.description, 120)}</p>
+              <div className="planning-overview-list">
+                <button type="button" className="planning-link-row" onClick={() => openView('releases', featuredRelease?.id ?? null)}>
+                  <span>{featuredRelease ? featuredRelease.title : 'No release highlighted yet'}</span>
+                  <span className="meta-pill">{featuredRelease ? `${featuredRelease.intents.length} intents` : 'release'}</span>
                 </button>
-              ))}
-            </div>
-          </article>
-
-          <article className="planning-panel planning-story-card">
-            <div className="planning-panel-head">
-              <div>
-                <p className="workspace-eyebrow">Remediation</p>
-                <h2>Intent must bind to KR</h2>
+                <button type="button" className="planning-link-row" onClick={() => openView('okr', topObjectives[0]?.id ?? null)}>
+                  <span>{topObjectives[0] ? `${topObjectives[0].code} — ${topObjectives[0].title}` : 'No objective loaded'}</span>
+                  <span className="meta-pill">{topObjectives[0]?.key_results.length ?? 0} KR</span>
+                </button>
+                <button type="button" className="planning-link-row" onClick={() => openView('intents', activeIntents[0]?.id ?? null)}>
+                  <span>{activeIntents[0] ? activeIntents[0].title : 'No active intent in current filter'}</span>
+                  <span className={`meta-pill ${activeIntents[0] ? intentTone(activeIntents[0]) : 'status-neutral'}`}>{activeIntents[0] ? lifecycleLabel(activeIntents[0].lifecycle) : 'intent'}</span>
+                </button>
               </div>
-            </div>
-            <div className="planning-list-stack">
-              {missingKeyResultIntents.slice(0, 5).map((intent) => (
-                <article key={intent.id} className="planning-remediation-card planning-remediation-inline-card">
-                  <button type="button" className="planning-remediation-summary" onClick={() => openView('intents', intent.id)}>
-                    <div>
-                      <strong>{intent.title}</strong>
-                      <p>{intent.id}</p>
+            </article>
+
+            <article className="planning-panel planning-story-card">
+              <div className="planning-panel-head">
+                <div>
+                  <p className="workspace-eyebrow">Objectives</p>
+                  <h2>What the OKR layer is driving</h2>
+                </div>
+              </div>
+              <div className="planning-list-stack">
+                {topObjectives.map((objective) => (
+                  <button key={objective.id} type="button" className="planning-list-card" onClick={() => openView('okr', objective.id)}>
+                    <div className="planning-list-card-head">
+                      <div>
+                        <span className="workspace-eyebrow">{objective.code}</span>
+                        <strong>{objective.title}</strong>
+                      </div>
+                      <span className="status-pill status-neutral">{objective.key_results.length} KR</span>
                     </div>
-                    <Icon icon={chevronRight} />
+                    <p>{excerpt(objective.description, 120)}</p>
                   </button>
-                  <div className="planning-inline-assistant-row">
-                    <button
-                      type="button"
-                      className="planning-inline-secondary-action"
-                      onClick={() => openUpdateKRDailog(intent.id)}
-                    >
-                      <Icon icon={sparkles} />
-                      <strong>Update KR</strong>
-                    </button>
-                    {intent.validation_state === 'proposed-new-key-result' ? (
-                      <p className="planning-inline-assistant-result">
-                        New O/KR proposed and pending acceptance
-                      </p>
-                    ) : intent.validation_state === 'out-of-scope' ? (
-                      <p className="planning-inline-assistant-result">
-                        Marked out of scope
-                      </p>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-              {!missingKeyResultIntents.length ? (
-                <p className="system-card-subtle">No visible remediation item in the current scope.</p>
-              ) : null}
-            </div>
-          </article>
-
-          <article className="planning-panel planning-story-card">
-            <div className="planning-panel-head">
-              <div>
-                <p className="workspace-eyebrow">Selection</p>
-                <h2>Current drilldown</h2>
+                ))}
               </div>
-            </div>
-            <DetailPanel detail={detail} onSelectNode={setSelectedNodeId} />
-          </article>
+            </article>
+
+            <article className="planning-panel planning-story-card">
+              <div className="planning-panel-head">
+                <div>
+                  <p className="workspace-eyebrow">Remediation</p>
+                  <h2>Intent must bind to KR</h2>
+                </div>
+              </div>
+              <div className="planning-list-stack">
+                {missingKeyResultIntents.slice(0, 5).map((intent) => (
+                  <article key={intent.id} className="planning-remediation-card planning-remediation-inline-card">
+                    <button type="button" className="planning-remediation-summary" onClick={() => openView('intents', intent.id)}>
+                      <div>
+                        <strong>{intent.title}</strong>
+                        <p>{intent.id}</p>
+                      </div>
+                      <Icon icon={chevronRight} />
+                    </button>
+                    <div className="planning-inline-assistant-row">
+                      <button
+                        type="button"
+                        className="planning-inline-secondary-action"
+                        onClick={() => openUpdateKRDailog(intent.id)}
+                      >
+                        <Icon icon={sparkles} />
+                        <strong>Update KR</strong>
+                      </button>
+                      {intent.validation_state === 'proposed-new-key-result' ? (
+                        <p className="planning-inline-assistant-result">
+                          New O/KR proposed and pending acceptance
+                        </p>
+                      ) : intent.validation_state === 'out-of-scope' ? (
+                        <p className="planning-inline-assistant-result">
+                          Marked out of scope
+                        </p>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+                {!missingKeyResultIntents.length ? (
+                  <p className="system-card-subtle">No visible remediation item in the current scope.</p>
+                ) : null}
+              </div>
+            </article>
+
+            <article className="planning-panel planning-story-card">
+              <div className="planning-panel-head">
+                <div>
+                  <p className="workspace-eyebrow">Selection</p>
+                  <h2>Current drilldown</h2>
+                </div>
+              </div>
+              <DetailPanel detail={detail} onSelectNode={setSelectedNodeId} />
+            </article>
+          </div>
         </div>
       ) : null}
 
       {activeView === 'okr' ? (
-        <div className="planning-stage-layout">
+        <div id="planning-panel-okr" role="tabpanel" aria-labelledby="planning-tab-okr" className="planning-stage-layout">
           <section className="planning-stage-primary">
             <article className="planning-panel">
               <div className="planning-panel-head">
@@ -1200,7 +1213,7 @@ export function IntentsListPage() {
       ) : null}
 
       {activeView === 'releases' ? (
-        <div className="planning-stage-layout">
+        <div id="planning-panel-releases" role="tabpanel" aria-labelledby="planning-tab-releases" className="planning-stage-layout">
           <section className="planning-stage-primary">
             <article className="planning-panel">
               <div className="planning-panel-head">
@@ -1285,7 +1298,7 @@ export function IntentsListPage() {
       ) : null}
 
       {activeView === 'intents' ? (
-        <div className="planning-stage-layout">
+        <div id="planning-panel-intents" role="tabpanel" aria-labelledby="planning-tab-intents" className="planning-stage-layout">
           <section className="planning-stage-primary">
             <article className="planning-toolbar">
               <label className="planning-search">
@@ -1403,7 +1416,7 @@ export function IntentsListPage() {
       ) : null}
 
       {activeView === 'graph' ? (
-        <div className="planning-stage-layout">
+        <div id="planning-panel-graph" role="tabpanel" aria-labelledby="planning-tab-graph" className="planning-stage-layout">
           <section className="planning-stage-primary">
             <article className="planning-toolbar">
               <label className="planning-search">

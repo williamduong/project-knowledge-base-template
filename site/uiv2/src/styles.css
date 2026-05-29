@@ -3859,6 +3859,11 @@
   gap: 1rem;
 }
 
+.planning-overview-stack {
+  display: grid;
+  gap: 1rem;
+}
+
 .planning-focus-card,
 .planning-stage-nav,
 .planning-story-card,
@@ -3902,22 +3907,29 @@
 }
 
 .planning-stage-nav {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.75rem;
-  padding: 0.45rem;
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding: 0.45rem 0.45rem 0;
   background: rgba(15, 20, 30, 0.92);
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .planning-stage-tab {
-  border: 0;
-  border-radius: 18px;
-  padding: 0.95rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 18px 18px 0 0;
+  padding: 0.85rem 1rem 0.95rem;
   text-align: left;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
   display: grid;
   gap: 0.2rem;
+  min-width: 0;
+  flex: 1 1 0;
+  color: #ebf2fa;
+  position: relative;
+  margin-bottom: -1px;
 }
 
 .planning-stage-tab strong {
@@ -3929,9 +3941,32 @@
   font-size: 0.86rem;
 }
 
+.planning-stage-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.planning-stage-tab:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: -2px;
+}
+
 .planning-stage-tab.active {
-  background: linear-gradient(135deg, rgba(11, 95, 255, 0.14), rgba(255, 122, 0, 0.1));
-  box-shadow: inset 0 0 0 1px rgba(11, 95, 255, 0.2);
+  background:
+    linear-gradient(180deg, rgba(11, 95, 255, 0.18), rgba(11, 95, 255, 0.04) 35%, rgba(15, 20, 30, 0.98) 100%);
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  z-index: 1;
+}
+
+.planning-stage-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0;
+  height: 3px;
+  border-radius: 999px 999px 0 0;
+  background: linear-gradient(90deg, #3b82f6, #ff7a00);
 }
 
 .planning-warning-strip,
@@ -4688,7 +4723,6 @@
 
   .planning-focus-strip,
   .planning-story-grid,
-  .planning-stage-nav,
   .planning-stage-layout {
     grid-template-columns: 1fr;
   }
@@ -4710,8 +4744,21 @@
     grid-template-columns: 1fr;
   }
 
+  .planning-stage-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0.45rem;
+  }
+
   .planning-stage-tab {
+    border-radius: 18px;
+    margin-bottom: 0;
     padding: 0.85rem 0.9rem;
+  }
+
+  .planning-stage-tab.active::after {
+    left: 0.9rem;
+    right: 0.9rem;
   }
 
   .planning-inline-editor {
