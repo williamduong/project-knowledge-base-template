@@ -202,19 +202,24 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 32px;
-  padding: 0 12px;
+  min-height: 34px;
+  padding: 0 14px;
   border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(17, 23, 34, 0.95), rgba(10, 14, 21, 0.95));
+  background: var(--bg-panel);
   color: var(--text);
   border-radius: 8px;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
+}
+
+.tool-button:hover {
+  background: var(--bg-elevated);
 }
 
 .tool-button:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.4;
 }
 
 .refresh-feedback {
@@ -4080,32 +4085,34 @@
 }
 
 .planning-inline-secondary-action {
-  width: fit-content;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  min-height: 32px;
-  background: linear-gradient(180deg, rgba(17, 23, 34, 0.95), rgba(10, 14, 21, 0.95));
-  color: var(--text);
-  padding: 0 12px;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  color: var(--text);
   cursor: pointer;
   font-size: 12px;
+  font-weight: 500;
 }
 
 .planning-inline-secondary-action strong {
-  font-size: 0.9rem;
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1.1;
 }
 
 .planning-inline-secondary-action:hover {
-  background: linear-gradient(180deg, rgba(25, 33, 48, 0.98), rgba(15, 21, 30, 0.96));
+  background: var(--bg-elevated);
 }
 
 .planning-inline-secondary-action:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 .planning-inline-assistant-copy {
@@ -4286,29 +4293,28 @@
 }
 
 .planning-mini-action {
-  border: 0;
-  border-radius: 8px;
-  min-height: 32px;
-  padding: 0 14px;
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.85), rgba(37, 99, 235, 0.9));
-  color: #fff;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  color: var(--text);
   cursor: pointer;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .planning-mini-action:hover {
-  background: linear-gradient(180deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 1));
+  background: var(--bg-elevated);
 }
 
 .planning-mini-action:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
-  background: rgba(148, 163, 184, 0.3);
-  color: rgba(255, 255, 255, 0.5);
+  opacity: 0.4;
 }
 
 .planning-release-members {
