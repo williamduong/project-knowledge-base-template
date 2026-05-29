@@ -55,7 +55,7 @@ const {
   updateAiSettings,
   pingAiSettings,
 } = require(path.join(repoRoot, 'src', 'lib', 'ai-settings.js'));
-const { translateInlineText } = require(path.join(repoRoot, 'src', 'lib', 'inline-translate.js'));
+const { translateInlineText, translateInlineTexts } = require(path.join(repoRoot, 'src', 'lib', 'inline-translate.js'));
 const { connect: connectKnowledgeGraph } = require(path.join(repoRoot, 'src', 'graph-db', 'knowledge'));
 const {
   buildIntentGraphProjection,
@@ -3877,6 +3877,35 @@ export function createApp(commandRunner = executeBridgeCommand) {
       res.status(200).json({
         ok: true,
         ...result,
+      });
+    } catch (error) {
+      res.status(500).json({
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
+  app.post('/api/system/translate-batch', express.json({ limit: '1mb' }), async (req, res) => {
+    try {
+      const texts = Array.isArray(req.body?.texts) ? req.body.texts.filter((value) => typeof value === 'string') : [];
+      const targetLanguage = req.body?.target_language === 'vi' ? 'vi' : 'en';
+      const sourceLanguage = typeof req.body?.source_language === 'string' && req.body.source_language.trim()
+        ? req.body.source_language.trim()
+        : 'auto';
+
+      const items = await translateInlineTexts({
+        texts,
+        targetLanguage,
+        sourceLanguage,
+      });
+
+      res.status(200).json({
+        ok: true,
+        provider: 'google-translate',
+        source_language: sourceLanguage,
+        target_language: targetLanguage,
+        items,
       });
     } catch (error) {
       res.status(500).json({

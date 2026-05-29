@@ -106,10 +106,33 @@ async function translateInlineText({
   };
 }
 
+async function translateInlineTexts({
+  texts,
+  targetLanguage = 'vi',
+  sourceLanguage = 'auto',
+} = {}) {
+  const uniqueTexts = [...new Set((Array.isArray(texts) ? texts : []).map((value) => String(value || '')))];
+  const results = await Promise.all(uniqueTexts.map(async (text) => {
+    const translated = await translateInlineText({
+      text,
+      targetLanguage,
+      sourceLanguage,
+    });
+    return [text, translated.translated_text];
+  }));
+
+  const lookup = new Map(results);
+  return (Array.isArray(texts) ? texts : []).map((text) => ({
+    source_text: String(text || ''),
+    translated_text: lookup.get(String(text || '')) || String(text || ''),
+  }));
+}
+
 module.exports = {
   DOMAIN_TERMS,
   protectDomainTerms,
   restoreDomainTerms,
   parseGoogleTranslatePayload,
   translateInlineText,
+  translateInlineTexts,
 };

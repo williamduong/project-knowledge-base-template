@@ -30,6 +30,7 @@ import { PrinciplesPage } from './pages/kbx/PrinciplesPage'
 import { SearchOverlay } from './SearchOverlay'
 import { productLabel, projectName, tabs } from './shell-data'
 import { UiLanguageProvider, useUiLanguage } from './ui-language'
+import { useAutoTranslateContent } from './hooks/useAutoTranslateContent'
 
 const projectNameStorageKey = 'kbx-ui-project-name'
 
@@ -97,6 +98,7 @@ function ShellFrameContent() {
   const shellStatusQuery = useShellStatus()
   const refreshSystemSnapshot = useRefreshSystemSnapshot()
   const { language, setLanguage, t } = useUiLanguage()
+  useAutoTranslateContent(language)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isEditingProjectName, setIsEditingProjectName] = useState(false)
   const [editableProjectName, setEditableProjectName] = useState(projectName)
