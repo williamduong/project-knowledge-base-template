@@ -182,6 +182,10 @@ function UpdateKRDialog({
   const decision = aiResult?.suggestion.decision
   const aiKRCandidates = aiResult?.suggestion.key_result_candidates ?? []
   const aiReleaseCandidates = aiResult?.suggestion.release_candidates ?? []
+  const defaultAiReleaseId = aiResult?.suggestion.primary_release_id
+    && aiReleaseCandidates.some((candidate) => candidate.id === aiResult.suggestion.primary_release_id)
+    ? aiResult.suggestion.primary_release_id
+    : aiReleaseCandidates[0]?.id || ''
 
   const canAccept = activeTab === 'manual'
     ? Boolean(manualKRId || manualOutOfScope)
@@ -321,8 +325,7 @@ function UpdateKRDialog({
                             className={`planning-list-card${aiKRId === candidate.id ? ' selected' : ''}`}
                             onClick={() => {
                               setAiKRId(candidate.id)
-                              const release = aiReleaseCandidates.find((r) => r.id === candidate.id) || aiReleaseCandidates[0]
-                              if (release) setAiReleaseId(release.id)
+                              setAiReleaseId((current) => current || defaultAiReleaseId)
                             }}
                           >
                             <div className="planning-list-card-head">
