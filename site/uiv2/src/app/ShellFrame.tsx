@@ -268,6 +268,10 @@ function ShellFrameContent() {
                   title="Flow"
                   subtitle="Flow will become the execution grammar of the factory: pipelines, gates, triggers, runs, and map views all belong here."
                   next="Build this after Rules is stable enough to act as the harness for gates and process contracts."
+                  actionLinks={[
+                    { label: 'Open React Flow Lab', to: '/prototype?tab=flow' },
+                    { label: 'Open GraphDB Lab', to: '/prototype?tab=graphdb' },
+                  ]}
                 />
               }
             />

@@ -22,6 +22,7 @@ import {
 import { useMemo, useState, useEffect, lazy, Suspense } from 'react'
 import { GraphDbCytoscapePanel } from '../../components/prototype/GraphDbCytoscapePanel'
 import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 // Lazy-load heavy visualization modules when needed
 // (dynamic imports below inside component)
 import { z } from 'zod'
@@ -242,6 +243,8 @@ function prototypeCharts() {
 }
 
 export function PrototypePage() {
+  const [searchParams] = useSearchParams()
+  const requestedTab = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState<PrototypeTab>('overview')
   const [searchText, setSearchText] = useState('agent')
   const [kindFilter, setKindFilter] = useState('all')
@@ -342,6 +345,25 @@ export function PrototypePage() {
   })
 
   const charts = prototypeCharts()
+
+  useEffect(() => {
+    if (
+      requestedTab === 'overview' ||
+      requestedTab === 'navigation' ||
+      requestedTab === 'tabs' ||
+      requestedTab === 'gates' ||
+      requestedTab === 'grid' ||
+      requestedTab === 'forms' ||
+      requestedTab === 'overlays' ||
+      requestedTab === 'states' ||
+      requestedTab === 'charts' ||
+      requestedTab === 'flow' ||
+      requestedTab === 'graphdb' ||
+      requestedTab === 'components'
+    ) {
+      setActiveTab(requestedTab)
+    }
+  }, [requestedTab])
 
   return (
     <section className="workspace-page">

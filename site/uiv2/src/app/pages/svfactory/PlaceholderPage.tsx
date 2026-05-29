@@ -1,7 +1,13 @@
+import { Link } from 'react-router-dom'
+
 type PlaceholderPageProps = {
   title: string
   subtitle: string
   next: string
+  actionLinks?: Array<{
+    label: string
+    to: string
+  }>
 }
 
 export function PlaceholderPage(props: PlaceholderPageProps) {
@@ -19,6 +25,11 @@ export function PlaceholderPage(props: PlaceholderPageProps) {
           <button className="tool-button" type="button">
             Inspect
           </button>
+          {props.actionLinks?.map((action) => (
+            <Link key={action.to} className="tool-button tool-button-primary" to={action.to}>
+              {action.label}
+            </Link>
+          ))}
         </div>
       </header>
 
