@@ -150,6 +150,7 @@ function UpdateKRDialog({
   isRunning,
   isApplying,
   error,
+  applyError,
   aiResult,
   onClose,
   onRunAI,
@@ -162,6 +163,7 @@ function UpdateKRDialog({
   isRunning: boolean
   isApplying: boolean
   error: string | null
+  applyError: string | null
   aiResult: PlanningAssistantResponse | null
   onClose: () => void
   onRunAI: () => void
@@ -387,6 +389,12 @@ function UpdateKRDialog({
                       {isApplying ? 'Applying...' : 'Accept'}
                     </button>
                   </div>
+                  {applyError ? (
+                    <article className="planning-warning-card planning-error-card">
+                      <strong>Apply failed</strong>
+                      <p>{applyError}</p>
+                    </article>
+                  ) : null}
                 </>
               ) : null}
 
@@ -683,6 +691,7 @@ export function IntentsListPage() {
   const [releaseIntentDrafts, setReleaseIntentDrafts] = useState<Record<string, string>>({})
   const [updateKRDialogIntentId, setUpdateKRDialogIntentId] = useState<string | null>(null)
   const [aiResult, setAiResult] = useState<PlanningAssistantResponse | null>(null)
+  const [applyError, setApplyError] = useState<string | null>(null)
   const deferredSearch = useDeferredValue(searchText)
 
   const data = workspaceQuery.data
@@ -859,6 +868,10 @@ export function IntentsListPage() {
       syncWorkspace(result.workspace)
       setUpdateKRDialogIntentId(null)
       setAiResult(null)
+      setApplyError(null)
+    },
+    onError: (error) => {
+      setApplyError(error instanceof Error ? error.message : 'Apply failed')
     },
   })
 
@@ -866,6 +879,7 @@ export function IntentsListPage() {
     openView('intents', intentId)
     setUpdateKRDialogIntentId(intentId)
     setAiResult(null)
+    setApplyError(null)
   }
 
   function runAIForDialog() {
@@ -876,22 +890,17 @@ export function IntentsListPage() {
 
   async function handleAcceptManual(krId: string | null) {
     if (!updateKRDialogIntent) return
-    try {
-      if (!krId) {
-        await markIntentOutOfScope(updateKRDialogIntent.id)
-      } else {
-        addIntentKeyResultMutation.mutate({ intentId: updateKRDialogIntent.id, keyResultId: krId })
-      }
-    } catch (error) {
-      console.error('Failed to apply manual KR binding:', error)
+    if (!krId) {
+      await markIntentOutOfScope(updateKRDialogIntent.id)
+    } else {
+      addIntentKeyResultMutation.mutate({ intentId: updateKRDialogIntent.id, keyResultId: krId })
     }
   }
 
   function handleAcceptAI(krId: string, releaseId: string, decision: AssistantDecision) {
     if (!updateKRDialogIntent || !aiResult) return
-    adoptAssistantRecommendation(updateKRDialogIntent, krId, releaseId, decision).catch((error) => {
-      console.error('Failed to apply assistant recommendation:', error)
-    })
+    setApplyError(null)
+    adoptAssistantRecommendation(updateKRDialogIntent, krId, releaseId, decision)
   }
 
   function openView(view: PlanningView, nodeId?: string | null) {
@@ -908,8 +917,11 @@ export function IntentsListPage() {
 
   async function adoptAssistantRecommendation(intent: PlanningIntent, krId: string, releaseId: string, decision: AssistantDecision) {
     const suggestion = aiResult?.suggestion
-    if (!suggestion) return
-    await assistantApplyMutation.mutateAsync({
+    if (!suggestion) {
+      setApplyError('No AI suggestion available.')
+      return
+    }
+    assistantApplyMutation.mutate({
       intentId: intent.id,
       body: {
         ...suggestion,
@@ -1425,6 +1437,7 @@ export function IntentsListPage() {
         error={assistantPlanMutation.isError && assistantPlanMutation.variables === updateKRDialogIntentId
           ? (assistantPlanMutation.error instanceof Error ? assistantPlanMutation.error.message : 'Assistant planning failed.')
           : null}
+        applyError={applyError}
         aiResult={aiResult}
         onClose={() => { setUpdateKRDialogIntentId(null); setAiResult(null) }}
         onRunAI={runAIForDialog}
