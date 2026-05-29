@@ -413,6 +413,7 @@ function UpdateKRDialog({
               ) : null}
             </>
           )}
+        </div>
       </div>
     </div>
   )
