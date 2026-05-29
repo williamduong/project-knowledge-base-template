@@ -24,6 +24,32 @@ vi.mock('./hooks/useSystemSnapshot', () => ({
   }),
 }))
 
+vi.mock('./hooks/svfactory/useAiSettings', () => ({
+  useAiSettings: () => ({
+    data: {
+      ok: true,
+      settings: {
+        schema_version: '0.1.0',
+        provider: 'deepseek',
+        ui_language: 'en',
+        model: 'deepseek-v4-flash',
+        endpoint: 'https://api.deepseek.com',
+        system_prompt: '',
+        planning_harness_prompt: '',
+        app_primary_goals: '',
+        app_description: '',
+        has_api_key: false,
+        api_key_masked: null,
+        updated_at: null,
+      },
+    },
+  }),
+  useSaveAiSettings: () => ({
+    isPending: false,
+    mutate: vi.fn(),
+  }),
+}))
+
 vi.mock('./SearchOverlay', () => ({
   SearchOverlay: () => null,
 }))

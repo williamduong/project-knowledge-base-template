@@ -6,6 +6,7 @@ export const aiSettingsQueryKey = ['system-ai-settings']
 export type AiSettings = {
   schema_version: string
   provider: 'deepseek'
+  ui_language: 'en' | 'vi'
   model: string
   endpoint: string
   system_prompt: string

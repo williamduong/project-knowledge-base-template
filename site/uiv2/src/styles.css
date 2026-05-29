@@ -179,6 +179,38 @@
   gap: 6px;
 }
 
+.shell-language-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid rgba(217, 226, 236, 0.12);
+  border-radius: 999px;
+  background: rgba(12, 18, 27, 0.88);
+}
+
+.shell-language-label {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.shell-language-picker select {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+}
+
+.shell-language-picker option {
+  color: var(--text);
+  background: var(--bg-panel);
+}
+
 .icon-tool-button {
   display: inline-flex;
   align-items: center;
@@ -1109,6 +1141,14 @@
 
 .ai-settings-field {
   min-width: 0;
+}
+
+.ai-settings-help {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .ai-settings-field-wide {

@@ -10,6 +10,7 @@ const { createProvider } = require('../llm');
 const DEFAULT_SETTINGS = {
   schema_version: '0.1.0',
   provider: 'deepseek',
+  ui_language: 'en',
   model: 'deepseek-v4-flash',
   endpoint: 'https://api.deepseek.com',
   system_prompt: '',
@@ -23,6 +24,7 @@ const DEFAULT_SETTINGS = {
 const PublicAiSettingsSchema = z.object({
   schema_version: z.string().min(1),
   provider: z.literal('deepseek'),
+  ui_language: z.enum(['en', 'vi']),
   model: z.string().min(1),
   endpoint: z.string().url(),
   system_prompt: z.string(),
@@ -116,6 +118,7 @@ function readAiSettings(workspaceRoot) {
   const normalized = {
     schema_version: raw.schema_version || DEFAULT_SETTINGS.schema_version,
     provider: 'deepseek',
+    ui_language: raw.ui_language === 'vi' ? 'vi' : 'en',
     model: raw.model || DEFAULT_SETTINGS.model,
     endpoint: raw.endpoint || DEFAULT_SETTINGS.endpoint,
     system_prompt: String(raw.system_prompt || ''),
@@ -141,6 +144,7 @@ function updateAiSettings(workspaceRoot, patch = {}) {
   const next = {
     ...raw,
     provider: 'deepseek',
+    ui_language: patch.ui_language === 'vi' ? 'vi' : patch.ui_language === 'en' ? 'en' : (raw.ui_language === 'vi' ? 'vi' : 'en'),
     model: typeof patch.model === 'string' && patch.model.trim() ? patch.model.trim() : raw.model || DEFAULT_SETTINGS.model,
     endpoint: typeof patch.endpoint === 'string' && patch.endpoint.trim() ? patch.endpoint.trim() : raw.endpoint || DEFAULT_SETTINGS.endpoint,
     system_prompt: typeof patch.system_prompt === 'string' ? patch.system_prompt : String(raw.system_prompt || ''),

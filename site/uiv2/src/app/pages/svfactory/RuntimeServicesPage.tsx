@@ -11,6 +11,7 @@ import { useEnsureRuntimeService, useRuntimeServices } from '../../hooks/svfacto
 import { useRefreshSystemSnapshot, useSystemSnapshot } from '../../hooks/svfactory/useSystemSnapshot'
 import { useAiSettings, usePingAiSettings, useSaveAiSettings } from '../../hooks/svfactory/useAiSettings'
 import { useEffect, useState } from 'react'
+import { useUiLanguage } from '../../ui-language'
 
 const RULES_PAGE_SIZE = 20
 
@@ -260,6 +261,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
   const aiSettingsQuery = useAiSettings()
   const saveAiSettings = useSaveAiSettings()
   const pingAiSettings = usePingAiSettings()
+  const { language, setLanguage, t } = useUiLanguage()
   const ensureRuntimeService = useEnsureRuntimeService()
   const refreshSystemSnapshot = useRefreshSystemSnapshot()
   const snapshotMetadata = runtimeServicesQuery.snapshotMetadata
@@ -512,12 +514,12 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
         <aside className="system-sidebar surface-panel compact-note-panel">
           <div className="panel-toolbar">
             <div>
-              <p className="workspace-eyebrow">System Menu</p>
+              <p className="workspace-eyebrow">{t('system.menu')}</p>
               <div className="section-title-row">
                 <span className="section-icon section-icon-system" aria-hidden="true">
                   <Icon icon={settings2} />
                 </span>
-                <h2>Operator Panels</h2>
+                <h2>{t('system.operatorPanels')}</h2>
               </div>
             </div>
           </div>
@@ -529,7 +531,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
             >
               <span className="system-menu-item-label">
                 <Icon icon={server} aria-hidden="true" />
-                <span>Services</span>
+                <span>{t('system.services')}</span>
               </span>
               <small>{summary?.summaryLabel ?? 'pending'}</small>
             </button>
@@ -540,7 +542,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
             >
               <span className="system-menu-item-label">
                 <Icon icon={clock3} aria-hidden="true" />
-                <span>Cron Schedules</span>
+                <span>{t('system.cron')}</span>
               </span>
               <small>{schedules.length} entries</small>
             </button>
@@ -551,7 +553,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
             >
               <span className="system-menu-item-label">
                 <Icon icon={gitBranch} aria-hidden="true" />
-                <span>Pipeline</span>
+                <span>{t('system.pipeline')}</span>
               </span>
               <small>{pipeline?.stepCount ?? 0} steps</small>
             </button>
@@ -562,7 +564,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
             >
               <span className="system-menu-item-label">
                 <Icon icon={shield} aria-hidden="true" />
-                <span>Gates</span>
+                <span>{t('system.gates')}</span>
               </span>
               <small>{gateFailCount > 0 ? `${gateFailCount} blocking` : `${gates.length} tracked`}</small>
             </button>
@@ -573,9 +575,9 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
             >
               <span className="system-menu-item-label">
                 <Icon icon={settings2} aria-hidden="true" />
-                <span>AI Settings</span>
+                <span>{t('system.aiSettings')}</span>
               </span>
-              <small>{aiSettingsQuery.data?.settings.has_api_key ? 'key configured' : 'key missing'}</small>
+              <small>{aiSettingsQuery.data?.settings.has_api_key ? t('system.aiStatus.keyConfigured') : t('system.aiStatus.keyMissing')}</small>
             </button>
           </div>
           <ul className="signal-list">
@@ -860,7 +862,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                     <span className="section-icon section-icon-system" aria-hidden="true">
                       <Icon icon={settings2} />
                     </span>
-                    <h2>AI Settings</h2>
+                    <h2>{t('system.aiSettings')}</h2>
                   </div>
                 </div>
                 <div className="panel-toolbar-meta">
@@ -878,22 +880,35 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
               <div className="system-module-stack">
                 <article className="system-info-card ai-settings-shell">
                   <p className="runtime-card-copy">
-                    Store one DeepSeek key locally, tune the base prompts, then keep the app goals and description close to the runtime so suggestions stay grounded.
+                    {t('system.aiCard.copy')}
                   </p>
                   <div className="ai-settings-grid">
                     <label className="rules-filter-select ai-settings-field">
-                      <span>DeepSeek API Key</span>
+                      <span>{t('system.language.label')}</span>
+                      <select
+                        id="ui-language"
+                        name="ui_language"
+                        value={language}
+                        onChange={(event) => setLanguage(event.target.value === 'vi' ? 'vi' : 'en')}
+                      >
+                        <option value="en">{t('system.language.english')}</option>
+                        <option value="vi">{t('system.language.vietnamese')}</option>
+                      </select>
+                      <small className="ai-settings-help">{t('system.language.help')}</small>
+                    </label>
+                    <label className="rules-filter-select ai-settings-field">
+                      <span>{t('system.ai.key')}</span>
                       <input
                         id="ai-settings-api-key"
                         name="ai_settings_api_key"
                         type="password"
                         value={aiForm.api_key}
-                        placeholder={aiSettingsQuery.data?.settings.has_api_key ? 'Stored key is encrypted locally. Paste new key to replace.' : 'Paste DeepSeek API key'}
+                        placeholder={aiSettingsQuery.data?.settings.has_api_key ? t('system.ai.keyReplacePlaceholder') : t('system.ai.keyPlaceholder')}
                         onChange={(event) => setAiForm((current) => ({ ...current, api_key: event.target.value }))}
                       />
                     </label>
                     <label className="rules-filter-select ai-settings-field">
-                      <span>Model</span>
+                      <span>{t('system.ai.model')}</span>
                       <input
                         id="ai-settings-model"
                         name="ai_settings_model"
@@ -903,7 +918,7 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                       />
                     </label>
                     <label className="rules-filter-select ai-settings-field">
-                      <span>Endpoint</span>
+                      <span>{t('system.ai.endpoint')}</span>
                       <input
                         id="ai-settings-endpoint"
                         name="ai_settings_endpoint"
@@ -913,43 +928,43 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                       />
                     </label>
                     <label className="rules-filter-select ai-settings-field ai-settings-field-wide">
-                      <span>System Prompt</span>
+                      <span>{t('system.ai.systemPrompt')}</span>
                       <textarea
                         id="ai-settings-system-prompt"
                         name="ai_settings_system_prompt"
                         value={aiForm.system_prompt}
                         onChange={(event) => setAiForm((current) => ({ ...current, system_prompt: event.target.value }))}
-                        placeholder="Base instruction for DeepSeek when acting inside this control plane."
+                        placeholder={t('system.ai.systemPromptPlaceholder')}
                       />
                     </label>
                     <label className="rules-filter-select ai-settings-field ai-settings-field-wide">
-                      <span>Planning Harness</span>
+                      <span>{t('system.ai.planningHarness')}</span>
                       <textarea
                         id="ai-settings-planning-harness"
                         name="ai_settings_planning_harness"
                         value={aiForm.planning_harness_prompt}
                         onChange={(event) => setAiForm((current) => ({ ...current, planning_harness_prompt: event.target.value }))}
-                        placeholder="Short harness prompt for planning / suggestion actions."
+                        placeholder={t('system.ai.planningHarnessPlaceholder')}
                       />
                     </label>
                     <label className="rules-filter-select ai-settings-field ai-settings-field-wide">
-                      <span>Primary Goals</span>
+                      <span>{t('system.ai.primaryGoals')}</span>
                       <textarea
                         id="ai-settings-primary-goals"
                         name="ai_settings_primary_goals"
                         value={aiForm.app_primary_goals}
                         onChange={(event) => setAiForm((current) => ({ ...current, app_primary_goals: event.target.value }))}
-                        placeholder="High-level goals that the AI should respect."
+                        placeholder={t('system.ai.primaryGoalsPlaceholder')}
                       />
                     </label>
                     <label className="rules-filter-select ai-settings-field ai-settings-field-wide">
-                      <span>App Description</span>
+                      <span>{t('system.ai.appDescription')}</span>
                       <textarea
                         id="ai-settings-app-description"
                         name="ai_settings_app_description"
                         value={aiForm.app_description}
                         onChange={(event) => setAiForm((current) => ({ ...current, app_description: event.target.value }))}
-                        placeholder="Describe the app and workspace in one grounded paragraph."
+                        placeholder={t('system.ai.appDescriptionPlaceholder')}
                       />
                     </label>
                   </div>
@@ -963,10 +978,10 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                         api_key: aiForm.api_key.trim() ? aiForm.api_key : undefined,
                       })}
                     >
-                      {saveAiSettings.isPending ? 'Saving...' : 'Save Settings'}
+                      {saveAiSettings.isPending ? t('system.ai.saving') : t('system.ai.save')}
                     </button>
                     <button className="tool-button secondary" type="button" onClick={() => pingAiSettings.mutate()}>
-                      {pingAiSettings.isPending ? 'Testing...' : 'Test DeepSeek'}
+                      {pingAiSettings.isPending ? t('system.ai.testing') : t('system.ai.test')}
                     </button>
                     <button
                       className="tool-button subtle"
@@ -976,12 +991,12 @@ export function RuntimeServicesPage(props: RuntimeServicesPageProps) {
                         saveAiSettings.mutate({ clear_api_key: true })
                       }}
                     >
-                      Clear Key
+                      {t('system.ai.clearKey')}
                     </button>
                   </div>
 
                   <div className="ai-settings-feedback">
-                    {saveAiSettings.data?.ok ? <span className="status-pill status-good">Saved</span> : null}
+                    {saveAiSettings.data?.ok ? <span className="status-pill status-good">{t('system.ai.saved')}</span> : null}
                     {pingAiSettings.data?.ok ? (
                       <span className="status-pill status-good">
                         Connected {pingAiSettings.data.provider} {pingAiSettings.data.model ? `(${pingAiSettings.data.model})` : ''} {pingAiSettings.data.latencyMs ? `· ${pingAiSettings.data.latencyMs}ms` : ''}

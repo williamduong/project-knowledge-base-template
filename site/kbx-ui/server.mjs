@@ -3789,6 +3789,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
         settings: {
           schema_version: settings.schema_version,
           provider: settings.provider,
+          ui_language: settings.ui_language,
           model: settings.model,
           endpoint: settings.endpoint,
           system_prompt: settings.system_prompt,
@@ -3816,6 +3817,7 @@ export function createApp(commandRunner = executeBridgeCommand) {
         settings: {
           schema_version: settings.schema_version,
           provider: settings.provider,
+          ui_language: settings.ui_language,
           model: settings.model,
           endpoint: settings.endpoint,
           system_prompt: settings.system_prompt,

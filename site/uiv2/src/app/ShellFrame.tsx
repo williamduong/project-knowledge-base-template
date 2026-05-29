@@ -29,6 +29,7 @@ import { DecisionsPage } from './pages/kbx/DecisionsPage'
 import { PrinciplesPage } from './pages/kbx/PrinciplesPage'
 import { SearchOverlay } from './SearchOverlay'
 import { productLabel, projectName, tabs } from './shell-data'
+import { UiLanguageProvider, useUiLanguage } from './ui-language'
 
 const projectNameStorageKey = 'kbx-ui-project-name'
 
@@ -42,6 +43,27 @@ const tabIcons = {
   '/dna': dna,
   '/system': settings2,
 } as const
+
+function tabLabel(path: keyof typeof tabIcons, t: ReturnType<typeof useUiLanguage>['t']) {
+  switch (path) {
+    case '/':
+      return t('tab.dashboard')
+    case '/code':
+      return t('tab.code')
+    case '/intents':
+      return t('tab.intent')
+    case '/rules':
+      return t('tab.rules')
+    case '/flow':
+      return t('tab.flow')
+    case '/tools':
+      return t('tab.tools')
+    case '/dna':
+      return t('tab.dna')
+    case '/system':
+      return t('tab.system')
+  }
+}
 
 function statusItemIcon(key: string, label: string) {
   if (key === 'focus-intent') {
@@ -71,9 +93,10 @@ function statusItemIcon(key: string, label: string) {
   return settings2
 }
 
-export function ShellFrame() {
+function ShellFrameContent() {
   const shellStatusQuery = useShellStatus()
   const refreshSystemSnapshot = useRefreshSystemSnapshot()
+  const { language, setLanguage, t } = useUiLanguage()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isEditingProjectName, setIsEditingProjectName] = useState(false)
   const [editableProjectName, setEditableProjectName] = useState(projectName)
@@ -119,11 +142,11 @@ export function ShellFrame() {
     const nextFingerprint = nextSnapshot?.metadata?.fingerprint ?? shellStatusQuery.data?.fingerprint ?? null
 
     if (nextFingerprint && previousFingerprint && nextFingerprint !== previousFingerprint) {
-      setRefreshFeedback('Updated signals')
+      setRefreshFeedback(t('shell.updatedSignals'))
     } else if (nextFingerprint) {
-      setRefreshFeedback('No signal change')
+      setRefreshFeedback(t('shell.noSignalChange'))
     } else {
-      setRefreshFeedback('Signals unavailable')
+      setRefreshFeedback(t('shell.signalsUnavailable'))
     }
 
     if (nextFingerprint) {
@@ -163,7 +186,7 @@ export function ShellFrame() {
               <button
                 className="project-name-button"
                 type="button"
-                title="Double click to edit project name"
+                title={t('shell.projectEditHint')}
                 onDoubleClick={() => setIsEditingProjectName(true)}
               >
                 <span className="project-name-text">{editableProjectName}</span>
@@ -182,23 +205,34 @@ export function ShellFrame() {
               className={({ isActive }) => `shell-tab${isActive ? ' active' : ''}`}
             >
               <Icon icon={tabIcons[tab.path]} aria-hidden="true" />
-              {tab.label}
+              {tabLabel(tab.path, t)}
             </NavLink>
           ))}
         </nav>
 
         <div className="command-cluster">
+          <label className="shell-language-picker">
+            <span className="shell-language-label">{t('shell.languageShort')}</span>
+            <select
+              aria-label={t('shell.language')}
+              value={language}
+              onChange={(event) => setLanguage(event.target.value === 'vi' ? 'vi' : 'en')}
+            >
+              <option value="en">{t('system.language.english')}</option>
+              <option value="vi">{t('system.language.vietnamese')}</option>
+            </select>
+          </label>
           <button
             className="icon-tool-button"
             type="button"
-            aria-label="Open search"
+            aria-label={t('shell.search')}
             onClick={() => setIsSearchOpen(true)}
           >
             <Icon icon={searchIcon} aria-hidden="true" />
           </button>
           <button className="tool-button" type="button" onClick={handleRefresh}>
             <Icon icon={refreshCw} aria-hidden="true" />
-            {shellStatusQuery.isFetching || refreshSystemSnapshot.isPending ? 'Syncing...' : 'Sync Signals'}
+            {shellStatusQuery.isFetching || refreshSystemSnapshot.isPending ? t('shell.syncing') : t('shell.sync')}
           </button>
           {refreshFeedback ? <span className="refresh-feedback">{refreshFeedback}</span> : null}
         </div>
@@ -304,5 +338,13 @@ export function ShellFrame() {
 
       <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </div>
+  )
+}
+
+export function ShellFrame() {
+  return (
+    <UiLanguageProvider>
+      <ShellFrameContent />
+    </UiLanguageProvider>
   )
 }
