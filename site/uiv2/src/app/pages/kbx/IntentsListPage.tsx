@@ -217,38 +217,46 @@ function UpdateKRDialog({
 
         <div className="planning-assistant-dialog-body">
           {activeTab === 'manual' ? (
-            <div className="planning-detail-stack">
-              <article className="planning-assistant-summary">
-                <strong>Bind this intent to a key result</strong>
-                <p>Choose an existing key result below.</p>
-              </article>
-              <div className="planning-inline-editor">
-                <select
-                  value={manualKRId}
-                  onChange={(event) => setManualKRId(event.target.value)}
-                  disabled={manualOutOfScope}
-                >
-                  <option value="">Select a key result…</option>
-                  {unusedKRs.map((kr) => (
-                    <option key={kr.id} value={kr.id}>
-                      {kr.code} — {kr.title}
-                    </option>
-                  ))}
-                </select>
+            <>
+              <div className="planning-detail-stack">
+                <article className="planning-assistant-summary">
+                  <strong>Bind this intent to a key result</strong>
+                  <p>Choose an existing key result below.</p>
+                </article>
+                <div className="planning-inline-editor">
+                  <select
+                    value={manualKRId}
+                    onChange={(event) => setManualKRId(event.target.value)}
+                    disabled={manualOutOfScope}
+                  >
+                    <option value="">Select a key result…</option>
+                    {unusedKRs.map((kr) => (
+                      <option key={kr.id} value={kr.id}>
+                        {kr.code} — {kr.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', cursor: 'pointer', padding: '0.5rem 0' }}>
+                  <input
+                    type="checkbox"
+                    checked={manualOutOfScope}
+                    onChange={(event) => {
+                      setManualOutOfScope(event.target.checked)
+                      if (event.target.checked) setManualKRId('')
+                    }}
+                    style={{ width: 16, height: 16, accentColor: '#6ee7b7' }}
+                  />
+                  <span>Mark this intent as out of scope</span>
+                </label>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', cursor: 'pointer', padding: '0.5rem 0' }}>
-                <input
-                  type="checkbox"
-                  checked={manualOutOfScope}
-                  onChange={(event) => {
-                    setManualOutOfScope(event.target.checked)
-                    if (event.target.checked) setManualKRId('')
-                  }}
-                  style={{ width: 16, height: 16, accentColor: '#6ee7b7' }}
-                />
-                <span>Mark this intent as out of scope</span>
-              </label>
-            </div>
+              <div className="planning-assistant-dialog-actions">
+                <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
+                <button type="button" className="tool-button" onClick={handleAccept} disabled={!canAccept || isApplying}>
+                  {isApplying ? 'Applying...' : 'Accept'}
+                </button>
+              </div>
+            </>
           ) : (
             <>
               <article className="planning-assistant-summary">
@@ -258,7 +266,7 @@ function UpdateKRDialog({
 
               {!aiResult && !isRunning && !error ? (
                 <div className="planning-assistant-dialog-body">
-                  <button type="button" className="planning-mini-action" onClick={onRunAI}>
+                  <button type="button" className="tool-button" onClick={onRunAI}>
                     <Icon icon={sparkles} />
                     Run AI Decide
                   </button>
@@ -284,7 +292,7 @@ function UpdateKRDialog({
                     <strong>Assistant planning failed</strong>
                     <p>{error}</p>
                   </article>
-                  <button type="button" className="planning-mini-action" onClick={onRunAI}>
+                  <button type="button" className="tool-button" onClick={onRunAI}>
                     <Icon icon={sparkles} />
                     Run AI Decide
                   </button>
@@ -368,31 +376,43 @@ function UpdateKRDialog({
                     <strong>Next action if accepted</strong>
                     <p>{aiResult.suggestion.next_action}</p>
                   </article>
+
+                  <div className="planning-assistant-dialog-actions">
+                    <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
+                    <button type="button" className="tool-button" onClick={onRunAI} disabled={isRunning || isApplying}>
+                      <Icon icon={sparkles} />
+                      Re-run AI
+                    </button>
+                    <button type="button" className="tool-button" onClick={handleAccept} disabled={!canAccept || isApplying}>
+                      {isApplying ? 'Applying...' : 'Accept'}
+                    </button>
+                  </div>
                 </>
+              ) : null}
+
+              {!isRunning && !aiResult && !error ? (
+                <div className="planning-assistant-dialog-actions">
+                  <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
+                </div>
+              ) : null}
+
+              {isRunning ? (
+                <div className="planning-assistant-dialog-actions">
+                  <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
+                  <button type="button" className="tool-button" disabled>
+                    <Icon icon={loader} style={{ animation: 'spin 0.85s linear infinite' }} />
+                    Running…
+                  </button>
+                </div>
+              ) : null}
+
+              {!isRunning && error ? (
+                <div className="planning-assistant-dialog-actions">
+                  <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
+                </div>
               ) : null}
             </>
           )}
-        </div>
-
-        <div className="planning-assistant-dialog-actions">
-          <button type="button" className="tool-button" onClick={onClose} disabled={isApplying}>Cancel</button>
-          {activeTab === 'ai' && aiResult && !isRunning ? (
-            <button type="button" className="tool-button" onClick={onRunAI} disabled={isRunning || isApplying}>
-              <Icon icon={sparkles} />
-              Re-run AI
-            </button>
-          ) : null}
-          {activeTab === 'ai' && isRunning ? (
-            <button type="button" className="tool-button" disabled>
-              <Icon icon={loader} style={{ animation: 'spin 0.85s linear infinite' }} />
-              Running…
-            </button>
-          ) : null}
-          <button type="button" className="planning-mini-action" onClick={handleAccept} disabled={!canAccept || isApplying}>
-            <Icon icon={plus} />
-            {isApplying ? 'Applying...' : 'Accept'}
-          </button>
-        </div>
       </div>
     </div>
   )
@@ -853,18 +873,24 @@ export function IntentsListPage() {
     }
   }
 
-  function handleAcceptManual(krId: string | null) {
+  async function handleAcceptManual(krId: string | null) {
     if (!updateKRDialogIntent) return
-    if (!krId) {
-      markIntentOutOfScope(updateKRDialogIntent.id)
-    } else {
-      addIntentKeyResultMutation.mutate({ intentId: updateKRDialogIntent.id, keyResultId: krId })
+    try {
+      if (!krId) {
+        await markIntentOutOfScope(updateKRDialogIntent.id)
+      } else {
+        addIntentKeyResultMutation.mutate({ intentId: updateKRDialogIntent.id, keyResultId: krId })
+      }
+    } catch (error) {
+      console.error('Failed to apply manual KR binding:', error)
     }
   }
 
   function handleAcceptAI(krId: string, releaseId: string, decision: AssistantDecision) {
     if (!updateKRDialogIntent || !aiResult) return
-    void adoptAssistantRecommendation(updateKRDialogIntent, krId, releaseId, decision)
+    adoptAssistantRecommendation(updateKRDialogIntent, krId, releaseId, decision).catch((error) => {
+      console.error('Failed to apply assistant recommendation:', error)
+    })
   }
 
   function openView(view: PlanningView, nodeId?: string | null) {
