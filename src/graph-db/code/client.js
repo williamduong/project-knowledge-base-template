@@ -6,22 +6,31 @@
 
 const { Database } = require('arangojs');
 
+const DEFAULT_ARANGODB_URL = 'http://localhost:8529';
+const DEFAULT_ARANGODB_DATABASE = 'kbx_code_graph';
+
 // ---------------------------------------------------------------------------
 // Config resolution (env vars with defaults)
 // ---------------------------------------------------------------------------
 
 function resolveConfig(overrides) {
   return {
-    url:      (overrides && overrides.url)      || process.env.KBX_ARANGODB_URL  || 'http://localhost:8529',
-    database: (overrides && overrides.database) || process.env.KBX_ARANGODB_DB   || 'kbx_code_graph',
+    url:      (overrides && overrides.url)      || process.env.KBX_ARANGODB_URL  || DEFAULT_ARANGODB_URL,
+    database: (overrides && overrides.database) || process.env.KBX_ARANGODB_DB   || DEFAULT_ARANGODB_DATABASE,
     username: (overrides && overrides.username) || process.env.KBX_ARANGODB_USER || 'root',
     password: (overrides && overrides.password) || process.env.KBX_ARANGODB_PASS || '',
+    autoCreateDatabase: Boolean(
+      (overrides && overrides.autoCreateDatabase != null)
+        ? overrides.autoCreateDatabase
+        : process.env.KBX_ARANGODB_AUTO_CREATE_DB === 'true'
+    ),
   };
 }
 
 // ---------------------------------------------------------------------------
 // Connect — returns an authenticated arangojs Database handle.
-// Does NOT create the database if it doesn't exist; call ensureDatabase() first.
+// Creates the default development database automatically, but requires explicit
+// opt-in before creating any custom-named database.
 // ---------------------------------------------------------------------------
 
 async function connect(overrides) {
@@ -34,9 +43,16 @@ async function connect(overrides) {
       auth: { username: cfg.username, password: cfg.password },
     });
 
-    // Ensure the named database exists (create if missing).
+    // Ensure the named database exists.
     const databases = await systemDb.listDatabases();
     if (!databases.includes(cfg.database)) {
+      const canAutoCreate = cfg.autoCreateDatabase || cfg.database === DEFAULT_ARANGODB_DATABASE;
+      if (!canAutoCreate) {
+        throw new Error(
+          `ArangoDB database '${cfg.database}' does not exist at ${cfg.url}. ` +
+          `Set KBX_ARANGODB_AUTO_CREATE_DB=true to create it explicitly.`
+        );
+      }
       await systemDb.createDatabase(cfg.database);
     }
   } catch (error) {
