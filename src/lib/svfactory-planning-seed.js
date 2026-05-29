@@ -4,7 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const { PlanningSeed } = require('../contracts/planning.contract');
+const { resolveExistingState } = require('./context');
 const { resolveGoalsArtifacts, readGoalsState, replaceAllGoals } = require('./goals-state');
+const { listIntentRecords } = require('./intent');
 
 const PLANNING_SEED_RELATIVE_PATH = path.join('svfactory', 'planning.seed.json');
 const INTENT_REVIEW_RELATIVE_PATH = path.join('svfactory', 'planning-intent-review.json');
@@ -143,7 +145,13 @@ function listIntentIds(rootPath, mode) {
 function buildIntentGoalReview(seed, workspaceRoot, existingReview = defaultPlanningReview()) {
   const activeIntentIds = listIntentIds(path.join(workspaceRoot, ACTIVE_INTENTS_RELATIVE_ROOT), 'active');
   const backlogIntentIds = listIntentIds(path.join(workspaceRoot, BACKLOG_INTENTS_RELATIVE_ROOT), 'backlog');
-  const knownIntentIds = [...activeIntentIds, ...backlogIntentIds];
+  const context = resolveExistingState({ workspaceRoot });
+  const knownIntentIds = listIntentRecords(context.contentRoot, {
+    includeActive: true,
+    includeBacklog: true,
+    includeClosed: true,
+    includeArchived: false,
+  }).map((record) => record.id);
   const linkedIntentIds = new Set((seed.intent_goal_links || []).map((link) => link.intent_id));
   const assistantTriage = Object.fromEntries(
     Object.entries(existingReview.assistant_triage || {}).filter(([intentId]) => knownIntentIds.includes(intentId)),

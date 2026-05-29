@@ -100,6 +100,14 @@ lifecycle: backlog
 
 # Intent
 `);
+  writeText(path.join(workspaceRoot, 'knowledge-base', 'intents', '_closed', 'released', 'intent-c', 'intent.md'), `---
+id: intent-c
+title: Intent C
+lifecycle: closed
+---
+
+# Intent
+`);
   return workspaceRoot;
 }
 
@@ -205,5 +213,25 @@ test('assistant decision can mark an intent out of scope', () => {
   assert.equal(
     review.assistant_triage['intent-b'].out_of_scope_reason,
     'The intent is exploratory maintenance work outside the current release objectives.',
+  );
+});
+
+test('assistant triage for closed intents survives planning review rebuilds', () => {
+  const workspaceRoot = buildWorkspaceRoot();
+
+  applyAssistantDecision(workspaceRoot, {
+    intentId: 'intent-c',
+    decision: 'out-of-scope',
+    summary: 'Closed migration intent should stay out of scope after review rebuild.',
+    whyNow: 'Historical closed work should not reappear as an unresolved missing KR.',
+    nextAction: 'Keep it excluded from missing-KR remediation lists.',
+    outOfScopeReason: 'Historical migration intent explicitly excluded from current OKR remediation.',
+  });
+
+  const review = loadPlanningReview(workspaceRoot).review;
+  assert.equal(review.assistant_triage['intent-c'].decision, 'out-of-scope');
+  assert.equal(
+    review.assistant_triage['intent-c'].out_of_scope_reason,
+    'Historical migration intent explicitly excluded from current OKR remediation.',
   );
 });
