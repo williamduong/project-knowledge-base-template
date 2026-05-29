@@ -12,7 +12,6 @@ import sparkles from '@iconify-icons/lucide/sparkles'
 import loader from '@iconify-icons/lucide/loader'
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { PlanningNativeGraph } from '../../components/intents/PlanningNativeGraph'
-import { InlineTranslate } from '../../components/InlineTranslate'
 import {
   addIntentKeyResultLink,
   addIntentToRelease,
@@ -537,7 +536,7 @@ function DetailPanel({
       <article className="planning-detail-card">
         <p className="workspace-eyebrow">Workspace</p>
         <h3>{detail.title}</h3>
-        <InlineTranslate text={excerpt(detail.summary, 220)} />
+        <p>{excerpt(detail.summary, 220)}</p>
         <div className="planning-detail-metrics">
           {detail.metrics.map((metric) => (
             <span key={metric} className="meta-pill">{metric}</span>
@@ -552,7 +551,7 @@ function DetailPanel({
       <article className="planning-detail-card">
         <p className="workspace-eyebrow">Objective {detail.objective.code}</p>
         <h3>{detail.objective.title}</h3>
-        <InlineTranslate text={excerpt(detail.objective.description, 200)} />
+        <p>{excerpt(detail.objective.description, 200)}</p>
         <p className="planning-detail-note">{excerpt(detail.objective.success_criteria, 160)}</p>
         <div className="planning-detail-metrics">
           <span className="meta-pill">{detail.objective.key_results.length} key results</span>
@@ -579,7 +578,7 @@ function DetailPanel({
       <article className="planning-detail-card">
         <p className="workspace-eyebrow">Key Result {detail.keyResult.code}</p>
         <h3>{detail.keyResult.title}</h3>
-        <InlineTranslate text={excerpt(detail.keyResult.description, 200)} />
+        <p>{excerpt(detail.keyResult.description, 200)}</p>
         <div className="planning-detail-stack">
           <div>
             <span className="runtime-overview-label">Metric</span>
@@ -610,7 +609,7 @@ function DetailPanel({
       <article className="planning-detail-card">
         <p className="workspace-eyebrow">Release {detail.release.code}</p>
         <h3>{detail.release.title}</h3>
-        <InlineTranslate text={excerpt(detail.release.description, 200)} />
+        <p>{excerpt(detail.release.description, 200)}</p>
         <div className="planning-detail-metrics">
           <span className="meta-pill">{detail.release.progress}% complete</span>
           <span className="meta-pill">{detail.release.intents.length} intents</span>
@@ -636,7 +635,7 @@ function DetailPanel({
       <article className="planning-detail-card">
         <p className="workspace-eyebrow">Intent</p>
         <h3>{detail.intent.title}</h3>
-        <InlineTranslate text={excerpt(detail.intent.summary || detail.intent.goal_text, 220)} />
+        <p>{excerpt(detail.intent.summary || detail.intent.goal_text, 220)}</p>
         <div className="planning-detail-metrics">
           <span className={`meta-pill ${intentTone(detail.intent)}`}>{lifecycleLabel(detail.intent.lifecycle)}</span>
           <span className="meta-pill">{detail.intent.task_count} tasks</span>
@@ -648,18 +647,18 @@ function DetailPanel({
           <div className="planning-detail-stack">
             <div>
               <span className="runtime-overview-label">Current focus</span>
-              <InlineTranslate text={detail.intent.focus_current || 'Not set'} />
+              <p>{detail.intent.focus_current || 'Not set'}</p>
             </div>
             <div>
               <span className="runtime-overview-label">Next action</span>
-              <InlineTranslate text={detail.intent.focus_next_action || 'Not set'} />
+              <p>{detail.intent.focus_next_action || 'Not set'}</p>
             </div>
           </div>
         ) : null}
         {detail.intent.out_of_scope_reason ? (
           <div className="planning-detail-list">
             <span className="runtime-overview-label">Out of scope reason</span>
-            <InlineTranslate text={detail.intent.out_of_scope_reason} />
+            <p>{detail.intent.out_of_scope_reason}</p>
           </div>
         ) : null}
         {detail.intent.proposed_objective || detail.intent.proposed_key_result ? (
@@ -704,7 +703,7 @@ function DetailPanel({
     <article className="planning-detail-card">
       <p className="workspace-eyebrow">Task</p>
       <h3>{detail.task.title}</h3>
-      <InlineTranslate text={excerpt(detail.task.description, 220)} />
+      <p>{excerpt(detail.task.description, 220)}</p>
       <div className="planning-detail-metrics">
         <span className="meta-pill">{lifecycleLabel(detail.task.state)}</span>
         <span className="meta-pill">{detail.task.section}</span>

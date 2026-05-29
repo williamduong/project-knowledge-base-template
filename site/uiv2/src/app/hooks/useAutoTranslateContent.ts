@@ -14,7 +14,6 @@ type BatchTranslateResponse = {
 }
 
 const SKIP_TAGS = new Set([
-  'BUTTON',
   'INPUT',
   'TEXTAREA',
   'SELECT',
@@ -44,7 +43,7 @@ export function useAutoTranslateContent(language: UiLanguage) {
   const frameRef = useRef<number | null>(null)
 
   useEffect(() => {
-    const root = document.querySelector('.shell-content')
+    const root = document.querySelector('.shell-root')
     if (!root) return
     const rootNode: Node = root
 
@@ -80,7 +79,7 @@ export function useAutoTranslateContent(language: UiLanguage) {
           if (!parent) return NodeFilter.FILTER_REJECT
           if (parent.closest('[data-no-auto-translate="true"]')) return NodeFilter.FILTER_REJECT
           if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT
-          if (parent.closest('button, input, textarea, select, option, code, pre, nav')) return NodeFilter.FILTER_REJECT
+          if (parent.closest('input, textarea, select, option, code, pre')) return NodeFilter.FILTER_REJECT
           return shouldTranslateText(node.textContent || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
         },
       })
