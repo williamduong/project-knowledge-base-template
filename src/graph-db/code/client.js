@@ -27,15 +27,27 @@ function resolveConfig(overrides) {
 async function connect(overrides) {
   const cfg = resolveConfig(overrides);
 
-  const systemDb = new Database({
-    url: cfg.url,
-    auth: { username: cfg.username, password: cfg.password },
-  });
+  let systemDb;
+  try {
+    systemDb = new Database({
+      url: cfg.url,
+      auth: { username: cfg.username, password: cfg.password },
+    });
 
-  // Ensure the named database exists (create if missing).
-  const databases = await systemDb.listDatabases();
-  if (!databases.includes(cfg.database)) {
-    await systemDb.createDatabase(cfg.database);
+    // Ensure the named database exists (create if missing).
+    const databases = await systemDb.listDatabases();
+    if (!databases.includes(cfg.database)) {
+      await systemDb.createDatabase(cfg.database);
+    }
+  } catch (error) {
+    const message = error.message || String(error);
+    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || message.includes('connect')) {
+      throw new Error(`ArangoDB is not reachable at ${cfg.url}. Make sure ArangoDB is running.`);
+    }
+    if (error.code === 401 || message.includes('authentication')) {
+      throw new Error(`ArangoDB authentication failed for user '${cfg.username}'. Check KBX_ARANGODB_USER / KBX_ARANGODB_PASS.`);
+    }
+    throw new Error(`ArangoDB connection failed (${cfg.url}): ${message || 'unknown error'}`);
   }
 
   const db = systemDb.database(cfg.database);
