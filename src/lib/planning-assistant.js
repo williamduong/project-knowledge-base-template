@@ -390,7 +390,27 @@ function parseJsonBlock(text) {
   if (firstBrace === -1 || lastBrace === -1) {
     throw new Error('Assistant response did not contain a JSON object.');
   }
-  return JSON.parse(payload.slice(firstBrace, lastBrace + 1));
+  let json = payload.slice(firstBrace, lastBrace + 1);
+
+  // Repair common LLM JSON formatting errors
+  json = repairJson(json);
+
+  return JSON.parse(json);
+}
+
+function repairJson(json) {
+  // Remove trailing commas before ] or }
+  let repaired = json.replace(/,(\s*[}\]])/g, '$1');
+
+  // Fix missing commas between array elements: }\n{ or ]\n[ or }\s*{ or ]\s*[
+  // Pattern: } or ] followed by newline/whitespace then { or [ without a comma
+  repaired = repaired.replace(/([}\]])\s*\n\s*([{\[])/g, '$1,\n$2');
+  repaired = repaired.replace(/([}\]])\s+([{\[])/g, '$1, $2');
+
+  // Fix missing commas between string values in arrays (e.g., "a"\n"b")
+  repaired = repaired.replace(/("\s*\n\s*")/g, '",\n"');
+
+  return repaired;
 }
 
 async function generateIntentPlanSuggestion(
@@ -429,6 +449,7 @@ async function generateIntentPlanSuggestion(
       await provider.extract(prompt, RecommendationJsonSchema),
     );
   } catch (error) {
+    console.error('[planning-assistant] extract failed, trying fallback:', error.message);
     if (!provider.complete) {
       throw error;
     }
@@ -450,14 +471,19 @@ async function generateIntentPlanSuggestion(
     ], {
       maxTokens: 2000,
     });
-    const parsed = parseJsonBlock(fallbackResult.text);
-    parsed.key_result_candidates = Array.isArray(parsed.key_result_candidates)
-      ? parsed.key_result_candidates.slice(0, 3)
-      : [];
-    parsed.release_candidates = Array.isArray(parsed.release_candidates)
-      ? parsed.release_candidates.slice(0, 3)
-      : [];
-    raw = RecommendationSchema.parse(parsed);
+    try {
+      const parsed = parseJsonBlock(fallbackResult.text);
+      parsed.key_result_candidates = Array.isArray(parsed.key_result_candidates)
+        ? parsed.key_result_candidates.slice(0, 3)
+        : [];
+      parsed.release_candidates = Array.isArray(parsed.release_candidates)
+        ? parsed.release_candidates.slice(0, 3)
+        : [];
+      raw = RecommendationSchema.parse(parsed);
+    } catch (fallbackError) {
+      console.error('[planning-assistant] fallback parse failed. Raw response:', fallbackResult.text?.substring(0, 500));
+      throw fallbackError;
+    }
   }
 
   return {

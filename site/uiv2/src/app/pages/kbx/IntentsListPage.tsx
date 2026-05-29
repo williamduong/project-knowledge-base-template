@@ -284,6 +284,11 @@ function UpdateKRDialog({
                     <strong>Assistant planning failed</strong>
                     <p>{error}</p>
                   </article>
+                  <button type="button" className="planning-mini-action" onClick={onRunAI}>
+                    <Icon icon={sparkles} />
+                    Run AI Decide
+                  </button>
+                  <p className="planning-inline-assistant-copy">Click to retry. The AI may return a better response on the next attempt.</p>
                 </div>
               ) : null}
 
