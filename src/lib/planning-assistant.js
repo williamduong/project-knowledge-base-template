@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('node:fs');
+const path = require('node:path');
 const { z } = require('zod');
 
 const { readAiSettings } = require('./ai-settings');
@@ -9,6 +11,7 @@ const DEFAULT_SYSTEM_PROMPT =
   'You are the planning copilot for this control plane. Stay grounded in the current workspace state, prefer clarity over verbosity, and never invent IDs, releases, key results, or progress.';
 const DEFAULT_HARNESS_PROMPT =
   'Summarize the current state, identify the most important planning gap, and recommend the smallest useful next action tied to a key result or release.';
+const FAILURE_LOG_RELATIVE_ROOT = path.join('svfactory', '.tmp-planning-assistant-failures');
 
 const RecommendationSchema = z.object({
   decision: z.enum(['bind-existing', 'propose-new-okr', 'out-of-scope']),
@@ -347,6 +350,42 @@ function buildPrompt({ settings, workspace, intent, keyResults, releases }) {
   ].join('\n');
 }
 
+function sanitizeFileToken(value) {
+  return String(value || 'unknown')
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'unknown';
+}
+
+function serializeError(error) {
+  if (!error) return null;
+  return {
+    name: error.name || 'Error',
+    message: error.message || String(error),
+    stack: error.stack || null,
+  };
+}
+
+function logPlanningAssistantFailure(workspaceRoot, payload) {
+  const logRoot = path.join(workspaceRoot, FAILURE_LOG_RELATIVE_ROOT);
+  fs.mkdirSync(logRoot, { recursive: true });
+
+  const timestamp = new Date().toISOString();
+  const stamp = timestamp.replace(/[:.]/g, '-');
+  const intentToken = sanitizeFileToken(payload.intent_id);
+  const stageToken = sanitizeFileToken(payload.stage);
+  const filePath = path.join(logRoot, `${stamp}-${intentToken}-${stageToken}.json`);
+
+  const record = {
+    logged_at: timestamp,
+    ...payload,
+  };
+
+  fs.writeFileSync(filePath, `${JSON.stringify(record, null, 2)}\n`, 'utf8');
+  return filePath;
+}
+
 function enrichRecommendations(raw, keyResults, releases) {
   const keyResultMap = new Map(keyResults.map((item) => [item.id, item]));
   const releaseMap = new Map(releases.map((item) => [item.id, item]));
@@ -655,6 +694,16 @@ async function generateIntentPlanSuggestion(
   } catch (error) {
     console.error('[planning-assistant] extract failed, trying fallback:', error.message);
     if (!provider.complete) {
+      const failurePath = logPlanningAssistantFailure(workspaceRoot, {
+        stage: 'extract',
+        intent_id: intent.id,
+        model: settings.model,
+        provider: 'deepseek',
+        prompt,
+        extract_error: serializeError(error),
+        fallback_available: false,
+      });
+      console.error('[planning-assistant] wrote failure artifact:', failurePath);
       throw error;
     }
 
@@ -688,6 +737,17 @@ async function generateIntentPlanSuggestion(
       raw = RecommendationSchema.parse(parsed);
     } catch (fallbackError) {
       console.error('[planning-assistant] fallback parse failed. Raw response:', fallbackResult.text?.substring(0, 500));
+      const failurePath = logPlanningAssistantFailure(workspaceRoot, {
+        stage: 'fallback-parse',
+        intent_id: intent.id,
+        model: settings.model,
+        provider: 'deepseek',
+        prompt,
+        extract_error: serializeError(error),
+        fallback_error: serializeError(fallbackError),
+        raw_response_text: fallbackResult.text || '',
+      });
+      console.error('[planning-assistant] wrote failure artifact:', failurePath);
       throw fallbackError;
     }
   }
@@ -708,6 +768,7 @@ module.exports = {
   selectReleaseCandidates,
   buildPrompt,
   generateIntentPlanSuggestion,
+  logPlanningAssistantFailure,
   parseJsonBlock,
   repairJson,
 };

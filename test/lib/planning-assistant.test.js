@@ -11,6 +11,7 @@ const {
   selectKeyResultCandidates,
   selectReleaseCandidates,
   generateIntentPlanSuggestion,
+  logPlanningAssistantFailure,
   parseJsonBlock,
   repairJson,
 } = require('../../src/lib/planning-assistant');
@@ -323,4 +324,26 @@ test('parseJsonBlock throws when no braces found', () => {
 test('repairJson is idempotent on valid JSON', () => {
   const valid = '{"a":1,"b":[2,3]}';
   assert.equal(repairJson(valid), valid);
+});
+
+test('logPlanningAssistantFailure writes structured debug artifacts under svfactory temp folder', () => {
+  const workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'planning-assistant-log-'));
+  const filePath = logPlanningAssistantFailure(workspaceRoot, {
+    stage: 'fallback-parse',
+    intent_id: 'intent-a',
+    model: 'deepseek-test',
+    provider: 'deepseek',
+    prompt: 'PROMPT',
+    fallback_error: { message: 'bad json' },
+    raw_response_text: '{"broken":true',
+  });
+
+  assert.equal(fs.existsSync(filePath), true);
+  assert.equal(filePath.includes(path.join('svfactory', '.tmp-planning-assistant-failures')), true);
+
+  const record = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  assert.equal(record.stage, 'fallback-parse');
+  assert.equal(record.intent_id, 'intent-a');
+  assert.equal(record.raw_response_text, '{"broken":true');
+  assert.equal(typeof record.logged_at, 'string');
 });
