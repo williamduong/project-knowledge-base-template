@@ -175,10 +175,9 @@ function UpdateKRDialog({
   const [manualOutOfScope, setManualOutOfScope] = useState(false)
   const [aiKRId, setAiKRId] = useState('')
   const [aiReleaseId, setAiReleaseId] = useState('')
-
-  if (!open || !intent) return null
-
-  const unusedKRs = availableKeyResults.filter((kr) => !intent.linked_key_result_ids.includes(kr.id))
+  const unusedKRs = intent
+    ? availableKeyResults.filter((kr) => !intent.linked_key_result_ids.includes(kr.id))
+    : []
   const decision = aiResult?.suggestion.decision
   const aiKRCandidates = aiResult?.suggestion.key_result_candidates ?? []
   const aiReleaseCandidates = aiResult?.suggestion.release_candidates ?? []
@@ -186,7 +185,6 @@ function UpdateKRDialog({
     && aiReleaseCandidates.some((candidate) => candidate.id === aiResult.suggestion.primary_release_id)
     ? aiResult.suggestion.primary_release_id
     : aiReleaseCandidates[0]?.id || ''
-
   const canAccept = activeTab === 'manual'
     ? Boolean(manualKRId || manualOutOfScope)
     : Boolean(aiResult && (decision === 'out-of-scope' || decision === 'propose-new-okr' || aiKRId))
@@ -215,6 +213,8 @@ function UpdateKRDialog({
     }
     setAiReleaseId(defaultAiReleaseId)
   }, [open, intent?.id, aiResult, decision, defaultAiReleaseId])
+
+  if (!open || !intent) return null
 
   function handleAccept() {
     if (activeTab === 'manual') {
