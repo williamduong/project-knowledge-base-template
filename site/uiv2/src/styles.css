@@ -1582,9 +1582,47 @@
   background: #0b111a;
 }
 
+.prototype-graphdb-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+  gap: 12px;
+}
+
+.prototype-graphdb-stage {
+  display: grid;
+  gap: 12px;
+}
+
+.prototype-graphdb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.prototype-graphdb-canvas {
+  min-height: 560px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(120, 144, 167, 0.2);
+  background:
+    radial-gradient(circle at top left, rgba(110, 231, 183, 0.08), transparent 28%),
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(11, 17, 26, 0.98), rgba(8, 12, 19, 1));
+}
+
+.prototype-graphdb-sidecar {
+  align-self: start;
+}
+
+.prototype-graphdb-detail {
+  display: grid;
+  gap: 8px;
+}
+
 @media (max-width: 1100px) {
   .prototype-form-layout,
-  .prototype-flow-shell {
+  .prototype-flow-shell,
+  .prototype-graphdb-shell {
     grid-template-columns: 1fr;
   }
 }

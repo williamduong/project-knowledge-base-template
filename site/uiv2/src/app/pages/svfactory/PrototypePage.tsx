@@ -20,12 +20,14 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { useMemo, useState, useEffect, lazy, Suspense } from 'react'
+import { GraphDbCytoscapePanel } from '../../components/prototype/GraphDbCytoscapePanel'
 import { useForm } from 'react-hook-form'
-import { PlanningNativeGraph } from '../../components/intents/PlanningNativeGraph'
-import { usePlanningWorkspace } from '../../hooks/kbx/usePlanningWorkspace'
+// Lazy-load heavy visualization modules when needed
+// (dynamic imports below inside component)
 import { z } from 'zod'
+import 'reactflow/dist/style.css'
 
-type PrototypeTab = 'overview' | 'navigation' | 'tabs' | 'gates' | 'grid' | 'forms' | 'overlays' | 'states' | 'charts' | 'flow' | 'components'
+type PrototypeTab = 'overview' | 'navigation' | 'tabs' | 'gates' | 'grid' | 'forms' | 'overlays' | 'states' | 'charts' | 'flow' | 'graphdb' | 'components'
 
 type CatalogCard = {
   label: string
@@ -134,6 +136,24 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
+const flowNodes: any[] = [
+  { id: 'catalog', position: { x: 0, y: 80 }, data: { label: 'Capability Catalog' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
+  { id: 'navigation', position: { x: 220, y: 0 }, data: { label: 'Navigation Family' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
+  { id: 'grid', position: { x: 220, y: 110 }, data: { label: 'Data Grid Family' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
+  { id: 'forms', position: { x: 220, y: 220 }, data: { label: 'Validated Forms' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
+  { id: 'charts', position: { x: 460, y: 55 }, data: { label: 'Charts & Metrics' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
+  { id: 'states', position: { x: 460, y: 170 }, data: { label: 'States & Overlays' }, style: { borderRadius: 12, padding: 10, background: '#101722', color: '#ebf2fa', border: '1px solid #314863' } },
+]
+
+const flowEdges: any[] = [
+  { id: 'e1', source: 'catalog', target: 'navigation', animated: true },
+  { id: 'e2', source: 'catalog', target: 'grid', animated: true },
+  { id: 'e3', source: 'catalog', target: 'forms', animated: true },
+  { id: 'e4', source: 'grid', target: 'charts' },
+  { id: 'e5', source: 'forms', target: 'states' },
+  { id: 'e6', source: 'navigation', target: 'states' },
+]
+
 function toneForSeverity(severity: GridRow['severity']) {
   if (severity === 'error') return 'status-offline'
   if (severity === 'warn') return 'status-warn'
@@ -230,8 +250,6 @@ export function PrototypePage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [sorting, setSorting] = useState<SortingState>([{ id: 'id', desc: false }])
-  const [selectedGraphNodeId, setSelectedGraphNodeId] = useState<string | null>(null)
-  const [graphSearchText, setGraphSearchText] = useState('')
   // Interactive demo state for navigation patterns
   const [topTabIndex, setTopTabIndex] = useState<number>(0)
   const [segmentedIndex, setSegmentedIndex] = useState<number>(1)
@@ -249,14 +267,17 @@ export function PrototypePage() {
 
   // Lazy-loaded modules
   const [EChartsModule, setEChartsModule] = useState<any | null>(null)
+  const [ReactFlowModule, setReactFlowModule] = useState<any | null>(null)
   const ComponentsHub = lazy(() => import('../../components/prototype/ComponentsHub'))
-  const planningWorkspace = usePlanningWorkspace()
 
   useEffect(() => {
     if (activeTab === 'charts' && !EChartsModule) {
       import('echarts-for-react').then((m) => setEChartsModule(m)).catch(() => {})
     }
-  }, [activeTab, EChartsModule])
+    if (activeTab === 'flow' && !ReactFlowModule) {
+      import('reactflow').then((m) => setReactFlowModule(m)).catch(() => {})
+    }
+  }, [activeTab, EChartsModule, ReactFlowModule])
 
   // Data grid expansion state
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
@@ -321,26 +342,6 @@ export function PrototypePage() {
   })
 
   const charts = prototypeCharts()
-  const graphNodes = useMemo(() => {
-    const nodes = planningWorkspace.data?.graph.nodes ?? []
-    const query = graphSearchText.trim().toLowerCase()
-    if (!query) return nodes
-    return nodes.filter((node) => `${node.label} ${node.detail} ${node.metrics.join(' ')}`.toLowerCase().includes(query))
-  }, [graphSearchText, planningWorkspace.data?.graph.nodes])
-  const graphNodeIds = useMemo(() => new Set(graphNodes.map((node) => node.id)), [graphNodes])
-  const graphEdges = useMemo(() => {
-    const edges = planningWorkspace.data?.graph.edges ?? []
-    return edges.filter((edge) => graphNodeIds.has(edge.source) && graphNodeIds.has(edge.target))
-  }, [graphNodeIds, planningWorkspace.data?.graph.edges])
-
-  useEffect(() => {
-    if (!graphNodes.length) {
-      setSelectedGraphNodeId(null)
-      return
-    }
-    if (selectedGraphNodeId && graphNodes.some((node) => node.id === selectedGraphNodeId)) return
-    setSelectedGraphNodeId(graphNodes[0].id)
-  }, [graphNodes, selectedGraphNodeId])
 
   return (
     <section className="workspace-page">
@@ -379,7 +380,8 @@ export function PrototypePage() {
             <button className={`system-menu-item${activeTab === 'overlays' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('overlays')}><span className="system-menu-item-label"><Icon icon={bot} aria-hidden="true" /><span>Overlays</span></span><small>modal + drawer</small></button>
             <button className={`system-menu-item${activeTab === 'states' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('states')}><span className="system-menu-item-label"><Icon icon={shield} aria-hidden="true" /><span>States</span></span><small>loading + empty</small></button>
             <button className={`system-menu-item${activeTab === 'charts' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('charts')}><span className="system-menu-item-label"><Icon icon={chartColumn} aria-hidden="true" /><span>Charts</span></span><small>echarts</small></button>
-            <button className={`system-menu-item${activeTab === 'flow' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('flow')}><span className="system-menu-item-label"><Icon icon={workflow} aria-hidden="true" /><span>GraphDB</span></span><small>native graph</small></button>
+            <button className={`system-menu-item${activeTab === 'flow' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('flow')}><span className="system-menu-item-label"><Icon icon={workflow} aria-hidden="true" /><span>Flow</span></span><small>reactflow</small></button>
+            <button className={`system-menu-item${activeTab === 'graphdb' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('graphdb')}><span className="system-menu-item-label"><Icon icon={server} aria-hidden="true" /><span>GraphDB</span></span><small>cytoscape</small></button>
             <button className={`system-menu-item${activeTab === 'components' ? ' active' : ''}`} type="button" onClick={() => setActiveTab('components')}><span className="system-menu-item-label"><Icon icon={blocks} aria-hidden="true" /><span>Components</span></span><small>controls</small></button>
           </div>
           <ul className="signal-list">
@@ -411,6 +413,7 @@ export function PrototypePage() {
                 <span className="meta-pill">States</span>
                 <span className="meta-pill">Charts</span>
                 <span className="meta-pill">Flow</span>
+                <span className="meta-pill">GraphDB</span>
               </div>
               <div className="system-info-grid prototype-card-grid prototype-overview-grid">
                 {[
@@ -422,6 +425,7 @@ export function PrototypePage() {
                   ['States', 'Loading, success, warning, blocked, empty'],
                   ['Charts', 'Bar, line, donut with real chart library'],
                   ['Flow', 'Node-link canvas for workflow and dependency demos'],
+                  ['GraphDB', 'Cytoscape.js surface for the live planning projection'],
                 ].map(([title, detail]) => (
                   <article key={title} className="system-info-card">
                     <span className="runtime-overview-label">Capability</span>
@@ -852,71 +856,40 @@ export function PrototypePage() {
 
           {activeTab === 'flow' ? (
             <>
-              <div className="panel-toolbar"><div><p className="workspace-eyebrow">GraphDB Native View</p><h2>Planning graph from the live projection</h2></div><span className="count-pill">workspace + OKR + release + intent + task</span></div>
+              <div className="panel-toolbar"><div><p className="workspace-eyebrow">Flow Family</p><h2>React Flow Canvas</h2></div><span className="count-pill">workflow + dependency demo</span></div>
               <div className="prototype-flow-shell">
                 <div className="prototype-flow-canvas">
-                  {planningWorkspace.isLoading ? (
-                    <div className="rules-tool-card prototype-chart-card"><em>Loading GraphDB-backed planning workspace…</em></div>
-                  ) : planningWorkspace.isError ? (
-                    <div className="rules-tool-card prototype-chart-card"><em>Graph workspace failed to load.</em></div>
-                  ) : planningWorkspace.data ? (
-                    <PlanningNativeGraph
-                      nodes={graphNodes}
-                      edges={graphEdges}
-                      selectedNodeId={selectedGraphNodeId}
-                      onSelectNode={setSelectedGraphNodeId}
-                    />
+                  {ReactFlowModule ? (
+                    (() => {
+                      const ReactFlowComp = ReactFlowModule.default || ReactFlowModule.ReactFlow || ReactFlowModule
+                      const MiniMapComp = ReactFlowModule.MiniMap
+                      const ControlsComp = ReactFlowModule.Controls
+                      const BackgroundComp = ReactFlowModule.Background
+                      return (
+                        <ReactFlowComp nodes={flowNodes} edges={flowEdges} fitView>
+                          {MiniMapComp ? <MiniMapComp /> : null}
+                          {ControlsComp ? <ControlsComp /> : null}
+                          {BackgroundComp ? <BackgroundComp /> : null}
+                        </ReactFlowComp>
+                      )
+                    })()
                   ) : (
-                    <div className="rules-tool-card prototype-chart-card"><em>No graph projection loaded.</em></div>
+                    <div className="rules-tool-card prototype-chart-card"><em>Loading flow canvas…</em></div>
                   )}
                 </div>
                 <article className="system-info-card">
-                  <span className="runtime-overview-label">Operator frame</span>
-                  <strong className="system-info-title">Use native UI, not a canvas library demo</strong>
-                  <p>This view now reads the same GraphDB-backed planning projection as the `/intents` workspace, so the prototype tab can evolve into a real graph operator surface instead of a detached React Flow sample.</p>
-                  <label className="rules-filter-select rules-filter-search" style={{ marginTop: '1rem' }}>
-                    <span>Filter graph nodes</span>
-                    <input
-                      type="search"
-                      value={graphSearchText}
-                      onChange={(event) => setGraphSearchText(event.target.value)}
-                      placeholder="objective, key result, intent, release"
-                    />
-                  </label>
-                  <div className="runtime-overview-grid compact-runtime-overview-grid gate-overview-grid" style={{ marginTop: '1rem' }}>
-                    <div className="runtime-overview-card">
-                      <span className="runtime-overview-label">Nodes</span>
-                      <strong>{planningWorkspace.data?.graph.nodes.length ?? 0}</strong>
-                    </div>
-                    <div className="runtime-overview-card">
-                      <span className="runtime-overview-label">Edges</span>
-                      <strong>{planningWorkspace.data?.graph.edges.length ?? 0}</strong>
-                    </div>
-                    <div className="runtime-overview-card">
-                      <span className="runtime-overview-label">Warnings</span>
-                      <strong>{planningWorkspace.data?.validation.warnings.length ?? 0}</strong>
-                    </div>
-                    <div className="runtime-overview-card">
-                      <span className="runtime-overview-label">Source</span>
-                      <strong>{planningWorkspace.data?.workspace.mode ?? 'svfactory-only'}</strong>
-                    </div>
-                  </div>
-                  <div className="rules-pill-row" style={{ marginTop: '1rem' }}>
-                    <span className="meta-pill">{planningWorkspace.data?.source.seedPath ?? 'seed path unavailable'}</span>
-                    {planningWorkspace.data?.source.reviewPath ? (
-                      <span className="meta-pill">{planningWorkspace.data.source.reviewPath}</span>
-                    ) : null}
-                  </div>
-                  <div className="planning-validation-list" style={{ marginTop: '1rem' }}>
-                    {(planningWorkspace.data?.validation.warnings ?? []).slice(0, 4).map((warning) => (
-                      <article key={warning.id} className={`planning-warning-card planning-warning-${warning.level}`}>
-                        <strong>{warning.code}</strong>
-                        <p>{warning.message}</p>
-                      </article>
-                    ))}
-                  </div>
+                  <span className="runtime-overview-label">When to use</span>
+                  <strong className="system-info-title">Process and dependency reasoning</strong>
+                  <p>Good for task flow, approval lanes, dependency paths, or graph-like operator explanation. Avoid when a table or checklist is clearer.</p>
                 </article>
               </div>
+            </>
+          ) : null}
+
+          {activeTab === 'graphdb' ? (
+            <>
+              <div className="panel-toolbar"><div><p className="workspace-eyebrow">GraphDB Family</p><h2>Cytoscape.js planning graph</h2></div><span className="count-pill">live graph projection</span></div>
+              <GraphDbCytoscapePanel />
             </>
           ) : null}
 
