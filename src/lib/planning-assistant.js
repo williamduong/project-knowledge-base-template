@@ -340,6 +340,8 @@ function buildPrompt({ settings, workspace, intent, keyResults, releases }) {
       'If no strong key result match exists, do not force a weak match.',
       'When decision is propose-new-okr, fill proposed_objective and proposed_key_result.',
       'When decision is out-of-scope, fill out_of_scope_reason.',
+      'Return raw JSON only, with every property and array element separated by commas.',
+      'Do not use markdown fences, comments, trailing prose, or omitted commas.',
       'Return concise operator-facing language.',
     ].join('\n'),
   ].join('\n');
@@ -502,6 +504,81 @@ function stripJsonComments(value) {
   return result;
 }
 
+function insertMissingCommas(value) {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  let previousSignificant = '';
+
+  function isValueStart(char) {
+    return char === '{'
+      || char === '['
+      || char === '"'
+      || char === '-'
+      || /[0-9]/.test(char)
+      || char === 't'
+      || char === 'f'
+      || char === 'n';
+  }
+
+  function isValueEnd(char) {
+    return char === '}'
+      || char === ']'
+      || char === '"'
+      || /[0-9]/.test(char)
+      || char === 'e'
+      || char === 'E'
+      || char === 'l';
+  }
+
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      result += char;
+      escaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      if (!inString && isValueEnd(previousSignificant)) {
+        result += ', ';
+      }
+      result += char;
+      inString = !inString;
+      if (!inString) {
+        previousSignificant = '"';
+      }
+      continue;
+    }
+
+    if (inString) {
+      result += char;
+      continue;
+    }
+
+    if (/\s/.test(char)) {
+      result += char;
+      continue;
+    }
+
+    if (isValueStart(char) && isValueEnd(previousSignificant)) {
+      result += ', ';
+    }
+
+    result += char;
+    previousSignificant = char;
+  }
+
+  return result;
+}
+
 function repairJson(json) {
   // Only run repairs if the JSON is actually broken
   try {
@@ -513,36 +590,28 @@ function repairJson(json) {
 
   let repaired = json;
 
-  // 1. Remove trailing commas before ] or }
-  repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+  // 1. Remove comments that appear outside of JSON strings.
+  repaired = stripJsonComments(repaired);
 
-  // 2. Fix missing commas between consecutive values: whitespace between }/] and {/[ 
-  repaired = repaired.replace(/([}\]])\s+([{\[])/g, '$1, $2');
-  // Also fix when they're directly adjacent: }{
-  repaired = repaired.replace(/([}\]])([{\[])/g, '$1, $2');
-
-  // 3. Fix missing commas between quoted strings (both array values and object properties)
-  repaired = repaired.replace(/(")\s+(")/g, '$1, $2');
-
-  // 4. Fix missing commas after number/boolean/null before next value
-  repaired = repaired.replace(/(\d|true|false|null)\s+("|{|\[)/g, '$1, $2');
-
-  // 5. Escape real newlines inside string values without touching token boundaries.
+  // 2. Escape real newlines inside string values without touching token boundaries.
   repaired = escapeNewlinesInsideStrings(repaired);
 
-  // 6. Fix single quotes used instead of double quotes for keys/strings
+  // 3. Fix single quotes used instead of double quotes for keys/strings
   // (only if the JSON clearly uses single quotes pattern)
   if (!repaired.includes('"') && repaired.includes("'")) {
     repaired = repaired.replace(/'/g, '"');
   }
 
-  // 7. Remove comments that appear outside of JSON strings.
-  repaired = stripJsonComments(repaired);
+  // 4. Insert missing commas between adjacent JSON values/tokens.
+  repaired = insertMissingCommas(repaired);
 
-  // 8. Fix duplicate commas
+  // 5. Fix duplicate commas
   repaired = repaired.replace(/,\s*,/g, ',');
 
-  // 9. Collapse multiple consecutive newlines into one (clean up comment removal artifacts)
+  // 6. Remove trailing commas before ] or }
+  repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+
+  // 7. Collapse multiple consecutive newlines into one (clean up comment removal artifacts)
   repaired = repaired.replace(/\n\s*\n/g, '\n');
 
   return repaired;
@@ -595,8 +664,10 @@ async function generateIntentPlanSuggestion(
         content: [
           prompt,
           '',
-          'Return one compact JSON object only.',
+          'Return one compact JSON object only, on a single line.',
           'Do not add prose before or after the JSON.',
+          'Do not use markdown fences.',
+          'Every property and array element must be separated by commas.',
           'Keep key_result_candidates to at most 3 items.',
           'Keep release_candidates to at most 3 items.',
           'If there is no strong KR match, choose propose-new-okr or out-of-scope instead of forcing a weak bind-existing answer.',
