@@ -392,23 +392,53 @@ function parseJsonBlock(text) {
   }
   let json = payload.slice(firstBrace, lastBrace + 1);
 
-  // Repair common LLM JSON formatting errors
-  json = repairJson(json);
+  // First attempt: parse as-is
+  try {
+    return JSON.parse(json);
+  } catch {
+    // ignore, try repair
+  }
 
+  // Second attempt: repair and parse
+  json = repairJson(json);
   return JSON.parse(json);
 }
 
 function repairJson(json) {
-  // Remove trailing commas before ] or }
-  let repaired = json.replace(/,(\s*[}\]])/g, '$1');
+  let repaired = json;
 
-  // Fix missing commas between array elements: }\n{ or ]\n[ or }\s*{ or ]\s*[
-  // Pattern: } or ] followed by newline/whitespace then { or [ without a comma
+  // 1. Remove trailing commas before ] or }
+  repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
+
+  // 2. Fix missing commas between consecutive values: } { or ] [ or } [ or ] {
   repaired = repaired.replace(/([}\]])\s*\n\s*([{\[])/g, '$1,\n$2');
   repaired = repaired.replace(/([}\]])\s+([{\[])/g, '$1, $2');
 
-  // Fix missing commas between string values in arrays (e.g., "a"\n"b")
+  // 3. Fix missing commas between string values: "..." "..."
   repaired = repaired.replace(/("\s*\n\s*")/g, '",\n"');
+
+  // 4. Fix missing commas between number/boolean/null and next value
+  repaired = repaired.replace(/(\d|true|false|null)\s*\n\s*("|{|\[)/g, '$1,\n$2');
+  repaired = repaired.replace(/(\d|true|false|null)\s+("|{|\[)/g, '$1, $2');
+
+  // 5. Fix unescaped newlines inside string values (LLM sometimes puts real newlines in strings)
+  // Strategy: find strings that span multiple lines and escape the newlines
+  repaired = repaired.replace(/"([^"]*\n[^"]*)"/g, (match) => {
+    return match.replace(/\n/g, '\\n');
+  });
+
+  // 6. Fix single quotes used instead of double quotes for keys/strings
+  // (only if the JSON clearly uses single quotes pattern)
+  if (!repaired.includes('"') && repaired.includes("'")) {
+    repaired = repaired.replace(/'/g, '"');
+  }
+
+  // 7. Remove comments (// and /* */) that LLMs sometimes add
+  repaired = repaired.replace(/\/\/.*$/gm, '');
+  repaired = repaired.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // 8. Fix duplicate commas
+  repaired = repaired.replace(/,\s*,/g, ',');
 
   return repaired;
 }
@@ -444,65 +474,46 @@ async function generateIntentPlanSuggestion(
   });
 
   let raw;
-  let lastError = null;
+  try {
+    raw = RecommendationSchema.parse(
+      await provider.extract(prompt, RecommendationJsonSchema),
+    );
+  } catch (error) {
+    console.error('[planning-assistant] extract failed, trying fallback:', error.message);
+    if (!provider.complete) {
+      throw error;
+    }
 
-  // Try structured extract up to 2 times
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const fallbackResult = await provider.complete([
+      {
+        role: 'user',
+        content: [
+          prompt,
+          '',
+          'Return one compact JSON object only.',
+          'Do not add prose before or after the JSON.',
+          'Keep key_result_candidates to at most 3 items.',
+          'Keep release_candidates to at most 3 items.',
+          'If there is no strong KR match, choose propose-new-okr or out-of-scope instead of forcing a weak bind-existing answer.',
+          `JSON schema:\n${JSON.stringify(RecommendationJsonSchema, null, 2)}`,
+        ].join('\n'),
+      },
+    ], {
+      maxTokens: 2000,
+    });
     try {
-      raw = RecommendationSchema.parse(
-        await provider.extract(prompt, RecommendationJsonSchema),
-      );
-      lastError = null;
-      break;
-    } catch (error) {
-      lastError = error;
-      console.error(`[planning-assistant] extract attempt ${attempt}/2 failed:`, error.message);
+      const parsed = parseJsonBlock(fallbackResult.text);
+      parsed.key_result_candidates = Array.isArray(parsed.key_result_candidates)
+        ? parsed.key_result_candidates.slice(0, 3)
+        : [];
+      parsed.release_candidates = Array.isArray(parsed.release_candidates)
+        ? parsed.release_candidates.slice(0, 3)
+        : [];
+      raw = RecommendationSchema.parse(parsed);
+    } catch (fallbackError) {
+      console.error('[planning-assistant] fallback parse failed. Raw response:', fallbackResult.text?.substring(0, 500));
+      throw fallbackError;
     }
-  }
-
-  // Fallback to raw complete with retry
-  if (!raw && provider.complete) {
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
-      try {
-        const fallbackResult = await provider.complete([
-          {
-            role: 'user',
-            content: [
-              prompt,
-              '',
-              'Return one compact JSON object only.',
-              'Do not add prose before or after the JSON.',
-              'Keep key_result_candidates to at most 3 items.',
-              'Keep release_candidates to at most 3 items.',
-              'If there is no strong KR match, choose propose-new-okr or out-of-scope instead of forcing a weak bind-existing answer.',
-              `JSON schema:\n${JSON.stringify(RecommendationJsonSchema, null, 2)}`,
-            ].join('\n'),
-          },
-        ], {
-          maxTokens: 2000,
-        });
-        const parsed = parseJsonBlock(fallbackResult.text);
-        parsed.key_result_candidates = Array.isArray(parsed.key_result_candidates)
-          ? parsed.key_result_candidates.slice(0, 3)
-          : [];
-        parsed.release_candidates = Array.isArray(parsed.release_candidates)
-          ? parsed.release_candidates.slice(0, 3)
-          : [];
-        raw = RecommendationSchema.parse(parsed);
-        lastError = null;
-        break;
-      } catch (error) {
-        lastError = error;
-        console.error(`[planning-assistant] fallback attempt ${attempt}/2 failed:`, error.message);
-        if (attempt === 2) {
-          console.error('[planning-assistant] all retries exhausted');
-        }
-      }
-    }
-  }
-
-  if (!raw) {
-    throw lastError || new Error('Assistant planning failed after multiple attempts.');
   }
 
   return {
