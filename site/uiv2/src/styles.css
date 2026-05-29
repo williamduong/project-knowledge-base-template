@@ -202,13 +202,19 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 30px;
-  padding: 0 9px;
+  min-height: 32px;
+  padding: 0 12px;
   border: 1px solid var(--line);
   background: linear-gradient(180deg, rgba(17, 23, 34, 0.95), rgba(10, 14, 21, 0.95));
   color: var(--text);
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 12px;
+  cursor: pointer;
+}
+
+.tool-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .refresh-feedback {
@@ -4075,25 +4081,31 @@
 
 .planning-inline-secondary-action {
   width: fit-content;
-  border: 1px solid rgba(59, 130, 246, 0.16);
-  border-radius: 14px;
-  background: rgba(59, 130, 246, 0.1);
-  color: #60a5fa;
-  padding: 0.7rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 32px;
+  background: linear-gradient(180deg, rgba(17, 23, 34, 0.95), rgba(10, 14, 21, 0.95));
+  color: var(--text);
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.45rem;
   cursor: pointer;
+  font-size: 12px;
 }
 
 .planning-inline-secondary-action strong {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   line-height: 1.1;
 }
 
+.planning-inline-secondary-action:hover {
+  background: linear-gradient(180deg, rgba(25, 33, 48, 0.98), rgba(15, 21, 30, 0.96));
+}
+
 .planning-inline-secondary-action:disabled {
-  cursor: wait;
-  opacity: 0.7;
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .planning-inline-assistant-copy {
@@ -4275,21 +4287,28 @@
 
 .planning-mini-action {
   border: 0;
-  border-radius: 14px;
-  padding: 0.72rem 0.9rem;
-  background: #0f172a;
+  border-radius: 8px;
+  min-height: 32px;
+  padding: 0 14px;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.85), rgba(37, 99, 235, 0.9));
   color: #fff;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.planning-mini-action:hover {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.95), rgba(37, 99, 235, 1));
 }
 
 .planning-mini-action:disabled {
   cursor: not-allowed;
-  opacity: 1;
-  background: #94a3b8;
-  color: rgba(255, 255, 255, 0.9);
+  opacity: 0.5;
+  background: rgba(148, 163, 184, 0.3);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .planning-release-members {
