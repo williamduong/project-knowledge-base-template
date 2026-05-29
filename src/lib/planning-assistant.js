@@ -404,6 +404,104 @@ function parseJsonBlock(text) {
   return JSON.parse(json);
 }
 
+function escapeNewlinesInsideStrings(value) {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+
+  for (const char of value) {
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      result += char;
+      escaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      result += char;
+      inString = !inString;
+      continue;
+    }
+
+    if (inString && (char === '\n' || char === '\r')) {
+      result += '\\n';
+      continue;
+    }
+
+    result += char;
+  }
+
+  return result;
+}
+
+function stripJsonComments(value) {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  let lineComment = false;
+  let blockComment = false;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+    const next = value[index + 1];
+
+    if (lineComment) {
+      if (char === '\n') {
+        lineComment = false;
+        result += char;
+      }
+      continue;
+    }
+
+    if (blockComment) {
+      if (char === '*' && next === '/') {
+        blockComment = false;
+        index += 1;
+      }
+      continue;
+    }
+
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      result += char;
+      escaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      result += char;
+      inString = !inString;
+      continue;
+    }
+
+    if (!inString && char === '/' && next === '/') {
+      lineComment = true;
+      index += 1;
+      continue;
+    }
+
+    if (!inString && char === '/' && next === '*') {
+      blockComment = true;
+      index += 1;
+      continue;
+    }
+
+    result += char;
+  }
+
+  return result;
+}
+
 function repairJson(json) {
   // Only run repairs if the JSON is actually broken
   try {
@@ -429,10 +527,8 @@ function repairJson(json) {
   // 4. Fix missing commas after number/boolean/null before next value
   repaired = repaired.replace(/(\d|true|false|null)\s+("|{|\[)/g, '$1, $2');
 
-  // 5. Escape real newlines inside string values (only inside one string, not across tokens)
-  repaired = repaired.replace(/"([^":{}\[\]]*\n[^"]*)"/g, (match) => {
-    return match.replace(/\n/g, '\\n');
-  });
+  // 5. Escape real newlines inside string values without touching token boundaries.
+  repaired = escapeNewlinesInsideStrings(repaired);
 
   // 6. Fix single quotes used instead of double quotes for keys/strings
   // (only if the JSON clearly uses single quotes pattern)
@@ -440,9 +536,8 @@ function repairJson(json) {
     repaired = repaired.replace(/'/g, '"');
   }
 
-  // 7. Remove comments (// and /* */) that LLMs sometimes add
-  repaired = repaired.replace(/\/\/.*$/gm, '');
-  repaired = repaired.replace(/\/\*[\s\S]*?\*\//g, '');
+  // 7. Remove comments that appear outside of JSON strings.
+  repaired = stripJsonComments(repaired);
 
   // 8. Fix duplicate commas
   repaired = repaired.replace(/,\s*,/g, ',');

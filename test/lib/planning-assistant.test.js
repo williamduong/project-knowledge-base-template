@@ -284,6 +284,16 @@ test('parseJsonBlock fixes missing comma between object properties', () => {
   assert.deepEqual(result, { a: 'x', b: 'y' });
 });
 
+test('parseJsonBlock preserves URLs inside strings while repairing missing commas', () => {
+  const result = parseJsonBlock('{"url":"https://api.example.com/x"\n"x":1}');
+  assert.deepEqual(result, { url: 'https://api.example.com/x', x: 1 });
+});
+
+test('parseJsonBlock preserves comment-like text inside strings while repairing missing commas', () => {
+  const result = parseJsonBlock('{"text":"keep // inside string"\n"x":1}');
+  assert.deepEqual(result, { text: 'keep // inside string', x: 1 });
+});
+
 test('parseJsonBlock handles mixed errors: missing commas + trailing comma + comments', () => {
   // JSON that has: missing comma between objects, trailing comma, and a single-line comment
   const input = '{\n  "items": [\n    {"a": 1}\n    {"b": 2},\n  ],\n  // this comment should be removed\n  "tags": ["x",]\n}';
