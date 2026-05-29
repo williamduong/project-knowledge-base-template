@@ -701,6 +701,8 @@ export function IntentsListPage() {
     return (data?.intents ?? []).filter((intent) => {
       if (intentFilter === 'linked' && intent.validation_state !== 'linked') return false
       if (intentFilter === 'missing-kr' && intent.validation_state !== 'missing-key-result') return false
+      // Always hide out-of-scope intents from non-out-of-scope filters
+      if (intentFilter !== 'out-of-scope' && intentFilter !== 'all' && intent.validation_state === 'out-of-scope') return false
       if (intentFilter === 'proposed' && intent.validation_state !== 'proposed-new-key-result') return false
       if (intentFilter === 'out-of-scope' && intent.validation_state !== 'out-of-scope') return false
       if (intentFilter === 'active' && intent.lifecycle !== 'active') return false
@@ -1260,6 +1262,9 @@ export function IntentsListPage() {
                         <span className={`status-pill ${intentTone(intent)}`}>{lifecycleLabel(intent.lifecycle)}</span>
                         {intent.validation_state === 'out-of-scope' ? (
                           <span className="status-pill status-out-of-scope">out of scope</span>
+                        ) : null}
+                        {intent.validation_state === 'proposed-new-key-result' ? (
+                          <span className="status-pill status-proposed">new O/KR proposed</span>
                         ) : null}
                       </div>
                       <p>{excerpt(intent.summary || intent.goal_text, 150)}</p>

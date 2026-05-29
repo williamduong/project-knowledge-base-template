@@ -3062,6 +3062,12 @@
   color: #94a3b8;
 }
 
+.status-proposed {
+  border-color: rgba(59, 130, 246, 0.22);
+  background: rgba(59, 130, 246, 0.08);
+  color: #93c5fd;
+}
+
 .search-overlay-backdrop {
   position: fixed;
   inset: 0;
