@@ -11,6 +11,8 @@ const {
   selectKeyResultCandidates,
   selectReleaseCandidates,
   generateIntentPlanSuggestion,
+  parseJsonBlock,
+  repairJson,
 } = require('../../src/lib/planning-assistant');
 
 function createWorkspaceFixture() {
@@ -211,4 +213,88 @@ test('planning assistant enriches provider output into UI-ready suggestion paylo
   assert.equal(suggestion.suggestion.proposed_objective?.title, 'Stabilize planning operator surfaces');
   assert.equal(suggestion.suggestion.key_result_candidates[0].code, 'KR1');
   assert.equal(suggestion.suggestion.release_candidates[0].code, 'R3.0');
+});
+
+// ============================================================================
+// parseJsonBlock / repairJson — self-healing JSON parser tests
+// ============================================================================
+
+test('parseJsonBlock parses valid JSON as-is', () => {
+  const result = parseJsonBlock('{"a":1,"b":[2,3]}');
+  assert.deepEqual(result, { a: 1, b: [2, 3] });
+});
+
+test('parseJsonBlock extracts JSON from markdown code fence', () => {
+  const result = parseJsonBlock('```json\n{"x":"y"}\n```');
+  assert.deepEqual(result, { x: 'y' });
+});
+
+test('parseJsonBlock extracts from plain code fence', () => {
+  const result = parseJsonBlock('```\n{"ok":true}\n```');
+  assert.deepEqual(result, { ok: true });
+});
+
+test('parseJsonBlock fixes trailing commas in objects', () => {
+  const result = parseJsonBlock('{"a":1,"b":2,}');
+  assert.deepEqual(result, { a: 1, b: 2 });
+});
+
+test('parseJsonBlock fixes trailing commas in arrays', () => {
+  const result = parseJsonBlock('{"items":[1,2,3,]}');
+  assert.deepEqual(result, { items: [1, 2, 3] });
+});
+
+test('parseJsonBlock fixes missing comma between object elements in array', () => {
+  const result = parseJsonBlock('{"items":[{"a":1}\n{"b":2}]}');
+  assert.deepEqual(result, { items: [{ a: 1 }, { b: 2 }] });
+});
+
+test('parseJsonBlock fixes missing comma between string values', () => {
+  const result = parseJsonBlock('{"tags":["alpha"\n"beta"]}');
+  assert.deepEqual(result, { tags: ['alpha', 'beta'] });
+});
+
+test('parseJsonBlock fixes unescaped newlines inside strings', () => {
+  // Build input with a real newline character inside the string value
+  const input = '{"text":"line 1' + '\n' + 'line 2"}';
+  const result = parseJsonBlock(input);
+  // After repair, the newline should be escaped as \n (two chars: backslash + n)
+  assert.equal(result.text, 'line 1\nline 2');
+  // Verify it's escaped (contains literal backslash-n), not a real newline
+  assert.equal(result.text.length, 'line 1\nline 2'.length);
+});
+
+test('parseJsonBlock removes single-line comments', () => {
+  const result = parseJsonBlock('{\n// comment\n"a":1\n}');
+  assert.deepEqual(result, { a: 1 });
+});
+
+test('parseJsonBlock removes block comments', () => {
+  const result = parseJsonBlock('{"a":1 /* inline */,"b":2}');
+  assert.deepEqual(result, { a: 1, b: 2 });
+});
+
+test('parseJsonBlock fixes duplicate commas', () => {
+  const result = parseJsonBlock('{"a":1,,"b":2}');
+  assert.deepEqual(result, { a: 1, b: 2 });
+});
+
+test('parseJsonBlock handles mixed errors: missing commas + trailing comma + comments', () => {
+  // JSON that has: missing comma between objects, trailing comma, and a single-line comment
+  const input = '{\n  "items": [\n    {"a": 1}\n    {"b": 2},\n  ],\n  // this comment should be removed\n  "tags": ["x",]\n}';
+  const result = parseJsonBlock(input);
+  assert.equal(result.items.length, 2);
+  assert.equal(result.items[0].a, 1);
+  assert.equal(result.items[1].b, 2);
+  assert.equal(result.tags.length, 1);
+  assert.equal(result.tags[0], 'x');
+});
+
+test('parseJsonBlock throws when no braces found', () => {
+  assert.throws(() => parseJsonBlock('just some text'), /did not contain a JSON object/);
+});
+
+test('repairJson is idempotent on valid JSON', () => {
+  const valid = '{"a":1,"b":[2,3]}';
+  assert.equal(repairJson(valid), valid);
 });

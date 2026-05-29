@@ -410,20 +410,19 @@ function repairJson(json) {
   // 1. Remove trailing commas before ] or }
   repaired = repaired.replace(/,(\s*[}\]])/g, '$1');
 
-  // 2. Fix missing commas between consecutive values: } { or ] [ or } [ or ] {
-  repaired = repaired.replace(/([}\]])\s*\n\s*([{\[])/g, '$1,\n$2');
+  // 2. Fix missing commas between consecutive values: whitespace between }/] and {/[ 
   repaired = repaired.replace(/([}\]])\s+([{\[])/g, '$1, $2');
+  // Also fix when they're directly adjacent: }{
+  repaired = repaired.replace(/([}\]])([{\[])/g, '$1, $2');
 
   // 3. Fix missing commas between string values: "..." "..."
-  repaired = repaired.replace(/("\s*\n\s*")/g, '",\n"');
+  repaired = repaired.replace(/("\s+")/g, '", "');
 
-  // 4. Fix missing commas between number/boolean/null and next value
-  repaired = repaired.replace(/(\d|true|false|null)\s*\n\s*("|{|\[)/g, '$1,\n$2');
+  // 4. Fix missing commas after number/boolean/null before next value
   repaired = repaired.replace(/(\d|true|false|null)\s+("|{|\[)/g, '$1, $2');
 
-  // 5. Fix unescaped newlines inside string values (LLM sometimes puts real newlines in strings)
-  // Strategy: find strings that span multiple lines and escape the newlines
-  repaired = repaired.replace(/"([^"]*\n[^"]*)"/g, (match) => {
+  // 5. Escape real newlines inside string values (only inside one string, not across tokens)
+  repaired = repaired.replace(/"([^":{}\[\]]*\n[^"]*)"/g, (match) => {
     return match.replace(/\n/g, '\\n');
   });
 
@@ -439,6 +438,9 @@ function repairJson(json) {
 
   // 8. Fix duplicate commas
   repaired = repaired.replace(/,\s*,/g, ',');
+
+  // 9. Collapse multiple consecutive newlines into one (clean up comment removal artifacts)
+  repaired = repaired.replace(/\n\s*\n/g, '\n');
 
   return repaired;
 }
@@ -532,4 +534,6 @@ module.exports = {
   selectReleaseCandidates,
   buildPrompt,
   generateIntentPlanSuggestion,
+  parseJsonBlock,
+  repairJson,
 };
