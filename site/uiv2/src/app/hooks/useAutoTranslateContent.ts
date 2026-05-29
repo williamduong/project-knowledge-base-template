@@ -13,7 +13,27 @@ type BatchTranslateResponse = {
   }>
 }
 
-const SKIP_TAGS = new Set([
+type AttributeTarget = {
+  element: Element
+  attribute: 'placeholder' | 'title' | 'aria-label'
+  original: string
+}
+
+const DOMAIN_TERMS = [
+  'SVFactory',
+  'KBX',
+  'Intent',
+  'Objective',
+  'Key Result',
+  'GraphDB',
+  'DNA',
+  'Flow',
+  'Gate',
+  'Rules',
+  'Workspace',
+] as const
+
+const TEXT_SKIP_TAGS = new Set([
   'INPUT',
   'TEXTAREA',
   'SELECT',
@@ -29,25 +49,90 @@ const SKIP_TAGS = new Set([
 function shouldTranslateText(value: string) {
   const text = value.trim()
   if (!text) return false
-  if (text.length < 5) return false
+  if (text.length < 2) return false
   if (!/[A-Za-z]/.test(text)) return false
   if (/^(http|\/|[A-Z0-9_\-.:/]+)$/.test(text)) return false
   return true
 }
 
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function protectDomainTerms(text: string) {
+  let protectedText = text
+  const replacements: Array<[string, string]> = []
+  const sortedTerms = [...DOMAIN_TERMS].sort((left, right) => right.length - left.length)
+
+  sortedTerms.forEach((term, index) => {
+    const token = `ZXQTERM${index}QXZ`
+    const pattern = new RegExp(escapeRegex(term), 'g')
+    if (pattern.test(protectedText)) {
+      replacements.push([token, term])
+      protectedText = protectedText.replace(pattern, token)
+    }
+  })
+
+  return {
+    text: protectedText,
+    replacements,
+  }
+}
+
+function restoreDomainTerms(text: string, replacements: Array<[string, string]>) {
+  return replacements.reduce((current, [token, term]) => current.split(token).join(term), text)
+}
+
+async function translateViaGoogleFallback(texts: string[]) {
+  const items = await Promise.all(texts.map(async (text) => {
+    const protectedPayload = protectDomainTerms(text)
+    const endpoint = new URL('https://translate.googleapis.com/translate_a/single')
+    endpoint.searchParams.set('client', 'gtx')
+    endpoint.searchParams.set('sl', 'auto')
+    endpoint.searchParams.set('tl', 'vi')
+    endpoint.searchParams.set('dt', 't')
+    endpoint.searchParams.set('q', protectedPayload.text)
+
+    const response = await fetch(endpoint, {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+    if (!response.ok) {
+      throw new Error(`Fallback translate failed: ${response.status} ${response.statusText}`)
+    }
+    const payload = await response.json() as unknown[]
+    const translated = Array.isArray(payload?.[0])
+      ? (payload[0] as unknown[])
+        .filter((part): part is [string, ...unknown[]] => Array.isArray(part) && typeof part[0] === 'string')
+        .map((part) => String(part[0]))
+        .join('')
+      : text
+
+    return {
+      source_text: text,
+      translated_text: restoreDomainTerms(translated, protectedPayload.replacements),
+    }
+  }))
+
+  return items
+}
+
 export function useAutoTranslateContent(language: UiLanguage) {
   const originalTextByNodeRef = useRef(new WeakMap<Text, string>())
+  const originalAttrByElementRef = useRef(new WeakMap<Element, Partial<Record<AttributeTarget['attribute'], string>>>())
   const cacheRef = useRef(new Map<string, string>())
   const pendingTextsRef = useRef(new Set<string>())
-  const observerRef = useRef<MutationObserver | null>(null)
   const frameRef = useRef<number | null>(null)
 
   useEffect(() => {
-    const root = document.querySelector('.shell-root')
-    if (!root) return
-    const rootNode: Node = root
+    const rootElement = document.querySelector('.shell-root')
+    if (!rootElement) return
+    const rootEl = rootElement
+    const rootNode: Node = rootElement
 
     const originalTextByNode = originalTextByNodeRef.current
+    const originalAttrByElement = originalAttrByElementRef.current
     const cache = cacheRef.current
     const pendingTexts = pendingTextsRef.current
 
@@ -56,12 +141,18 @@ export function useAutoTranslateContent(language: UiLanguage) {
       texts.forEach((text) => pendingTexts.add(text))
 
       try {
-        const response = await apiPost<BatchTranslateResponse>('/api/system/translate-batch', {
-          texts,
-          target_language: 'vi',
-        })
+        let items: BatchTranslateResponse['items']
+        try {
+          const response = await apiPost<BatchTranslateResponse>('/api/system/translate-batch', {
+            texts,
+            target_language: 'vi',
+          })
+          items = response.items
+        } catch {
+          items = await translateViaGoogleFallback(texts)
+        }
 
-        response.items.forEach((item) => {
+        items.forEach((item) => {
           cache.set(item.source_text, item.translated_text || item.source_text)
           pendingTexts.delete(item.source_text)
         })
@@ -71,14 +162,14 @@ export function useAutoTranslateContent(language: UiLanguage) {
       }
     }
 
-    function collectTranslatableNodes() {
+    function collectTextNodes() {
       const nodes: Text[] = []
       const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT, {
         acceptNode(node) {
           const parent = node.parentElement
           if (!parent) return NodeFilter.FILTER_REJECT
           if (parent.closest('[data-no-auto-translate="true"]')) return NodeFilter.FILTER_REJECT
-          if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT
+          if (TEXT_SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT
           if (parent.closest('input, textarea, select, option, code, pre')) return NodeFilter.FILTER_REJECT
           return shouldTranslateText(node.textContent || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
         },
@@ -93,21 +184,50 @@ export function useAutoTranslateContent(language: UiLanguage) {
       return nodes
     }
 
+    function collectAttributeTargets() {
+      const targets: AttributeTarget[] = []
+      const elements = rootEl.querySelectorAll('[placeholder], [title], [aria-label]')
+
+      elements.forEach((element) => {
+        if (element.closest('[data-no-auto-translate="true"]')) return
+        ;(['placeholder', 'title', 'aria-label'] as const).forEach((attribute) => {
+          const value = element.getAttribute(attribute)
+          if (!value || !shouldTranslateText(value)) return
+          targets.push({
+            element,
+            attribute,
+            original: value,
+          })
+        })
+      })
+
+      return targets
+    }
+
     function applyLanguage() {
-      const nodes = collectTranslatableNodes()
+      const textNodes = collectTextNodes()
+      const attributeTargets = collectAttributeTargets()
 
       if (language === 'en') {
-        nodes.forEach((node) => {
+        textNodes.forEach((node) => {
           const original = originalTextByNode.get(node)
           if (original && node.textContent !== original) {
             node.textContent = original
+          }
+        })
+        attributeTargets.forEach(({ element, attribute }) => {
+          const originalMap = originalAttrByElement.get(element)
+          const original = originalMap?.[attribute]
+          if (original && element.getAttribute(attribute) !== original) {
+            element.setAttribute(attribute, original)
           }
         })
         return
       }
 
       const batch: string[] = []
-      for (const node of nodes) {
+
+      for (const node of textNodes) {
         const currentText = node.textContent || ''
         const original = originalTextByNode.get(node) || currentText
         if (!originalTextByNode.has(node)) {
@@ -119,16 +239,30 @@ export function useAutoTranslateContent(language: UiLanguage) {
           if (node.textContent !== translated) {
             node.textContent = translated
           }
-          continue
-        }
-
-        if (!pendingTexts.has(original) && !batch.includes(original)) {
+        } else if (!pendingTexts.has(original) && !batch.includes(original)) {
           batch.push(original)
         }
       }
 
+      for (const target of attributeTargets) {
+        const originalMap = originalAttrByElement.get(target.element) || {}
+        if (!originalMap[target.attribute]) {
+          originalMap[target.attribute] = target.original
+          originalAttrByElement.set(target.element, originalMap)
+        }
+
+        const translated = cache.get(target.original)
+        if (translated) {
+          if (target.element.getAttribute(target.attribute) !== translated) {
+            target.element.setAttribute(target.attribute, translated)
+          }
+        } else if (!pendingTexts.has(target.original) && !batch.includes(target.original)) {
+          batch.push(target.original)
+        }
+      }
+
       if (batch.length) {
-        void flushBatch(batch.slice(0, 25))
+        void flushBatch(batch.slice(0, 50))
       }
     }
 
@@ -143,20 +277,19 @@ export function useAutoTranslateContent(language: UiLanguage) {
     }
 
     scheduleApply()
-
     const observer = new MutationObserver(() => {
       scheduleApply()
     })
-    observer.observe(root, {
+    observer.observe(rootEl, {
       childList: true,
       subtree: true,
       characterData: true,
+      attributes: true,
+      attributeFilter: ['placeholder', 'title', 'aria-label'],
     })
-    observerRef.current = observer
 
     return () => {
       observer.disconnect()
-      observerRef.current = null
       if (frameRef.current !== null) {
         window.cancelAnimationFrame(frameRef.current)
         frameRef.current = null
