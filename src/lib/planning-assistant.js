@@ -444,46 +444,65 @@ async function generateIntentPlanSuggestion(
   });
 
   let raw;
-  try {
-    raw = RecommendationSchema.parse(
-      await provider.extract(prompt, RecommendationJsonSchema),
-    );
-  } catch (error) {
-    console.error('[planning-assistant] extract failed, trying fallback:', error.message);
-    if (!provider.complete) {
-      throw error;
-    }
+  let lastError = null;
 
-    const fallbackResult = await provider.complete([
-      {
-        role: 'user',
-        content: [
-          prompt,
-          '',
-          'Return one compact JSON object only.',
-          'Do not add prose before or after the JSON.',
-          'Keep key_result_candidates to at most 3 items.',
-          'Keep release_candidates to at most 3 items.',
-          'If there is no strong KR match, choose propose-new-okr or out-of-scope instead of forcing a weak bind-existing answer.',
-          `JSON schema:\n${JSON.stringify(RecommendationJsonSchema, null, 2)}`,
-        ].join('\n'),
-      },
-    ], {
-      maxTokens: 2000,
-    });
+  // Try structured extract up to 2 times
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
-      const parsed = parseJsonBlock(fallbackResult.text);
-      parsed.key_result_candidates = Array.isArray(parsed.key_result_candidates)
-        ? parsed.key_result_candidates.slice(0, 3)
-        : [];
-      parsed.release_candidates = Array.isArray(parsed.release_candidates)
-        ? parsed.release_candidates.slice(0, 3)
-        : [];
-      raw = RecommendationSchema.parse(parsed);
-    } catch (fallbackError) {
-      console.error('[planning-assistant] fallback parse failed. Raw response:', fallbackResult.text?.substring(0, 500));
-      throw fallbackError;
+      raw = RecommendationSchema.parse(
+        await provider.extract(prompt, RecommendationJsonSchema),
+      );
+      lastError = null;
+      break;
+    } catch (error) {
+      lastError = error;
+      console.error(`[planning-assistant] extract attempt ${attempt}/2 failed:`, error.message);
     }
+  }
+
+  // Fallback to raw complete with retry
+  if (!raw && provider.complete) {
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const fallbackResult = await provider.complete([
+          {
+            role: 'user',
+            content: [
+              prompt,
+              '',
+              'Return one compact JSON object only.',
+              'Do not add prose before or after the JSON.',
+              'Keep key_result_candidates to at most 3 items.',
+              'Keep release_candidates to at most 3 items.',
+              'If there is no strong KR match, choose propose-new-okr or out-of-scope instead of forcing a weak bind-existing answer.',
+              `JSON schema:\n${JSON.stringify(RecommendationJsonSchema, null, 2)}`,
+            ].join('\n'),
+          },
+        ], {
+          maxTokens: 2000,
+        });
+        const parsed = parseJsonBlock(fallbackResult.text);
+        parsed.key_result_candidates = Array.isArray(parsed.key_result_candidates)
+          ? parsed.key_result_candidates.slice(0, 3)
+          : [];
+        parsed.release_candidates = Array.isArray(parsed.release_candidates)
+          ? parsed.release_candidates.slice(0, 3)
+          : [];
+        raw = RecommendationSchema.parse(parsed);
+        lastError = null;
+        break;
+      } catch (error) {
+        lastError = error;
+        console.error(`[planning-assistant] fallback attempt ${attempt}/2 failed:`, error.message);
+        if (attempt === 2) {
+          console.error('[planning-assistant] all retries exhausted');
+        }
+      }
+    }
+  }
+
+  if (!raw) {
+    throw lastError || new Error('Assistant planning failed after multiple attempts.');
   }
 
   return {
