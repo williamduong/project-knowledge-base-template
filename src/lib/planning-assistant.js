@@ -405,6 +405,14 @@ function parseJsonBlock(text) {
 }
 
 function repairJson(json) {
+  // Only run repairs if the JSON is actually broken
+  try {
+    JSON.parse(json);
+    return json; // already valid, nothing to fix
+  } catch {
+    // needs repair
+  }
+
   let repaired = json;
 
   // 1. Remove trailing commas before ] or }
