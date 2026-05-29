@@ -442,7 +442,25 @@ function parseJsonBlock(text) {
 
   // Second attempt: repair and parse
   json = repairJson(json);
-  return JSON.parse(json);
+  return parseJsonWithRecovery(json);
+}
+
+function parseJsonWithRecovery(json) {
+  let candidate = json;
+
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      return JSON.parse(candidate);
+    } catch (error) {
+      const recovered = recoverCommaFromParseError(candidate, error);
+      if (!recovered || recovered === candidate) {
+        throw error;
+      }
+      candidate = recovered;
+    }
+  }
+
+  return JSON.parse(candidate);
 }
 
 function escapeNewlinesInsideStrings(value) {
@@ -618,6 +636,70 @@ function insertMissingCommas(value) {
   return result;
 }
 
+function extractParseErrorPosition(error) {
+  const message = String(error?.message || '');
+  const match = message.match(/position\s+(\d+)/i);
+  if (!match) {
+    return null;
+  }
+  return Number.parseInt(match[1], 10);
+}
+
+function isLikelyValueStart(char) {
+  return char === '{'
+    || char === '['
+    || char === '"'
+    || char === '-'
+    || /[0-9]/.test(char)
+    || char === 't'
+    || char === 'f'
+    || char === 'n';
+}
+
+function isLikelyValueEnd(char) {
+  return char === '}'
+    || char === ']'
+    || char === '"'
+    || /[0-9]/.test(char)
+    || char === 'e'
+    || char === 'E'
+    || char === 'l';
+}
+
+function recoverCommaFromParseError(value, error) {
+  const message = String(error?.message || '');
+  if (!/Expected ',' or '[}\]]' after (property value|array element)/.test(message)) {
+    return null;
+  }
+
+  const position = extractParseErrorPosition(error);
+  if (!Number.isInteger(position) || position <= 0 || position >= value.length) {
+    return null;
+  }
+
+  let insertAt = position;
+  while (insertAt < value.length && /\s/.test(value[insertAt])) {
+    insertAt += 1;
+  }
+
+  let previousIndex = insertAt - 1;
+  while (previousIndex >= 0 && /\s/.test(value[previousIndex])) {
+    previousIndex -= 1;
+  }
+
+  if (previousIndex < 0 || insertAt >= value.length) {
+    return null;
+  }
+
+  const previousChar = value[previousIndex];
+  const nextChar = value[insertAt];
+  if (!isLikelyValueEnd(previousChar) || !isLikelyValueStart(nextChar)) {
+    return null;
+  }
+
+  return `${value.slice(0, insertAt)}, ${value.slice(insertAt)}`;
+}
+
 function repairJson(json) {
   // Only run repairs if the JSON is actually broken
   try {
@@ -770,5 +852,6 @@ module.exports = {
   generateIntentPlanSuggestion,
   logPlanningAssistantFailure,
   parseJsonBlock,
+  parseJsonWithRecovery,
   repairJson,
 };

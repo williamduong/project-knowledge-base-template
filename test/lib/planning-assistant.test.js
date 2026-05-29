@@ -13,6 +13,7 @@ const {
   generateIntentPlanSuggestion,
   logPlanningAssistantFailure,
   parseJsonBlock,
+  parseJsonWithRecovery,
   repairJson,
 } = require('../../src/lib/planning-assistant');
 
@@ -315,6 +316,18 @@ test('parseJsonBlock handles mixed errors: missing commas + trailing comma + com
   assert.equal(result.items[1].b, 2);
   assert.equal(result.tags.length, 1);
   assert.equal(result.tags[0], 'x');
+});
+
+test('parseJsonWithRecovery inserts missing comma before next array object from parser position', () => {
+  const input = '{"items":[{"a":1} {"b":2}]}';
+  const result = parseJsonWithRecovery(input);
+  assert.deepEqual(result, { items: [{ a: 1 }, { b: 2 }] });
+});
+
+test('parseJsonWithRecovery inserts missing comma before next property from parser position', () => {
+  const input = '{"summary":"ok" "why_now":"now"}';
+  const result = parseJsonWithRecovery(input);
+  assert.deepEqual(result, { summary: 'ok', why_now: 'now' });
 });
 
 test('parseJsonBlock throws when no braces found', () => {
