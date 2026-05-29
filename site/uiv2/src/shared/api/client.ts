@@ -6,7 +6,8 @@ export async function apiGet<T>(path: string): Promise<T> {
   })
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`)
+    const message = await extractErrorMessage(response)
+    throw new Error(message)
   }
 
   return response.json() as Promise<T>
@@ -23,7 +24,8 @@ export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   })
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`)
+    const message = await extractErrorMessage(response)
+    throw new Error(message)
   }
 
   return response.json() as Promise<T>
@@ -40,7 +42,8 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   })
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status} ${response.statusText}`)
+    const message = await extractErrorMessage(response)
+    throw new Error(message)
   }
 
   return response.json() as Promise<T>
@@ -55,9 +58,30 @@ export async function apiDelete<T>(path: string): Promise<T> {
   })
 
   if (!response.ok) {
-    const text = await response.text()
-    throw new Error(text || `Request failed: ${response.status} ${response.statusText}`)
+    const message = await extractErrorMessage(response)
+    throw new Error(message)
   }
 
   return response.json() as Promise<T>
+}
+
+async function extractErrorMessage(response: Response): Promise<string> {
+  try {
+    const body = await response.json()
+    if (body && typeof body.error === 'string' && body.error) {
+      return body.error
+    }
+    if (body && typeof body.message === 'string' && body.message) {
+      return body.message
+    }
+  } catch {
+    // response body is not JSON — try plain text
+  }
+  try {
+    const text = await response.text()
+    if (text) return text
+  } catch {
+    // ignore
+  }
+  return `Request failed: ${response.status} ${response.statusText}`
 }
