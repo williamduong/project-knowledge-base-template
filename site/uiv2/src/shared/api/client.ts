@@ -66,8 +66,10 @@ export async function apiDelete<T>(path: string): Promise<T> {
 }
 
 async function extractErrorMessage(response: Response): Promise<string> {
+  let text = ''
   try {
-    const body = await response.json()
+    text = await response.text()
+    const body = text ? JSON.parse(text) : null
     if (body && typeof body.error === 'string' && body.error) {
       return body.error
     }
@@ -75,13 +77,8 @@ async function extractErrorMessage(response: Response): Promise<string> {
       return body.message
     }
   } catch {
-    // response body is not JSON — try plain text
+    // response body is not JSON — fall back to plain text
   }
-  try {
-    const text = await response.text()
-    if (text) return text
-  } catch {
-    // ignore
-  }
+  if (text) return text
   return `Request failed: ${response.status} ${response.statusText}`
 }
