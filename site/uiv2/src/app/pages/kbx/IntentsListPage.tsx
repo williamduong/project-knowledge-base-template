@@ -191,6 +191,31 @@ function UpdateKRDialog({
     ? Boolean(manualKRId || manualOutOfScope)
     : Boolean(aiResult && (decision === 'out-of-scope' || decision === 'propose-new-okr' || aiKRId))
 
+  useEffect(() => {
+    if (!open || !intent) return
+    setActiveTab('ai')
+    setManualKRId('')
+    setManualOutOfScope(false)
+    setAiKRId('')
+    setAiReleaseId('')
+  }, [open, intent?.id])
+
+  useEffect(() => {
+    if (!open || !intent) return
+    if (!aiResult || aiResult.intent_id !== intent.id) {
+      setAiKRId('')
+      setAiReleaseId('')
+      return
+    }
+
+    if (decision === 'bind-existing') {
+      setAiKRId(aiResult.suggestion.primary_key_result_id || '')
+    } else {
+      setAiKRId('')
+    }
+    setAiReleaseId(defaultAiReleaseId)
+  }, [open, intent?.id, aiResult, decision, defaultAiReleaseId])
+
   function handleAccept() {
     if (activeTab === 'manual') {
       onAcceptManual(manualOutOfScope ? null : manualKRId || null)
@@ -822,6 +847,9 @@ export function IntentsListPage() {
   const activeIntents = useMemo(() => filteredIntents.filter((intent) => intent.lifecycle === 'active').slice(0, 5), [filteredIntents])
   const linkedCoverage = data ? Math.round((data.summary.mappedIntents / Math.max(data.summary.intents, 1)) * 100) : 0
   const updateKRDialogIntent = updateKRDialogIntentId ? intentMap.get(updateKRDialogIntentId) ?? null : null
+  const updateKRDialogAiResult = updateKRDialogIntentId && aiResult?.intent_id === updateKRDialogIntentId
+    ? aiResult
+    : null
 
   function syncWorkspace(nextWorkspace: typeof data) {
     queryClient.setQueryData(['planning-workspace'], nextWorkspace)
@@ -862,6 +890,7 @@ export function IntentsListPage() {
     mutationFn: (intentId: string) => generateIntentAssistantPlan(intentId),
     onSuccess: (result) => {
       setAiResult(result)
+      setApplyError(null)
     },
   })
 
@@ -887,6 +916,8 @@ export function IntentsListPage() {
 
   function runAIForDialog() {
     if (updateKRDialogIntentId) {
+      setAiResult(null)
+      setApplyError(null)
       assistantPlanMutation.mutate(updateKRDialogIntentId)
     }
   }
@@ -901,7 +932,7 @@ export function IntentsListPage() {
   }
 
   function handleAcceptAI(krId: string, releaseId: string, decision: AssistantDecision) {
-    if (!updateKRDialogIntent || !aiResult) return
+    if (!updateKRDialogIntent || !updateKRDialogAiResult) return
     setApplyError(null)
     adoptAssistantRecommendation(updateKRDialogIntent, krId, releaseId, decision)
   }
@@ -919,7 +950,7 @@ export function IntentsListPage() {
   }
 
   async function adoptAssistantRecommendation(intent: PlanningIntent, krId: string, releaseId: string, decision: AssistantDecision) {
-    const suggestion = aiResult?.suggestion
+    const suggestion = updateKRDialogAiResult?.suggestion
     if (!suggestion) {
       setApplyError('No AI suggestion available.')
       return
@@ -1441,8 +1472,8 @@ export function IntentsListPage() {
           ? (assistantPlanMutation.error instanceof Error ? assistantPlanMutation.error.message : 'Assistant planning failed.')
           : null}
         applyError={applyError}
-        aiResult={aiResult}
-        onClose={() => { setUpdateKRDialogIntentId(null); setAiResult(null) }}
+        aiResult={updateKRDialogAiResult}
+        onClose={() => { setUpdateKRDialogIntentId(null); setAiResult(null); setApplyError(null) }}
         onRunAI={runAIForDialog}
         onAcceptManual={handleAcceptManual}
         onAcceptAI={handleAcceptAI}
