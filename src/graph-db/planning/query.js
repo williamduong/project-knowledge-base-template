@@ -3,9 +3,29 @@
 const { COLLECTIONS, EDGE_COLLECTIONS } = require('./schema');
 const { synchronizePlanningWorkspace } = require('./sync');
 
+let activePlanningSync = null;
+
 async function fetchAll(collection) {
   const cursor = await collection.all();
   return cursor.all();
+}
+
+async function waitForPlanningSync() {
+  if (activePlanningSync) {
+    await activePlanningSync;
+  }
+}
+
+async function synchronizePlanningWorkspaceLocked(db, { workspaceRoot }) {
+  if (!activePlanningSync) {
+    activePlanningSync = (async () => synchronizePlanningWorkspace(db, { workspaceRoot }))();
+  }
+
+  try {
+    await activePlanningSync;
+  } finally {
+    activePlanningSync = null;
+  }
 }
 
 function buildObjectiveTree(objectives, keyResults) {
@@ -249,14 +269,14 @@ async function readPlanningWorkspaceFromGraph(db) {
 }
 
 async function getPlanningWorkspace(db, { workspaceRoot, forceRefresh = false } = {}) {
+  await waitForPlanningSync();
+
   if (forceRefresh) {
-    await synchronizePlanningWorkspace(db, { workspaceRoot });
+    await synchronizePlanningWorkspaceLocked(db, { workspaceRoot });
   } else {
     const existing = await fetchAll(db.collection(COLLECTIONS.WORKSPACES)).catch(() => []);
     if (!existing.length) {
-      await synchronizePlanningWorkspace(db, { workspaceRoot });
-    } else {
-      await synchronizePlanningWorkspace(db, { workspaceRoot });
+      await synchronizePlanningWorkspaceLocked(db, { workspaceRoot });
     }
   }
   return readPlanningWorkspaceFromGraph(db);
