@@ -69,6 +69,7 @@ function createGraphApiRouter() {
       res.set('X-Cache', 'MISS');
       res.json(workspace);
     } catch (error) {
+      console.error('[api-graph] GET /planning/workspace failed:', error.message, error.stack?.split('\n').slice(0, 3).join(' | '));
       res.status(500).json({ error: error.message });
     }
   });
@@ -86,6 +87,7 @@ function createGraphApiRouter() {
       const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
       res.json({ ok: true, workspace });
     } catch (error) {
+      console.error('[api-graph] POST /planning/intents/:intentId/key-results/:keyResultId failed:', error.message);
       res.status(500).json({ error: error.message });
     }
   });
@@ -99,6 +101,7 @@ function createGraphApiRouter() {
       const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
       res.json({ ok: true, workspace });
     } catch (error) {
+      console.error('[api-graph] DELETE /planning/intents/:intentId/key-results/:keyResultId failed:', error.message);
       res.status(500).json({ error: error.message });
     }
   });
@@ -112,6 +115,7 @@ function createGraphApiRouter() {
       const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
       res.json({ ok: true, workspace });
     } catch (error) {
+      console.error('[api-graph] POST /planning/releases/:releaseId/intents/:intentId failed:', error.message);
       res.status(500).json({ error: error.message });
     }
   });
@@ -125,6 +129,7 @@ function createGraphApiRouter() {
       const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
       res.json({ ok: true, workspace });
     } catch (error) {
+      console.error('[api-graph] DELETE /planning/releases/:releaseId/intents/:intentId failed:', error.message);
       res.status(500).json({ error: error.message });
     }
   });
@@ -135,6 +140,7 @@ function createGraphApiRouter() {
       const suggestion = await generateIntentPlanSuggestion(repoRoot, workspace, req.params.intentId);
       res.json(suggestion);
     } catch (error) {
+      console.error('[api-graph] POST /planning/intents/:intentId/assistant-plan failed:', error.message, error.stack?.split('\n').slice(0, 3).join(' | '));
       res.status(error.statusCode || 500).json({ error: error.message });
     }
   });
@@ -158,6 +164,7 @@ function createGraphApiRouter() {
       const workspace = await refreshPlanningWorkspace({ forceRefresh: true });
       res.json({ ok: true, workspace, review: result.review });
     } catch (error) {
+      console.error('[api-graph] POST /planning/intents/:intentId/assistant-apply failed:', error.message, error.stack?.split('\n').slice(0, 3).join(' | '));
       res.status(error.statusCode || 500).json({ error: error.message });
     }
   });

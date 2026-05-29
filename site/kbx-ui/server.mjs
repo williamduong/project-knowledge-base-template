@@ -4330,6 +4330,16 @@ export function createApp(commandRunner = executeBridgeCommand) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
   const app = createApp();
+  // Global error logging
+  process.on('uncaughtException', (error) => {
+    console.error('[bridge] UNCAUGHT EXCEPTION:', error.message);
+    console.error(error.stack);
+  });
+  process.on('unhandledRejection', (reason) => {
+    console.error('[bridge] UNHANDLED REJECTION:', reason?.message || reason);
+    if (reason?.stack) console.error(reason.stack);
+  });
+
   app.listen(port, () => {
     console.log(`kbx-ui bridge listening on http://${uiHost}:${port}`);
   });
