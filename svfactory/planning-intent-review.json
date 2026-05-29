@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-29T14:22:09.342Z",
+  "generated_at": "2026-05-29T16:15:24.703Z",
   "north_star": "Build SVFactory as the factory that generates KBX agents from DNA",
   "active_intent_ids": [
     "v2-10-code-graph",
@@ -175,6 +175,22 @@
       ],
       "intent_id": "v2-9-db-and-intent-web-ui",
       "updated_at": "2026-05-29T11:14:23.888Z"
+    },
+    "v2-4-intent-schema-migration": {
+      "decision": "out-of-scope",
+      "status": "pending-review",
+      "summary": "Historical schema migration intent is closed and should stay outside current KR remediation.",
+      "why_now": "It is already a released historical intent, so keeping it in missing-KR remediation creates noise rather than actionable work.",
+      "next_action": "Keep it visible only through the out-of-scope/closed lenses and exclude it from missing-KR follow-up.",
+      "key_result_id": null,
+      "release_id": null,
+      "objective_id": null,
+      "proposed_objective": null,
+      "proposed_key_result": null,
+      "out_of_scope_reason": "Closed historical migration intent; excluded from current OKR remediation scope.",
+      "warnings": [],
+      "intent_id": "v2-4-intent-schema-migration",
+      "updated_at": "2026-05-29T16:14:39.250Z"
     }
   },
   "intents_missing_goal_mapping": [

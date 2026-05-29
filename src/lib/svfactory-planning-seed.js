@@ -145,6 +145,7 @@ function listIntentIds(rootPath, mode) {
 function buildIntentGoalReview(seed, workspaceRoot, existingReview = defaultPlanningReview()) {
   const activeIntentIds = listIntentIds(path.join(workspaceRoot, ACTIVE_INTENTS_RELATIVE_ROOT), 'active');
   const backlogIntentIds = listIntentIds(path.join(workspaceRoot, BACKLOG_INTENTS_RELATIVE_ROOT), 'backlog');
+  const actionableIntentIds = [...activeIntentIds, ...backlogIntentIds];
   const context = resolveExistingState({ workspaceRoot });
   const knownIntentIds = listIntentRecords(context.contentRoot, {
     includeActive: true,
@@ -164,7 +165,7 @@ function buildIntentGoalReview(seed, workspaceRoot, existingReview = defaultPlan
     backlog_intent_ids: backlogIntentIds,
     linked_intent_ids: [...linkedIntentIds].sort(),
     assistant_triage: assistantTriage,
-    intents_missing_goal_mapping: knownIntentIds
+    intents_missing_goal_mapping: actionableIntentIds
       .filter((intentId) => !linkedIntentIds.has(intentId))
       .map((intentId) => ({
         intent_id: intentId,
