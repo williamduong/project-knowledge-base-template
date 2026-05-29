@@ -46,6 +46,20 @@ const TEXT_SKIP_TAGS = new Set([
   'SVG',
 ])
 
+const AUTO_TRANSLATE_SKIP_SELECTOR = [
+  '[data-no-auto-translate="true"]',
+  '.shell-command-bar',
+  '.shell-tab-strip',
+  '.planning-stage-nav',
+  '.planning-filter-row',
+  '.system-menu-list',
+  '.system-menu-trigger',
+  '.workspace-tab-list',
+  '.tab-strip',
+  '[role="tablist"]',
+  '[role="tab"]',
+].join(', ')
+
 function shouldTranslateText(value: string) {
   const text = value.trim()
   if (!text) return false
@@ -66,7 +80,9 @@ function protectDomainTerms(text: string) {
 
   sortedTerms.forEach((term, index) => {
     const token = `ZXQTERM${index}QXZ`
-    const pattern = new RegExp(escapeRegex(term), 'g')
+    const pattern = term.includes(' ')
+      ? new RegExp(`\\b${escapeRegex(term)}\\b`, 'gi')
+      : new RegExp(`\\b${escapeRegex(term)}\\b`, 'gi')
     if (pattern.test(protectedText)) {
       replacements.push([token, term])
       protectedText = protectedText.replace(pattern, token)
@@ -81,6 +97,14 @@ function protectDomainTerms(text: string) {
 
 function restoreDomainTerms(text: string, replacements: Array<[string, string]>) {
   return replacements.reduce((current, [token, term]) => current.split(token).join(term), text)
+}
+
+function shouldSkipElement(element: Element | null) {
+  if (!element) return true
+  if (TEXT_SKIP_TAGS.has(element.tagName)) return true
+  if (element.closest(AUTO_TRANSLATE_SKIP_SELECTOR)) return true
+  if (element.closest('input, textarea, select, option, code, pre')) return true
+  return false
 }
 
 async function translateViaGoogleFallback(texts: string[]) {
@@ -168,9 +192,7 @@ export function useAutoTranslateContent(language: UiLanguage) {
         acceptNode(node) {
           const parent = node.parentElement
           if (!parent) return NodeFilter.FILTER_REJECT
-          if (parent.closest('[data-no-auto-translate="true"]')) return NodeFilter.FILTER_REJECT
-          if (TEXT_SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT
-          if (parent.closest('input, textarea, select, option, code, pre')) return NodeFilter.FILTER_REJECT
+          if (shouldSkipElement(parent)) return NodeFilter.FILTER_REJECT
           return shouldTranslateText(node.textContent || '') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
         },
       })
@@ -189,7 +211,7 @@ export function useAutoTranslateContent(language: UiLanguage) {
       const elements = rootEl.querySelectorAll('[placeholder], [title], [aria-label]')
 
       elements.forEach((element) => {
-        if (element.closest('[data-no-auto-translate="true"]')) return
+        if (shouldSkipElement(element)) return
         ;(['placeholder', 'title', 'aria-label'] as const).forEach((attribute) => {
           const value = element.getAttribute(attribute)
           if (!value || !shouldTranslateText(value)) return
