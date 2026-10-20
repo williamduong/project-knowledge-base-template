@@ -14,6 +14,7 @@ const apiSymbols = require(path.join(repoRoot, 'src', 'graph-db', 'code', 'api-s
 const planningGraph = require(path.join(repoRoot, 'src', 'graph-db', 'planning'));
 const { getDatabase } = require(path.join(repoRoot, 'src', 'graph-db', 'db.js'));
 const { graphCache } = require(path.join(repoRoot, 'src', 'lib', 'graph-cache.js')); // Phase 6: caching layer
+const { buildWorkspaceSnapshot } = require(path.join(repoRoot, 'src', 'graph-db', 'planning', 'snapshot.js'));
 const {
   addIntentKeyResultLink,
   removeIntentKeyResultLink,
@@ -35,18 +36,53 @@ async function getGraphDb() {
   return graphDb;
 }
 
+function isArangoUnavailable(error) {
+  const message = error?.message || '';
+  return message.includes('ArangoDB is not reachable');
+}
+
 function createGraphApiRouter() {
   const router = express.Router();
   const planningCacheKey = 'planning:workspace';
 
   async function refreshPlanningWorkspace({ forceRefresh = true } = {}) {
-    const db = await getGraphDb();
-    const workspace = await planningGraph.getPlanningWorkspace(db, {
-      workspaceRoot: repoRoot,
-      forceRefresh,
-    });
-    graphCache.set(planningCacheKey, workspace);
-    return workspace;
+    try {
+      const db = await getGraphDb();
+      const workspace = await planningGraph.getPlanningWorkspace(db, {
+        workspaceRoot: repoRoot,
+        forceRefresh,
+      });
+      graphCache.set(planningCacheKey, workspace);
+      return workspace;
+    } catch (error) {
+      if (!isArangoUnavailable(error)) {
+        throw error;
+      }
+
+      const snapshot = buildWorkspaceSnapshot({ workspaceRoot: repoRoot });
+      const fallbackWorkspace = {
+        ...snapshot,
+        source: {
+          ...snapshot.source,
+          backend: 'snapshot-fallback',
+        },
+        validation: {
+          ...snapshot.validation,
+          warnings: [
+            {
+              id: 'planning-backend-fallback',
+              code: 'planning-backend-fallback',
+              level: 'info',
+              message: 'ArangoDB is unavailable. The planning workspace is running from source snapshot fallback.',
+              entity_ids: [],
+            },
+            ...(snapshot.validation?.warnings || []),
+          ],
+        },
+      };
+      graphCache.set(planningCacheKey, fallbackWorkspace);
+      return fallbackWorkspace;
+    }
   }
 
   // ============================================================================

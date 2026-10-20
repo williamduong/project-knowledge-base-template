@@ -14,8 +14,8 @@
       "key_result_target": "",
       "state": "active",
       "rank": 0,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "g-sf-g1-s1-dna-loader-validator-compiler",
@@ -30,8 +30,8 @@
       "key_result_target": "",
       "state": "active",
       "rank": 1,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g1-s1-k1-load-dna-contracts",
@@ -46,8 +46,8 @@
       "key_result_target": "4/4 contracts resolve successfully",
       "state": "active",
       "rank": 2,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g1-s1-k2-compile-manifest",
@@ -62,8 +62,8 @@
       "key_result_target": "1 deterministic manifest per spec root",
       "state": "active",
       "rank": 3,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "g-sf-g1-s2-materialize-kbx-package",
@@ -78,8 +78,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 4,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g1-s2-k1-output-plan",
@@ -94,8 +94,8 @@
       "key_result_target": "1 complete KBX filesystem plan",
       "state": "planned",
       "rank": 5,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g1-s2-k2-bootstrap-package",
@@ -110,8 +110,8 @@
       "key_result_target": "1 installable scaffold",
       "state": "planned",
       "rank": 6,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "g-sf-g2-define-kbx-dna-schema-v0-1",
@@ -126,8 +126,8 @@
       "key_result_target": "",
       "state": "active",
       "rank": 7,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g2-k1-four-contract-files",
@@ -142,8 +142,8 @@
       "key_result_target": "4 canonical contract files",
       "state": "active",
       "rank": 8,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g2-k2-domain-dna-roundtrip",
@@ -158,8 +158,8 @@
       "key_result_target": "1 passing reference DNA",
       "state": "active",
       "rank": 9,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "g-sf-g3-publish-first-kbx-agent-package",
@@ -174,8 +174,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 10,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g3-k1-package-installable",
@@ -190,8 +190,8 @@
       "key_result_target": "1 installable npm package",
       "state": "planned",
       "rank": 11,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g3-k2-first-release-path",
@@ -206,8 +206,8 @@
       "key_result_target": "1 publish-ready KBX package",
       "state": "planned",
       "rank": 12,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "g-sf-g4-build-quality-gate",
@@ -222,8 +222,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 13,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g4-k1-schema-and-compile-gates",
@@ -238,8 +238,8 @@
       "key_result_target": "100% invalid DNA blocked",
       "state": "planned",
       "rank": 14,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "kr-sf-g4-k2-generated-package-tests",
@@ -254,8 +254,8 @@
       "key_result_target": "100% release candidates tested",
       "state": "planned",
       "rank": 15,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.200Z",
+      "updated_at": "2026-05-29T17:08:43.200Z"
     },
     {
       "id": "g-sf-g5-build-maintainability-flow",
@@ -270,8 +270,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 16,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g5-k1-versioning-and-upgrade-path",
@@ -286,8 +286,8 @@
       "key_result_target": "1 documented upgrade path per release",
       "state": "planned",
       "rank": 17,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g5-k2-bugfix-and-release-flow",
@@ -302,8 +302,8 @@
       "key_result_target": "1 deterministic maintenance flow",
       "state": "planned",
       "rank": 18,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g6-enable-autonomous-repository-research-for-kbx-agents",
@@ -318,8 +318,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 19,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g6-k1-auto-scan-reference-repo-and-persist-to-graphdb",
@@ -334,8 +334,8 @@
       "key_result_target": "1 complete knowledge graph in GraphDB",
       "state": "planned",
       "rank": 20,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g7-define-the-natural-rules-foundation-for-svfactory",
@@ -350,8 +350,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 21,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g7-k1-lock-the-natural-rules-file-architecture-v0-1",
@@ -366,8 +366,8 @@
       "key_result_target": "1 validated natural‑rules package",
       "state": "planned",
       "rank": 22,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g8-runtime-test-harness-for-generated-kbx-agents",
@@ -382,8 +382,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 23,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g8-k1-dispatch-runtime-test-harness-operational",
@@ -398,8 +398,8 @@
       "key_result_target": "Passing smoke test on a reference agent",
       "state": "planned",
       "rank": 24,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g9-enable-queryable-kbagent-state-without-breaking-backward-compatibility",
@@ -414,8 +414,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 25,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g9-k1-structured-store-spike-with-backward-compatibility-verified",
@@ -430,8 +430,8 @@
       "key_result_target": "3 queries passed with zero regression in file outputs",
       "state": "planned",
       "rank": 26,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g10-ensure-cli-and-concept-naming-consistency",
@@ -446,8 +446,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 27,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g10-k1-complete-the-cli-and-concept-rename-kb-kbx-sv-factory-sv-factory",
@@ -462,8 +462,8 @@
       "key_result_target": "v2.4.0 release shipped with zero backward‑compatibility shims",
       "state": "planned",
       "rank": 28,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g11-define-and-implement-domain-lifecycle-separation-for-kbx-dna-packages",
@@ -478,8 +478,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 29,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g11-k1-domain-lifecycle-stages-documented-and-implemented-in-svfactory",
@@ -494,8 +494,8 @@
       "key_result_target": "Lifecycle field in dna.json; one package transitions draft → active",
       "state": "planned",
       "rank": 30,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g12-enable-project-level-customization-of-intent-governance-defaults",
@@ -510,8 +510,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 31,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g12-k1-config-layer-implemented-for-all-six-default-categories",
@@ -526,8 +526,8 @@
       "key_result_target": "6 (all six categories) by V2.5 release",
       "state": "planned",
       "rank": 32,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g13-enable-operational-visibility-and-data-persistence-for-kbx-agents",
@@ -542,8 +542,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 33,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g13-k1-db-layer-and-intent-web-ui-shipped-as-a-single-bundled-release",
@@ -558,8 +558,8 @@
       "key_result_target": "3 (intent list, intent detail, audit log)",
       "state": "planned",
       "rank": 34,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g14-establish-generative-loop-for-kbx-agent-generation",
@@ -574,8 +574,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 35,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g14-k1-define-and-validate-the-generative-loop-contract",
@@ -590,8 +590,8 @@
       "key_result_target": "1 validated generative loop contract",
       "state": "planned",
       "rank": 36,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g15-resolve-kbx-agent-roadmap-p0-alignment-gaps",
@@ -606,8 +606,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 37,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g15-k1-all-p0-intents-mapped-to-key-results-and-validated-against-north-star",
@@ -622,8 +622,8 @@
       "key_result_target": "100%",
       "state": "planned",
       "rank": 38,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g16-establish-ontology-lifecycle-foundation-for-kbx-agents",
@@ -638,8 +638,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 39,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g16-k1-ontology-foundation-v2-6-shipped",
@@ -654,8 +654,8 @@
       "key_result_target": "6/6 (100%)",
       "state": "planned",
       "rank": 40,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "g-sf-g17-establish-architectural-governance-for-cli-command-layer-ownership-sv-fa",
@@ -670,8 +670,8 @@
       "key_result_target": "",
       "state": "planned",
       "rank": 41,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     },
     {
       "id": "kr-sf-g17-k1-layer-classification-table-approved-and-soft-first-governance-policy-doc",
@@ -686,8 +686,104 @@
       "key_result_target": "All v2.5 commands (>=4) assigned; soft-first policy text merged.",
       "state": "planned",
       "rank": 42,
-      "created_at": "2026-05-29T16:15:24.335Z",
-      "updated_at": "2026-05-29T16:15:24.335Z"
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
+    },
+    {
+      "id": "g-sf-g18-establish-operator-visibility-into-execution-flow",
+      "entity_level": "system",
+      "entity_id": "workspace",
+      "parent_goal_id": null,
+      "goal_kind": "objective",
+      "title": "Establish operator visibility into execution flow",
+      "description": "Provide operators with a dedicated UI workspace to monitor pipelines, gates, and their relationships, making execution flow directly legible without navigating multiple source families.",
+      "success_criteria": "Flow workspace available as a top-level UIV2 tab, wired with mock or snapshot data, and reviewed by the team.",
+      "key_result_metric": "",
+      "key_result_target": "",
+      "state": "planned",
+      "rank": 43,
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
+    },
+    {
+      "id": "kr-sf-g18-k1-flow-ui-shell-deployed-and-validated",
+      "entity_level": "system",
+      "entity_id": "workspace",
+      "parent_goal_id": "g-sf-g18-establish-operator-visibility-into-execution-flow",
+      "goal_kind": "key_result",
+      "title": "KR18.1 — Flow UI shell deployed and validated",
+      "description": "Scaffold the Flow workspace in UIV2, wire it with current runtime snapshot data, and complete a playtest session demonstrating pipeline and gate visibility.",
+      "success_criteria": "Top-level Flow workspace exists in UIV2; operators can see at least one pipeline and one gate relationship without switching tabs; playtest log documents any blockers for next iteration.",
+      "key_result_metric": "Functional UI shell with mock data",
+      "key_result_target": "1 workspace with 1 demo pipeline and gate relationship visible",
+      "state": "planned",
+      "rank": 44,
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
+    },
+    {
+      "id": "g-sf-g19-pipeline-verification-and-quality-gate",
+      "entity_level": "system",
+      "entity_id": "workspace",
+      "parent_goal_id": null,
+      "goal_kind": "objective",
+      "title": "Pipeline verification and quality gate",
+      "description": "Ensure the SVFactory pipeline produces verified KBX agents that meet defined contracts, from DNA input to installable package output.",
+      "success_criteria": "Pipeline verification contract is defined, implemented, and passing for at least one reference DNA.",
+      "key_result_metric": "",
+      "key_result_target": "",
+      "state": "planned",
+      "rank": 45,
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
+    },
+    {
+      "id": "kr-sf-g19-k1-pipeline-end-to-end-verification-contract-passes",
+      "entity_level": "system",
+      "entity_id": "workspace",
+      "parent_goal_id": "g-sf-g19-pipeline-verification-and-quality-gate",
+      "goal_kind": "key_result",
+      "title": "KR19.1 — Pipeline end-to-end verification contract passes",
+      "description": "The pipeline-end verification contract ensures the generated KBX agent satisfies DNA constraints (schema, governance, release).",
+      "success_criteria": "One reference DNA successfully passes pipeline-end verification with zero failures.",
+      "key_result_metric": "Pipeline end-to-end verification pass rate",
+      "key_result_target": "1/1 reference DNA passes",
+      "state": "planned",
+      "rank": 46,
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
+    },
+    {
+      "id": "g-sf-g20-enable-natural-language-rule-handling-in-cli-logic",
+      "entity_level": "system",
+      "entity_id": "workspace",
+      "parent_goal_id": null,
+      "goal_kind": "objective",
+      "title": "Enable natural language rule handling in CLI logic",
+      "description": "Allow users to define rules in natural language that translate to CLI logic for agent generation.",
+      "success_criteria": "CLI can parse and execute at least 5 distinct natural language rule patterns, producing correct CLI commands.",
+      "key_result_metric": "",
+      "key_result_target": "",
+      "state": "planned",
+      "rank": 47,
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
+    },
+    {
+      "id": "kr-sf-g20-k1-nl-to-cli-rule-translator-implemented",
+      "entity_level": "system",
+      "entity_id": "workspace",
+      "parent_goal_id": "g-sf-g20-enable-natural-language-rule-handling-in-cli-logic",
+      "goal_kind": "key_result",
+      "title": "KR20.1 — NL-to-CLI rule translator implemented",
+      "description": "Implement a translator that converts natural language rules into CLI logic commands.",
+      "success_criteria": "At least 5 rule patterns translated correctly without manual intervention.",
+      "key_result_metric": "Number of rule patterns supported",
+      "key_result_target": "5",
+      "state": "planned",
+      "rank": 48,
+      "created_at": "2026-05-29T17:08:43.201Z",
+      "updated_at": "2026-05-29T17:08:43.201Z"
     }
   ],
   "source_files": {

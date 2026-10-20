@@ -128,7 +128,7 @@ test('release parseArgs: init-pipeline defaults and validation', () => {
 
 test('release parseArgs: run rejects invalid bump/target', () => {
   assert.throws(() => parseArgs(['run', '--bump=hotfix']), /--bump must be patch, minor, or major/);
-  assert.throws(() => parseArgs(['run', '--target=docker']), /--target must be npm, gh, or all/);
+  assert.throws(() => parseArgs(['run', '--target=ftp']), /--target must be npm, gh, or all/);
 });
 
 test('getReleaseContentPaths: returns defaults when config missing', () => {

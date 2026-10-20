@@ -30,7 +30,7 @@
       "portRange": [4173, 4175, 4176, 4177],
       "healthPath": "/",
       "healthMatch": "<div id=\"root\"></div>",
-      "autoStart": true
+      "autoStart": false
     }
   ]
 }

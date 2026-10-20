@@ -27,4 +27,4 @@ tags:
 
 ## Deployment
 
-<!-- TODO: describe deployment target (Vercel, AWS, Docker, etc.) -->
+<!-- TODO: describe deployment target (local host, Vercel, AWS, on-prem, etc.) -->

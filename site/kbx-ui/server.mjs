@@ -1,4 +1,5 @@
 import express from 'express';
+import dotenv from 'dotenv';
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
@@ -23,6 +24,7 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..', '..');
+dotenv.config({ path: path.join(repoRoot, '.env'), override: true });
 const kbRoot = path.join(repoRoot, 'knowledge-base');
 const cliPath = path.join(repoRoot, 'bin', 'kbx.js');
 const require = createRequire(import.meta.url);
@@ -379,7 +381,7 @@ function defaultRuntimeServices() {
       portRange: [4173, 4175, 4176, 4177],
       healthPath: '/',
       healthMatch: '<div id="root"></div>',
-      autoStart: true,
+      autoStart: false,
     },
   ];
 }

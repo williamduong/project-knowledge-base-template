@@ -474,6 +474,72 @@
           "state": "planned"
         }
       ]
+    },
+    {
+      "id": "g-sf-g18-establish-operator-visibility-into-execution-flow",
+      "code": "G18",
+      "kind": "objective",
+      "title": "Establish operator visibility into execution flow",
+      "description": "Provide operators with a dedicated UI workspace to monitor pipelines, gates, and their relationships, making execution flow directly legible without navigating multiple source families.",
+      "success_criteria": "Flow workspace available as a top-level UIV2 tab, wired with mock or snapshot data, and reviewed by the team.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g18-k1-flow-ui-shell-deployed-and-validated",
+          "code": "KR18.1",
+          "title": "Flow UI shell deployed and validated",
+          "description": "Scaffold the Flow workspace in UIV2, wire it with current runtime snapshot data, and complete a playtest session demonstrating pipeline and gate visibility.",
+          "success_criteria": "Top-level Flow workspace exists in UIV2; operators can see at least one pipeline and one gate relationship without switching tabs; playtest log documents any blockers for next iteration.",
+          "metric": "Functional UI shell with mock data",
+          "target": "1 workspace with 1 demo pipeline and gate relationship visible",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g19-pipeline-verification-and-quality-gate",
+      "code": "G19",
+      "kind": "objective",
+      "title": "Pipeline verification and quality gate",
+      "description": "Ensure the SVFactory pipeline produces verified KBX agents that meet defined contracts, from DNA input to installable package output.",
+      "success_criteria": "Pipeline verification contract is defined, implemented, and passing for at least one reference DNA.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g19-k1-pipeline-end-to-end-verification-contract-passes",
+          "code": "KR19.1",
+          "title": "Pipeline end-to-end verification contract passes",
+          "description": "The pipeline-end verification contract ensures the generated KBX agent satisfies DNA constraints (schema, governance, release).",
+          "success_criteria": "One reference DNA successfully passes pipeline-end verification with zero failures.",
+          "metric": "Pipeline end-to-end verification pass rate",
+          "target": "1/1 reference DNA passes",
+          "state": "planned"
+        }
+      ]
+    },
+    {
+      "id": "g-sf-g20-enable-natural-language-rule-handling-in-cli-logic",
+      "code": "G20",
+      "kind": "objective",
+      "title": "Enable natural language rule handling in CLI logic",
+      "description": "Allow users to define rules in natural language that translate to CLI logic for agent generation.",
+      "success_criteria": "CLI can parse and execute at least 5 distinct natural language rule patterns, producing correct CLI commands.",
+      "state": "planned",
+      "sub_goals": [],
+      "key_results": [
+        {
+          "id": "kr-sf-g20-k1-nl-to-cli-rule-translator-implemented",
+          "code": "KR20.1",
+          "title": "NL-to-CLI rule translator implemented",
+          "description": "Implement a translator that converts natural language rules into CLI logic commands.",
+          "success_criteria": "At least 5 rule patterns translated correctly without manual intervention.",
+          "metric": "Number of rule patterns supported",
+          "target": "5",
+          "state": "planned"
+        }
+      ]
     }
   ],
   "releases": [
@@ -501,11 +567,13 @@
       "state": "planned",
       "intent_ids": [
         "v2-9-db-and-intent-web-ui",
-        "v2-8-kbagent-minimal-db-schema"
+        "v2-8-kbagent-minimal-db-schema",
+        "v2-7-1-flow-and-gates-ui-planning"
       ],
       "target_goal_ids": [
         "g-sf-g4-build-quality-gate",
-        "g-sf-g5-build-maintainability-flow"
+        "g-sf-g5-build-maintainability-flow",
+        "g-sf-g18-establish-operator-visibility-into-execution-flow"
       ]
     }
   ],
@@ -641,6 +709,42 @@
       "relation": "advances",
       "key_result_id": "kr-sf-g17-k1-layer-classification-table-approved-and-soft-first-governance-policy-doc",
       "notes": "Assistant promoted new O/KR: Establish architectural governance for CLI command layer ownership (SV Factory vs KBAgent)"
+    },
+    {
+      "intent_id": "v2-7-1-flow-and-gates-ui-planning",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g18-k1-flow-ui-shell-deployed-and-validated",
+      "notes": "Assistant promoted new O/KR: Establish operator visibility into execution flow"
+    },
+    {
+      "intent_id": "v2-8-kbagent-minimal-db-schema",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g9-k1-structured-store-spike-with-backward-compatibility-verified",
+      "notes": "Assistant decision: The intent proposes a minimal DB schema for KBAgent operational tracking. It directly supports the structured store spike key result (KR9.1) under objective G9. Binding solidifies traceability and aligns with its release bucket v2-8."
+    },
+    {
+      "intent_id": "v2-8-2-principal-grounding-contract",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g2-k1-four-contract-files",
+      "notes": "Assistant decision: Intent 'v2-8-2-principal-grounding-contract' is closed with no linked key result and no tasks. Its title aligns with establishing the foundational contract set, matching KR2.1 (lock four canonical contract files)."
+    },
+    {
+      "intent_id": "v2-8-v2-8-2-principal-grounding-contract",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g2-k1-four-contract-files",
+      "notes": "Assistant decision: Intent 'v2-8-v2-8-2-principal-grounding-contract' is closed but missing key result linkage. It aligns with KR2.1 (Lock the four contract files) because grounding the contract files is core to locking them as canonical. Binding improves traceability and closes a gap in the workspace."
+    },
+    {
+      "intent_id": "v2-8-v2-8-3-pipeline-end-verification-contract",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g19-k1-pipeline-end-to-end-verification-contract-passes",
+      "notes": "Assistant promoted new O/KR: Pipeline verification and quality gate"
+    },
+    {
+      "intent_id": "v2-7-nl-rules-to-cli-logic",
+      "relation": "advances",
+      "key_result_id": "kr-sf-g20-k1-nl-to-cli-rule-translator-implemented",
+      "notes": "Assistant promoted new O/KR: Enable natural language rule handling in CLI logic"
     }
   ]
 }

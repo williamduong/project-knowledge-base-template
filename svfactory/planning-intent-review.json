@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-29T16:15:24.703Z",
+  "generated_at": "2026-05-29T17:08:43.360Z",
   "north_star": "Build SVFactory as the factory that generates KBX agents from DNA",
   "active_intent_ids": [
     "v2-10-code-graph",
@@ -28,8 +28,14 @@
     "v2-5-user-customization-framework",
     "v2-6-kb-ontology-foundation",
     "v2-7-0-1-ui-state-contract",
+    "v2-7-1-flow-and-gates-ui-planning",
+    "v2-7-nl-rules-to-cli-logic",
+    "v2-8-2-principal-grounding-contract",
+    "v2-8-kbagent-minimal-db-schema",
     "v2-8-kbagent-structured-store-spike",
     "v2-8-svfactory-rule-catalog-hardening",
+    "v2-8-v2-8-2-principal-grounding-contract",
+    "v2-8-v2-8-3-pipeline-end-verification-contract",
     "v2-8-v2-8-4-generative-loop-contract",
     "v2-8-v2-8-5-dispatch-integration-test-plan",
     "v2-8-v2-8-svfactory-rule-catalog-hardening",
@@ -176,6 +182,56 @@
       "intent_id": "v2-9-db-and-intent-web-ui",
       "updated_at": "2026-05-29T11:14:23.888Z"
     },
+    "v2-7-1-flow-and-gates-ui-planning": {
+      "decision": "propose-new-okr",
+      "status": "applied",
+      "summary": "This intent is a UI planning artifact for a Flow workspace — it has no direct match to existing key results. It should be bound to a new OKR under an objective focused on execution flow visibility.",
+      "why_now": "The intent captures critical analysis that a dedicated Flow workspace is needed, but it remains unlinked to any measurable outcome. Without a key result, this planning effort cannot be validated against the north star.",
+      "next_action": "Draft a new objective and key result for Flow workspace delivery, then reclassify this intent as a design task under that KR.",
+      "key_result_id": "kr-sf-g18-k1-flow-ui-shell-deployed-and-validated",
+      "release_id": "release-v2-9-execution-ui-foundation",
+      "objective_id": "g-sf-g18-establish-operator-visibility-into-execution-flow",
+      "proposed_objective": {
+        "title": "Establish operator visibility into execution flow",
+        "description": "Provide operators with a dedicated UI workspace to monitor pipelines, gates, and their relationships, making execution flow directly legible without navigating multiple source families.",
+        "success_criteria": "Flow workspace available as a top-level UIV2 tab, wired with mock or snapshot data, and reviewed by the team."
+      },
+      "proposed_key_result": {
+        "title": "Flow UI shell deployed and validated",
+        "description": "Scaffold the Flow workspace in UIV2, wire it with current runtime snapshot data, and complete a playtest session demonstrating pipeline and gate visibility.",
+        "success_criteria": "Top-level Flow workspace exists in UIV2; operators can see at least one pipeline and one gate relationship without switching tabs; playtest log documents any blockers for next iteration.",
+        "metric": "Functional UI shell with mock data",
+        "target": "1 workspace with 1 demo pipeline and gate relationship visible"
+      },
+      "out_of_scope_reason": null,
+      "warnings": [
+        "Intent is currently backlog — activation trigger not met (existing active intents need reconciliation).",
+        "No active implementation should begin until the intent owner chooses an activation window.",
+        "Proposed OKR requires new objective creation and stakeholder alignment before adoption.",
+        "The intent already has a release bucket v2-7; moving to v2.9 may require reprioritization of other intents in that bucket."
+      ],
+      "intent_id": "v2-7-1-flow-and-gates-ui-planning",
+      "updated_at": "2026-05-29T16:50:09.243Z"
+    },
+    "v2-8-kbagent-minimal-db-schema": {
+      "decision": "bind-existing",
+      "status": "applied",
+      "summary": "The intent proposes a minimal DB schema for KBAgent operational tracking. It directly supports the structured store spike key result (KR9.1) under objective G9. Binding solidifies traceability and aligns with its release bucket v2-8.",
+      "why_now": "The intent is currently missing a key result linkage. KR9.1 (structured store spike) is its direct activation trigger and outcome dependency. Binding now prevents orphan work and clarifies success criteria.",
+      "next_action": "Link this intent to KR9.1 (kr-sf-g9-k1-structured-store-spike-with-backward-compatibility-verified) and confirm the structured-store spike is scheduled within v2-8. Keep release bucket as v2-8.",
+      "key_result_id": "kr-sf-g9-k1-structured-store-spike-with-backward-compatibility-verified",
+      "release_id": "release-v2-8",
+      "objective_id": null,
+      "proposed_objective": null,
+      "proposed_key_result": null,
+      "out_of_scope_reason": null,
+      "warnings": [
+        "The intent's activation trigger depends on the structured-store spike (likely v2-8). Ensure the spike is actively scheduled to unblock this design work.",
+        "No tasks exist on this intent yet. After binding, consider adding at least one task for producing the schema proposal."
+      ],
+      "intent_id": "v2-8-kbagent-minimal-db-schema",
+      "updated_at": "2026-05-29T16:50:37.533Z"
+    },
     "v2-4-intent-schema-migration": {
       "decision": "out-of-scope",
       "status": "pending-review",
@@ -190,23 +246,8 @@
       "out_of_scope_reason": "Closed historical migration intent; excluded from current OKR remediation scope.",
       "warnings": [],
       "intent_id": "v2-4-intent-schema-migration",
-      "updated_at": "2026-05-29T16:14:39.250Z"
+      "updated_at": "2026-05-29T17:08:43.189Z"
     }
   },
-  "intents_missing_goal_mapping": [
-    {
-      "intent_id": "v2-7-1-flow-and-gates-ui-planning",
-      "suggested_relation": "advances",
-      "suggested_goal_id": null,
-      "suggested_key_result_id": null,
-      "status": "manual-review-required"
-    },
-    {
-      "intent_id": "v2-8-kbagent-minimal-db-schema",
-      "suggested_relation": "advances",
-      "suggested_goal_id": null,
-      "suggested_key_result_id": null,
-      "status": "manual-review-required"
-    }
-  ]
+  "intents_missing_goal_mapping": []
 }

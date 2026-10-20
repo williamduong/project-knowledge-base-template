@@ -281,7 +281,7 @@ ${envSection}
 
 ## Deployment
 
-<!-- TODO: describe deployment target (Vercel, AWS, Docker, etc.) -->
+<!-- TODO: describe deployment target (local host, Vercel, AWS, on-prem, etc.) -->
 `;
 }
 
@@ -324,7 +324,7 @@ Capture the observed current implementation baseline for this repository so futu
 - scanned folders: ${sourceFolders.join(', ') || '(none detected)'}
 
 ## Open Questions
-- Which runtime/deployment environment is canonical (local/docker/cloud)?
+- Which runtime/deployment environment is canonical (local/hosted/cloud)?
 - Which API surface is public and versioned?
 - Which data model objects are authoritative for domain vocabulary?
 `;
